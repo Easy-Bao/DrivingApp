@@ -71,7 +71,7 @@ class OnBoardingScreen extends StatelessWidget {
                       children: [
                         SizedBox(
                           width: double.infinity,
-                          height: 56,
+                          height: 50,
                           child: ElevatedButton(
                             onPressed: () {
                               context.pushNamed("Signin");
@@ -100,7 +100,7 @@ class OnBoardingScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: 50,
                     child: OutlinedButton(
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(

@@ -3,7 +3,7 @@ import 'package:BaoRide/features/passenger/presentation/views/passenger_home.dar
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter/material.dart';
 
-class HomeRoutes {
+class HomeModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: "SearchDestination",

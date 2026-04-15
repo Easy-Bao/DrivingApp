@@ -13,7 +13,7 @@ class PassengerShellLayout extends StatelessWidget {
     final String location = state.uri.path;
 
     if (location.contains('home')) return 0;
-    if (location.contains('order')) return 1;
+    if (location.contains('activity')) return 1;
     if (location.contains('favorites')) return 2;
     if (location.contains('account')) return 3;
 
@@ -26,7 +26,7 @@ class PassengerShellLayout extends StatelessWidget {
         context.goNamed('PassengerHome');
         break;
       case 1:
-        context.goNamed('PassengerOrder');
+        context.goNamed('PassengerActivity');
         break;
       case 2:
         context.goNamed('PassengerFavorites');
@@ -56,8 +56,7 @@ class PassengerShellLayout extends StatelessWidget {
           child: BottomNavigationBar(
             currentIndex: _calculateSelectedIndex(context),
             onTap: (index) => _onItemTapped(index, context),
-            backgroundColor:
-                Colors.transparent, // Lets the container's color show through
+            backgroundColor: Colors.transparent,
             elevation: 0,
             type: BottomNavigationBarType.fixed,
             showSelectedLabels: false,
@@ -77,7 +76,7 @@ class PassengerShellLayout extends StatelessWidget {
                   padding: EdgeInsets.only(top: 8.0),
                   child: Icon(LucideIcons.bookmark),
                 ),
-                label: 'Order',
+                label: 'Activity',
               ),
               BottomNavigationBarItem(
                 icon: Padding(
