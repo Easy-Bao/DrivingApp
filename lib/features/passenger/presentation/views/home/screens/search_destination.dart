@@ -1,3 +1,5 @@
+import "dart:developer";
+
 import "package:BaoRide/core/themes/app_themes.dart";
 import "package:flutter/material.dart";
 import "package:flutter_lucide/flutter_lucide.dart";
@@ -36,15 +38,15 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
         ),
         titleSpacing: 0,
         title: Padding(
-          padding: const EdgeInsets.only(right: 20.0),
+          padding: const EdgeInsets.only(right: 16.0),
           child: Hero(
             tag: 'search_bar_field',
             child: Material(
               color: Colors.transparent,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
+                  horizontal: 12,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
                   color: AppTheme.neutralColor,
@@ -55,21 +57,21 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                     Icon(
                       LucideIcons.search,
                       color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                      size: 20,
+                      size: 18,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
                         autofocus: true,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           color: AppTheme.primaryColor,
                         ),
                         decoration: InputDecoration(
                           hintText: "Search destination",
                           hintStyle: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             color: AppTheme.primaryColor.withValues(alpha: 0.6),
                             fontWeight: FontWeight.w400,
                           ),
@@ -77,6 +79,39 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
                         ),
+                      ),
+                    ),
+                    Container(
+                      height: 24,
+                      width: 1,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        //TODO: Action for "Set on Map"
+                        debugPrint("Clicked");
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            LucideIcons.map_pin,
+                            color: AppTheme.primaryColor,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Pin",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.8,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

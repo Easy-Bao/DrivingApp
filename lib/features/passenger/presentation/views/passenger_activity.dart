@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class PassengerActivityScreen extends StatefulWidget {
   const PassengerActivityScreen({super.key});
@@ -67,16 +68,16 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                     children: [
                       _buildActivityCard(
                         date: "OCT 24, 08:30 AM",
-                        location: "Pagadian Science High School",
-                        address: "Tuburan District",
+                        pickup: "Brgy. Balangasan",
+                        destination: "Robinson Supermarket",
                         price: "₱32.50",
                         status: "COMPLETED",
                         statusType: "completed",
                       ),
                       _buildActivityCard(
                         date: "OCT 24, 08:30 AM",
-                        location: "Pagadian Science High School",
-                        address: "Tuburan District",
+                        pickup: "San Francisco St.",
+                        destination: "Pagadian City Science High School",
                         price: "₱32.50",
                         status: "CANCELED",
                         statusType: "canceled",
@@ -88,8 +89,8 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                     children: [
                       _buildActivityCard(
                         date: "OCT 25, 10:00 AM",
-                        location: "City Commercial Center",
-                        address: "Rizal Avenue",
+                        pickup: "Balangasan",
+                        destination: "Tuburan District",
                         price: "₱45.00",
                         status: "IN PROGRESS",
                         statusType: "progress",
@@ -107,8 +108,8 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
 
   Widget _buildActivityCard({
     required String date,
-    required String location,
-    required String address,
+    required String pickup,
+    required String destination,
     required String price,
     required String status,
     required String statusType,
@@ -169,39 +170,62 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            location,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
-            ),
-          ),
           const SizedBox(height: 12),
           Row(
             children: [
+              Column(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 20,
+                    color: AppTheme.outlineBorderColor,
+                  ),
+                  const Icon(
+                    Icons.location_on,
+                    size: 14,
+                    color: AppTheme.tertiaryColor,
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  spacing: 10,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      address,
-                      style: TextStyle(
-                        color: AppTheme.unselectedItemColor,
-                        fontSize: 13,
+                      pickup,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor,
                       ),
                     ),
+                    const SizedBox(height: 8),
                     Text(
-                      price,
+                      destination,
                       style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: AppTheme.primaryColor,
                       ),
                     ),
                   ],
+                ),
+              ),
+              Text(
+                price,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
                 ),
               ),
             ],
@@ -218,14 +242,29 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                 size: 18,
                 color: AppTheme.primaryColor,
               ),
-              Text(
-                statusType == "progress"
-                    ? "Track Driver"
-                    : (statusType == "completed" ? "View Details" : "Rebook"),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  decoration: TextDecoration.underline,
-                  color: AppTheme.primaryColor,
+              TextButton(
+                onPressed: () {
+                  if (statusType == "progress") {
+                    context.pushNamed("ActivityTrackDriver");
+                  } else if (statusType == "completed") {
+                    context.pushNamed("ActivityViewDetails");
+                  } else {
+                    //TODO: Implement Rebook Navigation
+                  }
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  statusType == "progress"
+                      ? "Track Driver"
+                      : (statusType == "completed" ? "View Details" : "Rebook"),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ),
             ],

@@ -1,4 +1,4 @@
-import 'package:BaoRide/features/passenger/presentation/views/home/screens/search_destination_widget.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/search_destination.dart';
 import 'package:BaoRide/features/passenger/presentation/views/passenger_home.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter/material.dart';

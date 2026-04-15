@@ -7,7 +7,10 @@ import 'package:go_router_modular/go_router_modular.dart';
 
 class PassengerModule extends Module {
   final homeRoutes = [...HomeModule.shellRoutes, ...HomeModule.routes];
-  final activityRoutes = [...ActivityModule.shellRoutes];
+  final activityRoutes = [
+    ...ActivityModule.shellRoutes,
+    ...ActivityModule.routes,
+  ];
 
   @override
   List<ModularRoute> get routes => <ModularRoute>[
