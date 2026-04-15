@@ -1,5 +1,5 @@
 name: BaoRide  
-description: "A new Flutter project."
+description: "A Booking App Project"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -42,8 +42,6 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   fpdart: ^1.2.0
   flutter_lucide: ^1.8.2
-  liquid_glass_renderer: ^0.2.0-dev.4
-  google_fonts: ^8.0.2
 
 dev_dependencies:
   flutter_test:
