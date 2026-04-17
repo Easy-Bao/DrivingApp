@@ -1,5 +1,3 @@
-import "dart:developer";
-
 import "package:BaoRide/core/themes/app_themes.dart";
 import "package:flutter/material.dart";
 import "package:flutter_lucide/flutter_lucide.dart";
