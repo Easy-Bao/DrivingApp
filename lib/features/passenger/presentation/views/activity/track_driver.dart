@@ -36,7 +36,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                   Icons.arrow_back,
                   color: AppTheme.primaryColor,
                 ),
-                onPressed: () => context.pop(context),
+                onPressed: () => context.pop(),
               ),
             ),
           ),

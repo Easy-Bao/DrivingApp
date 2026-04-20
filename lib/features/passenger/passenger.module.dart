@@ -6,14 +6,15 @@ import 'package:BaoRide/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class PassengerModule extends Module {
-  final homeRoutes = [...HomeModule.shellRoutes, ...HomeModule.routes];
-  final activityRoutes = [
-    ...ActivityModule.shellRoutes,
-    ...ActivityModule.routes,
-  ];
+  final Iterable homeRoutes = [...HomeModule.shellRoutes, ...HomeModule.routes];
+  final activityRoutes = [...ActivityModule.shellRoutes];
+  final activityRoutesScreen = [...ActivityModule.routes];
+
+  static List<ModularRoute> get route => <ModularRoute>[...HomeModule.routes];
 
   @override
   List<ModularRoute> get routes => <ModularRoute>[
+    ...activityRoutesScreen,
     ShellModularRoute(
       builder: (context, GoRouterState state, child) =>
           PassengerShellLayout(child: child),

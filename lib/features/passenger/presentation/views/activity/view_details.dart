@@ -6,10 +6,10 @@ class ActivityViewDetails extends StatefulWidget {
   const ActivityViewDetails({super.key});
 
   @override
-  State<ActivityViewDetails> createState() => _AcitivtyViewDetailsState();
+  State<ActivityViewDetails> createState() => _ActivityViewDetailsState();
 }
 
-class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
+class _ActivityViewDetailsState extends State<ActivityViewDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,7 +19,7 @@ class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor),
-          onPressed: () => context.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           "Trip Details",
@@ -100,6 +100,7 @@ class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
                 children: [
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    spacing: 10,
                     children: [
                       Text(
                         "Fare Summary",
@@ -137,53 +138,55 @@ class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
                 _timelineItem("Tuburan District", "10:38 AM", false),
               ],
             ),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.refresh),
-                label: const Text(
-                  "Book this route again",
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(32),
-                  ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.refresh),
+              label: const Text(
+                "Book this route again",
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(32),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _fareRow(String label, String amount) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(color: AppTheme.unselectedItemColor, fontSize: 13),
-          ),
-          Text(
-            amount,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(color: AppTheme.unselectedItemColor, fontSize: 13),
+        ),
+        Text(
+          amount,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        ),
+      ],
     );
   }
 
   Widget _timelineItem(String loc, String time, bool isTop) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Column(
           children: [
