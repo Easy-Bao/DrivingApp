@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class AcitivityTrackDriver extends StatefulWidget {
   const AcitivityTrackDriver({super.key});
@@ -35,7 +36,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                   Icons.arrow_back,
                   color: AppTheme.primaryColor,
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => context.pop(context),
               ),
             ),
           ),
