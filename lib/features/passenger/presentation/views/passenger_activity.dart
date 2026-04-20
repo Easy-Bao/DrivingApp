@@ -27,12 +27,8 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Center(
-          child: Text(
-            "Activity",
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
+        title: Text("Activity", style: TextStyle(fontWeight: FontWeight.w700)),
+        centerTitle: true,
       ),
       backgroundColor: AppTheme.surface,
       body: SafeArea(

@@ -280,7 +280,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => _showFeedback("See all tapped"),
+                          onTap: () => context.pushNamed("ViewAllSuggestions"),
                           child: Text(
                             "See all",
                             style: TextStyle(

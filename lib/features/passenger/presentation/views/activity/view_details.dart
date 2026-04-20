@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class ActivityViewDetails extends StatefulWidget {
@@ -18,7 +19,10 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+          icon: const Icon(
+            LucideIcons.arrow_left,
+            color: AppTheme.primaryColor,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text(

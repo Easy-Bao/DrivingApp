@@ -1,4 +1,5 @@
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/search_destination.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/view_all_suggestions.dart';
 import 'package:BaoRide/features/passenger/presentation/views/passenger_home.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,29 @@ class HomeModule {
           );
         },
       ),
+    ),
+    // ChildRoute(
+    //   name: "ViewAllSuggestions",
+    //   "home/suggestions",
+    //   child: (context, state) => const PassengerViewAllSuggestions(),
+    //   pageBuilder: (context, state) => CustomTransitionPage<void>(
+    //     key: state.pageKey,
+    //     child: const PassengerViewAllSuggestions(),
+    //     transitionDuration: const Duration(milliseconds: 400),
+    //     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+    //       return FadeTransition(
+    //         opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
+    //         child: child,
+    //       );
+    //     },
+    //   ),
+    // ),
+    ChildRoute(
+      name: "ViewAllSuggestions",
+      "home/suggestions",
+      child: (context, GoRouterState state) => PassengerViewAllSuggestions(),
+      transition: GoTransitions.fadeUpwards,
+      transitionDuration: Duration(milliseconds: 300),
     ),
   ];
   static List<ModularRoute> shellRoutes = [

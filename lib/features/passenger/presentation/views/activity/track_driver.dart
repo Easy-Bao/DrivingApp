@@ -27,24 +27,17 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
             ),
           ),
           Positioned(
-            top: 50,
+            top: 60,
             left: 20,
-            child: CircleAvatar(
-              backgroundColor: AppTheme.surface,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: AppTheme.primaryColor,
-                ),
-                onPressed: () => context.pop(),
-              ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+              onPressed: () => context.pop(),
             ),
           ),
           Positioned(
             top: 60,
             right: 20,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 borderRadius: BorderRadius.circular(20),
