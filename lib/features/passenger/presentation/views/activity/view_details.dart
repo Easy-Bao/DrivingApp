@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class ActivityViewDetails extends StatefulWidget {
   const ActivityViewDetails({super.key});
@@ -18,7 +19,7 @@ class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(context),
         ),
         title: const Text(
           "Trip Details",
@@ -119,7 +120,7 @@ class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
                   const SizedBox(height: 15),
                   _fareRow("Base Fare", "₱5.50"),
                   _fareRow("Distance", "₱24.80"),
-                  _fareRow("Tax & Fees", "₱2.20"),
+                  _fareRow("Fees", "₱2.20"),
                 ],
               ),
             ),
@@ -137,7 +138,6 @@ class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
               ],
             ),
             const SizedBox(height: 40),
-            // Rebook Button
             SizedBox(
               width: double.infinity,
               height: 56,
@@ -152,7 +152,7 @@ class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(32),
                   ),
                 ),
               ),
@@ -165,7 +165,7 @@ class _AcitivtyViewDetailsState extends State<ActivityViewDetails> {
 
   Widget _fareRow(String label, String amount) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

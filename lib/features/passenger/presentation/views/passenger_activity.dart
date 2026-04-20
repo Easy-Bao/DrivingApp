@@ -26,6 +26,14 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Center(
+          child: Text(
+            "Activity",
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
       backgroundColor: AppTheme.surface,
       body: SafeArea(
         child: Column(
