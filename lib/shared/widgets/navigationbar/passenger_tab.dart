@@ -5,18 +5,14 @@ import 'package:go_router_modular/go_router_modular.dart';
 
 class PassengerShellLayout extends StatelessWidget {
   final Widget child;
-
   const PassengerShellLayout({super.key, required this.child});
 
   int _calculateSelectedIndex(BuildContext context) {
-    final GoRouterState state = GoRouterState.of(context);
-    final String location = state.uri.path;
-
-    if (location.contains('home')) return 0;
-    if (location.contains('activity')) return 1;
-    if (location.contains('favorites')) return 2;
-    if (location.contains('account')) return 3;
-
+    final String location = GoRouterState.of(context).uri.path;
+    if (location.startsWith('/passenger/home')) return 0;
+    if (location.startsWith('/passenger/activity')) return 1;
+    if (location.startsWith('/passenger/favorites')) return 2;
+    if (location.startsWith('/passenger/account')) return 3;
     return 0;
   }
 
@@ -39,61 +35,76 @@ class PassengerShellLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = _calculateSelectedIndex(context);
+
     return Scaffold(
       body: child,
-      bottomNavigationBar: Theme(
-        data: Theme.of(context).copyWith(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          border: Border(
+            top: BorderSide(color: AppTheme.outlineBorderColor, width: 0.5),
+          ),
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            border: Border(
-              top: BorderSide(color: AppTheme.outlineBorderColor, width: 1.0),
+        child: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (index) => _onItemTapped(index, context),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          indicatorColor: Colors.transparent,
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+          destinations: [
+            NavigationDestination(
+              icon: Icon(
+                LucideIcons.house,
+                color: AppTheme.unselectedItemColor,
+              ),
+              selectedIcon: Icon(
+                LucideIcons.house,
+                color: AppTheme.selectedItemColor,
+                size: 26,
+                weight: 700,
+              ),
+              label: 'Home',
             ),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _calculateSelectedIndex(context),
-            onTap: (index) => _onItemTapped(index, context),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            type: BottomNavigationBarType.fixed,
-            showSelectedLabels: false,
-            showUnselectedLabels: false,
-            selectedItemColor: AppTheme.selectedItemColor,
-            unselectedItemColor: AppTheme.unselectedItemColor,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(top: 8.0),
-                  child: Icon(LucideIcons.house),
-                ),
-                label: 'Home',
+            NavigationDestination(
+              icon: Icon(
+                LucideIcons.bookmark,
+                color: AppTheme.unselectedItemColor,
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(top: 8.0),
-                  child: Icon(LucideIcons.bookmark),
-                ),
-                label: 'Activity',
+              selectedIcon: Icon(
+                LucideIcons.bookmark,
+                color: AppTheme.selectedItemColor,
+                size: 26,
+                weight: 700,
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(top: 8.0),
-                  child: Icon(LucideIcons.heart),
-                ),
-                label: 'Favorites',
+              label: 'Activity',
+            ),
+            NavigationDestination(
+              icon: Icon(
+                LucideIcons.heart,
+                color: AppTheme.unselectedItemColor,
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(top: 8.0),
-                  child: Icon(LucideIcons.user),
-                ),
-                label: 'Account',
+              selectedIcon: Icon(
+                LucideIcons.heart,
+                color: AppTheme.selectedItemColor,
+                size: 26,
+                weight: 700,
               ),
-            ],
-          ),
+              label: 'Favorites',
+            ),
+            NavigationDestination(
+              icon: Icon(LucideIcons.user, color: AppTheme.unselectedItemColor),
+              selectedIcon: Icon(
+                LucideIcons.user,
+                color: AppTheme.selectedItemColor,
+                size: 26,
+                weight: 700,
+              ),
+              label: 'Account',
+            ),
+          ],
         ),
       ),
     );

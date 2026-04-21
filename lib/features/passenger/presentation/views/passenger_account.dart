@@ -1,3 +1,4 @@
+import "package:BaoRide/core/themes/app_themes.dart";
 import "package:flutter/material.dart";
 
 class PassengerAccountScreen extends StatefulWidget {
@@ -11,6 +12,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surface,
       appBar: AppBar(
         title: Text("Account", style: TextStyle(fontWeight: FontWeight.w700)),
         centerTitle: true,
