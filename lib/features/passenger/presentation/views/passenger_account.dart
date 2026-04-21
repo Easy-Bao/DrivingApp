@@ -11,6 +11,10 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Account", style: TextStyle(fontWeight: FontWeight.w700)),
+        centerTitle: true,
+      ),
       body: SafeArea(child: Center(child: Text("PassengerAccountScreen"))),
     );
   }
