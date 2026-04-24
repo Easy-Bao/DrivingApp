@@ -18,7 +18,7 @@ class _PassengerFavoritesScreenState extends State<PassengerFavoritesScreen> {
         centerTitle: true,
       ),
       backgroundColor: AppTheme.surface,
-      body: SafeArea(child: Center(child: Text("PassengerFavoritesScreen"))),
+      body: SafeArea(child: Center(child: Text("Passenger Favorites Screen"))),
     );
   }
 }
