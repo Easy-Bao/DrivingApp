@@ -70,269 +70,243 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      body: Column(
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                const SizedBox.expand(child: Center(child: Text("Map Here"))),
-                SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            LucideIcons.ellipsis_vertical,
-                            color: AppTheme.primaryColor,
-                          ),
-                          onPressed: () => _showFeedback("Menu tapped"),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "EasyRide",
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primaryColor,
+                          letterSpacing: -1.5,
                         ),
-                      ],
+                      ),
+                      Text(
+                        "Ready to ride today?",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          LucideIcons.bell,
+                          color: AppTheme.primaryColor,
+                        ),
+                        onPressed: () => _showFeedback("Notifications tapped"),
+                      ),
+                      Positioned(
+                        right: 12,
+                        top: 12,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(
+                    LucideIcons.map_pin,
+                    size: 14,
+                    color: AppTheme.primaryColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Pagadian City, Zamboanga del Sur",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.7),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          Flexible(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              decoration: const BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top: BorderSide(width: 1, color: AppTheme.borderSide),
-                ),
+                ],
               ),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Where to?",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => _showFeedback("Locate me tapped"),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => context.pushNamed("SearchDestination"),
+                      child: Hero(
+                        tag: 'search_bar_field',
+                        child: Material(
+                          color: Colors.transparent,
                           child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              LucideIcons.locate_fixed,
-                              color: AppTheme.neutralColor,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              context.pushNamed("SearchDestination");
-                            },
-                            child: Hero(
-                              tag: 'search_bar_field',
-                              child: Material(
-                                color: Colors.transparent,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.neutralColor,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        LucideIcons.search,
-                                        color: AppTheme.primaryColor.withValues(
-                                          alpha: 0.6,
-                                        ),
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        "Search destination",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: AppTheme.primaryColor
-                                              .withValues(alpha: 0.6),
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: () => _showFeedback("Schedule clock tapped"),
-                          child: Container(
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: AppTheme.neutralColor,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppTheme.borderSide),
                             ),
-                            padding: const EdgeInsets.all(15),
                             child: Row(
                               children: [
-                                Icon(
-                                  LucideIcons.clock,
-                                  size: 24,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.8,
-                                  ),
+                                const Icon(
+                                  LucideIcons.search,
+                                  color: AppTheme.primaryColor,
+                                  size: 20,
                                 ),
-                                const SizedBox(width: 10),
+                                const SizedBox(width: 12),
                                 Text(
-                                  "Schedule",
+                                  "Enter destination",
                                   style: TextStyle(
+                                    fontSize: 16,
                                     color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.8,
+                                      alpha: 0.6,
                                     ),
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: quickActions
-                          .asMap()
-                          .entries
-                          .map((entry) {
-                            final int index = entry.key;
-                            final action = entry.value;
-                            final isLast = index == quickActions.length - 1;
-
-                            final Widget card = Expanded(
-                              child: _buildQuickActionCard(
-                                icon: action.icon,
-                                title: action.title,
-                                subtitle: action.subtitle,
-                                onTap: () {
-                                  action.onTap();
-                                  _showFeedback("${action.title} tapped");
-                                },
-                              ),
-                            );
-
-                            if (!isLast) {
-                              return [card, const SizedBox(width: 12)];
-                            }
-                            return [card];
-                          })
-                          .expand((element) => element)
-                          .toList(),
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Recent Suggestions",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => context.pushNamed("ViewAllSuggestions"),
-                          child: Text(
-                            "See all",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: recentLocations.asMap().entries.map((
-                            entry,
-                          ) {
-                            final int index = entry.key;
-                            final location = entry.value;
-                            final isLast = index == recentLocations.length - 1;
-
-                            return Column(
-                              children: [
-                                _buildLocationItem(
-                                  icon: location.icon,
-                                  title: location.title,
-                                  subtitle: location.subtitle,
-                                  onTap: () {
-                                    location.onTap();
-                                    _showFeedback("${location.title} tapped");
-                                  },
-                                ),
-                                if (!isLast)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 56),
-                                    child: Divider(
-                                      height: 1,
-                                      color: Colors.grey[200],
-                                    ),
-                                  ),
-                              ],
-                            );
-                          }).toList(),
                         ),
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () => _showFeedback("Locating..."),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        LucideIcons.locate_fixed,
+                        color: AppTheme.neutralColor,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildShortcutChip(LucideIcons.house, "Home"),
+                    const SizedBox(width: 8),
+                    _buildShortcutChip(LucideIcons.graduation_cap, "Campus"),
+                    const SizedBox(width: 8),
+                    _buildShortcutChip(LucideIcons.briefcase, "Work"),
+                    const SizedBox(width: 8),
+                    _buildShortcutChip(LucideIcons.plus, "Add"),
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
+              Row(
+                children: quickActions.asMap().entries.map((entry) {
+                  final isLast = entry.key == quickActions.length - 1;
+                  final action = entry.value;
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: isLast ? 0 : 12),
+                      child: _buildQuickActionCard(
+                        icon: action.icon,
+                        title: action.title,
+                        subtitle: action.subtitle,
+                        onTap: () => _showFeedback(action.title),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Recent Activity",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.pushNamed("ViewAllSuggestions"),
+                    child: const Text(
+                      "View all",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: recentLocations.length,
+                  separatorBuilder: (_, _) =>
+                      Divider(height: 1, color: Colors.grey[100]),
+                  itemBuilder: (context, index) {
+                    final location = recentLocations[index];
+                    return _buildLocationItem(
+                      icon: location.icon,
+                      title: location.title,
+                      subtitle: location.subtitle,
+                      onTap: () => _showFeedback(location.title),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShortcutChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        border: Border.all(color: AppTheme.borderSide),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: AppTheme.primaryColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.primaryColor,
             ),
           ),
         ],
@@ -349,46 +323,31 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.borderSide),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+            Icon(icon, color: AppTheme.primaryColor, size: 28),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: AppTheme.primaryColor,
               ),
-              child: Icon(icon, color: AppTheme.primaryColor, size: 20),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppTheme.primaryColor,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                      fontSize: 12,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -406,22 +365,20 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          shape: BoxShape.circle,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.neutralColor,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: AppTheme.primaryColor, size: 20),
       ),
       title: Text(
         title,
         style: const TextStyle(
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           fontSize: 15,
           color: AppTheme.primaryColor,
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
         subtitle,
@@ -429,13 +386,11 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
           color: AppTheme.primaryColor.withValues(alpha: 0.5),
           fontSize: 13,
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
-      trailing: Icon(
+      trailing: const Icon(
         LucideIcons.chevron_right,
-        size: 18,
-        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+        size: 16,
+        color: AppTheme.borderSide,
       ),
       onTap: onTap,
     );
