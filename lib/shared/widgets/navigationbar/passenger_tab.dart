@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+// TODO: Refactor this to use a more dynamic approach, such as using a list of routes and icons to generate the navigation bar items, instead of hardcoding each case in the _onItemTapped method. This will make it easier to maintain and extend the navigation bar in the future.
 class PassengerShellLayout extends StatelessWidget {
   final Widget child;
   const PassengerShellLayout({super.key, required this.child});
