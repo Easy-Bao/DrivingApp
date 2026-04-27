@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-// TODO: Refactor this to use a more dynamic approach, such as using a list of routes and icons to generate the navigation bar items, instead of hardcoding each case in the _onItemTapped method. This will make it easier to maintain and extend the navigation bar in the future.
 class PassengerShellLayout extends StatelessWidget {
   final Widget child;
   const PassengerShellLayout({super.key, required this.child});
@@ -59,50 +58,25 @@ class PassengerShellLayout extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: NavigationBar(
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: (index) =>
-                      _onItemTapped(index, context),
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  indicatorColor: Colors.transparent,
-                  labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                  destinations: [
-                    NavigationDestination(
-                      icon: Icon(
-                        LucideIcons.house,
-                        color: AppTheme.unselectedItemColor,
-                      ),
-                      selectedIcon: Icon(
-                        LucideIcons.house,
-                        color: AppTheme.selectedItemColor,
-                        size: 24,
-                      ),
-                      label: 'Home',
+                child: Row(
+                  children: [
+                    _buildTabItem(
+                      context,
+                      icon: LucideIcons.house,
+                      index: 0,
+                      isSelected: selectedIndex == 0,
                     ),
-                    NavigationDestination(
-                      icon: Icon(
-                        LucideIcons.bookmark,
-                        color: AppTheme.unselectedItemColor,
-                      ),
-                      selectedIcon: Icon(
-                        LucideIcons.bookmark,
-                        color: AppTheme.selectedItemColor,
-                        size: 24,
-                      ),
-                      label: 'Activity',
+                    _buildTabItem(
+                      context,
+                      icon: LucideIcons.bookmark,
+                      index: 1,
+                      isSelected: selectedIndex == 1,
                     ),
-                    NavigationDestination(
-                      icon: Icon(
-                        LucideIcons.user,
-                        color: AppTheme.unselectedItemColor,
-                      ),
-                      selectedIcon: Icon(
-                        LucideIcons.user,
-                        color: AppTheme.selectedItemColor,
-                        size: 24,
-                      ),
-                      label: 'Account',
+                    _buildTabItem(
+                      context,
+                      icon: LucideIcons.user,
+                      index: 2,
+                      isSelected: selectedIndex == 2,
                     ),
                   ],
                 ),
@@ -133,6 +107,39 @@ class PassengerShellLayout extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabItem(
+    BuildContext context, {
+    required IconData icon,
+    required int index,
+    required bool isSelected,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onItemTapped(index, context),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              icon,
+              size: 24,
+              color: isSelected
+                  ? AppTheme.selectedItemColor
+                  : AppTheme.unselectedItemColor,
+            ),
+          ),
         ),
       ),
     );
