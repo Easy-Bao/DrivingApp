@@ -1,7 +1,6 @@
 import 'package:BaoRide/features/passenger/modules/activity_module.dart';
 import 'package:BaoRide/features/passenger/modules/home_module.dart';
 import 'package:BaoRide/features/passenger/presentation/views/passenger_account.dart';
-import 'package:BaoRide/features/passenger/presentation/views/passenger_favorites.dart';
 import 'package:BaoRide/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -25,11 +24,6 @@ class PassengerModule extends Module {
       routes: [
         ...homeRoutes,
         ...activityRoutes,
-        ChildRoute(
-          name: "PassengerFavorites",
-          "favorites",
-          child: (context, GoRouterState state) => PassengerFavoritesScreen(),
-        ),
         ChildRoute(
           name: "PassengerAccount",
           "account",
