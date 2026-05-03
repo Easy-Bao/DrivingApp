@@ -1,4 +1,5 @@
 import "package:BaoRide/core/themes/app_themes.dart";
+import "package:BaoRide/features/passenger/presentation/views/home/models/add_category_model.dart";
 import "package:BaoRide/features/passenger/presentation/views/home/models/location_suggestion_model.dart";
 import "package:BaoRide/features/passenger/presentation/views/home/models/quick_action_model.dart";
 import "package:flutter/material.dart";
@@ -55,6 +56,30 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     ),
   ];
 
+  List<AddCategoryModel> shortcuts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    shortcuts = [
+      AddCategoryModel(
+        icon: LucideIcons.house,
+        label: "Home",
+        onTap: () => _showFeedback("Home tapped"),
+      ),
+      AddCategoryModel(
+        icon: LucideIcons.graduation_cap,
+        label: "Campus",
+        onTap: () => _showFeedback("Campus tapped"),
+      ),
+      AddCategoryModel(
+        icon: LucideIcons.briefcase,
+        label: "Work",
+        onTap: () => _showFeedback("Work tapped"),
+      ),
+    ];
+  }
+
   void _showFeedback(String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -63,6 +88,23 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+
+  void _openAddCategoryScreen() {
+    context.pushNamed(
+      "PassengerAddCategory",
+      extra: (AddCategoryModel newShortcut) {
+        setState(() {
+          shortcuts.add(
+            AddCategoryModel(
+              icon: newShortcut.icon,
+              label: newShortcut.label,
+              onTap: () => _showFeedback("${newShortcut.label} tapped"),
+            ),
+          );
+        });
+      },
     );
   }
 
@@ -128,20 +170,20 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
+              const Row(
                 children: [
-                  const Icon(
+                  Icon(
                     LucideIcons.map_pin,
                     size: 14,
                     color: AppTheme.primaryColor,
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     "Pagadian City, Zamboanga del Sur",
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                      color: AppTheme.primaryColor,
                     ),
                   ),
                 ],
@@ -212,13 +254,22 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                 physics: const BouncingScrollPhysics(),
                 child: Row(
                   children: [
-                    _buildShortcutChip(LucideIcons.house, "Home"),
-                    const SizedBox(width: 8),
-                    _buildShortcutChip(LucideIcons.graduation_cap, "Campus"),
-                    const SizedBox(width: 8),
-                    _buildShortcutChip(LucideIcons.briefcase, "Work"),
-                    const SizedBox(width: 8),
-                    _buildShortcutChip(LucideIcons.plus, "Add"),
+                    ...shortcuts.map(
+                      (shortcut) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: shortcut.onTap,
+                          child: _buildShortcutChip(
+                            shortcut.icon,
+                            shortcut.label,
+                          ),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _openAddCategoryScreen,
+                      child: _buildShortcutChip(LucideIcons.plus, "Add"),
+                    ),
                   ],
                 ),
               ),

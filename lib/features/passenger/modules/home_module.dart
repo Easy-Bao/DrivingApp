@@ -1,5 +1,6 @@
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/add_category.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/search_destination.dart';
-import 'package:BaoRide/features/passenger/presentation/views/home/screens/view_all_suggestions.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/view_all_activity.dart';
 import 'package:BaoRide/features/passenger/presentation/views/passenger_home.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter/material.dart';
@@ -41,9 +42,16 @@ class HomeModule {
     ChildRoute(
       name: "ViewAllSuggestions",
       "home/suggestions",
-      child: (context, GoRouterState state) => PassengerViewAllSuggestions(),
+      child: (context, GoRouterState state) => PassengerViewAllActivity(),
       transition: GoTransitions.fadeUpwards,
       transitionDuration: Duration(milliseconds: 300),
+    ),
+    ChildRoute(
+      name: "PassengerAddCategory",
+      "home/add-category",
+      child: (context, GoRouterState state) =>
+          PassengerAddCategoryScreen(onSave: (category) {}),
+      transition: GoTransitions.slide.toLeft,
     ),
   ];
   static List<ModularRoute> shellRoutes = [
