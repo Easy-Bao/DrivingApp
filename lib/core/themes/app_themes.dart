@@ -18,7 +18,7 @@ class AppTheme {
   static Color outlineBorderColor = Color(0xFF222222).withValues(alpha: 0.1);
 
   // Activtiy Status
-  static Color complete = Color(0xFF79AE6F);
+  static Color complete = Color(0xFF285A48);
   static Color cancel = Color(0xFFFF3737);
   static Color inProgress = Color(0xFF607B8B);
 }

@@ -129,7 +129,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     Color getStatusText() {
       if (statusType == "canceled") return AppTheme.surface;
       if (statusType == "progress") return AppTheme.surface;
-      return AppTheme.primaryColor;
+      return AppTheme.surface;
     }
 
     return Container(
