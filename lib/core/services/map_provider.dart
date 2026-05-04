@@ -1,0 +1,395 @@
+// =============================================================================
+// MAP PROVIDER — THE ONE FILE TO CHANGE WHEN SWITCHING MAP PROVIDERS
+// =============================================================================
+//
+// Currently: Mapbox
+// To switch to Google Maps in the future:
+//   1. Replace the imports with google_maps_flutter + Google API packages
+//   2. Update the implementation methods below
+//   3. That's it — all other files in the app import from this file only
+//
+// No other file in the project imports mapbox_maps_flutter directly.
+// =============================================================================
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:BaoRide/core/config/env_config.dart';
+import 'package:BaoRide/core/models/place_model.dart';
+import 'package:BaoRide/core/models/route_model.dart';
+import 'package:BaoRide/core/services/location_service.dart';
+
+// ─── Re-export a minimal coordinate type so consumers don't need mapbox ───
+class LatLng {
+  final double latitude;
+  final double longitude;
+  const LatLng(this.latitude, this.longitude);
+}
+
+/// The map controller wrapper. Screens hold this to manipulate the map.
+/// Internally wraps the native controller (MapboxMap or GoogleMapController).
+class AppMapController {
+  final dynamic _native;
+  AppMapController(this._native);
+
+  /// Access native controller only within this file's implementation.
+  dynamic get native => _native;
+}
+
+class MapProvider {
+  MapProvider._();
+
+  static final Dio _dio = Dio();
+  static bool _initialized = false;
+
+  // ─── INITIALIZATION ──────────────────────────────────────────────────────
+
+  /// Initialize the map SDK. Call once in main.dart.
+  static Future<void> initialize() async {
+    if (_initialized) return;
+    final token = EnvConfig.mapboxPublicToken;
+    mapbox.MapboxOptions.setAccessToken(token);
+    _initialized = true;
+  }
+
+  // ─── GEOCODING ───────────────────────────────────────────────────────────
+
+  /// Forward geocoding: search for places by text query.
+  /// [proximity] biases results toward the user's location.
+  static Future<List<PlaceModel>> searchPlaces(
+    String query, {
+    double? lat,
+    double? lng,
+  }) async {
+    if (query.trim().isEmpty) return [];
+
+    try {
+      final token = EnvConfig.mapboxPublicToken;
+      String url =
+          'https://api.mapbox.com/geocoding/v5/mapbox.places/${Uri.encodeComponent(query)}.json'
+          '?access_token=$token&limit=8&language=en';
+
+      if (lat != null && lng != null) {
+        url += '&proximity=$lng,$lat';
+      }
+
+      final response = await _dio.get(url);
+      final features = response.data['features'] as List? ?? [];
+
+      final userLat = lat ?? LocationService.lastPosition?.latitude;
+      final userLng = lng ?? LocationService.lastPosition?.longitude;
+
+      return features.map<PlaceModel>((f) {
+        final coords = f['center'] as List;
+        final placeLat = (coords[1] as num).toDouble();
+        final placeLng = (coords[0] as num).toDouble();
+        double? dist;
+        if (userLat != null && userLng != null) {
+          dist = LocationService.distanceBetween(
+            userLat,
+            userLng,
+            placeLat,
+            placeLng,
+          );
+        }
+        return PlaceModel(
+          id: f['id'] ?? '',
+          name: f['text'] ?? '',
+          fullAddress: f['place_name'] ?? '',
+          latitude: placeLat,
+          longitude: placeLng,
+          category: f['properties']?['category'],
+          distanceKm: dist,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('MapProvider.searchPlaces error: $e');
+      return [];
+    }
+  }
+
+  /// Reverse geocoding: get place info from coordinates.
+  static Future<PlaceModel?> getPlaceFromCoordinates(
+    double lat,
+    double lng,
+  ) async {
+    try {
+      final token = EnvConfig.mapboxPublicToken;
+      final url =
+          'https://api.mapbox.com/geocoding/v5/mapbox.places/$lng,$lat.json'
+          '?access_token=$token&limit=1&language=en';
+
+      final response = await _dio.get(url);
+      final features = response.data['features'] as List? ?? [];
+      if (features.isEmpty) return null;
+
+      final f = features.first;
+      return PlaceModel(
+        id: f['id'] ?? '',
+        name: f['text'] ?? '',
+        fullAddress: f['place_name'] ?? '',
+        latitude: lat,
+        longitude: lng,
+        category: f['properties']?['category'],
+      );
+    } catch (e) {
+      debugPrint('MapProvider.getPlaceFromCoordinates error: $e');
+      return null;
+    }
+  }
+
+  // ─── DIRECTIONS / ROUTING ────────────────────────────────────────────────
+
+  /// Get a driving route between two points.
+  /// Returns a RouteModel with decoded polyline coordinates.
+  static Future<RouteModel?> getRoute(
+    double originLat,
+    double originLng,
+    double destLat,
+    double destLng,
+  ) async {
+    try {
+      final token = EnvConfig.mapboxPublicToken;
+      final url =
+          'https://api.mapbox.com/directions/v5/mapbox/driving/'
+          '$originLng,$originLat;$destLng,$destLat'
+          '?access_token=$token&geometries=geojson&overview=full';
+
+      final response = await _dio.get(url);
+      final routes = response.data['routes'] as List? ?? [];
+      if (routes.isEmpty) return null;
+
+      final route = routes.first;
+      final geometry = route['geometry'];
+      final coords = geometry['coordinates'] as List;
+      final points =
+          coords
+              .map<List<double>>(
+                (c) => [(c[0] as num).toDouble(), (c[1] as num).toDouble()],
+              )
+              .toList();
+
+      final distanceMeters = (route['distance'] as num).toDouble();
+      final durationSeconds = (route['duration'] as num).toDouble();
+
+      return RouteModel(
+        polylinePoints: points, // [[lng, lat], ...]
+        distanceKm: distanceMeters / 1000.0,
+        estimatedTime: Duration(seconds: durationSeconds.round()),
+        summary: route['legs']?[0]?['summary'] ?? '',
+      );
+    } catch (e) {
+      debugPrint('MapProvider.getRoute error: $e');
+      return null;
+    }
+  }
+
+  // ─── MAP WIDGET ──────────────────────────────────────────────────────────
+
+  /// Build a map widget. This is the ONLY place the native map widget is used.
+  /// All screens call this method instead of using MapboxMap/GoogleMap directly.
+  static Widget buildMapView({
+    required double latitude,
+    required double longitude,
+    double zoom = 14.0,
+    void Function(AppMapController controller)? onMapCreated,
+    void Function(double lat, double lng)? onTap,
+    void Function(double lat, double lng)? onCameraIdle,
+    bool interactive = true,
+    EdgeInsets? padding,
+  }) {
+    return mapbox.MapWidget(
+      styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
+      cameraOptions: mapbox.CameraOptions(
+        center: mapbox.Point(
+          coordinates: mapbox.Position(longitude, latitude),
+        ),
+        zoom: zoom,
+      ),
+      onMapCreated: (controller) {
+        if (!interactive) {
+          controller.gestures.updateSettings(
+            mapbox.GesturesSettings(
+              scrollEnabled: false,
+              rotateEnabled: false,
+              pitchEnabled: false,
+              doubleTapToZoomInEnabled: false,
+              quickZoomEnabled: false,
+            ),
+          );
+        }
+
+        onMapCreated?.call(AppMapController(controller));
+      },
+    );
+  }
+
+  // ─── MAP CONTROLLER UTILITIES ────────────────────────────────────────────
+
+  /// Move camera to a position.
+  static Future<void> moveCamera(
+    AppMapController controller,
+    double lat,
+    double lng, {
+    double? zoom,
+    bool animate = true,
+  }) async {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final camera = mapbox.CameraOptions(
+      center: mapbox.Point(
+        coordinates: mapbox.Position(lng, lat),
+      ),
+      zoom: zoom,
+    );
+
+    if (animate) {
+      await mapCtrl.flyTo(
+        camera,
+        mapbox.MapAnimationOptions(duration: 800),
+      );
+    } else {
+      await mapCtrl.setCamera(camera);
+    }
+  }
+
+  /// Get the current center coordinates of the map.
+  static Future<LatLng> getCameraCenter(AppMapController controller) async {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final camera = await mapCtrl.getCameraState();
+    final center = camera.center;
+    return LatLng(
+      center.coordinates.lat.toDouble(),
+      center.coordinates.lng.toDouble(),
+    );
+  }
+
+  /// Add a point annotation (marker) to the map.
+  static Future<void> addMarker(
+    AppMapController controller,
+    double lat,
+    double lng, {
+    String? label,
+    bool isOrigin = false,
+  }) async {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final annotationManager =
+        await mapCtrl.annotations.createCircleAnnotationManager();
+
+    await annotationManager.create(
+      mapbox.CircleAnnotationOptions(
+        geometry: mapbox.Point(
+          coordinates: mapbox.Position(lng, lat),
+        ),
+        circleRadius: isOrigin ? 8.0 : 10.0,
+        circleColor: isOrigin ? 0xFF222222 : 0xFF607B8B,
+        circleStrokeWidth: 3.0,
+        circleStrokeColor: 0xFFFFFFFF,
+      ),
+    );
+  }
+
+  /// Add a polyline (route line) to the map.
+  /// [points] is [[lng, lat], ...]
+  static Future<void> addPolyline(
+    AppMapController controller,
+    List<List<double>> points, {
+    Color color = const Color(0xFF222222),
+    double width = 4.0,
+  }) async {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final annotationManager =
+        await mapCtrl.annotations.createPolylineAnnotationManager();
+
+    final coordinates =
+        points
+            .map((p) => mapbox.Position(p[0], p[1]))
+            .toList();
+
+    await annotationManager.create(
+      mapbox.PolylineAnnotationOptions(
+        geometry: mapbox.LineString(coordinates: coordinates),
+        lineWidth: width,
+        lineColor: color.toARGB32(),
+        lineJoin: mapbox.LineJoin.ROUND,
+      ),
+    );
+  }
+
+  /// Add a subset of polyline points (for animated progressive reveal).
+  /// Returns the annotation manager so it can be cleared on next frame.
+  static Future<dynamic> addAnimatedPolylineSegment(
+    AppMapController controller,
+    List<List<double>> points, {
+    Color color = const Color(0xFF222222),
+    double width = 5.0,
+  }) async {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final annotationManager =
+        await mapCtrl.annotations.createPolylineAnnotationManager();
+
+    final coordinates =
+        points
+            .map((p) => mapbox.Position(p[0], p[1]))
+            .toList();
+
+    await annotationManager.create(
+      mapbox.PolylineAnnotationOptions(
+        geometry: mapbox.LineString(coordinates: coordinates),
+        lineWidth: width,
+        lineColor: color.toARGB32(),
+        lineJoin: mapbox.LineJoin.ROUND,
+      ),
+    );
+
+    return annotationManager;
+  }
+
+  /// Fit the map camera to show all given coordinates with padding.
+  static Future<void> fitBounds(
+    AppMapController controller,
+    List<LatLng> points, {
+    double padding = 80.0,
+  }) async {
+    if (points.isEmpty) return;
+
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final p in points) {
+      minLat = math.min(minLat, p.latitude);
+      maxLat = math.max(maxLat, p.latitude);
+      minLng = math.min(minLng, p.longitude);
+      maxLng = math.max(maxLng, p.longitude);
+    }
+
+    final bounds = mapbox.CoordinateBounds(
+      southwest: mapbox.Point(
+        coordinates: mapbox.Position(minLng, minLat),
+      ),
+      northeast: mapbox.Point(
+        coordinates: mapbox.Position(maxLng, maxLat),
+      ),
+      infiniteBounds: false,
+    );
+
+    final camera = await mapCtrl.cameraForCoordinateBounds(
+      bounds,
+      mapbox.MbxEdgeInsets(
+        top: padding,
+        left: padding,
+        bottom: padding + 100,
+        right: padding,
+      ),
+      null,
+      null,
+      null,
+      null,
+    );
+
+    await mapCtrl.flyTo(camera, mapbox.MapAnimationOptions(duration: 1000));
+  }
+}

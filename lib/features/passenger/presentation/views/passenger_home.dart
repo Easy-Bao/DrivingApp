@@ -1,6 +1,5 @@
 import "package:BaoRide/core/themes/app_themes.dart";
 import "package:BaoRide/features/passenger/presentation/views/home/models/add_category_model.dart";
-import "package:BaoRide/features/passenger/presentation/views/home/models/location_suggestion_model.dart";
 import "package:BaoRide/features/passenger/presentation/views/home/models/quick_action_model.dart";
 import "package:flutter/material.dart";
 import "package:flutter_lucide/flutter_lucide.dart";
@@ -29,31 +28,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     ),
   ];
 
-  final List<LocationSuggestionModel> recentLocations = [
-    LocationSuggestionModel(
-      icon: LucideIcons.circle_play,
-      title: "Plaza Luz",
-      subtitle: "San Francisco",
-      onTap: () {},
-    ),
-    LocationSuggestionModel(
-      icon: LucideIcons.store,
-      title: "Robinson Supermarket",
-      subtitle: "San Francisco",
-      onTap: () {},
-    ),
-    LocationSuggestionModel(
-      icon: LucideIcons.coffee,
-      title: "Bo's Coffee",
-      subtitle: "San Francisco",
-      onTap: () {},
-    ),
-    LocationSuggestionModel(
-      icon: LucideIcons.shopping_bag,
-      title: "Gaisano Capital",
-      subtitle: "San Francisco",
-      onTap: () {},
-    ),
+  // Recent locations with coordinates for dynamic activity
+  final List<Map<String, dynamic>> recentLocationData = [
+    {"icon": LucideIcons.circle_play, "title": "Plaza Luz", "subtitle": "San Francisco", "lat": 7.8275, "lng": 123.4365},
+    {"icon": LucideIcons.store, "title": "Robinson Supermarket", "subtitle": "San Francisco", "lat": 7.8250, "lng": 123.4380},
+    {"icon": LucideIcons.coffee, "title": "Bo's Coffee", "subtitle": "San Francisco", "lat": 7.8295, "lng": 123.4358},
+    {"icon": LucideIcons.shopping_bag, "title": "Gaisano Capital", "subtitle": "San Francisco", "lat": 7.8260, "lng": 123.4355},
   ];
 
   List<AddCategoryModel> shortcuts = [];
@@ -108,6 +88,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     );
   }
 
+  void _openActivityDetail(Map<String, dynamic> location) {
+    context.pushNamed("ActivityDetailMap", extra: location);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,6 +128,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                       ),
                     ],
                   ),
+                  // Notification bell — now navigates to NotificationScreen
                   Stack(
                     children: [
                       IconButton(
@@ -151,7 +136,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                           LucideIcons.bell,
                           color: AppTheme.primaryColor,
                         ),
-                        onPressed: () => _showFeedback("Notifications tapped"),
+                        onPressed: () => context.pushNamed("Notifications"),
                       ),
                       Positioned(
                         right: 12,
@@ -315,20 +300,21 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   ),
                 ],
               ),
+              // Recent Activity — now navigates to ActivityDetailMapScreen
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.only(bottom: 20),
                   physics: const BouncingScrollPhysics(),
-                  itemCount: recentLocations.length,
-                  separatorBuilder: (_, _) =>
+                  itemCount: recentLocationData.length,
+                  separatorBuilder: (_, __) =>
                       Divider(height: 1, color: Colors.grey[100]),
                   itemBuilder: (context, index) {
-                    final location = recentLocations[index];
+                    final location = recentLocationData[index];
                     return _buildLocationItem(
-                      icon: location.icon,
-                      title: location.title,
-                      subtitle: location.subtitle,
-                      onTap: () => _showFeedback(location.title),
+                      icon: location["icon"] as IconData,
+                      title: location["title"] as String,
+                      subtitle: location["subtitle"] as String,
+                      onTap: () => _openActivityDetail(location),
                     );
                   },
                 ),

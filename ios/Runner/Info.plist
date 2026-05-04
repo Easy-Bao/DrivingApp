@@ -66,5 +66,13 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>BaoRide needs your location to find nearby destinations and provide ride services.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>BaoRide needs your location to track your ride in the background.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>BaoRide needs your location for ride booking and navigation services.</string>
+	<key>MBXAccessToken</key>
+	<string>YOUR_MAPBOX_PUBLIC_TOKEN</string>
 </dict>
 </plist>

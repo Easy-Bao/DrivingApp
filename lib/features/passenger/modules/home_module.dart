@@ -1,4 +1,9 @@
+import 'package:BaoRide/core/models/place_model.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/activity_detail_map_screen.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/add_category.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/destination_preview_screen.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/map_pin_screen.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/notification_screen.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/search_destination.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/view_all_activity.dart';
 import 'package:BaoRide/features/passenger/presentation/views/passenger_home.dart';
@@ -23,22 +28,6 @@ class HomeModule {
         },
       ),
     ),
-    // ChildRoute(
-    //   name: "ViewAllSuggestions",
-    //   "home/suggestions",
-    //   child: (context, state) => const PassengerViewAllSuggestions(),
-    //   pageBuilder: (context, state) => CustomTransitionPage<void>(
-    //     key: state.pageKey,
-    //     child: const PassengerViewAllSuggestions(),
-    //     transitionDuration: const Duration(milliseconds: 400),
-    //     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-    //       return FadeTransition(
-    //         opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
-    //         child: child,
-    //       );
-    //     },
-    //   ),
-    // ),
     ChildRoute(
       name: "ViewAllSuggestions",
       "home/suggestions",
@@ -53,7 +42,43 @@ class HomeModule {
           PassengerAddCategoryScreen(onSave: (category) {}),
       transition: GoTransitions.slide.toLeft,
     ),
+    ChildRoute(
+      name: "Notifications",
+      "home/notifications",
+      child: (context, GoRouterState state) => const NotificationScreen(),
+      transition: GoTransitions.slide.toLeft,
+    ),
+    ChildRoute(
+      name: "ActivityDetailMap",
+      "home/activity-detail",
+      child: (context, GoRouterState state) {
+        final data = state.extra as Map<String, dynamic>;
+        return ActivityDetailMapScreen(
+          placeName: data["title"] as String,
+          placeSubtitle: data["subtitle"] as String,
+          destinationLat: (data["lat"] as num).toDouble(),
+          destinationLng: (data["lng"] as num).toDouble(),
+        );
+      },
+      transition: GoTransitions.slide.toLeft,
+    ),
+    ChildRoute(
+      name: "MapPin",
+      "home/map-pin",
+      child: (context, GoRouterState state) => const MapPinScreen(),
+      transition: GoTransitions.slide.toLeft,
+    ),
+    ChildRoute(
+      name: "DestinationPreview",
+      "home/destination-preview",
+      child: (context, GoRouterState state) {
+        final place = state.extra as PlaceModel;
+        return DestinationPreviewScreen(destination: place);
+      },
+      transition: GoTransitions.slide.toLeft,
+    ),
   ];
+
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: "PassengerHome",

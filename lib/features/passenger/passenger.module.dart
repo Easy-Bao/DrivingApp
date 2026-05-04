@@ -1,3 +1,4 @@
+import 'package:BaoRide/features/passenger/modules/account_module.dart';
 import 'package:BaoRide/features/passenger/modules/activity_module.dart';
 import 'package:BaoRide/features/passenger/modules/home_module.dart';
 import 'package:BaoRide/features/passenger/presentation/views/passenger_account.dart';
@@ -11,6 +12,8 @@ class PassengerModule extends Module {
   final activityRoutes = [...ActivityModule.shellRoutes];
   final activityRoutesScreen = [...ActivityModule.routes];
 
+  final accountRoutesScreen = [...AccountModule.routes];
+
   static List<ModularRoute> get route => <ModularRoute>[...HomeModule.routes];
 
   @override
@@ -18,6 +21,7 @@ class PassengerModule extends Module {
     // Independent Screen
     ...activityRoutesScreen,
     ...homeRoutesScreen,
+    ...accountRoutesScreen,
     ShellModularRoute(
       builder: (context, GoRouterState state, child) =>
           PassengerShellLayout(child: child),

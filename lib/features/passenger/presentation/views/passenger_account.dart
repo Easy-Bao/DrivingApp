@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import "package:BaoRide/core/themes/app_themes.dart";
 import "package:flutter_lucide/flutter_lucide.dart";
+import "package:go_router_modular/go_router_modular.dart";
 
 class PassengerAccountScreen extends StatelessWidget {
   const PassengerAccountScreen({super.key});
@@ -45,38 +46,44 @@ class PassengerAccountScreen extends StatelessWidget {
               const SizedBox(height: 40),
               _buildSectionTitle("Activity"),
               _buildAccountTile(
+                context,
                 LucideIcons.history,
                 "Ride History",
                 "View your past trips",
+                () => context.pushNamed("RideHistory"),
               ),
-              _buildAccountTile(
-                LucideIcons.wallet,
-                "Payments",
-                "Manage cards and credits",
-              ),
+              // Payments tile REMOVED per user request
               const SizedBox(height: 32),
               _buildSectionTitle("Personal"),
               _buildAccountTile(
+                context,
                 LucideIcons.user,
                 "Profile Info",
                 "Update name and details",
+                () => context.pushNamed("ProfileInfo"),
               ),
               _buildAccountTile(
+                context,
                 LucideIcons.shield_check,
                 "Security",
                 "Password and biometric",
+                () => context.pushNamed("Security"),
               ),
               const SizedBox(height: 32),
               _buildSectionTitle("Support"),
               _buildAccountTile(
+                context,
                 LucideIcons.message_circle_question_mark,
                 "Help Center",
                 "Get support and FAQs",
+                () => context.pushNamed("HelpCenter"),
               ),
               _buildAccountTile(
+                context,
                 LucideIcons.info,
                 "About BaoRide",
                 "Version 1.0.0",
+                () {},
               ),
               const SizedBox(height: 40),
               _buildLogoutButton(),
@@ -108,7 +115,7 @@ class PassengerAccountScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            "Xyrel Tenefrancia", // Based on your summary
+            "Xyrel Tenefrancia",
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -144,7 +151,7 @@ class PassengerAccountScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountTile(IconData icon, String title, String subtitle) {
+  Widget _buildAccountTile(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       leading: Container(
@@ -175,7 +182,7 @@ class PassengerAccountScreen extends StatelessWidget {
         size: 18,
         color: AppTheme.borderSide,
       ),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 
