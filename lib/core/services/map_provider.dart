@@ -12,12 +12,12 @@
 // =============================================================================
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:BaoRide/core/config/env_config.dart';
 import 'package:BaoRide/core/models/place_model.dart';
 import 'package:BaoRide/core/models/route_model.dart';
 import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/src/rust/api/map_api.dart' as rust_api;
 
 // ─── Re-export a minimal coordinate type so consumers don't need mapbox ───
 class LatLng {
@@ -39,7 +39,6 @@ class AppMapController {
 class MapProvider {
   MapProvider._();
 
-  static final Dio _dio = Dio();
   static bool _initialized = false;
 
   // ─── INITIALIZATION ──────────────────────────────────────────────────────
@@ -65,43 +64,27 @@ class MapProvider {
 
     try {
       final token = EnvConfig.mapboxPublicToken;
-      String url =
-          'https://api.mapbox.com/geocoding/v5/mapbox.places/${Uri.encodeComponent(query)}.json'
-          '?access_token=$token&limit=8&language=en';
-
-      if (lat != null && lng != null) {
-        url += '&proximity=$lng,$lat';
-      }
-
-      final response = await _dio.get(url);
-      final features = response.data['features'] as List? ?? [];
-
       final userLat = lat ?? LocationService.lastPosition?.latitude;
       final userLng = lng ?? LocationService.lastPosition?.longitude;
 
-      return features.map<PlaceModel>((f) {
-        final coords = f['center'] as List;
-        final placeLat = (coords[1] as num).toDouble();
-        final placeLng = (coords[0] as num).toDouble();
-        double? dist;
-        if (userLat != null && userLng != null) {
-          dist = LocationService.distanceBetween(
-            userLat,
-            userLng,
-            placeLat,
-            placeLng,
-          );
-        }
-        return PlaceModel(
-          id: f['id'] ?? '',
-          name: f['text'] ?? '',
-          fullAddress: f['place_name'] ?? '',
-          latitude: placeLat,
-          longitude: placeLng,
-          category: f['properties']?['category'],
-          distanceKm: dist,
-        );
-      }).toList();
+      final rustResults = await rust_api.searchPlaces(
+        token: token,
+        query: query,
+        proximityLat: lat,
+        proximityLng: lng,
+        userLat: userLat,
+        userLng: userLng,
+      );
+
+      return rustResults.map((r) => PlaceModel(
+        id: r.id,
+        name: r.name,
+        fullAddress: r.fullAddress,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        category: r.category,
+        distanceKm: r.distanceKm,
+      )).toList();
     } catch (e) {
       debugPrint('MapProvider.searchPlaces error: $e');
       return [];
@@ -115,22 +98,21 @@ class MapProvider {
   ) async {
     try {
       final token = EnvConfig.mapboxPublicToken;
-      final url =
-          'https://api.mapbox.com/geocoding/v5/mapbox.places/$lng,$lat.json'
-          '?access_token=$token&limit=1&language=en';
+      final rustResult = await rust_api.reverseGeocode(
+        token: token,
+        lat: lat,
+        lng: lng,
+      );
 
-      final response = await _dio.get(url);
-      final features = response.data['features'] as List? ?? [];
-      if (features.isEmpty) return null;
+      if (rustResult == null) return null;
 
-      final f = features.first;
       return PlaceModel(
-        id: f['id'] ?? '',
-        name: f['text'] ?? '',
-        fullAddress: f['place_name'] ?? '',
-        latitude: lat,
-        longitude: lng,
-        category: f['properties']?['category'],
+        id: rustResult.id,
+        name: rustResult.name,
+        fullAddress: rustResult.fullAddress,
+        latitude: rustResult.latitude,
+        longitude: rustResult.longitude,
+        category: rustResult.category,
       );
     } catch (e) {
       debugPrint('MapProvider.getPlaceFromCoordinates error: $e');
@@ -150,33 +132,25 @@ class MapProvider {
   ) async {
     try {
       final token = EnvConfig.mapboxPublicToken;
-      final url =
-          'https://api.mapbox.com/directions/v5/mapbox/driving/'
-          '$originLng,$originLat;$destLng,$destLat'
-          '?access_token=$token&geometries=geojson&overview=full';
+      final rustResult = await rust_api.getRoute(
+        token: token,
+        originLat: originLat,
+        originLng: originLng,
+        destLat: destLat,
+        destLng: destLng,
+      );
 
-      final response = await _dio.get(url);
-      final routes = response.data['routes'] as List? ?? [];
-      if (routes.isEmpty) return null;
+      if (rustResult == null) return null;
 
-      final route = routes.first;
-      final geometry = route['geometry'];
-      final coords = geometry['coordinates'] as List;
-      final points =
-          coords
-              .map<List<double>>(
-                (c) => [(c[0] as num).toDouble(), (c[1] as num).toDouble()],
-              )
-              .toList();
-
-      final distanceMeters = (route['distance'] as num).toDouble();
-      final durationSeconds = (route['duration'] as num).toDouble();
+      final points = rustResult.polylinePoints
+          .map<List<double>>((p) => [p.lng, p.lat])
+          .toList();
 
       return RouteModel(
-        polylinePoints: points, // [[lng, lat], ...]
-        distanceKm: distanceMeters / 1000.0,
-        estimatedTime: Duration(seconds: durationSeconds.round()),
-        summary: route['legs']?[0]?['summary'] ?? '',
+        polylinePoints: points,
+        distanceKm: rustResult.distanceKm,
+        estimatedTime: Duration(seconds: rustResult.durationSeconds.round()),
+        summary: rustResult.summary,
       );
     } catch (e) {
       debugPrint('MapProvider.getRoute error: $e');
@@ -201,9 +175,7 @@ class MapProvider {
     return mapbox.MapWidget(
       styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
       cameraOptions: mapbox.CameraOptions(
-        center: mapbox.Point(
-          coordinates: mapbox.Position(longitude, latitude),
-        ),
+        center: mapbox.Point(coordinates: mapbox.Position(longitude, latitude)),
         zoom: zoom,
       ),
       onMapCreated: (controller) {
@@ -236,17 +208,12 @@ class MapProvider {
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
     final camera = mapbox.CameraOptions(
-      center: mapbox.Point(
-        coordinates: mapbox.Position(lng, lat),
-      ),
+      center: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
       zoom: zoom,
     );
 
     if (animate) {
-      await mapCtrl.flyTo(
-        camera,
-        mapbox.MapAnimationOptions(duration: 800),
-      );
+      await mapCtrl.flyTo(camera, mapbox.MapAnimationOptions(duration: 800));
     } else {
       await mapCtrl.setCamera(camera);
     }
@@ -272,14 +239,12 @@ class MapProvider {
     bool isOrigin = false,
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
-    final annotationManager =
-        await mapCtrl.annotations.createCircleAnnotationManager();
+    final annotationManager = await mapCtrl.annotations
+        .createCircleAnnotationManager();
 
     await annotationManager.create(
       mapbox.CircleAnnotationOptions(
-        geometry: mapbox.Point(
-          coordinates: mapbox.Position(lng, lat),
-        ),
+        geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
         circleRadius: isOrigin ? 8.0 : 10.0,
         circleColor: isOrigin ? 0xFF222222 : 0xFF607B8B,
         circleStrokeWidth: 3.0,
@@ -297,13 +262,10 @@ class MapProvider {
     double width = 4.0,
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
-    final annotationManager =
-        await mapCtrl.annotations.createPolylineAnnotationManager();
+    final annotationManager = await mapCtrl.annotations
+        .createPolylineAnnotationManager();
 
-    final coordinates =
-        points
-            .map((p) => mapbox.Position(p[0], p[1]))
-            .toList();
+    final coordinates = points.map((p) => mapbox.Position(p[0], p[1])).toList();
 
     await annotationManager.create(
       mapbox.PolylineAnnotationOptions(
@@ -324,13 +286,10 @@ class MapProvider {
     double width = 5.0,
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
-    final annotationManager =
-        await mapCtrl.annotations.createPolylineAnnotationManager();
+    final annotationManager = await mapCtrl.annotations
+        .createPolylineAnnotationManager();
 
-    final coordinates =
-        points
-            .map((p) => mapbox.Position(p[0], p[1]))
-            .toList();
+    final coordinates = points.map((p) => mapbox.Position(p[0], p[1])).toList();
 
     await annotationManager.create(
       mapbox.PolylineAnnotationOptions(
@@ -367,12 +326,8 @@ class MapProvider {
     }
 
     final bounds = mapbox.CoordinateBounds(
-      southwest: mapbox.Point(
-        coordinates: mapbox.Position(minLng, minLat),
-      ),
-      northeast: mapbox.Point(
-        coordinates: mapbox.Position(maxLng, maxLat),
-      ),
+      southwest: mapbox.Point(coordinates: mapbox.Position(minLng, minLat)),
+      northeast: mapbox.Point(coordinates: mapbox.Position(maxLng, maxLat)),
       infiniteBounds: false,
     );
 

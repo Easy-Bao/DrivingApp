@@ -145,8 +145,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               onPressed: () {
                 setState(() {
                   for (int i = 0; i < _notifications.length; i++) {
-                    _notifications[i] =
-                        _notifications[i].copyWith(isRead: true);
+                    _notifications[i] = _notifications[i].copyWith(
+                      isRead: true,
+                    );
                   }
                 });
               },

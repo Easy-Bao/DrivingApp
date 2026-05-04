@@ -1,4 +1,5 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:BaoRide/src/rust/api/map_api.dart' as rust_api;
 
 /// Device location service using geolocator.
 /// Provider-agnostic — works regardless of map provider.
@@ -46,14 +47,18 @@ class LocationService {
     }
   }
 
-  /// Calculate distance between two coordinates in kilometers.
-  static double distanceBetween(
+  /// Calculate distance between two coordinates in kilometers using Rust.
+  static Future<double> distanceBetween(
     double startLat,
     double startLng,
     double endLat,
     double endLng,
-  ) {
-    return Geolocator.distanceBetween(startLat, startLng, endLat, endLng) /
-        1000.0;
+  ) async {
+    return await rust_api.haversineDistance(
+      lat1: startLat,
+      lng1: startLng,
+      lat2: endLat,
+      lng2: endLng,
+    );
   }
 }

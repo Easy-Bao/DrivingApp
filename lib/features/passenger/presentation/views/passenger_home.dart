@@ -30,10 +30,34 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
   // Recent locations with coordinates for dynamic activity
   final List<Map<String, dynamic>> recentLocationData = [
-    {"icon": LucideIcons.circle_play, "title": "Plaza Luz", "subtitle": "San Francisco", "lat": 7.8275, "lng": 123.4365},
-    {"icon": LucideIcons.store, "title": "Robinson Supermarket", "subtitle": "San Francisco", "lat": 7.8250, "lng": 123.4380},
-    {"icon": LucideIcons.coffee, "title": "Bo's Coffee", "subtitle": "San Francisco", "lat": 7.8295, "lng": 123.4358},
-    {"icon": LucideIcons.shopping_bag, "title": "Gaisano Capital", "subtitle": "San Francisco", "lat": 7.8260, "lng": 123.4355},
+    {
+      "icon": LucideIcons.circle_play,
+      "title": "Plaza Luz",
+      "subtitle": "San Francisco",
+      "lat": 7.8275,
+      "lng": 123.4365,
+    },
+    {
+      "icon": LucideIcons.store,
+      "title": "Robinson Supermarket",
+      "subtitle": "San Francisco",
+      "lat": 7.8250,
+      "lng": 123.4380,
+    },
+    {
+      "icon": LucideIcons.coffee,
+      "title": "Bo's Coffee",
+      "subtitle": "San Francisco",
+      "lat": 7.8295,
+      "lng": 123.4358,
+    },
+    {
+      "icon": LucideIcons.shopping_bag,
+      "title": "Gaisano Capital",
+      "subtitle": "San Francisco",
+      "lat": 7.8260,
+      "lng": 123.4355,
+    },
   ];
 
   List<AddCategoryModel> shortcuts = [];
@@ -306,7 +330,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   padding: const EdgeInsets.only(bottom: 20),
                   physics: const BouncingScrollPhysics(),
                   itemCount: recentLocationData.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       Divider(height: 1, color: Colors.grey[100]),
                   itemBuilder: (context, index) {
                     final location = recentLocationData[index];

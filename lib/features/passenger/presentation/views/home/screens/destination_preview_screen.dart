@@ -13,7 +13,8 @@ class DestinationPreviewScreen extends StatefulWidget {
   const DestinationPreviewScreen({super.key, required this.destination});
 
   @override
-  State<DestinationPreviewScreen> createState() => _DestinationPreviewScreenState();
+  State<DestinationPreviewScreen> createState() =>
+      _DestinationPreviewScreenState();
 }
 
 class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
@@ -34,7 +35,10 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
     final oLng = pos?.longitude ?? 123.4370;
 
     final route = await MapProvider.getRoute(
-      oLat, oLng, widget.destination.latitude, widget.destination.longitude,
+      oLat,
+      oLng,
+      widget.destination.latitude,
+      widget.destination.longitude,
     );
 
     if (!mounted) return;
@@ -49,13 +53,22 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
 
     if (_mapController != null) {
       await MapProvider.addMarker(_mapController!, oLat, oLng, isOrigin: true);
-      await MapProvider.addMarker(_mapController!, widget.destination.latitude, widget.destination.longitude);
+      await MapProvider.addMarker(
+        _mapController!,
+        widget.destination.latitude,
+        widget.destination.longitude,
+      );
       await MapProvider.fitBounds(_mapController!, [
         LatLng(oLat, oLng),
         LatLng(widget.destination.latitude, widget.destination.longitude),
       ]);
       if (route != null) {
-        await MapProvider.addPolyline(_mapController!, route.polylinePoints, color: AppTheme.primaryColor, width: 5.0);
+        await MapProvider.addPolyline(
+          _mapController!,
+          route.polylinePoints,
+          color: AppTheme.primaryColor,
+          width: 5.0,
+        );
       }
     }
   }
@@ -79,14 +92,27 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
             ),
           ),
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8, left: 16,
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
             child: GestureDetector(
               onTap: () => context.pop(),
               child: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 15)]),
-                child: const Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor, size: 20),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 15,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  LucideIcons.arrow_left,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
               ),
             ),
           ),
@@ -96,41 +122,113 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 30, offset: const Offset(0, -10))],
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 30,
+                    offset: const Offset(0, -10),
+                  ),
+                ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(color: AppTheme.borderSide, borderRadius: BorderRadius.circular(2)))),
-                  Row(children: [
-                    Container(padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: AppTheme.neutralColor, borderRadius: BorderRadius.circular(14)),
-                      child: const Icon(LucideIcons.map_pin, color: AppTheme.primaryColor, size: 20)),
-                    const SizedBox(width: 14),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(widget.destination.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
-                      const SizedBox(height: 2),
-                      Text(widget.destination.fullAddress,
-                        style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ])),
-                  ]),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.borderSide,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.neutralColor,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          LucideIcons.map_pin,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.destination.name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.destination.fullAddress,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
-                  Row(children: [
-                    _chip(LucideIcons.navigation, _isLoading ? "..." : _distance),
-                    const SizedBox(width: 10),
-                    _chip(LucideIcons.clock, _isLoading ? "..." : _duration),
-                  ]),
+                  Row(
+                    children: [
+                      _chip(
+                        LucideIcons.navigation,
+                        _isLoading ? "..." : _distance,
+                      ),
+                      const SizedBox(width: 10),
+                      _chip(LucideIcons.clock, _isLoading ? "..." : _duration),
+                    ],
+                  ),
                   const SizedBox(height: 20),
-                  SizedBox(width: double.infinity, height: 56,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
                     child: ElevatedButton(
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Booking feature coming soon!"), behavior: SnackBarBehavior.floating)),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), elevation: 0),
-                      child: const Text("Book Ride", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                      onPressed: () =>
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Booking feature coming soon!"),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        "Book Ride",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -145,12 +243,26 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   Widget _chip(IconData icon, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(color: AppTheme.neutralColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.borderSide)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 14, color: AppTheme.tertiaryColor),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primaryColor)),
-      ]),
+      decoration: BoxDecoration(
+        color: AppTheme.neutralColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppTheme.tertiaryColor),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

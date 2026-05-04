@@ -36,7 +36,12 @@ class _MapPinScreenState extends State<MapPinScreen> {
         _centerLng = pos.longitude;
       });
       if (_mapController != null) {
-        await MapProvider.moveCamera(_mapController!, _centerLat, _centerLng, zoom: 15.0);
+        await MapProvider.moveCamera(
+          _mapController!,
+          _centerLat,
+          _centerLng,
+          zoom: 15.0,
+        );
       }
       _reverseGeocode(_centerLat, _centerLng);
     }
@@ -101,18 +106,24 @@ class _MapPinScreenState extends State<MapPinScreen> {
                         ),
                       ],
                     ),
-                    child: const Icon(LucideIcons.map_pin, color: Colors.white, size: 24),
+                    child: const Icon(
+                      LucideIcons.map_pin,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                   // Pin tail
                   Container(
-                    width: 3, height: 20,
+                    width: 3,
+                    height: 20,
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   Container(
-                    width: 8, height: 8,
+                    width: 8,
+                    height: 8,
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
@@ -135,10 +146,17 @@ class _MapPinScreenState extends State<MapPinScreen> {
                   color: AppTheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 15),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 15,
+                    ),
                   ],
                 ),
-                child: const Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor, size: 20),
+                child: const Icon(
+                  LucideIcons.arrow_left,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
               ),
             ),
           ),
@@ -151,7 +169,12 @@ class _MapPinScreenState extends State<MapPinScreen> {
               onTap: () async {
                 final pos = await LocationService.getCurrentPosition();
                 if (pos != null && _mapController != null) {
-                  await MapProvider.moveCamera(_mapController!, pos.latitude, pos.longitude, zoom: 16.0);
+                  await MapProvider.moveCamera(
+                    _mapController!,
+                    pos.latitude,
+                    pos.longitude,
+                    zoom: 16.0,
+                  );
                   _reverseGeocode(pos.latitude, pos.longitude);
                 }
               },
@@ -161,10 +184,17 @@ class _MapPinScreenState extends State<MapPinScreen> {
                   color: AppTheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 15),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 15,
+                    ),
                   ],
                 ),
-                child: const Icon(LucideIcons.locate_fixed, color: AppTheme.primaryColor, size: 20),
+                child: const Icon(
+                  LucideIcons.locate_fixed,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
               ),
             ),
           ),
@@ -178,25 +208,44 @@ class _MapPinScreenState extends State<MapPinScreen> {
               child: GestureDetector(
                 onTap: () async {
                   if (_mapController != null) {
-                    final center = await MapProvider.getCameraCenter(_mapController!);
+                    final center = await MapProvider.getCameraCenter(
+                      _mapController!,
+                    );
                     _reverseGeocode(center.latitude, center.longitude);
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 12,
+                      ),
                     ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(LucideIcons.crosshair, size: 14, color: AppTheme.tertiaryColor),
+                      Icon(
+                        LucideIcons.crosshair,
+                        size: 14,
+                        color: AppTheme.tertiaryColor,
+                      ),
                       const SizedBox(width: 6),
-                      Text("Tap to update pin", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryColor.withValues(alpha: 0.6))),
+                      Text(
+                        "Tap to update pin",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -214,41 +263,90 @@ class _MapPinScreenState extends State<MapPinScreen> {
                 color: AppTheme.surface,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, -5)),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: AppTheme.neutralColor, borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(LucideIcons.map_pin, color: AppTheme.primaryColor, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text("Selected Location", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.tertiaryColor)),
-                        const SizedBox(height: 2),
-                        _isGeocoding
-                            ? Text("Searching...", style: TextStyle(fontSize: 14, color: AppTheme.primaryColor.withValues(alpha: 0.5)))
-                            : Text(_address, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryColor), maxLines: 2, overflow: TextOverflow.ellipsis),
-                      ]),
-                    ),
-                  ]),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.neutralColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          LucideIcons.map_pin,
+                          color: AppTheme.primaryColor,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Selected Location",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.tertiaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            _isGeocoding
+                                ? Text(
+                                    "Searching...",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    _address,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    width: double.infinity, height: 52,
+                    width: double.infinity,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         elevation: 0,
                       ),
-                      child: const Text("Confirm Location", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                      child: const Text(
+                        "Confirm Location",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
                 ],

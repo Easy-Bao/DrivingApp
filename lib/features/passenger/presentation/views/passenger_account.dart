@@ -151,7 +151,13 @@ class PassengerAccountScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountTile(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap) {
+  Widget _buildAccountTile(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       leading: Container(

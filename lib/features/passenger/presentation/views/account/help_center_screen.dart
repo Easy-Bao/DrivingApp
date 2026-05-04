@@ -16,15 +16,60 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   final Set<int> _expandedItems = {};
 
   final List<Map<String, String>> _faqs = [
-    {"q": "How do I book a ride?", "a": "Tap 'Enter destination' on the home screen, search for your destination or pin it on the map, then tap 'Book Ride' to confirm.", "cat": "Rides"},
-    {"q": "How do I cancel a ride?", "a": "Go to Activity → find your upcoming ride → tap 'Track Driver' → then tap 'Cancel Trip' at the bottom.", "cat": "Rides"},
-    {"q": "What is Share-Bao?", "a": "Share-Bao lets you share a ride with others heading the same direction. It's a cheaper alternative to solo rides!", "cat": "Rides"},
-    {"q": "How do I update my payment method?", "a": "Currently, BaoRide supports cash payments. Digital payment options will be available soon.", "cat": "Payments"},
-    {"q": "How do I get a receipt?", "a": "After your ride is completed, go to Activity → View Details. Your receipt with fare breakdown is shown there.", "cat": "Payments"},
-    {"q": "How do I change my phone number?", "a": "Go to Account → Profile Info → tap Edit → update your phone number → tap Save Changes.", "cat": "Account"},
-    {"q": "How do I enable biometric login?", "a": "Go to Account → Security → toggle on 'Biometric Login'. Make sure your device supports fingerprint or Face ID.", "cat": "Account"},
-    {"q": "Is my data secure?", "a": "Yes! We use industry-standard encryption to protect your personal information and ride data.", "cat": "General"},
-    {"q": "How do I contact support?", "a": "You can reach us via email at support@baoride.com or call +63 912 345 6789 during business hours.", "cat": "General"},
+    {
+      "q": "How do I book a ride?",
+      "a":
+          "Tap 'Enter destination' on the home screen, search for your destination or pin it on the map, then tap 'Book Ride' to confirm.",
+      "cat": "Rides",
+    },
+    {
+      "q": "How do I cancel a ride?",
+      "a":
+          "Go to Activity → find your upcoming ride → tap 'Track Driver' → then tap 'Cancel Trip' at the bottom.",
+      "cat": "Rides",
+    },
+    {
+      "q": "What is Share-Bao?",
+      "a":
+          "Share-Bao lets you share a ride with others heading the same direction. It's a cheaper alternative to solo rides!",
+      "cat": "Rides",
+    },
+    {
+      "q": "How do I update my payment method?",
+      "a":
+          "Currently, BaoRide supports cash payments. Digital payment options will be available soon.",
+      "cat": "Payments",
+    },
+    {
+      "q": "How do I get a receipt?",
+      "a":
+          "After your ride is completed, go to Activity → View Details. Your receipt with fare breakdown is shown there.",
+      "cat": "Payments",
+    },
+    {
+      "q": "How do I change my phone number?",
+      "a":
+          "Go to Account → Profile Info → tap Edit → update your phone number → tap Save Changes.",
+      "cat": "Account",
+    },
+    {
+      "q": "How do I enable biometric login?",
+      "a":
+          "Go to Account → Security → toggle on 'Biometric Login'. Make sure your device supports fingerprint or Face ID.",
+      "cat": "Account",
+    },
+    {
+      "q": "Is my data secure?",
+      "a":
+          "Yes! We use industry-standard encryption to protect your personal information and ride data.",
+      "cat": "General",
+    },
+    {
+      "q": "How do I contact support?",
+      "a":
+          "You can reach us via email at support@baoride.com or call +63 912 345 6789 during business hours.",
+      "cat": "General",
+    },
   ];
 
   List<Map<String, String>> get _filteredFaqs {
@@ -34,12 +79,24 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     }
     final q = _searchController.text.trim().toLowerCase();
     if (q.isNotEmpty) {
-      list = list.where((f) => f["q"]!.toLowerCase().contains(q) || f["a"]!.toLowerCase().contains(q)).toList();
+      list = list
+          .where(
+            (f) =>
+                f["q"]!.toLowerCase().contains(q) ||
+                f["a"]!.toLowerCase().contains(q),
+          )
+          .toList();
     }
     return list;
   }
 
-  final List<String> _categories = ["All", "Rides", "Payments", "Account", "General"];
+  final List<String> _categories = [
+    "All",
+    "Rides",
+    "Payments",
+    "Account",
+    "General",
+  ];
 
   @override
   void dispose() {
@@ -53,9 +110,24 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface, elevation: 0, scrolledUnderElevation: 0,
-        leading: IconButton(icon: const Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor), onPressed: () => context.pop()),
-        title: const Text("Help Center", style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.w800, fontSize: 18)),
+        backgroundColor: AppTheme.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            LucideIcons.arrow_left,
+            color: AppTheme.primaryColor,
+          ),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          "Help Center",
+          style: TextStyle(
+            color: AppTheme.primaryColor,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Column(
@@ -65,17 +137,29 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(color: AppTheme.neutralColor, borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.borderSide)),
+              decoration: BoxDecoration(
+                color: AppTheme.neutralColor,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.borderSide),
+              ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => setState(() {}),
-                style: const TextStyle(fontSize: 14, color: AppTheme.primaryColor),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.primaryColor,
+                ),
                 decoration: InputDecoration(
                   hintText: "Search FAQs...",
-                  hintStyle: TextStyle(color: AppTheme.primaryColor.withValues(alpha: 0.4)),
+                  hintStyle: TextStyle(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                  ),
                   border: InputBorder.none,
-                  icon: Icon(LucideIcons.search, size: 18, color: AppTheme.primaryColor.withValues(alpha: 0.4)),
+                  icon: Icon(
+                    LucideIcons.search,
+                    size: 18,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                  ),
                   isDense: true,
                 ),
               ),
@@ -88,7 +172,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (ctx, i) {
                 final cat = _categories[i];
                 final sel = cat == _selectedCategory;
@@ -96,14 +180,27 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   onTap: () => setState(() => _selectedCategory = cat),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: sel ? AppTheme.primaryColor : AppTheme.surface,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: sel ? AppTheme.primaryColor : AppTheme.borderSide),
+                      border: Border.all(
+                        color: sel
+                            ? AppTheme.primaryColor
+                            : AppTheme.borderSide,
+                      ),
                     ),
-                    child: Text(cat, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                      color: sel ? Colors.white : AppTheme.primaryColor)),
+                    child: Text(
+                      cat,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: sel ? Colors.white : AppTheme.primaryColor,
+                      ),
+                    ),
                   ),
                 );
               },
@@ -113,7 +210,14 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           // FAQ list
           Expanded(
             child: filtered.isEmpty
-                ? Center(child: Text("No results found", style: TextStyle(color: AppTheme.primaryColor.withValues(alpha: 0.4))))
+                ? Center(
+                    child: Text(
+                      "No results found",
+                      style: TextStyle(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     physics: const BouncingScrollPhysics(),
@@ -135,7 +239,11 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   Widget _buildFaqItem(Map<String, String> faq, int idx, bool expanded) {
     return GestureDetector(
       onTap: () => setState(() {
-        if (expanded) { _expandedItems.remove(idx); } else { _expandedItems.add(idx); }
+        if (expanded) {
+          _expandedItems.remove(idx);
+        } else {
+          _expandedItems.add(idx);
+        }
       }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -144,27 +252,54 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         decoration: BoxDecoration(
           color: expanded ? AppTheme.neutralColor : AppTheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: expanded ? AppTheme.primaryColor.withValues(alpha: 0.2) : AppTheme.borderSide),
+          border: Border.all(
+            color: expanded
+                ? AppTheme.primaryColor.withValues(alpha: 0.2)
+                : AppTheme.borderSide,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Expanded(child: Text(faq["q"]!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor))),
-              const SizedBox(width: 8),
-              AnimatedRotation(
-                turns: expanded ? 0.5 : 0, duration: const Duration(milliseconds: 200),
-                child: Icon(LucideIcons.chevron_down, size: 16, color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-              ),
-            ]),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    faq["q"]!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                AnimatedRotation(
+                  turns: expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    LucideIcons.chevron_down,
+                    size: 16,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
             AnimatedSize(
-              duration: const Duration(milliseconds: 250), curve: Curves.easeInOut,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
               child: expanded
                   ? Padding(
                       padding: const EdgeInsets.only(top: 12),
-                      child: Text(faq["a"]!, style: TextStyle(fontSize: 13, color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                        height: 1.5, fontWeight: FontWeight.w400)),
+                      child: Text(
+                        faq["a"]!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                          height: 1.5,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
                     )
                   : const SizedBox.shrink(),
             ),
@@ -179,20 +314,36 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
       margin: const EdgeInsets.only(top: 12, bottom: 32),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(24),
+        color: AppTheme.primaryColor,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Still need help?", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
+          const Text(
+            "Still need help?",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text("Our support team is available 24/7", style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7))),
+          Text(
+            "Our support team is available 24/7",
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.7),
+            ),
+          ),
           const SizedBox(height: 18),
-          Row(children: [
-            Expanded(child: _contactBtn(LucideIcons.mail, "Email Us")),
-            const SizedBox(width: 12),
-            Expanded(child: _contactBtn(LucideIcons.phone, "Call Us")),
-          ]),
+          Row(
+            children: [
+              Expanded(child: _contactBtn(LucideIcons.mail, "Email Us")),
+              const SizedBox(width: 12),
+              Expanded(child: _contactBtn(LucideIcons.phone, "Call Us")),
+            ],
+          ),
         ],
       ),
     );
@@ -201,15 +352,32 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   Widget _contactBtn(IconData icon, String text) {
     return GestureDetector(
       onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("$text — coming soon!"), behavior: SnackBarBehavior.floating)),
+        SnackBar(
+          content: Text("$text — coming soon!"),
+          behavior: SnackBarBehavior.floating,
+        ),
+      ),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, size: 16, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-        ]),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
