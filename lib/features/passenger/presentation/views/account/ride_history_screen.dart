@@ -103,8 +103,9 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
 
   List<RideHistoryModel> _filteredRides(int tabIndex) {
     if (tabIndex == 0) return _rides;
-    if (tabIndex == 1)
+    if (tabIndex == 1) {
       return _rides.where((r) => r.status == "completed").toList();
+    }
     return _rides.where((r) => r.status == "canceled").toList();
   }
 

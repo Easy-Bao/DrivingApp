@@ -28,7 +28,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     ),
   ];
 
-  // Recent locations with coordinates for dynamic activity
   final List<Map<String, dynamic>> recentLocationData = [
     {
       "icon": LucideIcons.circle_play,
@@ -152,7 +151,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                       ),
                     ],
                   ),
-                  // Notification bell — now navigates to NotificationScreen
                   Stack(
                     children: [
                       IconButton(
@@ -324,7 +322,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   ),
                 ],
               ),
-              // Recent Activity — now navigates to ActivityDetailMapScreen
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.only(bottom: 20),

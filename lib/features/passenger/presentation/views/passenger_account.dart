@@ -52,7 +52,6 @@ class PassengerAccountScreen extends StatelessWidget {
                 "View your past trips",
                 () => context.pushNamed("RideHistory"),
               ),
-              // Payments tile REMOVED per user request
               const SizedBox(height: 32),
               _buildSectionTitle("Personal"),
               _buildAccountTile(

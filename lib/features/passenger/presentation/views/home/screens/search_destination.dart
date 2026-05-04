@@ -47,7 +47,6 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
       _userLng = pos.longitude;
       _loadNearbyPlaces();
     } else {
-      // Fallback: Pagadian City coordinates
       _userLat = 7.8307;
       _userLng = 123.4370;
       _loadNearbyPlaces();
@@ -55,32 +54,24 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
   }
 
   Future<void> _loadNearbyPlaces() async {
-    // Search for common nearby places with proximity bias
-    final queries = [
-      "plaza",
-      "mall",
-      "market",
-      "restaurant",
-      "school",
-      "hospital",
-    ];
-    List<PlaceModel> all = [];
-
-    for (final q in queries.take(3)) {
-      final results = await MapProvider.searchPlaces(
-        q,
-        lat: _userLat,
-        lng: _userLng,
-      );
-      all.addAll(results.take(2));
+    if (_userLat == null || _userLng == null) {
+      if (mounted) {
+        setState(() {
+          _nearbyPlaces = [];
+          _isLoadingNearby = false;
+        });
+      }
+      return;
     }
 
-    // Sort by distance
-    all.sort((a, b) => (a.distanceKm ?? 999).compareTo(b.distanceKm ?? 999));
+    final results = await MapProvider.getNearbyPOIs(
+      lat: _userLat!,
+      lng: _userLng!,
+    );
 
     if (mounted) {
       setState(() {
-        _nearbyPlaces = all.take(8).toList();
+        _nearbyPlaces = results.take(15).toList();
         _isLoadingNearby = false;
       });
     }
@@ -244,7 +235,6 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Divider(height: 1, color: AppTheme.borderSide),
-          // Section header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: Text(
@@ -257,7 +247,6 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
               ),
             ),
           ),
-          // Results
           Expanded(
             child: _isSearching || _isLoadingNearby
                 ? const Center(
@@ -282,7 +271,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                         Text(
                           hasQuery
                               ? "No places found"
-                              : "Locating nearby places...",
+                              : "No nearby places found",
                           style: TextStyle(
                             color: AppTheme.primaryColor.withValues(alpha: 0.4),
                             fontWeight: FontWeight.w600,

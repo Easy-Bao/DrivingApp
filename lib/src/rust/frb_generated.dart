@@ -3,10 +3,10 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
-import 'api/map_api.dart';
-import 'core/models.dart';
+import 'application/map_api.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'domain/models.dart';
 import 'frb_generated.dart';
 import 'frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
@@ -65,7 +65,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 908202419;
+  int get rustContentHash => -803543905;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,7 +77,13 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<RustRouteResult?> crateApiMapApiGetRoute({
+  Future<List<RustPlaceResult>> crateApplicationMapApiGetNearbyPois({
+    required String token,
+    required double lat,
+    required double lng,
+  });
+
+  Future<RustRouteResult?> crateApplicationMapApiGetRoute({
     required String token,
     required double originLat,
     required double originLng,
@@ -85,20 +91,20 @@ abstract class RustLibApi extends BaseApi {
     required double destLng,
   });
 
-  Future<double> crateApiMapApiHaversineDistance({
+  Future<double> crateApplicationMapApiHaversineDistance({
     required double lat1,
     required double lng1,
     required double lat2,
     required double lng2,
   });
 
-  Future<RustPlaceResult?> crateApiMapApiReverseGeocode({
+  Future<RustPlaceResult?> crateApplicationMapApiReverseGeocode({
     required String token,
     required double lat,
     required double lng,
   });
 
-  Future<List<RustPlaceResult>> crateApiMapApiSearchPlaces({
+  Future<List<RustPlaceResult>> crateApplicationMapApiSearchPlaces({
     required String token,
     required String query,
     double? proximityLat,
@@ -117,7 +123,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<RustRouteResult?> crateApiMapApiGetRoute({
+  Future<List<RustPlaceResult>> crateApplicationMapApiGetNearbyPois({
+    required String token,
+    required double lat,
+    required double lng,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(token, serializer);
+          sse_encode_f_64(lat, serializer);
+          sse_encode_f_64(lng, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_rust_place_result,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApplicationMapApiGetNearbyPoisConstMeta,
+        argValues: [token, lat, lng],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApplicationMapApiGetNearbyPoisConstMeta =>
+      const TaskConstMeta(
+        debugName: "get_nearby_pois",
+        argNames: ["token", "lat", "lng"],
+      );
+
+  @override
+  Future<RustRouteResult?> crateApplicationMapApiGetRoute({
     required String token,
     required double originLat,
     required double originLng,
@@ -136,7 +179,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 2,
             port: port_,
           );
         },
@@ -144,20 +187,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_opt_box_autoadd_rust_route_result,
           decodeErrorData: sse_decode_AnyhowException,
         ),
-        constMeta: kCrateApiMapApiGetRouteConstMeta,
+        constMeta: kCrateApplicationMapApiGetRouteConstMeta,
         argValues: [token, originLat, originLng, destLat, destLng],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiMapApiGetRouteConstMeta => const TaskConstMeta(
-    debugName: "get_route",
-    argNames: ["token", "originLat", "originLng", "destLat", "destLng"],
-  );
+  TaskConstMeta get kCrateApplicationMapApiGetRouteConstMeta =>
+      const TaskConstMeta(
+        debugName: "get_route",
+        argNames: ["token", "originLat", "originLng", "destLat", "destLng"],
+      );
 
   @override
-  Future<double> crateApiMapApiHaversineDistance({
+  Future<double> crateApplicationMapApiHaversineDistance({
     required double lat1,
     required double lng1,
     required double lat2,
@@ -174,7 +218,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 3,
             port: port_,
           );
         },
@@ -182,21 +226,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_f_64,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiMapApiHaversineDistanceConstMeta,
+        constMeta: kCrateApplicationMapApiHaversineDistanceConstMeta,
         argValues: [lat1, lng1, lat2, lng2],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiMapApiHaversineDistanceConstMeta =>
+  TaskConstMeta get kCrateApplicationMapApiHaversineDistanceConstMeta =>
       const TaskConstMeta(
         debugName: "haversine_distance",
         argNames: ["lat1", "lng1", "lat2", "lng2"],
       );
 
   @override
-  Future<RustPlaceResult?> crateApiMapApiReverseGeocode({
+  Future<RustPlaceResult?> crateApplicationMapApiReverseGeocode({
     required String token,
     required double lat,
     required double lng,
@@ -211,7 +255,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 4,
             port: port_,
           );
         },
@@ -219,21 +263,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_opt_box_autoadd_rust_place_result,
           decodeErrorData: sse_decode_AnyhowException,
         ),
-        constMeta: kCrateApiMapApiReverseGeocodeConstMeta,
+        constMeta: kCrateApplicationMapApiReverseGeocodeConstMeta,
         argValues: [token, lat, lng],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiMapApiReverseGeocodeConstMeta =>
+  TaskConstMeta get kCrateApplicationMapApiReverseGeocodeConstMeta =>
       const TaskConstMeta(
         debugName: "reverse_geocode",
         argNames: ["token", "lat", "lng"],
       );
 
   @override
-  Future<List<RustPlaceResult>> crateApiMapApiSearchPlaces({
+  Future<List<RustPlaceResult>> crateApplicationMapApiSearchPlaces({
     required String token,
     required String query,
     double? proximityLat,
@@ -254,7 +298,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 5,
             port: port_,
           );
         },
@@ -262,24 +306,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_list_rust_place_result,
           decodeErrorData: sse_decode_AnyhowException,
         ),
-        constMeta: kCrateApiMapApiSearchPlacesConstMeta,
+        constMeta: kCrateApplicationMapApiSearchPlacesConstMeta,
         argValues: [token, query, proximityLat, proximityLng, userLat, userLng],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiMapApiSearchPlacesConstMeta => const TaskConstMeta(
-    debugName: "search_places",
-    argNames: [
-      "token",
-      "query",
-      "proximityLat",
-      "proximityLng",
-      "userLat",
-      "userLng",
-    ],
-  );
+  TaskConstMeta get kCrateApplicationMapApiSearchPlacesConstMeta =>
+      const TaskConstMeta(
+        debugName: "search_places",
+        argNames: [
+          "token",
+          "query",
+          "proximityLat",
+          "proximityLng",
+          "userLat",
+          "userLng",
+        ],
+      );
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {

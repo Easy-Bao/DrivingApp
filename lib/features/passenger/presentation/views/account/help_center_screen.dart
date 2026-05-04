@@ -132,7 +132,6 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
       ),
       body: Column(
         children: [
-          // Search
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
             child: Container(
@@ -165,7 +164,6 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               ),
             ),
           ),
-          // Category chips
           SizedBox(
             height: 38,
             child: ListView.separated(
@@ -207,7 +205,6 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // FAQ list
           Expanded(
             child: filtered.isEmpty
                 ? Center(

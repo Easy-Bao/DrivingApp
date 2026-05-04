@@ -1,15 +1,3 @@
-// =============================================================================
-// MAP PROVIDER — THE ONE FILE TO CHANGE WHEN SWITCHING MAP PROVIDERS
-// =============================================================================
-//
-// Currently: Mapbox
-// To switch to Google Maps in the future:
-//   1. Replace the imports with google_maps_flutter + Google API packages
-//   2. Update the implementation methods below
-//   3. That's it — all other files in the app import from this file only
-//
-// No other file in the project imports mapbox_maps_flutter directly.
-// =============================================================================
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -17,9 +5,8 @@ import 'package:BaoRide/core/config/env_config.dart';
 import 'package:BaoRide/core/models/place_model.dart';
 import 'package:BaoRide/core/models/route_model.dart';
 import 'package:BaoRide/core/services/location_service.dart';
-import 'package:BaoRide/src/rust/api/map_api.dart' as rust_api;
+import 'package:BaoRide/src/rust/application/map_api.dart' as rust_api;
 
-// ─── Re-export a minimal coordinate type so consumers don't need mapbox ───
 class LatLng {
   final double latitude;
   final double longitude;
@@ -41,8 +28,6 @@ class MapProvider {
 
   static bool _initialized = false;
 
-  // ─── INITIALIZATION ──────────────────────────────────────────────────────
-
   /// Initialize the map SDK. Call once in main.dart.
   static Future<void> initialize() async {
     if (_initialized) return;
@@ -50,8 +35,6 @@ class MapProvider {
     mapbox.MapboxOptions.setAccessToken(token);
     _initialized = true;
   }
-
-  // ─── GEOCODING ───────────────────────────────────────────────────────────
 
   /// Forward geocoding: search for places by text query.
   /// [proximity] biases results toward the user's location.
@@ -76,15 +59,24 @@ class MapProvider {
         userLng: userLng,
       );
 
-      return rustResults.map((r) => PlaceModel(
-        id: r.id,
-        name: r.name,
-        fullAddress: r.fullAddress,
-        latitude: r.latitude,
-        longitude: r.longitude,
-        category: r.category,
-        distanceKm: r.distanceKm,
-      )).toList();
+      final places = rustResults
+          .map(
+            (r) => PlaceModel(
+              id: r.id,
+              name: r.name,
+              fullAddress: r.fullAddress,
+              latitude: r.latitude,
+              longitude: r.longitude,
+              category: r.category,
+              distanceKm: r.distanceKm,
+            ),
+          )
+          .toList();
+
+      return places.where((p) {
+        if (p.distanceKm == null) return true;
+        return p.distanceKm! <= 30.0;
+      }).toList();
     } catch (e) {
       debugPrint('MapProvider.searchPlaces error: $e');
       return [];
@@ -119,8 +111,6 @@ class MapProvider {
       return null;
     }
   }
-
-  // ─── DIRECTIONS / ROUTING ────────────────────────────────────────────────
 
   /// Get a driving route between two points.
   /// Returns a RouteModel with decoded polyline coordinates.
@@ -158,7 +148,33 @@ class MapProvider {
     }
   }
 
-  // ─── MAP WIDGET ──────────────────────────────────────────────────────────
+  /// Dynamically extract all Points of Interest from the map within a radius.
+  static Future<List<PlaceModel>> getNearbyPOIs({
+    required double lat,
+    required double lng,
+  }) async {
+    try {
+      final token = EnvConfig.mapboxPublicToken;
+      final rustResults = await rust_api.getNearbyPois(
+        token: token,
+        lat: lat,
+        lng: lng,
+      );
+
+      return rustResults.map((r) => PlaceModel(
+        id: r.id,
+        name: r.name,
+        fullAddress: r.fullAddress,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        category: r.category,
+        distanceKm: r.distanceKm,
+      )).toList();
+    } catch (e) {
+      debugPrint('MapProvider.getNearbyPOIs error: $e');
+      return [];
+    }
+  }
 
   /// Build a map widget. This is the ONLY place the native map widget is used.
   /// All screens call this method instead of using MapboxMap/GoogleMap directly.
@@ -195,8 +211,6 @@ class MapProvider {
       },
     );
   }
-
-  // ─── MAP CONTROLLER UTILITIES ────────────────────────────────────────────
 
   /// Move camera to a position.
   static Future<void> moveCamera(
@@ -301,6 +315,17 @@ class MapProvider {
     );
 
     return annotationManager;
+  }
+
+  /// Clears an annotation manager.
+  static Future<void> clearAnnotations(dynamic manager) async {
+    if (manager != null) {
+      try {
+        await manager.deleteAll();
+      } catch (e) {
+        debugPrint('Error clearing annotations: $e');
+      }
+    }
   }
 
   /// Fit the map camera to show all given coordinates with padding.

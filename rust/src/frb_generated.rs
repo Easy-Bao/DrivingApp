@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 908202419;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -803543905;
 
 // Section: executor
 
@@ -46,7 +46,48 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
-fn wire__crate__api__map_api__get_route_impl(
+fn wire__crate__application__map_api__get_nearby_pois_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "get_nearby_pois",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_token = <String>::sse_decode(&mut deserializer);
+            let api_lat = <f64>::sse_decode(&mut deserializer);
+            let api_lng = <f64>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || async move {
+                        let output_ok = crate::application::map_api::get_nearby_pois(
+                            api_token, api_lat, api_lng,
+                        )
+                        .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__application__map_api__get_route_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -77,7 +118,7 @@ fn wire__crate__api__map_api__get_route_impl(
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || async move {
-                        let output_ok = crate::api::map_api::get_route(
+                        let output_ok = crate::application::map_api::get_route(
                             api_token,
                             api_origin_lat,
                             api_origin_lng,
@@ -93,7 +134,7 @@ fn wire__crate__api__map_api__get_route_impl(
         },
     )
 }
-fn wire__crate__api__map_api__haversine_distance_impl(
+fn wire__crate__application__map_api__haversine_distance_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -122,16 +163,17 @@ fn wire__crate__api__map_api__haversine_distance_impl(
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
-                    let output_ok = Result::<_, ()>::Ok(crate::api::map_api::haversine_distance(
-                        api_lat1, api_lng1, api_lat2, api_lng2,
-                    ))?;
+                    let output_ok =
+                        Result::<_, ()>::Ok(crate::application::map_api::haversine_distance(
+                            api_lat1, api_lng1, api_lat2, api_lng2,
+                        ))?;
                     Ok(output_ok)
                 })())
             }
         },
     )
 }
-fn wire__crate__api__map_api__reverse_geocode_impl(
+fn wire__crate__application__map_api__reverse_geocode_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -160,9 +202,10 @@ fn wire__crate__api__map_api__reverse_geocode_impl(
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || async move {
-                        let output_ok =
-                            crate::api::map_api::reverse_geocode(api_token, api_lat, api_lng)
-                                .await?;
+                        let output_ok = crate::application::map_api::reverse_geocode(
+                            api_token, api_lat, api_lng,
+                        )
+                        .await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -171,7 +214,7 @@ fn wire__crate__api__map_api__reverse_geocode_impl(
         },
     )
 }
-fn wire__crate__api__map_api__search_places_impl(
+fn wire__crate__application__map_api__search_places_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -203,7 +246,7 @@ fn wire__crate__api__map_api__search_places_impl(
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || async move {
-                        let output_ok = crate::api::map_api::search_places(
+                        let output_ok = crate::application::map_api::search_places(
                             api_token,
                             api_query,
                             api_proximity_lat,
@@ -239,12 +282,12 @@ impl SseDecode for String {
     }
 }
 
-impl SseDecode for crate::core::models::CoordPair {
+impl SseDecode for crate::domain::models::CoordPair {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_lng = <f64>::sse_decode(deserializer);
         let mut var_lat = <f64>::sse_decode(deserializer);
-        return crate::core::models::CoordPair {
+        return crate::domain::models::CoordPair {
             lng: var_lng,
             lat: var_lat,
         };
@@ -258,13 +301,13 @@ impl SseDecode for f64 {
     }
 }
 
-impl SseDecode for Vec<crate::core::models::CoordPair> {
+impl SseDecode for Vec<crate::domain::models::CoordPair> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
-            ans_.push(<crate::core::models::CoordPair>::sse_decode(deserializer));
+            ans_.push(<crate::domain::models::CoordPair>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -282,13 +325,13 @@ impl SseDecode for Vec<u8> {
     }
 }
 
-impl SseDecode for Vec<crate::core::models::RustPlaceResult> {
+impl SseDecode for Vec<crate::domain::models::RustPlaceResult> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
-            ans_.push(<crate::core::models::RustPlaceResult>::sse_decode(
+            ans_.push(<crate::domain::models::RustPlaceResult>::sse_decode(
                 deserializer,
             ));
         }
@@ -318,11 +361,11 @@ impl SseDecode for Option<f64> {
     }
 }
 
-impl SseDecode for Option<crate::core::models::RustPlaceResult> {
+impl SseDecode for Option<crate::domain::models::RustPlaceResult> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
-            return Some(<crate::core::models::RustPlaceResult>::sse_decode(
+            return Some(<crate::domain::models::RustPlaceResult>::sse_decode(
                 deserializer,
             ));
         } else {
@@ -331,11 +374,11 @@ impl SseDecode for Option<crate::core::models::RustPlaceResult> {
     }
 }
 
-impl SseDecode for Option<crate::core::models::RustRouteResult> {
+impl SseDecode for Option<crate::domain::models::RustRouteResult> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
-            return Some(<crate::core::models::RustRouteResult>::sse_decode(
+            return Some(<crate::domain::models::RustRouteResult>::sse_decode(
                 deserializer,
             ));
         } else {
@@ -344,7 +387,7 @@ impl SseDecode for Option<crate::core::models::RustRouteResult> {
     }
 }
 
-impl SseDecode for crate::core::models::RustPlaceResult {
+impl SseDecode for crate::domain::models::RustPlaceResult {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_id = <String>::sse_decode(deserializer);
@@ -354,7 +397,7 @@ impl SseDecode for crate::core::models::RustPlaceResult {
         let mut var_longitude = <f64>::sse_decode(deserializer);
         let mut var_category = <Option<String>>::sse_decode(deserializer);
         let mut var_distanceKm = <Option<f64>>::sse_decode(deserializer);
-        return crate::core::models::RustPlaceResult {
+        return crate::domain::models::RustPlaceResult {
             id: var_id,
             name: var_name,
             full_address: var_fullAddress,
@@ -366,15 +409,15 @@ impl SseDecode for crate::core::models::RustPlaceResult {
     }
 }
 
-impl SseDecode for crate::core::models::RustRouteResult {
+impl SseDecode for crate::domain::models::RustRouteResult {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_polylinePoints =
-            <Vec<crate::core::models::CoordPair>>::sse_decode(deserializer);
+            <Vec<crate::domain::models::CoordPair>>::sse_decode(deserializer);
         let mut var_distanceKm = <f64>::sse_decode(deserializer);
         let mut var_durationSeconds = <f64>::sse_decode(deserializer);
         let mut var_summary = <String>::sse_decode(deserializer);
-        return crate::core::models::RustRouteResult {
+        return crate::domain::models::RustRouteResult {
             polyline_points: var_polylinePoints,
             distance_km: var_distanceKm,
             duration_seconds: var_durationSeconds,
@@ -418,10 +461,28 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__map_api__get_route_impl(port, ptr, rust_vec_len, data_len),
-        2 => wire__crate__api__map_api__haversine_distance_impl(port, ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__map_api__reverse_geocode_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__map_api__search_places_impl(port, ptr, rust_vec_len, data_len),
+        1 => wire__crate__application__map_api__get_nearby_pois_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        2 => wire__crate__application__map_api__get_route_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__application__map_api__haversine_distance_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        4 => wire__crate__application__map_api__reverse_geocode_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        5 => {
+            wire__crate__application__map_api__search_places_impl(port, ptr, rust_vec_len, data_len)
+        }
         _ => unreachable!(),
     }
 }
@@ -441,7 +502,7 @@ fn pde_ffi_dispatcher_sync_impl(
 // Section: rust2dart
 
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::core::models::CoordPair {
+impl flutter_rust_bridge::IntoDart for crate::domain::models::CoordPair {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.lng.into_into_dart().into_dart(),
@@ -451,18 +512,18 @@ impl flutter_rust_bridge::IntoDart for crate::core::models::CoordPair {
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::core::models::CoordPair
+    for crate::domain::models::CoordPair
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<crate::core::models::CoordPair>
-    for crate::core::models::CoordPair
+impl flutter_rust_bridge::IntoIntoDart<crate::domain::models::CoordPair>
+    for crate::domain::models::CoordPair
 {
-    fn into_into_dart(self) -> crate::core::models::CoordPair {
+    fn into_into_dart(self) -> crate::domain::models::CoordPair {
         self
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::core::models::RustPlaceResult {
+impl flutter_rust_bridge::IntoDart for crate::domain::models::RustPlaceResult {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.id.into_into_dart().into_dart(),
@@ -477,18 +538,18 @@ impl flutter_rust_bridge::IntoDart for crate::core::models::RustPlaceResult {
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::core::models::RustPlaceResult
+    for crate::domain::models::RustPlaceResult
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<crate::core::models::RustPlaceResult>
-    for crate::core::models::RustPlaceResult
+impl flutter_rust_bridge::IntoIntoDart<crate::domain::models::RustPlaceResult>
+    for crate::domain::models::RustPlaceResult
 {
-    fn into_into_dart(self) -> crate::core::models::RustPlaceResult {
+    fn into_into_dart(self) -> crate::domain::models::RustPlaceResult {
         self
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::core::models::RustRouteResult {
+impl flutter_rust_bridge::IntoDart for crate::domain::models::RustRouteResult {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.polyline_points.into_into_dart().into_dart(),
@@ -500,13 +561,13 @@ impl flutter_rust_bridge::IntoDart for crate::core::models::RustRouteResult {
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::core::models::RustRouteResult
+    for crate::domain::models::RustRouteResult
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<crate::core::models::RustRouteResult>
-    for crate::core::models::RustRouteResult
+impl flutter_rust_bridge::IntoIntoDart<crate::domain::models::RustRouteResult>
+    for crate::domain::models::RustRouteResult
 {
-    fn into_into_dart(self) -> crate::core::models::RustRouteResult {
+    fn into_into_dart(self) -> crate::domain::models::RustRouteResult {
         self
     }
 }
@@ -525,7 +586,7 @@ impl SseEncode for String {
     }
 }
 
-impl SseEncode for crate::core::models::CoordPair {
+impl SseEncode for crate::domain::models::CoordPair {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <f64>::sse_encode(self.lng, serializer);
@@ -540,12 +601,12 @@ impl SseEncode for f64 {
     }
 }
 
-impl SseEncode for Vec<crate::core::models::CoordPair> {
+impl SseEncode for Vec<crate::domain::models::CoordPair> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
-            <crate::core::models::CoordPair>::sse_encode(item, serializer);
+            <crate::domain::models::CoordPair>::sse_encode(item, serializer);
         }
     }
 }
@@ -560,12 +621,12 @@ impl SseEncode for Vec<u8> {
     }
 }
 
-impl SseEncode for Vec<crate::core::models::RustPlaceResult> {
+impl SseEncode for Vec<crate::domain::models::RustPlaceResult> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
-            <crate::core::models::RustPlaceResult>::sse_encode(item, serializer);
+            <crate::domain::models::RustPlaceResult>::sse_encode(item, serializer);
         }
     }
 }
@@ -590,27 +651,27 @@ impl SseEncode for Option<f64> {
     }
 }
 
-impl SseEncode for Option<crate::core::models::RustPlaceResult> {
+impl SseEncode for Option<crate::domain::models::RustPlaceResult> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
-            <crate::core::models::RustPlaceResult>::sse_encode(value, serializer);
+            <crate::domain::models::RustPlaceResult>::sse_encode(value, serializer);
         }
     }
 }
 
-impl SseEncode for Option<crate::core::models::RustRouteResult> {
+impl SseEncode for Option<crate::domain::models::RustRouteResult> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
-            <crate::core::models::RustRouteResult>::sse_encode(value, serializer);
+            <crate::domain::models::RustRouteResult>::sse_encode(value, serializer);
         }
     }
 }
 
-impl SseEncode for crate::core::models::RustPlaceResult {
+impl SseEncode for crate::domain::models::RustPlaceResult {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.id, serializer);
@@ -623,10 +684,10 @@ impl SseEncode for crate::core::models::RustPlaceResult {
     }
 }
 
-impl SseEncode for crate::core::models::RustRouteResult {
+impl SseEncode for crate::domain::models::RustRouteResult {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <Vec<crate::core::models::CoordPair>>::sse_encode(self.polyline_points, serializer);
+        <Vec<crate::domain::models::CoordPair>>::sse_encode(self.polyline_points, serializer);
         <f64>::sse_encode(self.distance_km, serializer);
         <f64>::sse_encode(self.duration_seconds, serializer);
         <String>::sse_encode(self.summary, serializer);

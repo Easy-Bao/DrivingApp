@@ -30,7 +30,6 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
 
   void _toggleEdit() {
     if (_isEditing) {
-      // Save
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Profile updated!"),
@@ -83,7 +82,6 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
-            // Profile photo
             Center(
               child: Stack(
                 children: [

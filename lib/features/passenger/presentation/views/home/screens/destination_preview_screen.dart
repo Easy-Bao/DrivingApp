@@ -21,6 +21,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   AppMapController? _mapController;
   String _distance = "—";
   String _duration = "—";
+  double _computedFare = 0.0;
   bool _isLoading = true;
 
   @override
@@ -47,6 +48,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         _distance = "${route.distanceKm.toStringAsFixed(1)} km";
         final m = route.estimatedTime.inMinutes;
         _duration = m < 60 ? "$m min" : "${m ~/ 60}h ${m % 60}m";
+        _computedFare = 20.0 + (route.distanceKm * 10.0);
       }
       _isLoading = false;
     });
@@ -62,15 +64,149 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         LatLng(oLat, oLng),
         LatLng(widget.destination.latitude, widget.destination.longitude),
       ]);
-      if (route != null) {
-        await MapProvider.addPolyline(
-          _mapController!,
-          route.polylinePoints,
-          color: AppTheme.primaryColor,
-          width: 5.0,
-        );
+      if (route != null && route.polylinePoints.isNotEmpty) {
+        final points = route.polylinePoints;
+        dynamic currentManager;
+
+        final chunkSize = (points.length / 20).ceil().clamp(2, 50).toInt();
+        const int delayMs = 100;
+
+        for (int i = 0; i < points.length; i += chunkSize) {
+          if (!mounted) break;
+          final endIdx = (i + chunkSize < points.length)
+              ? i + chunkSize
+              : points.length;
+          final segment = points.sublist(0, endIdx);
+
+          final newManager = await MapProvider.addAnimatedPolylineSegment(
+            _mapController!,
+            segment,
+            color: AppTheme.primaryColor,
+            width: 5.0,
+          );
+
+          if (currentManager != null) {
+            await MapProvider.clearAnnotations(currentManager);
+          }
+          currentManager = newManager;
+
+          await Future.delayed(const Duration(milliseconds: delayMs));
+        }
       }
     }
+  }
+
+  void _showBookingConfirmation() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: AppTheme.borderSide,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Icon(
+                LucideIcons.car,
+                size: 48,
+                color: AppTheme.primaryColor,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Confirm Booking",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Base Fare: ₱20.00\nDistance Rate: ₱10.00/km",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.neutralColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Total Fare",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    Text(
+                      "₱${_computedFare.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Finding your driver..."),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    "Confirm & Find Driver",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -207,13 +343,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () =>
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Booking feature coming soon!"),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          ),
+                      onPressed: _isLoading ? null : _showBookingConfirmation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,

@@ -96,7 +96,6 @@ class _SecurityScreenState extends State<SecurityScreen> {
           children: [
             _sectionTitle("Password"),
             const SizedBox(height: 12),
-            // Change password
             GestureDetector(
               onTap: () =>
                   setState(() => _showPasswordForm = !_showPasswordForm),
@@ -155,7 +154,6 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 ),
               ),
             ),
-            // Password form (expandable)
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
@@ -373,7 +371,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: AppTheme.primaryColor,
+            activeTrackColor: AppTheme.primaryColor,
           ),
         ],
       ),

@@ -1,5 +1,5 @@
-pub mod api;
-pub mod core;
-pub mod services;
-pub mod utils;
+pub mod application;
+pub mod domain;
+pub mod infrastructure;
+pub mod shared;
 mod frb_generated;

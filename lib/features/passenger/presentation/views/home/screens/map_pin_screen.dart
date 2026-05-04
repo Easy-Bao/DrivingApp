@@ -6,8 +6,6 @@ import "package:flutter/material.dart";
 import "package:flutter_lucide/flutter_lucide.dart";
 import "package:go_router_modular/go_router_modular.dart";
 
-/// Full-screen map for manually pinning a destination.
-/// Center pin stays fixed; map moves underneath. Reverse geocodes on idle.
 class MapPinScreen extends StatefulWidget {
   const MapPinScreen({super.key});
 
@@ -76,7 +74,6 @@ class _MapPinScreenState extends State<MapPinScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Map
           MapProvider.buildMapView(
             latitude: _centerLat,
             longitude: _centerLng,
@@ -85,8 +82,6 @@ class _MapPinScreenState extends State<MapPinScreen> {
               _mapController = c;
             },
           ),
-
-          // Center pin icon (fixed)
           Center(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 48),
@@ -112,7 +107,6 @@ class _MapPinScreenState extends State<MapPinScreen> {
                       size: 24,
                     ),
                   ),
-                  // Pin tail
                   Container(
                     width: 3,
                     height: 20,
@@ -133,8 +127,6 @@ class _MapPinScreenState extends State<MapPinScreen> {
               ),
             ),
           ),
-
-          // Back button
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
@@ -160,8 +152,6 @@ class _MapPinScreenState extends State<MapPinScreen> {
               ),
             ),
           ),
-
-          // Locate me button
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             right: 16,
@@ -198,62 +188,38 @@ class _MapPinScreenState extends State<MapPinScreen> {
               ),
             ),
           ),
-
-          // Update location button (floating)
           Positioned(
-            bottom: 160,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () async {
-                  if (_mapController != null) {
-                    final center = await MapProvider.getCameraCenter(
-                      _mapController!,
-                    );
-                    _reverseGeocode(center.latitude, center.longitude);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        LucideIcons.crosshair,
-                        size: 14,
-                        color: AppTheme.tertiaryColor,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        "Tap to update pin",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
+            bottom: 210,
+            right: 16,
+            child: FloatingActionButton.extended(
+              onPressed: () async {
+                if (_mapController != null) {
+                  final center = await MapProvider.getCameraCenter(
+                    _mapController!,
+                  );
+                  _reverseGeocode(center.latitude, center.longitude);
+                }
+              },
+              backgroundColor: AppTheme.surface,
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: Icon(
+                LucideIcons.crosshair,
+                size: 18,
+                color: AppTheme.primaryColor,
+              ),
+              label: const Text(
+                "Update Pin",
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor,
                 ),
               ),
             ),
           ),
-
-          // Bottom address card + confirm
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
