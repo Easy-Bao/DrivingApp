@@ -61,7 +61,7 @@ pub struct RustRouteResult {
     pub summary: String,
 }
 
-/// A coordinate pair (lng, lat).
+/// A coordinate pair
 pub struct CoordPair {
     pub lng: f64,
     pub lat: f64,

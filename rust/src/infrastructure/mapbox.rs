@@ -1,10 +1,17 @@
+use std::time::Duration;
+
 use crate::domain::models::{
     CoordPair, MapboxDirectionsResponse, MapboxGeocodingResponse, RustPlaceResult, RustRouteResult,
 };
 use crate::shared::math::haversine_distance;
 use once_cell::sync::Lazy;
 
-static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| reqwest::Client::new());
+static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .unwrap()
+});
 
 /// Search for places using Mapbox Geocoding API.
 pub async fn search_places(
@@ -49,7 +56,7 @@ pub async fn search_places(
         .into_iter()
         .map(|f| {
             let place_lat = f.center.get(1).copied().unwrap_or(0.0);
-            let place_lng = f.center.get(0).copied().unwrap_or(0.0);
+            let place_lng = f.center.first().copied().unwrap_or(0.0);
 
             let dist = match (user_lat, user_lng) {
                 (Some(u_lat), Some(u_lng)) => {
@@ -120,7 +127,7 @@ pub async fn get_route(
             .coordinates
             .into_iter()
             .map(|c| CoordPair {
-                lng: c.get(0).copied().unwrap_or(0.0),
+                lng: c.first().copied().unwrap_or(0.0),
                 lat: c.get(1).copied().unwrap_or(0.0),
             })
             .collect();
@@ -165,13 +172,27 @@ pub async fn get_nearby_pois(
 
             if let (Some(geom), Some(props)) = (geom, props) {
                 let coords = geom.get("coordinates").and_then(|c| c.as_array());
-                let p_lng = coords.and_then(|c| c.get(0)).and_then(|v| v.as_f64()).unwrap_or(0.0);
-                let p_lat = coords.and_then(|c| c.get(1)).and_then(|v| v.as_f64()).unwrap_or(0.0);
+                let p_lng = coords
+                    .and_then(|c| c.first())
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0);
+                let p_lat = coords
+                    .and_then(|c| c.get(1))
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0);
 
-                let name = props.get("name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string();
-                
-                let category = props.get("type").and_then(|v| v.as_str()).unwrap_or("poi").to_string();
-                
+                let name = props
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Unknown")
+                    .to_string();
+
+                let category = props
+                    .get("type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("poi")
+                    .to_string();
+
                 let distance_m = props
                     .get("tilequery")
                     .and_then(|t| t.get("distance"))
@@ -194,7 +215,7 @@ pub async fn get_nearby_pois(
             }
         }
     }
-    
+
     results.sort_by(|a, b| {
         a.distance_km
             .unwrap_or(f64::MAX)
