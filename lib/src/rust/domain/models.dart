@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-/// A coordinate pair (lng, lat).
+/// A coordinate pair
 class CoordPair {
   final double lng;
   final double lat;
