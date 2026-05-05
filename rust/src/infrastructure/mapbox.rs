@@ -1,7 +1,8 @@
 use std::time::Duration;
 
 use crate::domain::models::{
-    CoordPair, MapboxDirectionsResponse, MapboxGeocodingResponse, RustPlaceResult, RustRouteResult,
+    CoordPair, MapboxDirectionsResponse, MapboxFeature, MapboxGeocodingResponse, MapboxProperties,
+    MapboxRoute, RustPlaceResult, RustRouteResult,
 };
 use crate::shared::math::haversine_distance;
 use once_cell::sync::Lazy;
@@ -93,15 +94,19 @@ pub async fn reverse_geocode(
 
     let resp: MapboxGeocodingResponse = HTTP_CLIENT.get(&url).send().await?.json().await?;
 
-    let result = resp.features.into_iter().next().map(|f| RustPlaceResult {
-        id: f.id.unwrap_or_default(),
-        name: f.text.unwrap_or_default(),
-        full_address: f.place_name.unwrap_or_default(),
-        latitude: lat,
-        longitude: lng,
-        category: f.properties.and_then(|p| p.category),
-        distance_km: None,
-    });
+    let result: Option<RustPlaceResult> =
+        resp.features
+            .into_iter()
+            .next()
+            .map(|f: MapboxFeature| RustPlaceResult {
+                id: f.id.unwrap_or_default(),
+                name: f.text.unwrap_or_default(),
+                full_address: f.place_name.unwrap_or_default(),
+                latitude: lat,
+                longitude: lng,
+                category: f.properties.and_then(|p: MapboxProperties| p.category),
+                distance_km: None,
+            });
 
     Ok(result)
 }
@@ -121,30 +126,31 @@ pub async fn get_route(
 
     let resp: MapboxDirectionsResponse = HTTP_CLIENT.get(&url).send().await?.json().await?;
 
-    let result = resp.routes.into_iter().next().map(|route| {
-        let points = route
-            .geometry
-            .coordinates
-            .into_iter()
-            .map(|c| CoordPair {
-                lng: c.first().copied().unwrap_or(0.0),
-                lat: c.get(1).copied().unwrap_or(0.0),
-            })
-            .collect();
+    let result: Option<RustRouteResult> =
+        resp.routes.into_iter().next().map(|route: MapboxRoute| {
+            let points: Vec<CoordPair> = route
+                .geometry
+                .coordinates
+                .into_iter()
+                .map(|c: Vec<f64>| CoordPair {
+                    lng: c.first().copied().unwrap_or(0.0),
+                    lat: c.get(1).copied().unwrap_or(0.0),
+                })
+                .collect();
 
-        let summary = route
-            .legs
-            .and_then(|legs| legs.into_iter().next())
-            .and_then(|leg| leg.summary)
-            .unwrap_or_default();
+            let summary = route
+                .legs
+                .and_then(|legs| legs.into_iter().next())
+                .and_then(|leg| leg.summary)
+                .unwrap_or_default();
 
-        RustRouteResult {
-            polyline_points: points,
-            distance_km: route.distance / 1000.0,
-            duration_seconds: route.duration,
-            summary,
-        }
-    });
+            RustRouteResult {
+                polyline_points: points,
+                distance_km: route.distance / 1000.0,
+                duration_seconds: route.duration,
+                summary,
+            }
+        });
 
     Ok(result)
 }
