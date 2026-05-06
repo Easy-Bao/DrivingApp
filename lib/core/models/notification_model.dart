@@ -1,10 +1,9 @@
-/// Represents an in-app notification.
 class NotificationModel {
   final String id;
   final String title;
   final String message;
   final DateTime timestamp;
-  final String type; // "ride", "promo", "system"
+  final String type; 
   final bool isRead;
 
   const NotificationModel({
