@@ -83,7 +83,7 @@ class _PassengerAddCategoryScreenState
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
-            LucideIcons.chevron_left,
+            LucideIcons.arrow_left,
             color: AppTheme.primaryColor,
           ),
           onPressed: () => context.pop(),
@@ -163,7 +163,7 @@ class _PassengerAddCategoryScreenState
                       focusedErrorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(
-                          color: Colors.red,
+                          color: AppTheme.primaryColor,
                           width: 2,
                         ),
                       ),
@@ -260,6 +260,8 @@ class _PassengerAddCategoryScreenState
                                     ),
                             ),
                             const SizedBox(height: 12),
+                            // TODO: Replace with actual map widget and pinning logic
+                            // TODO: Add visual feedback for pinning
                             Text(
                               _isLocationPinned
                                   ? "Location Pinned!"
@@ -299,7 +301,7 @@ class _PassengerAddCategoryScreenState
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(36),
                     ),
                     elevation: 0,
                   ),

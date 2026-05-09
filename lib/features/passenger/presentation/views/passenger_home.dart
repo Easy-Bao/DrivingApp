@@ -153,12 +153,18 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   ),
                   Stack(
                     children: [
-                      IconButton(
-                        icon: const Icon(
-                          LucideIcons.bell,
-                          color: AppTheme.primaryColor,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        onPressed: () => context.pushNamed("Notifications"),
+                        child: IconButton(
+                          icon: const Icon(
+                            LucideIcons.bell,
+                            color: AppTheme.primaryColor,
+                          ),
+                          onPressed: () => context.pushNamed("Notifications"),
+                        ),
                       ),
                       Positioned(
                         right: 12,
