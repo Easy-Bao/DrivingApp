@@ -48,3 +48,6 @@ app.*.map.json
 # Environment variable files
 *.env
 *.env.*
+
+#Metadata
+.metadata
