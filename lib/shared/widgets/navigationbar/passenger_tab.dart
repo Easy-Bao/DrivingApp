@@ -84,7 +84,9 @@ class PassengerShellLayout extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                // context.goNamed('MapPin');
+              },
               child: Container(
                 height: 64,
                 width: 64,

@@ -61,6 +61,7 @@ class PassengerAccountScreen extends StatelessWidget {
                 "Update name and details",
                 () => context.pushNamed("ProfileInfo"),
               ),
+              //TODO: Change this to preferences and settings
               _buildAccountTile(
                 context,
                 LucideIcons.shield_check,

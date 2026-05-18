@@ -38,6 +38,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            //TODO: Make this a map snapshot of the route taken
             Container(
               height: 180,
               width: double.infinity,
