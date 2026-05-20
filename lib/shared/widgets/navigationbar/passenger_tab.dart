@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-class PassengerShellLayout extends StatelessWidget {
+class PassengerShellLayout extends StatefulWidget {
   final Widget child;
   const PassengerShellLayout({super.key, required this.child});
 
+  @override
+  State<PassengerShellLayout> createState() => _PassengerShellLayoutState();
+}
+
+class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/passenger/home')) return 0;
@@ -35,7 +40,7 @@ class PassengerShellLayout extends StatelessWidget {
 
     return Scaffold(
       extendBody: true,
-      body: child,
+      body: widget.child,
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
         child: Row(

@@ -228,7 +228,9 @@ class _SigninScreenState extends State<SigninScreen> {
                     ),
                     const SizedBox(height: 32),
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        context.goNamed("DriverDashboard");
+                      },
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(60),
                         side: BorderSide(

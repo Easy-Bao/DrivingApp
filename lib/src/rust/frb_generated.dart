@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'application/fare_engine.dart';
 import 'application/map_api.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -65,7 +66,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -803543905;
+  int get rustContentHash => 270884330;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,6 +78,32 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<RouteSequenceResult> crateApplicationFareEngineCalculateOptimalRoute({
+    required double startLat,
+    required double startLng,
+    required List<Waypoint> waypoints,
+  });
+
+  Future<List<HeatmapCell>> crateApplicationFareEngineCalculateSurgeHeatmap({
+    required double centerLat,
+    required double centerLng,
+    required int gridSize,
+    required double cellSizeDegrees,
+    required List<double> requestLats,
+    required List<double> requestLngs,
+  });
+
+  Future<FareResult> crateApplicationFareEngineComputeFare({
+    required double distanceKm,
+    required double durationMinutes,
+    required FareConfig config,
+  });
+
+  Future<FareResult> crateApplicationFareEngineComputeFareDefault({
+    required double distanceKm,
+    required double durationMinutes,
+  });
+
   Future<List<RustPlaceResult>> crateApplicationMapApiGetNearbyPois({
     required String token,
     required double lat,
@@ -123,6 +150,172 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<RouteSequenceResult> crateApplicationFareEngineCalculateOptimalRoute({
+    required double startLat,
+    required double startLng,
+    required List<Waypoint> waypoints,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_64(startLat, serializer);
+          sse_encode_f_64(startLng, serializer);
+          sse_encode_list_waypoint(waypoints, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_route_sequence_result,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApplicationFareEngineCalculateOptimalRouteConstMeta,
+        argValues: [startLat, startLng, waypoints],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApplicationFareEngineCalculateOptimalRouteConstMeta =>
+      const TaskConstMeta(
+        debugName: "calculate_optimal_route",
+        argNames: ["startLat", "startLng", "waypoints"],
+      );
+
+  @override
+  Future<List<HeatmapCell>> crateApplicationFareEngineCalculateSurgeHeatmap({
+    required double centerLat,
+    required double centerLng,
+    required int gridSize,
+    required double cellSizeDegrees,
+    required List<double> requestLats,
+    required List<double> requestLngs,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_64(centerLat, serializer);
+          sse_encode_f_64(centerLng, serializer);
+          sse_encode_i_32(gridSize, serializer);
+          sse_encode_f_64(cellSizeDegrees, serializer);
+          sse_encode_list_prim_f_64_loose(requestLats, serializer);
+          sse_encode_list_prim_f_64_loose(requestLngs, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_heatmap_cell,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApplicationFareEngineCalculateSurgeHeatmapConstMeta,
+        argValues: [
+          centerLat,
+          centerLng,
+          gridSize,
+          cellSizeDegrees,
+          requestLats,
+          requestLngs,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApplicationFareEngineCalculateSurgeHeatmapConstMeta =>
+      const TaskConstMeta(
+        debugName: "calculate_surge_heatmap",
+        argNames: [
+          "centerLat",
+          "centerLng",
+          "gridSize",
+          "cellSizeDegrees",
+          "requestLats",
+          "requestLngs",
+        ],
+      );
+
+  @override
+  Future<FareResult> crateApplicationFareEngineComputeFare({
+    required double distanceKm,
+    required double durationMinutes,
+    required FareConfig config,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_64(distanceKm, serializer);
+          sse_encode_f_64(durationMinutes, serializer);
+          sse_encode_box_autoadd_fare_config(config, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_fare_result,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApplicationFareEngineComputeFareConstMeta,
+        argValues: [distanceKm, durationMinutes, config],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApplicationFareEngineComputeFareConstMeta =>
+      const TaskConstMeta(
+        debugName: "compute_fare",
+        argNames: ["distanceKm", "durationMinutes", "config"],
+      );
+
+  @override
+  Future<FareResult> crateApplicationFareEngineComputeFareDefault({
+    required double distanceKm,
+    required double durationMinutes,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_64(distanceKm, serializer);
+          sse_encode_f_64(durationMinutes, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_fare_result,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApplicationFareEngineComputeFareDefaultConstMeta,
+        argValues: [distanceKm, durationMinutes],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApplicationFareEngineComputeFareDefaultConstMeta =>
+      const TaskConstMeta(
+        debugName: "compute_fare_default",
+        argNames: ["distanceKm", "durationMinutes"],
+      );
+
+  @override
   Future<List<RustPlaceResult>> crateApplicationMapApiGetNearbyPois({
     required String token,
     required double lat,
@@ -138,7 +331,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 5,
             port: port_,
           );
         },
@@ -179,7 +372,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 6,
             port: port_,
           );
         },
@@ -218,7 +411,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 7,
             port: port_,
           );
         },
@@ -255,7 +448,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 8,
             port: port_,
           );
         },
@@ -298,7 +491,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 9,
             port: port_,
           );
         },
@@ -339,9 +532,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
   double dco_decode_box_autoadd_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
+  }
+
+  @protected
+  FareConfig dco_decode_box_autoadd_fare_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_fare_config(raw);
   }
 
   @protected
@@ -375,9 +580,76 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  FareConfig dco_decode_fare_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return FareConfig(
+      baseFare: dco_decode_f_64(arr[0]),
+      perKmRate: dco_decode_f_64(arr[1]),
+      perMinuteRate: dco_decode_f_64(arr[2]),
+      surgeMultiplier: dco_decode_f_64(arr[3]),
+      minimumFare: dco_decode_f_64(arr[4]),
+    );
+  }
+
+  @protected
+  FareResult dco_decode_fare_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return FareResult(
+      baseFare: dco_decode_f_64(arr[0]),
+      distanceCharge: dco_decode_f_64(arr[1]),
+      timeCharge: dco_decode_f_64(arr[2]),
+      surgeCharge: dco_decode_f_64(arr[3]),
+      totalFare: dco_decode_f_64(arr[4]),
+    );
+  }
+
+  @protected
+  HeatmapCell dco_decode_heatmap_cell(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return HeatmapCell(
+      lat: dco_decode_f_64(arr[0]),
+      lng: dco_decode_f_64(arr[1]),
+      intensity: dco_decode_f_64(arr[2]),
+    );
+  }
+
+  @protected
+  int dco_decode_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
   List<CoordPair> dco_decode_list_coord_pair(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_coord_pair).toList();
+  }
+
+  @protected
+  List<HeatmapCell> dco_decode_list_heatmap_cell(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_heatmap_cell).toList();
+  }
+
+  @protected
+  List<double> dco_decode_list_prim_f_64_loose(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as List<double>;
+  }
+
+  @protected
+  Float64List dco_decode_list_prim_f_64_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Float64List;
   }
 
   @protected
@@ -390,6 +662,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<RustPlaceResult> dco_decode_list_rust_place_result(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_rust_place_result).toList();
+  }
+
+  @protected
+  List<Waypoint> dco_decode_list_waypoint(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_waypoint).toList();
   }
 
   @protected
@@ -414,6 +692,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   RustRouteResult? dco_decode_opt_box_autoadd_rust_route_result(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_rust_route_result(raw);
+  }
+
+  @protected
+  RouteSequenceResult dco_decode_route_sequence_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return RouteSequenceResult(
+      optimalSequence: dco_decode_list_waypoint(arr[0]),
+      totalDistanceKm: dco_decode_f_64(arr[1]),
+    );
   }
 
   @protected
@@ -460,6 +750,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Waypoint dco_decode_waypoint(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return Waypoint(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      lat: dco_decode_f_64(arr[2]),
+      lng: dco_decode_f_64(arr[3]),
+      isPickup: dco_decode_bool(arr[4]),
+      passengerId: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_String(deserializer);
@@ -474,9 +780,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_f_64(deserializer));
+  }
+
+  @protected
+  FareConfig sse_decode_box_autoadd_fare_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_fare_config(deserializer));
   }
 
   @protected
@@ -510,6 +828,55 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  FareConfig sse_decode_fare_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_baseFare = sse_decode_f_64(deserializer);
+    var var_perKmRate = sse_decode_f_64(deserializer);
+    var var_perMinuteRate = sse_decode_f_64(deserializer);
+    var var_surgeMultiplier = sse_decode_f_64(deserializer);
+    var var_minimumFare = sse_decode_f_64(deserializer);
+    return FareConfig(
+      baseFare: var_baseFare,
+      perKmRate: var_perKmRate,
+      perMinuteRate: var_perMinuteRate,
+      surgeMultiplier: var_surgeMultiplier,
+      minimumFare: var_minimumFare,
+    );
+  }
+
+  @protected
+  FareResult sse_decode_fare_result(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_baseFare = sse_decode_f_64(deserializer);
+    var var_distanceCharge = sse_decode_f_64(deserializer);
+    var var_timeCharge = sse_decode_f_64(deserializer);
+    var var_surgeCharge = sse_decode_f_64(deserializer);
+    var var_totalFare = sse_decode_f_64(deserializer);
+    return FareResult(
+      baseFare: var_baseFare,
+      distanceCharge: var_distanceCharge,
+      timeCharge: var_timeCharge,
+      surgeCharge: var_surgeCharge,
+      totalFare: var_totalFare,
+    );
+  }
+
+  @protected
+  HeatmapCell sse_decode_heatmap_cell(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_lat = sse_decode_f_64(deserializer);
+    var var_lng = sse_decode_f_64(deserializer);
+    var var_intensity = sse_decode_f_64(deserializer);
+    return HeatmapCell(lat: var_lat, lng: var_lng, intensity: var_intensity);
+  }
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getInt32();
+  }
+
+  @protected
   List<CoordPair> sse_decode_list_coord_pair(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -519,6 +886,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_coord_pair(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  List<HeatmapCell> sse_decode_list_heatmap_cell(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <HeatmapCell>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_heatmap_cell(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<double> sse_decode_list_prim_f_64_loose(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getFloat64List(len_);
+  }
+
+  @protected
+  Float64List sse_decode_list_prim_f_64_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getFloat64List(len_);
   }
 
   @protected
@@ -538,6 +931,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <RustPlaceResult>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_rust_place_result(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Waypoint> sse_decode_list_waypoint(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Waypoint>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_waypoint(deserializer));
     }
     return ans_;
   }
@@ -591,6 +996,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RouteSequenceResult sse_decode_route_sequence_result(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_optimalSequence = sse_decode_list_waypoint(deserializer);
+    var var_totalDistanceKm = sse_decode_f_64(deserializer);
+    return RouteSequenceResult(
+      optimalSequence: var_optimalSequence,
+      totalDistanceKm: var_totalDistanceKm,
+    );
+  }
+
+  @protected
   RustPlaceResult sse_decode_rust_place_result(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_String(deserializer);
@@ -638,15 +1056,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  int sse_decode_i_32(SseDeserializer deserializer) {
+  Waypoint sse_decode_waypoint(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getInt32();
-  }
-
-  @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_lat = sse_decode_f_64(deserializer);
+    var var_lng = sse_decode_f_64(deserializer);
+    var var_isPickup = sse_decode_bool(deserializer);
+    var var_passengerId = sse_decode_String(deserializer);
+    return Waypoint(
+      id: var_id,
+      name: var_name,
+      lat: var_lat,
+      lng: var_lng,
+      isPickup: var_isPickup,
+      passengerId: var_passengerId,
+    );
   }
 
   @protected
@@ -665,9 +1090,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_f_64(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_fare_config(
+    FareConfig self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_fare_config(self, serializer);
   }
 
   @protected
@@ -702,6 +1142,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_fare_config(FareConfig self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.baseFare, serializer);
+    sse_encode_f_64(self.perKmRate, serializer);
+    sse_encode_f_64(self.perMinuteRate, serializer);
+    sse_encode_f_64(self.surgeMultiplier, serializer);
+    sse_encode_f_64(self.minimumFare, serializer);
+  }
+
+  @protected
+  void sse_encode_fare_result(FareResult self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.baseFare, serializer);
+    sse_encode_f_64(self.distanceCharge, serializer);
+    sse_encode_f_64(self.timeCharge, serializer);
+    sse_encode_f_64(self.surgeCharge, serializer);
+    sse_encode_f_64(self.totalFare, serializer);
+  }
+
+  @protected
+  void sse_encode_heatmap_cell(HeatmapCell self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.lat, serializer);
+    sse_encode_f_64(self.lng, serializer);
+    sse_encode_f_64(self.intensity, serializer);
+  }
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putInt32(self);
+  }
+
+  @protected
   void sse_encode_list_coord_pair(
     List<CoordPair> self,
     SseSerializer serializer,
@@ -711,6 +1185,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_coord_pair(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_list_heatmap_cell(
+    List<HeatmapCell> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_heatmap_cell(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_prim_f_64_loose(
+    List<double> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putFloat64List(
+      self is Float64List ? self : Float64List.fromList(self),
+    );
+  }
+
+  @protected
+  void sse_encode_list_prim_f_64_strict(
+    Float64List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putFloat64List(self);
   }
 
   @protected
@@ -732,6 +1240,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_rust_place_result(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_waypoint(List<Waypoint> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_waypoint(item, serializer);
     }
   }
 
@@ -782,6 +1299,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_route_sequence_result(
+    RouteSequenceResult self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_waypoint(self.optimalSequence, serializer);
+    sse_encode_f_64(self.totalDistanceKm, serializer);
+  }
+
+  @protected
   void sse_encode_rust_place_result(
     RustPlaceResult self,
     SseSerializer serializer,
@@ -820,14 +1347,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_i_32(int self, SseSerializer serializer) {
+  void sse_encode_waypoint(Waypoint self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putInt32(self);
-  }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_f_64(self.lat, serializer);
+    sse_encode_f_64(self.lng, serializer);
+    sse_encode_bool(self.isPickup, serializer);
+    sse_encode_String(self.passengerId, serializer);
   }
 }

@@ -253,7 +253,15 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                   } else if (statusType == "completed") {
                     context.pushNamed("ActivityViewDetails");
                   } else {
-                    //TODO: Implement Rebook Navigation
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Rebooking trip..."),
+                        duration: Duration(seconds: 1),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    context.pushNamed("SearchDestination");
                   }
                 },
                 style: TextButton.styleFrom(

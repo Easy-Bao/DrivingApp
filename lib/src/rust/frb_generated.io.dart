@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'application/fare_engine.dart';
 import 'application/map_api.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -26,7 +27,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  bool dco_decode_bool(dynamic raw);
+
+  @protected
   double dco_decode_box_autoadd_f_64(dynamic raw);
+
+  @protected
+  FareConfig dco_decode_box_autoadd_fare_config(dynamic raw);
 
   @protected
   RustPlaceResult dco_decode_box_autoadd_rust_place_result(dynamic raw);
@@ -41,13 +48,37 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double dco_decode_f_64(dynamic raw);
 
   @protected
+  FareConfig dco_decode_fare_config(dynamic raw);
+
+  @protected
+  FareResult dco_decode_fare_result(dynamic raw);
+
+  @protected
+  HeatmapCell dco_decode_heatmap_cell(dynamic raw);
+
+  @protected
+  int dco_decode_i_32(dynamic raw);
+
+  @protected
   List<CoordPair> dco_decode_list_coord_pair(dynamic raw);
+
+  @protected
+  List<HeatmapCell> dco_decode_list_heatmap_cell(dynamic raw);
+
+  @protected
+  List<double> dco_decode_list_prim_f_64_loose(dynamic raw);
+
+  @protected
+  Float64List dco_decode_list_prim_f_64_strict(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
   List<RustPlaceResult> dco_decode_list_rust_place_result(dynamic raw);
+
+  @protected
+  List<Waypoint> dco_decode_list_waypoint(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -62,6 +93,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustRouteResult? dco_decode_opt_box_autoadd_rust_route_result(dynamic raw);
 
   @protected
+  RouteSequenceResult dco_decode_route_sequence_result(dynamic raw);
+
+  @protected
   RustPlaceResult dco_decode_rust_place_result(dynamic raw);
 
   @protected
@@ -74,13 +108,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void dco_decode_unit(dynamic raw);
 
   @protected
+  Waypoint dco_decode_waypoint(dynamic raw);
+
+  @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
 
   @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
+
+  @protected
+  FareConfig sse_decode_box_autoadd_fare_config(SseDeserializer deserializer);
 
   @protected
   RustPlaceResult sse_decode_box_autoadd_rust_place_result(
@@ -99,7 +142,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
+  FareConfig sse_decode_fare_config(SseDeserializer deserializer);
+
+  @protected
+  FareResult sse_decode_fare_result(SseDeserializer deserializer);
+
+  @protected
+  HeatmapCell sse_decode_heatmap_cell(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer);
+
+  @protected
   List<CoordPair> sse_decode_list_coord_pair(SseDeserializer deserializer);
+
+  @protected
+  List<HeatmapCell> sse_decode_list_heatmap_cell(SseDeserializer deserializer);
+
+  @protected
+  List<double> sse_decode_list_prim_f_64_loose(SseDeserializer deserializer);
+
+  @protected
+  Float64List sse_decode_list_prim_f_64_strict(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -108,6 +172,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<RustPlaceResult> sse_decode_list_rust_place_result(
     SseDeserializer deserializer,
   );
+
+  @protected
+  List<Waypoint> sse_decode_list_waypoint(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -126,6 +193,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RouteSequenceResult sse_decode_route_sequence_result(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RustPlaceResult sse_decode_rust_place_result(SseDeserializer deserializer);
 
   @protected
@@ -138,10 +210,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
-  int sse_decode_i_32(SseDeserializer deserializer);
-
-  @protected
-  bool sse_decode_bool(SseDeserializer deserializer);
+  Waypoint sse_decode_waypoint(SseDeserializer deserializer);
 
   @protected
   void sse_encode_AnyhowException(
@@ -153,7 +222,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_fare_config(
+    FareConfig self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_rust_place_result(
@@ -174,8 +252,38 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
+  void sse_encode_fare_config(FareConfig self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_fare_result(FareResult self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_heatmap_cell(HeatmapCell self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_coord_pair(
     List<CoordPair> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_heatmap_cell(
+    List<HeatmapCell> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_f_64_loose(
+    List<double> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_f_64_strict(
+    Float64List self,
     SseSerializer serializer,
   );
 
@@ -192,6 +300,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_waypoint(List<Waypoint> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
@@ -206,6 +317,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_rust_route_result(
     RustRouteResult? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_route_sequence_result(
+    RouteSequenceResult self,
     SseSerializer serializer,
   );
 
@@ -228,10 +345,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_unit(void self, SseSerializer serializer);
 
   @protected
-  void sse_encode_i_32(int self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer);
+  void sse_encode_waypoint(Waypoint self, SseSerializer serializer);
 }
 
 // Section: wire_class

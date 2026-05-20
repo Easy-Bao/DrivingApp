@@ -12,7 +12,6 @@ class PassengerViewAllActivity extends StatefulWidget {
 }
 
 class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
-  // Mock data grouped by date
   final Map<String, List<Map<String, String>>> _grouped = {
     "Today": [
       {

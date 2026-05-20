@@ -2,8 +2,11 @@ import 'package:BaoRide/core/models/place_model.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/activity_detail_map_screen.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/add_category.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/destination_preview_screen.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/driver_matched_screen.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/finding_driver_screen.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/map_pin_screen.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/notification_screen.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/screens/ride_selection_screen.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/search_destination.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/view_all_activity.dart';
 import 'package:BaoRide/features/passenger/presentation/views/passenger_home.dart';
@@ -76,6 +79,52 @@ class HomeModule {
         return DestinationPreviewScreen(destination: place);
       },
       transition: GoTransitions.slide.toLeft,
+    ),
+    ChildRoute(
+      name: "RideSelection",
+      "home/ride-selection",
+      child: (context, GoRouterState state) {
+        final data = state.extra as Map<String, dynamic>;
+        return RideSelectionScreen(
+          destination: data["destination"] as PlaceModel,
+          distance: data["distance"] as String,
+          duration: data["duration"] as String,
+          distanceKm: (data["distanceKm"] as num).toDouble(),
+        );
+      },
+      transition: GoTransitions.slide.toLeft,
+    ),
+    ChildRoute(
+      name: "FindingDriver",
+      "home/finding-driver",
+      child: (context, GoRouterState state) {
+        final data = state.extra as Map<String, dynamic>;
+        return FindingDriverScreen(
+          rideType: data["rideType"] as String,
+          fare: (data["fare"] as num).toDouble(),
+          destination: data["destination"] as PlaceModel,
+          distance: data["distance"] as String,
+          duration: data["duration"] as String,
+        );
+      },
+      transition: GoTransitions.fadeUpwards,
+      transitionDuration: Duration(milliseconds: 400),
+    ),
+    ChildRoute(
+      name: "DriverMatched",
+      "home/driver-matched",
+      child: (context, GoRouterState state) {
+        final data = state.extra as Map<String, dynamic>;
+        return DriverMatchedScreen(
+          rideType: data["rideType"] as String,
+          fare: (data["fare"] as num).toDouble(),
+          destination: data["destination"] as PlaceModel,
+          distance: data["distance"] as String,
+          duration: data["duration"] as String,
+        );
+      },
+      transition: GoTransitions.fadeUpwards,
+      transitionDuration: Duration(milliseconds: 400),
     ),
   ];
 

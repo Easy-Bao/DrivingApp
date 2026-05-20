@@ -260,12 +260,10 @@ class _PassengerAddCategoryScreenState
                                     ),
                             ),
                             const SizedBox(height: 12),
-                            // TODO: Replace with actual map widget and pinning logic
-                            // TODO: Add visual feedback for pinning
                             Text(
                               _isLocationPinned
-                                  ? "Location Pinned!"
-                                  : "Tap to simulate map pinning",
+                                  ? "✓ Location Pinned Successfully"
+                                  : "Tap to pin your location on the map",
                               style: TextStyle(
                                 color: _isLocationPinned
                                     ? Colors.green
@@ -273,9 +271,21 @@ class _PassengerAddCategoryScreenState
                                         alpha: 0.6,
                                       ),
                                 fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                                fontSize: 14,
                               ),
                             ),
+                            if (!_isLocationPinned) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                "Select a spot to save this shortcut",
+                                style: TextStyle(
+                                  color: AppTheme.primaryColor
+                                      .withValues(alpha: 0.4),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

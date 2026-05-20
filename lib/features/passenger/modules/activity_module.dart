@@ -1,3 +1,4 @@
+import 'package:BaoRide/features/passenger/presentation/views/activity/driver_chat_screen.dart';
 import 'package:BaoRide/features/passenger/presentation/views/activity/track_driver.dart';
 import 'package:BaoRide/features/passenger/presentation/views/activity/view_details.dart';
 import 'package:BaoRide/features/passenger/presentation/views/passenger_activity.dart';
@@ -18,6 +19,12 @@ class ActivityModule {
       child: (context, GoRouterState state) => AcitivityTrackDriver(),
       transition: GoTransitions.fadeUpwards,
       transitionDuration: Duration(milliseconds: 300),
+    ),
+    ChildRoute(
+      name: "DriverChat",
+      "activity/driver-chat",
+      child: (context, GoRouterState state) => const DriverChatScreen(),
+      transition: GoTransitions.slide.toLeft,
     ),
   ];
 
