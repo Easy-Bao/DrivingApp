@@ -6,12 +6,10 @@ class DashboardCubit extends Cubit<DashboardState> {
   final RideRepository _rideRepository;
 
   DashboardCubit({required RideRepository rideRepository})
-      : _rideRepository = rideRepository,
-        super(const DashboardState(
-          isOnline: false,
-          surgeCells: [],
-          isLoading: false,
-        ));
+    : _rideRepository = rideRepository,
+      super(
+        const DashboardState(isOnline: false, surgeCells: [], isLoading: false),
+      );
 
   Future<void> toggleOnline(double lat, double lng) async {
     final nextOnline = !state.isOnline;

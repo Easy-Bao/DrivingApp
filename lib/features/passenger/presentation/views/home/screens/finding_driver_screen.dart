@@ -11,9 +11,6 @@ import 'package:BaoRide/features/passenger/presentation/bloc/finding_driver/find
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Screen displayed while searching for nearby drivers.
-/// Employs the FFI Rust driver matching algorithm to discover 5 nearby drivers,
-/// displays their simulated locations on Mapbox, and provides a selectable list.
 class FindingDriverScreen extends StatefulWidget {
   final String rideType;
   final double fare;
@@ -44,8 +41,14 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
   @override
   void initState() {
     super.initState();
-    _radarCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
-    _dotCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))..repeat();
+    _radarCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+    _dotCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat();
   }
 
   @override
@@ -63,7 +66,9 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
       final lng = LocationService.lastPosition?.longitude ?? 123.434343;
 
       // Start search via Bloc
-      BlocProvider.of<FindingDriverBloc>(context).add(SearchDriversEvent(lat: lat, lng: lng));
+      BlocProvider.of<FindingDriverBloc>(
+        context,
+      ).add(SearchDriversEvent(lat: lat, lng: lng));
 
       // Draw initial simple pin for user
       MapProvider.addMarker(controller, lat, lng, isOrigin: true);
@@ -72,19 +77,24 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
 
   void _showDriversOnMap(List<DriverModel> drivers) async {
     if (_mapController == null) return;
-    
+
     // Add markers for all matching drivers on map
     for (final driver in drivers) {
-      await MapProvider.addMarker(_mapController!, driver.lat, driver.lng, isOrigin: false);
+      await MapProvider.addMarker(
+        _mapController!,
+        driver.lat,
+        driver.lng,
+        isOrigin: false,
+      );
     }
 
     // Include passenger location inside bounds
     final passLat = LocationService.lastPosition?.latitude ?? 7.828282;
     final passLng = LocationService.lastPosition?.longitude ?? 123.434343;
 
-    final boundsPoints = [LatLng(passLat, passLng)]
-        .followedBy(drivers.map((d) => LatLng(d.lat, d.lng)))
-        .toList();
+    final boundsPoints = [
+      LatLng(passLat, passLng),
+    ].followedBy(drivers.map((d) => LatLng(d.lat, d.lng))).toList();
 
     await MapProvider.fitBounds(_mapController!, boundsPoints, padding: 80.0);
   }
@@ -100,17 +110,20 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
           _showDriversOnMap(state.drivers);
         } else if (state is FindingDriverSelected) {
           // Navigate with the selected driver data
-          context.pushReplacementNamed("DriverMatched", extra: {
-            "rideType": widget.rideType,
-            "fare": widget.fare,
-            "destination": widget.destination,
-            "distance": widget.distance,
-            "duration": widget.duration,
-            "driverName": state.selectedDriver.name,
-            "driverRating": state.selectedDriver.rating.toString(),
-            "vehicleType": state.selectedDriver.vehicleType,
-            "plateNumber": state.selectedDriver.plateNumber,
-          });
+          context.pushReplacementNamed(
+            "DriverMatched",
+            extra: {
+              "rideType": widget.rideType,
+              "fare": widget.fare,
+              "destination": widget.destination,
+              "distance": widget.distance,
+              "duration": widget.duration,
+              "driverName": state.selectedDriver.name,
+              "driverRating": state.selectedDriver.rating.toString(),
+              "vehicleType": state.selectedDriver.vehicleType,
+              "plateNumber": state.selectedDriver.plateNumber,
+            },
+          );
         }
       },
       child: Scaffold(
@@ -130,11 +143,12 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                 ),
               ),
             ),
-            
+
             // Radar overlay during search
             BlocBuilder<FindingDriverBloc, FindingDriverState>(
               builder: (context, state) {
-                if (state is FindingDriverSearching || state is FindingDriverInitial) {
+                if (state is FindingDriverSearching ||
+                    state is FindingDriverInitial) {
                   return Center(
                     child: AnimatedBuilder(
                       animation: _radarCtrl,
@@ -150,7 +164,9 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.15 * (1 - t)),
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.15 * (1 - t),
+                                    ),
                                     width: 2,
                                   ),
                                 ),
@@ -164,12 +180,18 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.3,
+                                    ),
                                     blurRadius: 20,
-                                  )
+                                  ),
                                 ],
                               ),
-                              child: const Icon(LucideIcons.navigation, color: Colors.white, size: 24),
+                              child: const Icon(
+                                LucideIcons.navigation,
+                                color: Colors.white,
+                                size: 24,
+                              ),
                             ),
                           ],
                         );
@@ -184,10 +206,15 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
             // Back button
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: GestureDetector(
                   onTap: () {
-                    BlocProvider.of<FindingDriverBloc>(context).add(CancelSearchEvent());
+                    BlocProvider.of<FindingDriverBloc>(
+                      context,
+                    ).add(CancelSearchEvent());
                     context.pop();
                   },
                   child: Container(
@@ -200,10 +227,14 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                           color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 15,
                           offset: const Offset(0, 4),
-                        )
+                        ),
                       ],
                     ),
-                    child: const Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor, size: 20),
+                    child: const Icon(
+                      LucideIcons.arrow_left,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
@@ -214,18 +245,21 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
               alignment: Alignment.bottomCenter,
               child: BlocBuilder<FindingDriverBloc, FindingDriverState>(
                 builder: (context, state) {
-                  if (state is FindingDriverSearching || state is FindingDriverInitial) {
+                  if (state is FindingDriverSearching ||
+                      state is FindingDriverInitial) {
                     return Container(
                       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 30,
                             offset: const Offset(0, -10),
-                          )
+                          ),
                         ],
                       ),
                       child: Column(
@@ -236,21 +270,37 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                               width: 40,
                               height: 4,
                               margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(color: AppTheme.borderSide, borderRadius: BorderRadius.circular(2)),
+                              decoration: BoxDecoration(
+                                color: AppTheme.borderSide,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
                           AnimatedBuilder(
                             animation: _dotCtrl,
                             builder: (ctx, _) {
-                              final dots = "." * (1 + (_dotCtrl.value * 3).floor());
+                              final dots =
+                                  "." * (1 + (_dotCtrl.value * 3).floor());
                               return Text(
                                 "Finding your driver$dots",
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.primaryColor),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppTheme.primaryColor,
+                                ),
                               );
                             },
                           ),
                           const SizedBox(height: 8),
-                          Text("Looking for ${widget.rideType} drivers nearby...", style: TextStyle(fontSize: 14, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
+                          Text(
+                            "Looking for ${widget.rideType} drivers nearby...",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 20),
                           Container(
                             padding: const EdgeInsets.all(16),
@@ -264,34 +314,61 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(LucideIcons.map_pin, size: 16, color: AppTheme.tertiaryColor),
+                                    const Icon(
+                                      LucideIcons.map_pin,
+                                      size: 16,
+                                      color: AppTheme.tertiaryColor,
+                                    ),
                                     const SizedBox(width: 8),
                                     SizedBox(
                                       width: 160,
                                       child: Text(
                                         widget.destination.name,
-                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryColor),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppTheme.primaryColor,
+                                        ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
                                 ),
-                                Text("₱${widget.fare.toStringAsFixed(2)}", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
+                                Text(
+                                  "₱${widget.fare.toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                           const SizedBox(height: 20),
                           GestureDetector(
                             onTap: () {
-                              BlocProvider.of<FindingDriverBloc>(context).add(CancelSearchEvent());
+                              BlocProvider.of<FindingDriverBloc>(
+                                context,
+                              ).add(CancelSearchEvent());
                               context.pop();
                             },
                             child: Container(
                               width: double.infinity,
                               alignment: Alignment.center,
                               padding: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(color: AppTheme.cancel.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(32)),
-                              child: Text("Cancel Search", style: TextStyle(color: AppTheme.cancel, fontWeight: FontWeight.w700, fontSize: 15)),
+                              decoration: BoxDecoration(
+                                color: AppTheme.cancel.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                              child: Text(
+                                "Cancel Search",
+                                style: TextStyle(
+                                  color: AppTheme.cancel,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -301,17 +378,21 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
 
                   if (state is FindingDriverResults) {
                     return Container(
-                      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.5,
+                      ),
                       padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 30,
                             offset: const Offset(0, -10),
-                          )
+                          ),
                         ],
                       ),
                       child: Column(
@@ -323,12 +404,19 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                               width: 40,
                               height: 4,
                               margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(color: AppTheme.borderSide, borderRadius: BorderRadius.circular(2)),
+                              decoration: BoxDecoration(
+                                color: AppTheme.borderSide,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
                           const Text(
                             "Select Nearest Driver",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primaryColor),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.primaryColor,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           const Text(
@@ -347,46 +435,68 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                   decoration: BoxDecoration(
                                     color: AppTheme.neutralColor,
                                     borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: AppTheme.borderSide),
+                                    border: Border.all(
+                                      color: AppTheme.borderSide,
+                                    ),
                                   ),
                                   child: ListTile(
                                     leading: CircleAvatar(
-                                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                                      child: const Icon(LucideIcons.user, color: AppTheme.primaryColor),
+                                      backgroundColor: AppTheme.primaryColor
+                                          .withValues(alpha: 0.1),
+                                      child: const Icon(
+                                        LucideIcons.user,
+                                        color: AppTheme.primaryColor,
+                                      ),
                                     ),
                                     title: Text(
                                       driver.name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                     subtitle: Text(
                                       "${driver.vehicleType} • ${driver.plateNumber}",
                                       style: const TextStyle(fontSize: 11),
                                     ),
                                     trailing: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
                                       children: [
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                                            const Icon(
+                                              Icons.star_rounded,
+                                              color: Colors.amber,
+                                              size: 16,
+                                            ),
                                             Text(
                                               " ${driver.rating.toStringAsFixed(1)}",
-                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
                                             ),
                                           ],
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           "${driver.distanceKm.toStringAsFixed(1)} km (~${driver.etaMinutes.ceil()} min)",
-                                          style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600),
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ],
                                     ),
                                     onTap: () {
-                                      BlocProvider.of<FindingDriverBloc>(context).add(
-                                            SelectDriverEvent(driver: driver),
-                                          );
+                                      BlocProvider.of<FindingDriverBloc>(
+                                        context,
+                                      ).add(SelectDriverEvent(driver: driver));
                                     },
                                   ),
                                 );

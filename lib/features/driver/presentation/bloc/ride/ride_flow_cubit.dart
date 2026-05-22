@@ -9,35 +9,41 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   int _elapsedWaitTime = 0;
 
   RideFlowCubit({required RideRepository rideRepository})
-      : _rideRepository = rideRepository,
-        super(RideFlowInitial());
+    : _rideRepository = rideRepository,
+      super(RideFlowInitial());
 
   void acceptRide({
     required String passengerName,
     required double pickupLat,
     required double pickupLng,
   }) {
-    emit(RideFlowEnRoutePickup(
-      passengerName: passengerName,
-      pickupLat: pickupLat,
-      pickupLng: pickupLng,
-    ));
+    emit(
+      RideFlowEnRoutePickup(
+        passengerName: passengerName,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+      ),
+    );
   }
 
   void arriveAtPickup(String passengerName) {
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
-    emit(RideFlowWaitingPassenger(
-      passengerName: passengerName,
-      waitTimeSeconds: 0,
-    ));
+    emit(
+      RideFlowWaitingPassenger(
+        passengerName: passengerName,
+        waitTimeSeconds: 0,
+      ),
+    );
     _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (isClosed) return;
       _elapsedWaitTime++;
-      emit(RideFlowWaitingPassenger(
-        passengerName: passengerName,
-        waitTimeSeconds: _elapsedWaitTime,
-      ));
+      emit(
+        RideFlowWaitingPassenger(
+          passengerName: passengerName,
+          waitTimeSeconds: _elapsedWaitTime,
+        ),
+      );
     });
   }
 
@@ -48,12 +54,14 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     required double distanceKm,
   }) {
     _waitTimer?.cancel();
-    emit(RideFlowInTransit(
-      passengerName: passengerName,
-      destLat: destLat,
-      destLng: destLng,
-      distanceKm: distanceKm,
-    ));
+    emit(
+      RideFlowInTransit(
+        passengerName: passengerName,
+        destLat: destLat,
+        destLng: destLng,
+        distanceKm: distanceKm,
+      ),
+    );
   }
 
   Future<void> endRide({

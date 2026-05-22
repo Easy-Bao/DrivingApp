@@ -233,12 +233,15 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading
                           ? null
-                          : () => context.pushNamed("RideSelection", extra: {
+                          : () => context.pushNamed(
+                              "RideSelection",
+                              extra: {
                                 "destination": widget.destination,
                                 "distance": _distance,
                                 "duration": _duration,
                                 "distanceKm": _distanceKm,
-                              }),
+                              },
+                            ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,

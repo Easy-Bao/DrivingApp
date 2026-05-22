@@ -7,8 +7,8 @@ class FindingDriverBloc extends Bloc<FindingDriverEvent, FindingDriverState> {
   final DriverRepository _driverRepository;
 
   FindingDriverBloc({required DriverRepository driverRepository})
-      : _driverRepository = driverRepository,
-        super(FindingDriverInitial()) {
+    : _driverRepository = driverRepository,
+      super(FindingDriverInitial()) {
     on<SearchDriversEvent>(_onSearchDrivers);
     on<SelectDriverEvent>(_onSelectDriver);
     on<CancelSearchEvent>(_onCancelSearch);

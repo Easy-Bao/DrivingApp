@@ -279,8 +279,9 @@ class _PassengerAddCategoryScreenState
                               Text(
                                 "Select a spot to save this shortcut",
                                 style: TextStyle(
-                                  color: AppTheme.primaryColor
-                                      .withValues(alpha: 0.4),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),

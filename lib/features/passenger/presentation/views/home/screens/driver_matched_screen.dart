@@ -44,7 +44,10 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
   @override
   void initState() {
     super.initState();
-    _scaleCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _scaleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
     _scaleAnim = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
     _scaleCtrl.forward();
     _autoNav = Timer(const Duration(seconds: 4), _goToTracking);
@@ -78,7 +81,10 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                 child: Container(
                   width: 100,
                   height: 100,
-                  decoration: BoxDecoration(color: AppTheme.complete.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: AppTheme.complete.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
                   child: Center(
                     child: Container(
                       width: 64,
@@ -86,19 +92,41 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                       decoration: BoxDecoration(
                         color: AppTheme.complete,
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: AppTheme.complete.withValues(alpha: 0.3), blurRadius: 20)],
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.complete.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                          ),
+                        ],
                       ),
-                      child: const Icon(LucideIcons.check, color: Colors.white, size: 32),
+                      child: const Icon(
+                        LucideIcons.check,
+                        color: Colors.white,
+                        size: 32,
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text("Driver Found!", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
+              const Text(
+                "Driver Found!",
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text("Your ${widget.rideType} driver is on the way", style: TextStyle(fontSize: 14, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
+              Text(
+                "Your ${widget.rideType} driver is on the way",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                ),
+              ),
               const SizedBox(height: 36),
-              
+
               // Dynamic Driver Information Card
               Container(
                 padding: const EdgeInsets.all(20),
@@ -114,8 +142,15 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                         Container(
                           width: 56,
                           height: 56,
-                          decoration: BoxDecoration(color: AppTheme.secondaryColor, borderRadius: BorderRadius.circular(18)),
-                          child: const Icon(LucideIcons.user, color: AppTheme.primaryColor, size: 26),
+                          decoration: BoxDecoration(
+                            color: AppTheme.secondaryColor,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(
+                            LucideIcons.user,
+                            color: AppTheme.primaryColor,
+                            size: 26,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -124,18 +159,38 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                             children: [
                               Text(
                                 widget.driverName ?? "Xyrel D. Tenefrancia",
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primaryColor),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryColor,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.star_rounded, size: 16, color: Color(0xFFDAA520)),
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    size: 16,
+                                    color: Color(0xFFDAA520),
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     widget.driverRating ?? "4.9",
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primaryColor),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.primaryColor,
+                                    ),
                                   ),
-                                  Text("  •  Local Match", style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
+                                  Text(
+                                    "  •  Local Match",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -151,8 +206,14 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                       runSpacing: 8,
                       alignment: WrapAlignment.center,
                       children: [
-                        _infoChip(LucideIcons.bike, widget.vehicleType ?? "Bao Bao"),
-                        _infoChip(LucideIcons.hash, widget.plateNumber ?? "ABC 1234"),
+                        _infoChip(
+                          LucideIcons.bike,
+                          widget.vehicleType ?? "Bao Bao",
+                        ),
+                        _infoChip(
+                          LucideIcons.hash,
+                          widget.plateNumber ?? "ABC 1234",
+                        ),
                         _infoChip(LucideIcons.palette, "Black"),
                       ],
                     ),
@@ -160,7 +221,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               // Destination and Fare Summary Card
               Container(
                 padding: const EdgeInsets.all(16),
@@ -171,21 +232,36 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.location_on, size: 18, color: AppTheme.tertiaryColor),
+                    const Icon(
+                      Icons.location_on,
+                      size: 18,
+                      color: AppTheme.tertiaryColor,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         widget.destination.name,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryColor),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text("₱${widget.fare.toStringAsFixed(2)}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
+                    Text(
+                      "₱${widget.fare.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const Spacer(flex: 2),
-              
+
               // Navigation button
               SizedBox(
                 width: double.infinity,
@@ -195,14 +271,25 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32),
+                    ),
                     elevation: 0,
                   ),
-                  child: const Text("Track Your Driver", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                  child: const Text(
+                    "Track Your Driver",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              Text("Auto-redirecting in a moment...", style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.4))),
+              Text(
+                "Auto-redirecting in a moment...",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                ),
+              ),
               const SizedBox(height: 24),
             ],
           ),
@@ -214,13 +301,23 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
   Widget _infoChip(IconData icon, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: AppTheme.tertiaryColor),
           const SizedBox(width: 6),
-          Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryColor)),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryColor,
+            ),
+          ),
         ],
       ),
     );
