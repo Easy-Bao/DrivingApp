@@ -1,5 +1,3 @@
-//! Driver matching and proximity calculation service.
-
 use crate::models::driver_models::NearbyDriver;
 use crate::shared::math::haversine_distance;
 
@@ -13,11 +11,35 @@ use crate::shared::math::haversine_distance;
 pub fn find_nearby_drivers(passenger_lat: f64, passenger_lng: f64) -> Vec<NearbyDriver> {
     // Standard mock driver profiles
     let driver_pool = vec![
-        ("drv_01", "Melvin Perez", "Habal-Habal Motorcycle", "987-PHP", 4.9),
-        ("drv_02", "Jerry Maglasang", "Premium BaoBao Trike", "321-XYZ", 4.7),
+        (
+            "drv_01",
+            "Melvin Perez",
+            "Habal-Habal Motorcycle",
+            "987-PHP",
+            4.9,
+        ),
+        (
+            "drv_02",
+            "Jerry Maglasang",
+            "Premium BaoBao Trike",
+            "321-XYZ",
+            4.7,
+        ),
         ("drv_03", "Ramil Sombilon", "Standard Trike", "555-ABC", 4.5),
-        ("drv_04", "Crisanto Caboverde", "Habal-Habal Motorcycle", "888-BAO", 4.8),
-        ("drv_05", "Junrey Tugahan", "Premium BaoBao Trike", "777-RIDE", 4.6),
+        (
+            "drv_04",
+            "Crisanto Caboverde",
+            "Habal-Habal Motorcycle",
+            "888-BAO",
+            4.8,
+        ),
+        (
+            "drv_05",
+            "Junrey Tugahan",
+            "Premium BaoBao Trike",
+            "777-RIDE",
+            4.6,
+        ),
     ];
 
     let mut drivers = Vec::new();
@@ -63,7 +85,11 @@ pub fn find_nearby_drivers(passenger_lat: f64, passenger_lng: f64) -> Vec<Nearby
     }
 
     // Sort by composite score (best/closest first)
-    drivers.sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal));
+    drivers.sort_by(|a, b| {
+        a.score
+            .partial_cmp(&b.score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     drivers
 }

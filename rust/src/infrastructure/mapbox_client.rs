@@ -1,7 +1,7 @@
 //! Client for interacting with Mapbox APIs (Geocoding, Directions).
 
-use std::time::Duration;
 use once_cell::sync::Lazy;
+use std::time::Duration;
 
 use crate::dto::mapbox_dto::{
     MapboxDirectionsResponse, MapboxFeature, MapboxGeocodingResponse, MapboxProperties, MapboxRoute,

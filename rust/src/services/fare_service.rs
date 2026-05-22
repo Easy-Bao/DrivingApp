@@ -1,9 +1,6 @@
-//! Fare calculation business logic service.
-
 use crate::models::fare_models::{FareConfig, FareResult};
 
 /// Compute the fare for a ride given distance, duration, and pricing config.
-/// All monetary values are in PHP (₱).
 pub fn compute_fare(distance_km: f64, duration_minutes: f64, config: FareConfig) -> FareResult {
     let distance_charge = distance_km * config.per_km_rate;
     let time_charge = duration_minutes * config.per_minute_rate;

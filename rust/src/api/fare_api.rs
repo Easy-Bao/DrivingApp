@@ -1,5 +1,3 @@
-//! Fare engine FFI bridge API.
-
 use crate::models::fare_models::{FareConfig, FareResult, HeatmapCell};
 use crate::models::route_models::{RouteSequenceResult, Waypoint};
 use crate::services;

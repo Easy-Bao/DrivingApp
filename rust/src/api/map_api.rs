@@ -1,5 +1,3 @@
-//! Mapbox API wrapper FFI bridge API.
-
 use crate::infrastructure::mapbox_client;
 use crate::models::map_models::{RustPlaceResult, RustRouteResult};
 use crate::shared::math;
@@ -55,6 +53,5 @@ pub async fn get_nearby_pois(
     lat: f64,
     lng: f64,
 ) -> anyhow::Result<Vec<RustPlaceResult>> {
-    // Default radius to 2000 meters (2km) based on user request
     mapbox_client::get_nearby_pois(&token, lat, lng, 2000).await
 }

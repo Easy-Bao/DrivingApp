@@ -1,5 +1,3 @@
-//! Surge demand heatmap calculation service.
-
 use crate::models::fare_models::HeatmapCell;
 use crate::shared::math::haversine_distance;
 
