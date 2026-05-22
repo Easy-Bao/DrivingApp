@@ -248,20 +248,13 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
               ),
               TextButton(
                 onPressed: () {
-                  if (statusType == "progress") {
-                    context.pushNamed("ActivityTrackDriver");
-                  } else if (statusType == "completed") {
-                    context.pushNamed("ActivityViewDetails");
-                  } else {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Rebooking trip..."),
-                        duration: Duration(seconds: 1),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                    context.pushNamed("SearchDestination");
+                  switch (statusType) {
+                    case "progress":
+                      context.pushNamed("ActivityTrackDriver");
+                    case "completed":
+                      context.pushNamed("ActivityViewDetails");
+                    default:
+                      context.pushNamed("SearchDestination");
                   }
                 },
                 style: TextButton.styleFrom(
