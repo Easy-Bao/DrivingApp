@@ -1,16 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
-import 'package:BaoRide/core/models/place_model.dart';
+import 'package:BaoRide/core/models/place/place_model.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+/// Screen displayed once a driver has been selected/matched for the trip.
+/// Confirms matching details and shows the driver information dynamically.
 class DriverMatchedScreen extends StatefulWidget {
   final String rideType;
   final double fare;
   final PlaceModel destination;
   final String distance;
   final String duration;
+  final String? driverName;
+  final String? driverRating;
+  final String? vehicleType;
+  final String? plateNumber;
 
   const DriverMatchedScreen({
     super.key,
@@ -19,6 +25,10 @@ class DriverMatchedScreen extends StatefulWidget {
     required this.destination,
     required this.distance,
     required this.duration,
+    this.driverName,
+    this.driverRating,
+    this.vehicleType,
+    this.plateNumber,
   });
 
   @override
@@ -37,7 +47,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
     _scaleCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _scaleAnim = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
     _scaleCtrl.forward();
-    _autoNav = Timer(const Duration(seconds: 5), _goToTracking);
+    _autoNav = Timer(const Duration(seconds: 4), _goToTracking);
   }
 
   @override
@@ -59,78 +69,143 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(children: [
-            const Spacer(flex: 2),
-            // Success animation
-            ScaleTransition(
-              scale: _scaleAnim,
-              child: Container(width: 100, height: 100,
-                decoration: BoxDecoration(color: AppTheme.complete.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: Center(child: Container(width: 64, height: 64,
-                  decoration: BoxDecoration(color: AppTheme.complete, shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: AppTheme.complete.withValues(alpha: 0.3), blurRadius: 20)]),
-                  child: const Icon(LucideIcons.check, color: Colors.white, size: 32)))),
-            ),
-            const SizedBox(height: 24),
-            const Text("Driver Found!", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
-            const SizedBox(height: 8),
-            Text("Your ${widget.rideType} driver is on the way", style: TextStyle(fontSize: 14, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
-            const SizedBox(height: 36),
-            // Driver card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: AppTheme.neutralColor, borderRadius: BorderRadius.circular(24), border: Border.all(color: AppTheme.borderSide)),
-              child: Column(children: [
-                Row(children: [
-                  Container(width: 56, height: 56,
-                    decoration: BoxDecoration(color: AppTheme.secondaryColor, borderRadius: BorderRadius.circular(18)),
-                    child: const Icon(LucideIcons.user, color: AppTheme.primaryColor, size: 26)),
-                  const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text("Xyrel D. Tenefrancia", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primaryColor)),
-                    const SizedBox(height: 4),
-                    Row(children: [
-                      const Icon(Icons.star_rounded, size: 16, color: Color(0xFFDAA520)),
-                      const SizedBox(width: 4),
-                      const Text("4.9", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primaryColor)),
-                      Text("  •  142 rides", style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
-                    ]),
-                  ])),
-                ]),
-                const SizedBox(height: 16),
-                const Divider(height: 1, color: AppTheme.borderSide),
-                const SizedBox(height: 16),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  _infoChip(LucideIcons.bike, "Bao Bao"),
-                  _infoChip(LucideIcons.hash, "ABC 1234"),
-                  _infoChip(LucideIcons.palette, "Black"),
-                ]),
-              ]),
-            ),
-            const SizedBox(height: 20),
-            // Trip summary
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: AppTheme.neutralColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppTheme.borderSide)),
-              child: Row(children: [
-                const Icon(Icons.location_on, size: 18, color: AppTheme.tertiaryColor),
-                const SizedBox(width: 10),
-                Expanded(child: Text(widget.destination.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryColor), overflow: TextOverflow.ellipsis)),
-                Text("₱${widget.fare.toStringAsFixed(2)}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
-              ]),
-            ),
-            const Spacer(flex: 2),
-            // Track button
-            SizedBox(width: double.infinity, height: 56,
-              child: ElevatedButton(
-                onPressed: _goToTracking,
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)), elevation: 0),
-                child: const Text("Track Your Driver", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)))),
-            const SizedBox(height: 12),
-            Text("Auto-redirecting in a moment...", style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.4))),
-            const SizedBox(height: 24),
-          ]),
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+              // Success checkmark animation
+              ScaleTransition(
+                scale: _scaleAnim,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(color: AppTheme.complete.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: Center(
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: AppTheme.complete,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: AppTheme.complete.withValues(alpha: 0.3), blurRadius: 20)],
+                      ),
+                      child: const Icon(LucideIcons.check, color: Colors.white, size: 32),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text("Driver Found!", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
+              const SizedBox(height: 8),
+              Text("Your ${widget.rideType} driver is on the way", style: TextStyle(fontSize: 14, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
+              const SizedBox(height: 36),
+              
+              // Dynamic Driver Information Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.neutralColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.borderSide),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(color: AppTheme.secondaryColor, borderRadius: BorderRadius.circular(18)),
+                          child: const Icon(LucideIcons.user, color: AppTheme.primaryColor, size: 26),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.driverName ?? "Xyrel D. Tenefrancia",
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primaryColor),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 16, color: Color(0xFFDAA520)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    widget.driverRating ?? "4.9",
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primaryColor),
+                                  ),
+                                  Text("  •  Local Match", style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(height: 1, color: AppTheme.borderSide),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _infoChip(LucideIcons.bike, widget.vehicleType ?? "Bao Bao"),
+                        _infoChip(LucideIcons.hash, widget.plateNumber ?? "ABC 1234"),
+                        _infoChip(LucideIcons.palette, "Black"),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Destination and Fare Summary Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.neutralColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.borderSide),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 18, color: AppTheme.tertiaryColor),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.destination.name,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryColor),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text("₱${widget.fare.toStringAsFixed(2)}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
+                  ],
+                ),
+              ),
+              const Spacer(flex: 2),
+              
+              // Navigation button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _goToTracking,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                    elevation: 0,
+                  ),
+                  child: const Text("Track Your Driver", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text("Auto-redirecting in a moment...", style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.4))),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -140,11 +215,14 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 14, color: AppTheme.tertiaryColor),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryColor)),
-      ]),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppTheme.tertiaryColor),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryColor)),
+        ],
+      ),
     );
   }
 }

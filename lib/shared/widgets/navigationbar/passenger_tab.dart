@@ -1,4 +1,5 @@
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:BaoRide/core/models/place/place_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -89,8 +90,12 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
             ),
             const SizedBox(width: 12),
             GestureDetector(
-              onTap: () {
-                // context.goNamed('MapPin');
+              onTap: () async {
+                final result = await context.pushNamed("MapPin");
+                if (!context.mounted) return;
+                if (result != null && result is PlaceModel) {
+                  context.pushNamed("DestinationPreview", extra: result);
+                }
               },
               child: Container(
                 height: 64,

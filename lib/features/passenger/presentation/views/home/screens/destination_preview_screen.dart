@@ -1,4 +1,5 @@
-import "package:BaoRide/core/models/place_model.dart";
+import "package:BaoRide/core/models/place/place_model.dart";
+import "package:BaoRide/core/models/route/route_model.dart";
 import "package:BaoRide/core/services/location_service.dart";
 import "package:BaoRide/core/services/map_provider.dart";
 import "package:BaoRide/core/themes/app_themes.dart";

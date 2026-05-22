@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+/// Screen showing summary details of a completed trip.
+/// Embeds a real Mapbox map showing static trip origin/destination points.
 class ActivityViewDetails extends StatefulWidget {
   const ActivityViewDetails({super.key});
 
@@ -11,8 +14,39 @@ class ActivityViewDetails extends StatefulWidget {
 }
 
 class _ActivityViewDetailsState extends State<ActivityViewDetails> {
+  void _onMapCreated(AppMapController controller) async {
+    
+    // Static coordinates representing Balangasan to Tuburan District, Pagadian City
+    final pickupLat = 7.8340;
+    final pickupLng = 123.4350;
+    final destLat = 7.8250;
+    final destLng = 123.4450;
+
+    try {
+      await MapProvider.addMarker(controller, pickupLat, pickupLng, isOrigin: true);
+      await MapProvider.addMarker(controller, destLat, destLng, isOrigin: false);
+
+      final route = await MapProvider.getRoute(pickupLat, pickupLng, destLat, destLng);
+      if (route != null) {
+        await MapProvider.addPolyline(controller, route.polylinePoints, color: AppTheme.primaryColor, width: 4.0);
+      }
+
+      await MapProvider.fitBounds(
+        controller,
+        [LatLng(pickupLat, pickupLng), LatLng(destLat, destLng)],
+        padding: 40.0,
+      );
+    } catch (e) {
+      debugPrint("Error setting up details preview map: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Center initially on general Pagadian center coordinate
+    const centerLat = 7.8300;
+    const centerLng = 123.4400;
+
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
@@ -46,134 +80,15 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: AppTheme.outlineBorderColor),
               ),
-              child: Stack(
-                children: [
-                  // Background grid pattern
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _MapGridPainter(),
-                    ),
-                  ),
-                  // Route line
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _RouteLinePainter(),
-                    ),
-                  ),
-                  // Pickup pin
-                  Positioned(
-                    left: 48,
-                    top: 60,
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primaryColor
-                                    .withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.circle,
-                            size: 8,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Pickup",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor
-                                .withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Destination pin
-                  Positioned(
-                    right: 48,
-                    bottom: 50,
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppTheme.tertiaryColor,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.tertiaryColor
-                                    .withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.location_on,
-                            size: 10,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Drop-off",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.tertiaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Distance badge
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.outlineBorderColor),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.route,
-                            size: 12,
-                            color: AppTheme.primaryColor
-                                .withValues(alpha: 0.7),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            "2.4 km",
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(23),
+                child: MapProvider.buildMapView(
+                  latitude: centerLat,
+                  longitude: centerLng,
+                  zoom: 13.0,
+                  interactive: false,
+                  onMapCreated: _onMapCreated,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -215,7 +130,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               ],
             ),
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Divider(color: AppTheme.outlineBorderColor),
             ),
             Container(
@@ -349,63 +264,4 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
       ],
     );
   }
-}
-
-class _MapGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.outlineBorderColor.withValues(alpha: 0.3)
-      ..strokeWidth = 0.5;
-
-    const spacing = 20.0;
-    for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _RouteLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.primaryColor.withValues(alpha: 0.3)
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
-
-    final path = Path();
-    path.moveTo(60, 70);
-    path.cubicTo(
-      size.width * 0.35,
-      30,
-      size.width * 0.65,
-      size.height - 30,
-      size.width - 60,
-      size.height - 60,
-    );
-
-    // Draw dashed line
-    const dashWidth = 6.0;
-    const dashSpace = 4.0;
-    double distance = 0;
-    for (final metric in path.computeMetrics()) {
-      while (distance < metric.length) {
-        final end = (distance + dashWidth).clamp(0, metric.length).toDouble();
-        canvas.drawPath(
-          metric.extractPath(distance, end),
-          paint,
-        );
-        distance += dashWidth + dashSpace;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -1,4 +1,4 @@
-import 'package:BaoRide/core/models/place_model.dart';
+import 'package:BaoRide/core/models/place/place_model.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/activity_detail_map_screen.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/add_category.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/screens/destination_preview_screen.dart';
@@ -121,10 +121,14 @@ class HomeModule {
           destination: data["destination"] as PlaceModel,
           distance: data["distance"] as String,
           duration: data["duration"] as String,
+          driverName: data["driverName"] as String?,
+          driverRating: data["driverRating"] as String?,
+          vehicleType: data["vehicleType"] as String?,
+          plateNumber: data["plateNumber"] as String?,
         );
       },
       transition: GoTransitions.fadeUpwards,
-      transitionDuration: Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 400),
     ),
   ];
 

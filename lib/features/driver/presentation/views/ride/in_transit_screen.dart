@@ -1,12 +1,18 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+/// Screen displayed to the driver during passenger transit.
+/// Displays a live Mapbox widget tracing the route to destination.
 class InTransitScreen extends StatefulWidget {
   final String pickup, dropoff, duration;
   final double distance, fare;
+
   const InTransitScreen({
     super.key,
     required this.pickup,
@@ -15,149 +21,91 @@ class InTransitScreen extends StatefulWidget {
     required this.fare,
     required this.duration,
   });
+
   @override
   State<InTransitScreen> createState() => _InTransitScreenState();
 }
 
-class _InTransitScreenState extends State<InTransitScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _moveCtrl;
-  late AnimationController _pulseCtrl;
+class _InTransitScreenState extends State<InTransitScreen> {
+  bool _initialized = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _moveCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 15),
-    )..repeat();
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+  void _onMapCreated(AppMapController controller) async {
+    if (!_initialized) {
+      _initialized = true;
+
+      // Simulated coordinates for Pagadian City
+      final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
+      final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
+
+      // Dropoff is displaced
+      final dropoffLat = pickupLat - 0.009;
+      final dropoffLng = pickupLng + 0.008;
+
+      try {
+        await MapProvider.addMarker(controller, pickupLat, pickupLng, isOrigin: true);
+        await MapProvider.addMarker(controller, dropoffLat, dropoffLng, isOrigin: false);
+
+        final route = await MapProvider.getRoute(pickupLat, pickupLng, dropoffLat, dropoffLng);
+        if (route != null) {
+          await MapProvider.addPolyline(controller, route.polylinePoints, color: AppTheme.primaryColor, width: 4.5);
+        }
+
+        await MapProvider.fitBounds(
+          controller,
+          [LatLng(pickupLat, pickupLng), LatLng(dropoffLat, dropoffLng)],
+          padding: 60.0,
+        );
+      } catch (e) {
+        debugPrint("Error drawing transit map: $e");
+      }
+    }
   }
 
-  @override
-  void dispose() {
-    _moveCtrl.dispose();
-    _pulseCtrl.dispose();
-    super.dispose();
-  }
+  void _completTrip() async {
+    await BlocProvider.of<RideFlowCubit>(context).endRide(
+          distanceKm: widget.distance,
+          durationMinutes: 10,
+        );
 
-  void _completTrip() {
-    context.pushReplacementNamed(
-      "CompleteTripDriver",
-      extra: {
-        "pickup": widget.pickup,
-        "dropoff": widget.dropoff,
-        "distance": widget.distance,
-        "fare": widget.fare,
-        "duration": widget.duration,
-      },
-    );
+    if (mounted) {
+      context.pushReplacementNamed(
+        "CompleteTripDriver",
+        extra: {
+          "pickup": widget.pickup,
+          "dropoff": widget.dropoff,
+          "distance": widget.distance,
+          "fare": widget.fare,
+          "duration": widget.duration,
+        },
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final defaultLat = LocationService.lastPosition?.latitude ?? 7.828282;
+    final defaultLng = LocationService.lastPosition?.longitude ?? 123.434343;
+
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
-          // Map
+          // Map Background (Replacing CustomPainter grid)
           Positioned.fill(
             bottom: 240,
             child: Container(
               color: AppTheme.neutralColor,
-              child: Stack(
-                children: [
-                  Positioned.fill(child: CustomPaint(painter: _Grid())),
-                  Positioned.fill(child: CustomPaint(painter: _Route())),
-                  // Driver moving
-                  AnimatedBuilder(
-                    animation: _moveCtrl,
-                    builder: (ctx, _) {
-                      final t = _moveCtrl.value;
-                      final w = MediaQuery.of(context).size.width;
-                      final h = MediaQuery.of(context).size.height * 0.4;
-                      return Positioned(
-                        left: 50 + (w - 140) * t,
-                        top: h * 0.4 + sin(t * pi * 0.8) * h * 0.25,
-                        child: AnimatedBuilder(
-                          animation: _pulseCtrl,
-                          builder: (ctx, _) {
-                            return Transform.scale(
-                              scale: 1.0 + _pulseCtrl.value * 0.12,
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                      blurRadius: 16,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  LucideIcons.bike,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                  // Destination
-                  Positioned(
-                    right: 40,
-                    bottom: 50,
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.tertiaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            "Drop-off",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.tertiaryColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              child: MapProvider.buildMapView(
+                latitude: defaultLat,
+                longitude: defaultLng,
+                zoom: 14.5,
+                interactive: true,
+                onMapCreated: _onMapCreated,
               ),
             ),
           ),
-          // Status badge
+
+          // Header Status Badge
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -186,10 +134,7 @@ class _InTransitScreenState extends State<InTransitScreen>
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor,
                       borderRadius: BorderRadius.circular(20),
@@ -221,16 +166,15 @@ class _InTransitScreenState extends State<InTransitScreen>
               ),
             ),
           ),
-          // Bottom panel
+
+          // Bottom sheet details & Actions
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(32),
-                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.08),
@@ -253,7 +197,6 @@ class _InTransitScreenState extends State<InTransitScreen>
                       ),
                     ),
                   ),
-                  // Drop-off
                   Row(
                     children: [
                       const Icon(
@@ -289,7 +232,6 @@ class _InTransitScreenState extends State<InTransitScreen>
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // Complete
                   GestureDetector(
                     onTap: _completTrip,
                     child: Container(
@@ -353,55 +295,4 @@ class _InTransitScreenState extends State<InTransitScreen>
       ),
     );
   }
-}
-
-class _Grid extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = AppTheme.outlineBorderColor.withValues(alpha: 0.2)
-      ..strokeWidth = 0.5;
-    for (double x = 0; x < size.width; x += 24) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);
-    }
-    for (double y = 0; y < size.height; y += 24) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), p);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _Route extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = AppTheme.primaryColor.withValues(alpha: 0.3)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-    final path = Path()
-      ..moveTo(50, size.height * 0.5)
-      ..cubicTo(
-        size.width * 0.35,
-        size.height * 0.15,
-        size.width * 0.65,
-        size.height * 0.75,
-        size.width - 40,
-        size.height - 50,
-      );
-    double d = 0;
-    for (final m in path.computeMetrics()) {
-      while (d < m.length) {
-        canvas.drawPath(
-          m.extractPath(d, (d + 8).clamp(0, m.length).toDouble()),
-          p,
-        );
-        d += 13;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

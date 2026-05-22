@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:BaoRide/src/rust/application/fare_engine.dart' as rust;
+import 'package:BaoRide/src/rust/api/fare_api.dart' as rust_api;
+import 'package:BaoRide/src/rust/models/route_models.dart' as rust;
 
 class RouteOptimizerScreen extends StatefulWidget {
   const RouteOptimizerScreen({super.key});
@@ -17,7 +18,7 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
   double _optimizedDistance = 0.0;
 
   // Initial list of waypoints (unsorted/raw order)
-  final List<rust.Waypoint> _rawWaypoints = const [
+  final List<rust.Waypoint> _rawWaypoints = [
     rust.Waypoint(id: "1", name: "Drop-off: Passenger A (Dipolog Market)", lat: 8.5862, lng: 123.3392, isPickup: false, passengerId: "A"),
     rust.Waypoint(id: "2", name: "Pick-up: Passenger B (Galas Port)", lat: 8.5912, lng: 123.3325, isPickup: true, passengerId: "B"),
     rust.Waypoint(id: "3", name: "Pick-up: Passenger A (SM City Dipolog)", lat: 8.5891, lng: 123.3441, isPickup: true, passengerId: "A"),
@@ -56,7 +57,7 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
       final startLat = 8.5879; // Current driver location
       final startLng = 123.3402;
 
-      final result = await rust.calculateOptimalRoute(
+      final result = await rust_api.calculateOptimalRoute(
         startLat: startLat,
         startLng: startLng,
         waypoints: _rawWaypoints,

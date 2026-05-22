@@ -6,12 +6,16 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
-import 'application/fare_engine.dart';
-import 'application/map_api.dart';
+import 'api/driver_api.dart';
+import 'api/fare_api.dart';
+import 'api/map_api.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'domain/models.dart';
 import 'frb_generated.dart';
+import 'models/driver_models.dart';
+import 'models/fare_models.dart';
+import 'models/map_models.dart';
+import 'models/route_models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -68,6 +72,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<HeatmapCell> dco_decode_list_heatmap_cell(dynamic raw);
 
   @protected
+  List<NearbyDriver> dco_decode_list_nearby_driver(dynamic raw);
+
+  @protected
   List<double> dco_decode_list_prim_f_64_loose(dynamic raw);
 
   @protected
@@ -81,6 +88,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Waypoint> dco_decode_list_waypoint(dynamic raw);
+
+  @protected
+  NearbyDriver dco_decode_nearby_driver(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -162,6 +172,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<HeatmapCell> sse_decode_list_heatmap_cell(SseDeserializer deserializer);
 
   @protected
+  List<NearbyDriver> sse_decode_list_nearby_driver(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<double> sse_decode_list_prim_f_64_loose(SseDeserializer deserializer);
 
   @protected
@@ -177,6 +192,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Waypoint> sse_decode_list_waypoint(SseDeserializer deserializer);
+
+  @protected
+  NearbyDriver sse_decode_nearby_driver(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -278,6 +296,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_nearby_driver(
+    List<NearbyDriver> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_f_64_loose(
     List<double> self,
     SseSerializer serializer,
@@ -303,6 +327,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_waypoint(List<Waypoint> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_nearby_driver(NearbyDriver self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);

@@ -3,14 +3,18 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
-import 'application/fare_engine.dart';
-import 'application/map_api.dart';
+import 'api/driver_api.dart';
+import 'api/fare_api.dart';
+import 'api/map_api.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'domain/models.dart';
 import 'frb_generated.dart';
 import 'frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
+import 'models/driver_models.dart';
+import 'models/fare_models.dart';
+import 'models/map_models.dart';
+import 'models/route_models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 /// Main entrypoint of the Rust API
@@ -66,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 270884330;
+  int get rustContentHash => 2096411110;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -78,13 +82,13 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<RouteSequenceResult> crateApplicationFareEngineCalculateOptimalRoute({
+  Future<RouteSequenceResult> crateApiFareApiCalculateOptimalRoute({
     required double startLat,
     required double startLng,
     required List<Waypoint> waypoints,
   });
 
-  Future<List<HeatmapCell>> crateApplicationFareEngineCalculateSurgeHeatmap({
+  Future<List<HeatmapCell>> crateApiFareApiCalculateSurgeHeatmap({
     required double centerLat,
     required double centerLng,
     required int gridSize,
@@ -93,24 +97,29 @@ abstract class RustLibApi extends BaseApi {
     required List<double> requestLngs,
   });
 
-  Future<FareResult> crateApplicationFareEngineComputeFare({
+  Future<FareResult> crateApiFareApiComputeFare({
     required double distanceKm,
     required double durationMinutes,
     required FareConfig config,
   });
 
-  Future<FareResult> crateApplicationFareEngineComputeFareDefault({
+  Future<FareResult> crateApiFareApiComputeFareDefault({
     required double distanceKm,
     required double durationMinutes,
   });
 
-  Future<List<RustPlaceResult>> crateApplicationMapApiGetNearbyPois({
+  Future<List<NearbyDriver>> crateApiDriverApiFindNearbyDrivers({
+    required double passengerLat,
+    required double passengerLng,
+  });
+
+  Future<List<RustPlaceResult>> crateApiMapApiGetNearbyPois({
     required String token,
     required double lat,
     required double lng,
   });
 
-  Future<RustRouteResult?> crateApplicationMapApiGetRoute({
+  Future<RustRouteResult?> crateApiMapApiGetRoute({
     required String token,
     required double originLat,
     required double originLng,
@@ -118,20 +127,20 @@ abstract class RustLibApi extends BaseApi {
     required double destLng,
   });
 
-  Future<double> crateApplicationMapApiHaversineDistance({
+  Future<double> crateApiMapApiHaversineDistance({
     required double lat1,
     required double lng1,
     required double lat2,
     required double lng2,
   });
 
-  Future<RustPlaceResult?> crateApplicationMapApiReverseGeocode({
+  Future<RustPlaceResult?> crateApiMapApiReverseGeocode({
     required String token,
     required double lat,
     required double lng,
   });
 
-  Future<List<RustPlaceResult>> crateApplicationMapApiSearchPlaces({
+  Future<List<RustPlaceResult>> crateApiMapApiSearchPlaces({
     required String token,
     required String query,
     double? proximityLat,
@@ -150,7 +159,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<RouteSequenceResult> crateApplicationFareEngineCalculateOptimalRoute({
+  Future<RouteSequenceResult> crateApiFareApiCalculateOptimalRoute({
     required double startLat,
     required double startLng,
     required List<Waypoint> waypoints,
@@ -173,21 +182,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_route_sequence_result,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApplicationFareEngineCalculateOptimalRouteConstMeta,
+        constMeta: kCrateApiFareApiCalculateOptimalRouteConstMeta,
         argValues: [startLat, startLng, waypoints],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApplicationFareEngineCalculateOptimalRouteConstMeta =>
+  TaskConstMeta get kCrateApiFareApiCalculateOptimalRouteConstMeta =>
       const TaskConstMeta(
         debugName: "calculate_optimal_route",
         argNames: ["startLat", "startLng", "waypoints"],
       );
 
   @override
-  Future<List<HeatmapCell>> crateApplicationFareEngineCalculateSurgeHeatmap({
+  Future<List<HeatmapCell>> crateApiFareApiCalculateSurgeHeatmap({
     required double centerLat,
     required double centerLng,
     required int gridSize,
@@ -216,7 +225,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_list_heatmap_cell,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApplicationFareEngineCalculateSurgeHeatmapConstMeta,
+        constMeta: kCrateApiFareApiCalculateSurgeHeatmapConstMeta,
         argValues: [
           centerLat,
           centerLng,
@@ -230,7 +239,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     );
   }
 
-  TaskConstMeta get kCrateApplicationFareEngineCalculateSurgeHeatmapConstMeta =>
+  TaskConstMeta get kCrateApiFareApiCalculateSurgeHeatmapConstMeta =>
       const TaskConstMeta(
         debugName: "calculate_surge_heatmap",
         argNames: [
@@ -244,7 +253,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<FareResult> crateApplicationFareEngineComputeFare({
+  Future<FareResult> crateApiFareApiComputeFare({
     required double distanceKm,
     required double durationMinutes,
     required FareConfig config,
@@ -267,21 +276,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_fare_result,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApplicationFareEngineComputeFareConstMeta,
+        constMeta: kCrateApiFareApiComputeFareConstMeta,
         argValues: [distanceKm, durationMinutes, config],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApplicationFareEngineComputeFareConstMeta =>
-      const TaskConstMeta(
-        debugName: "compute_fare",
-        argNames: ["distanceKm", "durationMinutes", "config"],
-      );
+  TaskConstMeta get kCrateApiFareApiComputeFareConstMeta => const TaskConstMeta(
+    debugName: "compute_fare",
+    argNames: ["distanceKm", "durationMinutes", "config"],
+  );
 
   @override
-  Future<FareResult> crateApplicationFareEngineComputeFareDefault({
+  Future<FareResult> crateApiFareApiComputeFareDefault({
     required double distanceKm,
     required double durationMinutes,
   }) {
@@ -302,21 +310,56 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_fare_result,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApplicationFareEngineComputeFareDefaultConstMeta,
+        constMeta: kCrateApiFareApiComputeFareDefaultConstMeta,
         argValues: [distanceKm, durationMinutes],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApplicationFareEngineComputeFareDefaultConstMeta =>
+  TaskConstMeta get kCrateApiFareApiComputeFareDefaultConstMeta =>
       const TaskConstMeta(
         debugName: "compute_fare_default",
         argNames: ["distanceKm", "durationMinutes"],
       );
 
   @override
-  Future<List<RustPlaceResult>> crateApplicationMapApiGetNearbyPois({
+  Future<List<NearbyDriver>> crateApiDriverApiFindNearbyDrivers({
+    required double passengerLat,
+    required double passengerLng,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_64(passengerLat, serializer);
+          sse_encode_f_64(passengerLng, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_nearby_driver,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiDriverApiFindNearbyDriversConstMeta,
+        argValues: [passengerLat, passengerLng],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDriverApiFindNearbyDriversConstMeta =>
+      const TaskConstMeta(
+        debugName: "find_nearby_drivers",
+        argNames: ["passengerLat", "passengerLng"],
+      );
+
+  @override
+  Future<List<RustPlaceResult>> crateApiMapApiGetNearbyPois({
     required String token,
     required double lat,
     required double lng,
@@ -331,7 +374,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 6,
             port: port_,
           );
         },
@@ -339,21 +382,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_list_rust_place_result,
           decodeErrorData: sse_decode_AnyhowException,
         ),
-        constMeta: kCrateApplicationMapApiGetNearbyPoisConstMeta,
+        constMeta: kCrateApiMapApiGetNearbyPoisConstMeta,
         argValues: [token, lat, lng],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApplicationMapApiGetNearbyPoisConstMeta =>
+  TaskConstMeta get kCrateApiMapApiGetNearbyPoisConstMeta =>
       const TaskConstMeta(
         debugName: "get_nearby_pois",
         argNames: ["token", "lat", "lng"],
       );
 
   @override
-  Future<RustRouteResult?> crateApplicationMapApiGetRoute({
+  Future<RustRouteResult?> crateApiMapApiGetRoute({
     required String token,
     required double originLat,
     required double originLng,
@@ -372,7 +415,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 7,
             port: port_,
           );
         },
@@ -380,21 +423,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_opt_box_autoadd_rust_route_result,
           decodeErrorData: sse_decode_AnyhowException,
         ),
-        constMeta: kCrateApplicationMapApiGetRouteConstMeta,
+        constMeta: kCrateApiMapApiGetRouteConstMeta,
         argValues: [token, originLat, originLng, destLat, destLng],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApplicationMapApiGetRouteConstMeta =>
-      const TaskConstMeta(
-        debugName: "get_route",
-        argNames: ["token", "originLat", "originLng", "destLat", "destLng"],
-      );
+  TaskConstMeta get kCrateApiMapApiGetRouteConstMeta => const TaskConstMeta(
+    debugName: "get_route",
+    argNames: ["token", "originLat", "originLng", "destLat", "destLng"],
+  );
 
   @override
-  Future<double> crateApplicationMapApiHaversineDistance({
+  Future<double> crateApiMapApiHaversineDistance({
     required double lat1,
     required double lng1,
     required double lat2,
@@ -411,7 +453,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -419,21 +461,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_f_64,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApplicationMapApiHaversineDistanceConstMeta,
+        constMeta: kCrateApiMapApiHaversineDistanceConstMeta,
         argValues: [lat1, lng1, lat2, lng2],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApplicationMapApiHaversineDistanceConstMeta =>
+  TaskConstMeta get kCrateApiMapApiHaversineDistanceConstMeta =>
       const TaskConstMeta(
         debugName: "haversine_distance",
         argNames: ["lat1", "lng1", "lat2", "lng2"],
       );
 
   @override
-  Future<RustPlaceResult?> crateApplicationMapApiReverseGeocode({
+  Future<RustPlaceResult?> crateApiMapApiReverseGeocode({
     required String token,
     required double lat,
     required double lng,
@@ -448,7 +490,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 9,
             port: port_,
           );
         },
@@ -456,21 +498,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_opt_box_autoadd_rust_place_result,
           decodeErrorData: sse_decode_AnyhowException,
         ),
-        constMeta: kCrateApplicationMapApiReverseGeocodeConstMeta,
+        constMeta: kCrateApiMapApiReverseGeocodeConstMeta,
         argValues: [token, lat, lng],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApplicationMapApiReverseGeocodeConstMeta =>
+  TaskConstMeta get kCrateApiMapApiReverseGeocodeConstMeta =>
       const TaskConstMeta(
         debugName: "reverse_geocode",
         argNames: ["token", "lat", "lng"],
       );
 
   @override
-  Future<List<RustPlaceResult>> crateApplicationMapApiSearchPlaces({
+  Future<List<RustPlaceResult>> crateApiMapApiSearchPlaces({
     required String token,
     required String query,
     double? proximityLat,
@@ -491,7 +533,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 10,
             port: port_,
           );
         },
@@ -499,25 +541,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_list_rust_place_result,
           decodeErrorData: sse_decode_AnyhowException,
         ),
-        constMeta: kCrateApplicationMapApiSearchPlacesConstMeta,
+        constMeta: kCrateApiMapApiSearchPlacesConstMeta,
         argValues: [token, query, proximityLat, proximityLng, userLat, userLng],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApplicationMapApiSearchPlacesConstMeta =>
-      const TaskConstMeta(
-        debugName: "search_places",
-        argNames: [
-          "token",
-          "query",
-          "proximityLat",
-          "proximityLng",
-          "userLat",
-          "userLng",
-        ],
-      );
+  TaskConstMeta get kCrateApiMapApiSearchPlacesConstMeta => const TaskConstMeta(
+    debugName: "search_places",
+    argNames: [
+      "token",
+      "query",
+      "proximityLat",
+      "proximityLng",
+      "userLat",
+      "userLng",
+    ],
+  );
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
@@ -641,6 +682,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<NearbyDriver> dco_decode_list_nearby_driver(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_nearby_driver).toList();
+  }
+
+  @protected
   List<double> dco_decode_list_prim_f_64_loose(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as List<double>;
@@ -668,6 +715,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<Waypoint> dco_decode_list_waypoint(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_waypoint).toList();
+  }
+
+  @protected
+  NearbyDriver dco_decode_nearby_driver(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return NearbyDriver(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      vehicleType: dco_decode_String(arr[2]),
+      plateNumber: dco_decode_String(arr[3]),
+      rating: dco_decode_f_64(arr[4]),
+      lat: dco_decode_f_64(arr[5]),
+      lng: dco_decode_f_64(arr[6]),
+      distanceKm: dco_decode_f_64(arr[7]),
+      etaMinutes: dco_decode_f_64(arr[8]),
+      score: dco_decode_f_64(arr[9]),
+    );
   }
 
   @protected
@@ -901,6 +968,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<NearbyDriver> sse_decode_list_nearby_driver(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <NearbyDriver>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_nearby_driver(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<double> sse_decode_list_prim_f_64_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -945,6 +1026,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_waypoint(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  NearbyDriver sse_decode_nearby_driver(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_vehicleType = sse_decode_String(deserializer);
+    var var_plateNumber = sse_decode_String(deserializer);
+    var var_rating = sse_decode_f_64(deserializer);
+    var var_lat = sse_decode_f_64(deserializer);
+    var var_lng = sse_decode_f_64(deserializer);
+    var var_distanceKm = sse_decode_f_64(deserializer);
+    var var_etaMinutes = sse_decode_f_64(deserializer);
+    var var_score = sse_decode_f_64(deserializer);
+    return NearbyDriver(
+      id: var_id,
+      name: var_name,
+      vehicleType: var_vehicleType,
+      plateNumber: var_plateNumber,
+      rating: var_rating,
+      lat: var_lat,
+      lng: var_lng,
+      distanceKm: var_distanceKm,
+      etaMinutes: var_etaMinutes,
+      score: var_score,
+    );
   }
 
   @protected
@@ -1200,6 +1308,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_nearby_driver(
+    List<NearbyDriver> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_nearby_driver(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_f_64_loose(
     List<double> self,
     SseSerializer serializer,
@@ -1250,6 +1370,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_waypoint(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_nearby_driver(NearbyDriver self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.vehicleType, serializer);
+    sse_encode_String(self.plateNumber, serializer);
+    sse_encode_f_64(self.rating, serializer);
+    sse_encode_f_64(self.lat, serializer);
+    sse_encode_f_64(self.lng, serializer);
+    sse_encode_f_64(self.distanceKm, serializer);
+    sse_encode_f_64(self.etaMinutes, serializer);
+    sse_encode_f_64(self.score, serializer);
   }
 
   @protected

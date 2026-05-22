@@ -1,4 +1,4 @@
-import "package:BaoRide/core/models/ride_history_model.dart";
+import "package:BaoRide/core/models/ride_history/ride_history_model.dart";
 import "package:BaoRide/core/themes/app_themes.dart";
 import "package:flutter/material.dart";
 import "package:flutter_lucide/flutter_lucide.dart";

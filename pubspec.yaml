@@ -31,20 +31,28 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  # Routing
   go_router_modular: ^5.0.5
-  flutter_riverpod: ^3.3.1
-  crystal_navigation_bar:
-  dio: ^5.9.2
-  retrofit: ^4.9.2
-  flutter_secure_storage: ^10.0.0
-  fpdart: ^1.2.0
+
+  # State Management
+  flutter_bloc: ^9.1.0
+  equatable: ^2.0.7
+
+  # Data Models & Serialization
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # UI
   flutter_lucide: ^1.8.2
+
+  # Environment
   flutter_dotenv: ^6.0.1
+
+  # Maps & Location
   mapbox_maps_flutter: ^2.23.0
   geolocator: ^13.0.2
+
+  # Rust Bridge
   rust_lib_BaoRide:
     path: rust_builder
   flutter_rust_bridge: 2.12.0
@@ -53,14 +61,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
   integration_test:
     sdk: flutter
+
+  # Code Generation
+  freezed: ^3.0.0
+  json_serializable: ^6.9.4
+  build_runner: ^2.4.15
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

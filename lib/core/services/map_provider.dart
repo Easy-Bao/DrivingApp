@@ -2,10 +2,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:BaoRide/core/config/env_config.dart';
-import 'package:BaoRide/core/models/place_model.dart';
-import 'package:BaoRide/core/models/route_model.dart';
+import 'package:BaoRide/core/models/place/place_model.dart';
+import 'package:BaoRide/core/models/route/route_model.dart';
 import 'package:BaoRide/core/services/location_service.dart';
-import 'package:BaoRide/src/rust/application/map_api.dart' as rust_api;
+import 'package:BaoRide/src/rust/api/map_api.dart' as rust_api;
 
 class LatLng {
   final double latitude;
@@ -139,7 +139,7 @@ class MapProvider {
       return RouteModel(
         polylinePoints: points,
         distanceKm: rustResult.distanceKm,
-        estimatedTime: Duration(seconds: rustResult.durationSeconds.round()),
+        durationSeconds: rustResult.durationSeconds.round(),
         summary: rustResult.summary,
       );
     } catch (e) {
@@ -195,6 +195,14 @@ class MapProvider {
         zoom: zoom,
       ),
       onMapCreated: (controller) {
+        // Disable logo and attribution watermark
+        controller.logo.updateSettings(
+          mapbox.LogoSettings(enabled: false),
+        );
+        controller.attribution.updateSettings(
+          mapbox.AttributionSettings(enabled: false),
+        );
+
         if (!interactive) {
           controller.gestures.updateSettings(
             mapbox.GesturesSettings(

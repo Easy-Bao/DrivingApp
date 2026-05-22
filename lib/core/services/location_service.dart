@@ -1,5 +1,5 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:BaoRide/src/rust/application/map_api.dart' as rust_api;
+import 'package:BaoRide/src/rust/api/map_api.dart' as rust_api;
 
 /// Device location service using geolocator.
 /// Provider-agnostic — works regardless of map provider.

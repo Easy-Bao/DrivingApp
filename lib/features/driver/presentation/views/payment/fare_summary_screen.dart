@@ -141,7 +141,7 @@ class FareSummaryScreen extends StatelessWidget {
               const Spacer(),
               // Confirm cash
               GestureDetector(
-                onTap: () => context.pushReplacementNamed("RatePassenger"),
+                onTap: () => context.goNamed("DriverDashboard"),
                 child: Container(
                   width: double.infinity,
                   height: 72,
