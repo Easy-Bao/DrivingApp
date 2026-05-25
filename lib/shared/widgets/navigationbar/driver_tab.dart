@@ -38,32 +38,26 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
   Widget build(BuildContext context) {
     final sel = _calcIndex(context);
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
       body: widget.child,
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      bottomNavigationBar: SafeArea(
+        top: false,
         child: Container(
-          height: 64,
+          height: 60,
           decoration: BoxDecoration(
             color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+            border: Border(
+              top: BorderSide(
+                color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
+                width: 1,
               ),
-            ],
+            ),
           ),
           child: Row(
             children: [
-              _tab(context, LucideIcons.layout_dashboard, 0, sel == 0),
-              _tab(context, LucideIcons.wallet, 1, sel == 1),
-              _tab(context, LucideIcons.user, 2, sel == 2),
+              _tab(context, LucideIcons.layout_dashboard, "Dashboard", 0, sel == 0),
+              _tab(context, LucideIcons.wallet, "Earnings", 1, sel == 1),
+              _tab(context, LucideIcons.user, "Account", 2, sel == 2),
             ],
           ),
         ),
@@ -71,28 +65,34 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
     );
   }
 
-  Widget _tab(BuildContext ctx, IconData icon, int idx, bool isSel) {
+  Widget _tab(BuildContext ctx, IconData icon, String label, int idx, bool isSel) {
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => _onTap(idx, ctx),
         child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSel
-                  ? AppTheme.primaryColor.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: isSel
-                  ? AppTheme.selectedItemColor
-                  : AppTheme.unselectedItemColor,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: isSel
+                    ? AppTheme.selectedItemColor
+                    : AppTheme.unselectedItemColor,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
+                  color: isSel
+                      ? AppTheme.selectedItemColor
+                      : AppTheme.unselectedItemColor,
+                ),
+              ),
+            ],
           ),
         ),
       ),
