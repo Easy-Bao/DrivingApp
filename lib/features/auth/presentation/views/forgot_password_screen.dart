@@ -1,7 +1,7 @@
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -29,7 +29,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         centerTitle: true,
         title: Image.asset(
-          "assets/logo/applogo.png",
+          'assets/logo/applogo.png',
           height: 150,
           fit: BoxFit.cover,
         ),
@@ -51,7 +51,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Text(
-                            "Forgot Password?",
+                            'Forgot Password?',
                             style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
@@ -72,7 +72,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              "EMAIL ADDRESS",
+                              'EMAIL ADDRESS',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -87,7 +87,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             controller: _emailController,
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
-                              hintText: "Email",
+                              hintText: 'Email',
                               prefixIcon: const Padding(
                                 padding: EdgeInsets.only(left: 10),
                                 child: Icon(LucideIcons.mail, size: 20),
@@ -131,7 +131,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Sent Reset Link",
+                                'Sent Reset Link',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -146,7 +146,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         TextButton(
                           onPressed: () => context.pop(),
                           child: const Text(
-                            "Back to Login",
+                            'Back to Login',
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.bold,

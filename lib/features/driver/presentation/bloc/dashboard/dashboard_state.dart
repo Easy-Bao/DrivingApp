@@ -1,29 +1,57 @@
-import 'package:equatable/equatable.dart';
 import 'package:BaoRide/src/rust/models/fare_models.dart';
+import 'package:equatable/equatable.dart';
 
+/// Immutable state for the driver dashboard.
+///
+/// All fields default to empty/zero — the UI can distinguish between
+/// "not yet loaded" and "loaded as zero" using [isLoadingStats].
 class DashboardState extends Equatable {
   final bool isOnline;
+  final bool isLoadingStats;
+  final bool isLoadingHeatmap;
+  final double todayEarnings;
+  final int todayTrips;
+  final double hoursOnline;
   final List<HeatmapCell> surgeCells;
-  final bool isLoading;
 
   const DashboardState({
-    required this.isOnline,
-    required this.surgeCells,
-    required this.isLoading,
+    this.isOnline = false,
+    this.isLoadingStats = false,
+    this.isLoadingHeatmap = false,
+    this.todayEarnings = 0.0,
+    this.todayTrips = 0,
+    this.hoursOnline = 0.0,
+    this.surgeCells = const [],
   });
 
   DashboardState copyWith({
     bool? isOnline,
+    bool? isLoadingStats,
+    bool? isLoadingHeatmap,
+    double? todayEarnings,
+    int? todayTrips,
+    double? hoursOnline,
     List<HeatmapCell>? surgeCells,
-    bool? isLoading,
   }) {
     return DashboardState(
       isOnline: isOnline ?? this.isOnline,
+      isLoadingStats: isLoadingStats ?? this.isLoadingStats,
+      isLoadingHeatmap: isLoadingHeatmap ?? this.isLoadingHeatmap,
+      todayEarnings: todayEarnings ?? this.todayEarnings,
+      todayTrips: todayTrips ?? this.todayTrips,
+      hoursOnline: hoursOnline ?? this.hoursOnline,
       surgeCells: surgeCells ?? this.surgeCells,
-      isLoading: isLoading ?? this.isLoading,
     );
   }
 
   @override
-  List<Object?> get props => [isOnline, surgeCells, isLoading];
+  List<Object?> get props => [
+    isOnline,
+    isLoadingStats,
+    isLoadingHeatmap,
+    todayEarnings,
+    todayTrips,
+    hoursOnline,
+    surgeCells,
+  ];
 }

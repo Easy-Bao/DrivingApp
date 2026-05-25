@@ -55,9 +55,15 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
           ),
           child: Row(
             children: [
-              _tab(context, LucideIcons.layout_dashboard, "Dashboard", 0, sel == 0),
-              _tab(context, LucideIcons.wallet, "Earnings", 1, sel == 1),
-              _tab(context, LucideIcons.user, "Account", 2, sel == 2),
+              _tab(
+                context,
+                LucideIcons.layout_dashboard,
+                'Dashboard',
+                0,
+                sel == 0,
+              ),
+              _tab(context, LucideIcons.wallet, 'Earnings', 1, sel == 1),
+              _tab(context, LucideIcons.user, 'Account', 2, sel == 2),
             ],
           ),
         ),
@@ -65,7 +71,13 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
     );
   }
 
-  Widget _tab(BuildContext ctx, IconData icon, String label, int idx, bool isSel) {
+  Widget _tab(
+    BuildContext ctx,
+    IconData icon,
+    String label,
+    int idx,
+    bool isSel,
+  ) {
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

@@ -9,19 +9,10 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 /// Configuration for fare calculation.
 /// Pass custom values for different vehicle types or surge periods.
 class FareConfig {
-  /// Fixed starting cost (e.g., ₱20.00).
   final double baseFare;
-
-  /// Cost per kilometer driven (e.g., ₱10.00).
   final double perKmRate;
-
-  /// Cost per minute of travel time (e.g., ₱1.50).
   final double perMinuteRate;
-
-  /// Multiplier applied during high-demand periods (1.0 = no surge).
   final double surgeMultiplier;
-
-  /// Floor price — fare never goes below this (e.g., ₱25.00).
   final double minimumFare;
 
   const FareConfig({
@@ -53,7 +44,6 @@ class FareConfig {
 }
 
 /// Itemized result of a fare calculation.
-/// All monetary values are in Philippine Peso (₱).
 class FareResult {
   final double baseFare;
   final double distanceCharge;
@@ -94,9 +84,6 @@ class FareResult {
 class HeatmapCell {
   final double lat;
   final double lng;
-
-  /// Surge intensity as a multiplier:
-  /// 1.0 = normal, 1.5 = 50% surge, 2.0 = 100% surge.
   final double intensity;
 
   const HeatmapCell({

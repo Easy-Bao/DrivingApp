@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:BaoRide/core/themes/app_themes.dart';
-import 'package:BaoRide/core/services/map_provider.dart';
 import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:BaoRide/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:BaoRide/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -28,22 +28,27 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
       _initialized = true;
       _routeDrawn = false;
       final passengerLat = LocationService.lastPosition?.latitude ?? 7.828282;
-      final passengerLng = LocationService.lastPosition?.longitude ?? 123.434343;
+      final passengerLng =
+          LocationService.lastPosition?.longitude ?? 123.434343;
 
       // Start driver displaced slightly to simulate movement towards user
       final driverStartLat = passengerLat + 0.006;
       final driverStartLng = passengerLng - 0.005;
 
       BlocProvider.of<TrackDriverCubit>(context).startTracking(
-            startLat: driverStartLat,
-            startLng: driverStartLng,
-            endLat: passengerLat,
-            endLng: passengerLng,
-          );
+        startLat: driverStartLat,
+        startLng: driverStartLng,
+        endLat: passengerLat,
+        endLng: passengerLng,
+      );
     }
   }
 
-  void _updateMapElements(double driverLat, double driverLng, List<List<double>>? routePoints) async {
+  void _updateMapElements(
+    double driverLat,
+    double driverLng,
+    List<List<double>>? routePoints,
+  ) async {
     if (_mapController == null) return;
     final passengerLat = LocationService.lastPosition?.latitude ?? 7.828282;
     final passengerLng = LocationService.lastPosition?.longitude ?? 123.434343;
@@ -60,20 +65,26 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
       }
 
       // Clear or overwrite markers (in this simplified SDK version, we re-draw or fly to bounds)
-      await MapProvider.addMarker(_mapController!, passengerLat, passengerLng, isOrigin: true);
-      await MapProvider.addMarker(_mapController!, driverLat, driverLng, isOrigin: false);
+      await MapProvider.addMarker(
+        _mapController!,
+        passengerLat,
+        passengerLng,
+        isOrigin: true,
+      );
+      await MapProvider.addMarker(
+        _mapController!,
+        driverLat,
+        driverLng,
+        isOrigin: false,
+      );
 
       // Re-fit camera to keep both visible
-      await MapProvider.fitBounds(
-        _mapController!,
-        [
-          LatLng(passengerLat, passengerLng),
-          LatLng(driverLat, driverLng),
-        ],
-        padding: 80.0,
-      );
+      await MapProvider.fitBounds(_mapController!, [
+        LatLng(passengerLat, passengerLng),
+        LatLng(driverLat, driverLng),
+      ], padding: 80.0);
     } catch (e) {
-      debugPrint("Error updating track map: $e");
+      debugPrint('Error updating track map: $e');
     }
   }
 
@@ -84,14 +95,14 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text(
-          "Cancel Trip?",
+          'Cancel Trip?',
           style: TextStyle(
             fontWeight: FontWeight.w800,
             color: AppTheme.primaryColor,
           ),
         ),
         content: Text(
-          "Are you sure you want to cancel this trip? A cancellation fee may apply.",
+          'Are you sure you want to cancel this trip? A cancellation fee may apply.',
           style: TextStyle(
             color: AppTheme.primaryColor.withValues(alpha: 0.6),
             fontSize: 14,
@@ -101,7 +112,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text(
-              "Keep Ride",
+              'Keep Ride',
               style: TextStyle(
                 color: AppTheme.primaryColor,
                 fontWeight: FontWeight.w700,
@@ -114,7 +125,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
               BlocProvider.of<TrackDriverCubit>(context).cancelTrip();
             },
             child: Text(
-              "Cancel Trip",
+              'Cancel Trip',
               style: TextStyle(
                 color: AppTheme.cancel,
                 fontWeight: FontWeight.w700,
@@ -134,7 +145,11 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
         if (state is TrackDriverInProgress) {
-          _updateMapElements(state.driverLat, state.driverLng, state.routePoints);
+          _updateMapElements(
+            state.driverLat,
+            state.driverLng,
+            state.routePoints,
+          );
         } else if (state is TrackDriverCompleted) {
           // Ride completed, transition back to home dashboard (rating removed per reqs)
           context.pop();
@@ -164,7 +179,10 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
             // Top navigation + ETA details
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -195,9 +213,14 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                     ),
                     BlocBuilder<TrackDriverCubit, TrackDriverState>(
                       builder: (context, state) {
-                        final eta = state is TrackDriverInProgress ? state.eta : "Calculating...";
+                        final eta = state is TrackDriverInProgress
+                            ? state.eta
+                            : 'Calculating...';
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.surface,
                             borderRadius: BorderRadius.circular(20),
@@ -215,15 +238,19 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                               Icon(
                                 LucideIcons.clock,
                                 size: 14,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                "ARRIVING IN",
+                                'ARRIVING IN',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -253,7 +280,9 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(32),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.08),
@@ -300,7 +329,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Xyrel D. Tenefrancia",
+                                'Xyrel D. Tenefrancia',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
@@ -309,7 +338,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                               ),
                               SizedBox(height: 2),
                               Text(
-                                "Bao Bao  •  ★ 4.9",
+                                'Bao Bao  •  ★ 4.9',
                                 style: TextStyle(
                                   color: AppTheme.tertiaryColor,
                                   fontSize: 13,
@@ -320,14 +349,17 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.neutralColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.borderSide),
                           ),
                           child: const Text(
-                            "ABC 1234",
+                            'ABC 1234',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -346,12 +378,12 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                         Expanded(
                           child: _buildActionButton(
                             icon: LucideIcons.message_circle,
-                            label: "Message",
+                            label: 'Message',
                             backgroundColor: AppTheme.neutralColor,
                             foregroundColor: AppTheme.primaryColor,
                             borderColor: AppTheme.borderSide,
                             onTap: () {
-                              context.pushNamed("DriverChat");
+                              context.pushNamed('DriverChat');
                             },
                           ),
                         ),
@@ -359,7 +391,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                         Expanded(
                           child: _buildActionButton(
                             icon: LucideIcons.phone,
-                            label: "Call",
+                            label: 'Call',
                             backgroundColor: AppTheme.primaryColor,
                             foregroundColor: Colors.white,
                             onTap: () {
@@ -383,7 +415,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                           borderRadius: BorderRadius.circular(32),
                         ),
                         child: Text(
-                          "Cancel Trip",
+                          'Cancel Trip',
                           style: TextStyle(
                             color: AppTheme.cancel,
                             fontWeight: FontWeight.w700,

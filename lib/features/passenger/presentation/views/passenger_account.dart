@@ -1,7 +1,7 @@
-import "package:flutter/material.dart";
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class PassengerAccountScreen extends StatelessWidget {
   const PassengerAccountScreen({super.key});
@@ -23,7 +23,7 @@ class PassengerAccountScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      "Account",
+                      'Account',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
@@ -37,44 +37,44 @@ class PassengerAccountScreen extends StatelessWidget {
               const SizedBox(height: 32),
               _buildProfileHeader(),
               const SizedBox(height: 40),
-              _buildSectionTitle("Activity"),
+              _buildSectionTitle('Activity'),
               _buildAccountTile(
                 context,
                 LucideIcons.history,
-                "Ride History",
-                "View your past trips",
-                () => context.pushNamed("RideHistory"),
+                'Ride History',
+                'View your past trips',
+                () => context.pushNamed('RideHistory'),
               ),
               const SizedBox(height: 32),
-              _buildSectionTitle("Personal"),
+              _buildSectionTitle('Personal'),
               _buildAccountTile(
                 context,
                 LucideIcons.user,
-                "Profile Info",
-                "Update name and details",
-                () => context.pushNamed("ProfileInfo"),
+                'Profile Info',
+                'Update name and details',
+                () => context.pushNamed('ProfileInfo'),
               ),
               _buildAccountTile(
                 context,
                 LucideIcons.shield_check,
-                "Security",
-                "Password and biometric",
-                () => context.pushNamed("Security"),
+                'Security',
+                'Password and biometric',
+                () => context.pushNamed('Security'),
               ),
               const SizedBox(height: 32),
-              _buildSectionTitle("Support"),
+              _buildSectionTitle('Support'),
               _buildAccountTile(
                 context,
                 LucideIcons.message_circle_question_mark,
-                "Help Center",
-                "Get support and FAQs",
-                () => context.pushNamed("HelpCenter"),
+                'Help Center',
+                'Get support and FAQs',
+                () => context.pushNamed('HelpCenter'),
               ),
               _buildAccountTile(
                 context,
                 LucideIcons.info,
-                "About BaoRide",
-                "Version 1.0.0",
+                'About BaoRide',
+                'Version 1.0.0',
                 () {},
               ),
               const SizedBox(height: 40),
@@ -107,7 +107,7 @@ class PassengerAccountScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            "Xyrel Tenefrancia",
+            'Xyrel Tenefrancia',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -116,7 +116,7 @@ class PassengerAccountScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            "+63 912 345 6789",
+            '+63 912 345 6789',
             style: TextStyle(
               fontSize: 14,
               color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -202,7 +202,7 @@ class PassengerAccountScreen extends StatelessWidget {
             Icon(LucideIcons.log_out, size: 18),
             SizedBox(width: 10),
             Text(
-              "Log Out",
+              'Log Out',
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
             ),
           ],

@@ -1,7 +1,7 @@
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class SecurityScreen extends StatefulWidget {
   const SecurityScreen({super.key});
@@ -43,7 +43,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
     if (_newPwdController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Password must be at least 6 characters"),
+          content: Text('Password must be at least 6 characters'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -51,7 +51,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("Password updated successfully!"),
+        content: Text('Password updated successfully!'),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -79,7 +79,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          "Security",
+          'Security',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -94,7 +94,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionTitle("Password"),
+            _sectionTitle('Password'),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: () =>
@@ -126,7 +126,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Change Password",
+                            'Change Password',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
@@ -134,7 +134,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             ),
                           ),
                           Text(
-                            "Last changed 30 days ago",
+                            'Last changed 30 days ago',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppTheme.tertiaryColor,
@@ -169,7 +169,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       child: Column(
                         children: [
                           _pwdField(
-                            "Current Password",
+                            'Current Password',
                             _currentPwdController,
                             _obscureCurrent,
                             () => setState(
@@ -178,14 +178,14 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           ),
                           const SizedBox(height: 14),
                           _pwdField(
-                            "New Password",
+                            'New Password',
                             _newPwdController,
                             _obscureNew,
                             () => setState(() => _obscureNew = !_obscureNew),
                           ),
                           const SizedBox(height: 14),
                           _pwdField(
-                            "Confirm Password",
+                            'Confirm Password',
                             _confirmPwdController,
                             _obscureConfirm,
                             () => setState(
@@ -207,7 +207,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                 elevation: 0,
                               ),
                               child: const Text(
-                                "Update Password",
+                                'Update Password',
                                 style: TextStyle(fontWeight: FontWeight.w700),
                               ),
                             ),
@@ -218,25 +218,25 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   : const SizedBox.shrink(),
             ),
             const SizedBox(height: 32),
-            _sectionTitle("Authentication"),
+            _sectionTitle('Authentication'),
             const SizedBox(height: 12),
             _buildToggleTile(
               icon: LucideIcons.scan_line,
-              title: "Biometric Login",
-              subtitle: "Use fingerprint or face ID",
+              title: 'Biometric Login',
+              subtitle: 'Use fingerprint or face ID',
               value: _biometricEnabled,
               onChanged: (v) => setState(() => _biometricEnabled = v),
             ),
             const SizedBox(height: 12),
             _buildToggleTile(
               icon: LucideIcons.shield_check,
-              title: "Two-Factor Authentication",
-              subtitle: "Extra security layer via SMS",
+              title: 'Two-Factor Authentication',
+              subtitle: 'Extra security layer via SMS',
               value: _twoFactorEnabled,
               onChanged: (v) => setState(() => _twoFactorEnabled = v),
             ),
             const SizedBox(height: 32),
-            _sectionTitle("Sessions"),
+            _sectionTitle('Sessions'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(18),
@@ -265,7 +265,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "This Device",
+                          'This Device',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -273,7 +273,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           ),
                         ),
                         Text(
-                          "Active now",
+                          'Active now',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.complete,
@@ -292,7 +292,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      "Current",
+                      'Current',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,

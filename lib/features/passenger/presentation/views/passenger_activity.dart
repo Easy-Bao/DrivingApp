@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class PassengerActivityScreen extends StatefulWidget {
@@ -27,7 +27,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Activity", style: TextStyle(fontWeight: FontWeight.w700)),
+        title: Text('Activity', style: TextStyle(fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
       backgroundColor: AppTheme.surface,
@@ -56,8 +56,8 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                   unselectedLabelColor: AppTheme.unselectedItemColor,
                   labelStyle: const TextStyle(fontWeight: FontWeight.w600),
                   tabs: const [
-                    Tab(text: "Past"),
-                    Tab(text: "Upcoming"),
+                    Tab(text: 'Past'),
+                    Tab(text: 'Upcoming'),
                   ],
                 ),
               ),
@@ -71,20 +71,20 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     children: [
                       _buildActivityCard(
-                        date: "OCT 24, 08:30 AM",
-                        pickup: "Brgy. Balangasan",
-                        destination: "Robinson Supermarket",
-                        price: "₱32.50",
-                        status: "COMPLETED",
-                        statusType: "completed",
+                        date: 'OCT 24, 08:30 AM',
+                        pickup: 'Brgy. Balangasan',
+                        destination: 'Robinson Supermarket',
+                        price: '₱32.50',
+                        status: 'COMPLETED',
+                        statusType: 'completed',
                       ),
                       _buildActivityCard(
-                        date: "OCT 24, 08:30 AM",
-                        pickup: "San Francisco St.",
-                        destination: "Pagadian City Science High School",
-                        price: "₱32.50",
-                        status: "CANCELED",
-                        statusType: "canceled",
+                        date: 'OCT 24, 08:30 AM',
+                        pickup: 'San Francisco St.',
+                        destination: 'Pagadian City Science High School',
+                        price: '₱32.50',
+                        status: 'CANCELED',
+                        statusType: 'canceled',
                       ),
                     ],
                   ),
@@ -92,12 +92,12 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     children: [
                       _buildActivityCard(
-                        date: "OCT 25, 10:00 AM",
-                        pickup: "Balangasan",
-                        destination: "Tuburan District",
-                        price: "₱45.00",
-                        status: "IN PROGRESS",
-                        statusType: "progress",
+                        date: 'OCT 25, 10:00 AM',
+                        pickup: 'Balangasan',
+                        destination: 'Tuburan District',
+                        price: '₱45.00',
+                        status: 'IN PROGRESS',
+                        statusType: 'progress',
                       ),
                     ],
                   ),
@@ -119,16 +119,16 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     required String statusType,
   }) {
     Color getStatusBg() {
-      if (statusType == "completed") {
+      if (statusType == 'completed') {
         return AppTheme.complete.withValues(alpha: 0.5);
       }
-      if (statusType == "progress") return AppTheme.inProgress;
+      if (statusType == 'progress') return AppTheme.inProgress;
       return AppTheme.cancel;
     }
 
     Color getStatusText() {
-      if (statusType == "canceled") return AppTheme.surface;
-      if (statusType == "progress") return AppTheme.surface;
+      if (statusType == 'canceled') return AppTheme.surface;
+      if (statusType == 'progress') return AppTheme.surface;
       return AppTheme.surface;
     }
 
@@ -249,12 +249,12 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
               TextButton(
                 onPressed: () {
                   switch (statusType) {
-                    case "progress":
-                      context.pushNamed("ActivityTrackDriver");
-                    case "completed":
-                      context.pushNamed("ActivityViewDetails");
+                    case 'progress':
+                      context.pushNamed('ActivityTrackDriver');
+                    case 'completed':
+                      context.pushNamed('ActivityViewDetails');
                     default:
-                      context.pushNamed("SearchDestination");
+                      context.pushNamed('SearchDestination');
                   }
                 },
                 style: TextButton.styleFrom(
@@ -263,9 +263,9 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  statusType == "progress"
-                      ? "Track Driver"
-                      : (statusType == "completed" ? "View Details" : "Rebook"),
+                  statusType == 'progress'
+                      ? 'Track Driver'
+                      : (statusType == 'completed' ? 'View Details' : 'Rebook'),
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryColor,

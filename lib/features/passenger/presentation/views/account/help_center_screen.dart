@@ -1,7 +1,7 @@
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class HelpCenterScreen extends StatefulWidget {
   const HelpCenterScreen({super.key});
@@ -12,78 +12,78 @@ class HelpCenterScreen extends StatefulWidget {
 
 class _HelpCenterScreenState extends State<HelpCenterScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = "All";
+  String _selectedCategory = 'All';
   final Set<int> _expandedItems = {};
 
   final List<Map<String, String>> _faqs = [
     {
-      "q": "How do I book a ride?",
-      "a":
+      'q': 'How do I book a ride?',
+      'a':
           "Tap 'Enter destination' on the home screen, search for your destination or pin it on the map, then tap 'Book Ride' to confirm.",
-      "cat": "Rides",
+      'cat': 'Rides',
     },
     {
-      "q": "How do I cancel a ride?",
-      "a":
+      'q': 'How do I cancel a ride?',
+      'a':
           "Go to Activity → find your upcoming ride → tap 'Track Driver' → then tap 'Cancel Trip' at the bottom.",
-      "cat": "Rides",
+      'cat': 'Rides',
     },
     {
-      "q": "What is Share-Bao?",
-      "a":
+      'q': 'What is Share-Bao?',
+      'a':
           "Share-Bao lets you share a ride with others heading the same direction. It's a cheaper alternative to solo rides!",
-      "cat": "Rides",
+      'cat': 'Rides',
     },
     {
-      "q": "How do I update my payment method?",
-      "a":
-          "Currently, BaoRide supports cash payments. Digital payment options will be available soon.",
-      "cat": "Payments",
+      'q': 'How do I update my payment method?',
+      'a':
+          'Currently, BaoRide supports cash payments. Digital payment options will be available soon.',
+      'cat': 'Payments',
     },
     {
-      "q": "How do I get a receipt?",
-      "a":
-          "After your ride is completed, go to Activity → View Details. Your receipt with fare breakdown is shown there.",
-      "cat": "Payments",
+      'q': 'How do I get a receipt?',
+      'a':
+          'After your ride is completed, go to Activity → View Details. Your receipt with fare breakdown is shown there.',
+      'cat': 'Payments',
     },
     {
-      "q": "How do I change my phone number?",
-      "a":
-          "Go to Account → Profile Info → tap Edit → update your phone number → tap Save Changes.",
-      "cat": "Account",
+      'q': 'How do I change my phone number?',
+      'a':
+          'Go to Account → Profile Info → tap Edit → update your phone number → tap Save Changes.',
+      'cat': 'Account',
     },
     {
-      "q": "How do I enable biometric login?",
-      "a":
+      'q': 'How do I enable biometric login?',
+      'a':
           "Go to Account → Security → toggle on 'Biometric Login'. Make sure your device supports fingerprint or Face ID.",
-      "cat": "Account",
+      'cat': 'Account',
     },
     {
-      "q": "Is my data secure?",
-      "a":
-          "Yes! We use industry-standard encryption to protect your personal information and ride data.",
-      "cat": "General",
+      'q': 'Is my data secure?',
+      'a':
+          'Yes! We use industry-standard encryption to protect your personal information and ride data.',
+      'cat': 'General',
     },
     {
-      "q": "How do I contact support?",
-      "a":
-          "You can reach us via email at support@baoride.com or call +63 912 345 6789 during business hours.",
-      "cat": "General",
+      'q': 'How do I contact support?',
+      'a':
+          'You can reach us via email at support@baoride.com or call +63 912 345 6789 during business hours.',
+      'cat': 'General',
     },
   ];
 
   List<Map<String, String>> get _filteredFaqs {
     var list = _faqs;
-    if (_selectedCategory != "All") {
-      list = list.where((f) => f["cat"] == _selectedCategory).toList();
+    if (_selectedCategory != 'All') {
+      list = list.where((f) => f['cat'] == _selectedCategory).toList();
     }
     final q = _searchController.text.trim().toLowerCase();
     if (q.isNotEmpty) {
       list = list
           .where(
             (f) =>
-                f["q"]!.toLowerCase().contains(q) ||
-                f["a"]!.toLowerCase().contains(q),
+                f['q']!.toLowerCase().contains(q) ||
+                f['a']!.toLowerCase().contains(q),
           )
           .toList();
     }
@@ -91,11 +91,11 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   final List<String> _categories = [
-    "All",
-    "Rides",
-    "Payments",
-    "Account",
-    "General",
+    'All',
+    'Rides',
+    'Payments',
+    'Account',
+    'General',
   ];
 
   @override
@@ -121,7 +121,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          "Help Center",
+          'Help Center',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -149,7 +149,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   color: AppTheme.primaryColor,
                 ),
                 decoration: InputDecoration(
-                  hintText: "Search FAQs...",
+                  hintText: 'Search FAQs...',
                   hintStyle: TextStyle(
                     color: AppTheme.primaryColor.withValues(alpha: 0.4),
                   ),
@@ -209,7 +209,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             child: filtered.isEmpty
                 ? Center(
                     child: Text(
-                      "No results found",
+                      'No results found',
                       style: TextStyle(
                         color: AppTheme.primaryColor.withValues(alpha: 0.4),
                       ),
@@ -262,7 +262,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    faq["q"]!,
+                    faq['q']!,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -289,7 +289,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   ? Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: Text(
-                        faq["a"]!,
+                        faq['a']!,
                         style: TextStyle(
                           fontSize: 13,
                           color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -318,7 +318,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Still need help?",
+            'Still need help?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -327,7 +327,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            "Our support team is available 24/7",
+            'Our support team is available 24/7',
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.7),
@@ -336,9 +336,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           const SizedBox(height: 18),
           Row(
             children: [
-              Expanded(child: _contactBtn(LucideIcons.mail, "Email Us")),
+              Expanded(child: _contactBtn(LucideIcons.mail, 'Email Us')),
               const SizedBox(width: 12),
-              Expanded(child: _contactBtn(LucideIcons.phone, "Call Us")),
+              Expanded(child: _contactBtn(LucideIcons.phone, 'Call Us')),
             ],
           ),
         ],
@@ -350,7 +350,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     return GestureDetector(
       onTap: () => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("$text — coming soon!"),
+          content: Text('$text — coming soon!'),
           behavior: SnackBarBehavior.floating,
         ),
       ),

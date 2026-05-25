@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -15,11 +16,11 @@ class _RideAlertScreenState extends State<RideAlertScreen>
   late AnimationController _timerCtrl;
   Timer? _autoDecline;
 
-  final String _pickup = "SM City Dipolog, Rizal Ave";
-  final String _dropoff = "Dipolog Public Market, Quezon St";
+  final String _pickup = 'SM City Dipolog, Rizal Ave';
+  final String _dropoff = 'Dipolog Public Market, Quezon St';
   final double _distance = 3.2;
   final double _fare = 52.00;
-  final String _duration = "8 min";
+  final String _duration = '8 min';
 
   @override
   void initState() {
@@ -32,7 +33,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Ride request expired"),
+            content: Text('Ride request expired'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -51,13 +52,13 @@ class _RideAlertScreenState extends State<RideAlertScreen>
   void _accept() {
     _autoDecline?.cancel();
     context.pushReplacementNamed(
-      "EnRoutePickup",
+      'EnRoutePickup',
       extra: {
-        "pickup": _pickup,
-        "dropoff": _dropoff,
-        "distance": _distance,
-        "fare": _fare,
-        "duration": _duration,
+        'pickup': _pickup,
+        'dropoff': _dropoff,
+        'distance': _distance,
+        'fare': _fare,
+        'duration': _duration,
       },
     );
   }
@@ -82,7 +83,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "NEW RIDE REQUEST",
+                    'NEW RIDE REQUEST',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
@@ -100,7 +101,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      "₱${_fare.toStringAsFixed(2)}",
+                      '₱${_fare.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -133,7 +134,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        "${remaining}s remaining",
+                        '${remaining}s remaining',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -190,7 +191,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Pickup",
+                                'Pickup',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -211,7 +212,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                               ),
                               const SizedBox(height: 20),
                               Text(
-                                "Drop off",
+                                'Drop off',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -245,17 +246,17 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                   Expanded(
                     child: _infoBox(
                       LucideIcons.map_pin,
-                      "$_distance km",
-                      "Distance",
+                      '$_distance km',
+                      'Distance',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _infoBox(LucideIcons.clock, _duration, "ETA"),
+                    child: _infoBox(LucideIcons.clock, _duration, 'ETA'),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _infoBox(LucideIcons.banknote, "Cash", "Payment"),
+                    child: _infoBox(LucideIcons.banknote, 'Cash', 'Payment'),
                   ),
                 ],
               ),
@@ -279,7 +280,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                   ),
                   child: const Center(
                     child: Text(
-                      "Accept Ride",
+                      'Accept Ride',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -303,7 +304,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                     borderRadius: BorderRadius.circular(32),
                   ),
                   child: Text(
-                    "Decline",
+                    'Decline',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

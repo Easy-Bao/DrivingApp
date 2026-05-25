@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -15,7 +15,6 @@ class ActivityViewDetails extends StatefulWidget {
 
 class _ActivityViewDetailsState extends State<ActivityViewDetails> {
   void _onMapCreated(AppMapController controller) async {
-    
     // Static coordinates representing Balangasan to Tuburan District, Pagadian City
     final pickupLat = 7.8340;
     final pickupLng = 123.4350;
@@ -23,21 +22,40 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
     final destLng = 123.4450;
 
     try {
-      await MapProvider.addMarker(controller, pickupLat, pickupLng, isOrigin: true);
-      await MapProvider.addMarker(controller, destLat, destLng, isOrigin: false);
+      await MapProvider.addMarker(
+        controller,
+        pickupLat,
+        pickupLng,
+        isOrigin: true,
+      );
+      await MapProvider.addMarker(
+        controller,
+        destLat,
+        destLng,
+        isOrigin: false,
+      );
 
-      final route = await MapProvider.getRoute(pickupLat, pickupLng, destLat, destLng);
+      final route = await MapProvider.getRoute(
+        pickupLat,
+        pickupLng,
+        destLat,
+        destLng,
+      );
       if (route != null) {
-        await MapProvider.addPolyline(controller, route.polylinePoints, color: AppTheme.primaryColor, width: 4.0);
+        await MapProvider.addPolyline(
+          controller,
+          route.polylinePoints,
+          color: AppTheme.primaryColor,
+          width: 4.0,
+        );
       }
 
-      await MapProvider.fitBounds(
-        controller,
-        [LatLng(pickupLat, pickupLng), LatLng(destLat, destLng)],
-        padding: 40.0,
-      );
+      await MapProvider.fitBounds(controller, [
+        LatLng(pickupLat, pickupLng),
+        LatLng(destLat, destLng),
+      ], padding: 40.0);
     } catch (e) {
-      debugPrint("Error setting up details preview map: $e");
+      debugPrint('Error setting up details preview map: $e');
     }
   }
 
@@ -60,7 +78,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          "Trip Details",
+          'Trip Details',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -105,7 +123,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Xyrel D. Tenefrancia",
+                        'Xyrel D. Tenefrancia',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -113,7 +131,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                         ),
                       ),
                       Text(
-                        "Bao Bao",
+                        'Bao Bao',
                         style: TextStyle(
                           fontSize: 13,
                           color: AppTheme.tertiaryColor,
@@ -124,7 +142,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                 ),
                 const Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
                 const Text(
-                  " 4.9",
+                  ' 4.9',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
@@ -147,14 +165,14 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                     spacing: 10,
                     children: [
                       Text(
-                        "Fare Summary",
+                        'Fare Summary',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       Text(
-                        "₱32.50",
+                        '₱32.50',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
@@ -163,9 +181,9 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                     ],
                   ),
                   const SizedBox(height: 15),
-                  _fareRow("Base Fare", "₱5.50"),
-                  _fareRow("Distance", "₱24.80"),
-                  _fareRow("Fees", "₱2.20"),
+                  _fareRow('Base Fare', '₱5.50'),
+                  _fareRow('Distance', '₱24.80'),
+                  _fareRow('Fees', '₱2.20'),
                 ],
               ),
             ),
@@ -174,12 +192,12 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Timeline",
+                  'Timeline',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
                 const SizedBox(height: 16),
-                _timelineItem("Balangasan", "10:14 AM", true),
-                _timelineItem("Tuburan District", "10:38 AM", false),
+                _timelineItem('Balangasan', '10:14 AM', true),
+                _timelineItem('Tuburan District', '10:38 AM', false),
               ],
             ),
           ],
@@ -195,7 +213,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               onPressed: () {},
               icon: const Icon(Icons.refresh),
               label: const Text(
-                "Book this route again",
+                'Book this route again',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
               style: ElevatedButton.styleFrom(

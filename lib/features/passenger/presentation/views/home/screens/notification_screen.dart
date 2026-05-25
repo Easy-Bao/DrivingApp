@@ -1,8 +1,8 @@
-import "package:BaoRide/core/models/notification/notification_model.dart";
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/models/notification/notification_model.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -14,57 +14,57 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   final List<NotificationModel> _notifications = [
     NotificationModel(
-      id: "1",
-      title: "Ride Completed",
+      id: '1',
+      title: 'Ride Completed',
       message:
-          "Your trip to Robinson Supermarket has been completed. Total fare: ₱32.50",
+          'Your trip to Robinson Supermarket has been completed. Total fare: ₱32.50',
       timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      type: "ride",
+      type: 'ride',
       isRead: false,
     ),
     NotificationModel(
-      id: "2",
-      title: "Weekend Promo! 🎉",
+      id: '2',
+      title: 'Weekend Promo! 🎉',
       message:
-          "Get 20% off on all rides this weekend. Use code BAOWEEKEND. Valid until Sunday.",
+          'Get 20% off on all rides this weekend. Use code BAOWEEKEND. Valid until Sunday.',
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      type: "promo",
+      type: 'promo',
       isRead: false,
     ),
     NotificationModel(
-      id: "3",
-      title: "Ride Canceled",
+      id: '3',
+      title: 'Ride Canceled',
       message:
-          "Your ride to Pagadian City Science High School was canceled. No charges applied.",
+          'Your ride to Pagadian City Science High School was canceled. No charges applied.',
       timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-      type: "ride",
+      type: 'ride',
       isRead: true,
     ),
     NotificationModel(
-      id: "4",
-      title: "Account Security",
+      id: '4',
+      title: 'Account Security',
       message:
           "A new device logged into your account. If this wasn't you, change your password immediately.",
       timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      type: "system",
+      type: 'system',
       isRead: true,
     ),
     NotificationModel(
-      id: "5",
-      title: "New Feature: Share-Bao 🚀",
+      id: '5',
+      title: 'New Feature: Share-Bao 🚀',
       message:
-          "Split your ride with others going the same way. Try Share-Bao for cheaper fares!",
+          'Split your ride with others going the same way. Try Share-Bao for cheaper fares!',
       timestamp: DateTime.now().subtract(const Duration(days: 2)),
-      type: "promo",
+      type: 'promo',
       isRead: true,
     ),
     NotificationModel(
-      id: "6",
-      title: "Trip Receipt",
+      id: '6',
+      title: 'Trip Receipt',
       message:
-          "Your receipt for the trip from Brgy. Balangasan to Robinson Supermarket is ready.",
+          'Your receipt for the trip from Brgy. Balangasan to Robinson Supermarket is ready.',
       timestamp: DateTime.now().subtract(const Duration(days: 3)),
-      type: "ride",
+      type: 'ride',
       isRead: true,
     ),
   ];
@@ -83,19 +83,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   String _timeAgo(DateTime timestamp) {
     final diff = DateTime.now().difference(timestamp);
-    if (diff.inMinutes < 60) return "${diff.inMinutes}m ago";
-    if (diff.inHours < 24) return "${diff.inHours}h ago";
-    if (diff.inDays < 7) return "${diff.inDays}d ago";
-    return "${(diff.inDays / 7).floor()}w ago";
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${(diff.inDays / 7).floor()}w ago';
   }
 
   IconData _iconForType(String type) {
     switch (type) {
-      case "ride":
+      case 'ride':
         return LucideIcons.bike;
-      case "promo":
+      case 'promo':
         return LucideIcons.tag;
-      case "system":
+      case 'system':
         return LucideIcons.shield_check;
       default:
         return LucideIcons.bell;
@@ -104,11 +104,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Color _colorForType(String type) {
     switch (type) {
-      case "ride":
+      case 'ride':
         return AppTheme.primaryColor;
-      case "promo":
+      case 'promo':
         return const Color(0xFF8B5E3C);
-      case "system":
+      case 'system':
         return AppTheme.tertiaryColor;
       default:
         return AppTheme.primaryColor;
@@ -131,7 +131,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          "Notifications",
+          'Notifications',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -152,7 +152,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 });
               },
               child: Text(
-                "Read all",
+                'Read all',
                 style: TextStyle(
                   color: AppTheme.primaryColor.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w700,
@@ -309,7 +309,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            "No notifications yet",
+            'No notifications yet',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

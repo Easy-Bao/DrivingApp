@@ -1,11 +1,11 @@
-import "dart:async";
-import "package:BaoRide/core/models/place/place_model.dart";
-import "package:BaoRide/core/services/location_service.dart";
-import "package:BaoRide/core/services/map_provider.dart";
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'dart:async';
+import 'package:BaoRide/core/models/place/place_model.dart';
+import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class SearchDestinationScreen extends StatefulWidget {
   const SearchDestinationScreen({super.key});
@@ -112,11 +112,11 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
   }
 
   void _onPlaceSelected(PlaceModel place) {
-    context.pushNamed("DestinationPreview", extra: place);
+    context.pushNamed('DestinationPreview', extra: place);
   }
 
   void _openMapPin() async {
-    final result = await context.pushNamed("MapPin");
+    final result = await context.pushNamed('MapPin');
     if (result != null && result is PlaceModel) {
       _onPlaceSelected(result);
     }
@@ -173,7 +173,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                           color: AppTheme.primaryColor,
                         ),
                         decoration: InputDecoration(
-                          hintText: "Search destination",
+                          hintText: 'Search destination',
                           hintStyle: TextStyle(
                             fontSize: 15,
                             color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -212,7 +212,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            "Pin",
+                            'Pin',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -238,7 +238,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: Text(
-              hasQuery ? "Search Results" : "Nearby Places",
+              hasQuery ? 'Search Results' : 'Nearby Places',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
@@ -270,8 +270,8 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                         const SizedBox(height: 12),
                         Text(
                           hasQuery
-                              ? "No places found"
-                              : "No nearby places found",
+                              ? 'No places found'
+                              : 'No nearby places found',
                           style: TextStyle(
                             color: AppTheme.primaryColor.withValues(alpha: 0.4),
                             fontWeight: FontWeight.w600,
@@ -337,7 +337,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                "${place.distanceKm!.toStringAsFixed(1)} km",
+                '${place.distanceKm!.toStringAsFixed(1)} km',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,

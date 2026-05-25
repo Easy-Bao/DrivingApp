@@ -1,17 +1,20 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:BaoRide/features/driver/data/repositories/ride_repository.dart';
-import 'ride_flow_state.dart';
 
+import 'package:BaoRide/features/driver/data/repositories/ride_repository.dart';
+import 'package:BaoRide/features/driver/presentation/bloc/ride/ride_flow_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+/// Manages the sequential ride lifecycle: initial → en-route → waiting → in-transit → complete.
 class RideFlowCubit extends Cubit<RideFlowState> {
-  final RideRepository _rideRepository;
+  final RideRepository _repository;
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
 
-  RideFlowCubit({required RideRepository rideRepository})
-    : _rideRepository = rideRepository,
+  RideFlowCubit({required RideRepository repository})
+    : _repository = repository,
       super(RideFlowInitial());
 
+  /// Driver accepted a ride request — begin navigating to pickup.
   void acceptRide({
     required String passengerName,
     required double pickupLat,
@@ -26,6 +29,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
+  /// Driver has arrived at the pickup location — start waiting timer.
   void arriveAtPickup(String passengerName) {
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
@@ -47,6 +51,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     });
   }
 
+  /// Passenger is aboard — begin trip to destination.
   void startRide({
     required String passengerName,
     required double destLat,
@@ -64,22 +69,25 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
+  /// Driver has reached the destination — compute and display the final fare.
   Future<void> endRide({
     required double distanceKm,
     required double durationMinutes,
   }) async {
     _waitTimer?.cancel();
     try {
-      final fareResult = await _rideRepository.getFare(
+      final fareResult = await _repository.getFare(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,
       );
       emit(RideFlowComplete(fare: fareResult.totalFare));
-    } catch (e) {
-      emit(const RideFlowComplete(fare: 50.0)); // Fallback
+    } catch (_) {
+      // Fallback to minimum fare on error — never leave the driver on a loading screen.
+      emit(const RideFlowComplete(fare: 50.0));
     }
   }
 
+  /// Resets the ride flow back to idle.
   void reset() {
     _waitTimer?.cancel();
     emit(RideFlowInitial());

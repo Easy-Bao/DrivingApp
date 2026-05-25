@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:BaoRide/core/themes/app_themes.dart';
-import 'package:BaoRide/core/models/place/place_model.dart';
 import 'package:BaoRide/core/models/driver/driver_model.dart';
-import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/models/place/place_model.dart';
 import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:BaoRide/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
 import 'package:BaoRide/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
 import 'package:BaoRide/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -111,17 +111,17 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
         } else if (state is FindingDriverSelected) {
           // Navigate with the selected driver data
           context.pushReplacementNamed(
-            "DriverMatched",
+            'DriverMatched',
             extra: {
-              "rideType": widget.rideType,
-              "fare": widget.fare,
-              "destination": widget.destination,
-              "distance": widget.distance,
-              "duration": widget.duration,
-              "driverName": state.selectedDriver.name,
-              "driverRating": state.selectedDriver.rating.toString(),
-              "vehicleType": state.selectedDriver.vehicleType,
-              "plateNumber": state.selectedDriver.plateNumber,
+              'rideType': widget.rideType,
+              'fare': widget.fare,
+              'destination': widget.destination,
+              'distance': widget.distance,
+              'duration': widget.duration,
+              'driverName': state.selectedDriver.name,
+              'driverRating': state.selectedDriver.rating.toString(),
+              'vehicleType': state.selectedDriver.vehicleType,
+              'plateNumber': state.selectedDriver.plateNumber,
             },
           );
         }
@@ -280,9 +280,9 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                             animation: _dotCtrl,
                             builder: (ctx, _) {
                               final dots =
-                                  "." * (1 + (_dotCtrl.value * 3).floor());
+                                  '.' * (1 + (_dotCtrl.value * 3).floor());
                               return Text(
-                                "Finding your driver$dots",
+                                'Finding your driver$dots',
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w900,
@@ -293,7 +293,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Looking for ${widget.rideType} drivers nearby...",
+                            'Looking for ${widget.rideType} drivers nearby...',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppTheme.primaryColor.withValues(
@@ -335,7 +335,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                   ],
                                 ),
                                 Text(
-                                  "₱${widget.fare.toStringAsFixed(2)}",
+                                  '₱${widget.fare.toStringAsFixed(2)}',
                                   style: const TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.w900,
@@ -362,7 +362,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                 borderRadius: BorderRadius.circular(32),
                               ),
                               child: Text(
-                                "Cancel Search",
+                                'Cancel Search',
                                 style: TextStyle(
                                   color: AppTheme.cancel,
                                   fontWeight: FontWeight.w700,
@@ -411,7 +411,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                             ),
                           ),
                           const Text(
-                            "Select Nearest Driver",
+                            'Select Nearest Driver',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
@@ -420,7 +420,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            "Select from drivers matched by proximity algorithm",
+                            'Select from drivers matched by proximity algorithm',
                             style: TextStyle(fontSize: 12, color: Colors.grey),
                           ),
                           const SizedBox(height: 12),
@@ -456,7 +456,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                       ),
                                     ),
                                     subtitle: Text(
-                                      "${driver.vehicleType} • ${driver.plateNumber}",
+                                      '${driver.vehicleType} • ${driver.plateNumber}',
                                       style: const TextStyle(fontSize: 11),
                                     ),
                                     trailing: Column(
@@ -474,7 +474,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                               size: 16,
                                             ),
                                             Text(
-                                              " ${driver.rating.toStringAsFixed(1)}",
+                                              ' ${driver.rating.toStringAsFixed(1)}',
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 13,
@@ -484,7 +484,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          "${driver.distanceKm.toStringAsFixed(1)} km (~${driver.etaMinutes.ceil()} min)",
+                                          '${driver.distanceKm.toStringAsFixed(1)} km (~${driver.etaMinutes.ceil()} min)',
                                           style: const TextStyle(
                                             fontSize: 11,
                                             color: Colors.grey,

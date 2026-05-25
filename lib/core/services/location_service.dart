@@ -1,5 +1,5 @@
-import 'package:geolocator/geolocator.dart';
 import 'package:BaoRide/src/rust/api/map_api.dart' as rust_api;
+import 'package:geolocator/geolocator.dart';
 
 /// Device location service using geolocator.
 /// Provider-agnostic — works regardless of map provider.
@@ -14,7 +14,7 @@ class LocationService {
   /// Check and request location permissions.
   /// Returns true if permission is granted.
   static Future<bool> checkAndRequestPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return false;
 
     LocationPermission permission = await Geolocator.checkPermission();

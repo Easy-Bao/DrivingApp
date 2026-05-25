@@ -1,10 +1,10 @@
-import "package:BaoRide/core/models/route/route_model.dart";
-import "package:BaoRide/core/services/location_service.dart";
-import "package:BaoRide/core/services/map_provider.dart";
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/models/route/route_model.dart';
+import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class ActivityDetailMapScreen extends StatefulWidget {
   final String placeName;
@@ -27,9 +27,9 @@ class ActivityDetailMapScreen extends StatefulWidget {
 
 class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
   AppMapController? _mapController;
-  String _distance = "—";
-  String _duration = "—";
-  String _fullAddress = "";
+  String _distance = '—';
+  String _duration = '—';
+  String _fullAddress = '';
   bool _isLoading = true;
 
   @override
@@ -59,9 +59,9 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
     setState(() {
       _fullAddress = place?.fullAddress ?? widget.placeSubtitle;
       if (route != null) {
-        _distance = "${route.distanceKm.toStringAsFixed(1)} km";
+        _distance = '${route.distanceKm.toStringAsFixed(1)} km';
         final mins = route.estimatedTime.inMinutes;
-        _duration = mins < 60 ? "$mins min" : "${mins ~/ 60}h ${mins % 60}m";
+        _duration = mins < 60 ? '$mins min' : '${mins ~/ 60}h ${mins % 60}m';
       }
       _isLoading = false;
     });
@@ -198,7 +198,7 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              _isLoading ? "Loading..." : _fullAddress,
+                              _isLoading ? 'Loading...' : _fullAddress,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: AppTheme.primaryColor.withValues(
@@ -227,8 +227,8 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                         Expanded(
                           child: _buildStat(
                             LucideIcons.navigation,
-                            "Distance",
-                            _isLoading ? "..." : _distance,
+                            'Distance',
+                            _isLoading ? '...' : _distance,
                           ),
                         ),
                         Container(
@@ -239,8 +239,8 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                         Expanded(
                           child: _buildStat(
                             LucideIcons.clock,
-                            "ETA",
-                            _isLoading ? "..." : _duration,
+                            'ETA',
+                            _isLoading ? '...' : _duration,
                           ),
                         ),
                       ],
@@ -254,7 +254,7 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                       onPressed: () =>
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("Booking feature coming soon!"),
+                              content: Text('Booking feature coming soon!'),
                               behavior: SnackBarBehavior.floating,
                             ),
                           ),
@@ -267,7 +267,7 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                         elevation: 0,
                       ),
                       child: const Text(
-                        "Book Ride",
+                        'Book Ride',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,

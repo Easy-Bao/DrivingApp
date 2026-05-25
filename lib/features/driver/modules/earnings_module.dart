@@ -3,10 +3,12 @@ import 'package:BaoRide/features/driver/presentation/views/earnings/earnings_scr
 import 'package:go_router_modular/go_router_modular.dart';
 
 class EarningsModule {
+  EarningsModule._();
+
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: "DriverTripHistory",
-      "earnings/trip-history",
+      name: 'DriverTripHistory',
+      'earnings/trip-history',
       child: (context, GoRouterState state) => const DriverTripHistoryScreen(),
       transition: GoTransitions.slide.toLeft,
     ),
@@ -14,8 +16,8 @@ class EarningsModule {
 
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
-      name: "DriverEarnings",
-      "earnings",
+      name: 'DriverEarnings',
+      'earnings',
       child: (context, GoRouterState state) => const DriverEarningsScreen(),
     ),
   ];

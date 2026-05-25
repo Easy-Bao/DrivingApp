@@ -9,35 +9,15 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 /// A nearby driver available for ride matching.
 /// Returned to Flutter as a selectable list item.
 class NearbyDriver {
-  /// Unique driver identifier.
   final String id;
-
-  /// Driver's display name.
   final String name;
-
-  /// Vehicle type (e.g., "Motorcycle", "Habal-Habal").
   final String vehicleType;
-
-  /// Vehicle plate number (e.g., "ABC-1234").
   final String plateNumber;
-
-  /// Driver's average rating (1.0–5.0).
   final double rating;
-
-  /// Driver's current latitude.
   final double lat;
-
-  /// Driver's current longitude.
   final double lng;
-
-  /// Distance from the passenger in kilometers.
   final double distanceKm;
-
-  /// Estimated time of arrival in minutes.
   final double etaMinutes;
-
-  /// Composite ranking score (lower is better).
-  /// Calculated as: 0.5×distance + 0.3×(5.0-rating) + 0.2×eta
   final double score;
 
   const NearbyDriver({

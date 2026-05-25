@@ -8,15 +8,6 @@ abstract class RideRepository {
     required double durationMinutes,
   });
 
-  Future<List<rust_fare.HeatmapCell>> getSurgeHeatmap({
-    required double lat,
-    required double lng,
-    required int gridSize,
-    required double cellSize,
-    required List<double> requestLats,
-    required List<double> requestLngs,
-  });
-
   Future<rust_route.RouteSequenceResult> optimizeRoute({
     required double startLat,
     required double startLng,
@@ -37,25 +28,6 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
-  Future<List<rust_fare.HeatmapCell>> getSurgeHeatmap({
-    required double lat,
-    required double lng,
-    required int gridSize,
-    required double cellSize,
-    required List<double> requestLats,
-    required List<double> requestLngs,
-  }) {
-    return fare_api.calculateSurgeHeatmap(
-      centerLat: lat,
-      centerLng: lng,
-      gridSize: gridSize,
-      cellSizeDegrees: cellSize,
-      requestLats: requestLats,
-      requestLngs: requestLngs,
-    );
-  }
-
-  @override
   Future<rust_route.RouteSequenceResult> optimizeRoute({
     required double startLat,
     required double startLng,
@@ -66,5 +38,71 @@ class RideRepositoryImpl implements RideRepository {
       startLng: startLng,
       waypoints: waypoints,
     );
+  }
+}
+
+class MockRideRepository implements RideRepository {
+  @override
+  Future<rust_fare.FareResult> getFare({
+    required double distanceKm,
+    required double durationMinutes,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return rust_fare.FareResult(
+      baseFare: 40.0,
+      distanceCharge: distanceKm * 8.0,
+      timeCharge: durationMinutes * 1.0,
+      surgeCharge: 0.0,
+      totalFare: 40.0 + (distanceKm * 8.0) + durationMinutes,
+    );
+  }
+
+  @override
+  Future<rust_route.RouteSequenceResult> optimizeRoute({
+    required double startLat,
+    required double startLng,
+    required List<rust_route.Waypoint> waypoints,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return rust_route.RouteSequenceResult(
+      optimalSequence: waypoints,
+      totalDistanceKm: 5.2,
+    );
+  }
+}
+
+//TODO: Implement the real API repository once backend endpoints are ready and integrated.
+
+// ignore: unused_element — will be used when backend is integrated
+class _ApiRideRepository implements RideRepository {
+  // final HttpClient _httpClient;
+  // _ApiRideRepository(this._httpClient);
+
+  @override
+  Future<rust_fare.FareResult> getFare({
+    required double distanceKm,
+    required double durationMinutes,
+  }) async {
+    // final response = await _httpClient.get('/ride/fare', queryParameters: {
+    //   'distanceKm': distanceKm,
+    //   'durationMinutes': durationMinutes,
+    // });
+    // return rust_fare.FareResult.fromJson(response.data);
+    throw UnimplementedError('Backend not yet integrated');
+  }
+
+  @override
+  Future<rust_route.RouteSequenceResult> optimizeRoute({
+    required double startLat,
+    required double startLng,
+    required List<rust_route.Waypoint> waypoints,
+  }) async {
+    // final response = await _httpClient.post('/ride/optimize', data: {
+    //   'startLat': startLat,
+    //   'startLng': startLng,
+    //   'waypoints': waypoints.map((w) => w.toJson()).toList(),
+    // });
+    // return rust_route.RouteSequenceResult.fromJson(response.data);
+    throw UnimplementedError('Backend not yet integrated');
   }
 }

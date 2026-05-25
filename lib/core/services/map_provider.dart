@@ -1,11 +1,12 @@
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+
 import 'package:BaoRide/core/config/env_config.dart';
 import 'package:BaoRide/core/models/place/place_model.dart';
 import 'package:BaoRide/core/models/route/route_model.dart';
 import 'package:BaoRide/core/services/location_service.dart';
 import 'package:BaoRide/src/rust/api/map_api.dart' as rust_api;
+import 'package:flutter/material.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 class LatLng {
   final double latitude;
@@ -161,15 +162,19 @@ class MapProvider {
         lng: lng,
       );
 
-      return rustResults.map((r) => PlaceModel(
-        id: r.id,
-        name: r.name,
-        fullAddress: r.fullAddress,
-        latitude: r.latitude,
-        longitude: r.longitude,
-        category: r.category,
-        distanceKm: r.distanceKm,
-      )).toList();
+      return rustResults
+          .map(
+            (r) => PlaceModel(
+              id: r.id,
+              name: r.name,
+              fullAddress: r.fullAddress,
+              latitude: r.latitude,
+              longitude: r.longitude,
+              category: r.category,
+              distanceKm: r.distanceKm,
+            ),
+          )
+          .toList();
     } catch (e) {
       debugPrint('MapProvider.getNearbyPOIs error: $e');
       return [];
@@ -196,9 +201,7 @@ class MapProvider {
       ),
       onMapCreated: (controller) {
         // Disable logo and attribution watermark
-        controller.logo.updateSettings(
-          mapbox.LogoSettings(enabled: false),
-        );
+        controller.logo.updateSettings(mapbox.LogoSettings(enabled: false));
         controller.attribution.updateSettings(
           mapbox.AttributionSettings(enabled: false),
         );

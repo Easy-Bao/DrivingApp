@@ -1,7 +1,7 @@
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class ProfileInfoScreen extends StatefulWidget {
   const ProfileInfoScreen({super.key});
@@ -11,11 +11,11 @@ class ProfileInfoScreen extends StatefulWidget {
 }
 
 class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
-  final _nameController = TextEditingController(text: "Xyrel Tenefrancia");
-  final _phoneController = TextEditingController(text: "+63 912 345 6789");
-  final _emailController = TextEditingController(text: "xyrel@baoride.com");
+  final _nameController = TextEditingController(text: 'Xyrel Tenefrancia');
+  final _phoneController = TextEditingController(text: '+63 912 345 6789');
+  final _emailController = TextEditingController(text: 'xyrel@baoride.com');
   final _addressController = TextEditingController(
-    text: "Pagadian City, Zamboanga del Sur",
+    text: 'Pagadian City, Zamboanga del Sur',
   );
   bool _isEditing = false;
 
@@ -32,7 +32,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
     if (_isEditing) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Profile updated!"),
+          content: Text('Profile updated!'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -56,7 +56,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          "Profile Info",
+          'Profile Info',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -68,7 +68,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           TextButton(
             onPressed: _toggleEdit,
             child: Text(
-              _isEditing ? "Save" : "Edit",
+              _isEditing ? 'Save' : 'Edit',
               style: TextStyle(
                 color: AppTheme.primaryColor,
                 fontWeight: FontWeight.w700,
@@ -121,13 +121,13 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            _buildField("Full Name", _nameController, LucideIcons.user),
+            _buildField('Full Name', _nameController, LucideIcons.user),
             const SizedBox(height: 16),
-            _buildField("Phone Number", _phoneController, LucideIcons.phone),
+            _buildField('Phone Number', _phoneController, LucideIcons.phone),
             const SizedBox(height: 16),
-            _buildField("Email", _emailController, LucideIcons.mail),
+            _buildField('Email', _emailController, LucideIcons.mail),
             const SizedBox(height: 16),
-            _buildField("Address", _addressController, LucideIcons.map_pin),
+            _buildField('Address', _addressController, LucideIcons.map_pin),
             const SizedBox(height: 32),
             if (_isEditing)
               SizedBox(
@@ -144,7 +144,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
                     elevation: 0,
                   ),
                   child: const Text(
-                    "Save Changes",
+                    'Save Changes',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                   ),
                 ),

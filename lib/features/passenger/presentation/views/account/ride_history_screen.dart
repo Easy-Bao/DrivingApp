@@ -1,8 +1,8 @@
-import "package:BaoRide/core/models/ride_history/ride_history_model.dart";
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/models/ride_history/ride_history_model.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class RideHistoryScreen extends StatefulWidget {
   const RideHistoryScreen({super.key});
@@ -17,74 +17,74 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
 
   final List<RideHistoryModel> _rides = [
     RideHistoryModel(
-      id: "1",
-      pickup: "Brgy. Balangasan",
-      destination: "Robinson Supermarket",
+      id: '1',
+      pickup: 'Brgy. Balangasan',
+      destination: 'Robinson Supermarket',
       pickupLat: 7.8307,
       pickupLng: 123.4370,
       destLat: 7.8250,
       destLng: 123.4380,
-      date: "MAY 02, 09:15 AM",
-      price: "₱32.50",
-      status: "completed",
-      driverName: "Juan dela Cruz",
-      vehiclePlate: "ABC 1234",
+      date: 'MAY 02, 09:15 AM',
+      price: '₱32.50',
+      status: 'completed',
+      driverName: 'Juan dela Cruz',
+      vehiclePlate: 'ABC 1234',
     ),
     RideHistoryModel(
-      id: "2",
-      pickup: "San Francisco St.",
-      destination: "Pagadian City Science HS",
+      id: '2',
+      pickup: 'San Francisco St.',
+      destination: 'Pagadian City Science HS',
       pickupLat: 7.8310,
       pickupLng: 123.4375,
       destLat: 7.8280,
       destLng: 123.4390,
-      date: "MAY 01, 07:30 AM",
-      price: "₱28.00",
-      status: "completed",
-      driverName: "Pedro Santos",
-      vehiclePlate: "XYZ 5678",
+      date: 'MAY 01, 07:30 AM',
+      price: '₱28.00',
+      status: 'completed',
+      driverName: 'Pedro Santos',
+      vehiclePlate: 'XYZ 5678',
     ),
     RideHistoryModel(
-      id: "3",
-      pickup: "Plaza Luz",
-      destination: "Gaisano Capital",
+      id: '3',
+      pickup: 'Plaza Luz',
+      destination: 'Gaisano Capital',
       pickupLat: 7.8290,
       pickupLng: 123.4365,
       destLat: 7.8260,
       destLng: 123.4355,
-      date: "APR 30, 02:00 PM",
-      price: "₱18.50",
-      status: "canceled",
-      driverName: "",
-      vehiclePlate: "",
+      date: 'APR 30, 02:00 PM',
+      price: '₱18.50',
+      status: 'canceled',
+      driverName: '',
+      vehiclePlate: '',
     ),
     RideHistoryModel(
-      id: "4",
+      id: '4',
       pickup: "Bo's Coffee",
-      destination: "Tuburan District",
+      destination: 'Tuburan District',
       pickupLat: 7.8300,
       pickupLng: 123.4360,
       destLat: 7.8200,
       destLng: 123.4340,
-      date: "APR 29, 11:45 AM",
-      price: "₱45.00",
-      status: "completed",
-      driverName: "Maria Garcia",
-      vehiclePlate: "DEF 9012",
+      date: 'APR 29, 11:45 AM',
+      price: '₱45.00',
+      status: 'completed',
+      driverName: 'Maria Garcia',
+      vehiclePlate: 'DEF 9012',
     ),
     RideHistoryModel(
-      id: "5",
-      pickup: "Balangasan",
-      destination: "Robinson Supermarket",
+      id: '5',
+      pickup: 'Balangasan',
+      destination: 'Robinson Supermarket',
       pickupLat: 7.8307,
       pickupLng: 123.4370,
       destLat: 7.8250,
       destLng: 123.4380,
-      date: "APR 28, 08:00 AM",
-      price: "₱32.50",
-      status: "completed",
-      driverName: "Juan dela Cruz",
-      vehiclePlate: "ABC 1234",
+      date: 'APR 28, 08:00 AM',
+      price: '₱32.50',
+      status: 'completed',
+      driverName: 'Juan dela Cruz',
+      vehiclePlate: 'ABC 1234',
     ),
   ];
 
@@ -104,9 +104,9 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
   List<RideHistoryModel> _filteredRides(int tabIndex) {
     if (tabIndex == 0) return _rides;
     if (tabIndex == 1) {
-      return _rides.where((r) => r.status == "completed").toList();
+      return _rides.where((r) => r.status == 'completed').toList();
     }
-    return _rides.where((r) => r.status == "canceled").toList();
+    return _rides.where((r) => r.status == 'canceled').toList();
   }
 
   @override
@@ -125,7 +125,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          "Ride History",
+          'Ride History',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -160,9 +160,9 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
                   fontSize: 13,
                 ),
                 tabs: const [
-                  Tab(text: "All"),
-                  Tab(text: "Completed"),
-                  Tab(text: "Canceled"),
+                  Tab(text: 'All'),
+                  Tab(text: 'Completed'),
+                  Tab(text: 'Canceled'),
                 ],
               ),
             ),
@@ -185,7 +185,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          "No rides yet",
+                          'No rides yet',
                           style: TextStyle(
                             color: AppTheme.primaryColor.withValues(alpha: 0.4),
                             fontWeight: FontWeight.w600,
@@ -210,7 +210,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
   }
 
   Widget _buildRideCard(RideHistoryModel ride) {
-    Color statusBg = ride.status == "completed"
+    final Color statusBg = ride.status == 'completed'
         ? AppTheme.complete.withValues(alpha: 0.5)
         : AppTheme.cancel;
 

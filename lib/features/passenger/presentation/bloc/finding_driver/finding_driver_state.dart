@@ -1,5 +1,5 @@
-import 'package:equatable/equatable.dart';
 import 'package:BaoRide/core/models/driver/driver_model.dart';
+import 'package:equatable/equatable.dart';
 
 abstract class FindingDriverState extends Equatable {
   const FindingDriverState();

@@ -29,8 +29,8 @@ class PassengerModule extends Module {
         ...homeRoutes,
         ...activityRoutes,
         ChildRoute(
-          name: "PassengerAccount",
-          "account",
+          name: 'PassengerAccount',
+          'account',
           child: (context, GoRouterState state) => PassengerAccountScreen(),
         ),
       ],

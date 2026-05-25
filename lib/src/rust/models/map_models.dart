@@ -6,7 +6,6 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-/// A single coordinate pair [longitude, latitude].
 class CoordPair {
   final double lng;
   final double lat;
@@ -25,22 +24,13 @@ class CoordPair {
           lat == other.lat;
 }
 
-/// A geocoded place result returned to Flutter.
 class RustPlaceResult {
   final String id;
-
-  /// Short display name (e.g., "Gaisano Mall").
   final String name;
-
-  /// Full formatted address string.
   final String fullAddress;
   final double latitude;
   final double longitude;
-
-  /// Place category (e.g., "restaurant", "gas_station").
   final String? category;
-
-  /// Distance from the user's current position in kilometers.
   final double? distanceKm;
 
   const RustPlaceResult({
@@ -77,18 +67,10 @@ class RustPlaceResult {
           distanceKm == other.distanceKm;
 }
 
-/// A driving route result returned to Flutter.
 class RustRouteResult {
-  /// Ordered list of coordinate pairs forming the route polyline.
   final List<CoordPair> polylinePoints;
-
-  /// Total route distance in kilometers.
   final double distanceKm;
-
-  /// Total estimated travel time in seconds.
   final double durationSeconds;
-
-  /// Human-readable route summary (e.g., street names).
   final String summary;
 
   const RustRouteResult({

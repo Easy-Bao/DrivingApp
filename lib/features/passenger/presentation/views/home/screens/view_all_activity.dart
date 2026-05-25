@@ -1,7 +1,7 @@
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class PassengerViewAllActivity extends StatefulWidget {
   const PassengerViewAllActivity({super.key});
@@ -13,54 +13,54 @@ class PassengerViewAllActivity extends StatefulWidget {
 
 class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
   final Map<String, List<Map<String, String>>> _grouped = {
-    "Today": [
+    'Today': [
       {
-        "pickup": "Brgy. Balangasan",
-        "dest": "Robinson Supermarket",
-        "time": "09:15 AM",
-        "price": "₱32.50",
-        "status": "completed",
+        'pickup': 'Brgy. Balangasan',
+        'dest': 'Robinson Supermarket',
+        'time': '09:15 AM',
+        'price': '₱32.50',
+        'status': 'completed',
       },
     ],
-    "Yesterday": [
+    'Yesterday': [
       {
-        "pickup": "San Francisco St.",
-        "dest": "Pagadian City Science HS",
-        "time": "07:30 AM",
-        "price": "₱28.00",
-        "status": "canceled",
+        'pickup': 'San Francisco St.',
+        'dest': 'Pagadian City Science HS',
+        'time': '07:30 AM',
+        'price': '₱28.00',
+        'status': 'canceled',
       },
       {
-        "pickup": "Plaza Luz",
-        "dest": "Bo's Coffee",
-        "time": "02:00 PM",
-        "price": "₱15.00",
-        "status": "completed",
-      },
-    ],
-    "Apr 30": [
-      {
-        "pickup": "Gaisano Capital",
-        "dest": "Tuburan District",
-        "time": "11:45 AM",
-        "price": "₱45.00",
-        "status": "completed",
+        'pickup': 'Plaza Luz',
+        'dest': "Bo's Coffee",
+        'time': '02:00 PM',
+        'price': '₱15.00',
+        'status': 'completed',
       },
     ],
-    "Apr 29": [
+    'Apr 30': [
       {
-        "pickup": "Balangasan",
-        "dest": "Robinson Supermarket",
-        "time": "08:00 AM",
-        "price": "₱32.50",
-        "status": "completed",
+        'pickup': 'Gaisano Capital',
+        'dest': 'Tuburan District',
+        'time': '11:45 AM',
+        'price': '₱45.00',
+        'status': 'completed',
+      },
+    ],
+    'Apr 29': [
+      {
+        'pickup': 'Balangasan',
+        'dest': 'Robinson Supermarket',
+        'time': '08:00 AM',
+        'price': '₱32.50',
+        'status': 'completed',
       },
       {
-        "pickup": "Bo's Coffee",
-        "dest": "Plaza Luz",
-        "time": "04:30 PM",
-        "price": "₱12.00",
-        "status": "completed",
+        'pickup': "Bo's Coffee",
+        'dest': 'Plaza Luz',
+        'time': '04:30 PM',
+        'price': '₱12.00',
+        'status': 'completed',
       },
     ],
   };
@@ -81,7 +81,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          "Recent Activity",
+          'Recent Activity',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -124,7 +124,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
   }
 
   Widget _buildActivityCard(Map<String, String> item) {
-    final isCompleted = item["status"] == "completed";
+    final isCompleted = item['status'] == 'completed';
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(18),
@@ -139,7 +139,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                item["time"]!,
+                item['time']!,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -158,7 +158,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  item["status"]!.toUpperCase(),
+                  item['status']!.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
@@ -199,7 +199,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item["pickup"]!,
+                      item['pickup']!,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -208,7 +208,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      item["dest"]!,
+                      item['dest']!,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -219,7 +219,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                 ),
               ),
               Text(
-                item["price"]!,
+                item['price']!,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -242,7 +242,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
               ),
               TextButton(
                 onPressed: () {
-                  if (isCompleted) context.pushNamed("ActivityViewDetails");
+                  if (isCompleted) context.pushNamed('ActivityViewDetails');
                 },
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -253,7 +253,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  isCompleted ? "View Details" : "Rebook",
+                  isCompleted ? 'View Details' : 'Rebook',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryColor,

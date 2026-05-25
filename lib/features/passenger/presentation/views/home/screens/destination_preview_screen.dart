@@ -1,11 +1,11 @@
-import "package:BaoRide/core/models/place/place_model.dart";
-import "package:BaoRide/core/models/route/route_model.dart";
-import "package:BaoRide/core/services/location_service.dart";
-import "package:BaoRide/core/services/map_provider.dart";
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/models/place/place_model.dart';
+import 'package:BaoRide/core/models/route/route_model.dart';
+import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 /// Shows map with origin + destination markers, animated polyline, and ride info.
 class DestinationPreviewScreen extends StatefulWidget {
@@ -20,8 +20,8 @@ class DestinationPreviewScreen extends StatefulWidget {
 
 class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   AppMapController? _mapController;
-  String _distance = "—";
-  String _duration = "—";
+  String _distance = '—';
+  String _duration = '—';
   double _distanceKm = 0.0;
   bool _isLoading = true;
 
@@ -47,9 +47,9 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
     setState(() {
       if (route != null) {
         _distanceKm = route.distanceKm;
-        _distance = "${route.distanceKm.toStringAsFixed(1)} km";
+        _distance = '${route.distanceKm.toStringAsFixed(1)} km';
         final m = route.estimatedTime.inMinutes;
-        _duration = m < 60 ? "$m min" : "${m ~/ 60}h ${m % 60}m";
+        _duration = m < 60 ? '$m min' : '${m ~/ 60}h ${m % 60}m';
       }
       _isLoading = false;
     });
@@ -220,10 +220,10 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                     children: [
                       _chip(
                         LucideIcons.navigation,
-                        _isLoading ? "..." : _distance,
+                        _isLoading ? '...' : _distance,
                       ),
                       const SizedBox(width: 10),
-                      _chip(LucideIcons.clock, _isLoading ? "..." : _duration),
+                      _chip(LucideIcons.clock, _isLoading ? '...' : _duration),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -234,12 +234,12 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       onPressed: _isLoading
                           ? null
                           : () => context.pushNamed(
-                              "RideSelection",
+                              'RideSelection',
                               extra: {
-                                "destination": widget.destination,
-                                "distance": _distance,
-                                "duration": _duration,
-                                "distanceKm": _distanceKm,
+                                'destination': widget.destination,
+                                'distance': _distance,
+                                'duration': _duration,
+                                'distanceKm': _distanceKm,
                               },
                             ),
                       style: ElevatedButton.styleFrom(
@@ -251,7 +251,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                         elevation: 0,
                       ),
                       child: const Text(
-                        "Book Ride",
+                        'Book Ride',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,

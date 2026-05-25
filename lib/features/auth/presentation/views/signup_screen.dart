@@ -30,7 +30,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         centerTitle: true,
         title: Image.asset(
-          "assets/logo/applogo.png",
+          'assets/logo/applogo.png',
           height: 150,
           fit: BoxFit.cover,
         ),
@@ -50,7 +50,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   children: [
                     const SizedBox(height: 20),
                     const Text(
-                      "Create an account",
+                      'Create an account',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
@@ -60,7 +60,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Sign up to continue your journey.",
+                      'Sign up to continue your journey.',
                       style: TextStyle(
                         fontSize: 16,
                         color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -71,7 +71,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        hintText: "Email",
+                        hintText: 'Email',
                         prefixIcon: Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: const Icon(LucideIcons.mail, size: 20),
@@ -97,7 +97,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       obscureText: !_isPasswordVisible,
                       textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
-                        hintText: "Password",
+                        hintText: 'Password',
                         prefixIcon: Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: const Icon(LucideIcons.lock, size: 20),
@@ -134,7 +134,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       obscureText: !_isPasswordVisible,
                       textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
-                        hintText: "Confirm Password",
+                        hintText: 'Confirm Password',
                         prefixIcon: Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: const Icon(LucideIcons.lock, size: 20),
@@ -182,7 +182,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               },
                             ),
                             const Text(
-                              "Remember me",
+                              'Remember me',
                               style: TextStyle(fontSize: 14),
                             ),
                           ],
@@ -202,7 +202,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         elevation: 0,
                       ),
                       child: const Text(
-                        "Sign up",
+                        'Sign up',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -214,17 +214,17 @@ class _SignupScreenState extends State<SignupScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Already have an account?",
+                          'Already have an account?',
                           style: TextStyle(
                             color: AppTheme.primaryColor.withValues(alpha: 0.6),
                           ),
                         ),
                         TextButton(
                           onPressed: () {
-                            context.pushNamed("Signin");
+                            context.pushNamed('Signin');
                           },
                           child: const Text(
-                            "Sign In",
+                            'Sign In',
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.bold,

@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:BaoRide/core/themes/app_themes.dart';
+
 import 'package:BaoRide/core/models/place/place_model.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -62,7 +63,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
 
   void _goToTracking() {
     if (!mounted) return;
-    context.pushReplacementNamed("ActivityTrackDriver");
+    context.pushReplacementNamed('ActivityTrackDriver');
   }
 
   @override
@@ -110,7 +111,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
               ),
               const SizedBox(height: 24),
               const Text(
-                "Driver Found!",
+                'Driver Found!',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
@@ -119,7 +120,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                "Your ${widget.rideType} driver is on the way",
+                'Your ${widget.rideType} driver is on the way',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppTheme.primaryColor.withValues(alpha: 0.5),
@@ -158,7 +159,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.driverName ?? "Xyrel D. Tenefrancia",
+                                widget.driverName ?? 'Xyrel D. Tenefrancia',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
@@ -175,7 +176,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    widget.driverRating ?? "4.9",
+                                    widget.driverRating ?? '4.9',
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
@@ -183,7 +184,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                                     ),
                                   ),
                                   Text(
-                                    "  •  Local Match",
+                                    '  •  Local Match',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: AppTheme.primaryColor.withValues(
@@ -208,13 +209,13 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                       children: [
                         _infoChip(
                           LucideIcons.bike,
-                          widget.vehicleType ?? "Bao Bao",
+                          widget.vehicleType ?? 'Bao Bao',
                         ),
                         _infoChip(
                           LucideIcons.hash,
-                          widget.plateNumber ?? "ABC 1234",
+                          widget.plateNumber ?? 'ABC 1234',
                         ),
-                        _infoChip(LucideIcons.palette, "Black"),
+                        _infoChip(LucideIcons.palette, 'Black'),
                       ],
                     ),
                   ],
@@ -250,7 +251,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                       ),
                     ),
                     Text(
-                      "₱${widget.fare.toStringAsFixed(2)}",
+                      '₱${widget.fare.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -277,14 +278,14 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                     elevation: 0,
                   ),
                   child: const Text(
-                    "Track Your Driver",
+                    'Track Your Driver',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                "Auto-redirecting in a moment...",
+                'Auto-redirecting in a moment...',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppTheme.primaryColor.withValues(alpha: 0.4),

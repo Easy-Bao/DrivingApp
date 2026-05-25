@@ -1,33 +1,38 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:BaoRide/features/passenger/data/repositories/driver_repository.dart';
-import 'finding_driver_event.dart';
-import 'finding_driver_state.dart';
+import 'package:BaoRide/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
+import 'package:BaoRide/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+/// Manages the driver-search lifecycle for the passenger.
 class FindingDriverBloc extends Bloc<FindingDriverEvent, FindingDriverState> {
-  final DriverRepository _driverRepository;
+  final DriverRepository _repository;
 
-  FindingDriverBloc({required DriverRepository driverRepository})
-    : _driverRepository = driverRepository,
+  FindingDriverBloc({required DriverRepository repository})
+    : _repository = repository,
       super(FindingDriverInitial()) {
     on<SearchDriversEvent>(_onSearchDrivers);
     on<SelectDriverEvent>(_onSelectDriver);
     on<CancelSearchEvent>(_onCancelSearch);
   }
 
+  /// Triggers a radar scan — emits [FindingDriverSearching], then [FindingDriverResults].
   Future<void> _onSearchDrivers(
     SearchDriversEvent event,
     Emitter<FindingDriverState> emit,
   ) async {
     emit(FindingDriverSearching());
-    // Simulate searching latency (radar pulse visual check)
-    await Future.delayed(const Duration(seconds: 2));
-    final drivers = await _driverRepository.getNearbyDrivers(
-      lat: event.lat,
-      lng: event.lng,
-    );
-    emit(FindingDriverResults(drivers: drivers));
+    try {
+      final drivers = await _repository.getNearbyDrivers(
+        lat: event.lat,
+        lng: event.lng,
+      );
+      emit(FindingDriverResults(drivers: drivers));
+    } catch (_) {
+      emit(FindingDriverResults(drivers: []));
+    }
   }
 
+  /// Driver selected from results list.
   void _onSelectDriver(
     SelectDriverEvent event,
     Emitter<FindingDriverState> emit,
@@ -35,6 +40,7 @@ class FindingDriverBloc extends Bloc<FindingDriverEvent, FindingDriverState> {
     emit(FindingDriverSelected(selectedDriver: event.driver));
   }
 
+  /// Passenger canceled the search.
   void _onCancelSearch(
     CancelSearchEvent event,
     Emitter<FindingDriverState> emit,

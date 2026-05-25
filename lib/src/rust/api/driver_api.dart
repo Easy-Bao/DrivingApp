@@ -7,8 +7,6 @@ import '../frb_generated.dart';
 import '../models/driver_models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-/// Discovers and ranks 5 nearby drivers relative to the passenger's current coordinates.
-/// Passes the computation off to the pure Rust driver matching service.
 Future<List<NearbyDriver>> findNearbyDrivers({
   required double passengerLat,
   required double passengerLng,

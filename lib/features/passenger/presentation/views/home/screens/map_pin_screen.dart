@@ -1,10 +1,10 @@
-import "package:BaoRide/core/models/place/place_model.dart";
-import "package:BaoRide/core/services/location_service.dart";
-import "package:BaoRide/core/services/map_provider.dart";
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/models/place/place_model.dart';
+import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class MapPinScreen extends StatefulWidget {
   const MapPinScreen({super.key});
@@ -16,8 +16,8 @@ class MapPinScreen extends StatefulWidget {
 class _MapPinScreenState extends State<MapPinScreen>
     with SingleTickerProviderStateMixin {
   AppMapController? _mapController;
-  String _address = "Move the map to select a location";
-  String _subAddress = "";
+  String _address = 'Move the map to select a location';
+  String _subAddress = '';
   bool _isGeocoding = false;
   double _centerLat = 7.8307;
   double _centerLng = 123.4370;
@@ -69,11 +69,11 @@ class _MapPinScreenState extends State<MapPinScreen>
     setState(() => _isGeocoding = true);
     final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
     if (mounted) {
-      final full = place?.fullAddress ?? "Unknown location";
+      final full = place?.fullAddress ?? 'Unknown location';
       final parts = full.split(',');
       setState(() {
         _address = parts.first.trim();
-        _subAddress = parts.length > 1 ? parts.sublist(1).join(',').trim() : "";
+        _subAddress = parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
         _centerLat = lat;
         _centerLng = lng;
         _isGeocoding = false;
@@ -105,7 +105,7 @@ class _MapPinScreenState extends State<MapPinScreen>
   /// Packages the selected coordinates and address into a PlaceModel and returns it.
   void _confirmLocation() {
     final result = PlaceModel(
-      id: "pin_${DateTime.now().millisecondsSinceEpoch}",
+      id: 'pin_${DateTime.now().millisecondsSinceEpoch}',
       name: _address,
       fullAddress: [
         _address,
@@ -137,7 +137,7 @@ class _MapPinScreenState extends State<MapPinScreen>
               children: [
                 AnimatedBuilder(
                   animation: _pulseAnim,
-                  builder: (_, __) => Transform.scale(
+                  builder: (_, _) => Transform.scale(
                     scale: _pulseAnim.value,
                     child: Container(
                       width: 64,
@@ -251,7 +251,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "Pin a location",
+                        'Pin a location',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -348,7 +348,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Selected location",
+                              'Selected location',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
@@ -359,7 +359,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                             const SizedBox(height: 3),
                             if (_isGeocoding)
                               Text(
-                                "Locating…",
+                                'Locating…',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: AppTheme.primaryColor.withValues(
@@ -428,8 +428,8 @@ class _MapPinScreenState extends State<MapPinScreen>
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Text(
-                            "${_centerLat.toStringAsFixed(4)}° N, "
-                            "${_centerLng.toStringAsFixed(4)}° E",
+                            '${_centerLat.toStringAsFixed(4)}° N, '
+                            '${_centerLng.toStringAsFixed(4)}° E',
                             style: TextStyle(
                               fontSize: 11,
                               color: AppTheme.tertiaryColor.withValues(
@@ -470,7 +470,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                           Icon(LucideIcons.check, size: 18),
                           SizedBox(width: 8),
                           Text(
-                            "Confirm location",
+                            'Confirm location',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,

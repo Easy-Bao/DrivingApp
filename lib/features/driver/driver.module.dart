@@ -19,8 +19,8 @@ class DriverModule extends Module {
         ...DashboardModule.shellRoutes,
         ...EarningsModule.shellRoutes,
         ChildRoute(
-          name: "DriverAccount",
-          "account",
+          name: 'DriverAccount',
+          'account',
           child: (context, GoRouterState state) => const DriverAccountScreen(),
         ),
       ],

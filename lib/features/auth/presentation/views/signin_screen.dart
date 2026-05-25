@@ -40,7 +40,7 @@ class _SigninScreenState extends State<SigninScreen> {
         ),
         centerTitle: true,
         title: Image.asset(
-          "assets/logo/applogo.png",
+          'assets/logo/applogo.png',
           height: 150,
           fit: BoxFit.cover,
         ),
@@ -60,7 +60,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   children: [
                     const SizedBox(height: 20),
                     const Text(
-                      "Welcome Back",
+                      'Welcome Back',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
@@ -70,7 +70,7 @@ class _SigninScreenState extends State<SigninScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Log in to continue your journey.",
+                      'Log in to continue your journey.',
                       style: TextStyle(
                         fontSize: 16,
                         color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -82,7 +82,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       controller: _emailController,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        hintText: "Email",
+                        hintText: 'Email',
                         prefixIcon: Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: const Icon(LucideIcons.mail, size: 20),
@@ -109,10 +109,10 @@ class _SigninScreenState extends State<SigninScreen> {
                       controller: _passwordController,
                       textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
-                        hintText: "Password",
-                        prefixIcon: Padding(
+                        hintText: 'Password',
+                        prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
-                          child: const Icon(LucideIcons.lock, size: 20),
+                          child: Icon(LucideIcons.lock, size: 20),
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -157,17 +157,17 @@ class _SigninScreenState extends State<SigninScreen> {
                               },
                             ),
                             const Text(
-                              "Remember me",
+                              'Remember me',
                               style: TextStyle(fontSize: 14),
                             ),
                           ],
                         ),
                         TextButton(
                           onPressed: () {
-                            context.pushNamed("ForgotPassword");
+                            context.pushNamed('ForgotPassword');
                           },
                           child: const Text(
-                            "Forgot Password?",
+                            'Forgot Password?',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppTheme.primaryColor,
@@ -179,7 +179,7 @@ class _SigninScreenState extends State<SigninScreen> {
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
-                        context.pushNamed("PassengerHome");
+                        context.pushNamed('PassengerHome');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
@@ -191,7 +191,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         elevation: 0,
                       ),
                       child: const Text(
-                        "Sign In",
+                        'Sign In',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -209,7 +209,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
-                            "OR",
+                            'OR',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -229,7 +229,7 @@ class _SigninScreenState extends State<SigninScreen> {
                     const SizedBox(height: 32),
                     OutlinedButton(
                       onPressed: () {
-                        context.goNamed("DriverDashboard");
+                        context.goNamed('DriverDashboard');
                       },
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(60),
@@ -243,10 +243,10 @@ class _SigninScreenState extends State<SigninScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset("assets/icons/google.png", height: 20),
+                          Image.asset('assets/icons/google.png', height: 20),
                           const SizedBox(width: 12),
                           const Text(
-                            "Continue with Google",
+                            'Continue with Google',
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.w600,
@@ -268,10 +268,10 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            context.pushNamed("Signup");
+                            context.pushNamed('Signup');
                           },
                           child: const Text(
-                            "Sign up",
+                            'Sign up',
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.bold,

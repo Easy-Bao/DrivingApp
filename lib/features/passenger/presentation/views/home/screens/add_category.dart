@@ -1,6 +1,6 @@
+import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:BaoRide/features/passenger/presentation/views/home/models/add_category_model.dart';
 import 'package:flutter/material.dart';
-import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -89,7 +89,7 @@ class _PassengerAddCategoryScreenState
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          "Add Shortcut",
+          'Add Shortcut',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -107,7 +107,7 @@ class _PassengerAddCategoryScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Label Your Shortcut",
+                    'Label Your Shortcut',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
@@ -136,7 +136,7 @@ class _PassengerAddCategoryScreenState
                       }
                     },
                     decoration: InputDecoration(
-                      hintText: "Enter label...",
+                      hintText: 'Enter label...',
                       errorText: _errorMessage,
                       prefixIcon: Icon(
                         selectedIcon,
@@ -171,7 +171,7 @@ class _PassengerAddCategoryScreenState
                   ),
                   const SizedBox(height: 32),
                   const Text(
-                    "Select Icon",
+                    'Select Icon',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -216,7 +216,7 @@ class _PassengerAddCategoryScreenState
                   ),
                   const SizedBox(height: 32),
                   const Text(
-                    "Pin Location",
+                    'Pin Location',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -262,8 +262,8 @@ class _PassengerAddCategoryScreenState
                             const SizedBox(height: 12),
                             Text(
                               _isLocationPinned
-                                  ? "✓ Location Pinned Successfully"
-                                  : "Tap to pin your location on the map",
+                                  ? '✓ Location Pinned Successfully'
+                                  : 'Tap to pin your location on the map',
                               style: TextStyle(
                                 color: _isLocationPinned
                                     ? Colors.green
@@ -277,7 +277,7 @@ class _PassengerAddCategoryScreenState
                             if (!_isLocationPinned) ...[
                               const SizedBox(height: 4),
                               Text(
-                                "Select a spot to save this shortcut",
+                                'Select a spot to save this shortcut',
                                 style: TextStyle(
                                   color: AppTheme.primaryColor.withValues(
                                     alpha: 0.4,
@@ -317,7 +317,7 @@ class _PassengerAddCategoryScreenState
                     elevation: 0,
                   ),
                   child: const Text(
-                    "Save Shortcut",
+                    'Save Shortcut',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,

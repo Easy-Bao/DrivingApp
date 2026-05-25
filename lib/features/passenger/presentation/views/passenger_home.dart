@@ -1,9 +1,9 @@
-import "package:BaoRide/core/themes/app_themes.dart";
-import "package:BaoRide/features/passenger/presentation/views/home/models/add_category_model.dart";
-import "package:BaoRide/features/passenger/presentation/views/home/models/quick_action_model.dart";
-import "package:flutter/material.dart";
-import "package:flutter_lucide/flutter_lucide.dart";
-import "package:go_router_modular/go_router_modular.dart";
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/models/add_category_model.dart';
+import 'package:BaoRide/features/passenger/presentation/views/home/models/quick_action_model.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
@@ -16,46 +16,46 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   final List<QuickActionModel> quickActions = [
     QuickActionModel(
       icon: LucideIcons.bike,
-      title: "Solo Ride",
-      subtitle: "Direct booking",
+      title: 'Solo Ride',
+      subtitle: 'Direct booking',
       onTap: () {},
     ),
     QuickActionModel(
       icon: LucideIcons.users,
-      title: "Share-Bao",
-      subtitle: "Pasabay",
+      title: 'Share-Bao',
+      subtitle: 'Pasabay',
       onTap: () {},
     ),
   ];
 
   final List<Map<String, dynamic>> recentLocationData = [
     {
-      "icon": LucideIcons.circle_play,
-      "title": "Plaza Luz",
-      "subtitle": "San Francisco",
-      "lat": 7.8275,
-      "lng": 123.4365,
+      'icon': LucideIcons.circle_play,
+      'title': 'Plaza Luz',
+      'subtitle': 'San Francisco',
+      'lat': 7.8275,
+      'lng': 123.4365,
     },
     {
-      "icon": LucideIcons.store,
-      "title": "Robinson Supermarket",
-      "subtitle": "San Francisco",
-      "lat": 7.8250,
-      "lng": 123.4380,
+      'icon': LucideIcons.store,
+      'title': 'Robinson Supermarket',
+      'subtitle': 'San Francisco',
+      'lat': 7.8250,
+      'lng': 123.4380,
     },
     {
-      "icon": LucideIcons.coffee,
-      "title": "Bo's Coffee",
-      "subtitle": "San Francisco",
-      "lat": 7.8295,
-      "lng": 123.4358,
+      'icon': LucideIcons.coffee,
+      'title': "Bo's Coffee",
+      'subtitle': 'San Francisco',
+      'lat': 7.8295,
+      'lng': 123.4358,
     },
     {
-      "icon": LucideIcons.shopping_bag,
-      "title": "Gaisano Capital",
-      "subtitle": "San Francisco",
-      "lat": 7.8260,
-      "lng": 123.4355,
+      'icon': LucideIcons.shopping_bag,
+      'title': 'Gaisano Capital',
+      'subtitle': 'San Francisco',
+      'lat': 7.8260,
+      'lng': 123.4355,
     },
   ];
 
@@ -67,18 +67,18 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     shortcuts = [
       AddCategoryModel(
         icon: LucideIcons.house,
-        label: "Home",
-        onTap: () => _showFeedback("Home tapped"),
+        label: 'Home',
+        onTap: () => _showFeedback('Home tapped'),
       ),
       AddCategoryModel(
         icon: LucideIcons.graduation_cap,
-        label: "Campus",
-        onTap: () => _showFeedback("Campus tapped"),
+        label: 'Campus',
+        onTap: () => _showFeedback('Campus tapped'),
       ),
       AddCategoryModel(
         icon: LucideIcons.briefcase,
-        label: "Work",
-        onTap: () => _showFeedback("Work tapped"),
+        label: 'Work',
+        onTap: () => _showFeedback('Work tapped'),
       ),
     ];
   }
@@ -96,14 +96,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
   void _openAddCategoryScreen() {
     context.pushNamed(
-      "PassengerAddCategory",
+      'PassengerAddCategory',
       extra: (AddCategoryModel newShortcut) {
         setState(() {
           shortcuts.add(
             AddCategoryModel(
               icon: newShortcut.icon,
               label: newShortcut.label,
-              onTap: () => _showFeedback("${newShortcut.label} tapped"),
+              onTap: () => _showFeedback('${newShortcut.label} tapped'),
             ),
           );
         });
@@ -112,7 +112,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   }
 
   void _openActivityDetail(Map<String, dynamic> location) {
-    context.pushNamed("ActivityDetailMap", extra: location);
+    context.pushNamed('ActivityDetailMap', extra: location);
   }
 
   @override
@@ -133,7 +133,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "EasyRide",
+                        'EasyRide',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
@@ -142,7 +142,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                         ),
                       ),
                       Text(
-                        "Ready to ride today?",
+                        'Ready to ride today?',
                         style: TextStyle(
                           fontSize: 16,
                           color: AppTheme.primaryColor,
@@ -163,7 +163,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                             LucideIcons.bell,
                             color: AppTheme.primaryColor,
                           ),
-                          onPressed: () => context.pushNamed("Notifications"),
+                          onPressed: () => context.pushNamed('Notifications'),
                         ),
                       ),
                       Positioned(
@@ -192,7 +192,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   ),
                   SizedBox(width: 6),
                   Text(
-                    "Pagadian City, Zamboanga del Sur",
+                    'Pagadian City, Zamboanga del Sur',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -206,7 +206,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => context.pushNamed("SearchDestination"),
+                      onTap: () => context.pushNamed('SearchDestination'),
                       child: Hero(
                         tag: 'search_bar_field',
                         child: Material(
@@ -227,7 +227,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  "Enter destination",
+                                  'Enter destination',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: AppTheme.primaryColor.withValues(
@@ -245,7 +245,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   ),
                   const SizedBox(width: 12),
                   GestureDetector(
-                    onTap: () => _showFeedback("Locating..."),
+                    onTap: () => _showFeedback('Locating...'),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -281,7 +281,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                     ),
                     GestureDetector(
                       onTap: _openAddCategoryScreen,
-                      child: _buildShortcutChip(LucideIcons.plus, "Add"),
+                      child: _buildShortcutChip(LucideIcons.plus, 'Add'),
                     ),
                   ],
                 ),
@@ -309,7 +309,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "Recent Activity",
+                    'Recent Activity',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -317,9 +317,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => context.pushNamed("ViewAllSuggestions"),
+                    onPressed: () => context.pushNamed('ViewAllSuggestions'),
                     child: const Text(
-                      "View all",
+                      'View all',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppTheme.primaryColor,
@@ -338,9 +338,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   itemBuilder: (context, index) {
                     final location = recentLocationData[index];
                     return _buildLocationItem(
-                      icon: location["icon"] as IconData,
-                      title: location["title"] as String,
-                      subtitle: location["subtitle"] as String,
+                      icon: location['icon'] as IconData,
+                      title: location['title'] as String,
+                      subtitle: location['subtitle'] as String,
                       onTap: () => _openActivityDetail(location),
                     );
                   },

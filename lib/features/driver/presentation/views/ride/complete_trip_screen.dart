@@ -1,11 +1,17 @@
-import 'package:flutter/material.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+/// Confirmation screen shown immediately after completing a trip.
+/// Shows route summary and routes to fare summary.
 class CompleteTripScreen extends StatelessWidget {
-  final String pickup, dropoff, duration;
-  final double distance, fare;
+  final String pickup;
+  final String dropoff;
+  final String duration;
+  final double distance;
+  final double fare;
+
   const CompleteTripScreen({
     super.key,
     required this.pickup,
@@ -21,121 +27,33 @@ class CompleteTripScreen extends StatelessWidget {
       backgroundColor: AppTheme.surface,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
               const Spacer(),
-              // Success icon
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppTheme.complete.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: AppTheme.complete,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      LucideIcons.check,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                ),
-              ),
+              _buildSuccessIcon(),
               const SizedBox(height: 20),
               const Text(
-                "Trip Completed!",
+                'Trip Completed!',
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
                   color: AppTheme.primaryColor,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                "Great job, driver!",
+                'Great job, driver! 🎉',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   color: AppTheme.primaryColor.withValues(alpha: 0.5),
                 ),
               ),
-              const SizedBox(height: 32),
-              // Trip summary card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.borderSide),
-                ),
-                child: Column(
-                  children: [
-                    _row("Pickup", pickup, LucideIcons.circle_dot),
-                    const SizedBox(height: 12),
-                    _row("Drop-off", dropoff, LucideIcons.map_pin),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Divider(height: 1, color: AppTheme.borderSide),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _stat("${distance.toStringAsFixed(1)} km", "Distance"),
-                        _stat(duration, "Duration"),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 36),
+              _buildSummaryCard(),
               const Spacer(),
-              // End ride button
-              GestureDetector(
-                onTap: () => context.pushReplacementNamed(
-                  "FareSummary",
-                  extra: {
-                    "pickup": pickup,
-                    "dropoff": dropoff,
-                    "distance": distance,
-                    "fare": fare,
-                    "duration": duration,
-                  },
-                ),
-                child: Container(
-                  width: double.infinity,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(32),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text(
-                      "END RIDE",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+              _buildEndRideButton(context),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -143,11 +61,68 @@ class CompleteTripScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value, IconData icon) {
+  Widget _buildSuccessIcon() {
+    return Container(
+      width: 90,
+      height: 90,
+      decoration: BoxDecoration(
+        color: AppTheme.complete.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Container(
+          width: 62,
+          height: 62,
+          decoration: BoxDecoration(
+            color: AppTheme.complete,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(LucideIcons.check, color: Colors.white, size: 30),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: AppTheme.neutralColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: Column(
+        children: [
+          _routeRow(LucideIcons.circle_dot, 'Pickup', pickup),
+          const SizedBox(height: 14),
+          _routeRow(LucideIcons.map_pin, 'Drop-off', dropoff),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1, color: AppTheme.borderSide),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _statCell(
+                  '${distance.toStringAsFixed(1)} km',
+                  'Distance',
+                ),
+              ),
+              Container(width: 1, height: 36, color: AppTheme.borderSide),
+              Expanded(child: _statCell(duration, 'Duration')),
+              Container(width: 1, height: 36, color: AppTheme.borderSide),
+              Expanded(child: _statCell('₱${fare.toStringAsFixed(0)}', 'Fare')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _routeRow(IconData icon, String label, String value) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: AppTheme.tertiaryColor),
+        Icon(icon, size: 15, color: AppTheme.tertiaryColor),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -178,26 +153,68 @@ class CompleteTripScreen extends StatelessWidget {
     );
   }
 
-  Widget _stat(String value, String label) {
+  Widget _statCell(String value, String label) {
     return Column(
       children: [
         Text(
           value,
           style: const TextStyle(
-            fontSize: 18,
+            fontSize: 17,
             fontWeight: FontWeight.w900,
             color: AppTheme.primaryColor,
           ),
         ),
+        const SizedBox(height: 3),
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
-            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+            fontSize: 10,
             fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor.withValues(alpha: 0.4),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEndRideButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.pushReplacementNamed(
+        'FareSummary',
+        extra: {
+          'pickup': pickup,
+          'dropoff': dropoff,
+          'distance': distance,
+          'fare': fare,
+          'duration': duration,
+        },
+      ),
+      child: Container(
+        width: double.infinity,
+        height: 68,
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor,
+          borderRadius: BorderRadius.circular(34),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: 0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 7),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Text(
+            'COLLECT FARE',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

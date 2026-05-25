@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:BaoRide/core/models/place/place_model.dart';
-import 'package:BaoRide/core/services/map_provider.dart';
 import 'package:BaoRide/core/services/location_service.dart';
+import 'package:BaoRide/core/services/map_provider.dart';
+import 'package:BaoRide/core/themes/app_themes.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -36,15 +36,36 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
     super.initState();
     final km = widget.distanceKm;
     _options = [
-      _RideOption("Solo Ride", "Direct booking, just you", LucideIcons.bike, 20 + km * 10, "3 min", null),
-      _RideOption("Share-Bao", "Pasabay, split the fare", LucideIcons.users, 15 + km * 7, "5 min", "Cheapest"),
-      _RideOption("Bao Premium", "Priority pickup, top rated", LucideIcons.crown, 35 + km * 15, "2 min", "Fastest"),
+      _RideOption(
+        'Solo Ride',
+        'Direct booking, just you',
+        LucideIcons.bike,
+        20 + km * 10,
+        '3 min',
+        null,
+      ),
+      _RideOption(
+        'Share-Bao',
+        'Pasabay, split the fare',
+        LucideIcons.users,
+        15 + km * 7,
+        '5 min',
+        'Cheapest',
+      ),
+      _RideOption(
+        'Bao Premium',
+        'Priority pickup, top rated',
+        LucideIcons.crown,
+        35 + km * 15,
+        '2 min',
+        'Fastest',
+      ),
     ];
   }
 
   Future<void> _drawRoute() async {
     if (_mapController == null) return;
-    
+
     final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
     final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
     final destLat = widget.destination.latitude;
@@ -52,11 +73,26 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
 
     try {
       // Get route details from Rust Mapbox wrapper
-      final route = await MapProvider.getRoute(pickupLat, pickupLng, destLat, destLng);
+      final route = await MapProvider.getRoute(
+        pickupLat,
+        pickupLng,
+        destLat,
+        destLng,
+      );
       if (route != null && mounted) {
         // Add markers for pickup and drop-off
-        await MapProvider.addMarker(_mapController!, pickupLat, pickupLng, isOrigin: true);
-        await MapProvider.addMarker(_mapController!, destLat, destLng, isOrigin: false);
+        await MapProvider.addMarker(
+          _mapController!,
+          pickupLat,
+          pickupLng,
+          isOrigin: true,
+        );
+        await MapProvider.addMarker(
+          _mapController!,
+          destLat,
+          destLng,
+          isOrigin: false,
+        );
         // Draw polyline
         await MapProvider.addPolyline(
           _mapController!,
@@ -65,17 +101,13 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
           width: 5.0,
         );
         // Fit both inside bounds
-        await MapProvider.fitBounds(
-          _mapController!,
-          [
-            LatLng(pickupLat, pickupLng),
-            LatLng(destLat, destLng),
-          ],
-          padding: 60.0,
-        );
+        await MapProvider.fitBounds(_mapController!, [
+          LatLng(pickupLat, pickupLng),
+          LatLng(destLat, destLng),
+        ], padding: 60.0);
       }
     } catch (e) {
-      debugPrint("Error drawing route preview: $e");
+      debugPrint('Error drawing route preview: $e');
     }
   }
 
@@ -106,7 +138,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
               ),
             ),
           ),
-          
+
           // Back button
           SafeArea(
             child: Padding(
@@ -123,10 +155,14 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                         color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 15,
                         offset: const Offset(0, 4),
-                      )
+                      ),
                     ],
                   ),
-                  child: const Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor, size: 20),
+                  child: const Icon(
+                    LucideIcons.arrow_left,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
                 ),
               ),
             ),
@@ -139,13 +175,15 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 30,
                     offset: const Offset(0, -10),
-                  )
+                  ),
                 ],
               ),
               child: Column(
@@ -162,7 +200,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                       ),
                     ),
                   ),
-                  
+
                   // Route summary display
                   Row(
                     children: [
@@ -171,10 +209,21 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                           Container(
                             width: 8,
                             height: 8,
-                            decoration: const BoxDecoration(color: AppTheme.primaryColor, shape: BoxShape.circle),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                          Container(width: 1, height: 20, color: AppTheme.outlineBorderColor),
-                          const Icon(Icons.location_on, size: 14, color: AppTheme.tertiaryColor),
+                          Container(
+                            width: 1,
+                            height: 20,
+                            color: AppTheme.outlineBorderColor,
+                          ),
+                          const Icon(
+                            Icons.location_on,
+                            size: 14,
+                            color: AppTheme.tertiaryColor,
+                          ),
                         ],
                       ),
                       const SizedBox(width: 12),
@@ -182,11 +231,22 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Current Location", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primaryColor)),
+                            const Text(
+                              'Current Location',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Text(
                               widget.destination.name,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primaryColor),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                              ),
                             ),
                           ],
                         ),
@@ -194,19 +254,34 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(widget.distance, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.tertiaryColor)),
+                          Text(
+                            widget.distance,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.tertiaryColor,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text(widget.duration, style: TextStyle(fontSize: 11, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
+                          Text(
+                            widget.duration,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
-                      "CHOOSE YOUR RIDE",
+                      'CHOOSE YOUR RIDE',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -216,7 +291,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Ride options list
                   ...List.generate(_options.length, (i) {
                     final o = _options[i];
@@ -228,10 +303,14 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isSel ? AppTheme.primaryColor.withValues(alpha: 0.05) : AppTheme.surface,
+                          color: isSel
+                              ? AppTheme.primaryColor.withValues(alpha: 0.05)
+                              : AppTheme.surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isSel ? AppTheme.primaryColor : AppTheme.borderSide,
+                            color: isSel
+                                ? AppTheme.primaryColor
+                                : AppTheme.borderSide,
                             width: isSel ? 1.5 : 1,
                           ),
                         ),
@@ -240,10 +319,18 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: isSel ? AppTheme.primaryColor : AppTheme.neutralColor,
+                                color: isSel
+                                    ? AppTheme.primaryColor
+                                    : AppTheme.neutralColor,
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: Icon(o.icon, size: 20, color: isSel ? Colors.white : AppTheme.primaryColor),
+                              child: Icon(
+                                o.icon,
+                                size: 20,
+                                color: isSel
+                                    ? Colors.white
+                                    : AppTheme.primaryColor,
+                              ),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -252,23 +339,40 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(o.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.primaryColor)),
+                                      Text(
+                                        o.name,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ),
                                       if (o.badge != null) ...[
                                         const SizedBox(width: 8),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: o.badge == "Cheapest"
-                                                ? AppTheme.complete.withValues(alpha: 0.15)
-                                                : AppTheme.tertiaryColor.withValues(alpha: 0.15),
-                                            borderRadius: BorderRadius.circular(8),
+                                            color: o.badge == 'Cheapest'
+                                                ? AppTheme.complete.withValues(
+                                                    alpha: 0.15,
+                                                  )
+                                                : AppTheme.tertiaryColor
+                                                      .withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           child: Text(
                                             o.badge!,
                                             style: TextStyle(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
-                                              color: o.badge == "Cheapest" ? AppTheme.complete : AppTheme.tertiaryColor,
+                                              color: o.badge == 'Cheapest'
+                                                  ? AppTheme.complete
+                                                  : AppTheme.tertiaryColor,
                                             ),
                                           ),
                                         ),
@@ -276,23 +380,53 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(o.subtitle, style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.5))),
+                                  Text(
+                                    o.subtitle,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text("₱${o.fare.toStringAsFixed(2)}", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
-                                Text("~${o.eta}", style: TextStyle(fontSize: 11, color: AppTheme.primaryColor.withValues(alpha: 0.4))),
+                                Text(
+                                  '₱${o.fare.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                Text(
+                                  '~${o.eta}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             if (isSel) ...[
                               const SizedBox(width: 10),
                               Container(
                                 padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(color: AppTheme.primaryColor, shape: BoxShape.circle),
-                                child: const Icon(LucideIcons.check, size: 14, color: Colors.white),
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.primaryColor,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  LucideIcons.check,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
                               ),
                             ],
                           ],
@@ -300,7 +434,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                       ),
                     );
                   }),
-                  
+
                   // Book button
                   SafeArea(
                     child: Padding(
@@ -309,20 +443,31 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () => context.pushNamed("FindingDriver", extra: {
-                            "rideType": sel.name,
-                            "fare": sel.fare,
-                            "destination": widget.destination,
-                            "distance": widget.distance,
-                            "duration": widget.duration,
-                          }),
+                          onPressed: () => context.pushNamed(
+                            'FindingDriver',
+                            extra: {
+                              'rideType': sel.name,
+                              'fare': sel.fare,
+                              'destination': widget.destination,
+                              'distance': widget.distance,
+                              'duration': widget.duration,
+                            },
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(32),
+                            ),
                             elevation: 0,
                           ),
-                          child: Text("Book ${sel.name}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                          child: Text(
+                            'Book ${sel.name}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -342,5 +487,12 @@ class _RideOption {
   final IconData icon;
   final double fare;
   final String? badge;
-  _RideOption(this.name, this.subtitle, this.icon, this.fare, this.eta, this.badge);
+  _RideOption(
+    this.name,
+    this.subtitle,
+    this.icon,
+    this.fare,
+    this.eta,
+    this.badge,
+  );
 }

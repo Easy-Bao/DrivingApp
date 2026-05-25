@@ -22,6 +22,8 @@ extension RouteModelExtension on RouteModel {
 
 // For backwards compatibility:
 class RouteModelLegacyAdapter {
+  RouteModelLegacyAdapter._();
+
   static RouteModel create({
     required List<List<double>> polylinePoints,
     required double distanceKm,

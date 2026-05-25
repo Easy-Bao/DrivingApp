@@ -7,7 +7,7 @@ class AppModule extends Module {
   @override
   List<ModularRoute> get routes => [
     ModuleRoute('/', module: AuthModule()),
-    ModuleRoute("/passenger/", module: PassengerModule()),
-    ModuleRoute("/driver/", module: DriverModule()),
+    ModuleRoute('/passenger/', module: PassengerModule()),
+    ModuleRoute('/driver/', module: DriverModule()),
   ];
 }

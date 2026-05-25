@@ -51,3 +51,6 @@ app.*.map.json
 
 #Metadata
 .metadata
+
+# AI Agent Skills
+.agents/

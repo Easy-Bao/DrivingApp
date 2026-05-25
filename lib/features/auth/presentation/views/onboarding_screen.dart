@@ -17,7 +17,7 @@ class OnBoardingScreen extends StatelessWidget {
             right: 0,
             height: MediaQuery.of(context).size.height * 0.75,
             child: Image.asset(
-              "assets/images/BaoBao.png",
+              'assets/images/BaoBao.png',
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
             ),
@@ -48,7 +48,7 @@ class OnBoardingScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Move\nEffortlessly.",
+                    'Move\nEffortlessly.',
                     style: TextStyle(
                       color: AppTheme.primaryColor,
                       fontSize: 48,
@@ -58,7 +58,7 @@ class OnBoardingScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    "Experience the silent transition\nthrough urban landscapes.",
+                    'Experience the silent transition\nthrough urban landscapes.',
                     style: TextStyle(
                       color: AppTheme.primaryColor,
                       fontSize: 16,
@@ -74,7 +74,7 @@ class OnBoardingScreen extends StatelessWidget {
                           height: 60,
                           child: ElevatedButton(
                             onPressed: () {
-                              context.pushNamed("Signin");
+                              context.pushNamed('Signin');
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryColor,
@@ -85,7 +85,7 @@ class OnBoardingScreen extends StatelessWidget {
                               ),
                             ),
                             child: const Text(
-                              "Continue with Email",
+                              'Continue with Email',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -117,10 +117,10 @@ class OnBoardingScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset("assets/icons/google.png", height: 20),
+                          Image.asset('assets/icons/google.png', height: 20),
                           const SizedBox(width: 12),
                           const Text(
-                            "Continue with Google",
+                            'Continue with Google',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
