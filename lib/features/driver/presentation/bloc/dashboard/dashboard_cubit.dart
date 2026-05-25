@@ -33,7 +33,6 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   /// Toggles driver online/offline status.
-  ///
   /// When going online, fetches the surge heatmap for the current location.
   Future<void> toggleOnline({required double lat, required double lng}) async {
     final goingOnline = !state.isOnline;

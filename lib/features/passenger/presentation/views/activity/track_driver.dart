@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:BaoRide/core/services/location_service.dart';
 import 'package:BaoRide/core/services/map_provider.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
@@ -8,8 +10,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Screen displayed while tracking the driver in real time.
-/// Subscribes to the TrackDriverCubit and updates a live Mapbox widget.
 class AcitivityTrackDriver extends StatefulWidget {
   const AcitivityTrackDriver({super.key});
 
@@ -35,16 +35,18 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
       final driverStartLat = passengerLat + 0.006;
       final driverStartLng = passengerLng - 0.005;
 
-      BlocProvider.of<TrackDriverCubit>(context).startTracking(
-        startLat: driverStartLat,
-        startLng: driverStartLng,
-        endLat: passengerLat,
-        endLng: passengerLng,
+      unawaited(
+        BlocProvider.of<TrackDriverCubit>(context).startTracking(
+          startLat: driverStartLat,
+          startLng: driverStartLng,
+          endLat: passengerLat,
+          endLng: passengerLng,
+        ),
       );
     }
   }
 
-  void _updateMapElements(
+  Future<void> _updateMapElements(
     double driverLat,
     double driverLng,
     List<List<double>>? routePoints,
@@ -145,14 +147,16 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
         if (state is TrackDriverInProgress) {
-          _updateMapElements(
-            state.driverLat,
-            state.driverLng,
-            state.routePoints,
+          unawaited(
+            _updateMapElements(
+              state.driverLat,
+              state.driverLng,
+              state.routePoints,
+            ),
           );
         } else if (state is TrackDriverCompleted) {
-          // Ride completed, transition back to home dashboard (rating removed per reqs)
-          context.pop();
+          // Ride completed, transition to rating screen
+          unawaited(context.pushNamed('PassengerRating'));
         } else if (state is TrackDriverCanceled) {
           context.pop();
         }
@@ -383,7 +387,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                             foregroundColor: AppTheme.primaryColor,
                             borderColor: AppTheme.borderSide,
                             onTap: () {
-                              context.pushNamed('DriverChat');
+                              unawaited(context.pushNamed('DriverChat'));
                             },
                           ),
                         ),

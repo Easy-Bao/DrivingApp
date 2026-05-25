@@ -78,7 +78,7 @@ class PassengerAccountScreen extends StatelessWidget {
                 () {},
               ),
               const SizedBox(height: 40),
-              _buildLogoutButton(),
+              _buildLogoutButton(context),
               const SizedBox(height: 40),
             ],
           ),
@@ -184,11 +184,13 @@ class PassengerAccountScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton() {
+  Widget _buildLogoutButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: TextButton(
-        onPressed: () {},
+        onPressed: () {
+          context.goNamed('OnBoarding');
+        },
         style: TextButton.styleFrom(
           foregroundColor: Colors.redAccent,
           minimumSize: const Size(double.infinity, 50),
