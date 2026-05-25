@@ -1,5 +1,4 @@
 /// Contract: what the TrackDriver feature needs from the data layer.
-/// Encapsulates route-fetching logic away from the Cubit.
 abstract class TrackRepository {
   /// Fetches a snap-to-road polyline between two coordinates.
   /// Returns a list of [lat, lng] pairs, or null if unavailable.
@@ -11,9 +10,6 @@ abstract class TrackRepository {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK IMPLEMENTATION — straight-line 5-point route
-// ─────────────────────────────────────────────────────────────────────────────
 
 class MockTrackRepository implements TrackRepository {
   @override
@@ -34,10 +30,6 @@ class MockTrackRepository implements TrackRepository {
     });
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAPBOX IMPLEMENTATION — real snap-to-road from MapProvider
-// ─────────────────────────────────────────────────────────────────────────────
 
 class MapboxTrackRepository implements TrackRepository {
   @override

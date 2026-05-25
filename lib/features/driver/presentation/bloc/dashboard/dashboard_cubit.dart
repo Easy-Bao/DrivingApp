@@ -2,7 +2,7 @@ import 'package:BaoRide/features/driver/data/repositories/dashboard_repository.d
 import 'package:BaoRide/features/driver/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Manages the driver's dashboard state.
+// Manages the driver's dashboard state.
 class DashboardCubit extends Cubit<DashboardState> {
   final DashboardRepository _repository;
 
@@ -32,8 +32,8 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  /// Toggles driver online/offline status.
-  /// When going online, fetches the surge heatmap for the current location.
+  // Toggles driver online/offline status.
+  // When going online, fetches the surge heatmap for the current location.
   Future<void> toggleOnline({required double lat, required double lng}) async {
     final goingOnline = !state.isOnline;
 

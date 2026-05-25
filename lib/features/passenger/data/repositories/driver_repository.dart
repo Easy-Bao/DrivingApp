@@ -2,7 +2,6 @@ import 'package:BaoRide/core/models/driver/driver_model.dart';
 import 'package:BaoRide/src/rust/api/driver_api.dart' as rust_api;
 
 /// Contract: defines what the passenger feature needs for finding nearby drivers.
-/// Neither the Bloc nor the UI ever depends on a concrete class.
 abstract class DriverRepository {
   /// Returns a list of nearby available drivers for the given coordinates.
   Future<List<DriverModel>> getNearbyDrivers({
@@ -11,17 +10,13 @@ abstract class DriverRepository {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK IMPLEMENTATION — for development and unit testing
-// ─────────────────────────────────────────────────────────────────────────────
-
 class MockDriverRepository implements DriverRepository {
   @override
   Future<List<DriverModel>> getNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate radar scan
+    await Future.delayed(const Duration(seconds: 2)); 
     return [
       DriverModel(
         id: 'drv_001',
@@ -50,10 +45,6 @@ class MockDriverRepository implements DriverRepository {
     ];
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RUST FFI IMPLEMENTATION — uses local driver-matching Rust algorithm
-// ─────────────────────────────────────────────────────────────────────────────
 
 class RustDriverRepository implements DriverRepository {
   @override
@@ -87,10 +78,6 @@ class RustDriverRepository implements DriverRepository {
     }
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// API IMPLEMENTATION — for when the Go backend WebSocket is ready
-// ─────────────────────────────────────────────────────────────────────────────
 
 //TODO: Implement the real API repository once backend endpoints are ready and integrated.
 

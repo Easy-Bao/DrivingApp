@@ -1,8 +1,6 @@
 import 'package:BaoRide/src/rust/models/fare_models.dart';
 import 'package:equatable/equatable.dart';
 
-/// Immutable state for the driver dashboard.
-///
 /// All fields default to empty/zero — the UI can distinguish between
 /// "not yet loaded" and "loaded as zero" using [isLoadingStats].
 class DashboardState extends Equatable {

@@ -64,7 +64,8 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
 
   void _calculateRawDistance() {
     double d = 0.0;
-    double lat = 8.5879; // Driver start
+    //TODO: Make this base on the driver location
+    double lat = 8.5879; 
     double lng = 123.3402;
     for (final wp in _rawWaypoints) {
       final latDiff = wp.lat - lat;
@@ -79,7 +80,6 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
   void _runRustTspOptimizer() async {
     setState(() => _isOptimizing = true);
 
-    // Simulate real calculations with a short loading state for UX
     await Future.delayed(const Duration(milliseconds: 600));
 
     try {

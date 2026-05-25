@@ -43,7 +43,7 @@ class CompleteTripScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Great job, driver! 🎉',
+                'Great job, driver!',
                 style: TextStyle(
                   fontSize: 15,
                   color: AppTheme.primaryColor.withValues(alpha: 0.5),

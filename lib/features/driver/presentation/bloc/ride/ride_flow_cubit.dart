@@ -4,7 +4,7 @@ import 'package:BaoRide/features/driver/data/repositories/ride_repository.dart';
 import 'package:BaoRide/features/driver/presentation/bloc/ride/ride_flow_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Manages the sequential ride lifecycle: initial → en-route → waiting → in-transit → complete.
+// Manages the sequential ride lifecycle: initial → en-route → waiting → in-transit → complete.
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
   Timer? _waitTimer;
@@ -29,7 +29,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
-  /// Driver has arrived at the pickup location — start waiting timer.
+  // Driver has arrived at the pickup location — start waiting timer.
   void arriveAtPickup(String passengerName) {
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
@@ -51,7 +51,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     });
   }
 
-  /// Passenger is aboard — begin trip to destination.
+  // Passenger is aboard — begin trip to destination.
   void startRide({
     required String passengerName,
     required double destLat,
@@ -69,7 +69,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
-  /// Driver has reached the destination — compute and display the final fare.
+  // Driver has reached the destination — compute and display the final fare.
   Future<void> endRide({
     required double distanceKm,
     required double durationMinutes,
@@ -87,7 +87,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
   }
 
-  /// Resets the ride flow back to idle.
+  // Resets the ride flow back to idle.
   void reset() {
     _waitTimer?.cancel();
     emit(RideFlowInitial());

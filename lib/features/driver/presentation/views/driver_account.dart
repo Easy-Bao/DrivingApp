@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Driver profile and account settings screen.
-class DriverAccountScreen extends StatelessWidget {
+:class DriverAccountScreen extends StatelessWidget {w
   const DriverAccountScreen({super.key});
 
   @override

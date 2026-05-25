@@ -8,10 +8,6 @@ abstract class PassengerHomeRepository {
   Future<List<Map<String, dynamic>>> getRecentLocations();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK IMPLEMENTATION — hardcoded Pagadian City data
-// ─────────────────────────────────────────────────────────────────────────────
-
 class MockPassengerHomeRepository implements PassengerHomeRepository {
   @override
   Future<String> resolveAddress({
@@ -53,10 +49,6 @@ class MockPassengerHomeRepository implements PassengerHomeRepository {
     ];
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// API IMPLEMENTATION stub
-// ─────────────────────────────────────────────────────────────────────────────
 
 //TODO: Implement the real API repository once backend endpoints are ready and integrated.
 

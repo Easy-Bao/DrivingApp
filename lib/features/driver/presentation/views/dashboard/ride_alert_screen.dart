@@ -78,7 +78,6 @@ class _RideAlertScreenState extends State<RideAlertScreen>
           child: Column(
             children: [
               const SizedBox(height: 8),
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -112,7 +111,6 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                 ],
               ),
               const SizedBox(height: 20),
-              // Countdown bar
               AnimatedBuilder(
                 animation: _timerCtrl,
                 builder: (ctx, _) {
@@ -148,7 +146,6 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                 },
               ),
               const SizedBox(height: 28),
-              // Route card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -240,7 +237,6 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              // Distance and ETA
               Row(
                 children: [
                   Expanded(
@@ -261,7 +257,6 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                 ],
               ),
               const Spacer(),
-              // Accept button
               GestureDetector(
                 onTap: _accept,
                 child: Container(
@@ -292,7 +287,6 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                 ),
               ),
               const SizedBox(height: 14),
-              // Decline
               GestureDetector(
                 onTap: _decline,
                 child: Container(
