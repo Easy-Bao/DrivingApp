@@ -224,7 +224,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             context.pushNamed("Signin");
                           },
                           child: const Text(
-                            "Sign in",
+                            "Sign In",
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.bold,

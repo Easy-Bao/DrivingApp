@@ -191,10 +191,10 @@ class _SigninScreenState extends State<SigninScreen> {
                         elevation: 0,
                       ),
                       child: const Text(
-                        "Sign in",
+                        "Sign In",
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -250,6 +250,7 @@ class _SigninScreenState extends State<SigninScreen> {
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
                           ),
                         ],
@@ -274,6 +275,7 @@ class _SigninScreenState extends State<SigninScreen> {
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
                           ),
                         ),

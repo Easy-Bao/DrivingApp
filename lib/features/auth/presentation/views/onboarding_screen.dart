@@ -71,7 +71,7 @@ class OnBoardingScreen extends StatelessWidget {
                       children: [
                         SizedBox(
                           width: double.infinity,
-                          height: 50,
+                          height: 60,
                           child: ElevatedButton(
                             onPressed: () {
                               context.pushNamed("Signin");
@@ -87,7 +87,7 @@ class OnBoardingScreen extends StatelessWidget {
                             child: const Text(
                               "Continue with Email",
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 1.1,
                               ),
@@ -100,7 +100,7 @@ class OnBoardingScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 60,
                     child: OutlinedButton(
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
@@ -117,12 +117,12 @@ class OnBoardingScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset("assets/icons/google.png", height: 18),
+                          Image.asset("assets/icons/google.png", height: 20),
                           const SizedBox(width: 12),
                           const Text(
                             "Continue with Google",
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
