@@ -224,6 +224,7 @@ class _PassengerAddCategoryScreenState
                     ),
                   ),
                   const SizedBox(height: 16),
+                  //TODO: Display actual map preview here instead of static container
                   GestureDetector(
                     onTap: () {
                       setState(() {
