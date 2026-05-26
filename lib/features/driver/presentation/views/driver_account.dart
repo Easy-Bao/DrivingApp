@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-:class DriverAccountScreen extends StatelessWidget {w
+class DriverAccountScreen extends StatelessWidget {
   const DriverAccountScreen({super.key});
 
   @override
