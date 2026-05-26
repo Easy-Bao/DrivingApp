@@ -24,8 +24,8 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: Duration(milliseconds: 400),
+      transition: GoTransitions.fade,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
       name: 'WaitingPassenger',
@@ -40,8 +40,8 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: Duration(milliseconds: 300),
+      transition: GoTransitions.fade,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
       name: 'InTransit',
@@ -56,8 +56,8 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: Duration(milliseconds: 300),
+      transition: GoTransitions.fade,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
       name: 'CompleteTripDriver',
@@ -72,8 +72,8 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: Duration(milliseconds: 300),
+      transition: GoTransitions.fade,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
       name: 'FareSummary',
@@ -88,19 +88,19 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fadeUpwards,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'RatePassenger',
       'ride/rate',
       child: (context, GoRouterState state) => const RatePassengerScreen(),
-      transition: GoTransitions.fadeUpwards,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'RouteOptimizer',
       'ride/optimize',
       child: (context, GoRouterState state) => const RouteOptimizerScreen(),
-      transition: GoTransitions.fadeUpwards,
+      transition: GoTransitions.fade,
     ),
   ];
 }

@@ -12,6 +12,19 @@ class DriverShellLayout extends StatefulWidget {
 }
 
 class _DriverShellLayoutState extends State<DriverShellLayout> {
+  final List<int> _navigationHistory = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newIndex = _calcIndex(context);
+    if (_navigationHistory.isEmpty) {
+      _navigationHistory.add(newIndex);
+    } else if (_navigationHistory.last != newIndex) {
+      _navigationHistory.add(newIndex);
+    }
+  }
+
   int _calcIndex(BuildContext context) {
     final loc = GoRouterState.of(context).uri.path;
     if (loc.startsWith('/driver/dashboard')) return 0;
@@ -21,15 +34,20 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
   }
 
   void _onTap(int i, BuildContext ctx) {
-    switch (i) {
+    if (i == _calcIndex(ctx)) return;
+    _navigateToIndex(i);
+  }
+
+  void _navigateToIndex(int index) {
+    switch (index) {
       case 0:
-        ctx.goNamed('DriverDashboard');
+        context.goNamed('DriverDashboard');
         break;
       case 1:
-        ctx.goNamed('DriverEarnings');
+        context.goNamed('DriverEarnings');
         break;
       case 2:
-        ctx.goNamed('DriverAccount');
+        context.goNamed('DriverAccount');
         break;
     }
   }
@@ -37,34 +55,56 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
   @override
   Widget build(BuildContext context) {
     final sel = _calcIndex(context);
-    return Scaffold(
-      extendBody: false,
-      body: widget.child,
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          height: 60,
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
-                width: 1,
+
+    return PopScope(
+      canPop: _navigationHistory.length <= 1 &&
+          _navigationHistory.isNotEmpty &&
+          _navigationHistory.last == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_navigationHistory.length > 1) {
+          setState(() {
+            _navigationHistory.removeLast(); 
+            final previousIndex = _navigationHistory.last;
+            _navigateToIndex(previousIndex);
+          });
+        } else {
+          setState(() {
+            _navigationHistory.clear();
+            _navigationHistory.add(0);
+            _navigateToIndex(0);
+          });
+        }
+      },
+      child: Scaffold(
+        extendBody: false,
+        body: widget.child,
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Container(
+            height: 60,
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              border: Border(
+                top: BorderSide(
+                  color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
+                  width: 1,
+                ),
               ),
             ),
-          ),
-          child: Row(
-            children: [
-              _tab(
-                context,
-                LucideIcons.layout_dashboard,
-                'Dashboard',
-                0,
-                sel == 0,
-              ),
-              _tab(context, LucideIcons.wallet, 'Earnings', 1, sel == 1),
-              _tab(context, LucideIcons.user, 'Account', 2, sel == 2),
-            ],
+            child: Row(
+              children: [
+                _tab(
+                  context,
+                  LucideIcons.layout_dashboard,
+                  'Dashboard',
+                  0,
+                  sel == 0,
+                ),
+                _tab(context, LucideIcons.wallet, 'Earnings', 1, sel == 1),
+                _tab(context, LucideIcons.user, 'Account', 2, sel == 2),
+              ],
+            ),
           ),
         ),
       ),

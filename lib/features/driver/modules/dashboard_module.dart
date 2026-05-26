@@ -16,8 +16,8 @@ class DashboardModule {
       name: 'RideAlert',
       'dashboard/ride-alert',
       child: (context, GoRouterState state) => const RideAlertScreen(),
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: const Duration(milliseconds: 300),
+      transition: GoTransitions.fade,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
   ];
 
@@ -38,6 +38,7 @@ class DashboardModule {
         },
         child: const DriverDashboardScreen(),
       ),
+      transition: GoTransitions.fade,
     ),
   ];
 }

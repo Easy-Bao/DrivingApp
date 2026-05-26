@@ -189,7 +189,7 @@ class PassengerAccountScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: TextButton(
         onPressed: () {
-          context.goNamed('OnBoarding');
+          context.goNamed('Signin');
         },
         style: TextButton.styleFrom(
           foregroundColor: Colors.redAccent,

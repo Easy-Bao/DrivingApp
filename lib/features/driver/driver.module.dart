@@ -22,6 +22,7 @@ class DriverModule extends Module {
           name: 'DriverAccount',
           'account',
           child: (context, GoRouterState state) => const DriverAccountScreen(),
+          transition: GoTransitions.fade,
         ),
       ],
     ),

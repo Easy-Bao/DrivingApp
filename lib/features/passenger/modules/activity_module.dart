@@ -13,28 +13,28 @@ class ActivityModule {
       name: 'ActivityViewDetails',
       'activity/viewDetails',
       child: (context, GoRouterState state) => const ActivityViewDetails(),
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: const Duration(milliseconds: 300),
+      transition: GoTransitions.fade,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
       name: 'ActivityTrackDriver',
       'activity/trackDriver',
       child: (context, GoRouterState state) => const AcitivityTrackDriver(),
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: const Duration(milliseconds: 300),
+      transition: GoTransitions.fade,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
       name: 'DriverChat',
       'activity/driver-chat',
       child: (context, GoRouterState state) => const DriverChatScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'PassengerRating',
       'activity/rating',
       child: (context, GoRouterState state) => const PassengerRatingScreen(),
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: const Duration(milliseconds: 400),
+      transition: GoTransitions.fade,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
   ];
 
@@ -43,6 +43,7 @@ class ActivityModule {
       name: 'PassengerActivity',
       'activity',
       child: (context, GoRouterState state) => const PassengerActivityScreen(),
+      transition: GoTransitions.fade,
     ),
   ];
 }

@@ -28,7 +28,7 @@ class HomeModule {
       pageBuilder: (context, state) => CustomTransitionPage<void>(
         key: state.pageKey,
         child: const SearchDestinationScreen(),
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: const Duration(milliseconds: 200),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
@@ -49,13 +49,13 @@ class HomeModule {
       'home/add-category',
       child: (context, GoRouterState state) =>
           PassengerAddCategoryScreen(onSave: (category) {}),
-      transition: GoTransitions.slide.toLeft,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'Notifications',
       'home/notifications',
       child: (context, GoRouterState state) => const NotificationScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'ActivityDetailMap',
@@ -69,13 +69,13 @@ class HomeModule {
           destinationLng: (data['lng'] as num).toDouble(),
         );
       },
-      transition: GoTransitions.slide.toLeft,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'MapPin',
       'home/map-pin',
       child: (context, GoRouterState state) => const MapPinScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'DestinationPreview',
@@ -84,7 +84,7 @@ class HomeModule {
         final place = state.extra as PlaceModel;
         return DestinationPreviewScreen(destination: place);
       },
-      transition: GoTransitions.slide.toLeft,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'RideSelection',
@@ -98,7 +98,7 @@ class HomeModule {
           distanceKm: (data['distanceKm'] as num).toDouble(),
         );
       },
-      transition: GoTransitions.slide.toLeft,
+      transition: GoTransitions.fade,
     ),
     ChildRoute(
       name: 'FindingDriver',
@@ -147,10 +147,13 @@ class HomeModule {
           // NOTE: getIt<PassengerHomeRepository>() automatically injects the active implementation
           // (MockPassengerHomeRepository, or _ApiPassengerHomeRepository when backend is ready)
           // based on the single configuration line in lib/core/di/service_locator.dart.
-          return PassengerHomeCubit(repository: getIt<PassengerHomeRepository>());
+          return PassengerHomeCubit(
+            repository: getIt<PassengerHomeRepository>(),
+          );
         },
         child: const PassengerHomeScreen(),
       ),
+      transition: GoTransitions.fade,
     ),
   ];
 }

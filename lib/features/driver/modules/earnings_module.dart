@@ -10,7 +10,7 @@ class EarningsModule {
       name: 'DriverTripHistory',
       'earnings/trip-history',
       child: (context, GoRouterState state) => const DriverTripHistoryScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: GoTransitions.fade,
     ),
   ];
 
@@ -19,6 +19,7 @@ class EarningsModule {
       name: 'DriverEarnings',
       'earnings',
       child: (context, GoRouterState state) => const DriverEarningsScreen(),
+      transition: GoTransitions.fade,
     ),
   ];
 }
