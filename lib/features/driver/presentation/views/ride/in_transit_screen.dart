@@ -1,3 +1,5 @@
+import 'package:BaoRide/core/models/place/place_model.dart';
+import 'package:BaoRide/core/models/route/route_model.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:BaoRide/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:BaoRide/core/services/location_service.dart';
@@ -8,7 +10,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 /// Driver is actively transporting the passenger to their destination.
-class InTransitScreen extends StatelessWidget {
+class InTransitScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;
   final String duration;
@@ -24,19 +26,111 @@ class InTransitScreen extends StatelessWidget {
     required this.duration,
   });
 
+  @override
+  State<InTransitScreen> createState() => _InTransitScreenState();
+}
+
+class _InTransitScreenState extends State<InTransitScreen> {
+  AppMapController? _mapController;
+  bool _isLoading = true;
+  RouteModel? _route;
+  double _destLat = 8.5862;
+  double _destLng = 123.3392;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoute();
+  }
+
+  Future<void> _loadRoute() async {
+    final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+    final dLat = pos?.latitude ?? 8.5879;
+    final dLng = pos?.longitude ?? 123.3402;
+
+    // Dynamically search destination coordinates
+    final places = await MapProvider.searchPlaces(widget.dropoff);
+    if (places.isNotEmpty) {
+      _destLat = places.first.latitude;
+      _destLng = places.first.longitude;
+    } else {
+      if (widget.dropoff.contains('Dipolog Public Market')) {
+        _destLat = 8.5862;
+        _destLng = 123.3392;
+      } else if (widget.dropoff.contains('SM City Dipolog')) {
+        _destLat = 8.5891;
+        _destLng = 123.3441;
+      }
+    }
+
+    final route = await MapProvider.getRoute(
+      dLat,
+      dLng,
+      _destLat,
+      _destLng,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _route = route;
+      _isLoading = false;
+    });
+
+    if (_mapController != null) {
+      await _drawMapElements(dLat, dLng);
+    }
+  }
+
+  Future<void> _drawMapElements(double dLat, double dLng) async {
+    if (_mapController == null) return;
+
+    // Driver/pickup marker
+    await MapProvider.addMarker(
+      _mapController!,
+      dLat,
+      dLng,
+      isOrigin: true,
+      label: 'Driver',
+    );
+
+    // Destination marker
+    await MapProvider.addMarker(
+      _mapController!,
+      _destLat,
+      _destLng,
+      label: 'Destination',
+    );
+
+    // Fit bounds to show both driver and destination
+    await MapProvider.fitBounds(_mapController!, [
+      LatLng(dLat, dLng),
+      LatLng(_destLat, _destLng),
+    ]);
+
+    // Draw route polyline
+    if (_route != null && _route!.polylinePoints.isNotEmpty) {
+      await MapProvider.addPolyline(
+        _mapController!,
+        _route!.polylinePoints,
+        color: AppTheme.primaryColor,
+        width: 5.0,
+      );
+    }
+  }
+
   Future<void> _completeTrip(BuildContext context) async {
     await BlocProvider.of<RideFlowCubit>(
       context,
-    ).endRide(distanceKm: distance, durationMinutes: 10);
+    ).endRide(distanceKm: widget.distance, durationMinutes: 10);
     if (context.mounted) {
       context.pushReplacementNamed(
         'CompleteTripDriver',
         extra: {
-          'pickup': pickup,
-          'dropoff': dropoff,
-          'distance': distance,
-          'fare': fare,
-          'duration': duration,
+          'pickup': widget.pickup,
+          'dropoff': widget.dropoff,
+          'distance': widget.distance,
+          'fare': widget.fare,
+          'duration': widget.duration,
         },
       );
     }
@@ -50,9 +144,18 @@ class InTransitScreen extends StatelessWidget {
         children: [
           Positioned.fill(
             child: MapProvider.buildMapView(
-              latitude: LocationService.lastPosition?.latitude ?? 7.828282,
-              longitude: LocationService.lastPosition?.longitude ?? 123.434343,
+              latitude: LocationService.lastPosition?.latitude ?? 8.5879,
+              longitude: LocationService.lastPosition?.longitude ?? 123.3402,
               zoom: 15.0,
+              onMapCreated: (c) {
+                _mapController = c;
+                if (!_isLoading) {
+                  final pos = LocationService.lastPosition;
+                  final dLat = pos?.latitude ?? 8.5879;
+                  final dLng = pos?.longitude ?? 123.3402;
+                  _drawMapElements(dLat, dLng);
+                }
+              },
             ),
           ),
           SafeArea(
@@ -155,7 +258,7 @@ class InTransitScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  dropoff,
+                  widget.dropoff,
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -174,11 +277,11 @@ class InTransitScreen extends StatelessWidget {
   Widget _buildMetaRow() {
     return Row(
       children: [
-        _chip(LucideIcons.map_pin, '${distance.toStringAsFixed(1)} km'),
+        _chip(LucideIcons.map_pin, '${widget.distance.toStringAsFixed(1)} km'),
         const SizedBox(width: 10),
-        _chip(LucideIcons.clock, duration),
+        _chip(LucideIcons.clock, widget.duration),
         const SizedBox(width: 10),
-        _chip(LucideIcons.banknote, '₱${fare.toStringAsFixed(0)}'),
+        _chip(LucideIcons.banknote, '₱${widget.fare.toStringAsFixed(0)}'),
       ],
     );
   }

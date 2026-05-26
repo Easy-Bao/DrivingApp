@@ -286,7 +286,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOut,
           width: double.infinity,
-          height: 72,
+          height: 60,
           decoration: BoxDecoration(
             color: isOnline ? AppTheme.cancel : AppTheme.primaryColor,
             borderRadius: BorderRadius.circular(36),
@@ -300,25 +300,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             ],
           ),
           child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  isOnline ? LucideIcons.power : LucideIcons.zap,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  isOnline ? 'GO OFFLINE' : 'GO ONLINE',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ],
+            child: Text(
+              isOnline ? 'Go Offline' : 'Go Online',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 1.0,
+              ),
             ),
           ),
         ),

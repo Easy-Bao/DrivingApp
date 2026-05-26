@@ -10,7 +10,7 @@ class EarningsModule {
       name: 'DriverTripHistory',
       'earnings/trip-history',
       child: (context, GoRouterState state) => const DriverTripHistoryScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
   ];
 

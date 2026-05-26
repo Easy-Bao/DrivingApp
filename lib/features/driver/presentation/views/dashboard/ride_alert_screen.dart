@@ -261,7 +261,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
                 onTap: _accept,
                 child: Container(
                   width: double.infinity,
-                  height: 72,
+                  height: 60,
                   decoration: BoxDecoration(
                     color: AppTheme.complete,
                     borderRadius: BorderRadius.circular(36),

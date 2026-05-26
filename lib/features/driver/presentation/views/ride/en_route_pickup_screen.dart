@@ -1,3 +1,5 @@
+import 'package:BaoRide/core/models/place/place_model.dart';
+import 'package:BaoRide/core/models/route/route_model.dart';
 import 'package:BaoRide/core/themes/app_themes.dart';
 import 'package:BaoRide/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:BaoRide/core/services/location_service.dart';
@@ -30,6 +32,92 @@ class EnRoutePickupScreen extends StatefulWidget {
 
 class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   double _sliderVal = 0;
+  AppMapController? _mapController;
+  bool _isLoading = true;
+  RouteModel? _route;
+  double _passengerLat = 8.5891;
+  double _passengerLng = 123.3441;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoute();
+  }
+
+  Future<void> _loadRoute() async {
+    final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+    final dLat = pos?.latitude ?? 8.5879;
+    final dLng = pos?.longitude ?? 123.3402;
+
+    // Dynamically search passenger's coordinates
+    final places = await MapProvider.searchPlaces(widget.pickup);
+    if (places.isNotEmpty) {
+      _passengerLat = places.first.latitude;
+      _passengerLng = places.first.longitude;
+    } else {
+      if (widget.pickup.contains('SM City Dipolog')) {
+        _passengerLat = 8.5891;
+        _passengerLng = 123.3441;
+      } else if (widget.pickup.contains('Dipolog Public Market')) {
+        _passengerLat = 8.5862;
+        _passengerLng = 123.3392;
+      }
+    }
+
+    final route = await MapProvider.getRoute(
+      dLat,
+      dLng,
+      _passengerLat,
+      _passengerLng,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _route = route;
+      _isLoading = false;
+    });
+
+    if (_mapController != null) {
+      await _drawMapElements(dLat, dLng);
+    }
+  }
+
+  Future<void> _drawMapElements(double dLat, double dLng) async {
+    if (_mapController == null) return;
+
+    // Driver marker
+    await MapProvider.addMarker(
+      _mapController!,
+      dLat,
+      dLng,
+      isOrigin: true,
+      label: 'Driver',
+    );
+
+    // Passenger marker
+    await MapProvider.addMarker(
+      _mapController!,
+      _passengerLat,
+      _passengerLng,
+      label: 'Passenger',
+    );
+
+    // Fit bounds to show both driver and passenger
+    await MapProvider.fitBounds(_mapController!, [
+      LatLng(dLat, dLng),
+      LatLng(_passengerLat, _passengerLng),
+    ]);
+
+    // Draw route polyline
+    if (_route != null && _route!.polylinePoints.isNotEmpty) {
+      await MapProvider.addPolyline(
+        _mapController!,
+        _route!.polylinePoints,
+        color: AppTheme.primaryColor,
+        width: 5.0,
+      );
+    }
+  }
 
   void _confirmArrival() {
     BlocProvider.of<RideFlowCubit>(context).arriveAtPickup('Juan D. Cruz');
@@ -53,9 +141,18 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
         children: [
           Positioned.fill(
             child: MapProvider.buildMapView(
-              latitude: LocationService.lastPosition?.latitude ?? 7.828282,
-              longitude: LocationService.lastPosition?.longitude ?? 123.434343,
+              latitude: LocationService.lastPosition?.latitude ?? 8.5879,
+              longitude: LocationService.lastPosition?.longitude ?? 123.3402,
               zoom: 15.0,
+              onMapCreated: (c) {
+                _mapController = c;
+                if (!_isLoading) {
+                  final pos = LocationService.lastPosition;
+                  final dLat = pos?.latitude ?? 8.5879;
+                  final dLng = pos?.longitude ?? 123.3402;
+                  _drawMapElements(dLat, dLng);
+                }
+              },
             ),
           ),
           SafeArea(child: _buildHeader()),

@@ -16,7 +16,7 @@ class DashboardModule {
       name: 'RideAlert',
       'dashboard/ride-alert',
       child: (context, GoRouterState state) => const RideAlertScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
   ];

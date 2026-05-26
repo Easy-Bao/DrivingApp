@@ -25,37 +25,28 @@ class HomeModule {
       name: 'SearchDestination',
       'home/search',
       child: (context, state) => const SearchDestinationScreen(),
-      pageBuilder: (context, state) => CustomTransitionPage<void>(
-        key: state.pageKey,
-        child: const SearchDestinationScreen(),
-        transitionDuration: const Duration(milliseconds: 200),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
-            child: child,
-          );
-        },
-      ),
+      transition: GoTransitions.slide.toLeft,
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
       name: 'ViewAllSuggestions',
       'home/suggestions',
       child: (context, GoRouterState state) => PassengerViewAllActivity(),
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: Duration(milliseconds: 300),
+      transition: GoTransitions.slide.toLeft,
+      transitionDuration: const Duration(milliseconds: 300),
     ),
     ChildRoute(
       name: 'PassengerAddCategory',
       'home/add-category',
       child: (context, GoRouterState state) =>
           PassengerAddCategoryScreen(onSave: (category) {}),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'Notifications',
       'home/notifications',
       child: (context, GoRouterState state) => const NotificationScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'ActivityDetailMap',
@@ -69,13 +60,13 @@ class HomeModule {
           destinationLng: (data['lng'] as num).toDouble(),
         );
       },
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'MapPin',
       'home/map-pin',
       child: (context, GoRouterState state) => const MapPinScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'DestinationPreview',
@@ -84,7 +75,7 @@ class HomeModule {
         final place = state.extra as PlaceModel;
         return DestinationPreviewScreen(destination: place);
       },
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'RideSelection',
@@ -98,7 +89,7 @@ class HomeModule {
           distanceKm: (data['distanceKm'] as num).toDouble(),
         );
       },
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'FindingDriver',
@@ -113,8 +104,8 @@ class HomeModule {
           duration: data['duration'] as String,
         );
       },
-      transition: GoTransitions.fadeUpwards,
-      transitionDuration: Duration(milliseconds: 400),
+      transition: GoTransitions.slide.toLeft,
+      transitionDuration: const Duration(milliseconds: 400),
     ),
     ChildRoute(
       name: 'DriverMatched',
@@ -133,7 +124,7 @@ class HomeModule {
           plateNumber: data['plateNumber'] as String?,
         );
       },
-      transition: GoTransitions.fadeUpwards,
+      transition: GoTransitions.slide.toLeft,
       transitionDuration: const Duration(milliseconds: 400),
     ),
   ];

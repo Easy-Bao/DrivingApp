@@ -24,7 +24,7 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
@@ -40,7 +40,7 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
@@ -56,7 +56,7 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
@@ -72,7 +72,7 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
     ChildRoute(
@@ -88,19 +88,19 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'RatePassenger',
       'ride/rate',
       child: (context, GoRouterState state) => const RatePassengerScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'RouteOptimizer',
       'ride/optimize',
       child: (context, GoRouterState state) => const RouteOptimizerScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
   ];
 }

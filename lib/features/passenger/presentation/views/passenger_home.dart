@@ -191,6 +191,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                     color: AppTheme.primaryColor,
                   ),
                   SizedBox(width: 6),
+                  //TODO: Display actual location from GPS
                   Text(
                     'Pagadian City, Zamboanga del Sur',
                     style: TextStyle(

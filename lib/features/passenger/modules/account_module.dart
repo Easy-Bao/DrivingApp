@@ -12,25 +12,25 @@ class AccountModule {
       name: 'RideHistory',
       'account/ride-history',
       child: (context, GoRouterState state) => const RideHistoryScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'ProfileInfo',
       'account/profile-info',
       child: (context, GoRouterState state) => const ProfileInfoScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'Security',
       'account/security',
       child: (context, GoRouterState state) => const SecurityScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'HelpCenter',
       'account/help-center',
       child: (context, GoRouterState state) => const HelpCenterScreen(),
-      transition: GoTransitions.fade,
+      transition: GoTransitions.slide.toLeft,
     ),
   ];
 }
