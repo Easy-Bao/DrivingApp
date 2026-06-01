@@ -19,6 +19,7 @@ linter:
   rules:
     # Style
     prefer_single_quotes: true
+    prefer_relative_imports: false
     require_trailing_commas: true
     directives_ordering: true
     sort_child_properties_last: true
