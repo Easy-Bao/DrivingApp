@@ -65,8 +65,8 @@ class _PassengerAddCategoryScreenState
     final newShortcut = AddCategoryModel(
       icon: selectedIcon,
       label: label,
-      onTap: () {
-        context.push('/map-navigation', extra: {'destination': label});
+      onTap: () async {
+        await context.push('/map-navigation', extra: {'destination': label});
       },
     );
 

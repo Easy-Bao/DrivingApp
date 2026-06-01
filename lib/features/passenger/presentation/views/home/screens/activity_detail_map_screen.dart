@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:BaoRide/core/models/route/route_model.dart';
 import 'package:BaoRide/core/services/location_service.dart';
 import 'package:BaoRide/core/services/map_provider.dart';
@@ -35,7 +37,7 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
   @override
   void initState() {
     super.initState();
-    _loadRouteData();
+    unawaited(_loadRouteData());
   }
 
   Future<void> _loadRouteData() async {
@@ -105,9 +107,9 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
               latitude: widget.destinationLat,
               longitude: widget.destinationLng,
               zoom: 13.0,
-              onMapCreated: (c) {
+              onMapCreated: (c) async {
                 _mapController = c;
-                if (!_isLoading) _loadRouteData();
+                if (!_isLoading) await _loadRouteData();
               },
             ),
           ),

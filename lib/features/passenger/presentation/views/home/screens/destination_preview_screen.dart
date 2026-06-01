@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:BaoRide/core/models/place/place_model.dart';
 import 'package:BaoRide/core/models/route/route_model.dart';
 import 'package:BaoRide/core/services/location_service.dart';
@@ -7,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Shows map with origin + destination markers, animated polyline, and ride info.
 class DestinationPreviewScreen extends StatefulWidget {
   final PlaceModel destination;
 
@@ -28,7 +29,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   @override
   void initState() {
     super.initState();
-    _loadRoute();
+    unawaited(_loadRoute());
   }
 
   Future<void> _loadRoute() async {
@@ -109,9 +110,9 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               latitude: widget.destination.latitude,
               longitude: widget.destination.longitude,
               zoom: 13.0,
-              onMapCreated: (c) {
+              onMapCreated: (c) async {
                 _mapController = c;
-                if (!_isLoading) _loadRoute();
+                if (!_isLoading) await _loadRoute();
               },
             ),
           ),

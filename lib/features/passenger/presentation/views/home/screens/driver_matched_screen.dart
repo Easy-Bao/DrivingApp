@@ -50,7 +50,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       duration: const Duration(milliseconds: 600),
     );
     _scaleAnim = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
-    _scaleCtrl.forward();
+    unawaited(_scaleCtrl.forward());
     _autoNav = Timer(const Duration(seconds: 4), _goToTracking);
   }
 
