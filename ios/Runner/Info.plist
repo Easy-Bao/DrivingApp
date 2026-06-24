@@ -72,6 +72,5 @@
 	<string>BaoRide needs your location to track your ride in the background.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>BaoRide needs your location for ride booking and navigation services.</string>
-	<key>MBXAccessToken</key>
 </dict>
 </plist>
