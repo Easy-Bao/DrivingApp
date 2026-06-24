@@ -1,0 +1,68 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  plugins:
+    - custom_lint
+  errors:
+    # Treat these as errors — not warnings
+    missing_required_param: error
+    missing_return: error
+    dead_code: warning
+    unused_import: warning
+    unused_local_variable: warning
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "lib/src/rust/**"
+
+linter:
+  rules:
+    # Style
+    slash_for_doc_comments: false
+    prefer_single_quotes: true
+    prefer_relative_imports: false
+    require_trailing_commas: true
+    directives_ordering: true
+    sort_child_properties_last: true
+    always_use_package_imports: true
+
+    # Safety & Correctness
+    avoid_dynamic_calls: true
+    cancel_subscriptions: true
+    close_sinks: true
+    literal_only_boolean_expressions: true
+    no_adjacent_strings_in_list: true
+    test_types_in_equals: true
+    throw_in_finally: true
+    unnecessary_statements: true
+
+    # Design
+    prefer_final_fields: true
+    prefer_final_in_for_each: true
+    prefer_final_locals: true
+    avoid_classes_with_only_static_members: true
+    prefer_constructors_over_static_methods: true
+    use_setters_to_change_properties: true
+
+    # Bloc (Native Dart rules for immutability & async safety)
+    avoid_field_initializers_in_const_classes: true
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_literals_to_create_immutables: true
+    avoid_equals_and_hash_code_on_mutable_classes: true
+    unawaited_futures: true 
+    discarded_futures: true
+    avoid_void_async: true
+    exhaustive_cases: true 
+
+custom_lint:
+  rules:
+    # Strict Architecture
+    - avoid_public_fields
+    - avoid_public_bloc_methods
+    - prefer_void_public_cubit_methods
+    - prefer_file_naming_conventions
+    
+    # Project Preferences
+    - prefer_cubit
+    - prefer_build_context_extensions

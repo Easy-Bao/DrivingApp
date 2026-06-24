@@ -1,0 +1,33 @@
+import 'package:driver_app/core/di/service_locator.dart';
+import 'package:driver_app/features/driver/data/repositories/ride_repository.dart';
+import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+
+class AppWidget extends StatelessWidget {
+  const AppWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<RideFlowCubit>(
+          create: (_) {
+            return RideFlowCubit(repository: getIt<RideRepository>());
+          },
+        ),
+      ],
+      child: ModularApp.router(
+        theme: ThemeData(
+          useMaterial3: true,
+          textTheme: Theme.of(
+            context,
+          ).textTheme.apply(fontFamily: 'ProductSans'),
+        ),
+        debugShowCheckedModeBanner: false,
+        title: 'BaoRide Driver',
+      ),
+    );
+  }
+}

@@ -1,0 +1,19 @@
+name: drive_app_workspace
+repository: https://github.com/Baoride/my_driving_app
+
+packages:
+  - apps/*
+  - packages/*
+
+scripts:
+  postbootstrap:
+    exec: flutter pub get
+    description: Run pub get in all packages after bootstrapping.
+
+  gen:
+    exec: flutter_rust_bridge_codegen generate
+    description: Generate Rust FFI bindings.
+
+  analyze:
+    exec: flutter analyze .
+    description: Run flutter analyzer on all packages.
