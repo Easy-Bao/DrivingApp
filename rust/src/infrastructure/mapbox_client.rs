@@ -1,5 +1,3 @@
-//! Client for interacting with Mapbox APIs (Geocoding, Directions).
-
 use once_cell::sync::Lazy;
 use std::time::Duration;
 
