@@ -73,6 +73,5 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>BaoRide needs your location for ride booking and navigation services.</string>
 	<key>MBXAccessToken</key>
-	<string>YOUR_MAPBOX_PUBLIC_TOKEN</string>
 </dict>
 </plist>
