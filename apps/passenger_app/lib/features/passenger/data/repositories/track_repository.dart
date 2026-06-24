@@ -1,7 +1,7 @@
 /**
  * Contract: what the TrackDriver feature needs from the data layer.
  */
-import 'package:fixtures/mock_data.dart';
+import 'package:fixtures/fixtures.dart';
 
 abstract class TrackRepository {
   /**

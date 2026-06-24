@@ -1,6 +1,7 @@
 import 'package:passenger_app/core/models/driver/driver_model.dart';
 import 'package:passenger_app/src/rust/api/driver_api.dart' as rust_api;
-import 'package:core_models/core_models.dart';
+import 'package:fixtures/fixtures.dart';
+
 
 /**
  * Contract: defines what the passenger feature needs for finding nearby drivers.

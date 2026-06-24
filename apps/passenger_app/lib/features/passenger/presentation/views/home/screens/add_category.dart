@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-import 'package:core_models/core_models.dart';
+import 'package:fixtures/fixtures.dart';
 import 'package:passenger_app/core/services/location_service.dart';
 import 'package:passenger_app/core/services/map_provider.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/add_category_model.dart';
+
 
 class PassengerAddCategoryScreen extends StatefulWidget {
   final Function(AddCategoryModel) onSave;
