@@ -1,4 +1,4 @@
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use crate::dto::mapbox_dto::{
@@ -7,14 +7,13 @@ use crate::dto::mapbox_dto::{
 use crate::models::map_models::{CoordPair, RustPlaceResult, RustRouteResult};
 use crate::shared::math::haversine_distance;
 
-static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
+static HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
     reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .build()
         .unwrap()
 });
 
-/// Search for places using Mapbox Geocoding API.
 pub async fn search_places(
     token: &str,
     query: &str,
@@ -28,14 +27,17 @@ pub async fn search_places(
     }
 
     let encoded_query = urlencoding::encode(query);
-    let mut url = format!(
-        "https://api.mapbox.com/geocoding/v5/mapbox.places/{}.json?access_token={}&limit=8&language=en",
-        encoded_query, token
+    let url = format!(
+        "https://api.mapbox.com/geocoding/v5/mapbox.places/{}.json",
+        encoded_query
     );
 
-    if let (Some(lat), Some(lng)) = (proximity_lat, proximity_lng) {
-        url.push_str(&format!("&proximity={},{}", lng, lat));
+    let mut request =
+        HTTP_CLIENT
+            .get(&url)
+            .query(&[("access_token", token), ("limit", "8"), ("language", "en")]);
 
+    if let (Some(lat), Some(lng)) = (proximity_lat, proximity_lng) {
         let lat_offset = 50.0 / 111.0;
         let lng_offset = 50.0 / (111.0 * lat.to_radians().cos());
 
@@ -44,13 +46,16 @@ pub async fn search_places(
         let max_lng = lng + lng_offset;
         let max_lat = lat + lat_offset;
 
-        url.push_str(&format!(
-            "&bbox={},{},{},{}",
-            min_lng, min_lat, max_lng, max_lat
-        ));
+        request = request.query(&[
+            ("proximity", format!("{},{}", lng, lat)),
+            (
+                "bbox",
+                format!("{},{},{},{}", min_lng, min_lat, max_lng, max_lat),
+            ),
+        ]);
     }
 
-    let resp: MapboxGeocodingResponse = HTTP_CLIENT.get(&url).send().await?.json().await?;
+    let resp: MapboxGeocodingResponse = request.send().await?.json().await?;
 
     let results = resp
         .features
@@ -81,18 +86,23 @@ pub async fn search_places(
     Ok(results)
 }
 
-/// Get place info from coordinates using Mapbox Geocoding API.
 pub async fn reverse_geocode(
     token: &str,
     lat: f64,
     lng: f64,
 ) -> anyhow::Result<Option<RustPlaceResult>> {
     let url = format!(
-        "https://api.mapbox.com/geocoding/v5/mapbox.places/{},{}.json?access_token={}&limit=1&language=en",
-        lng, lat, token
+        "https://api.mapbox.com/geocoding/v5/mapbox.places/{},{}.json",
+        lng, lat
     );
 
-    let resp: MapboxGeocodingResponse = HTTP_CLIENT.get(&url).send().await?.json().await?;
+    let resp: MapboxGeocodingResponse = HTTP_CLIENT
+        .get(&url)
+        .query(&[("access_token", token), ("limit", "1"), ("language", "en")])
+        .send()
+        .await?
+        .json()
+        .await?;
 
     let result: Option<RustPlaceResult> =
         resp.features
@@ -111,7 +121,6 @@ pub async fn reverse_geocode(
     Ok(result)
 }
 
-/// Get a driving route between two points.
 pub async fn get_route(
     token: &str,
     origin_lat: f64,
@@ -120,11 +129,21 @@ pub async fn get_route(
     dest_lng: f64,
 ) -> anyhow::Result<Option<RustRouteResult>> {
     let url = format!(
-        "https://api.mapbox.com/directions/v5/mapbox/driving/{},{};{},{}?access_token={}&geometries=geojson&overview=full",
-        origin_lng, origin_lat, dest_lng, dest_lat, token
+        "https://api.mapbox.com/directions/v5/mapbox/driving/{},{};{},{}",
+        origin_lng, origin_lat, dest_lng, dest_lat
     );
 
-    let resp: MapboxDirectionsResponse = HTTP_CLIENT.get(&url).send().await?.json().await?;
+    let resp: MapboxDirectionsResponse = HTTP_CLIENT
+        .get(&url)
+        .query(&[
+            ("access_token", token),
+            ("geometries", "geojson"),
+            ("overview", "full"),
+        ])
+        .send()
+        .await?
+        .json()
+        .await?;
 
     let result: Option<RustRouteResult> =
         resp.routes.into_iter().next().map(|route: MapboxRoute| {
@@ -155,7 +174,6 @@ pub async fn get_route(
     Ok(result)
 }
 
-/// Extract all dynamic Points of Interest from Mapbox vector tiles within a radius
 pub async fn get_nearby_pois(
     token: &str,
     lat: f64,
@@ -163,11 +181,22 @@ pub async fn get_nearby_pois(
     radius_meters: i32,
 ) -> anyhow::Result<Vec<RustPlaceResult>> {
     let url = format!(
-        "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/{},{}.json?radius={}&limit=50&layers=poi_label&access_token={}",
-        lng, lat, radius_meters, token
+        "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/{},{}.json",
+        lng, lat
     );
 
-    let resp: serde_json::Value = HTTP_CLIENT.get(&url).send().await?.json().await?;
+    let resp: serde_json::Value = HTTP_CLIENT
+        .get(&url)
+        .query(&[
+            ("radius", radius_meters.to_string().as_str()),
+            ("limit", "50"),
+            ("layers", "poi_label"),
+            ("access_token", token),
+        ])
+        .send()
+        .await?
+        .json()
+        .await?;
 
     let mut results = Vec::new();
 
@@ -223,10 +252,9 @@ pub async fn get_nearby_pois(
     }
 
     results.sort_by(|a, b| {
-        a.distance_km
-            .unwrap_or(f64::MAX)
-            .partial_cmp(&b.distance_km.unwrap_or(f64::MAX))
-            .unwrap_or(std::cmp::Ordering::Equal)
+        let dist_a = a.distance_km.unwrap_or(f64::MAX);
+        let dist_b = b.distance_km.unwrap_or(f64::MAX);
+        dist_a.total_cmp(&dist_b)
     });
 
     Ok(results)
