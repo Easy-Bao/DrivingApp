@@ -1,4 +1,4 @@
-import 'package:driver_app/src/rust/models/fare_models.dart';
+import 'package:core_models/core_models.dart';
 import 'package:equatable/equatable.dart';
 
 /// All fields default to empty/zero — the UI can distinguish between

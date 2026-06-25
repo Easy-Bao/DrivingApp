@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:driver_app/core/config/env_config.dart';
-import 'package:driver_app/core/models/place/place_model.dart';
-import 'package:driver_app/core/models/route/route_model.dart';
+import 'package:core_models/core_models.dart';
+import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/services/location_service.dart';
 import 'package:driver_app/src/rust/api/map_api.dart' as rust_api;
 import 'package:flutter/material.dart';

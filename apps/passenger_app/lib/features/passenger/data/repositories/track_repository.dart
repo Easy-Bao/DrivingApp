@@ -1,20 +1,5 @@
-/**
- * Contract: what the TrackDriver feature needs from the data layer.
- */
 import 'package:fixtures/fixtures.dart';
-
-abstract class TrackRepository {
-  /**
-   * Fetches a snap-to-road polyline between two coordinates.
-   * Returns a list of [lat, lng] pairs, or null if unavailable.
-   */
-  Future<List<List<double>>?> getRoutePolyline({
-    required double startLat,
-    required double startLng,
-    required double endLat,
-    required double endLng,
-  });
-}
+import 'package:core_models/core_models.dart';
 
 class MockTrackRepository implements TrackRepository {
   @override

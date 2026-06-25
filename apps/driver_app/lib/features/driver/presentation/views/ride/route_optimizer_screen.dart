@@ -1,8 +1,8 @@
 import 'dart:math';
 
+import 'package:driver_app/core/di/service_locator.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
-import 'package:driver_app/src/rust/api/fare_api.dart' as rust_api;
-import 'package:driver_app/src/rust/models/route_models.dart' as rust;
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -15,12 +15,12 @@ class RouteOptimizerScreen extends StatefulWidget {
 
 class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
   bool _isOptimizing = false;
-  List<rust.Waypoint> _sequence = [];
+  List<Waypoint> _sequence = [];
   double _optimizedDistance = 0.0;
 
-  // Initial list of waypoints (unsorted/raw order)
-  final List<rust.Waypoint> _rawWaypoints = [
-    rust.Waypoint(
+  /** Initial list of waypoints (unsorted/raw order). */
+  final List<Waypoint> _rawWaypoints = [
+    Waypoint(
       id: '1',
       name: 'Drop-off: Passenger A (Dipolog Market)',
       lat: 8.5862,
@@ -28,7 +28,7 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
       isPickup: false,
       passengerId: 'A',
     ),
-    rust.Waypoint(
+    Waypoint(
       id: '2',
       name: 'Pick-up: Passenger B (Galas Port)',
       lat: 8.5912,
@@ -36,7 +36,7 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
       isPickup: true,
       passengerId: 'B',
     ),
-    rust.Waypoint(
+    Waypoint(
       id: '3',
       name: 'Pick-up: Passenger A (SM City Dipolog)',
       lat: 8.5891,
@@ -44,7 +44,7 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
       isPickup: true,
       passengerId: 'A',
     ),
-    rust.Waypoint(
+    Waypoint(
       id: '4',
       name: 'Drop-off: Passenger B (Sunset Boulevard)',
       lat: 8.5795,
@@ -57,7 +57,7 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
   @override
   void initState() {
     super.initState();
-    // Default sequence is raw
+    /** Default sequence is raw. */
     _sequence = List.from(_rawWaypoints);
     _calculateRawDistance();
   }
@@ -83,10 +83,10 @@ class _RouteOptimizerScreenState extends State<RouteOptimizerScreen> {
     await Future.delayed(const Duration(milliseconds: 600));
 
     try {
-      final startLat = 8.5879; // Current driver location
+      final startLat = 8.5879; /** Current driver location. */
       final startLng = 123.3402;
 
-      final result = await rust_api.calculateOptimalRoute(
+      final result = await getIt<RideRepository>().optimizeRoute(
         startLat: startLat,
         startLng: startLng,
         waypoints: _rawWaypoints,

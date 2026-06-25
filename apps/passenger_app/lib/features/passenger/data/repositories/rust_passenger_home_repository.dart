@@ -1,5 +1,5 @@
 import 'package:passenger_app/core/services/map_provider.dart';
-import 'package:passenger_app/features/passenger/data/repositories/passenger_home_repository.dart';
+import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
 import 'package:flutter/foundation.dart';
 

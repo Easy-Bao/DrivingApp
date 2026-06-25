@@ -1,54 +1,77 @@
+import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/rust/api/fare_api.dart' as fare_api;
-import 'package:driver_app/src/rust/models/fare_models.dart' as rust_fare;
 import 'package:driver_app/src/rust/models/route_models.dart' as rust_route;
-
-abstract class RideRepository {
-  Future<rust_fare.FareResult> getFare({
-    required double distanceKm,
-    required double durationMinutes,
-  });
-
-  Future<rust_route.RouteSequenceResult> optimizeRoute({
-    required double startLat,
-    required double startLng,
-    required List<rust_route.Waypoint> waypoints,
-  });
-}
 
 class RideRepositoryImpl implements RideRepository {
   @override
-  Future<rust_fare.FareResult> getFare({
+  Future<FareResult> getFare({
     required double distanceKm,
     required double durationMinutes,
-  }) {
-    return fare_api.computeFareDefault(
+  }) async {
+    final rustFare = await fare_api.computeFareDefault(
       distanceKm: distanceKm,
       durationMinutes: durationMinutes,
+    );
+    return FareResult(
+      baseFare: rustFare.baseFare,
+      distanceCharge: rustFare.distanceCharge,
+      timeCharge: rustFare.timeCharge,
+      surgeCharge: rustFare.surgeCharge,
+      totalFare: rustFare.totalFare,
     );
   }
 
   @override
-  Future<rust_route.RouteSequenceResult> optimizeRoute({
+  Future<RouteSequenceResult> optimizeRoute({
     required double startLat,
     required double startLng,
-    required List<rust_route.Waypoint> waypoints,
-  }) {
-    return fare_api.calculateOptimalRoute(
+    required List<Waypoint> waypoints,
+  }) async {
+    final rustWaypoints = waypoints
+        .map(
+          (w) => rust_route.Waypoint(
+            id: w.id,
+            name: w.name,
+            lat: w.lat,
+            lng: w.lng,
+            isPickup: w.isPickup,
+            passengerId: w.passengerId,
+          ),
+        )
+        .toList();
+
+    final rustResult = await fare_api.calculateOptimalRoute(
       startLat: startLat,
       startLng: startLng,
-      waypoints: waypoints,
+      waypoints: rustWaypoints,
+    );
+
+    return RouteSequenceResult(
+      optimalSequence: rustResult.optimalSequence
+          .map(
+            (w) => Waypoint(
+              id: w.id,
+              name: w.name,
+              lat: w.lat,
+              lng: w.lng,
+              isPickup: w.isPickup,
+              passengerId: w.passengerId,
+            ),
+          )
+          .toList(),
+      totalDistanceKm: rustResult.totalDistanceKm,
     );
   }
 }
 
 class MockRideRepository implements RideRepository {
   @override
-  Future<rust_fare.FareResult> getFare({
+  Future<FareResult> getFare({
     required double distanceKm,
     required double durationMinutes,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    return rust_fare.FareResult(
+    return FareResult(
       baseFare: 40.0,
       distanceCharge: distanceKm * 8.0,
       timeCharge: durationMinutes * 1.0,
@@ -58,13 +81,13 @@ class MockRideRepository implements RideRepository {
   }
 
   @override
-  Future<rust_route.RouteSequenceResult> optimizeRoute({
+  Future<RouteSequenceResult> optimizeRoute({
     required double startLat,
     required double startLng,
-    required List<rust_route.Waypoint> waypoints,
+    required List<Waypoint> waypoints,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return rust_route.RouteSequenceResult(
+    return RouteSequenceResult(
       optimalSequence: waypoints,
       totalDistanceKm: 5.2,
     );
@@ -75,34 +98,20 @@ class MockRideRepository implements RideRepository {
 
 // ignore: unused_element — will be used when backend is integrated
 class _ApiRideRepository implements RideRepository {
-  // final HttpClient _httpClient;
-  // _ApiRideRepository(this._httpClient);
-
   @override
-  Future<rust_fare.FareResult> getFare({
+  Future<FareResult> getFare({
     required double distanceKm,
     required double durationMinutes,
   }) async {
-    // final response = await _httpClient.get('/ride/fare', queryParameters: {
-    //   'distanceKm': distanceKm,
-    //   'durationMinutes': durationMinutes,
-    // });
-    // return rust_fare.FareResult.fromJson(response.data);
     throw UnimplementedError('Backend not yet integrated');
   }
 
   @override
-  Future<rust_route.RouteSequenceResult> optimizeRoute({
+  Future<RouteSequenceResult> optimizeRoute({
     required double startLat,
     required double startLng,
-    required List<rust_route.Waypoint> waypoints,
+    required List<Waypoint> waypoints,
   }) async {
-    // final response = await _httpClient.post('/ride/optimize', data: {
-    //   'startLat': startLat,
-    //   'startLng': startLng,
-    //   'waypoints': waypoints.map((w) => w.toJson()).toList(),
-    // });
-    // return rust_route.RouteSequenceResult.fromJson(response.data);
     throw UnimplementedError('Backend not yet integrated');
   }
 }

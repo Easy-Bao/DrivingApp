@@ -1,5 +1,5 @@
-import 'package:driver_app/core/models/place/place_model.dart';
-import 'package:driver_app/core/models/route/route_model.dart';
+import 'package:core_models/core_models.dart';
+import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/core/services/location_service.dart';

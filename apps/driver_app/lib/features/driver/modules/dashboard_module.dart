@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:driver_app/core/di/service_locator.dart';
-import 'package:driver_app/features/driver/data/repositories/dashboard_repository.dart';
+import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/features/driver/presentation/views/dashboard/ride_alert_screen.dart';
 import 'package:driver_app/features/driver/presentation/views/driver_dashboard.dart';

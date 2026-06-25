@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:passenger_app/core/models/place/place_model.dart';
-import 'package:passenger_app/core/models/route/route_model.dart';
+import 'package:core_models/core_models.dart';
+import 'package:core_models/core_models.dart';
 import 'package:passenger_app/core/services/location_service.dart';
 import 'package:passenger_app/core/services/map_provider.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';

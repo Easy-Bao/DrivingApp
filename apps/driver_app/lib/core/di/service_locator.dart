@@ -1,3 +1,4 @@
+import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/data/repositories/dashboard_repository.dart';
 import 'package:driver_app/features/driver/data/repositories/ride_repository.dart';
 import 'package:get_it/get_it.dart';

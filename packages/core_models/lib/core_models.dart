@@ -1,8 +1,17 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
-library;
+library core_models;
 
-export 'src/core_models_base.dart';
+export 'src/models/driver_model.dart';
+export 'src/models/notification_model.dart';
+export 'src/models/place_model.dart';
+export 'src/models/ride_history_model.dart';
+export 'src/models/route_model.dart';
+export 'src/models/heatmap_cell.dart';
+export 'src/models/fare_result.dart';
+export 'src/models/waypoint.dart';
+export 'src/models/route_sequence_result.dart';
 
-// TODO: Export any libraries intended for clients of this package.
+export 'src/repositories/driver_repository.dart';
+export 'src/repositories/passenger_home_repository.dart';
+export 'src/repositories/track_repository.dart';
+export 'src/repositories/dashboard_repository.dart';
+export 'src/repositories/ride_repository.dart';

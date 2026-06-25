@@ -1,8 +1,7 @@
+import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/data/repositories/driver_repository.dart';
-import 'package:passenger_app/features/passenger/data/repositories/passenger_home_repository.dart';
 import 'package:passenger_app/features/passenger/data/repositories/rust_passenger_home_repository.dart';
 import 'package:passenger_app/features/passenger/data/repositories/rust_track_repository.dart';
-import 'package:passenger_app/features/passenger/data/repositories/track_repository.dart';
 import 'package:get_it/get_it.dart';
 
 /**

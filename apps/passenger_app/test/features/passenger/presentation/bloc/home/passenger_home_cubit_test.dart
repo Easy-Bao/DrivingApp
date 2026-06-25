@@ -1,4 +1,4 @@
-import 'package:passenger_app/features/passenger/data/repositories/passenger_home_repository.dart';
+import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_state.dart';
 import 'package:bloc_test/bloc_test.dart';

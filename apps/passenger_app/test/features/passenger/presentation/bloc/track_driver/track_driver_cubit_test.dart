@@ -1,4 +1,4 @@
-import 'package:passenger_app/features/passenger/data/repositories/track_repository.dart';
+import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:bloc_test/bloc_test.dart';

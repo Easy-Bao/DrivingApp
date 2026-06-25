@@ -1,5 +1,4 @@
-import 'package:passenger_app/core/models/driver/driver_model.dart';
-import 'package:passenger_app/features/passenger/data/repositories/driver_repository.dart';
+import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';

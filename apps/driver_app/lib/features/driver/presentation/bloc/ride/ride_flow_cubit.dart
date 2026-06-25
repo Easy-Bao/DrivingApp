@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:driver_app/features/driver/data/repositories/ride_repository.dart';
+import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

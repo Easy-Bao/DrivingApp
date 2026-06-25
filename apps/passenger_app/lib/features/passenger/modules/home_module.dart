@@ -1,6 +1,5 @@
 import 'package:passenger_app/core/di/service_locator.dart';
-import 'package:passenger_app/core/models/place/place_model.dart';
-import 'package:passenger_app/features/passenger/data/repositories/passenger_home_repository.dart';
+import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/activity_detail_map_screen.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/add_category.dart';

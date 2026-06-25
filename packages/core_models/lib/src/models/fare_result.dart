@@ -1,0 +1,21 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'fare_result.freezed.dart';
+part 'fare_result.g.dart';
+
+/**
+ * FareResult represents calculated cost breakups of a trip.
+ */
+@freezed
+abstract class FareResult with _$FareResult {
+  const factory FareResult({
+    required double baseFare,
+    required double distanceCharge,
+    required double timeCharge,
+    required double surgeCharge,
+    required double totalFare,
+  }) = _FareResult;
+
+  factory FareResult.fromJson(Map<String, dynamic> json) =>
+      _$FareResultFromJson(json);
+}

@@ -1,20 +1,4 @@
-import 'package:driver_app/src/rust/models/fare_models.dart';
-
-abstract class DashboardRepository {
-  Future<double> getTodayEarnings();
-
-  Future<int> getTodayTrips();
-
-  Future<double> getHoursOnline();
-  Future<List<HeatmapCell>> getSurgeHeatmap({
-    required double lat,
-    required double lng,
-    required int gridSize,
-    required double cellSize,
-    required List<double> requestLats,
-    required List<double> requestLngs,
-  });
-}
+import 'package:core_models/core_models.dart';
 
 //TODO: Replace with real API implementation once backend endpoints are ready and integrated.
 
