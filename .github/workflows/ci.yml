@@ -1,4 +1,4 @@
-name: BaoRide Code Quality & Verification
+name: BaoRide Continuous Integration
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  verify:
-    name: Code Analysis & Verification
+  ci:
+    name: Continuous Integration & Verification
     runs-on: ubuntu-latest
     
     steps:
@@ -38,5 +38,8 @@ jobs:
       - name: Bootstrap Monorepo Workspace
         run: flutter pub global run melos bootstrap
 
+      - name: Install Just Task Runner
+        run: sudo apt-get update && sudo apt-get install -y just
+
       - name: Run Static Analysis & Verification
-        run: flutter pub global run melos exec -- "flutter analyze . --no-fatal-warnings --no-fatal-infos"
+        run: just analyze
