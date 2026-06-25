@@ -54,6 +54,8 @@ dependencies:
   # Maps & Location
   mapbox_maps_flutter: ^2.23.0
   geolocator: ^13.0.2
+  location_service:
+    path: ../../packages/location_service
 
   # Rust Bridge
   core_models:

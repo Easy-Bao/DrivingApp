@@ -4,7 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 import 'package:fixtures/fixtures.dart';
-import 'package:passenger_app/core/services/location_service.dart';
+import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_state.dart';

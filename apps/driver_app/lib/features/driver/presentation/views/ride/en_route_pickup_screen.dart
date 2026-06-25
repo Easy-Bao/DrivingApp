@@ -1,9 +1,7 @@
 import 'package:core_models/core_models.dart';
-import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
-import 'package:driver_app/core/services/location_service.dart';
-import 'package:driver_app/core/services/map_provider.dart';
+import 'package:location_service/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';

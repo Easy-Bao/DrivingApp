@@ -1,4 +1,4 @@
-import 'package:passenger_app/core/services/map_provider.dart';
+import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';

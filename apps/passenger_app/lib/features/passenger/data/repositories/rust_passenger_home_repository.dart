@@ -1,4 +1,4 @@
-import 'package:passenger_app/core/services/map_provider.dart';
+import 'package:location_service/location_service.dart';
 import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
 import 'package:flutter/foundation.dart';

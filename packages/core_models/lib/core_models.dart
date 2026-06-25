@@ -1,5 +1,3 @@
-library core_models;
-
 export 'src/models/driver_model.dart';
 export 'src/models/notification_model.dart';
 export 'src/models/place_model.dart';

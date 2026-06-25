@@ -1,7 +1,5 @@
 import 'package:core_models/core_models.dart';
-import 'package:core_models/core_models.dart';
-import 'package:passenger_app/core/services/location_service.dart';
-import 'package:passenger_app/core/services/map_provider.dart';
+import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';

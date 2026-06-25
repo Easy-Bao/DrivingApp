@@ -1,12 +1,9 @@
 import 'dart:math' as math;
-
-import 'package:passenger_app/core/config/env_config.dart';
 import 'package:core_models/core_models.dart';
-import 'package:core_models/core_models.dart';
-import 'package:passenger_app/core/services/location_service.dart';
-import 'package:passenger_app/src/rust/api/map_api.dart' as rust_api;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'location_service.dart';
+import 'map_native_service.dart';
 
 class LatLng {
   final double latitude;
@@ -14,13 +11,17 @@ class LatLng {
   const LatLng(this.latitude, this.longitude);
 }
 
-/// The map controller wrapper. Screens hold this to manipulate the map.
-/// Internally wraps the native controller (MapboxMap or GoogleMapController).
+/**
+ * The map controller wrapper. Screens hold this to manipulate the map.
+ * Internally wraps the native controller (MapboxMap or GoogleMapController).
+ */
 class AppMapController {
   final dynamic _native;
   AppMapController(this._native);
 
-  /// Access native controller only within this file's implementation.
+  /**
+   * Access native controller only within this file's implementation.
+   */
   dynamic get native => _native;
 }
 
@@ -28,17 +29,27 @@ class MapProvider {
   MapProvider._();
 
   static bool _initialized = false;
+  static String? _token;
+  static MapNativeService? _nativeService;
 
-  /// Initialize the map SDK. Call once in main.dart.
-  static Future<void> initialize() async {
+  /**
+   * Initialize the map SDK. Call once in main.dart.
+   */
+  static Future<void> initialize({
+    required String token,
+    required MapNativeService nativeService,
+  }) async {
     if (_initialized) return;
-    final token = EnvConfig.mapboxPublicToken;
+    _token = token;
+    _nativeService = nativeService;
     mapbox.MapboxOptions.setAccessToken(token);
     _initialized = true;
   }
 
-  /// Forward geocoding: search for places by text query.
-  /// [proximity] biases results toward the user's location.
+  /**
+   * Forward geocoding: search for places by text query.
+   * [proximity] biases results toward the user's location.
+   */
   static Future<List<PlaceModel>> searchPlaces(
     String query, {
     double? lat,
@@ -46,12 +57,17 @@ class MapProvider {
   }) async {
     if (query.trim().isEmpty) return [];
 
+    final nativeService = _nativeService;
+    final token = _token;
+    if (nativeService == null || token == null) {
+      throw StateError('MapProvider not initialized. Call initialize() first.');
+    }
+
     try {
-      final token = EnvConfig.mapboxPublicToken;
       final userLat = lat ?? LocationService.lastPosition?.latitude;
       final userLng = lng ?? LocationService.lastPosition?.longitude;
 
-      final rustResults = await rust_api.searchPlaces(
+      final places = await nativeService.searchPlaces(
         token: token,
         query: query,
         proximityLat: lat,
@@ -59,20 +75,6 @@ class MapProvider {
         userLat: userLat,
         userLng: userLng,
       );
-
-      final places = rustResults
-          .map(
-            (r) => PlaceModel(
-              id: r.id,
-              name: r.name,
-              fullAddress: r.fullAddress,
-              latitude: r.latitude,
-              longitude: r.longitude,
-              category: r.category,
-              distanceKm: r.distanceKm,
-            ),
-          )
-          .toList();
 
       return places.where((p) {
         if (p.distanceKm == null) return true;
@@ -84,28 +86,24 @@ class MapProvider {
     }
   }
 
-  /// Reverse geocoding: get place info from coordinates.
+  /**
+   * Reverse geocoding: get place info from coordinates.
+   */
   static Future<PlaceModel?> getPlaceFromCoordinates(
     double lat,
     double lng,
   ) async {
+    final nativeService = _nativeService;
+    final token = _token;
+    if (nativeService == null || token == null) {
+      throw StateError('MapProvider not initialized. Call initialize() first.');
+    }
+
     try {
-      final token = EnvConfig.mapboxPublicToken;
-      final rustResult = await rust_api.reverseGeocode(
+      return await nativeService.reverseGeocode(
         token: token,
         lat: lat,
         lng: lng,
-      );
-
-      if (rustResult == null) return null;
-
-      return PlaceModel(
-        id: rustResult.id,
-        name: rustResult.name,
-        fullAddress: rustResult.fullAddress,
-        latitude: rustResult.latitude,
-        longitude: rustResult.longitude,
-        category: rustResult.category,
       );
     } catch (e) {
       debugPrint('MapProvider.getPlaceFromCoordinates error: $e');
@@ -113,35 +111,29 @@ class MapProvider {
     }
   }
 
-  /// Get a driving route between two points.
-  /// Returns a RouteModel with decoded polyline coordinates.
+  /**
+   * Get a driving route between two points.
+   * Returns a RouteModel with decoded polyline coordinates.
+   */
   static Future<RouteModel?> getRoute(
     double originLat,
     double originLng,
     double destLat,
     double destLng,
   ) async {
+    final nativeService = _nativeService;
+    final token = _token;
+    if (nativeService == null || token == null) {
+      throw StateError('MapProvider not initialized. Call initialize() first.');
+    }
+
     try {
-      final token = EnvConfig.mapboxPublicToken;
-      final rustResult = await rust_api.getRoute(
+      return await nativeService.getRoute(
         token: token,
         originLat: originLat,
         originLng: originLng,
         destLat: destLat,
         destLng: destLng,
-      );
-
-      if (rustResult == null) return null;
-
-      final points = rustResult.polylinePoints
-          .map<List<double>>((p) => [p.lng, p.lat])
-          .toList();
-
-      return RouteModel(
-        polylinePoints: points,
-        distanceKm: rustResult.distanceKm,
-        durationSeconds: rustResult.durationSeconds.round(),
-        summary: rustResult.summary,
       );
     } catch (e) {
       debugPrint('MapProvider.getRoute error: $e');
@@ -149,40 +141,35 @@ class MapProvider {
     }
   }
 
-  /// Dynamically extract all Points of Interest from the map within a radius.
+  /**
+   * Dynamically extract all Points of Interest from the map within a radius.
+   */
   static Future<List<PlaceModel>> getNearbyPOIs({
     required double lat,
     required double lng,
   }) async {
+    final nativeService = _nativeService;
+    final token = _token;
+    if (nativeService == null || token == null) {
+      throw StateError('MapProvider not initialized. Call initialize() first.');
+    }
+
     try {
-      final token = EnvConfig.mapboxPublicToken;
-      final rustResults = await rust_api.getNearbyPois(
+      return await nativeService.getNearbyPois(
         token: token,
         lat: lat,
         lng: lng,
       );
-
-      return rustResults
-          .map(
-            (r) => PlaceModel(
-              id: r.id,
-              name: r.name,
-              fullAddress: r.fullAddress,
-              latitude: r.latitude,
-              longitude: r.longitude,
-              category: r.category,
-              distanceKm: r.distanceKm,
-            ),
-          )
-          .toList();
     } catch (e) {
       debugPrint('MapProvider.getNearbyPOIs error: $e');
       return [];
     }
   }
 
-  /// Build a map widget. This is the ONLY place the native map widget is used.
-  /// All screens call this method instead of using MapboxMap/GoogleMap directly.
+  /**
+   * Build a map widget. This is the ONLY place the native map widget is used.
+   * All screens call this method instead of using MapboxMap/GoogleMap directly.
+   */
   static Widget buildMapView({
     required double latitude,
     required double longitude,
@@ -223,7 +210,9 @@ class MapProvider {
     );
   }
 
-  /// Move camera to a position.
+  /**
+   * Move camera to a position.
+   */
   static Future<void> moveCamera(
     AppMapController controller,
     double lat,
@@ -244,7 +233,9 @@ class MapProvider {
     }
   }
 
-  /// Get the current center coordinates of the map.
+  /**
+   * Get the current center coordinates of the map.
+   */
   static Future<LatLng> getCameraCenter(AppMapController controller) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
     final camera = await mapCtrl.getCameraState();
@@ -255,7 +246,9 @@ class MapProvider {
     );
   }
 
-  /// Add a point annotation (marker) to the map.
+  /**
+   * Add a point annotation (marker) to the map.
+   */
   static Future<void> addMarker(
     AppMapController controller,
     double lat,
@@ -278,8 +271,10 @@ class MapProvider {
     );
   }
 
-  /// Add a polyline (route line) to the map.
-  /// [points] is [[lng, lat], ...]
+  /**
+   * Add a polyline (route line) to the map.
+   * [points] is [[lng, lat], ...]
+   */
   static Future<void> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
@@ -302,8 +297,10 @@ class MapProvider {
     );
   }
 
-  /// Add a subset of polyline points (for animated progressive reveal).
-  /// Returns the annotation manager so it can be cleared on next frame.
+  /**
+   * Add a subset of polyline points (for animated progressive reveal).
+   * Returns the annotation manager so it can be cleared on next frame.
+   */
   static Future<dynamic> addAnimatedPolylineSegment(
     AppMapController controller,
     List<List<double>> points, {
@@ -328,7 +325,9 @@ class MapProvider {
     return annotationManager;
   }
 
-  /// Clears an annotation manager.
+  /**
+   * Clears an annotation manager.
+   */
   static Future<void> clearAnnotations(dynamic manager) async {
     if (manager != null) {
       try {
@@ -339,7 +338,9 @@ class MapProvider {
     }
   }
 
-  /// Fit the map camera to show all given coordinates with padding.
+  /**
+   * Fit the map camera to show all given coordinates with padding.
+   */
   static Future<void> fitBounds(
     AppMapController controller,
     List<LatLng> points, {

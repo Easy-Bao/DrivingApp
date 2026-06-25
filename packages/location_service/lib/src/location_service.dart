@@ -1,18 +1,32 @@
-import 'package:driver_app/src/rust/api/map_api.dart' as rust_api;
 import 'package:geolocator/geolocator.dart';
+import 'map_native_service.dart';
 
-/// Device location service using geolocator.
-/// Provider-agnostic — works regardless of map provider.
+/**
+ * Device location service using geolocator.
+ * Provider-agnostic — works regardless of map provider.
+ */
 class LocationService {
   LocationService._();
 
   static Position? _lastPosition;
+  static MapNativeService? _nativeService;
 
-  /// Returns the last known position (cached).
+  /**
+   * Initializes the location service with the native FFI implementation.
+   */
+  static void initialize(MapNativeService nativeService) {
+    _nativeService = nativeService;
+  }
+
+  /**
+   * Returns the last known position (cached).
+   */
   static Position? get lastPosition => _lastPosition;
 
-  /// Check and request location permissions.
-  /// Returns true if permission is granted.
+  /**
+   * Check and request location permissions.
+   * Returns true if permission is granted.
+   */
   static Future<bool> checkAndRequestPermission() async {
     final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return false;
@@ -28,8 +42,10 @@ class LocationService {
     return true;
   }
 
-  /// Get the current device position.
-  /// Caches result for quick re-access.
+  /**
+   * Get the current device position.
+   * Caches result for quick re-access.
+   */
   static Future<Position?> getCurrentPosition() async {
     final hasPermission = await checkAndRequestPermission();
     if (!hasPermission) return null;
@@ -47,14 +63,20 @@ class LocationService {
     }
   }
 
-  /// Calculate distance between two coordinates in kilometers using Rust.
+  /**
+   * Calculate distance between two coordinates in kilometers using Rust.
+   */
   static Future<double> distanceBetween(
     double startLat,
     double startLng,
     double endLat,
     double endLng,
   ) async {
-    return await rust_api.haversineDistance(
+    final nativeService = _nativeService;
+    if (nativeService == null) {
+      throw StateError('LocationService not initialized. Call initialize() first.');
+    }
+    return await nativeService.haversineDistance(
       lat1: startLat,
       lng1: startLng,
       lat2: endLat,

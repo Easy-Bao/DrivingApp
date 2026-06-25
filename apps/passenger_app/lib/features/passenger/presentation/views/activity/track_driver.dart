@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:passenger_app/core/services/location_service.dart';
-import 'package:passenger_app/core/services/map_provider.dart';
+import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:driver_app/core/services/location_service.dart';
+import 'package:location_service/location_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_state.dart';
