@@ -3,6 +3,10 @@ import 'package:driver_app/src/rust/api/fare_api.dart' as fare_api;
 import 'package:driver_app/src/rust/models/route_models.dart' as rust_route;
 import 'package:fixtures/fixtures.dart';
 
+/**
+ * Rust-backed concrete implementation of [RideRepository].
+ * Invokes native FFI methods for fare calculation and route optimization.
+ */
 class RideRepositoryImpl implements RideRepository {
   @override
   Future<FareResult> getFare({
@@ -65,6 +69,10 @@ class RideRepositoryImpl implements RideRepository {
   }
 }
 
+/**
+ * Fixture-backed implementation of [RideRepository].
+ * Provides mock fare and optimized route sequences using static assets.
+ */
 class FixtureRideRepository implements RideRepository {
   @override
   Future<FareResult> getFare({
@@ -101,6 +109,10 @@ class FixtureRideRepository implements RideRepository {
 
 //TODO: Implement the real API repository once backend endpoints are ready and integrated.
 
+/**
+ * API-backed implementation of [RideRepository].
+ * Designed to interact directly with backend server endpoints.
+ */
 // ignore: unused_element — will be used when backend is integrated
 class _ApiRideRepository implements RideRepository {
   @override

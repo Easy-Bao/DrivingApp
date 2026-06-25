@@ -1,6 +1,10 @@
 import 'package:fixtures/fixtures.dart';
 import 'package:core_models/core_models.dart';
 
+/**
+ * Fixture-backed implementation of [TrackRepository].
+ * Decodes road segments and tracks driver path using mock data interpolation.
+ */
 class FixtureTrackRepository implements TrackRepository {
   @override
   Future<List<List<double>>?> getRoutePolyline({
@@ -19,6 +23,10 @@ class FixtureTrackRepository implements TrackRepository {
   }
 }
 
+/**
+ * Mapbox-backed concrete implementation of [TrackRepository].
+ * Decodes road segments and tracks driver path using Mapbox Routing API.
+ */
 class MapboxTrackRepository implements TrackRepository {
   @override
   Future<List<List<double>>?> getRoutePolyline({
@@ -39,6 +47,10 @@ class MapboxTrackRepository implements TrackRepository {
 
 //TODO: Implement the real API repository once backend endpoints are ready and integrated.
 
+/**
+ * API-backed implementation of [TrackRepository].
+ * Designed to interact directly with backend server endpoints.
+ */
 // ignore: unused_element — will be used when backend is integrated
 class _ApiTrackRepository implements TrackRepository {
   // final HttpClient _httpClient;

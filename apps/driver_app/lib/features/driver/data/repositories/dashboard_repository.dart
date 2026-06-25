@@ -3,6 +3,10 @@ import 'package:fixtures/fixtures.dart';
 
 //TODO: Replace with real API implementation once backend endpoints are ready and integrated.
 
+/**
+ * Fixture-backed implementation of [DashboardRepository].
+ * Resolves dashboard statistics and surge heatmap using centralized mock assets.
+ */
 class FixtureDashboardRepository implements DashboardRepository {
   @override
   Future<double> getTodayEarnings() async {
@@ -46,6 +50,10 @@ class FixtureDashboardRepository implements DashboardRepository {
 
 //TODO: Implement the real API repository once backend endpoints are ready and integrated.
 
+/**
+ * API-backed implementation of [DashboardRepository].
+ * Designed to fetch data directly from backend server endpoints.
+ */
 // ignore: unused_element — will be used when backend is integrated
 class _ApiDashboardRepository implements DashboardRepository {
   // final HttpClient _httpClient;

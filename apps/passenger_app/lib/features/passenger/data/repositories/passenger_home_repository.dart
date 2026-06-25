@@ -1,6 +1,10 @@
 import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
 
+/**
+ * Fixture-backed implementation of [PassengerHomeRepository].
+ * Resolves address and recent locations using static mock data assets.
+ */
 class FixturePassengerHomeRepository implements PassengerHomeRepository {
   @override
   Future<String> resolveAddress({
@@ -21,6 +25,10 @@ class FixturePassengerHomeRepository implements PassengerHomeRepository {
 //TODO: Implement the real API repository once backend endpoints are ready and integrated.
 
 // ignore: unused_element — will be used when backend is integrated
+/**
+ * API-backed implementation of [PassengerHomeRepository].
+ * Designed to fetch data directly from backend server endpoints.
+ */
 class _ApiPassengerHomeRepository implements PassengerHomeRepository {
   // final HttpClient _httpClient;
   // _ApiPassengerHomeRepository(this._httpClient);

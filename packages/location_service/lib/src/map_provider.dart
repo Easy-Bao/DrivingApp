@@ -5,6 +5,9 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'location_service.dart';
 import 'map_native_service.dart';
 
+/**
+ * Simple representation of geographical coordinates (latitude and longitude).
+ */
 class LatLng {
   final double latitude;
   final double longitude;

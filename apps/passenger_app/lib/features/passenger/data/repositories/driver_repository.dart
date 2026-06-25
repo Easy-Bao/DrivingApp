@@ -5,6 +5,10 @@ import 'package:fixtures/fixtures.dart';
 
 
 
+/**
+ * Fixture-backed implementation of [DriverRepository].
+ * Resolves nearby drivers using static mock assets.
+ */
 class FixtureDriverRepository implements DriverRepository {
   @override
   Future<List<DriverModel>> getNearbyDrivers({
@@ -32,6 +36,10 @@ class FixtureDriverRepository implements DriverRepository {
   }
 }
 
+/**
+ * Rust FFI concrete implementation of [DriverRepository].
+ * Invokes native FFI finding algorithms.
+ */
 class RustDriverRepository implements DriverRepository {
   @override
   Future<List<DriverModel>> getNearbyDrivers({
@@ -67,6 +75,10 @@ class RustDriverRepository implements DriverRepository {
 
 //TODO: Implement the real API repository once backend endpoints are ready and integrated.
 
+/**
+ * API-backed implementation of [DriverRepository].
+ * Designed to interact directly with backend server endpoints.
+ */
 // ignore: unused_element — will be used when backend is integrated
 class _ApiDriverRepository implements DriverRepository {
   // final HttpClient _httpClient;
