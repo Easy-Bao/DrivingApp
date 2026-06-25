@@ -26,7 +26,7 @@ class PassengerAccountScreen extends StatelessWidget {
                       'Account',
                       style: TextStyle(
                         fontSize: 32,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w700,
                         color: AppTheme.primaryColor,
                         letterSpacing: -1.5,
                       ),

@@ -1,8 +1,8 @@
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 
 /// Screen showing summary details of a completed trip.
 /// Embeds a real Mapbox map showing static trip origin/destination points.
@@ -13,8 +13,9 @@ class ActivityViewDetails extends StatefulWidget {
   State<ActivityViewDetails> createState() => _ActivityViewDetailsState();
 }
 
+//TODO: Replace static coordinates with dynamic data from trip details when available.
 class _ActivityViewDetailsState extends State<ActivityViewDetails> {
-  void _onMapCreated(AppMapController controller) async {
+  Future _onMapCreated(AppMapController controller) async {
     // Static coordinates representing Balangasan to Tuburan District, Pagadian City
     final pickupLat = 7.8340;
     final pickupLng = 123.4350;
@@ -110,15 +111,15 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               ),
             ),
             const SizedBox(height: 24),
-            Row(
+            const Row(
               children: [
                 CircleAvatar(
                   radius: 25,
                   backgroundColor: AppTheme.secondaryColor,
-                  child: const Icon(Icons.person, color: AppTheme.primaryColor),
+                  child: Icon(Icons.person, color: AppTheme.primaryColor),
                 ),
-                const SizedBox(width: 15),
-                const Expanded(
+                SizedBox(width: 15),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -140,11 +141,8 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                     ],
                   ),
                 ),
-                const Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
-                const Text(
-                  ' 4.9',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
+                Text(' 4.9', style: TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
             Padding(

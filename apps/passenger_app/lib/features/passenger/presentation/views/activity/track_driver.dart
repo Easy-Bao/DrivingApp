@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 
 class AcitivityTrackDriver extends StatefulWidget {
   const AcitivityTrackDriver({super.key});
@@ -89,8 +89,8 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
     }
   }
 
-  void _handleCancelTrip() {
-    showDialog(
+  Future _handleCancelTrip() async {
+    await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,

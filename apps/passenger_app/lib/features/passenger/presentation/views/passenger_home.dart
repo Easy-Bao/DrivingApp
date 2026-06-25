@@ -11,7 +11,6 @@ import 'package:passenger_app/features/passenger/presentation/bloc/home/passenge
 import 'package:passenger_app/features/passenger/presentation/views/home/models/add_category_model.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/quick_action_model.dart';
 
-
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
 
@@ -52,7 +51,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     quickActions = MockData.getQuickActions().map((action) {
       final title = action['title'] ?? '';
       return QuickActionModel(
@@ -77,10 +76,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
       } else {
         icon = LucideIcons.circle_play;
       }
-      return {
-        ...loc,
-        'icon': icon,
-      };
+      return {...loc, 'icon': icon};
     }).toList();
 
     shortcuts = MockData.getDefaultShortcuts().map((shortcut) {
@@ -104,7 +100,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     if (position != null) {
       await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
     } else {
-      await cubit.loadHomeData(lat: MockData.defaultLat, lng: MockData.defaultLng);
+      await cubit.loadHomeData(
+        lat: MockData.defaultLat,
+        lng: MockData.defaultLng,
+      );
     }
   }
 
@@ -161,7 +160,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                         'EasyRide',
                         style: TextStyle(
                           fontSize: 32,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                           color: AppTheme.primaryColor,
                           letterSpacing: -1.5,
                         ),
@@ -383,7 +382,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                       itemBuilder: (context, index) {
                         final location = locations[index];
                         return _buildLocationItem(
-                          icon: (location['icon'] ?? LucideIcons.map_pin) as IconData,
+                          icon:
+                              (location['icon'] ?? LucideIcons.map_pin)
+                                  as IconData,
                           title: location['title'] as String,
                           subtitle: location['subtitle'] as String,
                           onTap: () => _openActivityDetail(location),
