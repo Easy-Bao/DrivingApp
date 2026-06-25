@@ -5,7 +5,7 @@ members = [
     "passenger",
     "driver",
     "trip",
-    "billing",
+    "fare",
     "location",
     "libs/common",
     "libs/protocols",
