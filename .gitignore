@@ -57,6 +57,9 @@ app.*.map.json
 # AI Agent tooling and local states
 .agent
 .agents/
+.skills/
+.clinerules
+.cursorrules
 
 # Rust build artifacts
 target/
