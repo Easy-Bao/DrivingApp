@@ -155,4 +155,40 @@ class MockData {
       ];
     });
   }
+
+  /**
+   * Mock data for driver dashboard earnings.
+   */
+  static const double todayEarnings = 385.50;
+
+  /**
+   * Mock data for driver dashboard trip count.
+   */
+  static const int todayTrips = 7;
+
+  /**
+   * Mock data for driver dashboard online hours.
+   */
+  static const double hoursOnline = 4.5;
+
+  /**
+   * Returns mock surge heatmap cells offsets and intensities.
+   */
+  static List<Map<String, double>> getSurgeHeatmapOffsets() {
+    return [
+      {'latOffset': 0.002, 'lngOffset': -0.002, 'intensity': 2.5},
+      {'latOffset': -0.001, 'lngOffset': 0.003, 'intensity': 1.8},
+      {'latOffset': 0.005, 'lngOffset': 0.001, 'intensity': 3.1},
+    ];
+  }
+
+  /**
+   * Mock fare calculation constants.
+   */
+  static const double fareBase = 40.0;
+  static const double fareDistanceRate = 8.0;
+  static const double fareTimeRate = 1.0;
+  static const double fareSurge = 0.0;
+  static const double optimizedDistanceKm = 5.2;
 }
+

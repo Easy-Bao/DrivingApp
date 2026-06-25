@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:fixtures/fixtures.dart';
 
 class MockPassengerHomeRepository implements PassengerHomeRepository {
   @override
@@ -7,38 +8,13 @@ class MockPassengerHomeRepository implements PassengerHomeRepository {
     required double lng,
   }) async {
     await Future.delayed(const Duration(milliseconds: 400));
-    return 'Pagadian City, Zamboanga del Sur';
+    return MockData.defaultAddress;
   }
 
   @override
   Future<List<Map<String, dynamic>>> getRecentLocations() async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return [
-      {
-        'title': 'Plaza Luz',
-        'subtitle': 'San Francisco',
-        'lat': 7.8275,
-        'lng': 123.4365,
-      },
-      {
-        'title': 'Robinson Supermarket',
-        'subtitle': 'San Francisco',
-        'lat': 7.8250,
-        'lng': 123.4380,
-      },
-      {
-        'title': "Bo's Coffee",
-        'subtitle': 'San Francisco',
-        'lat': 7.8295,
-        'lng': 123.4358,
-      },
-      {
-        'title': 'Gaisano Capital',
-        'subtitle': 'San Francisco',
-        'lat': 7.8260,
-        'lng': 123.4355,
-      },
-    ];
+    return MockData.getRecentLocations();
   }
 }
 

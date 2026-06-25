@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:fixtures/fixtures.dart';
 
 //TODO: Replace with real API implementation once backend endpoints are ready and integrated.
 
@@ -6,19 +7,19 @@ class MockDashboardRepository implements DashboardRepository {
   @override
   Future<double> getTodayEarnings() async {
     await Future.delayed(const Duration(milliseconds: 600));
-    return 385.50;
+    return MockData.todayEarnings;
   }
 
   @override
   Future<int> getTodayTrips() async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return 7;
+    return MockData.todayTrips;
   }
 
   @override
   Future<double> getHoursOnline() async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return 4.5;
+    return MockData.hoursOnline;
   }
 
   @override
@@ -31,11 +32,15 @@ class MockDashboardRepository implements DashboardRepository {
     required List<double> requestLngs,
   }) async {
     await Future.delayed(const Duration(milliseconds: 400));
-    return [
-      HeatmapCell(lat: lat + 0.002, lng: lng - 0.002, intensity: 2.5),
-      HeatmapCell(lat: lat - 0.001, lng: lng + 0.003, intensity: 1.8),
-      HeatmapCell(lat: lat + 0.005, lng: lng + 0.001, intensity: 3.1),
-    ];
+    return MockData.getSurgeHeatmapOffsets()
+        .map(
+          (o) => HeatmapCell(
+            lat: lat + (o['latOffset'] ?? 0.0),
+            lng: lng + (o['lngOffset'] ?? 0.0),
+            intensity: o['intensity'] ?? 0.0,
+          ),
+        )
+        .toList();
   }
 }
 

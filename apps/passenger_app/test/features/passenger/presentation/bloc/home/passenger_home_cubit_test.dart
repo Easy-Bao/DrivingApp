@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:fixtures/fixtures.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_state.dart';
 import 'package:bloc_test/bloc_test.dart';
@@ -25,7 +26,7 @@ void main() {
     test('starts with default address and empty locations', () async {
       final cubit = _makeCubit(repo);
       expect(cubit.state.isLoading, isFalse);
-      expect(cubit.state.currentAddress, 'Pagadian City, Zamboanga del Sur');
+      expect(cubit.state.currentAddress, MockData.defaultAddress);
       expect(cubit.state.recentLocations, isEmpty);
       await cubit.close();
     });
@@ -44,7 +45,7 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => 'Pagadian City, Zamboanga del Sur');
+        ).thenAnswer((_) async => MockData.defaultAddress);
         when(() => repo.getRecentLocations())
             .thenAnswer((_) async => mockLocations);
         return _makeCubit(repo);
@@ -54,7 +55,7 @@ void main() {
         const PassengerHomeState(isLoading: true),
         PassengerHomeState(
           isLoading: false,
-          currentAddress: 'Pagadian City, Zamboanga del Sur',
+          currentAddress: MockData.defaultAddress,
           recentLocations: mockLocations,
         ),
       ],

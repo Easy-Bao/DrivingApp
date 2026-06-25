@@ -1,6 +1,7 @@
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/rust/api/fare_api.dart' as fare_api;
 import 'package:driver_app/src/rust/models/route_models.dart' as rust_route;
+import 'package:fixtures/fixtures.dart';
 
 class RideRepositoryImpl implements RideRepository {
   @override
@@ -71,12 +72,16 @@ class MockRideRepository implements RideRepository {
     required double durationMinutes,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
+    final base = MockData.fareBase;
+    final distCharge = distanceKm * MockData.fareDistanceRate;
+    final timeCharge = durationMinutes * MockData.fareTimeRate;
+    final surge = MockData.fareSurge;
     return FareResult(
-      baseFare: 40.0,
-      distanceCharge: distanceKm * 8.0,
-      timeCharge: durationMinutes * 1.0,
-      surgeCharge: 0.0,
-      totalFare: 40.0 + (distanceKm * 8.0) + durationMinutes,
+      baseFare: base,
+      distanceCharge: distCharge,
+      timeCharge: timeCharge,
+      surgeCharge: surge,
+      totalFare: base + distCharge + timeCharge + surge,
     );
   }
 
@@ -89,7 +94,7 @@ class MockRideRepository implements RideRepository {
     await Future.delayed(const Duration(milliseconds: 300));
     return RouteSequenceResult(
       optimalSequence: waypoints,
-      totalDistanceKm: 5.2,
+      totalDistanceKm: MockData.optimizedDistanceKm,
     );
   }
 }

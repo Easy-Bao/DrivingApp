@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:fixtures/fixtures.dart';
 
 /// Immutable state for the passenger home screen.
 class PassengerHomeState extends Equatable {
@@ -8,7 +9,7 @@ class PassengerHomeState extends Equatable {
 
   const PassengerHomeState({
     this.isLoading = false,
-    this.currentAddress = 'Pagadian City, Zamboanga del Sur',
+    this.currentAddress = MockData.defaultAddress,
     this.recentLocations = const [],
   });
 
