@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'driver_model.freezed.dart';
-part 'driver_model.g.dart';
+part 'generated/driver_model.freezed.dart';
+part 'generated/driver_model.g.dart';
 
 /**
  * DriverModel represents a driver's details and real-time positional updates.

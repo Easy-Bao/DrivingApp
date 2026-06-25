@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'fare_result.freezed.dart';
-part 'fare_result.g.dart';
+part 'generated/fare_result.freezed.dart';
+part 'generated/fare_result.g.dart';
 
 /**
  * FareResult represents calculated cost breakups of a trip.

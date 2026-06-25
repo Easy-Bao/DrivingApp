@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'heatmap_cell.freezed.dart';
-part 'heatmap_cell.g.dart';
+part 'generated/heatmap_cell.freezed.dart';
+part 'generated/heatmap_cell.g.dart';
 
 /**
  * HeatmapCell represents density markers on a map grid.

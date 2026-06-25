@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'ride_history_model.dart';
+part of '../ride_history_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

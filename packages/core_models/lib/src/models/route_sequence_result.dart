@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'waypoint.dart';
 
-part 'route_sequence_result.freezed.dart';
-part 'route_sequence_result.g.dart';
+part 'generated/route_sequence_result.freezed.dart';
+part 'generated/route_sequence_result.g.dart';
 
 /**
  * RouteSequenceResult represents calculated metrics of an optimized path traversal.

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'driver_model.dart';
+part of '../driver_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

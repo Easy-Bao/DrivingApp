@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'place_model.freezed.dart';
-part 'place_model.g.dart';
+part 'generated/place_model.freezed.dart';
+part 'generated/place_model.g.dart';
 
 /**
  * PlaceModel represents a geocoded address or location suggestion.

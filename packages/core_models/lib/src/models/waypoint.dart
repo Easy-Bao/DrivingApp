@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'waypoint.freezed.dart';
-part 'waypoint.g.dart';
+part 'generated/waypoint.freezed.dart';
+part 'generated/waypoint.g.dart';
 
 /**
  * Waypoint represents geographical coordinates in a travel path.

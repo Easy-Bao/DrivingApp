@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'notification_model.freezed.dart';
-part 'notification_model.g.dart';
+part 'generated/notification_model.freezed.dart';
+part 'generated/notification_model.g.dart';
 
 /**
  * NotificationModel represents a system or transactional alert notification.

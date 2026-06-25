@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'route_model.freezed.dart';
-part 'route_model.g.dart';
+part 'generated/route_model.freezed.dart';
+part 'generated/route_model.g.dart';
 
 /**
  * RouteModel represents route coordinates, metrics, and description.

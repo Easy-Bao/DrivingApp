@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'fare_result.dart';
+part of '../fare_result.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

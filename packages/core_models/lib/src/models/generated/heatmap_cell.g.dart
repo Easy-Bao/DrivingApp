@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'heatmap_cell.dart';
+part of '../heatmap_cell.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
