@@ -1,7 +1,7 @@
 import 'package:fixtures/fixtures.dart';
 import 'package:core_models/core_models.dart';
 
-class MockTrackRepository implements TrackRepository {
+class FixtureTrackRepository implements TrackRepository {
   @override
   Future<List<List<double>>?> getRoutePolyline({
     required double startLat,

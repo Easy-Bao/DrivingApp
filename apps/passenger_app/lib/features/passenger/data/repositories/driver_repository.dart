@@ -5,7 +5,7 @@ import 'package:fixtures/fixtures.dart';
 
 
 
-class MockDriverRepository implements DriverRepository {
+class FixtureDriverRepository implements DriverRepository {
   @override
   Future<List<DriverModel>> getNearbyDrivers({
     required double lat,

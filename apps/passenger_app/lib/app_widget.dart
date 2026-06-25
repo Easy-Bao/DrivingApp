@@ -20,7 +20,7 @@ class AppWidget extends StatelessWidget {
         BlocProvider<FindingDriverBloc>(
           create: (_) {
             // NOTE: getIt<DriverRepository>() automatically injects the active implementation
-            // (e.g. MockDriverRepository, or _ApiDriverRepository when backend is ready).
+                        // (e.g. FixtureDriverRepository, or _ApiDriverRepository when backend is ready).
             return FindingDriverBloc(repository: getIt<DriverRepository>());
           },
         ),
@@ -29,7 +29,7 @@ class AppWidget extends StatelessWidget {
         BlocProvider<TrackDriverCubit>(
           create: (_) {
             // NOTE: getIt<TrackRepository>() automatically injects the active implementation
-            // (e.g. MockTrackRepository, or _ApiTrackRepository when backend is ready).
+            // (e.g. FixtureTrackRepository, or _ApiTrackRepository when backend is ready).
             return TrackDriverCubit(repository: getIt<TrackRepository>());
           },
         ),

@@ -28,7 +28,7 @@ class DashboardModule {
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
           // NOTE: getIt<DashboardRepository>() automatically injects the active implementation
-          // (MockDashboardRepository, or _ApiDashboardRepository when backend is ready)
+          // (FixtureDashboardRepository, or _ApiDashboardRepository when backend is ready)
           // based on the single configuration line in lib/core/di/service_locator.dart.
           final cubit = DashboardCubit(
             repository: getIt<DashboardRepository>(),

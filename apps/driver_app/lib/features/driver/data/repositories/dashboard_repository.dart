@@ -3,7 +3,7 @@ import 'package:fixtures/fixtures.dart';
 
 //TODO: Replace with real API implementation once backend endpoints are ready and integrated.
 
-class MockDashboardRepository implements DashboardRepository {
+class FixtureDashboardRepository implements DashboardRepository {
   @override
   Future<double> getTodayEarnings() async {
     await Future.delayed(const Duration(milliseconds: 600));

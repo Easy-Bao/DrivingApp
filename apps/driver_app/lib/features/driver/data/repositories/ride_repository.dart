@@ -65,7 +65,7 @@ class RideRepositoryImpl implements RideRepository {
   }
 }
 
-class MockRideRepository implements RideRepository {
+class FixtureRideRepository implements RideRepository {
   @override
   Future<FareResult> getFare({
     required double distanceKm,

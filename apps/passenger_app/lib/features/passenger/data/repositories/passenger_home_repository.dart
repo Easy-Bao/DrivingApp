@@ -1,7 +1,7 @@
 import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
 
-class MockPassengerHomeRepository implements PassengerHomeRepository {
+class FixturePassengerHomeRepository implements PassengerHomeRepository {
   @override
   Future<String> resolveAddress({
     required double lat,

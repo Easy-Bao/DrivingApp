@@ -16,7 +16,7 @@ void setupServiceLocator() {
   // Driver Feature Repositories
   // Mock data. Swap to ApiDashboardRepository when backend is ready.
   getIt.registerLazySingleton<DashboardRepository>(
-    () => MockDashboardRepository(),
+    () => FixtureDashboardRepository(),
   );
 
   // Rust FFI implementation. Swap to ApiRideRepository when backend is ready.

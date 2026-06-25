@@ -135,7 +135,7 @@ class HomeModule {
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
           // NOTE: getIt<PassengerHomeRepository>() automatically injects the active implementation
-          // (MockPassengerHomeRepository, or _ApiPassengerHomeRepository when backend is ready)
+          // (FixturePassengerHomeRepository, or _ApiPassengerHomeRepository when backend is ready)
           // based on the single configuration line in lib/core/di/service_locator.dart.
           return PassengerHomeCubit(
             repository: getIt<PassengerHomeRepository>(),
