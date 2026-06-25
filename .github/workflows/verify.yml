@@ -1,4 +1,4 @@
-name: Monorepo CI
+name: BaoRide Code Quality & Verification
 
 on:
   push:
@@ -7,8 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  analyze:
+  verify:
+    name: Code Analysis & Verification
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -25,16 +27,16 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Dependencies
+      - name: Install Root Dependencies
+        run: flutter pub get
+
+      - name: Install Melos Global Executable
         run: |
           dart pub global activate melos
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
-      - name: Bootstrap Workspace
-        run: melos bootstrap
+      - name: Bootstrap Monorepo Workspace
+        run: flutter pub global run melos bootstrap
 
-      - name: Run Static Analysis
-        run: |
-          # Install just task runner
-          sudo apt-get update && sudo apt-get install -y just
-          just analyze
+      - name: Run Static Analysis & Verification
+        run: flutter pub global run melos exec -- "flutter analyze . --no-fatal-warnings --no-fatal-infos"

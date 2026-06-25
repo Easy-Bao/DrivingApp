@@ -32,6 +32,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+pubspec_overrides.yaml
 
 # Symbolication related
 app.*.symbols
@@ -52,5 +53,6 @@ app.*.map.json
 #Metadata
 .metadata
 
-# AI Agent Skills
-# .agents/
+# AI Agent tooling and local states
+.agent
+.agents/

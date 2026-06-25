@@ -1,0 +1,4 @@
+# Private files created by dart pub
+.dart_tool/
+pubspec.lock
+pubspec_overrides.yaml
