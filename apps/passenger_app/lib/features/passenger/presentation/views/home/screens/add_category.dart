@@ -5,11 +5,11 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:fixtures/fixtures.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/features/passenger/presentation/views/home/models/add_category_model.dart';
+import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 
 
 class PassengerAddCategoryScreen extends StatefulWidget {
-  final Function(AddCategoryModel) onSave;
+  final Function(SavedPlaceModel) onSave;
 
   const PassengerAddCategoryScreen({super.key, required this.onSave});
 
@@ -101,16 +101,29 @@ class _PassengerAddCategoryScreenState
       _errorMessage = null;
     });
 
-    final newShortcut = AddCategoryModel(
-      icon: selectedIcon,
+    final iconName = _iconNameFromData(selectedIcon);
+    final newPlace = SavedPlaceModel(
       label: label,
-      onTap: () async {
-        await context.push('/map-navigation', extra: {'destination': label});
-      },
+      iconName: iconName,
+      latitude: _lat,
+      longitude: _lng,
+      savedAddress: label,
+      onTap: () {},
     );
 
-    widget.onSave(newShortcut);
+    widget.onSave(newPlace);
     context.pop();
+  }
+
+  String _iconNameFromData(IconData icon) {
+    if (icon == LucideIcons.house) return 'house';
+    if (icon == LucideIcons.briefcase) return 'briefcase';
+    if (icon == LucideIcons.shopping_cart) return 'shopping_cart';
+    if (icon == LucideIcons.heart) return 'heart';
+    if (icon == LucideIcons.star) return 'star';
+    if (icon == LucideIcons.coffee) return 'coffee';
+    if (icon == LucideIcons.dumbbell) return 'dumbbell';
+    return 'map_pin';
   }
 
   @override

@@ -2,6 +2,8 @@ import 'package:passenger_app/core/di/service_locator.dart';
 import 'package:core_models/core_models.dart';
 import 'package:passenger_app/core/transitions/app_transitions.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_cubit.dart';
+import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/activity_detail_map_screen.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/add_category.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/destination_preview_screen.dart';
@@ -15,7 +17,6 @@ import 'package:passenger_app/features/passenger/presentation/views/home/screens
 import 'package:passenger_app/features/passenger/presentation/views/passenger_home.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-
 
 class HomeModule {
   HomeModule._();
@@ -40,8 +41,10 @@ class HomeModule {
     ChildRoute(
       name: 'PassengerAddCategory',
       'home/add-category',
-      child: (context, GoRouterState state) =>
-          PassengerAddCategoryScreen(onSave: (category) {}),
+      child: (context, GoRouterState state) {
+        final onSave = state.extra as Function(SavedPlaceModel)?;
+        return PassengerAddCategoryScreen(onSave: onSave ?? (_) {});
+      },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),
@@ -144,15 +147,22 @@ class HomeModule {
     ChildRoute(
       name: 'PassengerHome',
       'home',
-      child: (context, GoRouterState state) => BlocProvider(
-        create: (_) {
-          // NOTE: getIt<PassengerHomeRepository>() automatically injects the active implementation
-          // (FixturePassengerHomeRepository, or _ApiPassengerHomeRepository when backend is ready)
-          // based on the single configuration line in lib/core/di/service_locator.dart.
-          return PassengerHomeCubit(
-            repository: getIt<PassengerHomeRepository>(),
-          );
-        },
+      child: (context, GoRouterState state) => MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) {
+              // NOTE: getIt<PassengerHomeRepository>() automatically injects the active implementation
+              // (FixturePassengerHomeRepository, or _ApiPassengerHomeRepository when backend is ready)
+              // based on the single configuration line in lib/core/di/service_locator.dart.
+              return PassengerHomeCubit(
+                repository: getIt<PassengerHomeRepository>(),
+              );
+            },
+          ),
+          BlocProvider(
+            create: (_) => getIt<SavedPlacesCubit>(),
+          ),
+        ],
         child: const PassengerHomeScreen(),
       ),
       transition: AppTransitions.fade,
