@@ -30,10 +30,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repo: Arc<dyn PassengerRepository> = if let Some(ref database_url) = config.database_url {
         info!("PostgreSQL database configuration detected. Connecting...");
         let pool = sqlx::PgPool::connect(database_url).await?;
-        let postgres_repo = PostgresPassengerRepository::new(pool);
-        postgres_repo.init_db().await?;
-        info!("PostgreSQL database tables successfully initialized.");
-        Arc::new(postgres_repo)
+
+        /*
+         * Run versioned database migrations from the ./migrations directory before
+         * initializing any repository adapters. This guarantees schema correctness
+         * across all concurrent service instances and supports incremental schema evolution.
+         */
+        sqlx::migrate!("./migrations").run(&pool).await?;
+        info!("Database migrations applied successfully.");
+
+        Arc::new(PostgresPassengerRepository::new(pool))
     } else {
         info!("DATABASE_URL environment variable is missing. Falling back to InMemoryPassengerRepository.");
         Arc::new(InMemoryPassengerRepository::new())

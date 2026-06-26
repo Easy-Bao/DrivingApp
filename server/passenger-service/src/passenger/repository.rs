@@ -38,10 +38,13 @@ impl PassengerRepository for InMemoryPassengerRepository {
         };
 
         let mut passengers_guard = self.passengers.write().await;
-        
+
         // Prevent duplicate emails
         if passengers_guard.values().any(|p| p.email == req.email) {
-            return Err(anyhow!("A passenger with email {} already exists", req.email));
+            return Err(anyhow!(
+                "A passenger with email {} already exists",
+                req.email
+            ));
         }
 
         let passenger = Passenger {
@@ -64,7 +67,7 @@ impl PassengerRepository for InMemoryPassengerRepository {
 
     async fn create_ride_request(&self, req: CreateRideRequest) -> Result<RideRequest> {
         let ride_type = RideType::from_str(&req.ride_type)?;
-        
+
         // Verify passenger exists
         {
             let passengers_guard = self.passengers.read().await;
@@ -120,52 +123,12 @@ pub struct PostgresPassengerRepository {
 }
 
 impl PostgresPassengerRepository {
-    /** Creates a new Postgres database adapter. */
+    /** Creates a new Postgres database adapter bound to the provided connection pool. */
     pub fn new(pool: sqlx::PgPool) -> Self {
         Self { pool }
     }
-
-    /** Pre-run initialization that establishes the database tables if they do not exist. */
-    pub async fn init_db(&self) -> Result<()> {
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS passengers (
-                id UUID PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE,
-                phone VARCHAR(50) NOT NULL,
-                preferred_ride_type VARCHAR(50),
-                created_at TIMESTAMPTZ NOT NULL
-            );
-            "#
-        )
-        .execute(&self.pool)
-        .await?;
-
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS ride_requests (
-                id UUID PRIMARY KEY,
-                passenger_id UUID NOT NULL REFERENCES passengers(id),
-                ride_type VARCHAR(50) NOT NULL,
-                pickup_latitude DOUBLE PRECISION NOT NULL,
-                pickup_longitude DOUBLE PRECISION NOT NULL,
-                pickup_name VARCHAR(255) NOT NULL,
-                dropoff_latitude DOUBLE PRECISION NOT NULL,
-                dropoff_longitude DOUBLE PRECISION NOT NULL,
-                dropoff_name VARCHAR(255) NOT NULL,
-                fare DOUBLE PRECISION NOT NULL,
-                status VARCHAR(50) NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL
-            );
-            "#
-        )
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
-    }
 }
+
 
 #[async_trait::async_trait]
 impl PassengerRepository for PostgresPassengerRepository {
@@ -183,7 +146,7 @@ impl PassengerRepository for PostgresPassengerRepository {
             r#"
             INSERT INTO passengers (id, name, email, phone, preferred_ride_type, created_at)
             VALUES ($1, $2, $3, $4, $5, $6)
-            "#
+            "#,
         )
         .bind(id)
         .bind(&req.name)
@@ -211,7 +174,7 @@ impl PassengerRepository for PostgresPassengerRepository {
             SELECT name, email, phone, preferred_ride_type, created_at
             FROM passengers
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -250,7 +213,7 @@ impl PassengerRepository for PostgresPassengerRepository {
                 dropoff_latitude, dropoff_longitude, dropoff_name, fare, status, created_at
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            "#
+            "#,
         )
         .bind(id)
         .bind(req.passenger_id)
@@ -304,7 +267,7 @@ impl PassengerRepository for PostgresPassengerRepository {
             FROM ride_requests
             WHERE passenger_id = $1
             ORDER BY created_at DESC
-            "#
+            "#,
         )
         .bind(passenger_id)
         .fetch_all(&self.pool)
