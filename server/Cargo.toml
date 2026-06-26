@@ -1,14 +1,14 @@
 [workspace]
 resolver = "2"
 members = [
-    "gateway",
-    "passenger",
-    "driver",
-    "trip",
-    "fare",
-    "location",
-    "libs/common",
-    "libs/protocols",
+    "api-gateway",
+    "passenger-service",
+    "driver-service",
+    "trip-service",
+    "bidding-service",
+    "telemetry-service",
+    "shared-core/common",
+    "shared-core/protocols",
 ]
 
 [workspace.dependencies]

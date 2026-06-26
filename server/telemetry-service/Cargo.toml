@@ -1,5 +1,5 @@
 [package]
-name = "location"
+name = "telemetry-service"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,5 +9,5 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
-common = { path = "../libs/common" }
-protocols = { path = "../libs/protocols" }
+common = { path = "../shared-core/common" }
+protocols = { path = "../shared-core/protocols" }
