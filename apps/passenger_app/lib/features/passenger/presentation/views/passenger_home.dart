@@ -58,7 +58,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         icon: _getIconFromName(action['iconName'] ?? ''),
         title: title,
         subtitle: action['subtitle'] ?? '',
-        onTap: () => _showFeedback(title),
+        onTap: () => context.pushNamed('SearchDestination'),
       );
     }).toList();
 
@@ -335,7 +335,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                         icon: action.icon,
                         title: action.title,
                         subtitle: action.subtitle,
-                        onTap: () => _showFeedback(action.title),
+                        onTap: action.onTap,
                       ),
                     ),
                   );
