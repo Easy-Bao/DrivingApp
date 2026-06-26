@@ -16,8 +16,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Passenger service starting...");
 
-    // Dynamically resolve repository backend based on environmental context.
-    // Enables seamless fallback to an In-Memory state store during development/testing.
+    /*
+     * Dynamically resolve repository backend based on environmental context.
+     * Enables seamless fallback to an In-Memory state store during development/testing.
+     */
     let repo: Arc<dyn PassengerRepository> = if let Ok(database_url) = std::env::var("DATABASE_URL") {
         info!("PostgreSQL database configuration detected. Connecting...");
         let pool = sqlx::PgPool::connect(&database_url).await?;

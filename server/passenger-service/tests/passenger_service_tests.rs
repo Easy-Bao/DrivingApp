@@ -12,8 +12,10 @@ use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
 
-/// Verifies that the string representations of ride types ('solo-ride', 'share-bao', and their aliases)
-/// are correctly deserialized/parsed into `RideType` enum variants.
+/**
+ * Verifies that the string representations of ride types ('solo-ride', 'share-bao', and their aliases)
+ * are correctly deserialized/parsed into `RideType` enum variants.
+ */
 #[test]
 fn test_ride_type_parsing() {
     assert_eq!(RideType::from_str("solo-ride").unwrap(), RideType::SoloRide);
@@ -30,8 +32,10 @@ fn test_ride_type_parsing() {
     assert!(RideType::from_str("something-else").is_err());
 }
 
-/// Verifies the repository operations under the thread-safe in-memory adapter.
-/// Ensures standard CRUD, duplicate prevention, and validation rules work.
+/**
+ * Verifies the repository operations under the thread-safe in-memory adapter.
+ * Ensures standard CRUD, duplicate prevention, and validation rules work.
+ */
 #[tokio::test]
 async fn test_in_memory_repository_operations() {
     let repo = InMemoryPassengerRepository::new();
@@ -115,8 +119,10 @@ async fn test_in_memory_repository_operations() {
     assert_eq!(rides[1].ride_type, RideType::ShareBao);
 }
 
-/// Verifies that HTTP handlers serialize and deserialize payloads properly
-/// and return appropriate HTTP response status codes.
+/**
+ * Verifies that HTTP handlers serialize and deserialize payloads properly
+ * and return appropriate HTTP response status codes.
+ */
 #[tokio::test]
 async fn test_http_handlers() {
     let repo = Arc::new(InMemoryPassengerRepository::new());

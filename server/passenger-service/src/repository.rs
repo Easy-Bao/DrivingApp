@@ -7,25 +7,29 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-/// Contract defining database access operations for managing passenger data.
-/// Promotes clean separation of concerns and database independence for test mocking.
+/**
+ * Contract defining database access operations for managing passenger data.
+ * Promotes clean separation of concerns and database independence for test mocking.
+ */
 #[async_trait::async_trait]
 pub trait PassengerRepository: Send + Sync {
-    /// Registers a new passenger profile.
+    /** Registers a new passenger profile. */
     async fn create_passenger(&self, req: CreatePassengerRequest) -> Result<Passenger>;
     
-    /// Retrieves a passenger profile by its unique ID.
+    /** Retrieves a passenger profile by its unique ID. */
     async fn get_passenger(&self, id: Uuid) -> Result<Option<Passenger>>;
     
-    /// Creates a new ride request under a specific passenger profile.
+    /** Creates a new ride request under a specific passenger profile. */
     async fn create_ride_request(&self, req: CreateRideRequest) -> Result<RideRequest>;
     
-    /// Returns all ride requests initiated by a specific passenger.
+    /** Returns all ride requests initiated by a specific passenger. */
     async fn get_passenger_rides(&self, passenger_id: Uuid) -> Result<Vec<RideRequest>>;
 }
 
-/// An in-memory, thread-safe implementation of [PassengerRepository].
-/// Useful for unit testing, integration tests, and local offline development.
+/**
+ * An in-memory, thread-safe implementation of [PassengerRepository].
+ * Useful for unit testing, integration tests, and local offline development.
+ */
 #[derive(Debug, Default, Clone)]
 pub struct InMemoryPassengerRepository {
     passengers: Arc<RwLock<HashMap<Uuid, Passenger>>>,
@@ -33,7 +37,7 @@ pub struct InMemoryPassengerRepository {
 }
 
 impl InMemoryPassengerRepository {
-    /// Creates a new empty database instance in system memory.
+    /** Creates a new empty database instance in system memory. */
     pub fn new() -> Self {
         Self {
             passengers: Arc::new(RwLock::new(HashMap::new())),
@@ -124,19 +128,21 @@ impl PassengerRepository for InMemoryPassengerRepository {
     }
 }
 
-/// Postgres-backed implementation of [PassengerRepository] utilizing SQLx.
+/**
+ * Postgres-backed implementation of [PassengerRepository] utilizing SQLx.
+ */
 #[derive(Debug, Clone)]
 pub struct PostgresPassengerRepository {
     pool: sqlx::PgPool,
 }
 
 impl PostgresPassengerRepository {
-    /// Creates a new Postgres database adapter.
+    /** Creates a new Postgres database adapter. */
     pub fn new(pool: sqlx::PgPool) -> Self {
         Self { pool }
     }
 
-    /// Pre-run initialization that establishes the database tables if they do not exist.
+    /** Pre-run initialization that establishes the database tables if they do not exist. */
     pub async fn init_db(&self) -> Result<()> {
         sqlx::query(
             r#"
