@@ -1,5 +1,6 @@
 import 'package:passenger_app/core/di/service_locator.dart';
 import 'package:core_models/core_models.dart';
+import 'package:passenger_app/core/transitions/app_transitions.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/activity_detail_map_screen.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/add_category.dart';
@@ -26,28 +27,30 @@ class HomeModule {
       child: (context, GoRouterState state) => SearchDestinationScreen(
         preselectedRideType: state.uri.queryParameters['rideType'],
       ),
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'ViewAllSuggestions',
       'home/suggestions',
       child: (context, GoRouterState state) => PassengerViewAllActivity(),
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 300),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'PassengerAddCategory',
       'home/add-category',
       child: (context, GoRouterState state) =>
           PassengerAddCategoryScreen(onSave: (category) {}),
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
       name: 'Notifications',
       'home/notifications',
       child: (context, GoRouterState state) => const NotificationScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'ActivityDetailMap',
@@ -61,13 +64,15 @@ class HomeModule {
           destinationLng: (data['lng'] as num).toDouble(),
         );
       },
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'MapPin',
       'home/map-pin',
       child: (context, GoRouterState state) => const MapPinScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
       name: 'DestinationPreview',
@@ -79,7 +84,8 @@ class HomeModule {
           preselectedRideType: state.uri.queryParameters['rideType'],
         );
       },
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'RideSelection',
@@ -93,7 +99,8 @@ class HomeModule {
           distanceKm: (data['distanceKm'] as num).toDouble(),
         );
       },
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'FindingDriver',
@@ -108,8 +115,8 @@ class HomeModule {
           duration: data['duration'] as String,
         );
       },
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
       name: 'DriverMatched',
@@ -128,8 +135,8 @@ class HomeModule {
           plateNumber: data['plateNumber'] as String?,
         );
       },
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
   ];
 
@@ -148,7 +155,8 @@ class HomeModule {
         },
         child: const PassengerHomeScreen(),
       ),
-      transition: GoTransitions.fade,
+      transition: AppTransitions.fade,
+      transitionDuration: AppTransitions.fadeDuration,
     ),
   ];
 }

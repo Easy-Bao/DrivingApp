@@ -1,5 +1,6 @@
 import 'package:driver_app/features/driver/presentation/views/earnings/driver_trip_history_screen.dart';
 import 'package:driver_app/features/driver/presentation/views/earnings/earnings_screen.dart';
+import 'package:driver_app/core/transitions/app_transitions.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class EarningsModule {
@@ -10,7 +11,8 @@ class EarningsModule {
       name: 'DriverTripHistory',
       'earnings/trip-history',
       child: (context, GoRouterState state) => const DriverTripHistoryScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
   ];
 
@@ -19,7 +21,8 @@ class EarningsModule {
       name: 'DriverEarnings',
       'earnings',
       child: (context, GoRouterState state) => const DriverEarningsScreen(),
-      transition: GoTransitions.fade,
+      transition: AppTransitions.fade,
+      transitionDuration: AppTransitions.fadeDuration,
     ),
   ];
 }

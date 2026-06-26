@@ -7,6 +7,7 @@ import 'package:passenger_app/app_widget.dart';
 import 'package:passenger_app/core/config/env_config.dart';
 import 'package:passenger_app/core/di/service_locator.dart';
 import 'package:passenger_app/core/services/map_native_service_impl.dart';
+import 'package:passenger_app/core/transitions/app_transitions.dart';
 import 'package:passenger_app/src/rust/frb_generated.dart';
 
 void main() async {
@@ -23,6 +24,12 @@ void main() async {
   );
 
   setupServiceLocator();
+
+  /**
+   * Apply globally snappy transition timing before the router initializes.
+   * 160ms easeOutCubic replaces the default 300ms linear curve across all routes.
+   */
+  AppTransitions.configure();
 
   await Modular.configure(
     appModule: AppModule(),

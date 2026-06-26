@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:driver_app/core/di/service_locator.dart';
 import 'package:core_models/core_models.dart';
+import 'package:driver_app/core/transitions/app_transitions.dart';
 import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/features/driver/presentation/views/dashboard/ride_alert_screen.dart';
 import 'package:driver_app/features/driver/presentation/views/driver_dashboard.dart';
@@ -16,8 +17,8 @@ class DashboardModule {
       name: 'RideAlert',
       'dashboard/ride-alert',
       child: (context, GoRouterState state) => const RideAlertScreen(),
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
   ];
 
@@ -38,7 +39,8 @@ class DashboardModule {
         },
         child: const DriverDashboardScreen(),
       ),
-      transition: GoTransitions.fade,
+      transition: AppTransitions.fade,
+      transitionDuration: AppTransitions.fadeDuration,
     ),
   ];
 }

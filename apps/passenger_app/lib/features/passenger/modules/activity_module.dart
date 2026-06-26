@@ -3,6 +3,7 @@ import 'package:passenger_app/features/passenger/presentation/views/activity/tra
 import 'package:passenger_app/features/passenger/presentation/views/activity/view_details.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/passenger_rating_screen.dart';
 import 'package:passenger_app/features/passenger/presentation/views/passenger_activity.dart';
+import 'package:passenger_app/core/transitions/app_transitions.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class ActivityModule {
@@ -13,28 +14,29 @@ class ActivityModule {
       name: 'ActivityViewDetails',
       'activity/viewDetails',
       child: (context, GoRouterState state) => const ActivityViewDetails(),
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'ActivityTrackDriver',
       'activity/trackDriver',
       child: (context, GoRouterState state) => const AcitivityTrackDriver(),
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'DriverChat',
       'activity/driver-chat',
       child: (context, GoRouterState state) => const DriverChatScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'PassengerRating',
       'activity/rating',
       child: (context, GoRouterState state) => const PassengerRatingScreen(),
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
   ];
 
@@ -43,7 +45,8 @@ class ActivityModule {
       name: 'PassengerActivity',
       'activity',
       child: (context, GoRouterState state) => const PassengerActivityScreen(),
-      transition: GoTransitions.fade,
+      transition: AppTransitions.fade,
+      transitionDuration: AppTransitions.fadeDuration,
     ),
   ];
 }

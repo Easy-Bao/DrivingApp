@@ -5,6 +5,7 @@ import 'package:driver_app/features/driver/presentation/views/ride/en_route_pick
 import 'package:driver_app/features/driver/presentation/views/ride/in_transit_screen.dart';
 import 'package:driver_app/features/driver/presentation/views/ride/route_optimizer_screen.dart';
 import 'package:driver_app/features/driver/presentation/views/ride/waiting_passenger_screen.dart';
+import 'package:driver_app/core/transitions/app_transitions.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class RideModule {
@@ -24,8 +25,8 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'WaitingPassenger',
@@ -40,8 +41,8 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'InTransit',
@@ -56,8 +57,8 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'CompleteTripDriver',
@@ -72,8 +73,8 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.slide.toLeft,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
       name: 'FareSummary',
@@ -88,19 +89,22 @@ class RideModule {
           duration: d['duration'] as String,
         );
       },
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
       name: 'RatePassenger',
       'ride/rate',
       child: (context, GoRouterState state) => const RatePassengerScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
       name: 'RouteOptimizer',
       'ride/optimize',
       child: (context, GoRouterState state) => const RouteOptimizerScreen(),
-      transition: GoTransitions.slide.toLeft,
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
   ];
 }
