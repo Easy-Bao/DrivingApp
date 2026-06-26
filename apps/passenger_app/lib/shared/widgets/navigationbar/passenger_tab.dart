@@ -1,8 +1,8 @@
 import 'package:core_models/core_models.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 
 class PassengerShellLayout extends StatefulWidget {
   final Widget child;
@@ -16,56 +16,9 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   final List<int> _navigationHistory = [];
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final newIndex = _calculateSelectedIndex(context);
-    if (_navigationHistory.isEmpty) {
-      _navigationHistory.add(newIndex);
-    } else if (_navigationHistory.last != newIndex) {
-      _navigationHistory.add(newIndex);
-    }
-  }
-
-  int _calculateSelectedIndex(BuildContext context) {
-    final GoRouterState state = GoRouterState.of(context);
-    final String location = state.uri.path;
-    final String? routeName = state.topRoute?.name;
-
-    if (routeName != null) {
-      if (routeName.contains('Home')) return 0;
-      if (routeName.contains('Activity')) return 1;
-      if (routeName.contains('Account')) return 2;
-    }
-
-    if (location.contains('/home')) return 0;
-    if (location.contains('/activity')) return 1;
-    if (location.contains('/account')) return 2;
-
-    return 0;
-  }
-
-  void _onItemTapped(int index, BuildContext context) {
-    if (index == _calculateSelectedIndex(context)) return;
-    _navigateToIndex(index);
-  }
-
-  void _navigateToIndex(int index) {
-    switch (index) {
-      case 0:
-        context.goNamed('PassengerHome');
-        break;
-      case 1:
-        context.goNamed('PassengerActivity');
-        break;
-      case 2:
-        context.goNamed('PassengerAccount');
-        break;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final sel = _calculateSelectedIndex(context);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return PopScope(
       canPop:
@@ -92,7 +45,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
         extendBody: true,
         body: widget.child,
         bottomNavigationBar: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding + 12),
           child: Row(
             children: [
               Expanded(
@@ -102,14 +55,21 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(
-                      color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
+                      color: AppTheme.outlineBorderColor.withValues(
+                        alpha: 0.16,
+                      ),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -157,9 +117,14 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                        blurRadius: 15,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.35),
+                        blurRadius: 20,
                         offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -177,6 +142,17 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     );
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newIndex = _calculateSelectedIndex(context);
+    if (_navigationHistory.isEmpty) {
+      _navigationHistory.add(newIndex);
+    } else if (_navigationHistory.last != newIndex) {
+      _navigationHistory.add(newIndex);
+    }
+  }
+
   Widget _buildTabItem(
     BuildContext context, {
     required IconData icon,
@@ -188,25 +164,73 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
         behavior: HitTestBehavior.opaque,
         onTap: () => _onItemTapped(index, context),
         child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppTheme.primaryColor.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: isSelected
-                  ? AppTheme.selectedItemColor
-                  : AppTheme.unselectedItemColor,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedScale(
+                scale: isSelected ? 1.12 : 1.0,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutBack,
+                child: Icon(
+                  icon,
+                  size: 24,
+                  color: isSelected
+                      ? AppTheme.selectedItemColor
+                      : AppTheme.unselectedItemColor,
+                ),
+              ),
+              const SizedBox(height: 5),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                width: isSelected ? 4 : 0,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.selectedItemColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  int _calculateSelectedIndex(BuildContext context) {
+    final GoRouterState state = GoRouterState.of(context);
+    final String location = state.uri.path;
+    final String? routeName = state.topRoute?.name;
+
+    if (routeName != null) {
+      if (routeName.contains('Home')) return 0;
+      if (routeName.contains('Activity')) return 1;
+      if (routeName.contains('Account')) return 2;
+    }
+
+    if (location.contains('/home')) return 0;
+    if (location.contains('/activity')) return 1;
+    if (location.contains('/account')) return 2;
+
+    return 0;
+  }
+
+  void _navigateToIndex(int index) {
+    switch (index) {
+      case 0:
+        context.goNamed('PassengerHome');
+        break;
+      case 1:
+        context.goNamed('PassengerActivity');
+        break;
+      case 2:
+        context.goNamed('PassengerAccount');
+        break;
+    }
+  }
+
+  void _onItemTapped(int index, BuildContext context) {
+    if (index == _calculateSelectedIndex(context)) return;
+    _navigateToIndex(index);
   }
 }
