@@ -1,12 +1,10 @@
+import 'package:fixtures/fixtures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-
-import 'package:fixtures/fixtures.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
-
 
 class PassengerAddCategoryScreen extends StatefulWidget {
   final Function(SavedPlaceModel) onSave;
@@ -38,93 +36,6 @@ class _PassengerAddCategoryScreenState
     LucideIcons.coffee,
     LucideIcons.dumbbell,
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _initLocation();
-  }
-
-  Future<void> _initLocation() async {
-    final position = await LocationService.getCurrentPosition();
-    if (position != null) {
-      if (!mounted) return;
-      setState(() {
-        _lat = position.latitude;
-        _lng = position.longitude;
-        _isLocationPinned = true;
-      });
-      if (_mapController != null) {
-        await MapProvider.moveCamera(_mapController!, _lat, _lng, zoom: 14.0);
-        await MapProvider.addMarker(_mapController!, _lat, _lng, isOrigin: false);
-      }
-    } else {
-      if (!mounted) return;
-      setState(() {
-        _isLocationPinned = true;
-      });
-    }
-  }
-
-  void _onMapCreated(AppMapController controller) {
-    _mapController = controller;
-    MapProvider.addMarker(controller, _lat, _lng, isOrigin: false);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _handleSave() {
-    final label = _controller.text.trim();
-
-    if (label.isEmpty) {
-      setState(() {
-        _errorMessage = 'Please enter a name for your shortcut.';
-      });
-      return;
-    }
-
-    if (!_isLocationPinned) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please pin a location on the map before saving.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _errorMessage = null;
-    });
-
-    final iconName = _iconNameFromData(selectedIcon);
-    final newPlace = SavedPlaceModel(
-      label: label,
-      iconName: iconName,
-      latitude: _lat,
-      longitude: _lng,
-      savedAddress: label,
-      onTap: () {},
-    );
-
-    widget.onSave(newPlace);
-    context.pop();
-  }
-
-  String _iconNameFromData(IconData icon) {
-    if (icon == LucideIcons.house) return 'house';
-    if (icon == LucideIcons.briefcase) return 'briefcase';
-    if (icon == LucideIcons.shopping_cart) return 'shopping_cart';
-    if (icon == LucideIcons.heart) return 'heart';
-    if (icon == LucideIcons.star) return 'star';
-    if (icon == LucideIcons.coffee) return 'coffee';
-    if (icon == LucideIcons.dumbbell) return 'dumbbell';
-    return 'map_pin';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -284,7 +195,9 @@ class _PassengerAddCategoryScreenState
                       color: AppTheme.neutralColor,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: _isLocationPinned ? Colors.green : AppTheme.borderSide,
+                        color: _isLocationPinned
+                            ? Colors.green
+                            : AppTheme.borderSide,
                         width: _isLocationPinned ? 2 : 1,
                       ),
                     ),
@@ -375,5 +288,97 @@ class _PassengerAddCategoryScreenState
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initLocation();
+  }
+
+  void _handleSave() {
+    final label = _controller.text.trim();
+
+    if (label.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter a name for your shortcut.';
+      });
+      return;
+    }
+
+    if (!_isLocationPinned) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please pin a location on the map before saving.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _errorMessage = null;
+    });
+
+    final iconName = _iconNameFromData(selectedIcon);
+    final newPlace = SavedPlaceModel(
+      label: label,
+      iconName: iconName,
+      latitude: _lat,
+      longitude: _lng,
+      savedAddress: label,
+      onTap: () {},
+    );
+
+    widget.onSave(newPlace);
+    context.pop();
+  }
+
+  String _iconNameFromData(IconData icon) {
+    if (icon == LucideIcons.house) return 'house';
+    if (icon == LucideIcons.briefcase) return 'briefcase';
+    if (icon == LucideIcons.shopping_cart) return 'shopping_cart';
+    if (icon == LucideIcons.heart) return 'heart';
+    if (icon == LucideIcons.star) return 'star';
+    if (icon == LucideIcons.coffee) return 'coffee';
+    if (icon == LucideIcons.dumbbell) return 'dumbbell';
+    return 'map_pin';
+  }
+
+  Future<void> _initLocation() async {
+    final position = await LocationService.getCurrentPosition();
+    if (position != null) {
+      if (!mounted) return;
+      setState(() {
+        _lat = position.latitude;
+        _lng = position.longitude;
+        _isLocationPinned = true;
+      });
+      if (_mapController != null) {
+        await MapProvider.moveCamera(_mapController!, _lat, _lng, zoom: 14.0);
+        await MapProvider.addMarker(
+          _mapController!,
+          _lat,
+          _lng,
+          isOrigin: false,
+        );
+      }
+    } else {
+      if (!mounted) return;
+      setState(() {
+        _isLocationPinned = true;
+      });
+    }
+  }
+
+  void _onMapCreated(AppMapController controller) {
+    _mapController = controller;
+    MapProvider.addMarker(controller, _lat, _lng, isOrigin: false);
   }
 }

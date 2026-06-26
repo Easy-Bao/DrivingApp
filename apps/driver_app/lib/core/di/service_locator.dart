@@ -14,11 +14,11 @@ final GetIt getIt = GetIt.instance;
 
 void setupServiceLocator() {
   // Driver Feature Repositories
-  // Mock data. Swap to ApiDashboardRepository when backend is ready.
+  // Mock data. NOTE: Swap to ApiDashboardRepository when backend is ready.
   getIt.registerLazySingleton<DashboardRepository>(
     () => FixtureDashboardRepository(),
   );
 
-  // Rust FFI implementation. Swap to ApiRideRepository when backend is ready.
+  // Rust FFI implementation. NOTE: Swap to ApiRideRepository when backend is ready.
   getIt.registerLazySingleton<RideRepository>(() => RideRepositoryImpl());
 }
