@@ -7,10 +7,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+/**
+ * Screen showing a map and route preview to the selected destination.
+ * Allows the passenger to review distances and trigger bookings.
+ */
 class DestinationPreviewScreen extends StatefulWidget {
+  /** Selected destination place model. */
   final PlaceModel destination;
+  /** Optional preselected ride type from quick actions. */
+  final String? preselectedRideType;
 
-  const DestinationPreviewScreen({super.key, required this.destination});
+  /** Constructs a destination preview screen with destination details and optional preselected ride type. */
+  const DestinationPreviewScreen({
+    super.key,
+    required this.destination,
+    this.preselectedRideType,
+  });
 
   @override
   State<DestinationPreviewScreen> createState() =>
@@ -23,6 +35,18 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   String _duration = '—';
   double _distanceKm = 0.0;
   bool _isLoading = true;
+
+  /** Helper that calculates dynamic fare based on ride type and distance in kilometers. */
+  double _calculateFare(String type, double distance) {
+    if (type == 'Share-Bao') {
+      return 15 + distance * 7;
+    } else if (type == 'Bao Premium') {
+      return 35 + distance * 15;
+    } else {
+      // Default / Solo Ride
+      return 20 + distance * 10;
+    }
+  }
 
   @override
   void initState() {
@@ -232,15 +256,30 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading
                           ? null
-                          : () => context.pushNamed(
-                              'RideSelection',
-                              extra: {
-                                'destination': widget.destination,
-                                'distance': _distance,
-                                'duration': _duration,
-                                'distanceKm': _distanceKm,
-                              },
-                            ),
+                          : () {
+                              if (widget.preselectedRideType != null) {
+                                context.pushNamed(
+                                  'FindingDriver',
+                                  extra: {
+                                    'rideType': widget.preselectedRideType!,
+                                    'fare': _calculateFare(widget.preselectedRideType!, _distanceKm),
+                                    'destination': widget.destination,
+                                    'distance': _distance,
+                                    'duration': _duration,
+                                  },
+                                );
+                              } else {
+                                context.pushNamed(
+                                  'RideSelection',
+                                  extra: {
+                                    'destination': widget.destination,
+                                    'distance': _distance,
+                                    'duration': _duration,
+                                    'distanceKm': _distanceKm,
+                                  },
+                                );
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,

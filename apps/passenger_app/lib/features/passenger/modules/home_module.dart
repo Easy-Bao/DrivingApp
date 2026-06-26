@@ -23,7 +23,9 @@ class HomeModule {
     ChildRoute(
       name: 'SearchDestination',
       'home/search',
-      child: (context, state) => const SearchDestinationScreen(),
+      child: (context, GoRouterState state) => SearchDestinationScreen(
+        preselectedRideType: state.uri.queryParameters['rideType'],
+      ),
       transition: GoTransitions.slide.toLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
@@ -72,7 +74,10 @@ class HomeModule {
       'home/destination-preview',
       child: (context, GoRouterState state) {
         final place = state.extra as PlaceModel;
-        return DestinationPreviewScreen(destination: place);
+        return DestinationPreviewScreen(
+          destination: place,
+          preselectedRideType: state.uri.queryParameters['rideType'],
+        );
       },
       transition: GoTransitions.slide.toLeft,
     ),

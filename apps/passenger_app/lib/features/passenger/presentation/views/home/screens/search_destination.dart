@@ -6,8 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+/**
+ * Screen that handles searching for destinations.
+ * Provides autocompletion and nearby suggestions.
+ */
 class SearchDestinationScreen extends StatefulWidget {
-  const SearchDestinationScreen({super.key});
+  /** Optional ride type preselected from the home page quick action cards. */
+  final String? preselectedRideType;
+
+  /** Constructs a new search screen with an optional preselected ride type. */
+  const SearchDestinationScreen({super.key, this.preselectedRideType});
 
   @override
   State<SearchDestinationScreen> createState() =>
@@ -110,8 +118,15 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
     }
   }
 
+  /** Handles final selection of a destination place, routing to the preview screen. */
   void _onPlaceSelected(PlaceModel place) {
-    context.pushNamed('DestinationPreview', extra: place);
+    context.pushNamed(
+      'DestinationPreview',
+      extra: place,
+      queryParameters: widget.preselectedRideType != null
+          ? {'rideType': widget.preselectedRideType!}
+          : {},
+    );
   }
 
   void _openMapPin() async {

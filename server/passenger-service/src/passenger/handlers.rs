@@ -1,5 +1,5 @@
-use crate::models::{CreatePassengerRequest, CreateRideRequest};
-use crate::repository::PassengerRepository;
+use super::domain::PassengerRepository;
+use super::models::{CreatePassengerRequest, CreateRideRequest};
 use axum::{
     extract::{Path, State},
     http::StatusCode,

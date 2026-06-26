@@ -1,7 +1,8 @@
 mod mock_setup {
-    pub use passenger_service::models::*;
-    pub use passenger_service::repository::*;
-    pub use passenger_service::handlers::*;
+    pub use passenger_service::passenger::domain::*;
+    pub use passenger_service::passenger::models::*;
+    pub use passenger_service::passenger::repository::*;
+    pub use passenger_service::passenger::handlers::*;
 }
 
 use axum::extract::State;

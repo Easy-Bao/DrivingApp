@@ -58,7 +58,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         icon: _getIconFromName(action['iconName'] ?? ''),
         title: title,
         subtitle: action['subtitle'] ?? '',
-        onTap: () => context.pushNamed('SearchDestination'),
+        onTap: () => context.pushNamed(
+          'SearchDestination',
+          queryParameters: {'rideType': title},
+        ),
       );
     }).toList();
 

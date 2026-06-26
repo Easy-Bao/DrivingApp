@@ -1,14 +1,18 @@
-use axum::{
-    routing::{get, post},
-    Router,
-};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing::info;
 
-use passenger_service::handlers;
-use passenger_service::repository::{InMemoryPassengerRepository, PassengerRepository, PostgresPassengerRepository};
+use passenger_service::config::Config;
+use passenger_service::passenger::{
+    repository::{InMemoryPassengerRepository, PostgresPassengerRepository},
+    domain::PassengerRepository,
+    router,
+};
 
+/**
+ * Service bootstrap entrypoint initializing environment config, tracing, database
+ * pooling adapters, routing layers, and initiating the primary TCP server event loop.
+ */
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing subscriber for runtime diagnostics logging
@@ -16,13 +20,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Passenger service starting...");
 
+    // Parse configuration from environment variables
+    let config = Config::from_env();
+
     /*
      * Dynamically resolve repository backend based on environmental context.
      * Enables seamless fallback to an In-Memory state store during development/testing.
      */
-    let repo: Arc<dyn PassengerRepository> = if let Ok(database_url) = std::env::var("DATABASE_URL") {
+    let repo: Arc<dyn PassengerRepository> = if let Some(ref database_url) = config.database_url {
         info!("PostgreSQL database configuration detected. Connecting...");
-        let pool = sqlx::PgPool::connect(&database_url).await?;
+        let pool = sqlx::PgPool::connect(database_url).await?;
         let postgres_repo = PostgresPassengerRepository::new(pool);
         postgres_repo.init_db().await?;
         info!("PostgreSQL database tables successfully initialized.");
@@ -33,18 +40,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Construct the web service router mapping REST endpoints to logic handlers
-    let app = Router::new()
-        .route("/passengers", post(handlers::create_passenger))
-        .route("/passengers/:id", get(handlers::get_passenger))
-        .route("/rides", post(handlers::request_ride))
-        .route("/passengers/:id/rides", get(handlers::get_passenger_rides))
-        .with_state(repo);
+    let app = router(repo);
 
     // Bind socket address and start server listener loop
-    let port = std::env::var("PORT")
-        .unwrap_or_else(|_| "8081".to_string())
-        .parse::<u16>()?;
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
     let listener = tokio::net::TcpListener::bind(addr).await?;
     
     info!("Passenger service is listening at: http://{}", addr);

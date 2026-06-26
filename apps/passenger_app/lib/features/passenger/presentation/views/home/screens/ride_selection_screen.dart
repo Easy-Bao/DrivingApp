@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Screen where the passenger selects their preferred ride option.
-/// Displays a real Mapbox map preview showing the route from pickup to drop-off.
+/**
+ * Screen where the passenger selects their preferred ride option.
+ * Displays a real Mapbox map preview showing the route from pickup to drop-off.
+ */
 class RideSelectionScreen extends StatefulWidget {
   final PlaceModel destination;
   final String distance;

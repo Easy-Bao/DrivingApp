@@ -16,19 +16,16 @@ class AuthModule extends Module {
       name: 'Signin',
       '/auth/signin',
       child: (context, GoRouterState state) => const SigninScreen(),
-      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'Signup',
       '/auth/signup',
       child: (context, GoRouterState state) => const SignupScreen(),
-      transition: GoTransitions.slide.toLeft,
     ),
     ChildRoute(
       name: 'ForgotPassword',
       '/auth/forgotpassword',
       child: (context, GoRouterState state) => const ForgotPasswordScreen(),
-      transition: GoTransitions.slide.toLeft,
     ),
   ];
 }

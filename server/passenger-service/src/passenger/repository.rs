@@ -1,4 +1,3 @@
-use crate::models::{CreatePassengerRequest, CreateRideRequest, Passenger, RideRequest, RideType};
 use anyhow::{anyhow, Result};
 use chrono::Utc;
 use std::collections::HashMap;
@@ -7,24 +6,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-/**
- * Contract defining database access operations for managing passenger data.
- * Promotes clean separation of concerns and database independence for test mocking.
- */
-#[async_trait::async_trait]
-pub trait PassengerRepository: Send + Sync {
-    /** Registers a new passenger profile. */
-    async fn create_passenger(&self, req: CreatePassengerRequest) -> Result<Passenger>;
-    
-    /** Retrieves a passenger profile by its unique ID. */
-    async fn get_passenger(&self, id: Uuid) -> Result<Option<Passenger>>;
-    
-    /** Creates a new ride request under a specific passenger profile. */
-    async fn create_ride_request(&self, req: CreateRideRequest) -> Result<RideRequest>;
-    
-    /** Returns all ride requests initiated by a specific passenger. */
-    async fn get_passenger_rides(&self, passenger_id: Uuid) -> Result<Vec<RideRequest>>;
-}
+use super::domain::{Passenger, PassengerRepository, RideRequest, RideType};
+use super::models::{CreatePassengerRequest, CreateRideRequest};
 
 /**
  * An in-memory, thread-safe implementation of [PassengerRepository].
