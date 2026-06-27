@@ -17,3 +17,5 @@ uuid = { version = "1.8", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 tracing-subscriber = "0.3"
 async-trait = "0.1"
+bcrypt = "0.15"
+jsonwebtoken = "9.3"

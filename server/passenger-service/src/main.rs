@@ -24,10 +24,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         sqlx::migrate!("./migrations").run(&pool).await?;
         info!("Database Migrations Applied Successfully.");
 
-        Arc::new(PostgresPassengerRepository::new(pool))
+        Arc::new(PostgresPassengerRepository::new(pool)) as Arc<dyn PassengerRepository>
     } else {
         info!("DATABASE_URL environment variable is missing. Falling back to InMemoryPassengerRepository.");
-        Arc::new(InMemoryPassengerRepository::new())
+        Arc::new(InMemoryPassengerRepository::new()) as Arc<dyn PassengerRepository>
     };
 
     let app = router(repo);

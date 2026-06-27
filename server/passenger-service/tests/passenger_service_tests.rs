@@ -38,12 +38,14 @@ async fn test_in_memory_repository_operations() {
         name: "Test Passenger".to_string(),
         email: "test@bao.com".to_string(),
         phone: "+639123456789".to_string(),
+        password: "password123".to_string(),
         preferred_ride_type: Some("share-bao".to_string()),
     };
     let passenger = repo.create_passenger(create_req.clone()).await.unwrap();
     assert_eq!(passenger.name, "Test Passenger");
     assert_eq!(passenger.email, "test@bao.com");
     assert_eq!(passenger.preferred_ride_type, Some(RideType::ShareBao));
+    assert!(bcrypt::verify("password123", &passenger.password_hash).unwrap());
 
     let dup_err = repo.create_passenger(create_req).await;
     assert!(dup_err.is_err());
@@ -115,6 +117,7 @@ async fn test_http_handlers() {
         name: "Alice Smith".to_string(),
         email: "alice@bao.com".to_string(),
         phone: "+639999999999".to_string(),
+        password: "password123".to_string(),
         preferred_ride_type: Some("solo-ride".to_string()),
     };
     let create_res = create_passenger(state.clone(), Json(create_payload)).await.into_response();
@@ -123,6 +126,20 @@ async fn test_http_handlers() {
     let body_bytes = axum::body::to_bytes(create_res.into_body(), 1024 * 16).await.unwrap();
     let passenger: Passenger = serde_json::from_slice(&body_bytes).unwrap();
     let passenger_id = passenger.id;
+
+    let login_payload = LoginRequest {
+        email: "alice@bao.com".to_string(),
+        password: "password123".to_string(),
+    };
+    let login_res = login(state.clone(), Json(login_payload)).await.into_response();
+    assert_eq!(login_res.status(), axum::http::StatusCode::OK);
+
+    let invalid_login_payload = LoginRequest {
+        email: "alice@bao.com".to_string(),
+        password: "wrong_password".to_string(),
+    };
+    let invalid_login_res = login(state.clone(), Json(invalid_login_payload)).await.into_response();
+    assert_eq!(invalid_login_res.status(), axum::http::StatusCode::UNAUTHORIZED);
 
     let get_res = get_passenger(state.clone(), axum::extract::Path(passenger_id)).await.into_response();
     assert_eq!(get_res.status(), axum::http::StatusCode::OK);

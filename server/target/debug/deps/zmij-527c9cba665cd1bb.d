@@ -1,7 +1,7 @@
-/home/xyreltenz/Development/DriveApp/server/target/debug/deps/zmij-527c9cba665cd1bb.d: /home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/lib.rs /home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/stdarch_x86.rs /home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/traits.rs
+/home/xyreltenz/Development/DriveApp/server/target/debug/deps/zmij-527c9cba665cd1bb.d: /home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/lib.rs /home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/stdarch_x86.rs /home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/traits.rs
 
-/home/xyreltenz/Development/DriveApp/server/target/debug/deps/libzmij-527c9cba665cd1bb.rmeta: /home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/lib.rs /home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/stdarch_x86.rs /home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/traits.rs
+/home/xyreltenz/Development/DriveApp/server/target/debug/deps/libzmij-527c9cba665cd1bb.rmeta: /home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/lib.rs /home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/stdarch_x86.rs /home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/traits.rs
 
-/home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/lib.rs:
-/home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/stdarch_x86.rs:
-/home/xyreltenz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.21/src/traits.rs:
+/home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/lib.rs:
+/home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/stdarch_x86.rs:
+/home/xyreltenz/Development/DriveApp/server/vendor/zmij/src/traits.rs:

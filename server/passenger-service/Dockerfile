@@ -1,11 +1,9 @@
 # Multi-stage Docker build for the passenger-service Rust service.
-FROM rust:1.78-bookworm AS builder
+FROM rust:latest AS builder
 
 WORKDIR /app
 
-COPY server/Cargo.toml server/Cargo.lock ./server/
-COPY server/shared-core ./server/shared-core
-COPY server/passenger-service ./server/passenger-service
+COPY server/ ./server/
 
 WORKDIR /app/server/passenger-service
 

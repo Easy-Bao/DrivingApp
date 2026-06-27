@@ -63,3 +63,5 @@ app.*.map.json
 
 # Rust build artifacts
 target/
+server/vendor/
+server/.cargo/

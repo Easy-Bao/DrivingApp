@@ -15,6 +15,7 @@ use domain::PassengerRepository;
 pub fn router(repo: Arc<dyn PassengerRepository>) -> Router {
     Router::new()
         .route("/passengers", post(handlers::create_passenger))
+        .route("/passengers/login", post(handlers::login))
         .route("/passengers/:id", get(handlers::get_passenger))
         .route("/rides", post(handlers::request_ride))
         .route("/passengers/:id/rides", get(handlers::get_passenger_rides))

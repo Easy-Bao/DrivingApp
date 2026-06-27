@@ -43,6 +43,8 @@ impl PassengerRepository for InMemoryPassengerRepository {
             ));
         }
 
+        let password_hash = bcrypt::hash(&req.password, bcrypt::DEFAULT_COST)?;
+
         let passenger = Passenger {
             id: Uuid::new_v4(),
             name: req.name,
@@ -50,6 +52,7 @@ impl PassengerRepository for InMemoryPassengerRepository {
             phone: req.phone,
             preferred_ride_type,
             created_at: Utc::now(),
+            password_hash,
         };
 
         passengers_guard.insert(passenger.id, passenger.clone());
@@ -59,6 +62,14 @@ impl PassengerRepository for InMemoryPassengerRepository {
     async fn get_passenger(&self, id: Uuid) -> Result<Option<Passenger>> {
         let passengers_guard = self.passengers.read().await;
         Ok(passengers_guard.get(&id).cloned())
+    }
+
+    async fn get_passenger_by_email(&self, email: &str) -> Result<Option<Passenger>> {
+        let passengers_guard = self.passengers.read().await;
+        Ok(passengers_guard
+            .values()
+            .find(|p| p.email == email)
+            .cloned())
     }
 
     async fn create_ride_request(&self, req: CreateRideRequest) -> Result<RideRequest> {
@@ -128,14 +139,15 @@ impl PassengerRepository for PostgresPassengerRepository {
             .map(RideType::from_str)
             .transpose()?;
 
+        let password_hash = bcrypt::hash(&req.password, bcrypt::DEFAULT_COST)?;
         let id = Uuid::new_v4();
         let created_at = Utc::now();
         let pref_str = preferred_ride_type.map(|t| t.to_string());
 
         sqlx::query(
             r#"
-            INSERT INTO passengers (id, name, email, phone, preferred_ride_type, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO passengers (id, name, email, phone, preferred_ride_type, created_at, password_hash)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
         .bind(id)
@@ -144,6 +156,7 @@ impl PassengerRepository for PostgresPassengerRepository {
         .bind(&req.phone)
         .bind(pref_str)
         .bind(created_at)
+        .bind(&password_hash)
         .execute(&self.pool)
         .await?;
 
@@ -154,6 +167,7 @@ impl PassengerRepository for PostgresPassengerRepository {
             phone: req.phone,
             preferred_ride_type,
             created_at,
+            password_hash,
         })
     }
 
@@ -161,7 +175,7 @@ impl PassengerRepository for PostgresPassengerRepository {
         use sqlx::Row;
         let row = sqlx::query(
             r#"
-            SELECT name, email, phone, preferred_ride_type, created_at
+            SELECT name, email, phone, preferred_ride_type, created_at, password_hash
             FROM passengers
             WHERE id = $1
             "#,
@@ -184,6 +198,41 @@ impl PassengerRepository for PostgresPassengerRepository {
                     phone: r.try_get("phone")?,
                     preferred_ride_type,
                     created_at: r.try_get("created_at")?,
+                    password_hash: r.try_get("password_hash")?,
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
+    async fn get_passenger_by_email(&self, email: &str) -> Result<Option<Passenger>> {
+        use sqlx::Row;
+        let row = sqlx::query(
+            r#"
+            SELECT id, name, email, phone, preferred_ride_type, created_at, password_hash
+            FROM passengers
+            WHERE email = $1
+            "#,
+        )
+        .bind(email)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        match row {
+            Some(r) => {
+                let preferred_ride_type_str: Option<String> = r.try_get("preferred_ride_type")?;
+                let preferred_ride_type = preferred_ride_type_str
+                    .as_deref()
+                    .map(RideType::from_str)
+                    .transpose()?;
+                Ok(Some(Passenger {
+                    id: r.try_get("id")?,
+                    name: r.try_get("name")?,
+                    email: r.try_get("email")?,
+                    phone: r.try_get("phone")?,
+                    preferred_ride_type,
+                    created_at: r.try_get("created_at")?,
+                    password_hash: r.try_get("password_hash")?,
                 }))
             }
             None => Ok(None),

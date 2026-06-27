@@ -44,6 +44,8 @@ pub struct Passenger {
     pub phone: String,
     pub preferred_ride_type: Option<RideType>,
     pub created_at: DateTime<Utc>,
+    #[serde(skip_serializing, default)]
+    pub password_hash: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,6 +68,7 @@ pub struct RideRequest {
 pub trait PassengerRepository: Send + Sync {
     async fn create_passenger(&self, req: CreatePassengerRequest) -> Result<Passenger>;
     async fn get_passenger(&self, id: Uuid) -> Result<Option<Passenger>>;
+    async fn get_passenger_by_email(&self, email: &str) -> Result<Option<Passenger>>;
     async fn create_ride_request(&self, req: CreateRideRequest) -> Result<RideRequest>;
     async fn get_passenger_rides(&self, passenger_id: Uuid) -> Result<Vec<RideRequest>>;
 }
