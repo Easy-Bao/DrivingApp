@@ -124,6 +124,13 @@ class _PassengerAddCategoryScreenState
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(color: Colors.red),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppTheme.primaryColor,
+                          width: 2,
+                        ),
+                      ),
                       focusedErrorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(

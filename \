@@ -9,6 +9,10 @@ use uuid::Uuid;
 use super::domain::{Passenger, PassengerRepository, RideRequest, RideType};
 use super::models::{CreatePassengerRequest, CreateRideRequest};
 
+/**
+ * An in-memory, thread-safe implementation of [PassengerRepository].
+ * Useful for unit testing, integration tests, and local offline development.
+ */
 #[derive(Debug, Default, Clone)]
 pub struct InMemoryPassengerRepository {
     passengers: Arc<RwLock<HashMap<Uuid, Passenger>>>,
@@ -16,6 +20,7 @@ pub struct InMemoryPassengerRepository {
 }
 
 impl InMemoryPassengerRepository {
+    /** Creates a new empty database instance in system memory. */
     pub fn new() -> Self {
         Self {
             passengers: Arc::new(RwLock::new(HashMap::new())),
@@ -109,16 +114,13 @@ impl PassengerRepository for InMemoryPassengerRepository {
     }
 }
 
-/**
- * Postgres-backed implementation of [PassengerRepository] utilizing SQLx.
- */
 #[derive(Debug, Clone)]
 pub struct PostgresPassengerRepository {
     pool: sqlx::PgPool,
 }
 
+/** Creates a new Postgres database adapter bound to the provided connection pool. */
 impl PostgresPassengerRepository {
-    /** Creates a new Postgres database adapter bound to the provided connection pool. */
     pub fn new(pool: sqlx::PgPool) -> Self {
         Self { pool }
     }

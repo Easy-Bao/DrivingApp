@@ -5,9 +5,9 @@ use axum::{
 use std::sync::Arc;
 
 pub mod domain;
+pub mod handlers;
 pub mod models;
 pub mod repository;
-pub mod handlers;
 
 use domain::PassengerRepository;
 

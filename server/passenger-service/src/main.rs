@@ -4,8 +4,8 @@ use tracing::info;
 
 use passenger_service::config::Config;
 use passenger_service::passenger::{
-    repository::{InMemoryPassengerRepository, PostgresPassengerRepository},
     domain::PassengerRepository,
+    repository::{InMemoryPassengerRepository, PostgresPassengerRepository},
     router,
 };
 
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Bind socket address and start server listener loop
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    
+
     info!("Passenger service is listening at: http://{}", addr);
     axum::serve(listener, app).await?;
 
