@@ -1,4 +1,3 @@
-/// Application entry point: initializes logging, DB migrations, repositories, and axum HTTP server.
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing::info;

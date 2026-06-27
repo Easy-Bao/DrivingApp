@@ -1,8 +1,8 @@
 # Ignore build artifacts and platform-specific directories for Docker build context
 .git
 .idea
-target
-**/target
+/target
+/server/target
 /android
 /ios
 /linux
