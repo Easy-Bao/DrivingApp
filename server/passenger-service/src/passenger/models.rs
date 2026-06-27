@@ -1,9 +1,7 @@
+/// Passenger Models: defines input payloads for creating passenger profiles and ride requests.
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/**
- * Input request payload used when registering a new passenger profile.
- */
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePassengerRequest {
     pub name: String,
@@ -12,9 +10,6 @@ pub struct CreatePassengerRequest {
     pub preferred_ride_type: Option<String>,
 }
 
-/**
- * Input request payload used when submitting a new ride request.
- */
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateRideRequest {
     pub passenger_id: Uuid,

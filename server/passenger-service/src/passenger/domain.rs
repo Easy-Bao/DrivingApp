@@ -1,3 +1,4 @@
+/// Passenger Domain: defines core domain models, ride types, and repository interfaces.
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -7,10 +8,6 @@ use uuid::Uuid;
 
 use super::models::{CreatePassengerRequest, CreateRideRequest};
 
-/**
- * Represents the classification of a booking request or passenger preference.
- * Supports both 'solo-ride' and 'share-bao' options.
- */
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum RideType {
@@ -39,9 +36,6 @@ impl FromStr for RideType {
     }
 }
 
-/**
- * Profile account model representing registered passengers within the database.
- */
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Passenger {
     pub id: Uuid,
@@ -52,9 +46,6 @@ pub struct Passenger {
     pub created_at: DateTime<Utc>,
 }
 
-/**
- * Lifecycle tracking state for an active passenger ride request.
- */
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RideRequest {
     pub id: Uuid,
@@ -71,10 +62,6 @@ pub struct RideRequest {
     pub created_at: DateTime<Utc>,
 }
 
-/**
- * Contract defining database access operations for managing passenger data.
- * Promotes clean separation of concerns and database independence for test mocking.
- */
 #[async_trait::async_trait]
 pub trait PassengerRepository: Send + Sync {
     async fn create_passenger(&self, req: CreatePassengerRequest) -> Result<Passenger>;

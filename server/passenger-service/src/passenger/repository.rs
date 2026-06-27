@@ -1,3 +1,4 @@
+/// Passenger Repository: persistence backend implementing SQLx postgres operations and thread-safe in-memory caching.
 use anyhow::{anyhow, Result};
 use chrono::Utc;
 use std::collections::HashMap;
@@ -27,14 +28,14 @@ impl InMemoryPassengerRepository {
 #[async_trait::async_trait]
 impl PassengerRepository for InMemoryPassengerRepository {
     async fn create_passenger(&self, req: CreatePassengerRequest) -> Result<Passenger> {
-        let preferred_ride_type = match req.preferred_ride_type {
-            Some(ref t) => Some(RideType::from_str(t)?),
-            None => None,
-        };
+        let preferred_ride_type = req
+            .preferred_ride_type
+            .as_deref()
+            .map(RideType::from_str)
+            .transpose()?;
 
         let mut passengers_guard = self.passengers.write().await;
 
-        // Prevent duplicate emails
         if passengers_guard.values().any(|p| p.email == req.email) {
             return Err(anyhow!(
                 "A passenger with email {} already exists",
@@ -63,7 +64,6 @@ impl PassengerRepository for InMemoryPassengerRepository {
     async fn create_ride_request(&self, req: CreateRideRequest) -> Result<RideRequest> {
         let ride_type = RideType::from_str(&req.ride_type)?;
 
-        // Verify passenger exists
         {
             let passengers_guard = self.passengers.read().await;
             if !passengers_guard.contains_key(&req.passenger_id) {
@@ -96,7 +96,6 @@ impl PassengerRepository for InMemoryPassengerRepository {
     }
 
     async fn get_passenger_rides(&self, passenger_id: Uuid) -> Result<Vec<RideRequest>> {
-        // Verify passenger exists
         {
             let passengers_guard = self.passengers.read().await;
             if !passengers_guard.contains_key(&passenger_id) {
@@ -109,16 +108,12 @@ impl PassengerRepository for InMemoryPassengerRepository {
     }
 }
 
-/**
- * Postgres-backed implementation of [PassengerRepository] utilizing SQLx.
- */
 #[derive(Debug, Clone)]
 pub struct PostgresPassengerRepository {
     pool: sqlx::PgPool,
 }
 
 impl PostgresPassengerRepository {
-    /** Creates a new Postgres database adapter bound to the provided connection pool. */
     pub fn new(pool: sqlx::PgPool) -> Self {
         Self { pool }
     }
@@ -127,10 +122,11 @@ impl PostgresPassengerRepository {
 #[async_trait::async_trait]
 impl PassengerRepository for PostgresPassengerRepository {
     async fn create_passenger(&self, req: CreatePassengerRequest) -> Result<Passenger> {
-        let preferred_ride_type = match req.preferred_ride_type {
-            Some(ref t) => Some(RideType::from_str(t)?),
-            None => None,
-        };
+        let preferred_ride_type = req
+            .preferred_ride_type
+            .as_deref()
+            .map(RideType::from_str)
+            .transpose()?;
 
         let id = Uuid::new_v4();
         let created_at = Utc::now();
@@ -177,10 +173,10 @@ impl PassengerRepository for PostgresPassengerRepository {
         match row {
             Some(r) => {
                 let preferred_ride_type_str: Option<String> = r.try_get("preferred_ride_type")?;
-                let preferred_ride_type = match preferred_ride_type_str.as_deref() {
-                    Some(t) => Some(RideType::from_str(t)?),
-                    None => None,
-                };
+                let preferred_ride_type = preferred_ride_type_str
+                    .as_deref()
+                    .map(RideType::from_str)
+                    .transpose()?;
                 Ok(Some(Passenger {
                     id,
                     name: r.try_get("name")?,
@@ -243,7 +239,6 @@ impl PassengerRepository for PostgresPassengerRepository {
     async fn get_passenger_rides(&self, passenger_id: Uuid) -> Result<Vec<RideRequest>> {
         use sqlx::Row;
 
-        // Verify passenger exists
         let exists_row = sqlx::query("SELECT EXISTS(SELECT 1 FROM passengers WHERE id = $1)")
             .bind(passenger_id)
             .fetch_one(&self.pool)
@@ -267,25 +262,24 @@ impl PassengerRepository for PostgresPassengerRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        let mut rides = Vec::new();
-        for r in rows {
-            let ride_type_str: String = r.try_get("ride_type")?;
-            rides.push(RideRequest {
-                id: r.try_get("id")?,
-                passenger_id,
-                ride_type: RideType::from_str(&ride_type_str)?,
-                pickup_latitude: r.try_get("pickup_latitude")?,
-                pickup_longitude: r.try_get("pickup_longitude")?,
-                pickup_name: r.try_get("pickup_name")?,
-                dropoff_latitude: r.try_get("dropoff_latitude")?,
-                dropoff_longitude: r.try_get("dropoff_longitude")?,
-                dropoff_name: r.try_get("dropoff_name")?,
-                fare: r.try_get("fare")?,
-                status: r.try_get("status")?,
-                created_at: r.try_get("created_at")?,
-            });
-        }
-
-        Ok(rides)
+        rows.into_iter()
+            .map(|r| {
+                let ride_type_str: String = r.try_get("ride_type")?;
+                Ok(RideRequest {
+                    id: r.try_get("id")?,
+                    passenger_id,
+                    ride_type: RideType::from_str(&ride_type_str)?,
+                    pickup_latitude: r.try_get("pickup_latitude")?,
+                    pickup_longitude: r.try_get("pickup_longitude")?,
+                    pickup_name: r.try_get("pickup_name")?,
+                    dropoff_latitude: r.try_get("dropoff_latitude")?,
+                    dropoff_longitude: r.try_get("dropoff_longitude")?,
+                    dropoff_name: r.try_get("dropoff_name")?,
+                    fare: r.try_get("fare")?,
+                    status: r.try_get("status")?,
+                    created_at: r.try_get("created_at")?,
+                })
+            })
+            .collect::<Result<Vec<_>>>()
     }
 }

@@ -1,3 +1,4 @@
+/// Passenger module entry: defines sub-modules and exports the feature router for API endpoints.
 use axum::{
     routing::{get, post},
     Router,
@@ -11,10 +12,6 @@ pub mod repository;
 
 use domain::PassengerRepository;
 
-/**
- * Builds and returns the passenger feature module Router.
- * Configures REST endpoints and binds handlers to the repository state.
- */
 pub fn router(repo: Arc<dyn PassengerRepository>) -> Router {
     Router::new()
         .route("/passengers", post(handlers::create_passenger))

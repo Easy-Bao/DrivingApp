@@ -1,3 +1,4 @@
+/// Passenger Handlers: defines Axum HTTP handler functions for managing passengers and ride requests.
 use super::domain::PassengerRepository;
 use super::models::{CreatePassengerRequest, CreateRideRequest};
 use axum::{
@@ -9,10 +10,6 @@ use axum::{
 use std::sync::Arc;
 use uuid::Uuid;
 
-/**
- * Registers a new passenger profile.
- * Matches POST /passengers
- */
 pub async fn create_passenger(
     State(repo): State<Arc<dyn PassengerRepository>>,
     Json(payload): Json<CreatePassengerRequest>,
@@ -27,10 +24,6 @@ pub async fn create_passenger(
     }
 }
 
-/**
- * Retrieves the profile details of an existing passenger.
- * Matches GET /passengers/:id
- */
 pub async fn get_passenger(
     State(repo): State<Arc<dyn PassengerRepository>>,
     Path(id): Path<Uuid>,
@@ -50,10 +43,6 @@ pub async fn get_passenger(
     }
 }
 
-/**
- * Creates a new ride request (validates and registers solo-ride or share-bao bookings).
- * Matches POST /rides
- */
 pub async fn request_ride(
     State(repo): State<Arc<dyn PassengerRepository>>,
     Json(payload): Json<CreateRideRequest>,
@@ -68,10 +57,6 @@ pub async fn request_ride(
     }
 }
 
-/**
- * Retrieves the historical ride requests initiated by a specific passenger.
- * Matches GET /passengers/:id/rides
- */
 pub async fn get_passenger_rides(
     State(repo): State<Arc<dyn PassengerRepository>>,
     Path(passenger_id): Path<Uuid>,

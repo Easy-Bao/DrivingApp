@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  passenger-db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: driveapp
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: passenger_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  passenger-service:
+    build:
+      context: .
+      dockerfile: server/passenger-service/Dockerfile
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: 8081
+    depends_on:
+      - passenger-db
+
+volumes:
+  postgres_data:
