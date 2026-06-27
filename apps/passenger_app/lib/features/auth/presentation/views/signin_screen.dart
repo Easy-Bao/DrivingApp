@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/core/config/env_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -11,17 +15,84 @@ class SigninScreen extends StatefulWidget {
 }
 
 class _SigninScreenState extends State<SigninScreen> {
-  final TextEditingController _emailController = .new();
-  final TextEditingController _passwordController = .new();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
   bool isChecked = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter email and password')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final url = Uri.parse('${EnvConfig.passengerServiceUrl}/passengers/login');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final token = data['token'] as String;
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt_token', token);
+
+        if (!mounted) return;
+        context.pushNamed('PassengerHome');
+      } else {
+        final errorMsg = _parseError(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg)),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Connection failed: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _parseError(String body) {
+    try {
+      final data = jsonDecode(body);
+      return data['error'] ?? 'Login failed';
+    } catch (_) {
+      return 'Login failed';
+    }
   }
 
   @override
@@ -83,9 +154,9 @@ class _SigninScreenState extends State<SigninScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         hintText: 'Email',
-                        prefixIcon: Padding(
+                        prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
-                          child: const Icon(LucideIcons.mail, size: 20),
+                          child: Icon(LucideIcons.mail, size: 20),
                         ),
                         filled: false,
                         enabledBorder: OutlineInputBorder(
@@ -178,9 +249,7 @@ class _SigninScreenState extends State<SigninScreen> {
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: () {
-                        context.pushNamed('PassengerHome');
-                      },
+                      onPressed: _isLoading ? null : _signIn,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: AppTheme.neutralColor,
@@ -190,13 +259,15 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Sign In',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: AppTheme.neutralColor)
+                          : const Text(
+                              'Sign In',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 32),
                     Row(

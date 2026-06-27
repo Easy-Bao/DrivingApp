@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fixtures/fixtures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -113,9 +114,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _attachSavedPlacesContext();
+      unawaited(_entranceController.forward());
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
-      await _entranceController.forward();
     });
   }
 

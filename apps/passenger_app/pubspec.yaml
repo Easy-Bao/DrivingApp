@@ -47,6 +47,7 @@ dependencies:
 
   # Dependency Injection
   get_it: ^8.0.3
+  http: ^1.2.0
 
   # Environment
   flutter_dotenv: ^6.0.1
