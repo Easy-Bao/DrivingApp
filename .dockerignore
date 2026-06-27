@@ -1,12 +1,13 @@
 # Ignore build artifacts and platform-specific directories for Docker build context
-**/.git
-**/.idea
+.git
+.idea
+target
 **/target
-**/android
-**/ios
-**/linux
-**/macos
-**/windows
-**/web
-**/apps
-**/packages
+/android
+/ios
+/linux
+/macos
+/windows
+/web
+/apps
+/packages
