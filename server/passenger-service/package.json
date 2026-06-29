@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "generate": "bunx prisma generate",
-    "start": "bun run src/index.ts",
+    "db:migrate": "bunx prisma migrate deploy",
+    "start": "bunx prisma migrate deploy && bun run src/index.ts",
     "dev": "bun --watch src/index.ts",
     "test": "bun test"
   },
