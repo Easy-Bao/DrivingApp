@@ -1,9 +1,6 @@
 import 'package:core_models/core_models.dart';
-import 'package:passenger_app/src/rust/api/driver_api.dart' as rust_api;
+import 'package:location_service/location_service.dart';
 import 'package:fixtures/fixtures.dart';
-
-
-
 
 /**
  * Fixture-backed implementation of [DriverRepository].
@@ -37,36 +34,17 @@ class FixtureDriverRepository implements DriverRepository {
 }
 
 /**
- * Rust FFI concrete implementation of [DriverRepository].
- * Invokes native FFI finding algorithms.
+ * Dart concrete implementation of [DriverRepository].
+ * Delegates matching calculations to the shared [DriverMatchingService].
  */
-class RustDriverRepository implements DriverRepository {
+class LocalDriverRepository implements DriverRepository {
   @override
   Future<List<DriverModel>> getNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
     try {
-      final rustDrivers = await rust_api.findNearbyDrivers(
-        passengerLat: lat,
-        passengerLng: lng,
-      );
-      return rustDrivers
-          .map(
-            (d) => DriverModel(
-              id: d.id,
-              name: d.name,
-              vehicleType: d.vehicleType,
-              plateNumber: d.plateNumber,
-              rating: d.rating,
-              lat: d.lat,
-              lng: d.lng,
-              distanceKm: d.distanceKm,
-              etaMinutes: d.etaMinutes,
-              score: d.score,
-            ),
-          )
-          .toList();
+      return DriverMatchingService.findNearbyDrivers(lat, lng);
     } catch (_) {
       return [];
     }

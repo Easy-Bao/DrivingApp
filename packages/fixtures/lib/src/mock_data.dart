@@ -190,5 +190,48 @@ class MockData {
   static const double fareTimeRate = 1.0;
   static const double fareSurge = 0.0;
   static const double optimizedDistanceKm = 5.2;
+
+  /**
+   * Returns a static pool of driver profiles used for matching simulation.
+   */
+  static List<Map<String, dynamic>> getDriverPool() {
+    return [
+      {
+        'id': 'drv_01',
+        'name': 'Melvin Perez',
+        'vehicleType': 'Habal-Habal Motorcycle',
+        'plateNumber': '987-PHP',
+        'rating': 4.9,
+      },
+      {
+        'id': 'drv_02',
+        'name': 'Jerry Maglasang',
+        'vehicleType': 'Premium BaoBao Trike',
+        'plateNumber': '321-XYZ',
+        'rating': 4.7,
+      },
+      {
+        'id': 'drv_03',
+        'name': 'Ramil Sombilon',
+        'vehicleType': 'Standard Trike',
+        'plateNumber': '555-ABC',
+        'rating': 4.5,
+      },
+      {
+        'id': 'drv_04',
+        'name': 'Crisanto Caboverde',
+        'vehicleType': 'Habal-Habal Motorcycle',
+        'plateNumber': '888-BAO',
+        'rating': 4.8,
+      },
+      {
+        'id': 'drv_05',
+        'name': 'Junrey Tugahan',
+        'vehicleType': 'Premium BaoBao Trike',
+        'plateNumber': '777-RIDE',
+        'rating': 4.6,
+      },
+    ];
+  }
 }
 

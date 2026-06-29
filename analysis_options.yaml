@@ -14,7 +14,6 @@ analyzer:
     - "build/**"
     - "**/*.g.dart"
     - "**/*.freezed.dart"
-    - "lib/src/rust/**"
 
 linter:
   rules:

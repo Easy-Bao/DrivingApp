@@ -10,9 +10,6 @@ scripts:
     exec: flutter pub get
     description: Run pub get in all packages after bootstrapping.
 
-  gen:
-    exec: flutter_rust_bridge_codegen generate
-    description: Generate Rust FFI bindings.
 
   analyze:
     exec: flutter analyze .

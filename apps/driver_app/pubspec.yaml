@@ -57,14 +57,10 @@ dependencies:
   location_service:
     path: ../../packages/location_service
 
-  # Rust Bridge
   core_models:
     path: ../../packages/core_models
   fixtures:
     path: ../../packages/fixtures
-  rust_lib_bao_ride:
-    path: ../../rust_builder
-  flutter_rust_bridge: 2.12.0
 
 dev_dependencies:
   flutter_test:

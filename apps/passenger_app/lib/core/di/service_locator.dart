@@ -1,11 +1,11 @@
 import 'package:core_models/core_models.dart';
+import 'package:get_it/get_it.dart';
 import 'package:passenger_app/features/passenger/data/repositories/driver_repository.dart';
 import 'package:passenger_app/features/passenger/data/repositories/local_saved_places_repository.dart';
-import 'package:passenger_app/features/passenger/data/repositories/rust_passenger_home_repository.dart';
-import 'package:passenger_app/features/passenger/data/repositories/rust_track_repository.dart';
+import 'package:passenger_app/features/passenger/data/repositories/local_passenger_home_repository.dart';
+import 'package:passenger_app/features/passenger/data/repositories/local_track_repository.dart';
 import 'package:passenger_app/features/passenger/data/repositories/saved_places_repository.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_cubit.dart';
-import 'package:get_it/get_it.dart';
 
 /**
  * Global service locator instance.
@@ -18,20 +18,20 @@ final GetIt getIt = GetIt.instance;
 
 void setupServiceLocator() {
   /**
-   * Rust-backed repository mapping coordinates to nearby available drivers.
+   * Pure Dart repository mapping coordinates to nearby available drivers.
    */
-  getIt.registerLazySingleton<DriverRepository>(() => RustDriverRepository());
+  getIt.registerLazySingleton<DriverRepository>(() => LocalDriverRepository());
 
   /**
-   * Rust-backed snapped-to-road routing polyline calculation adapter.
+   * Pure Dart snapped-to-road routing polyline calculation adapter.
    */
-  getIt.registerLazySingleton<TrackRepository>(() => RustTrackRepository());
+  getIt.registerLazySingleton<TrackRepository>(() => LocalTrackRepository());
 
   /**
-   * Rust-backed reverse geocoding for passenger homepage location tracking.
+   * Pure Dart reverse geocoding for passenger homepage location tracking.
    */
   getIt.registerLazySingleton<PassengerHomeRepository>(
-    () => RustPassengerHomeRepository(),
+    () => LocalPassengerHomeRepository(),
   );
 
   /**

@@ -1,7 +1,7 @@
 import 'package:BaoRide/features/driver/data/repositories/dashboard_repository.dart';
 import 'package:BaoRide/features/driver/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:BaoRide/features/driver/presentation/bloc/dashboard/dashboard_state.dart';
-import 'package:BaoRide/src/rust/models/fare_models.dart';
+import 'package:core_models/core_models.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

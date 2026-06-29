@@ -1,11 +1,10 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/rust/api/fare_api.dart' as fare_api;
-import 'package:driver_app/src/rust/models/route_models.dart' as rust_route;
+import 'package:location_service/location_service.dart';
 import 'package:fixtures/fixtures.dart';
 
 /**
- * Rust-backed concrete implementation of [RideRepository].
- * Invokes native FFI methods for fare calculation and route optimization.
+ * Concrete implementation of [RideRepository] delegating computations to shared services.
+ * Invokes shared algorithms for fare calculation and route optimization.
  */
 class RideRepositoryImpl implements RideRepository {
   @override
@@ -13,16 +12,9 @@ class RideRepositoryImpl implements RideRepository {
     required double distanceKm,
     required double durationMinutes,
   }) async {
-    final rustFare = await fare_api.computeFareDefault(
+    return FareCalculationService.computeFareDefault(
       distanceKm: distanceKm,
       durationMinutes: durationMinutes,
-    );
-    return FareResult(
-      baseFare: rustFare.baseFare,
-      distanceCharge: rustFare.distanceCharge,
-      timeCharge: rustFare.timeCharge,
-      surgeCharge: rustFare.surgeCharge,
-      totalFare: rustFare.totalFare,
     );
   }
 
@@ -32,39 +24,10 @@ class RideRepositoryImpl implements RideRepository {
     required double startLng,
     required List<Waypoint> waypoints,
   }) async {
-    final rustWaypoints = waypoints
-        .map(
-          (w) => rust_route.Waypoint(
-            id: w.id,
-            name: w.name,
-            lat: w.lat,
-            lng: w.lng,
-            isPickup: w.isPickup,
-            passengerId: w.passengerId,
-          ),
-        )
-        .toList();
-
-    final rustResult = await fare_api.calculateOptimalRoute(
+    return RouteOptimizationService.calculateOptimalRoute(
       startLat: startLat,
       startLng: startLng,
-      waypoints: rustWaypoints,
-    );
-
-    return RouteSequenceResult(
-      optimalSequence: rustResult.optimalSequence
-          .map(
-            (w) => Waypoint(
-              id: w.id,
-              name: w.name,
-              lat: w.lat,
-              lng: w.lng,
-              isPickup: w.isPickup,
-              passengerId: w.passengerId,
-            ),
-          )
-          .toList(),
-      totalDistanceKm: rustResult.totalDistanceKm,
+      waypoints: waypoints,
     );
   }
 }
