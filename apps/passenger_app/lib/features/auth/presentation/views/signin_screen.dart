@@ -176,7 +176,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       decoration: InputDecoration(
                         hintText: 'Email',
                         errorText: _emailError,
-                        errorStyle: const TextStyle(color: AppTheme.cancel),
+                        errorStyle: TextStyle(color: AppTheme.cancel),
                         prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: Icon(LucideIcons.mail, size: 20),
@@ -197,11 +197,11 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(32),
-                          borderSide: const BorderSide(color: AppTheme.cancel),
+                          borderSide: BorderSide(color: AppTheme.cancel),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(32),
-                          borderSide: const BorderSide(
+                          borderSide: BorderSide(
                             color: AppTheme.cancel,
                             width: 1.5,
                           ),
@@ -216,7 +216,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       decoration: InputDecoration(
                         hintText: 'Password',
                         errorText: _passwordError,
-                        errorStyle: const TextStyle(color: AppTheme.cancel),
+                        errorStyle: TextStyle(color: AppTheme.cancel),
                         prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: Icon(LucideIcons.lock, size: 20),
@@ -248,11 +248,11 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(32),
-                          borderSide: const BorderSide(color: AppTheme.cancel),
+                          borderSide: BorderSide(color: AppTheme.cancel),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(32),
-                          borderSide: const BorderSide(
+                          borderSide: BorderSide(
                             color: AppTheme.cancel,
                             width: 1.5,
                           ),
