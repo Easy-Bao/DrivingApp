@@ -22,6 +22,9 @@ class _SigninScreenState extends State<SigninScreen> {
   bool isChecked = false;
   bool _isLoading = false;
 
+  String? _emailError;
+  String? _passwordError;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -33,10 +36,26 @@ class _SigninScreenState extends State<SigninScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
-      );
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+    });
+
+    bool hasError = false;
+    if (email.isEmpty) {
+      _emailError = 'Please enter email';
+      hasError = true;
+    } else if (!email.contains('@')) {
+      _emailError = 'Please enter a valid email';
+      hasError = true;
+    }
+
+    if (password.isEmpty) {
+      _passwordError = 'Please enter password';
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -68,15 +87,17 @@ class _SigninScreenState extends State<SigninScreen> {
         context.pushNamed('PassengerHome');
       } else {
         final errorMsg = _parseError(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
-        );
+        setState(() {
+          _emailError = errorMsg;
+          _passwordError = errorMsg;
+        });
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Connection failed: $e')),
-      );
+      setState(() {
+        _emailError = 'Connection failed: $e';
+        _passwordError = 'Connection failed: $e';
+      });
     } finally {
       if (mounted) {
         setState(() {
@@ -154,6 +175,8 @@ class _SigninScreenState extends State<SigninScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         hintText: 'Email',
+                        errorText: _emailError,
+                        errorStyle: const TextStyle(color: AppTheme.cancel),
                         prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: Icon(LucideIcons.mail, size: 20),
@@ -172,6 +195,17 @@ class _SigninScreenState extends State<SigninScreen> {
                             width: 1.5,
                           ),
                         ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: const BorderSide(color: AppTheme.cancel),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: const BorderSide(
+                            color: AppTheme.cancel,
+                            width: 1.5,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -181,6 +215,8 @@ class _SigninScreenState extends State<SigninScreen> {
                       textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
                         hintText: 'Password',
+                        errorText: _passwordError,
+                        errorStyle: const TextStyle(color: AppTheme.cancel),
                         prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: Icon(LucideIcons.lock, size: 20),
@@ -207,6 +243,17 @@ class _SigninScreenState extends State<SigninScreen> {
                           borderRadius: BorderRadius.circular(32),
                           borderSide: const BorderSide(
                             color: AppTheme.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: const BorderSide(color: AppTheme.cancel),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: const BorderSide(
+                            color: AppTheme.cancel,
                             width: 1.5,
                           ),
                         ),
