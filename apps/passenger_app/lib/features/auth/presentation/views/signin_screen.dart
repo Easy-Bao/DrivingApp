@@ -1,3 +1,4 @@
+/// Signin Screen: allows passengers to sign in with their email and password credentials.
 import 'dart:convert';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/core/config/env_config.dart';
@@ -79,9 +80,14 @@ class _SigninScreenState extends State<SigninScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'] as String;
+        final passenger = data['passenger'] as Map<String, dynamic>;
         
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwt_token', token);
+        await prefs.setString('passenger_id', passenger['id'] as String);
+        await prefs.setString('passenger_name', passenger['name'] as String);
+        await prefs.setString('passenger_phone', passenger['phone'] as String);
+        await prefs.setString('passenger_email', passenger['email'] as String);
 
         if (!mounted) return;
         context.pushNamed('PassengerHome');
