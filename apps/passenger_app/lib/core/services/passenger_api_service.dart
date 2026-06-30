@@ -7,7 +7,7 @@ import 'package:passenger_app/core/config/env_config.dart';
 class PassengerApiService {
   PassengerApiService._();
 
-  static final String _baseUrl = EnvConfig.passengerServiceUrl;
+  static final String _baseUrl = EnvConfig.passengerServiceUrl ?? 'http://localhost:8081';
 
   static Future<Map<String, dynamic>?> registerPassenger({
     required String name,

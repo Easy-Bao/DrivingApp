@@ -292,7 +292,7 @@ class _SignupScreenState extends State<SignupScreen> {
               Container(
                 width: 72,
                 height: 72,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppTheme.complete,
                   shape: BoxShape.circle,
                 ),
