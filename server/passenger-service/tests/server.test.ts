@@ -29,12 +29,29 @@ describe('Passenger Service Endpoints', () => {
 
     expect(res.status).toBe(201);
     const data: any = await res.json();
-    expect(data.id).toBeDefined();
-    expect(data.name).toBe('Test User');
+    expect(data.needs_verification).toBe(true);
     expect(data.email).toBe('test@example.com');
-    expect(data.password_hash).toBeUndefined();
+    expect(data.passenger.id).toBeDefined();
+    expect(data.passenger.name).toBe('Test User');
+    expect(data.passenger.email).toBe('test@example.com');
+    expect(data.passenger.password_hash).toBeUndefined();
 
-    passengerId = data.id;
+    passengerId = data.passenger.id;
+  });
+
+  test('POST /passengers/verify-otp - verifies passenger successfully', async () => {
+    const res = await app.request('/passengers/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'test@example.com',
+        code: '123456',
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const data: any = await res.json();
+    expect(data.success).toBe(true);
   });
 
   test('POST /passengers/login - authenticates passenger and returns token', async () => {
@@ -62,6 +79,38 @@ describe('Passenger Service Endpoints', () => {
     const data: any = await res.json();
     expect(data.id).toBe(passengerId);
     expect(data.name).toBe('Test User');
+  });
+
+  test('PUT /passengers/:id - updates passenger profile', async () => {
+    const res = await app.request(`/passengers/${passengerId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Updated User Name',
+        phone: '9999999999',
+        email: 'test@example.com',
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const data: any = await res.json();
+    expect(data.id).toBe(passengerId);
+    expect(data.name).toBe('Updated User Name');
+    expect(data.phone).toBe('9999999999');
+  });
+
+  test('POST /passengers/forgot-password - triggers password recovery email', async () => {
+    const res = await app.request('/passengers/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'test@example.com',
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const data: any = await res.json();
+    expect(data.success).toBe(true);
   });
 
   test('POST /rides - requests a ride successfully', async () => {

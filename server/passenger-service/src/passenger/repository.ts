@@ -15,6 +15,7 @@ export interface PassengerRepository {
   getPassengerByEmail(email: string): Promise<Passenger | null>;
   createRideRequest(req: CreateRideRequest): Promise<RideRequest>;
   getPassengerRides(passengerId: string): Promise<RideRequest[]>;
+  updatePassenger(id: string, name: string, phone: string, email: string): Promise<Passenger>;
 }
 
 export class InMemoryPassengerRepository implements PassengerRepository {
@@ -94,6 +95,21 @@ export class InMemoryPassengerRepository implements PassengerRepository {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
     return this.rides.get(passengerId) || [];
+  }
+
+  async updatePassenger(id: string, name: string, phone: string, email: string): Promise<Passenger> {
+    const passenger = this.passengers.get(id);
+    if (!passenger) {
+      throw new Error(`Passenger ID ${id} not found`);
+    }
+    const updated: Passenger = {
+      ...passenger,
+      name,
+      phone,
+      email,
+    };
+    this.passengers.set(id, updated);
+    return updated;
   }
 }
 
@@ -229,6 +245,23 @@ export class PostgresPassengerRepository implements PassengerRepository {
       fare: r.fare,
       status: r.status,
       created_at: r.created_at,
+      password_hash: '',
     }));
+  }
+
+  async updatePassenger(id: string, name: string, phone: string, email: string): Promise<Passenger> {
+    const res = await prisma.passenger.update({
+      where: { id },
+      data: { name, phone, email },
+    });
+    return {
+      id: res.id,
+      name: res.name,
+      email: res.email,
+      phone: res.phone,
+      preferred_ride_type: res.preferred_ride_type as RideType | null,
+      created_at: res.created_at,
+      password_hash: res.password_hash,
+    };
   }
 }

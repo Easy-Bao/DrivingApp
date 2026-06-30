@@ -14,7 +14,7 @@ export async function authMiddleware(c: Context, next: Next) {
   const secret = process.env.JWT_SECRET || 'secret';
 
   try {
-    const payload = await verify(token, secret);
+    const payload = await verify(token, secret, "HS256");
     if (!payload || typeof payload.sub !== 'string') {
       return c.json({ error: 'Unauthorized' }, 401);
     }
