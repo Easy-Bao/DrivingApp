@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -660,9 +661,15 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
    */
   Future _openAddCategoryScreen() async {
     final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+    final selectedPlace = await context.pushNamed('MapPin');
+    if (selectedPlace == null || selectedPlace is! PlaceModel) return;
+    if (!mounted) return;
     await context.pushNamed(
       'PassengerAddCategory',
-      extra: (SavedPlaceModel newPlace) => cubit.addPlace(newPlace),
+      extra: {
+        'onSave': (SavedPlaceModel newPlace) => cubit.addPlace(newPlace),
+        'place': selectedPlace,
+      },
     );
   }
 

@@ -1,13 +1,14 @@
+/// Screen displayed once a driver has been selected/matched for the trip, saving booking details to the backend database.
 import 'dart:async';
-
 import 'package:core_models/core_models.dart';
+import 'package:location_service/location_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Screen displayed once a driver has been selected/matched for the trip.
-/// Confirms matching details and shows the driver information dynamically.
 class DriverMatchedScreen extends StatefulWidget {
   final String rideType;
   final double fare;
@@ -51,7 +52,35 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
     );
     _scaleAnim = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
     unawaited(_scaleCtrl.forward());
-    _autoNav = Timer(const Duration(seconds: 4), _goToTracking);
+    _saveRideAndStartTimer();
+  }
+
+  Future<void> _saveRideAndStartTimer() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerId = prefs.getString('passenger_id') ?? '';
+      final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
+      final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
+
+      if (passengerId.isNotEmpty) {
+        await PassengerApiService.createRideRequest(
+          passengerId: passengerId,
+          rideType: widget.rideType,
+          pickupLat: pickupLat,
+          pickupLng: pickupLng,
+          pickupName: 'Current Location',
+          dropoffLat: widget.destination.latitude,
+          dropoffLng: widget.destination.longitude,
+          dropoffName: widget.destination.name,
+          fare: widget.fare,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error creating ride request in DB: $e');
+    }
+    if (mounted) {
+      _autoNav = Timer(const Duration(seconds: 4), _goToTracking);
+    }
   }
 
   @override

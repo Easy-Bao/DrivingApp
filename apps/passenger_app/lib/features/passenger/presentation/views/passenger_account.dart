@@ -1,10 +1,34 @@
+/// Passenger Account Screen: displays account settings, support information, and handles logging out.
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class PassengerAccountScreen extends StatelessWidget {
+class PassengerAccountScreen extends StatefulWidget {
   const PassengerAccountScreen({super.key});
+
+  @override
+  State<PassengerAccountScreen> createState() => _PassengerAccountScreenState();
+}
+
+class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
+  String _name = 'Xyrel Tenefrancia';
+  String _phone = '+63 912 345 6789';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _name = prefs.getString('passenger_name') ?? 'Xyrel Tenefrancia';
+      _phone = prefs.getString('passenger_phone') ?? '+63 912 345 6789';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +45,8 @@ class PassengerAccountScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
+                  children: const [
+                    Text(
                       'Account',
                       style: TextStyle(
                         fontSize: 32,
@@ -52,14 +76,10 @@ class PassengerAccountScreen extends StatelessWidget {
                 LucideIcons.user,
                 'Profile Info',
                 'Update name and details',
-                () => context.pushNamed('ProfileInfo'),
-              ),
-              _buildAccountTile(
-                context,
-                LucideIcons.shield_check,
-                'Security',
-                'Password and biometric',
-                () => context.pushNamed('Security'),
+                () async {
+                  await context.pushNamed('ProfileInfo');
+                  _loadProfile();
+                },
               ),
               const SizedBox(height: 32),
               _buildSectionTitle('Support'),
@@ -106,9 +126,9 @@ class PassengerAccountScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Xyrel Tenefrancia',
-            style: TextStyle(
+          Text(
+            _name,
+            style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: AppTheme.primaryColor,
@@ -116,7 +136,7 @@ class PassengerAccountScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '+63 912 345 6789',
+            _phone,
             style: TextStyle(
               fontSize: 14,
               color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -188,7 +208,10 @@ class PassengerAccountScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: TextButton(
-        onPressed: () {
+        onPressed: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
+          if (!mounted) return;
           context.goNamed('Signin');
         },
         style: TextButton.styleFrom(

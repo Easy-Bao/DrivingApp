@@ -1,8 +1,11 @@
+/// Ride History Screen: displays a list of past and canceled trips fetched from the database for the active passenger.
 import 'package:core_models/core_models.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RideHistoryScreen extends StatefulWidget {
   const RideHistoryScreen({super.key});
@@ -14,85 +17,15 @@ class RideHistoryScreen extends StatefulWidget {
 class _RideHistoryScreenState extends State<RideHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  final List<RideHistoryModel> _rides = [
-    RideHistoryModel(
-      id: '1',
-      pickup: 'Brgy. Balangasan',
-      destination: 'Robinson Supermarket',
-      pickupLat: 7.8307,
-      pickupLng: 123.4370,
-      destLat: 7.8250,
-      destLng: 123.4380,
-      date: 'MAY 02, 09:15 AM',
-      price: '₱32.50',
-      status: 'completed',
-      driverName: 'Juan dela Cruz',
-      vehiclePlate: 'ABC 1234',
-    ),
-    RideHistoryModel(
-      id: '2',
-      pickup: 'San Francisco St.',
-      destination: 'Pagadian City Science HS',
-      pickupLat: 7.8310,
-      pickupLng: 123.4375,
-      destLat: 7.8280,
-      destLng: 123.4390,
-      date: 'MAY 01, 07:30 AM',
-      price: '₱28.00',
-      status: 'completed',
-      driverName: 'Pedro Santos',
-      vehiclePlate: 'XYZ 5678',
-    ),
-    RideHistoryModel(
-      id: '3',
-      pickup: 'Plaza Luz',
-      destination: 'Gaisano Capital',
-      pickupLat: 7.8290,
-      pickupLng: 123.4365,
-      destLat: 7.8260,
-      destLng: 123.4355,
-      date: 'APR 30, 02:00 PM',
-      price: '₱18.50',
-      status: 'canceled',
-      driverName: '',
-      vehiclePlate: '',
-    ),
-    RideHistoryModel(
-      id: '4',
-      pickup: "Bo's Coffee",
-      destination: 'Tuburan District',
-      pickupLat: 7.8300,
-      pickupLng: 123.4360,
-      destLat: 7.8200,
-      destLng: 123.4340,
-      date: 'APR 29, 11:45 AM',
-      price: '₱45.00',
-      status: 'completed',
-      driverName: 'Maria Garcia',
-      vehiclePlate: 'DEF 9012',
-    ),
-    RideHistoryModel(
-      id: '5',
-      pickup: 'Balangasan',
-      destination: 'Robinson Supermarket',
-      pickupLat: 7.8307,
-      pickupLng: 123.4370,
-      destLat: 7.8250,
-      destLng: 123.4380,
-      date: 'APR 28, 08:00 AM',
-      price: '₱32.50',
-      status: 'completed',
-      driverName: 'Juan dela Cruz',
-      vehiclePlate: 'ABC 1234',
-    ),
-  ];
+  bool _isLoading = true;
+  List<RideHistoryModel> _dbRides = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() => setState(() {}));
+    _loadRides();
   }
 
   @override
@@ -101,12 +34,62 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
     super.dispose();
   }
 
-  List<RideHistoryModel> _filteredRides(int tabIndex) {
-    if (tabIndex == 0) return _rides;
-    if (tabIndex == 1) {
-      return _rides.where((r) => r.status == 'completed').toList();
+  Future<void> _loadRides() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerId = prefs.getString('passenger_id') ?? '';
+      if (passengerId.isEmpty) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final rawRides = await PassengerApiService.fetchRideHistory(passengerId);
+      final mapped = rawRides.map((r) {
+        final dt = DateTime.tryParse(r['created_at'] ?? '') ?? DateTime.now();
+        final formattedDate = '${_monthName(dt.month)} ${dt.day.toString().padLeft(2, '0')}, ${_formatTime(dt)}';
+        
+        return RideHistoryModel(
+          id: r['id'] as String,
+          pickup: r['pickup_name'] as String,
+          destination: r['dropoff_name'] as String,
+          pickupLat: (r['pickup_latitude'] as num).toDouble(),
+          pickupLng: (r['pickup_longitude'] as num).toDouble(),
+          destLat: (r['dropoff_latitude'] as num).toDouble(),
+          destLng: (r['dropoff_longitude'] as num).toDouble(),
+          date: formattedDate,
+          price: '₱${(r['fare'] as num).toStringAsFixed(2)}',
+          status: r['status'] as String? ?? 'completed',
+          driverName: r['status'] == 'completed' ? 'Juan dela Cruz' : '',
+          vehiclePlate: r['status'] == 'completed' ? 'ABC 1234' : '',
+        );
+      }).toList();
+
+      setState(() {
+        _dbRides = mapped;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
     }
-    return _rides.where((r) => r.status == 'canceled').toList();
+  }
+
+  String _monthName(int month) {
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    if (month >= 1 && month <= 12) return months[month - 1];
+    return 'JAN';
+  }
+
+  String _formatTime(DateTime dt) {
+    final hr = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    return '${hr.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} $period';
+  }
+
+  List<RideHistoryModel> _filteredRides(int tabIndex) {
+    if (tabIndex == 0) return _dbRides;
+    if (tabIndex == 1) {
+      return _dbRides.where((r) => r.status == 'completed').toList();
+    }
+    return _dbRides.where((r) => r.status == 'canceled').toList();
   }
 
   @override
@@ -134,78 +117,84 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 50,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppTheme.outlineBorderColor,
-                borderRadius: BorderRadius.circular(26),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.primaryColor,
               ),
-              child: TabBar(
-                controller: _tabController,
-                dividerColor: Colors.transparent,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: AppTheme.neutralColor,
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                labelColor: AppTheme.selectedItemColor,
-                unselectedLabelColor: AppTheme.unselectedItemColor,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-                tabs: const [
-                  Tab(text: 'All'),
-                  Tab(text: 'Completed'),
-                  Tab(text: 'Canceled'),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: List.generate(3, (i) {
-                final rides = _filteredRides(i);
-                if (rides.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LucideIcons.history,
-                          size: 40,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No rides yet',
-                          style: TextStyle(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+            )
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    height: 50,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.outlineBorderColor,
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      dividerColor: Colors.transparent,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicator: BoxDecoration(
+                        color: AppTheme.neutralColor,
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      labelColor: AppTheme.selectedItemColor,
+                      unselectedLabelColor: AppTheme.unselectedItemColor,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                      tabs: const [
+                        Tab(text: 'All'),
+                        Tab(text: 'Completed'),
+                        Tab(text: 'Canceled'),
                       ],
                     ),
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: rides.length,
-                  itemBuilder: (ctx, idx) => _buildRideCard(rides[idx]),
-                );
-              }),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: List.generate(3, (i) {
+                      final rides = _filteredRides(i);
+                      if (rides.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.history,
+                                size: 40,
+                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No rides yet',
+                                style: TextStyle(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: rides.length,
+                        itemBuilder: (ctx, idx) => _buildRideCard(rides[idx]),
+                      );
+                    }),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 

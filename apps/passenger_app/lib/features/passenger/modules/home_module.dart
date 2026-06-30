@@ -42,8 +42,13 @@ class HomeModule {
       name: 'PassengerAddCategory',
       'home/add-category',
       child: (context, GoRouterState state) {
-        final onSave = state.extra as Function(SavedPlaceModel)?;
-        return PassengerAddCategoryScreen(onSave: onSave ?? (_) {});
+        final extra = state.extra as Map<String, dynamic>?;
+        final onSave = extra?['onSave'] as Function(SavedPlaceModel)?;
+        final place = extra?['place'] as PlaceModel?;
+        return PassengerAddCategoryScreen(
+          onSave: onSave ?? (_) {},
+          initialPlace: place,
+        );
       },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,

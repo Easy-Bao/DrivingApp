@@ -1,26 +1,11 @@
+/// Geocoding and history synchronization adapter: fetches recent locations and resolves coordinates dynamically.
 import 'package:location_service/location_service.dart';
 import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 
-/**
- * Geocoding and history synchronization adapter.
- *
- * This repository implements [PassengerHomeRepository] by routing reverse-geocoding
- * queries through [MapProvider.getPlaceFromCoordinates], which invokes Mapbox API.
- *
- * **Lifecycle & Execution Flow:**
- * Address resolution begins when the presentation layer (via BLoC) requests the descriptive
- * location name for a specific coordinate pair. The repository delegates this query by
- * calling [resolveAddress], which asynchronously invokes the Mapbox Reverse Geocoding API.
- * When the execution completes successfully, the returned location string is supplied back
- * to the caller. If the call encounters a failure, timeout, or returns an empty result, the
- * repository intercepts the exception, logs it, and returns the fallback address
- * "Pagadian City, Zamboanga del Sur" to ensure the user interface remains functional.
- *
- * **State & Concurrency:**
- * All service calls execute asynchronously, preventing blocking of the UI thread.
- */
 class LocalPassengerHomeRepository implements PassengerHomeRepository {
   @override
   Future<String> resolveAddress({
@@ -41,8 +26,32 @@ class LocalPassengerHomeRepository implements PassengerHomeRepository {
 
   @override
   Future<List<Map<String, dynamic>>> getRecentLocations() async {
-    // Mimics reading recent activity records from local storage.
-    await Future.delayed(const Duration(milliseconds: 150));
-    return MockData.getRecentLocations();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerId = prefs.getString('passenger_id') ?? '';
+      if (passengerId.isEmpty) {
+        return [];
+      }
+      final rawRides = await PassengerApiService.fetchRideHistory(passengerId);
+      final Set<String> seenDestinations = {};
+      final List<Map<String, dynamic>> list = [];
+      for (final r in rawRides) {
+        final destName = r['dropoff_name'] as String;
+        if (!seenDestinations.contains(destName)) {
+          seenDestinations.add(destName);
+          list.add({
+            'title': destName,
+            'subtitle': r['pickup_name'] as String? ?? 'Previous Trip',
+            'lat': (r['dropoff_latitude'] as num).toDouble(),
+            'lng': (r['dropoff_longitude'] as num).toDouble(),
+          });
+        }
+        if (list.length >= 5) break;
+      }
+      return list;
+    } catch (e) {
+      debugPrint('LocalPassengerHomeRepository.getRecentLocations failed: $e');
+      return [];
+    }
   }
 }

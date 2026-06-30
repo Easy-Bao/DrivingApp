@@ -1,3 +1,4 @@
+import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -6,11 +7,15 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 
-//TODO: Pin Map -> Enter Label -> Select Icon -> Save
 class PassengerAddCategoryScreen extends StatefulWidget {
   final Function(SavedPlaceModel) onSave;
+  final PlaceModel? initialPlace;
 
-  const PassengerAddCategoryScreen({super.key, required this.onSave});
+  const PassengerAddCategoryScreen({
+    super.key,
+    required this.onSave,
+    this.initialPlace,
+  });
 
   @override
   State<PassengerAddCategoryScreen> createState() =>
@@ -307,7 +312,14 @@ class _PassengerAddCategoryScreenState
   @override
   void initState() {
     super.initState();
-    _initLocation();
+    if (widget.initialPlace != null) {
+      _lat = widget.initialPlace!.latitude;
+      _lng = widget.initialPlace!.longitude;
+      _isLocationPinned = true;
+      _controller.text = widget.initialPlace!.name;
+    } else {
+      _initLocation();
+    }
   }
 
   void _handleSave() {

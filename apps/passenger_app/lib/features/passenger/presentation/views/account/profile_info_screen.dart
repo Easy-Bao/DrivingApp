@@ -1,7 +1,10 @@
+/// Profile Info Screen: lets passengers view and update their profile details in the database.
 import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileInfoScreen extends StatefulWidget {
   const ProfileInfoScreen({super.key});
@@ -11,13 +14,18 @@ class ProfileInfoScreen extends StatefulWidget {
 }
 
 class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
-  final _nameController = TextEditingController(text: 'Xyrel Tenefrancia');
-  final _phoneController = TextEditingController(text: '+63 912 345 6789');
-  final _emailController = TextEditingController(text: 'xyrel@baoride.com');
-  final _addressController = TextEditingController(
-    text: 'Pagadian City, Zamboanga del Sur',
-  );
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _addressController = TextEditingController(text: 'Pagadian City, Zamboanga del Sur');
   bool _isEditing = false;
+  String _passengerId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
 
   @override
   void dispose() {
@@ -28,14 +36,70 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
     super.dispose();
   }
 
-  void _toggleEdit() {
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _passengerId = prefs.getString('passenger_id') ?? '';
+      _nameController.text = prefs.getString('passenger_name') ?? 'Xyrel Tenefrancia';
+      _phoneController.text = prefs.getString('passenger_phone') ?? '+63 912 345 6789';
+      _emailController.text = prefs.getString('passenger_email') ?? 'xyrel@baoride.com';
+    });
+  }
+
+  Future<void> _toggleEdit() async {
     if (_isEditing) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated!'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      final name = _nameController.text.trim();
+      final phone = _phoneController.text.trim();
+      final email = _emailController.text.trim();
+
+      if (name.isEmpty || phone.isEmpty || email.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please fill out all fields.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      try {
+        final updated = await PassengerApiService.updateProfile(
+          id: _passengerId,
+          name: name,
+          phone: phone,
+          email: email,
+        );
+        if (updated != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('passenger_name', updated['name'] as String);
+          await prefs.setString('passenger_phone', updated['phone'] as String);
+          await prefs.setString('passenger_email', updated['email'] as String);
+
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to update profile details.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Connection failed: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
     setState(() => _isEditing = !_isEditing);
   }
@@ -69,7 +133,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
             onPressed: _toggleEdit,
             child: Text(
               _isEditing ? 'Save' : 'Edit',
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppTheme.primaryColor,
                 fontWeight: FontWeight.w700,
               ),

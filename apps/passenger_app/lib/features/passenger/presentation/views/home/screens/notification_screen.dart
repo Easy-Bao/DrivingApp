@@ -1,8 +1,11 @@
+/// Notification Screen: displays dynamic notifications built from the active user's ride history and promotion updates.
 import 'package:core_models/core_models.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -12,62 +15,83 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  final List<NotificationModel> _notifications = [
-    NotificationModel(
-      id: '1',
-      title: 'Ride Completed',
-      message:
-          'Your trip to Robinson Supermarket has been completed. Total fare: ₱32.50',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      type: 'ride',
-      isRead: false,
-    ),
-    NotificationModel(
-      id: '2',
-      title: 'Weekend Promo! 🎉',
-      message:
-          'Get 20% off on all rides this weekend. Use code BAOWEEKEND. Valid until Sunday.',
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      type: 'promo',
-      isRead: false,
-    ),
-    NotificationModel(
-      id: '3',
-      title: 'Ride Canceled',
-      message:
-          'Your ride to Pagadian City Science High School was canceled. No charges applied.',
-      timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-      type: 'ride',
-      isRead: true,
-    ),
-    NotificationModel(
-      id: '4',
-      title: 'Account Security',
-      message:
-          "A new device logged into your account. If this wasn't you, change your password immediately.",
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      type: 'system',
-      isRead: true,
-    ),
-    NotificationModel(
-      id: '5',
-      title: 'New Feature: Share-Bao 🚀',
-      message:
-          'Split your ride with others going the same way. Try Share-Bao for cheaper fares!',
-      timestamp: DateTime.now().subtract(const Duration(days: 2)),
-      type: 'promo',
-      isRead: true,
-    ),
-    NotificationModel(
-      id: '6',
-      title: 'Trip Receipt',
-      message:
-          'Your receipt for the trip from Brgy. Balangasan to Robinson Supermarket is ready.',
-      timestamp: DateTime.now().subtract(const Duration(days: 3)),
-      type: 'ride',
-      isRead: true,
-    ),
-  ];
+  bool _isLoading = true;
+  List<NotificationModel> _notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerId = prefs.getString('passenger_id') ?? '';
+      if (passengerId.isEmpty) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      
+      final rawRides = await PassengerApiService.fetchRideHistory(passengerId);
+      final List<NotificationModel> list = [];
+      int idCounter = 1;
+      
+      for (final r in rawRides) {
+        final status = r['status'] as String? ?? 'completed';
+        final dropoffName = r['dropoff_name'] as String;
+        final fare = (r['fare'] as num).toDouble();
+        final dt = DateTime.tryParse(r['created_at'] ?? '') ?? DateTime.now();
+        
+        String title = 'Ride Completed';
+        String message = 'Your trip to $dropoffName has been completed. Total fare: ₱${fare.toStringAsFixed(2)}';
+        
+        if (status == 'canceled') {
+          title = 'Ride Canceled';
+          message = 'Your ride to $dropoffName was canceled. No charges applied.';
+        } else if (status == 'requested') {
+          title = 'Finding Driver';
+          message = 'Your ride request to $dropoffName is active. Finding a driver...';
+        }
+        
+        list.add(NotificationModel(
+          id: 'ride_${r['id']}_${idCounter++}',
+          title: title,
+          message: message,
+          timestamp: dt,
+          type: 'ride',
+          isRead: status != 'requested',
+        ));
+      }
+      
+      list.add(NotificationModel(
+        id: 'promo_1',
+        title: 'Weekend Promo! 🎉',
+        message: 'Get 20% off on all rides this weekend. Use code BAOWEEKEND. Valid until Sunday.',
+        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        type: 'promo',
+        isRead: false,
+      ));
+      
+      list.add(NotificationModel(
+        id: 'system_1',
+        title: 'Account Security',
+        message: 'A new device logged into your account. If this was not you, change your password immediately.',
+        timestamp: DateTime.now().subtract(const Duration(days: 1)),
+        type: 'system',
+        isRead: true,
+      ));
+
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+      setState(() {
+        _notifications = list;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
 
   void _markAsRead(int index) {
     setState(() {
@@ -162,36 +186,42 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
         ],
       ),
-      body: _notifications.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              physics: const BouncingScrollPhysics(),
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final notification = _notifications[index];
-                return Dismissible(
-                  key: Key(notification.id),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (_) => _dismissNotification(index),
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 24),
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cancel.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      LucideIcons.trash_2,
-                      color: AppTheme.cancel,
-                      size: 20,
-                    ),
-                  ),
-                  child: _buildNotificationCard(notification, index),
-                );
-              },
-            ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.primaryColor,
+              ),
+            )
+          : _notifications.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _notifications.length,
+                  itemBuilder: (context, index) {
+                    final notification = _notifications[index];
+                    return Dismissible(
+                      key: Key(notification.id),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (_) => _dismissNotification(index),
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cancel.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          LucideIcons.trash_2,
+                          color: AppTheme.cancel,
+                          size: 20,
+                        ),
+                      ),
+                      child: _buildNotificationCard(notification, index),
+                    );
+                  },
+                ),
     );
   }
 
