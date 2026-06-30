@@ -24,8 +24,52 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       PORT: 8081
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
     depends_on:
       - passenger-db
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: server/api-gateway/Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+
+  driver-service:
+    build:
+      context: .
+      dockerfile: server/driver-service/Dockerfile
+    restart: always
+    ports:
+      - "8082:8082"
+
+  trip-service:
+    build:
+      context: .
+      dockerfile: server/trip-service/Dockerfile
+    restart: always
+    ports:
+      - "8083:8083"
+
+  bidding-service:
+    build:
+      context: .
+      dockerfile: server/bidding-service/Dockerfile
+    restart: always
+    ports:
+      - "8084:8084"
+
+  telemetry-service:
+    build:
+      context: .
+      dockerfile: server/telemetry-service/Dockerfile
+    restart: always
+    ports:
+      - "8085:8085"
 
 volumes:
   postgres_data:

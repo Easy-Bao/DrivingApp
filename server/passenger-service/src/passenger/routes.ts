@@ -5,6 +5,7 @@ import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
 import { PassengerRepository } from './repository.ts';
 import { CreatePassengerSchema, LoginSchema, CreateRideSchema } from './schema.ts';
+import { sendEmail } from './email.ts';
 
 export function getPassengerRouter(repo: PassengerRepository) {
   const router = new Hono();
@@ -20,7 +21,11 @@ export function getPassengerRouter(repo: PassengerRepository) {
 
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
       otps.set(payload.email, { code: otpCode, expires: Date.now() + 10 * 60 * 1000 });
-      console.log(`[EMAIL] From: easyride@gmail.com | To: ${payload.email} | Subject: Verify Your EasyRide Account | Message: Your OTP code is: ${otpCode}`);
+      await sendEmail({
+        to: payload.email,
+        subject: 'Verify Your EasyRide Account',
+        text: `Your OTP code is: ${otpCode}`,
+      });
 
       return c.json({
         needs_verification: true,
@@ -64,7 +69,11 @@ export function getPassengerRouter(repo: PassengerRepository) {
         return c.json({ error: 'No passenger registered with this email' }, 404);
       }
       const resetToken = Math.random().toString(36).substring(2, 10).toUpperCase();
-      console.log(`[EMAIL] From: easyride@gmail.com | To: ${email} | Subject: Reset Your EasyRide Password | Message: Click here to reset your password: http://localhost:8081/reset-password?token=${resetToken}`);
+      await sendEmail({
+        to: email,
+        subject: 'Reset Your EasyRide Password',
+        text: `Click here to reset your password: http://localhost:8081/reset-password?token=${resetToken}`,
+      });
       return c.json({ success: true }, 200);
     } catch (e: any) {
       return c.json({ error: e.message }, 400);
