@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
-
-//TODO: Replace with real API implementation once backend endpoints are ready and integrated.
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:driver_app/core/config/env_config.dart';
 
 /**
  * Fixture-backed implementation of [DashboardRepository].
@@ -48,36 +50,59 @@ class FixtureDashboardRepository implements DashboardRepository {
   }
 }
 
-//TODO: Implement the real API repository once backend endpoints are ready and integrated.
-
 /**
  * API-backed implementation of [DashboardRepository].
  * Designed to fetch data directly from backend server endpoints.
  */
-// ignore: unused_element — will be used when backend is integrated
-class _ApiDashboardRepository implements DashboardRepository {
-  // final HttpClient _httpClient;
-  // ApiDashboardRepository(this._httpClient);
+class ApiDashboardRepository implements DashboardRepository {
+  Future<String> _getDriverId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('driver_id') ?? '';
+  }
 
   @override
   Future<double> getTodayEarnings() async {
-    // final response = await _httpClient.get('/driver/earnings/today');
-    // return (response.data['earnings'] as num).toDouble();
-    throw UnimplementedError('Backend not yet integrated');
+    final driverId = await _getDriverId();
+    if (driverId.isEmpty) return 0.0;
+    try {
+      final baseUrl = EnvConfig.driverServiceUrl;
+      final response = await http.get(Uri.parse('$baseUrl/drivers/$driverId/stats'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['todayEarnings'] as num).toDouble();
+      }
+    } catch (_) {}
+    return 0.0;
   }
 
   @override
   Future<int> getTodayTrips() async {
-    // final response = await _httpClient.get('/driver/trips/today');
-    // return response.data['count'] as int;
-    throw UnimplementedError('Backend not yet integrated');
+    final driverId = await _getDriverId();
+    if (driverId.isEmpty) return 0;
+    try {
+      final baseUrl = EnvConfig.driverServiceUrl;
+      final response = await http.get(Uri.parse('$baseUrl/drivers/$driverId/stats'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['todayTrips'] as int;
+      }
+    } catch (_) {}
+    return 0;
   }
 
   @override
   Future<double> getHoursOnline() async {
-    // final response = await _httpClient.get('/driver/hours-online/today');
-    // return (response.data['hours'] as num).toDouble();
-    throw UnimplementedError('Backend not yet integrated');
+    final driverId = await _getDriverId();
+    if (driverId.isEmpty) return 0.0;
+    try {
+      final baseUrl = EnvConfig.driverServiceUrl;
+      final response = await http.get(Uri.parse('$baseUrl/drivers/$driverId/stats'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['hoursOnline'] as num).toDouble();
+      }
+    } catch (_) {}
+    return 0.0;
   }
 
   @override
@@ -89,8 +114,15 @@ class _ApiDashboardRepository implements DashboardRepository {
     required List<double> requestLats,
     required List<double> requestLngs,
   }) async {
-    // final response = await _httpClient.post('/map/surge', body: {...});
-    // return (response.data['cells'] as List).map(HeatmapCell.fromJson).toList();
-    throw UnimplementedError('Backend not yet integrated');
+    // Generate surge heatmap coordinates dynamically around the user's location
+    return MockData.getSurgeHeatmapOffsets()
+        .map(
+          (o) => HeatmapCell(
+            lat: lat + (o['latOffset'] ?? 0.0),
+            lng: lng + (o['lngOffset'] ?? 0.0),
+            intensity: o['intensity'] ?? 0.0,
+          ),
+        )
+        .toList();
   }
 }

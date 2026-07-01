@@ -33,54 +33,26 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return;
       }
       
-      final rawRides = await PassengerApiService.fetchRideHistory(passengerId);
+      final rawNotifications = await PassengerApiService.fetchNotifications(passengerId);
       final List<NotificationModel> list = [];
-      int idCounter = 1;
       
-      for (final r in rawRides) {
-        final status = r['status'] as String? ?? 'completed';
-        final dropoffName = r['dropoff_name'] as String;
-        final fare = (r['fare'] as num).toDouble();
-        final dt = DateTime.tryParse(r['created_at'] ?? '') ?? DateTime.now();
-        
-        String title = 'Ride Completed';
-        String message = 'Your trip to $dropoffName has been completed. Total fare: ₱${fare.toStringAsFixed(2)}';
-        
-        if (status == 'canceled') {
-          title = 'Ride Canceled';
-          message = 'Your ride to $dropoffName was canceled. No charges applied.';
-        } else if (status == 'requested') {
-          title = 'Finding Driver';
-          message = 'Your ride request to $dropoffName is active. Finding a driver...';
-        }
+      for (final n in rawNotifications) {
+        final id = n['id'] as String;
+        final title = n['title'] as String;
+        final message = n['message'] as String;
+        final type = n['type'] as String? ?? 'system';
+        final isRead = n['isRead'] as bool? ?? false;
+        final dt = DateTime.tryParse(n['timestamp'] ?? '') ?? DateTime.now();
         
         list.add(NotificationModel(
-          id: 'ride_${r['id']}_${idCounter++}',
+          id: id,
           title: title,
           message: message,
           timestamp: dt,
-          type: 'ride',
-          isRead: status != 'requested',
+          type: type,
+          isRead: isRead,
         ));
       }
-      
-      list.add(NotificationModel(
-        id: 'promo_1',
-        title: 'Weekend Promo! 🎉',
-        message: 'Get 20% off on all rides this weekend. Use code BAOWEEKEND. Valid until Sunday.',
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        type: 'promo',
-        isRead: false,
-      ));
-      
-      list.add(NotificationModel(
-        id: 'system_1',
-        title: 'Account Security',
-        message: 'A new device logged into your account. If this was not you, change your password immediately.',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        type: 'system',
-        isRead: true,
-      ));
 
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
@@ -121,6 +93,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return LucideIcons.tag;
       case 'system':
         return LucideIcons.shield_check;
+      case 'driver':
+        return LucideIcons.user;
+      case 'chat':
+        return LucideIcons.message_square;
       default:
         return LucideIcons.bell;
     }
@@ -134,6 +110,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return const Color(0xFF8B5E3C);
       case 'system':
         return AppTheme.tertiaryColor;
+      case 'driver':
+        return AppTheme.complete;
+      case 'chat':
+        return AppTheme.primaryColor;
       default:
         return AppTheme.primaryColor;
     }

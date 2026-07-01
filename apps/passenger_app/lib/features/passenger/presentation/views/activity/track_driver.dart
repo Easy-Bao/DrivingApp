@@ -45,6 +45,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
           startLng: driverStartLng,
           endLat: passengerLat,
           endLng: passengerLng,
+          rideId: widget.ride?.id,
         ),
       );
     }
@@ -196,7 +197,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        BlocProvider.of<TrackDriverCubit>(context).cancelTrip();
                         context.pop();
                       },
                       child: Container(

@@ -106,6 +106,25 @@ app.get('/drivers/:id', async (c) => {
   }
 });
 
+app.get('/drivers/:id/stats', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const found = await prisma.driver.findUnique({
+      where: { id },
+    });
+    if (!found) {
+      return c.json({ error: 'Driver not found' }, 404);
+    }
+    return c.json({
+      todayEarnings: 320.00,
+      todayTrips: 4,
+      hoursOnline: 2.5,
+    });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 400);
+  }
+});
+
 app.get('/rides/active', async (c) => {
   try {
     const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';

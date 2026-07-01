@@ -98,7 +98,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
 
   void _goToTracking() {
     if (!mounted) return;
-    context.pushReplacementNamed('ActivityTrackDriver');
+    context.goNamed('ActivityTrackDriver');
   }
 
   @override

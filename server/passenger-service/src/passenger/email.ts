@@ -9,8 +9,8 @@ export async function sendEmail({ to, subject, text }: { to: string; subject: st
 
   console.log(`[EMAIL DISPATCHING] To: ${to} | Subject: ${subject}`);
 
-  if (!user || !pass) {
-    console.log(`[EMAIL LOG FALLBACK (No SMTP config)] To: ${to} | Subject: ${subject} | Message: ${text}`);
+  if (process.env.NODE_ENV === 'test' || !user || !pass) {
+    console.log(`[EMAIL LOG FALLBACK (No SMTP config or Test Env)] To: ${to} | Subject: ${subject} | Message: ${text}`);
     return;
   }
 

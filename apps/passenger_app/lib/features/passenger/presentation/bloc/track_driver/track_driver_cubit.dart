@@ -23,10 +23,14 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     required double startLng,
     required double endLat,
     required double endLng,
+    String? rideId,
   }) async {
     _ticker?.cancel();
 
     final prefs = await SharedPreferences.getInstance();
+    if (rideId != null && rideId.isNotEmpty) {
+      await prefs.setString('active_ride_id', rideId);
+    }
     final activeRideId = prefs.getString('active_ride_id') ?? '';
 
     final routePoints = await _repository.getRoutePolyline(

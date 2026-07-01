@@ -118,6 +118,20 @@ class PassengerApiService {
     return [];
   }
 
+  static Future<List<dynamic>> fetchNotifications(String passengerId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/passengers/$passengerId/notifications'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
   static Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
     final response = await http.get(
       Uri.parse('$_baseUrl/rides/$rideId'),

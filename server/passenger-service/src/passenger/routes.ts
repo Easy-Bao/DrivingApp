@@ -165,5 +165,15 @@ export function getPassengerRouter(repo: PassengerRepository) {
     }
   });
 
+  router.get('/passengers/:id/notifications', async (c) => {
+    const id = c.req.param('id');
+    try {
+      const notifications = await repo.getPassengerNotifications(id);
+      return c.json(notifications, 200);
+    } catch (e: any) {
+      return c.json({ error: e.message }, 404);
+    }
+  });
+
   return router;
 }

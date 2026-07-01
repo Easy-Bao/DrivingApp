@@ -146,4 +146,13 @@ describe('Passenger Service Endpoints', () => {
     expect(data.length).toBe(1);
     expect(data[0].pickup_name).toBe('Plaza Luz');
   });
+
+  test('GET /passengers/:id/notifications - retrieves passenger notifications', async () => {
+    const res = await app.request(`/passengers/${passengerId}/notifications`);
+
+    expect(res.status).toBe(200);
+    const data: any = await res.json();
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.length).toBeGreaterThan(0);
+  });
 });
