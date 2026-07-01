@@ -73,3 +73,6 @@ server/.cargo/
 .envrc
 .env.local
 
+# GitHub workflows directory
+.github/workflows/
+
