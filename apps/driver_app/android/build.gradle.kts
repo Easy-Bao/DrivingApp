@@ -1,7 +1,16 @@
+/// Android build configurations mapping build caches and Mapbox Maven releases.
 allprojects {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            credentials.username = "mapbox"
+            credentials.password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orNull ?: ""
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+        }
     }
 }
 

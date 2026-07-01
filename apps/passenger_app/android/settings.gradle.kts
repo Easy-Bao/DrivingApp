@@ -1,3 +1,4 @@
+/// Passenger app Gradle settings: configures plugins, SDK paths, and Mapbox dependencies.
 pluginManagement {
     val flutterSdkPath =
         run {
@@ -17,7 +18,7 @@ pluginManagement {
         maven {
             url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
             credentials.username = "mapbox"
-            credentials.password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orNull() ?: ""
+            credentials.password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orNull ?: ""
             authentication {
                 create<BasicAuthentication>("basic")
             }
