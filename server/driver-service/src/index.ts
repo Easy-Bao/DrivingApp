@@ -115,11 +115,50 @@ app.get('/drivers/:id/stats', async (c) => {
     if (!found) {
       return c.json({ error: 'Driver not found' }, 404);
     }
-    return c.json({
-      todayEarnings: 320.00,
-      todayTrips: 4,
-      hoursOnline: 2.5,
+    const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+    let rides: any[] = [];
+    try {
+      const res = await fetch(`${tripServiceUrl}/rides/driver/${id}`);
+      if (res.ok) {
+        rides = await res.json() as any[];
+      }
+    } catch (err) {
+      console.error('Failed to fetch rides from trip-service:', err);
+    }
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const todayRides = rides.filter((r: any) => {
+      const createdAt = new Date(r.created_at);
+      return createdAt >= startOfToday && r.status === 'completed';
     });
+
+    const todayEarnings = todayRides.reduce((sum: number, r: any) => sum + (r.fare ?? 0), 0);
+    const todayTrips = todayRides.length;
+    const baseHours = todayTrips * 0.75;
+    const hoursOnline = parseFloat((found.isOnline ? baseHours + 0.5 : baseHours).toFixed(1));
+
+    return c.json({
+      todayEarnings,
+      todayTrips,
+      hoursOnline,
+    });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 400);
+  }
+});
+
+app.get('/drivers/:id/trips', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+    const res = await fetch(`${tripServiceUrl}/rides/driver/${id}`);
+    if (!res.ok) {
+      return c.json({ error: 'Trip service failed' }, res.status as any);
+    }
+    const data = await res.json();
+    return c.json(data);
   } catch (e: any) {
     return c.json({ error: e.message }, 400);
   }

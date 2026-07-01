@@ -1,7 +1,6 @@
 import 'package:driver_app/features/auth/presentation/views/forgot_password_screen.dart';
 import 'package:driver_app/features/auth/presentation/views/onboarding_screen.dart';
 import 'package:driver_app/features/auth/presentation/views/signin_screen.dart';
-import 'package:driver_app/features/auth/presentation/views/signup_screen.dart';
 import 'package:driver_app/core/transitions/app_transitions.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -19,13 +18,6 @@ class AuthModule extends Module {
       name: 'Signin',
       '/auth/signin',
       child: (context, GoRouterState state) => const SigninScreen(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: 'Signup',
-      '/auth/signup',
-      child: (context, GoRouterState state) => const SignupScreen(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

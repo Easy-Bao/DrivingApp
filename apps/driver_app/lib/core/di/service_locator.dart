@@ -19,6 +19,6 @@ void setupServiceLocator() {
     () => ApiDashboardRepository(),
   );
 
-  // Rust FFI implementation. NOTE: Swap to ApiRideRepository when backend is ready.
-  getIt.registerLazySingleton<RideRepository>(() => RideRepositoryImpl());
+  // Live API implementation.
+  getIt.registerLazySingleton<RideRepository>(() => ApiRideRepository());
 }

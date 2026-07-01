@@ -105,6 +105,7 @@ class HomeModule {
           distance: data['distance'] as String,
           duration: data['duration'] as String,
           distanceKm: (data['distanceKm'] as num).toDouble(),
+          fares: data['fares'] as Map<String, double>?,
         );
       },
       transition: AppTransitions.push.toLeft,

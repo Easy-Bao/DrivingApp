@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -35,18 +36,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   String _duration = '—';
   double _distanceKm = 0.0;
   bool _isLoading = true;
-
-  /** Helper that calculates dynamic fare based on ride type and distance in kilometers. */
-  double _calculateFare(String type, double distance) {
-    if (type == 'Share-Bao') {
-      return 15 + distance * 7;
-    } else if (type == 'Bao Premium') {
-      return 35 + distance * 15;
-    } else {
-      // Default / Solo Ride
-      return 20 + distance * 10;
-    }
-  }
+  Map<String, double> _fares = {};
 
   @override
   void initState() {
@@ -74,8 +64,41 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         final m = route.estimatedTime.inMinutes;
         _duration = m < 60 ? '$m min' : '${m ~/ 60}h ${m % 60}m';
       }
-      _isLoading = false;
     });
+
+    if (route != null) {
+      final mins = route.estimatedTime.inMinutes.toDouble();
+      final estimates = await Future.wait([
+        PassengerApiService.fetchFareEstimate(rideType: 'Solo Ride', distanceKm: route.distanceKm, durationMinutes: mins),
+        PassengerApiService.fetchFareEstimate(rideType: 'Share-Bao', distanceKm: route.distanceKm, durationMinutes: mins),
+        PassengerApiService.fetchFareEstimate(rideType: 'Bao Premium', distanceKm: route.distanceKm, durationMinutes: mins),
+      ]);
+
+      double solo = 20.0 + route.distanceKm * 10;
+      double share = 15.0 + route.distanceKm * 7;
+      double premium = 35.0 + route.distanceKm * 15;
+
+      if (estimates[0] != null) solo = (estimates[0]!['total_fare'] as num).toDouble();
+      if (estimates[1] != null) share = (estimates[1]!['total_fare'] as num).toDouble();
+      if (estimates[2] != null) premium = (estimates[2]!['total_fare'] as num).toDouble();
+
+      if (mounted) {
+        setState(() {
+          _fares = {
+            'Solo Ride': solo,
+            'Share-Bao': share,
+            'Bao Premium': premium,
+          };
+          _isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
 
     if (_mapController != null) {
       await MapProvider.addMarker(_mapController!, oLat, oLng, isOrigin: true);
@@ -262,7 +285,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                                   'FindingDriver',
                                   extra: {
                                     'rideType': widget.preselectedRideType!,
-                                    'fare': _calculateFare(widget.preselectedRideType!, _distanceKm),
+                                    'fare': _fares[widget.preselectedRideType!] ?? (20.0 + _distanceKm * 10),
                                     'destination': widget.destination,
                                     'distance': _distance,
                                     'duration': _duration,
@@ -276,6 +299,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                                     'distance': _distance,
                                     'duration': _duration,
                                     'distanceKm': _distanceKm,
+                                    'fares': _fares,
                                   },
                                 );
                               }

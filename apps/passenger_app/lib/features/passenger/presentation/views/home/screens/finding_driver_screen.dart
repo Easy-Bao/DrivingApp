@@ -1,20 +1,12 @@
-/// Passenger ride matching screen tracking available drivers on the map.
+/// Passenger matching screen: handles real-time driver bidding lifecycle, offer polling, and accept flows.
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/config/env_config.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FindingDriverScreen extends StatefulWidget {
@@ -44,462 +36,9 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
   AppMapController? _mapController;
   bool _initialized = false;
 
-  String? _rideId;
+  String? _sessionId;
+  List<dynamic> _offers = [];
   Timer? _pollTimer;
-
-  @override
-  Widget build(BuildContext context) {
-    final defaultLat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final defaultLng = LocationService.lastPosition?.longitude ?? 123.434343;
-
-    return BlocListener<FindingDriverBloc, FindingDriverState>(
-      listener: (context, state) {
-        if (state is FindingDriverResults) {
-          _showDriversOnMap(state.drivers);
-        } else if (state is FindingDriverSelected) {
-          // Navigate with the selected driver data
-          context.pushReplacementNamed(
-            'DriverMatched',
-            extra: {
-              'rideType': widget.rideType,
-              'fare': widget.fare,
-              'destination': widget.destination,
-              'distance': widget.distance,
-              'duration': widget.duration,
-              'driverName': state.selectedDriver.name,
-              'driverRating': state.selectedDriver.rating.toString(),
-              'vehicleType': state.selectedDriver.vehicleType,
-              'plateNumber': state.selectedDriver.plateNumber,
-            },
-          );
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppTheme.surface,
-        body: Stack(
-          children: [
-            // Map Background (Replacing CustomPainter grid)
-            Positioned.fill(
-              child: Container(
-                color: AppTheme.neutralColor,
-                child: MapProvider.buildMapView(
-                  latitude: defaultLat,
-                  longitude: defaultLng,
-                  zoom: 14.5,
-                  interactive: true,
-                  onMapCreated: _onMapCreated,
-                ),
-              ),
-            ),
-
-            // Radar overlay during search
-            BlocBuilder<FindingDriverBloc, FindingDriverState>(
-              builder: (context, state) {
-                if (state is FindingDriverSearching ||
-                    state is FindingDriverInitial) {
-                  return Center(
-                    child: AnimatedBuilder(
-                      animation: _radarCtrl,
-                      builder: (ctx, _) {
-                        return Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            ...List.generate(3, (i) {
-                              final t = (_radarCtrl.value + i * 0.33) % 1.0;
-                              return Container(
-                                width: 60 + t * 200,
-                                height: 60 + t * 200,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.15 * (1 - t),
-                                    ),
-                                    width: 2,
-                                  ),
-                                ),
-                              );
-                            }),
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    blurRadius: 20,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                LucideIcons.navigation,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-
-            // Back button
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    BlocProvider.of<FindingDriverBloc>(
-                      context,
-                    ).add(CancelSearchEvent());
-                    context.pop();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 15,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      LucideIcons.arrow_left,
-                      color: AppTheme.primaryColor,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Bottom Panel
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: BlocBuilder<FindingDriverBloc, FindingDriverState>(
-                builder: (context, state) {
-                  if (state is FindingDriverSearching ||
-                      state is FindingDriverInitial) {
-                    return Container(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(32),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 30,
-                            offset: const Offset(0, -10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Center(
-                            child: Container(
-                              width: 40,
-                              height: 4,
-                              margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(
-                                color: AppTheme.borderSide,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                          AnimatedBuilder(
-                            animation: _dotCtrl,
-                            builder: (ctx, _) {
-                              final dots =
-                                  '.' * (1 + (_dotCtrl.value * 3).floor());
-                              return Text(
-                                'Finding your driver$dots',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Looking for ${widget.rideType} drivers nearby...',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.neutralColor,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppTheme.borderSide),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      LucideIcons.map_pin,
-                                      size: 16,
-                                      color: AppTheme.tertiaryColor,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                      width: 160,
-                                      child: Text(
-                                        widget.destination.name,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  '₱${widget.fare.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () {
-                              BlocProvider.of<FindingDriverBloc>(
-                                context,
-                              ).add(CancelSearchEvent());
-                              context.pop();
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              alignment: Alignment.center,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: AppTheme.cancel.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(32),
-                              ),
-                              child: Text(
-                                'Cancel Search',
-                                style: TextStyle(
-                                  color: AppTheme.cancel,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  if (state is FindingDriverResults) {
-                    return Container(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.5,
-                      ),
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(32),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 30,
-                            offset: const Offset(0, -10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Container(
-                              width: 40,
-                              height: 4,
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                color: AppTheme.borderSide,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                          const Text(
-                            'Select Nearest Driver',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Select from drivers matched by proximity algorithm',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 12),
-                          Expanded(
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: state.drivers.length,
-                              itemBuilder: (context, index) {
-                                final driver = state.drivers[index];
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.neutralColor,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: AppTheme.borderSide,
-                                    ),
-                                  ),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: AppTheme.primaryColor
-                                          .withValues(alpha: 0.1),
-                                      child: const Icon(
-                                        LucideIcons.user,
-                                        color: AppTheme.primaryColor,
-                                      ),
-                                    ),
-                                    title: Text(
-                                      driver.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      '${driver.vehicleType} • ${driver.plateNumber}',
-                                      style: const TextStyle(fontSize: 11),
-                                    ),
-                                    trailing: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              Icons.star_rounded,
-                                              color: Colors.amber,
-                                              size: 16,
-                                            ),
-                                            Text(
-                                              ' ${driver.rating.toStringAsFixed(1)}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${driver.distanceKm.toStringAsFixed(1)} km (~${driver.etaMinutes.ceil()} min)',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    onTap: () async {
-                                      if (_rideId != null) {
-                                        try {
-                                          await http.post(
-                                            Uri.parse(
-                                              '${EnvConfig.passengerServiceUrl}/rides/$_rideId/accept',
-                                            ),
-                                            headers: {
-                                              'Content-Type':
-                                                  'application/json',
-                                            },
-                                            body: jsonEncode({
-                                              'driver_id': driver.id,
-                                              'driver_name': driver.name,
-                                              'driver_rating': driver.rating
-                                                  .toString(),
-                                              'vehicle_type':
-                                                  driver.vehicleType,
-                                              'plate_number':
-                                                  driver.plateNumber,
-                                            }),
-                                          );
-                                        } catch (e) {
-                                          debugPrint(
-                                            'Error sending mock acceptance: $e',
-                                          );
-                                        }
-                                      }
-                                      BlocProvider.of<FindingDriverBloc>(
-                                        context,
-                                      ).add(SelectDriverEvent(driver: driver));
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _radarCtrl.dispose();
-    _dotCtrl.dispose();
-    _pollTimer?.cancel();
-    super.dispose();
-  }
 
   @override
   void initState() {
@@ -515,45 +54,22 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
     _startBookingFlow();
   }
 
+  @override
+  void dispose() {
+    _radarCtrl.dispose();
+    _dotCtrl.dispose();
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
     if (!_initialized) {
       _initialized = true;
       final lat = LocationService.lastPosition?.latitude ?? 7.828282;
       final lng = LocationService.lastPosition?.longitude ?? 123.434343;
-
-      // Start search via Bloc
-      BlocProvider.of<FindingDriverBloc>(
-        context,
-      ).add(SearchDriversEvent(lat: lat, lng: lng));
-
-      // Draw initial simple pin for user
       MapProvider.addMarker(controller, lat, lng, isOrigin: true);
     }
-  }
-
-  void _showDriversOnMap(List<DriverModel> drivers) async {
-    if (_mapController == null) return;
-
-    // Add markers for all matching drivers on map
-    for (final driver in drivers) {
-      await MapProvider.addMarker(
-        _mapController!,
-        driver.lat,
-        driver.lng,
-        isOrigin: false,
-      );
-    }
-
-    // Include passenger location inside bounds
-    final passLat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final passLng = LocationService.lastPosition?.longitude ?? 123.434343;
-
-    final boundsPoints = [
-      LatLng(passLat, passLng),
-    ].followedBy(drivers.map((d) => LatLng(d.lat, d.lng))).toList();
-
-    await MapProvider.fitBounds(_mapController!, boundsPoints, padding: 80.0);
   }
 
   Future<void> _startBookingFlow() async {
@@ -565,7 +81,10 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
       final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
       final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
 
-      final result = await PassengerApiService.createRideRequest(
+      final distanceNum = double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 1.0;
+      final durationNum = double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 5.0;
+
+      final result = await PassengerApiService.openBidSession(
         passengerId: passengerId,
         rideType: widget.rideType,
         pickupLat: pickupLat,
@@ -574,46 +93,474 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
         dropoffLat: widget.destination.latitude,
         dropoffLng: widget.destination.longitude,
         dropoffName: widget.destination.name,
-        fare: widget.fare,
+        distanceKm: distanceNum,
+        durationMinutes: durationNum,
       );
 
       if (result != null && result['id'] != null) {
-        _rideId = result['id'] as String;
-        await prefs.setString('active_ride_id', _rideId!);
+        _sessionId = result['id'] as String;
         _startPolling();
       }
     } catch (e) {
-      debugPrint('Error starting booking flow: $e');
+      debugPrint('Error starting bidding session: $e');
     }
   }
 
   void _startPolling() {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
-      if (!mounted || _rideId == null) return;
-      final statusData = await PassengerApiService.getRideStatus(_rideId!);
-      if (statusData != null) {
-        final status = statusData['status'] as String?;
-        if (status == 'accepted') {
-          timer.cancel();
-          if (mounted) {
-            context.pushReplacementNamed(
-              'DriverMatched',
-              extra: {
-                'rideType': widget.rideType,
-                'fare': widget.fare,
-                'destination': widget.destination,
-                'distance': widget.distance,
-                'duration': widget.duration,
-                'driverName': statusData['driver_name'] ?? 'Driver Xyrel',
-                'driverRating': statusData['driver_rating'] ?? '4.9',
-                'vehicleType': statusData['vehicle_type'] ?? 'Bao Bao',
-                'plateNumber': statusData['plate_number'] ?? 'ABC 1234',
-              },
-            );
-          }
+      if (!mounted || _sessionId == null) return;
+      final offers = await PassengerApiService.pollBidOffers(_sessionId!);
+      if (mounted) {
+        setState(() {
+          _offers = offers;
+        });
+      }
+
+      final statusData = await PassengerApiService.getBidSession(_sessionId!);
+      if (statusData != null && statusData['status'] == 'accepted') {
+        timer.cancel();
+        final acceptedDriverId = statusData['accepted_driver_id'] as String?;
+        final rideId = statusData['ride_id'] as String? ?? '';
+        final offersList = statusData['offers'] as List<dynamic>? ?? [];
+        final acceptedOffer = offersList.firstWhere(
+          (o) => o['driver_id'] == acceptedDriverId,
+          orElse: () => null,
+        );
+
+        if (mounted && acceptedOffer != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('active_ride_id', rideId);
+          context.pushReplacementNamed(
+            'DriverMatched',
+            extra: {
+              'rideType': widget.rideType,
+              'fare': (acceptedOffer['proposed_fare'] as num).toDouble(),
+              'destination': widget.destination,
+              'distance': widget.distance,
+              'duration': widget.duration,
+              'driverName': acceptedOffer['driver_name'] ?? 'Driver',
+              'driverRating': '5.0',
+              'vehicleType': acceptedOffer['vehicle_type'] ?? 'Bao Bao',
+              'plateNumber': acceptedOffer['plate_number'] ?? 'Unknown',
+            },
+          );
         }
       }
     });
+  }
+
+  Future<void> _handleCancel() async {
+    _pollTimer?.cancel();
+    if (_sessionId != null) {
+      await PassengerApiService.cancelBidSession(_sessionId!);
+    }
+    if (mounted) {
+      context.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final defaultLat = LocationService.lastPosition?.latitude ?? 7.828282;
+    final defaultLng = LocationService.lastPosition?.longitude ?? 123.434343;
+
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              color: AppTheme.neutralColor,
+              child: MapProvider.buildMapView(
+                latitude: defaultLat,
+                longitude: defaultLng,
+                zoom: 14.5,
+                interactive: true,
+                onMapCreated: _onMapCreated,
+              ),
+            ),
+          ),
+          if (_offers.isEmpty)
+            Center(
+              child: AnimatedBuilder(
+                animation: _radarCtrl,
+                builder: (ctx, _) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      ...List.generate(3, (i) {
+                        final t = (_radarCtrl.value + i * 0.33) % 1.0;
+                        return Container(
+                          width: 60 + t * 200,
+                          height: 60 + t * 200,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.15 * (1 - t),
+                              ),
+                              width: 2,
+                            ),
+                          ),
+                        );
+                      }),
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.3,
+                              ),
+                              blurRadius: 20,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          LucideIcons.navigation,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              child: GestureDetector(
+                onTap: _handleCancel,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    LucideIcons.arrow_left,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _offers.isEmpty ? _buildSearchingPanel() : _buildBidsPanel(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchingPanel() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 30,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: AppTheme.borderSide,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          AnimatedBuilder(
+            animation: _dotCtrl,
+            builder: (ctx, _) {
+              final dots = '.' * (1 + (_dotCtrl.value * 3).floor());
+              return Text(
+                'Finding your driver$dots',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Looking for ${widget.rideType} drivers nearby...',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.primaryColor.withValues(
+                alpha: 0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.neutralColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.borderSide),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.map_pin,
+                      size: 16,
+                      color: AppTheme.tertiaryColor,
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 160,
+                      child: Text(
+                        widget.destination.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '₱${widget.fare.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: _handleCancel,
+            child: Container(
+              width: double.infinity,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.cancel.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Text(
+                'Cancel Search',
+                style: TextStyle(
+                  color: AppTheme.cancel,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBidsPanel() {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.5,
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 30,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.borderSide,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const Text(
+            'Select Driver Offer',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Drivers nearby have placed these bids for your trip',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _offers.length,
+              itemBuilder: (context, index) {
+                final offer = _offers[index];
+                final driverName = offer['driver_name'] as String? ?? 'Driver';
+                final vehicleType = offer['vehicle_type'] as String? ?? 'Bao Bao';
+                final plateNumber = offer['plate_number'] as String? ?? 'Unknown';
+                final proposedFare = (offer['proposed_fare'] as num?)?.toDouble() ?? widget.fare;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.neutralColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.borderSide,
+                    ),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      child: const Icon(
+                        LucideIcons.user,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    title: Text(
+                      driverName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Text(
+                      '$vehicleType • $plateNumber',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '₱${proposedFare.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Accept Bid',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.complete,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    onTap: () async {
+                      final acceptResult = await PassengerApiService.acceptBidOffer(
+                        sessionId: _sessionId!,
+                        offerId: offer['id'] as String,
+                      );
+                      if (acceptResult != null && acceptResult['ride_id'] != null) {
+                        _pollTimer?.cancel();
+                        final committedRideId = acceptResult['ride_id'] as String;
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString('active_ride_id', committedRideId);
+
+                        if (mounted) {
+                          context.pushReplacementNamed(
+                            'DriverMatched',
+                            extra: {
+                              'rideType': widget.rideType,
+                              'fare': proposedFare,
+                              'destination': widget.destination,
+                              'distance': widget.distance,
+                              'duration': widget.duration,
+                              'driverName': driverName,
+                              'driverRating': '5.0',
+                              'vehicleType': vehicleType,
+                              'plateNumber': plateNumber,
+                            },
+                          );
+                        }
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: _handleCancel,
+            child: Container(
+              width: double.infinity,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.cancel.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Text(
+                'Cancel Search',
+                style: TextStyle(
+                  color: AppTheme.cancel,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

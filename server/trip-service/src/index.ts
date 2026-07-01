@@ -95,6 +95,19 @@ app.get('/rides/:id', async (c) => {
   }
 });
 
+app.get('/rides/driver/:driverId', async (c) => {
+  const driverId = c.req.param('driverId');
+  try {
+    const list = await prisma.ride.findMany({
+      where: { driverId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return c.json(list.map(mapRideToSnakeCase));
+  } catch (e: any) {
+    return c.json({ error: e.message }, 400);
+  }
+});
+
 app.post('/rides/:id/accept', async (c) => {
   const id = c.req.param('id');
   try {

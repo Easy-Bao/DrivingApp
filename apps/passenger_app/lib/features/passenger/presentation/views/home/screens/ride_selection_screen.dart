@@ -14,6 +14,7 @@ class RideSelectionScreen extends StatefulWidget {
   final String distance;
   final String duration;
   final double distanceKm;
+  final Map<String, double>? fares;
 
   const RideSelectionScreen({
     super.key,
@@ -21,6 +22,7 @@ class RideSelectionScreen extends StatefulWidget {
     required this.distance,
     required this.duration,
     required this.distanceKm,
+    this.fares,
   });
 
   @override
@@ -36,12 +38,13 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   void initState() {
     super.initState();
     final km = widget.distanceKm;
+    final f = widget.fares ?? {};
     _options = [
       _RideOption(
         'Solo Ride',
         'Direct booking, just you',
         LucideIcons.bike,
-        20 + km * 10,
+        f['Solo Ride'] ?? (20.0 + km * 10),
         '3 min',
         null,
       ),
@@ -49,7 +52,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         'Share-Bao',
         'Pasabay, split the fare',
         LucideIcons.users,
-        15 + km * 7,
+        f['Share-Bao'] ?? (15.0 + km * 7),
         '5 min',
         'Cheapest',
       ),
@@ -57,7 +60,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         'Bao Premium',
         'Priority pickup, top rated',
         LucideIcons.crown,
-        35 + km * 15,
+        f['Bao Premium'] ?? (35.0 + km * 15),
         '2 min',
         'Fastest',
       ),

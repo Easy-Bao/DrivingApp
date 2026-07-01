@@ -1,63 +1,80 @@
+/// Trip history screen: displays a chronological list of completed and canceled trips for the authenticated driver.
+import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Redesigned trip history screen — chronological list of completed and canceled rides.
-class DriverTripHistoryScreen extends StatelessWidget {
+class DriverTripHistoryScreen extends StatefulWidget {
   const DriverTripHistoryScreen({super.key});
 
-  static const _trips = [
-    _Trip(
-      'Today',
-      'SM City Dipolog',
-      'Dipolog Market',
-      '₱52.00',
-      '8 min',
-      true,
-    ),
-    _Trip(
-      'Today',
-      'Turno, Dipolog',
-      'Biasong, Dipolog',
-      '₱38.00',
-      '6 min',
-      true,
-    ),
-    _Trip(
-      'Yesterday',
-      'Galas, Dipolog',
-      'Olingan, Dipolog',
-      '₱65.00',
-      '12 min',
-      true,
-    ),
-    _Trip(
-      'Yesterday',
-      'Central, Dipolog',
-      'Sicayab, Dipolog',
-      '₱45.00',
-      '9 min',
-      true,
-    ),
-    _Trip(
-      'Yesterday',
-      'Miputak, Dipolog',
-      'Airport Rd, Dipolog',
-      '₱72.00',
-      '15 min',
-      false,
-    ),
-    _Trip('May 17', 'Cogon Market', 'Sta. Filomena', '₱55.00', '10 min', true),
-    _Trip(
-      'May 17',
-      'Boulevard, Dipolog',
-      'Sunset Blvd',
-      '₱30.00',
-      '5 min',
-      true,
-    ),
-  ];
+  @override
+  State<DriverTripHistoryScreen> createState() => _DriverTripHistoryScreenState();
+}
+
+class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
+  bool _isLoading = true;
+  List<dynamic> _trips = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTrips();
+  }
+
+  Future<void> _loadTrips() async {
+    final prefs = await SharedPreferences.getInstance();
+    final driverId = prefs.getString('driver_id') ?? '';
+    if (driverId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+    final trips = await DriverApiService.fetchTripHistory(driverId);
+    if (mounted) {
+      setState(() {
+        _trips = trips;
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _formatDate(String isoString) {
+    try {
+      final dt = DateTime.parse(isoString).toLocal();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+      final tripDate = DateTime(dt.year, dt.month, dt.day);
+
+      if (tripDate == today) {
+        return 'Today';
+      } else if (tripDate == yesterday) {
+        return 'Yesterday';
+      } else {
+        const months = [
+          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+        return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+      }
+    } catch (_) {
+      return 'Past Trip';
+    }
+  }
+
+  Map<String, List<dynamic>> _groupByDate(List<dynamic> trips) {
+    final map = <String, List<dynamic>>{};
+    for (final t in trips) {
+      final dateStr = _formatDate(t['created_at'] as String? ?? '');
+      map.putIfAbsent(dateStr, () => []).add(t);
+    }
+    return map;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,47 +103,70 @@ class DriverTripHistoryScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
-        physics: const BouncingScrollPhysics(),
-        itemCount: grouped.keys.length,
-        itemBuilder: (context, groupIndex) {
-          final date = grouped.keys.elementAt(groupIndex);
-          final trips = grouped[date]!;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 20, bottom: 12),
-                child: Text(
-                  date,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                    letterSpacing: 0.5,
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            )
+          : _trips.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        LucideIcons.history,
+                        size: 64,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No trip history found',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
                   ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: grouped.keys.length,
+                  itemBuilder: (context, groupIndex) {
+                    final date = grouped.keys.elementAt(groupIndex);
+                    final trips = grouped[date]!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20, bottom: 12),
+                          child: Text(
+                            date,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        ...trips.map(_buildTripCard),
+                      ],
+                    );
+                  },
                 ),
-              ),
-              ...trips.map(_buildTripCard),
-            ],
-          );
-        },
-      ),
     );
   }
 
-  Map<String, List<_Trip>> _groupByDate(List<_Trip> trips) {
-    final map = <String, List<_Trip>>{};
-    for (final t in trips) {
-      map.putIfAbsent(t.date, () => []).add(t);
-    }
-    return map;
-  }
-
-  Widget _buildTripCard(_Trip trip) {
-    final statusColor = trip.isCompleted ? AppTheme.complete : AppTheme.cancel;
-    final statusLabel = trip.isCompleted ? 'Completed' : 'Canceled';
+  Widget _buildTripCard(dynamic trip) {
+    final status = trip['status'] as String? ?? 'completed';
+    final isCompleted = status == 'completed';
+    final statusColor = isCompleted ? AppTheme.complete : AppTheme.cancel;
+    final statusLabel = isCompleted ? 'Completed' : 'Canceled';
+    final fromName = trip['pickup_name'] as String? ?? 'Pickup';
+    final toName = trip['dropoff_name'] as String? ?? 'Dropoff';
+    final fareAmt = (trip['fare'] as num?)?.toDouble() ?? 0.0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -139,7 +179,6 @@ class DriverTripHistoryScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Route dot indicator
           Padding(
             padding: const EdgeInsets.only(top: 3),
             child: Column(
@@ -162,13 +201,12 @@ class DriverTripHistoryScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Route labels
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  trip.from,
+                  fromName,
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -177,7 +215,7 @@ class DriverTripHistoryScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  trip.to,
+                  toName,
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -187,12 +225,11 @@ class DriverTripHistoryScreen extends StatelessWidget {
               ],
             ),
           ),
-          // Fare + status
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                trip.fare,
+                '₱${fareAmt.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -221,22 +258,4 @@ class DriverTripHistoryScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Trip {
-  final String date;
-  final String from;
-  final String to;
-  final String fare;
-  final String time;
-  final bool isCompleted;
-
-  const _Trip(
-    this.date,
-    this.from,
-    this.to,
-    this.fare,
-    this.time,
-    this.isCompleted,
-  );
 }

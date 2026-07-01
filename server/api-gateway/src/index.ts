@@ -11,6 +11,7 @@ const SERVICES = {
   rides: process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083',
   drivers: process.env.DRIVER_SERVICE_URL || 'http://127.0.0.1:8082',
   telemetry: process.env.TELEMETRY_SERVICE_URL || 'http://127.0.0.1:8085',
+  bidding: process.env.BIDDING_SERVICE_URL || 'http://127.0.0.1:8084',
 };
 
 async function handleProxy(c: any, targetBaseUrl: string) {
@@ -40,6 +41,7 @@ app.all('/passengers/*', (c) => handleProxy(c, SERVICES.passengers));
 app.all('/rides/*', (c) => handleProxy(c, SERVICES.rides));
 app.all('/drivers/*', (c) => handleProxy(c, SERVICES.drivers));
 app.all('/telemetry/*', (c) => handleProxy(c, SERVICES.telemetry));
+app.all('/bids/*', (c) => handleProxy(c, SERVICES.bidding));
 
 app.get('/', (c) => c.json({ status: 'Gateway OK' }));
 

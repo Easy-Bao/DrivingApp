@@ -2,6 +2,8 @@ import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
 import 'package:fixtures/fixtures.dart';
 
+import 'package:driver_app/core/services/driver_api_service.dart';
+
 /**
  * Concrete implementation of [RideRepository] delegating computations to shared services.
  * Invokes shared algorithms for fare calculation and route optimization.
@@ -70,20 +72,34 @@ class FixtureRideRepository implements RideRepository {
   }
 }
 
-//TODO: Implement the real API repository once backend endpoints are ready and integrated.
-
 /**
  * API-backed implementation of [RideRepository].
  * Designed to interact directly with backend server endpoints.
  */
-// ignore: unused_element — will be used when backend is integrated
-class _ApiRideRepository implements RideRepository {
+class ApiRideRepository implements RideRepository {
   @override
   Future<FareResult> getFare({
     required double distanceKm,
     required double durationMinutes,
   }) async {
-    throw UnimplementedError('Backend not yet integrated');
+    final fare = await DriverApiService.fetchFareEstimate(
+      distanceKm: distanceKm,
+      durationMinutes: durationMinutes,
+    );
+    if (fare != null) {
+      return FareResult(
+        baseFare: (fare['base_fare'] as num).toDouble(),
+        distanceCharge: (fare['distance_charge'] as num).toDouble(),
+        timeCharge: (fare['time_charge'] as num).toDouble(),
+        surgeCharge: (fare['surge_charge'] as num).toDouble(),
+        totalFare: (fare['total_fare'] as num).toDouble(),
+      );
+    }
+    // Fallback if service unavailable
+    return FareCalculationService.computeFareDefault(
+      distanceKm: distanceKm,
+      durationMinutes: durationMinutes,
+    );
   }
 
   @override
@@ -92,6 +108,11 @@ class _ApiRideRepository implements RideRepository {
     required double startLng,
     required List<Waypoint> waypoints,
   }) async {
-    throw UnimplementedError('Backend not yet integrated');
+    // Keep local route optimization or implement if backend endpoint is created.
+    return RouteOptimizationService.calculateOptimalRoute(
+      startLat: startLat,
+      startLng: startLng,
+      waypoints: waypoints,
+    );
   }
 }
