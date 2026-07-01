@@ -2,10 +2,10 @@
 { pkgs ? import <nixpkgs> {} }:
 
 pkgs.mkShell {
-  buildInputs = [ pkgs.prisma-engines ];
+  buildInputs = [ pkgs.prisma-engines_6 ];
 
   shellHook = ''
-    export PRISMA_SCHEMA_ENGINE_PATH="${pkgs.prisma-engines}/bin/schema-engine"
-    export PRISMA_QUERY_ENGINE_LIBRARY="$PWD/server/passenger-service/node_modules/@prisma/engines/libquery_engine-linux-nixos.so.node"
+    export PRISMA_SCHEMA_ENGINE_PATH="${pkgs.prisma-engines_6}/bin/schema-engine"
+    export PRISMA_QUERY_ENGINE_LIBRARY="${pkgs.prisma-engines_6}/lib/libquery_engine.node"
   '';
 }

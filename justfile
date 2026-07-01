@@ -1,4 +1,7 @@
 # Justfile configuring development, build, test, and container recipes.
+export PRISMA_QUERY_ENGINE_LIBRARY := "/nix/store/ivg58274an803gs7k0kym1r8vprsj7dh-prisma-engines_6-6.19.3/lib/libquery_engine.node"
+export PRISMA_SCHEMA_ENGINE_PATH := "/nix/store/ivg58274an803gs7k0kym1r8vprsj7dh-prisma-engines_6-6.19.3/bin/schema-engine"
+
 default:
     @just --list
 
