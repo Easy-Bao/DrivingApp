@@ -76,3 +76,6 @@ server/.cargo/
 # GitHub workflows directory
 .github/workflows/
 
+# Local direnv directory
+.direnv/
+
