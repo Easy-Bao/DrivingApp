@@ -1,6 +1,4 @@
-/**
- * Passenger Repository: defines passenger profile and ride request persistence implementations for in-memory and PostgreSQL (via Prisma) databases.
- */
+/// Passenger Repository interface and implementations mapping to PostgreSQL database via Prisma client.
 import { z } from 'zod';
 import { prisma } from '../db.ts';
 import { Passenger, RideRequest, RideType } from './types.ts';
@@ -9,13 +7,20 @@ import { CreatePassengerSchema, CreateRideSchema } from './schema.ts';
 export type CreatePassengerRequest = z.infer<typeof CreatePassengerSchema>;
 export type CreateRideRequest = z.infer<typeof CreateRideSchema>;
 
+export interface UpdatePassengerOptions {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+}
+
 export interface PassengerRepository {
   createPassenger(req: CreatePassengerRequest): Promise<Passenger>;
   getPassenger(id: string): Promise<Passenger | null>;
   getPassengerByEmail(email: string): Promise<Passenger | null>;
   createRideRequest(req: CreateRideRequest): Promise<RideRequest>;
   getPassengerRides(passengerId: string): Promise<RideRequest[]>;
-  updatePassenger(id: string, name: string, phone: string, email: string): Promise<Passenger>;
+  updatePassenger(options: UpdatePassengerOptions): Promise<Passenger>;
 }
 
 export class InMemoryPassengerRepository implements PassengerRepository {
@@ -28,13 +33,11 @@ export class InMemoryPassengerRepository implements PassengerRepository {
         throw new Error(`A passenger with email ${req.email} already exists`);
       }
     }
-
     const id = crypto.randomUUID();
     const passwordHash = await Bun.password.hash(req.password, {
       algorithm: 'bcrypt',
       cost: 10,
     });
-
     const passenger: Passenger = {
       id,
       name: req.name,
@@ -44,7 +47,6 @@ export class InMemoryPassengerRepository implements PassengerRepository {
       created_at: new Date(),
       password_hash: passwordHash,
     };
-
     this.passengers.set(id, passenger);
     return passenger;
   }
@@ -66,7 +68,6 @@ export class InMemoryPassengerRepository implements PassengerRepository {
     if (!this.passengers.has(req.passenger_id)) {
       throw new Error(`Passenger ID ${req.passenger_id} not found`);
     }
-
     const id = crypto.randomUUID();
     const ride: RideRequest = {
       id,
@@ -82,11 +83,9 @@ export class InMemoryPassengerRepository implements PassengerRepository {
       status: 'requested',
       created_at: new Date(),
     };
-
     const userRides = this.rides.get(req.passenger_id) || [];
     userRides.push(ride);
     this.rides.set(req.passenger_id, userRides);
-
     return ride;
   }
 
@@ -97,7 +96,7 @@ export class InMemoryPassengerRepository implements PassengerRepository {
     return this.rides.get(passengerId) || [];
   }
 
-  async updatePassenger(id: string, name: string, phone: string, email: string): Promise<Passenger> {
+  async updatePassenger({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
     const passenger = this.passengers.get(id);
     if (!passenger) {
       throw new Error(`Passenger ID ${id} not found`);
@@ -121,12 +120,10 @@ export class PostgresPassengerRepository implements PassengerRepository {
     if (existing) {
       throw new Error(`A passenger with email ${req.email} already exists`);
     }
-
     const passwordHash = await Bun.password.hash(req.password, {
       algorithm: 'bcrypt',
       cost: 10,
     });
-
     const res = await prisma.passenger.create({
       data: {
         name: req.name,
@@ -136,7 +133,6 @@ export class PostgresPassengerRepository implements PassengerRepository {
         password_hash: passwordHash,
       },
     });
-
     return {
       id: res.id,
       name: res.name,
@@ -187,7 +183,6 @@ export class PostgresPassengerRepository implements PassengerRepository {
     if (!passenger) {
       throw new Error(`Passenger ID ${req.passenger_id} not found`);
     }
-
     const res = await prisma.rideRequest.create({
       data: {
         passenger_id: req.passenger_id,
@@ -202,7 +197,6 @@ export class PostgresPassengerRepository implements PassengerRepository {
         status: 'requested',
       },
     });
-
     return {
       id: res.id,
       passenger_id: res.passenger_id,
@@ -226,12 +220,10 @@ export class PostgresPassengerRepository implements PassengerRepository {
     if (!passenger) {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
-
     const rows = await prisma.rideRequest.findMany({
       where: { passenger_id: passengerId },
       orderBy: { created_at: 'desc' },
     });
-
     return rows.map((r) => ({
       id: r.id,
       passenger_id: r.passenger_id,
@@ -249,7 +241,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
     }));
   }
 
-  async updatePassenger(id: string, name: string, phone: string, email: string): Promise<Passenger> {
+  async updatePassenger({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
     const res = await prisma.passenger.update({
       where: { id },
       data: { name, phone, email },
