@@ -16,7 +16,9 @@ class DashboardModule {
     ChildRoute(
       name: 'RideAlert',
       'dashboard/ride-alert',
-      child: (context, GoRouterState state) => const RideAlertScreen(),
+      child: (context, GoRouterState state) => RideAlertScreen(
+        rideData: state.extra as Map<String, dynamic>?,
+      ),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),

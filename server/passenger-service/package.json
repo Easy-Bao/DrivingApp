@@ -6,9 +6,13 @@
   "scripts": {
     "generate": "bunx prisma generate",
     "db:migrate": "bunx prisma migrate deploy",
+    "db:seed": "bunx prisma db seed",
     "start": "bunx prisma migrate deploy && bun run src/index.ts",
     "dev": "bun --watch src/index.ts",
     "test": "bun test"
+  },
+  "prisma": {
+    "seed": "bun run prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.16.1",

@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:driver_app/core/config/env_config.dart';
 
 import 'package:location_service/location_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
@@ -45,10 +48,43 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
     if (!currentOnline) {
       _rideTriggerTimer?.cancel();
-      _rideTriggerTimer = Timer(const Duration(seconds: 4), () {
+      _rideTriggerTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
         if (!mounted) return;
         final s = BlocProvider.of<DashboardCubit>(context).state;
-        if (s.isOnline) context.pushNamed('RideAlert');
+        if (!s.isOnline) {
+          timer.cancel();
+          return;
+        }
+
+        try {
+          final baseUrl = EnvConfig.driverServiceUrl;
+          final response = await http.get(Uri.parse('$baseUrl/rides/active'));
+          if (response.statusCode == 200) {
+            final List<dynamic> list = jsonDecode(response.body);
+            if (list.isNotEmpty) {
+              timer.cancel();
+              if (mounted) {
+                final ride = list.first as Map<String, dynamic>;
+                final rideData = {
+                  'id': ride['id'],
+                  'passenger_name': ride['passenger_name'] ?? 'Passenger',
+                  'pickup_name': ride['pickup_name'] ?? 'Pickup',
+                  'dropoff_name': ride['dropoff_name'] ?? 'Dropoff',
+                  'pickup_latitude': ride['pickup_latitude'],
+                  'pickup_longitude': ride['pickup_longitude'],
+                  'dropoff_latitude': ride['dropoff_latitude'],
+                  'dropoff_longitude': ride['dropoff_longitude'],
+                  'fare': (ride['fare'] as num?)?.toDouble() ?? 50.0,
+                  'distance': 3.2,
+                  'duration': '8 min',
+                };
+                context.pushNamed('RideAlert', extra: rideData);
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('Error polling active ride requests: $e');
+        }
       });
     } else {
       _rideTriggerTimer?.cancel();

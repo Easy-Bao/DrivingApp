@@ -1,3 +1,4 @@
+/// Unit tests for RideFlowCubit managing driver state transitions.
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
@@ -28,6 +29,7 @@ void main() {
       'emits RideFlowEnRoutePickup with correct data',
       build: () => _makeCubit(repo),
       act: (cubit) => cubit.acceptRide(
+        rideId: 'test-ride-id',
         passengerName: 'Juan Dela Cruz',
         pickupLat: 7.82,
         pickupLng: 123.43,
@@ -52,8 +54,6 @@ void main() {
           passengerName: 'Juan Dela Cruz',
           waitTimeSeconds: 0,
         ),
-        // The timer fires every 1s but bloc_test stops after act completes.
-        // Integration-level timer behaviour is tested separately.
       ],
     );
   });

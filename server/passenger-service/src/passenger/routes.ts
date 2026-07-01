@@ -69,10 +69,11 @@ export function getPassengerRouter(repo: PassengerRepository) {
         return c.json({ error: 'No passenger registered with this email' }, 404);
       }
       const resetToken = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const appUrl = process.env.APP_URL || 'http://127.0.0.1:8081';
       await sendEmail({
         to: email,
         subject: 'Reset Your EasyRide Password',
-        text: `Click here to reset your password: http://localhost:8081/reset-password?token=${resetToken}`,
+        text: `Click here to reset your password: ${appUrl}/reset-password?token=${resetToken}`,
       });
       return c.json({ success: true }, 200);
     } catch (e: any) {

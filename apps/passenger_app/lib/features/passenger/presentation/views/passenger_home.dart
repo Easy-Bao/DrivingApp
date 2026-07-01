@@ -40,7 +40,6 @@ class PassengerHomeScreen extends StatefulWidget {
 class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     with SingleTickerProviderStateMixin {
   List<QuickActionModel> _quickActions = [];
-  List<Map<String, dynamic>> _recentLocationData = [];
 
   late AnimationController _entranceController;
   late Animation<double> _fadeIn;
@@ -111,7 +110,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         );
 
     _buildQuickActions();
-    _buildRecentLocations();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _attachSavedPlacesContext();
@@ -457,48 +455,72 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
 
   Widget _buildRecentActivityList() {
     return BlocBuilder<PassengerHomeCubit, PassengerHomeState>(
-      buildWhen: (prev, curr) => prev.recentLocations != curr.recentLocations,
+      buildWhen: (prev, curr) =>
+          prev.recentLocations != curr.recentLocations ||
+          prev.isLoading != curr.isLoading,
       builder: (context, state) {
-        final locations = state.recentLocations.isEmpty
-            ? _recentLocationData
-            : state.recentLocations;
+        if (state.isLoading) {
+          return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 20),
+            itemCount: 3,
+            itemBuilder: (_, __) => _buildShimmerListItem(),
+          );
+        }
+        if (state.recentLocations.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LucideIcons.clock,
+                  size: 36,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No recent trips yet',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
         return ListView.separated(
           padding: const EdgeInsets.only(bottom: 20),
           physics: const BouncingScrollPhysics(),
-          itemCount: locations.length,
+          itemCount: state.recentLocations.length,
           separatorBuilder: (_, _) =>
               Divider(height: 1, color: Colors.grey[100]),
           itemBuilder: (context, index) {
-            final location = locations[index];
+            final location = state.recentLocations[index];
+            final title = location['title'] as String? ?? '';
+            IconData icon;
+            if (title.contains('Luz') || title.contains('Plaza')) {
+              icon = LucideIcons.circle_play;
+            } else if (title.contains('Supermarket') ||
+                title.contains('Robinson')) {
+              icon = LucideIcons.store;
+            } else if (title.contains('Coffee') || title.contains("Bo's")) {
+              icon = LucideIcons.coffee;
+            } else if (title.contains('Capital') || title.contains('Gaisano')) {
+              icon = LucideIcons.shopping_bag;
+            } else {
+              icon = LucideIcons.map_pin;
+            }
             return _buildLocationItem(
-              icon: (location['icon'] ?? LucideIcons.map_pin) as IconData,
-              title: location['title'] as String,
-              subtitle: location['subtitle'] as String,
+              icon: icon,
+              title: title,
+              subtitle: location['subtitle'] as String? ?? 'Previous Trip',
               onTap: () => _openActivityDetail(location),
             );
           },
         );
       },
     );
-  }
-
-  void _buildRecentLocations() {
-    _recentLocationData = MockData.getRecentLocations().map((loc) {
-      final title = loc['title'] as String;
-      IconData icon;
-      if (title.contains('Luz')) {
-        icon = LucideIcons.circle_play;
-      } else if (title.contains('Supermarket') || title.contains('Robinson')) {
-        icon = LucideIcons.store;
-      } else if (title.contains('Coffee') || title.contains("Bo's")) {
-        icon = LucideIcons.coffee;
-      } else if (title.contains('Capital') || title.contains('Gaisano')) {
-        icon = LucideIcons.shopping_bag;
-      } else {
-        icon = LucideIcons.circle_play;
-      }
-      return {...loc, 'icon': icon};
-    }).toList();
   }
 
   /**
@@ -625,6 +647,49 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       decoration: BoxDecoration(
         color: AppTheme.neutralColor,
         borderRadius: BorderRadius.circular(20),
+      ),
+    );
+  }
+
+  Widget _buildShimmerListItem() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppTheme.neutralColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 13,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppTheme.neutralColor,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  height: 11,
+                  width: 140,
+                  decoration: BoxDecoration(
+                    color: AppTheme.neutralColor.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

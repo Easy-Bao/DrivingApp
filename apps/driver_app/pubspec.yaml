@@ -50,6 +50,7 @@ dependencies:
 
   # Environment
   flutter_dotenv: ^6.0.1
+  http: ^1.2.1
 
   # Maps & Location
   mapbox_maps_flutter: ^2.23.0

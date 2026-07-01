@@ -7,7 +7,7 @@ import 'package:passenger_app/core/config/env_config.dart';
 class PassengerApiService {
   PassengerApiService._();
 
-  static final String _baseUrl = EnvConfig.passengerServiceUrl ?? 'http://localhost:8081';
+  static final String _baseUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8080';
 
   static Future<Map<String, dynamic>?> registerPassenger({
     required String name,
@@ -117,5 +117,24 @@ class PassengerApiService {
       return jsonDecode(response.body) as List<dynamic>;
     }
     return [];
+  }
+
+  static Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/rides/$rideId'),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    return null;
+  }
+
+  static Future<bool> updateRideStatus(String rideId, String status) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/rides/$rideId/status'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'status': status}),
+    );
+    return response.statusCode == 200;
   }
 }

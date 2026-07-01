@@ -69,3 +69,7 @@ server/.cargo/
 # Node/Bun dependencies
 **/node_modules/
 
+# Local machine-specific configuration files
+.envrc
+.env.local
+

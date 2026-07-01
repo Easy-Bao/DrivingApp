@@ -1,0 +1,26 @@
+/// Driver schema defining driver authentication, vehicle details, and active status tracking in driver_db.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Driver {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique
+  phone        String
+  vehicleType  String   @map("vehicle_type")
+  plateNumber  String   @map("plate_number")
+  passwordHash String   @map("password_hash")
+  rating       Float    @default(5.0)
+  isOnline     Boolean  @default(false) @map("is_online")
+  lat          Float    @default(7.828282)
+  lng          Float    @default(123.434343)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("drivers")
+}

@@ -1,25 +1,25 @@
+/// Unit tests for TrackDriverCubit with mocked repository and shared preferences.
 import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-
-// Mock Repositories
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockTrackRepo extends Mock implements TrackRepository {}
-
-// Helper Factory Methods
 
 TrackDriverCubit _makeCubit(TrackRepository repo) =>
     TrackDriverCubit(repository: repo);
 
-// Unit Tests
-
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MockTrackRepo repo;
 
-  setUp(() => repo = MockTrackRepo());
+  setUp(() {
+    repo = MockTrackRepo();
+    SharedPreferences.setMockInitialValues({});
+  });
 
   group('TrackDriverCubit — initial state', () {
     test('starts with TrackDriverInitial', () async {
@@ -65,14 +65,11 @@ void main() {
           endLat: 7.830,
           endLng: 123.436,
         );
-        // Wait for at least one timer tick
-        await Future.delayed(const Duration(milliseconds: 1600));
+        await Future.delayed(const Duration(milliseconds: 2200));
       },
       expect: () => [
-        // At least one InProgress emitted
         isA<TrackDriverInProgress>(),
       ],
-      // Allow extra states from the timer
       skip: 0,
     );
 
@@ -96,7 +93,7 @@ void main() {
           endLat: 7.830,
           endLng: 123.436,
         );
-        await Future.delayed(const Duration(milliseconds: 1600));
+        await Future.delayed(const Duration(milliseconds: 2200));
       },
       expect: () => [isA<TrackDriverInProgress>()],
       skip: 0,

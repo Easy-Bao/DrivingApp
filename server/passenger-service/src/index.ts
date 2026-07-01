@@ -1,7 +1,5 @@
-/**
- * Server entrypoint: loads configurations, maps API routes, and launches the Hono server on port 8081.
- */
 import { Hono } from 'hono';
+
 import { getPassengerRouter } from './passenger/routes.ts';
 import { InMemoryPassengerRepository, PostgresPassengerRepository } from './passenger/repository.ts';
 

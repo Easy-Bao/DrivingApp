@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 
 class RideAlertScreen extends StatefulWidget {
-  const RideAlertScreen({super.key});
+  final Map<String, dynamic>? rideData;
+  const RideAlertScreen({super.key, this.rideData});
+
   @override
   State<RideAlertScreen> createState() => _RideAlertScreenState();
 }
@@ -16,15 +20,24 @@ class _RideAlertScreenState extends State<RideAlertScreen>
   late AnimationController _timerCtrl;
   Timer? _autoDecline;
 
-  final String _pickup = 'SM City Dipolog, Rizal Ave';
-  final String _dropoff = 'Dipolog Public Market, Quezon St';
-  final double _distance = 3.2;
-  final double _fare = 52.00;
-  final String _duration = '8 min';
+  late final String _rideId;
+  late final String _pickup;
+  late final String _dropoff;
+  late final double _distance;
+  late final double _fare;
+  late final String _duration;
 
   @override
   void initState() {
     super.initState();
+
+    _rideId = widget.rideData?['id'] as String? ?? 'mock_id';
+    _pickup = widget.rideData?['pickup_name'] as String? ?? 'SM City Dipolog, Rizal Ave';
+    _dropoff = widget.rideData?['dropoff_name'] as String? ?? 'Dipolog Public Market, Quezon St';
+    _distance = (widget.rideData?['distance'] ?? 3.2) as double;
+    _fare = (widget.rideData?['fare'] ?? 52.00) as double;
+    _duration = widget.rideData?['duration'] as String? ?? '8 min';
+
     _timerCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 15),
@@ -51,6 +64,18 @@ class _RideAlertScreenState extends State<RideAlertScreen>
 
   void _accept() {
     _autoDecline?.cancel();
+
+    final passengerName = widget.rideData?['passenger_name'] as String? ?? 'Juan D. Cruz';
+    final pickupLat = (widget.rideData?['pickup_latitude'] ?? 7.828282) as double;
+    final pickupLng = (widget.rideData?['pickup_longitude'] ?? 123.434343) as double;
+
+    BlocProvider.of<RideFlowCubit>(context).acceptRide(
+      rideId: _rideId,
+      passengerName: passengerName,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+    );
+
     context.pushReplacementNamed(
       'EnRoutePickup',
       extra: {

@@ -1,13 +1,21 @@
+/// Passenger ride matching screen tracking available drivers on the map.
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:core_models/core_models.dart';
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:http/http.dart' as http;
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/config/env_config.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FindingDriverScreen extends StatefulWidget {
   final String rideType;
@@ -36,66 +44,8 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
   AppMapController? _mapController;
   bool _initialized = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _radarCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
-    _dotCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _radarCtrl.dispose();
-    _dotCtrl.dispose();
-    super.dispose();
-  }
-
-  void _onMapCreated(AppMapController controller) {
-    _mapController = controller;
-    if (!_initialized) {
-      _initialized = true;
-      final lat = LocationService.lastPosition?.latitude ?? 7.828282;
-      final lng = LocationService.lastPosition?.longitude ?? 123.434343;
-
-      // Start search via Bloc
-      BlocProvider.of<FindingDriverBloc>(
-        context,
-      ).add(SearchDriversEvent(lat: lat, lng: lng));
-
-      // Draw initial simple pin for user
-      MapProvider.addMarker(controller, lat, lng, isOrigin: true);
-    }
-  }
-
-  void _showDriversOnMap(List<DriverModel> drivers) async {
-    if (_mapController == null) return;
-
-    // Add markers for all matching drivers on map
-    for (final driver in drivers) {
-      await MapProvider.addMarker(
-        _mapController!,
-        driver.lat,
-        driver.lng,
-        isOrigin: false,
-      );
-    }
-
-    // Include passenger location inside bounds
-    final passLat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final passLng = LocationService.lastPosition?.longitude ?? 123.434343;
-
-    final boundsPoints = [
-      LatLng(passLat, passLng),
-    ].followedBy(drivers.map((d) => LatLng(d.lat, d.lng))).toList();
-
-    await MapProvider.fitBounds(_mapController!, boundsPoints, padding: 80.0);
-  }
+  String? _rideId;
+  Timer? _pollTimer;
 
   @override
   Widget build(BuildContext context) {
@@ -491,7 +441,34 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                                         ),
                                       ],
                                     ),
-                                    onTap: () {
+                                    onTap: () async {
+                                      if (_rideId != null) {
+                                        try {
+                                          await http.post(
+                                            Uri.parse(
+                                              '${EnvConfig.passengerServiceUrl}/rides/$_rideId/accept',
+                                            ),
+                                            headers: {
+                                              'Content-Type':
+                                                  'application/json',
+                                            },
+                                            body: jsonEncode({
+                                              'driver_id': driver.id,
+                                              'driver_name': driver.name,
+                                              'driver_rating': driver.rating
+                                                  .toString(),
+                                              'vehicle_type':
+                                                  driver.vehicleType,
+                                              'plate_number':
+                                                  driver.plateNumber,
+                                            }),
+                                          );
+                                        } catch (e) {
+                                          debugPrint(
+                                            'Error sending mock acceptance: $e',
+                                          );
+                                        }
+                                      }
                                       BlocProvider.of<FindingDriverBloc>(
                                         context,
                                       ).add(SelectDriverEvent(driver: driver));
@@ -514,5 +491,129 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _radarCtrl.dispose();
+    _dotCtrl.dispose();
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _radarCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+    _dotCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat();
+    _startBookingFlow();
+  }
+
+  void _onMapCreated(AppMapController controller) {
+    _mapController = controller;
+    if (!_initialized) {
+      _initialized = true;
+      final lat = LocationService.lastPosition?.latitude ?? 7.828282;
+      final lng = LocationService.lastPosition?.longitude ?? 123.434343;
+
+      // Start search via Bloc
+      BlocProvider.of<FindingDriverBloc>(
+        context,
+      ).add(SearchDriversEvent(lat: lat, lng: lng));
+
+      // Draw initial simple pin for user
+      MapProvider.addMarker(controller, lat, lng, isOrigin: true);
+    }
+  }
+
+  void _showDriversOnMap(List<DriverModel> drivers) async {
+    if (_mapController == null) return;
+
+    // Add markers for all matching drivers on map
+    for (final driver in drivers) {
+      await MapProvider.addMarker(
+        _mapController!,
+        driver.lat,
+        driver.lng,
+        isOrigin: false,
+      );
+    }
+
+    // Include passenger location inside bounds
+    final passLat = LocationService.lastPosition?.latitude ?? 7.828282;
+    final passLng = LocationService.lastPosition?.longitude ?? 123.434343;
+
+    final boundsPoints = [
+      LatLng(passLat, passLng),
+    ].followedBy(drivers.map((d) => LatLng(d.lat, d.lng))).toList();
+
+    await MapProvider.fitBounds(_mapController!, boundsPoints, padding: 80.0);
+  }
+
+  Future<void> _startBookingFlow() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerId = prefs.getString('passenger_id') ?? '';
+      if (passengerId.isEmpty) return;
+
+      final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
+      final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
+
+      final result = await PassengerApiService.createRideRequest(
+        passengerId: passengerId,
+        rideType: widget.rideType,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        pickupName: 'Current Location',
+        dropoffLat: widget.destination.latitude,
+        dropoffLng: widget.destination.longitude,
+        dropoffName: widget.destination.name,
+        fare: widget.fare,
+      );
+
+      if (result != null && result['id'] != null) {
+        _rideId = result['id'] as String;
+        await prefs.setString('active_ride_id', _rideId!);
+        _startPolling();
+      }
+    } catch (e) {
+      debugPrint('Error starting booking flow: $e');
+    }
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      if (!mounted || _rideId == null) return;
+      final statusData = await PassengerApiService.getRideStatus(_rideId!);
+      if (statusData != null) {
+        final status = statusData['status'] as String?;
+        if (status == 'accepted') {
+          timer.cancel();
+          if (mounted) {
+            context.pushReplacementNamed(
+              'DriverMatched',
+              extra: {
+                'rideType': widget.rideType,
+                'fare': widget.fare,
+                'destination': widget.destination,
+                'distance': widget.distance,
+                'duration': widget.duration,
+                'driverName': statusData['driver_name'] ?? 'Driver Xyrel',
+                'driverRating': statusData['driver_rating'] ?? '4.9',
+                'vehicleType': statusData['vehicle_type'] ?? 'Bao Bao',
+                'plateNumber': statusData['plate_number'] ?? 'ABC 1234',
+              },
+            );
+          }
+        }
+      }
+    });
   }
 }

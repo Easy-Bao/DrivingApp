@@ -58,22 +58,28 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
   Future<void> _saveRideAndStartTimer() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final passengerId = prefs.getString('passenger_id') ?? '';
-      final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
-      final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
+      final activeRideId = prefs.getString('active_ride_id') ?? '';
+      if (activeRideId.isEmpty) {
+        final passengerId = prefs.getString('passenger_id') ?? '';
+        final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
+        final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
 
-      if (passengerId.isNotEmpty) {
-        await PassengerApiService.createRideRequest(
-          passengerId: passengerId,
-          rideType: widget.rideType,
-          pickupLat: pickupLat,
-          pickupLng: pickupLng,
-          pickupName: 'Current Location',
-          dropoffLat: widget.destination.latitude,
-          dropoffLng: widget.destination.longitude,
-          dropoffName: widget.destination.name,
-          fare: widget.fare,
-        );
+        if (passengerId.isNotEmpty) {
+          final res = await PassengerApiService.createRideRequest(
+            passengerId: passengerId,
+            rideType: widget.rideType,
+            pickupLat: pickupLat,
+            pickupLng: pickupLng,
+            pickupName: 'Current Location',
+            dropoffLat: widget.destination.latitude,
+            dropoffLng: widget.destination.longitude,
+            dropoffName: widget.destination.name,
+            fare: widget.fare,
+          );
+          if (res != null && res['id'] != null) {
+            await prefs.setString('active_ride_id', res['id'] as String);
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error creating ride request in DB: $e');

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 
 /// Manages real-time driver position tracking for the passenger.
 class TrackDriverCubit extends Cubit<TrackDriverState> {
@@ -24,6 +26,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   }) async {
     _ticker?.cancel();
 
+    final prefs = await SharedPreferences.getInstance();
+    final activeRideId = prefs.getString('active_ride_id') ?? '';
+
     final routePoints = await _repository.getRoutePolyline(
       startLat: startLat,
       startLng: startLng,
@@ -33,8 +38,54 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
     double progress = 0.0;
 
-    _ticker = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
+    _ticker = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (isClosed) return;
+
+      if (activeRideId.isNotEmpty) {
+        final statusData = await PassengerApiService.getRideStatus(activeRideId);
+        if (statusData != null) {
+          final status = statusData['status'] as String?;
+          if (status == 'completed') {
+            timer.cancel();
+            emit(TrackDriverCompleted());
+            await prefs.remove('active_ride_id');
+            return;
+          }
+
+          progress += 0.05;
+          if (progress >= 1.0) progress = 0.99;
+
+          final pos = _interpolate(
+            progress: progress,
+            routePoints: routePoints,
+            startLat: startLat,
+            startLng: startLng,
+            endLat: endLat,
+            endLng: endLng,
+          );
+
+          String eta = 'Calculating...';
+          if (status == 'accepted') {
+            eta = 'En-route';
+          } else if (status == 'arrived') {
+            eta = 'Arrived';
+          } else if (status == 'in_transit') {
+            eta = 'In-transit';
+          }
+
+          emit(
+            TrackDriverInProgress(
+              driverLat: pos.$1,
+              driverLng: pos.$2,
+              progress: progress,
+              eta: eta,
+              routePoints: routePoints,
+            ),
+          );
+          return;
+        }
+      }
+
       progress += 0.1;
       if (progress >= 1.0) {
         timer.cancel();

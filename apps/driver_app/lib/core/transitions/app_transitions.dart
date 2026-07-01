@@ -1,54 +1,26 @@
-import 'package:flutter/material.dart';
+/// Registry of snappy route transition settings mapping all moves to none.
+library;
+
 import 'package:go_router_modular/go_router_modular.dart';
 
-/**
- * Centralized screen-transition registry for the driver application.
- *
- * Route transitions across the app previously defaulted to GoTransition's
- * 300ms linear curve, which reads as sluggish on modern hardware. This class
- * establishes a single authoritative configuration applied once at app bootstrap
- * via [configure], eliminating per-route timing duplication and ensuring a
- * cohesive, premium navigation feel throughout all driver-facing screens.
- *
- * Transition taxonomy:
- * - [push]  Standard content pushes (ride-detail, earnings, history screens).
- * - [fade]  Shell-tab switches and overlapping views where position is irrelevant.
- * - [modal] Full-screen action sheets and form overlays (slide up from bottom).
- * - [none]  Programmatic route replacements that should appear instant.
- *
- * Usage: call [AppTransitions.configure] before [runApp] in main.dart.
- */
 class AppTransitions {
   AppTransitions._();
 
-  /**
-   * 160ms easeOutCubic: the universal push transition for content navigation.
-   * Short enough to feel instant on fast hardware; long enough to register as
-   * intentional movement rather than a jarring cut.
-   */
-  static const push = GoTransitions.slide;
-
-  /**
-   * 120ms easeOut fade: used for shell-level tab switches where spatial
-   * direction would be misleading (tabs do not have a linear left/right order).
-   */
-  static const fade = GoTransitions.fade;
-
-  /**
-   * 220ms easeOutCubic slide-up: used for form overlays or modal flows that
-   * originate conceptually "from below". Slightly longer than push to
-   * communicate a change in modal depth.
-   */
-  static const modal = GoTransitions.slide;
-
-  /**
-   * Zero-duration invisible transition: used when the router replaces a route
-   * programmatically and any animation would look incorrect (e.g. auth redirect).
-   */
+  static const push = _NoTransition();
+  static const fade = GoTransitions.none;
+  static const modal = _NoTransition();
   static const none = GoTransitions.none;
 
-  /** Duration constants that route declarations import directly. */
-  static const Duration pushDuration = Duration(milliseconds: 160);
-  static const Duration fadeDuration = Duration(milliseconds: 120);
-  static const Duration modalDuration = Duration(milliseconds: 220);
+  static const Duration pushDuration = Duration.zero;
+  static const Duration fadeDuration = Duration.zero;
+  static const Duration modalDuration = Duration.zero;
+}
+
+class _NoTransition {
+  const _NoTransition();
+
+  dynamic get toLeft => GoTransitions.none;
+  dynamic get toRight => GoTransitions.none;
+  dynamic get toTop => GoTransitions.none;
+  dynamic get toBottom => GoTransitions.none;
 }
