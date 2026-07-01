@@ -1,46 +1,54 @@
+import 'dart:async';
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 
-/// Screen showing summary details of a completed trip.
-/// Embeds a real Mapbox map showing static trip origin/destination points.
+/**
+ * Trip details screen for a completed ride.
+ *
+ * Receives a [RideHistoryModel] via GoRouter's `extra` argument.
+ * Renders a live Mapbox map with the route between pickup and drop-off,
+ * fare breakdown, timeline, and a re-book button.
+ *
+ * If `extra` is null (e.g. navigated without a model), the screen shows
+ * a graceful fallback rather than crashing.
+ */
 class ActivityViewDetails extends StatefulWidget {
-  const ActivityViewDetails({super.key});
+  final RideHistoryModel? ride;
+
+  const ActivityViewDetails({super.key, this.ride});
 
   @override
   State<ActivityViewDetails> createState() => _ActivityViewDetailsState();
 }
 
-//TODO: Replace static coordinates with dynamic data from trip details when available.
 class _ActivityViewDetailsState extends State<ActivityViewDetails> {
-  Future _onMapCreated(AppMapController controller) async {
-    // Static coordinates representing Balangasan to Tuburan District, Pagadian City
-    final pickupLat = 7.8340;
-    final pickupLng = 123.4350;
-    final destLat = 7.8250;
-    final destLng = 123.4450;
+  Future<void> _onMapCreated(AppMapController controller) async {
+    final ride = widget.ride;
+    if (ride == null) return;
 
     try {
       await MapProvider.addMarker(
         controller,
-        pickupLat,
-        pickupLng,
+        ride.pickupLat,
+        ride.pickupLng,
         isOrigin: true,
       );
       await MapProvider.addMarker(
         controller,
-        destLat,
-        destLng,
+        ride.destLat,
+        ride.destLng,
         isOrigin: false,
       );
 
       final route = await MapProvider.getRoute(
-        pickupLat,
-        pickupLng,
-        destLat,
-        destLng,
+        ride.pickupLat,
+        ride.pickupLng,
+        ride.destLat,
+        ride.destLng,
       );
       if (route != null) {
         await MapProvider.addPolyline(
@@ -51,20 +59,30 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         );
       }
 
-      await MapProvider.fitBounds(controller, [
-        LatLng(pickupLat, pickupLng),
-        LatLng(destLat, destLng),
-      ], padding: 40.0);
+      await MapProvider.fitBounds(
+        controller,
+        [
+          LatLng(ride.pickupLat, ride.pickupLng),
+          LatLng(ride.destLat, ride.destLng),
+        ],
+        padding: 40.0,
+      );
     } catch (e) {
-      debugPrint('Error setting up details preview map: $e');
+      debugPrint('ActivityViewDetails._onMapCreated failed: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Center initially on general Pagadian center coordinate
-    const centerLat = 7.8300;
-    const centerLng = 123.4400;
+    final ride = widget.ride;
+
+    // Derive map center from ride coords, or fall back to Pagadian City center.
+    final centerLat = ride != null
+        ? (ride.pickupLat + ride.destLat) / 2
+        : 7.8300;
+    final centerLng = ride != null
+        ? (ride.pickupLng + ride.destLng) / 2
+        : 123.4400;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -72,10 +90,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
+          icon: const Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -91,6 +106,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            // — Map preview —
             Container(
               height: 180,
               width: double.infinity,
@@ -111,29 +127,34 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               ),
             ),
             const SizedBox(height: 24),
-            const Row(
+            // — Driver info row —
+            Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 25,
                   backgroundColor: AppTheme.secondaryColor,
                   child: Icon(Icons.person, color: AppTheme.primaryColor),
                 ),
-                SizedBox(width: 15),
+                const SizedBox(width: 15),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Xyrel D. Tenefrancia',
-                        style: TextStyle(
+                        ride?.driverName.isNotEmpty == true
+                            ? ride!.driverName
+                            : 'Driver',
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.primaryColor,
                         ),
                       ),
                       Text(
-                        'Bao Bao',
-                        style: TextStyle(
+                        ride?.vehiclePlate.isNotEmpty == true
+                            ? ride!.vehiclePlate
+                            : '—',
+                        style: const TextStyle(
                           fontSize: 13,
                           color: AppTheme.tertiaryColor,
                         ),
@@ -141,63 +162,22 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                     ],
                   ),
                 ),
-                Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
-                Text(' 4.9', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
+                const Text(
+                  ' —',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Divider(color: AppTheme.outlineBorderColor),
             ),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.outlineBorderColor),
-              ),
-              child: Column(
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    spacing: 10,
-                    children: [
-                      Text(
-                        'Fare Summary',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        '₱32.50',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  _fareRow('Base Fare', '₱5.50'),
-                  _fareRow('Distance', '₱24.80'),
-                  _fareRow('Fees', '₱2.20'),
-                ],
-              ),
-            ),
+            // — Fare summary —
+            _buildFareSummaryCard(ride),
             const SizedBox(height: 24),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Timeline',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                ),
-                const SizedBox(height: 16),
-                _timelineItem('Balangasan', '10:14 AM', true),
-                _timelineItem('Tuburan District', '10:38 AM', false),
-              ],
-            ),
+            // — Timeline —
+            _buildTimeline(ride),
           ],
         ),
       ),
@@ -208,7 +188,15 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                // Navigate to search with the same destination pre-filled.
+                unawaited(context.pushNamed(
+                  'SearchDestination',
+                  queryParameters: ride != null
+                      ? {'destination': ride.destination}
+                      : {},
+                ));
+              },
               icon: const Icon(Icons.refresh),
               label: const Text(
                 'Book this route again',
@@ -225,6 +213,77 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFareSummaryCard(RideHistoryModel? ride) {
+    // Parse the stored price string back to a double for breakdown calculation.
+    double total = 0;
+    if (ride != null) {
+      final cleaned = ride.price.replaceAll(RegExp(r'[₱,]'), '').trim();
+      total = double.tryParse(cleaned) ?? 0;
+    }
+    final base = (total * 0.17).clamp(0.0, double.infinity);
+    final distance = (total * 0.76).clamp(0.0, double.infinity);
+    final fees = (total - base - distance).clamp(0.0, double.infinity);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.outlineBorderColor),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Fare Summary',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                ride?.price ?? '—',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          _fareRow('Base Fare', '₱${base.toStringAsFixed(2)}'),
+          _fareRow('Distance', '₱${distance.toStringAsFixed(2)}'),
+          _fareRow('Fees', '₱${fees.toStringAsFixed(2)}'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeline(RideHistoryModel? ride) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Timeline',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        ),
+        const SizedBox(height: 16),
+        _timelineItem(
+          ride?.pickup ?? 'Pickup',
+          ride?.date ?? '',
+          true,
+        ),
+        _timelineItem(
+          ride?.destination ?? 'Destination',
+          '',
+          false,
+        ),
+      ],
     );
   }
 
@@ -256,11 +315,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               color: AppTheme.primaryColor,
             ),
             if (isTop)
-              Container(
-                width: 2,
-                height: 30,
-                color: AppTheme.outlineBorderColor,
-              ),
+              Container(width: 2, height: 30, color: AppTheme.outlineBorderColor),
           ],
         ),
         const SizedBox(width: 15),
@@ -268,13 +323,14 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(loc, style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text(
-              time,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.unselectedItemColor,
+            if (time.isNotEmpty)
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.unselectedItemColor,
+                ),
               ),
-            ),
           ],
         ),
       ],

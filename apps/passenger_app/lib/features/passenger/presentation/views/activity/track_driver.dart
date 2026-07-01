@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -10,7 +11,11 @@ import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 
 class AcitivityTrackDriver extends StatefulWidget {
-  const AcitivityTrackDriver({super.key});
+  /// The ride being tracked. When provided, driver name and plate are
+  /// rendered dynamically from server data instead of placeholder text.
+  final RideHistoryModel? ride;
+
+  const AcitivityTrackDriver({super.key, this.ride});
 
   @override
   State<AcitivityTrackDriver> createState() => _AcitivityTrackDriverState();
@@ -327,21 +332,23 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                           ),
                         ),
                         const SizedBox(width: 14),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Xyrel D. Tenefrancia',
-                                style: TextStyle(
+                                widget.ride?.driverName.isNotEmpty == true
+                                    ? widget.ride!.driverName
+                                    : 'Driver',
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
                                   color: AppTheme.primaryColor,
                                 ),
                               ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Bao Bao  •  ★ 4.9',
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Bao Bao  •  ★ —',
                                 style: TextStyle(
                                   color: AppTheme.tertiaryColor,
                                   fontSize: 13,
@@ -361,9 +368,11 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.borderSide),
                           ),
-                          child: const Text(
-                            'ABC 1234',
-                            style: TextStyle(
+                          child: Text(
+                            widget.ride?.vehiclePlate.isNotEmpty == true
+                                ? widget.ride!.vehiclePlate
+                                : '—',
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: AppTheme.primaryColor,

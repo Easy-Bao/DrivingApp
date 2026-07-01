@@ -1,4 +1,7 @@
 /// Passenger Account Screen: displays account settings, support information, and handles logging out.
+library;
+import 'dart:async';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -13,21 +16,51 @@ class PassengerAccountScreen extends StatefulWidget {
 }
 
 class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
-  String _name = 'Xyrel Tenefrancia';
-  String _phone = '+63 912 345 6789';
+  String _name = '';
+  String _phone = '';
+  String _email = '';
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    unawaited(_loadProfile());
   }
 
+  /// Loads passenger profile from SharedPreferences first for instant display,
+  /// then refreshes from the backend and caches the latest values.
   Future<void> _loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _name = prefs.getString('passenger_name') ?? 'Xyrel Tenefrancia';
-      _phone = prefs.getString('passenger_phone') ?? '+63 912 345 6789';
-    });
+    // Render cached values immediately (fast first paint).
+    if (mounted) {
+      setState(() {
+        _name = prefs.getString('passenger_name') ?? '';
+        _phone = prefs.getString('passenger_phone') ?? '';
+        _email = prefs.getString('passenger_email') ?? '';
+      });
+    }
+
+    // Sync from server and update cache.
+    final passengerId = prefs.getString('passenger_id') ?? '';
+    if (passengerId.isEmpty) return;
+
+    final profile = await PassengerApiService.getPassengerProfile(passengerId);
+    if (profile == null || !mounted) return;
+
+    final name = profile['name'] as String? ?? _name;
+    final phone = profile['phone'] as String? ?? _phone;
+    final email = profile['email'] as String? ?? _email;
+
+    await prefs.setString('passenger_name', name);
+    await prefs.setString('passenger_phone', phone);
+    await prefs.setString('passenger_email', email);
+
+    if (mounted) {
+      setState(() {
+        _name = name;
+        _phone = phone;
+        _email = email;
+      });
+    }
   }
 
   @override
@@ -78,7 +111,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                 'Update name and details',
                 () async {
                   await context.pushNamed('ProfileInfo');
-                  _loadProfile();
+                  unawaited(_loadProfile());
                 },
               ),
               const SizedBox(height: 32),
@@ -127,7 +160,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _name,
+            _name.isNotEmpty ? _name : '—',
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -136,13 +169,25 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            _phone,
+            _phone.isNotEmpty ? _phone : '—',
             style: TextStyle(
               fontSize: 14,
               color: AppTheme.primaryColor.withValues(alpha: 0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
+          if (_email.isNotEmpty) ...
+            [
+              const SizedBox(height: 2),
+              Text(
+                _email,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.45),
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
         ],
       ),
     );

@@ -1,7 +1,6 @@
 /// Passenger API Service: manages server communication for authentication, OTP verification, ride requests, and profile updates.
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passenger_app/core/config/env_config.dart';
 
 class PassengerApiService {
@@ -136,5 +135,23 @@ class PassengerApiService {
       body: jsonEncode({'status': status}),
     );
     return response.statusCode == 200;
+  }
+
+  /// Fetches the authenticated passenger's profile by [passengerId].
+  /// Returns the raw JSON map from `GET /passengers/:id`, or `null` on failure.
+  static Future<Map<String, dynamic>?> getPassengerProfile(
+    String passengerId,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/passengers/$passengerId'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 }

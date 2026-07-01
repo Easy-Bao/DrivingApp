@@ -1,6 +1,15 @@
-import 'package:passenger_app/core/themes/app_themes.dart';
+/// Passenger Activity Screen: displays past and upcoming rides loaded live from
+/// the passenger-service backend, split across two tabs.
+library;
+import 'dart:async';
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/di/service_locator.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/activity/activity_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerActivityScreen extends StatefulWidget {
   const PassengerActivityScreen({super.key});
@@ -13,133 +22,139 @@ class PassengerActivityScreen extends StatefulWidget {
 class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late ActivityBloc _bloc;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      setState(() {});
-    });
+    _tabController = TabController(length: 2, vsync: this)
+      ..addListener(() => setState(() {}));
+
+    // Obtain a fresh ActivityBloc from GetIt and immediately trigger a load.
+    _bloc = getIt<ActivityBloc>();
+    unawaited(_loadActivity());
+  }
+
+  Future<void> _loadActivity() async {
+    final prefs = await SharedPreferences.getInstance();
+    final passengerId = prefs.getString('passenger_id') ?? '';
+    if (passengerId.isNotEmpty) {
+      _bloc.add(LoadActivityEvent(passengerId: passengerId));
+    } else {
+      // No logged-in user — emit an empty loaded state.
+      _bloc.add(LoadActivityEvent(passengerId: ''));
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    unawaited(_bloc.close());
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppTheme.surface,
-        title: const Text(
-          'Activity',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.primaryColor,
-            letterSpacing: -1.5,
+    return BlocProvider<ActivityBloc>.value(
+      value: _bloc,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppTheme.surface,
+          title: const Text(
+            'Activity',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryColor,
+              letterSpacing: -1.5,
+            ),
           ),
         ),
-      ),
-      backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                height: 54,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppTheme.outlineBorderColor,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  dividerColor: Colors.transparent,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  indicator: BoxDecoration(
-                    color: AppTheme.neutralColor,
-                    borderRadius: BorderRadius.circular(26),
-                  ),
-                  labelColor: AppTheme.selectedItemColor,
-                  unselectedLabelColor: AppTheme.unselectedItemColor,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-                  tabs: const [
-                    Tab(text: 'Past'),
-                    Tab(text: 'Upcoming'),
-                  ],
+        backgroundColor: AppTheme.surface,
+        body: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              _buildTabBar(),
+              const SizedBox(height: 16),
+              Expanded(
+                child: BlocBuilder<ActivityBloc, ActivityState>(
+                  builder: (context, state) {
+                    if (state is ActivityLoading) {
+                      return _buildLoadingList();
+                    }
+                    if (state is ActivityError) {
+                      return _buildErrorState(state.message);
+                    }
+                    if (state is ActivityLoaded) {
+                      return TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildRideList(state.past, isPast: true),
+                          _buildRideList(state.upcoming, isPast: false),
+                        ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _buildActivityCard(
-                        date: 'OCT 24, 08:30 AM',
-                        pickup: 'Brgy. Balangasan',
-                        destination: 'Robinson Supermarket',
-                        price: '₱32.50',
-                        status: 'COMPLETED',
-                        statusType: 'completed',
-                      ),
-                      _buildActivityCard(
-                        date: 'OCT 24, 08:30 AM',
-                        pickup: 'San Francisco St.',
-                        destination: 'Pagadian City Science High School',
-                        price: '₱32.50',
-                        status: 'CANCELED',
-                        statusType: 'canceled',
-                      ),
-                    ],
-                  ),
-                  ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _buildActivityCard(
-                        date: 'OCT 25, 10:00 AM',
-                        pickup: 'Balangasan',
-                        destination: 'Tuburan District',
-                        price: '₱45.00',
-                        status: 'IN PROGRESS',
-                        statusType: 'progress',
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildActivityCard({
-    required String date,
-    required String pickup,
-    required String destination,
-    required String price,
-    required String status,
-    required String statusType,
-  }) {
-    Color getStatusBg() {
-      if (statusType == 'completed') {
-        return AppTheme.complete.withValues(alpha: 0.5);
-      }
-      if (statusType == 'progress') return AppTheme.inProgress;
-      return AppTheme.cancel;
-    }
+  Widget _buildTabBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        height: 54,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppTheme.outlineBorderColor,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: TabBar(
+          controller: _tabController,
+          dividerColor: Colors.transparent,
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicator: BoxDecoration(
+            color: AppTheme.neutralColor,
+            borderRadius: BorderRadius.circular(26),
+          ),
+          labelColor: AppTheme.selectedItemColor,
+          unselectedLabelColor: AppTheme.unselectedItemColor,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+          tabs: const [Tab(text: 'Past'), Tab(text: 'Upcoming')],
+        ),
+      ),
+    );
+  }
 
-    Color getStatusText() {
-      if (statusType == 'canceled') return AppTheme.surface;
-      if (statusType == 'progress') return AppTheme.surface;
-      return AppTheme.surface;
+  Widget _buildRideList(List<RideHistoryModel> rides, {required bool isPast}) {
+    if (rides.isEmpty) {
+      return _buildEmptyState(
+        isPast ? 'No past rides yet' : 'No upcoming rides',
+        isPast
+            ? 'Your completed and canceled trips will appear here.'
+            : 'Active and scheduled trips will appear here.',
+      );
     }
+    return RefreshIndicator(
+      color: AppTheme.primaryColor,
+      onRefresh: _loadActivity,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: rides.length,
+        itemBuilder: (context, index) => _buildActivityCard(rides[index]),
+      ),
+    );
+  }
 
+  Widget _buildActivityCard(RideHistoryModel ride) {
+    final statusType = _resolveStatusType(ride.status);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
@@ -151,38 +166,23 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // — Header row: date + status badge —
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                date,
+                ride.date,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.unselectedItemColor,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: getStatusBg(),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: getStatusText(),
-                  ),
-                ),
-              ),
+              _buildStatusBadge(ride.status, statusType),
             ],
           ),
           const SizedBox(height: 12),
+          // — Route visualization: pickup → destination —
           Row(
             children: [
               Column(
@@ -213,7 +213,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      pickup,
+                      ride.pickup,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -222,7 +222,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      destination,
+                      ride.destination,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -233,7 +233,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                 ),
               ),
               Text(
-                price,
+                ride.price,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -242,10 +242,11 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: AppTheme.borderSide),
           ),
+          // — Footer: vehicle icon + action button —
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -255,25 +256,15 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
                 color: AppTheme.primaryColor,
               ),
               TextButton(
-                onPressed: () {
-                  switch (statusType) {
-                    case 'progress':
-                      context.pushNamed('ActivityTrackDriver');
-                    case 'completed':
-                      context.pushNamed('ActivityViewDetails');
-                    default:
-                      context.pushNamed('SearchDestination');
-                  }
-                },
+                onPressed: () => _onCardAction(statusType, ride),
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                   minimumSize: const Size(0, 0),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  statusType == 'progress'
-                      ? 'Track Driver'
-                      : (statusType == 'completed' ? 'View Details' : 'Rebook'),
+                  _actionLabel(statusType),
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryColor,
@@ -285,5 +276,176 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
         ],
       ),
     );
+  }
+
+  Widget _buildStatusBadge(String status, String statusType) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: _statusBgColor(statusType),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        status.toUpperCase().replaceAll('_', ' '),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: _statusTextColor(statusType),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingList() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: 4,
+      itemBuilder: (_, __) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        height: 160,
+        decoration: BoxDecoration(
+          color: AppTheme.neutralColor,
+          borderRadius: BorderRadius.circular(24),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String title, String subtitle) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 48,
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryColor.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.primaryColor.withValues(alpha: 0.35),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.wifi_off_rounded,
+              size: 48,
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Could not load activity',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryColor.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton.icon(
+              onPressed: _loadActivity,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  /// Maps server status string to a normalized display type.
+  String _resolveStatusType(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'completed';
+      case 'canceled':
+      case 'cancelled':
+        return 'canceled';
+      case 'in_progress':
+        return 'progress';
+      case 'accepted':
+        return 'accepted';
+      default:
+        return 'requested';
+    }
+  }
+
+  Color _statusBgColor(String statusType) {
+    switch (statusType) {
+      case 'completed':
+        return AppTheme.complete.withValues(alpha: 0.5);
+      case 'progress':
+      case 'accepted':
+        return AppTheme.inProgress;
+      default:
+        return AppTheme.cancel;
+    }
+  }
+
+  Color _statusTextColor(String statusType) => AppTheme.surface;
+
+  String _actionLabel(String statusType) {
+    switch (statusType) {
+      case 'progress':
+      case 'accepted':
+        return 'Track Driver';
+      case 'completed':
+        return 'View Details';
+      default:
+        return 'Rebook';
+    }
+  }
+
+  void _onCardAction(String statusType, RideHistoryModel ride) {
+    switch (statusType) {
+      case 'progress':
+      case 'accepted':
+        unawaited(context.pushNamed('ActivityTrackDriver', extra: ride));
+      case 'completed':
+        unawaited(context.pushNamed('ActivityViewDetails', extra: ride));
+      default:
+        unawaited(context.pushNamed('SearchDestination'));
+    }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/driver_chat_screen.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/track_driver.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/view_details.dart';
@@ -13,14 +14,24 @@ class ActivityModule {
     ChildRoute(
       name: 'ActivityViewDetails',
       'activity/viewDetails',
-      child: (context, GoRouterState state) => const ActivityViewDetails(),
+      child: (context, GoRouterState state) {
+        final ride = state.extra is RideHistoryModel
+            ? state.extra as RideHistoryModel
+            : null;
+        return ActivityViewDetails(ride: ride);
+      },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: 'ActivityTrackDriver',
       'activity/trackDriver',
-      child: (context, GoRouterState state) => const AcitivityTrackDriver(),
+      child: (context, GoRouterState state) {
+        final ride = state.extra is RideHistoryModel
+            ? state.extra as RideHistoryModel
+            : null;
+        return AcitivityTrackDriver(ride: ride);
+      },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -50,3 +61,4 @@ class ActivityModule {
     ),
   ];
 }
+
