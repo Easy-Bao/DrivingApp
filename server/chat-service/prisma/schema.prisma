@@ -1,0 +1,30 @@
+/// Chat service schema defining passenger/driver chat rooms and message logs in chat_db.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Room {
+  id          String    @id @db.VarChar(255)
+  driverId    String    @map("driver_id")
+  passengerId String    @map("passenger_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  messages    Message[]
+
+  @@map("rooms")
+}
+
+model Message {
+  id        String   @id @default(uuid()) @db.Uuid
+  roomId    String   @map("room_id") @db.VarChar(255)
+  senderId  String   @map("sender_id")
+  message   String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}

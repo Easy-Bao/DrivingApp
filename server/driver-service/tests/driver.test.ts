@@ -1,8 +1,17 @@
 /// Driver service unit tests: verifies signup, login, online toggle, and active ride proxy endpoints.
 import { expect, test, describe, beforeAll } from 'bun:test';
 import driverApp from '../src/index.ts';
+import { prisma } from '../src/db.ts';
 
 let driverId = '';
+
+beforeAll(async () => {
+  try {
+    await prisma.driver.deleteMany();
+  } catch (e) {
+    console.error('Failed to clean driver database:', e);
+  }
+});
 
 describe('Driver Service', () => {
   test('POST /drivers/signup — registers a new driver', async () => {
@@ -12,11 +21,11 @@ describe('Driver Service', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: 'Test Driver',
-          email: `driver_${Date.now()}@test.com`,
+          email: 'driver@test.com',
           phone: '09111111111',
           vehicleType: 'Bao Bao',
           plateNumber: 'XYZ 9999',
-          password: 'driverpass123',
+          password: '@Democrito111',
         }),
       })
     );
