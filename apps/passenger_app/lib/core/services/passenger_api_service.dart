@@ -1,4 +1,6 @@
 /// Passenger API Service: manages server communication for authentication, OTP verification, ride requests, and profile updates.
+library;
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:passenger_app/core/config/env_config.dart';
@@ -151,8 +153,6 @@ class PassengerApiService {
     return response.statusCode == 200;
   }
 
-  /// Fetches the authenticated passenger's profile by [passengerId].
-  /// Returns the raw JSON map from `GET /passengers/:id`, or `null` on failure.
   static Future<Map<String, dynamic>?> getPassengerProfile(
     String passengerId,
   ) async {
@@ -169,9 +169,6 @@ class PassengerApiService {
     }
   }
 
-  /**
-   * Stateless fare estimate calculation from bidding-service via POST /bids/fare.
-   */
   static Future<Map<String, dynamic>?> fetchFareEstimate({
     required String rideType,
     required double distanceKm,
@@ -196,9 +193,6 @@ class PassengerApiService {
     }
   }
 
-  /**
-   * Opens a bidding session for a ride request via POST /bids.
-   */
   static Future<Map<String, dynamic>?> openBidSession({
     required String passengerId,
     required String rideType,
@@ -237,9 +231,6 @@ class PassengerApiService {
     }
   }
 
-  /**
-   * Polls pending driver offers for a bid session via GET /bids/:id/offers.
-   */
   static Future<List<dynamic>> pollBidOffers(String sessionId) async {
     try {
       final response = await http.get(
@@ -254,9 +245,6 @@ class PassengerApiService {
     }
   }
 
-  /**
-   * Passenger accepts a specific driver offer via POST /bids/:id/accept.
-   */
   static Future<Map<String, dynamic>?> acceptBidOffer({
     required String sessionId,
     required String offerId,
@@ -278,9 +266,6 @@ class PassengerApiService {
     }
   }
 
-  /**
-   * Passenger cancels an active bidding session via DELETE /bids/:id.
-   */
   static Future<bool> cancelBidSession(String sessionId) async {
     try {
       final response = await http.delete(
@@ -292,9 +277,6 @@ class PassengerApiService {
     }
   }
 
-  /**
-   * Gets bid session status via GET /bids/:id.
-   */
   static Future<Map<String, dynamic>?> getBidSession(String sessionId) async {
     try {
       final response = await http.get(
@@ -306,6 +288,20 @@ class PassengerApiService {
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  static Future<List<dynamic>> fetchOnlineDrivers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/drivers/online'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      return [];
+    } catch (_) {
+      return [];
     }
   }
 }

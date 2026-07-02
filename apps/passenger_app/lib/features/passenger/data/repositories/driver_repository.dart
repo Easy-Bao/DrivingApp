@@ -1,18 +1,19 @@
+/// Driver Repository implementation: manages driver discovery and ranks nearby drivers using real-time backend updates.
+library;
+
 import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
 import 'package:fixtures/fixtures.dart';
+import 'package:flutter/foundation.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 
-/**
- * Fixture-backed implementation of [DriverRepository].
- * Resolves nearby drivers using static mock assets.
- */
 class FixtureDriverRepository implements DriverRepository {
   @override
   Future<List<DriverModel>> getNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
-    await Future.delayed(const Duration(seconds: 2)); 
+    await Future.delayed(const Duration(seconds: 2));
     final rawDrivers = MockData.getNearbyDrivers(lat: lat, lng: lng);
     return rawDrivers
         .map(
@@ -33,10 +34,6 @@ class FixtureDriverRepository implements DriverRepository {
   }
 }
 
-/**
- * Dart concrete implementation of [DriverRepository].
- * Delegates matching calculations to the shared [DriverMatchingService].
- */
 class LocalDriverRepository implements DriverRepository {
   @override
   Future<List<DriverModel>> getNearbyDrivers({
@@ -51,24 +48,46 @@ class LocalDriverRepository implements DriverRepository {
   }
 }
 
-//TODO: Implement the real API repository once backend endpoints are ready and integrated.
-
-/**
- * API-backed implementation of [DriverRepository].
- * Designed to interact directly with backend server endpoints.
- */
-// ignore: unused_element — will be used when backend is integrated
-class _ApiDriverRepository implements DriverRepository {
-  // final HttpClient _httpClient;
-  // _ApiDriverRepository(this._httpClient);
-
+class ApiDriverRepository implements DriverRepository {
   @override
   Future<List<DriverModel>> getNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
-    // final response = await _httpClient.get('/passenger/drivers/nearby?lat=$lat&lng=$lng');
-    // return (response.data['drivers'] as List).map(DriverModel.fromJson).toList();
-    throw UnimplementedError('Backend not yet integrated');
+    try {
+      final rawList = await PassengerApiService.fetchOnlineDrivers();
+      final List<DriverModel> drivers = [];
+      for (final d in rawList) {
+        final driverLat = (d['lat'] as num?)?.toDouble() ?? 0.0;
+        final driverLng = (d['lng'] as num?)?.toDouble() ?? 0.0;
+        final actualDist = MapNativeServiceImpl.calculateHaversine(
+          lat,
+          lng,
+          driverLat,
+          driverLng,
+        );
+        if (actualDist > 5.0) continue;
+        final double etaMinutes = (actualDist / 20.0 * 60.0).clamp(1.0, 30.0);
+        final rating = (d['rating'] as num?)?.toDouble() ?? 5.0;
+        final double score = (0.5 * actualDist) + (0.3 * (5.0 - rating)) + (0.2 * etaMinutes);
+        drivers.add(DriverModel(
+          id: d['id'] as String? ?? '',
+          name: d['name'] as String? ?? 'Driver',
+          vehicleType: d['vehicleType'] as String? ?? 'Bao Bao',
+          plateNumber: d['plateNumber'] as String? ?? 'Unknown',
+          rating: rating,
+          lat: driverLat,
+          lng: driverLng,
+          distanceKm: actualDist,
+          etaMinutes: etaMinutes,
+          score: score,
+        ));
+      }
+      drivers.sort((a, b) => a.score.compareTo(b.score));
+      return drivers.take(5).toList();
+    } catch (e) {
+      debugPrint('ApiDriverRepository.getNearbyDrivers failed: $e');
+      return [];
+    }
   }
 }
