@@ -4,6 +4,9 @@ import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Driver has arrived at pickup and is waiting for the passenger to board.
 class WaitingPassengerScreen extends StatefulWidget {
@@ -234,6 +237,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             'Call',
             AppTheme.primaryColor,
             Colors.white,
+            onTap: () {},
           ),
         ),
         const SizedBox(width: 12),
@@ -243,6 +247,21 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             'Chat',
             AppTheme.neutralColor,
             AppTheme.primaryColor,
+            onTap: () async {
+              final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
+              final prefs = await SharedPreferences.getInstance();
+              final driverId = prefs.getString('driver_id') ?? '';
+              if (mounted) {
+                context.pushNamed(
+                  'DriverChat',
+                  extra: {
+                    'roomId': rideId,
+                    'userId': driverId,
+                    'peerName': 'Juan D. Cruz',
+                  },
+                );
+              }
+            },
           ),
         ),
       ],
@@ -313,14 +332,9 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     );
   }
 
-  Widget _btn(IconData icon, String label, Color bg, Color fg) {
+  Widget _btn(IconData icon, String label, Color bg, Color fg, {required VoidCallback onTap}) {
     return GestureDetector(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${label}ing passenger...'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      ),
+      onTap: onTap,
       child: Container(
         height: 46,
         decoration: BoxDecoration(

@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/core/config/env_config.dart';
+import 'package:driver_app/core/themes/app_themes.dart';
+import 'package:driver_app/core/config/env_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -11,14 +11,12 @@ import 'package:go_router_modular/go_router_modular.dart';
 class DriverChatScreen extends StatefulWidget {
   final String? roomId;
   final String? userId;
-  final String? token;
   final String? peerName;
 
   const DriverChatScreen({
     super.key,
     this.roomId,
     this.userId,
-    this.token,
     this.peerName,
   });
 
@@ -32,7 +30,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   final ScrollController _scrollCtrl = ScrollController();
   final List<_Msg> _msgs = [];
   late AnimationController _typingCtrl;
-  bool _driverTyping = false;
+  bool _passengerTyping = false;
   WebSocket? _socket;
   bool _isConnected = false;
 
@@ -56,14 +54,13 @@ class _DriverChatScreenState extends State<DriverChatScreen>
 
   Future<void> _connectWebSocket() async {
     final rId = widget.roomId ?? 'test-room-123';
-    final uId = widget.userId ?? 'passenger-id-xyz';
-    final tok = widget.token ?? '';
+    final uId = widget.userId ?? 'driver-id-abc';
 
-    final serviceUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8081';
-    final gatewayUrl = serviceUrl.replaceAll('8081', '8080');
+    final serviceUrl = EnvConfig.driverServiceUrl;
+    final gatewayUrl = serviceUrl.replaceAll('8082', '8080');
     final wsScheme = gatewayUrl.startsWith('https') ? 'wss://' : 'ws://';
     final hostPort = gatewayUrl.replaceAll('https://', '').replaceAll('http://', '');
-    final wsUrl = '$wsScheme$hostPort/chat/ws?roomId=$rId&userId=$uId&token=$tok';
+    final wsUrl = '$wsScheme$hostPort/chat/ws?roomId=$rId&userId=$uId';
 
     try {
       final socket = await WebSocket.connect(wsUrl);
@@ -82,11 +79,11 @@ class _DriverChatScreenState extends State<DriverChatScreen>
             setState(() {
               _msgs.clear();
               for (final m in list) {
-                final isDriver = m['senderId'] != uId;
+                final isPassenger = m['senderId'] != uId;
                 _msgs.add(
                   _Msg(
                     m['text'] as String,
-                    isDriver,
+                    isPassenger,
                     DateTime.parse(m['createdAt'] as String).toLocal(),
                   ),
                 );
@@ -94,12 +91,12 @@ class _DriverChatScreenState extends State<DriverChatScreen>
             });
             _scrollDown();
           } else if (data['type'] == 'message') {
-            final isDriver = data['senderId'] != uId;
+            final isPassenger = data['senderId'] != uId;
             setState(() {
               _msgs.add(
                 _Msg(
                   data['text'] as String,
-                  isDriver,
+                  isPassenger,
                   DateTime.parse(data['createdAt'] as String).toLocal(),
                 ),
               );
@@ -193,7 +190,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.peerName ?? 'Driver',
+                  widget.peerName ?? 'Passenger',
                   style: const TextStyle(
                     color: AppTheme.primaryColor,
                     fontWeight: FontWeight.w800,
@@ -234,9 +231,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               controller: _scrollCtrl,
               padding: const EdgeInsets.all(16),
               physics: const BouncingScrollPhysics(),
-              itemCount: _msgs.length + (_driverTyping ? 1 : 0),
+              itemCount: _msgs.length + (_passengerTyping ? 1 : 0),
               itemBuilder: (ctx, i) {
-                if (i == _msgs.length && _driverTyping) return _buildTyping();
+                if (i == _msgs.length && _passengerTyping) return _buildTyping();
                 return _buildBubble(_msgs[i]);
               },
             ),
@@ -343,7 +340,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   }
 
   Widget _buildBubble(_Msg m) {
-    final isMe = !m.isDriver;
+    final isMe = !m.isPassenger;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -487,7 +484,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
 
 class _Msg {
   final String text;
-  final bool isDriver;
+  final bool isPassenger;
   final DateTime time;
-  _Msg(this.text, this.isDriver, this.time);
+  _Msg(this.text, this.isPassenger, this.time);
 }

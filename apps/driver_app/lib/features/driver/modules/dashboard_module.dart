@@ -1,3 +1,4 @@
+import 'package:driver_app/features/driver/presentation/views/dashboard/driver_chat_screen.dart';
 import 'dart:async';
 
 import 'package:driver_app/core/di/service_locator.dart';
@@ -21,6 +22,20 @@ class DashboardModule {
       ),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
+    ),
+    ChildRoute(
+      name: 'DriverChat',
+      'dashboard/driver-chat',
+      child: (context, GoRouterState state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return DriverChatScreen(
+          roomId: extra?['roomId'] as String?,
+          userId: extra?['userId'] as String?,
+          peerName: extra?['peerName'] as String?,
+        );
+      },
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
   ];
 

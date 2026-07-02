@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
@@ -424,6 +425,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               'Call',
               AppTheme.primaryColor,
               Colors.white,
+              onTap: () {},
             ),
           ),
           const SizedBox(width: 12),
@@ -433,6 +435,21 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               'Chat',
               AppTheme.neutralColor,
               AppTheme.primaryColor,
+              onTap: () async {
+                final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
+                final prefs = await SharedPreferences.getInstance();
+                final driverId = prefs.getString('driver_id') ?? '';
+                if (mounted) {
+                  context.pushNamed(
+                    'DriverChat',
+                    extra: {
+                      'roomId': rideId,
+                      'userId': driverId,
+                      'peerName': 'Juan D. Cruz',
+                    },
+                  );
+                }
+              },
             ),
           ),
         ],
@@ -440,9 +457,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
     );
   }
 
-  Widget _actionBtn(IconData icon, String label, Color bg, Color fg) {
+  Widget _actionBtn(IconData icon, String label, Color bg, Color fg, {required VoidCallback onTap}) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap,
       child: Container(
         height: 46,
         decoration: BoxDecoration(

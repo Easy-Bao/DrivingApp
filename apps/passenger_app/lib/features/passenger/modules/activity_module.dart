@@ -38,7 +38,15 @@ class ActivityModule {
     ChildRoute(
       name: 'DriverChat',
       'activity/driver-chat',
-      child: (context, GoRouterState state) => const DriverChatScreen(),
+      child: (context, GoRouterState state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return DriverChatScreen(
+          roomId: extra?['roomId'] as String?,
+          userId: extra?['userId'] as String?,
+          token: extra?['token'] as String?,
+          peerName: extra?['peerName'] as String?,
+        );
+      },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
