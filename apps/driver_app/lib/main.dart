@@ -1,4 +1,6 @@
-/// Driver app main entrypoint configuring dependency injection and routing without custom transitions.
+/// Driver app main entrypoint configuring dependency injection and routing.
+library;
+
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
 import 'package:driver_app/core/config/env_config.dart';

@@ -1,7 +1,7 @@
 import 'package:core_models/core_models.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Manages the driver-search lifecycle for the passenger.
 class FindingDriverBloc extends Bloc<FindingDriverEvent, FindingDriverState> {
@@ -13,6 +13,14 @@ class FindingDriverBloc extends Bloc<FindingDriverEvent, FindingDriverState> {
     on<SearchDriversEvent>(_onSearchDrivers);
     on<SelectDriverEvent>(_onSelectDriver);
     on<CancelSearchEvent>(_onCancelSearch);
+  }
+
+  /// Passenger canceled the search.
+  void _onCancelSearch(
+    CancelSearchEvent event,
+    Emitter<FindingDriverState> emit,
+  ) {
+    emit(FindingDriverCanceled());
   }
 
   /// Triggers a radar scan — emits [FindingDriverSearching], then [FindingDriverResults].
@@ -28,7 +36,7 @@ class FindingDriverBloc extends Bloc<FindingDriverEvent, FindingDriverState> {
       );
       emit(FindingDriverResults(drivers: drivers));
     } catch (_) {
-      emit(FindingDriverResults(drivers: []));
+      emit(const FindingDriverResults(drivers: []));
     }
   }
 
@@ -38,13 +46,5 @@ class FindingDriverBloc extends Bloc<FindingDriverEvent, FindingDriverState> {
     Emitter<FindingDriverState> emit,
   ) {
     emit(FindingDriverSelected(selectedDriver: event.driver));
-  }
-
-  /// Passenger canceled the search.
-  void _onCancelSearch(
-    CancelSearchEvent event,
-    Emitter<FindingDriverState> emit,
-  ) {
-    emit(FindingDriverCanceled());
   }
 }

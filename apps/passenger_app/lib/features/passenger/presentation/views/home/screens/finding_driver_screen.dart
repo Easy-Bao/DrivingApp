@@ -81,8 +81,12 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
       final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
       final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
 
-      final distanceNum = double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 1.0;
-      final durationNum = double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 5.0;
+      final distanceNum =
+          double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+          1.0;
+      final durationNum =
+          double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+          5.0;
 
       final result = await PassengerApiService.openBidSession(
         passengerId: passengerId,
@@ -233,10 +237,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
             ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: GestureDetector(
                 onTap: _handleCancel,
                 child: Container(
@@ -275,9 +276,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(32),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -319,9 +318,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
             'Looking for ${widget.rideType} drivers nearby...',
             style: TextStyle(
               fontSize: 14,
-              color: AppTheme.primaryColor.withValues(
-                alpha: 0.5,
-              ),
+              color: AppTheme.primaryColor.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 20),
@@ -402,9 +399,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(32),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -449,22 +444,25 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
               itemBuilder: (context, index) {
                 final offer = _offers[index];
                 final driverName = offer['driver_name'] as String? ?? 'Driver';
-                final vehicleType = offer['vehicle_type'] as String? ?? 'Bao Bao';
-                final plateNumber = offer['plate_number'] as String? ?? 'Unknown';
-                final proposedFare = (offer['proposed_fare'] as num?)?.toDouble() ?? widget.fare;
+                final vehicleType =
+                    offer['vehicle_type'] as String? ?? 'Bao Bao';
+                final plateNumber =
+                    offer['plate_number'] as String? ?? 'Unknown';
+                final proposedFare =
+                    (offer['proposed_fare'] as num?)?.toDouble() ?? widget.fare;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
                     color: AppTheme.neutralColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppTheme.borderSide,
-                    ),
+                    border: Border.all(color: AppTheme.borderSide),
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      backgroundColor: AppTheme.primaryColor.withValues(
+                        alpha: 0.1,
+                      ),
                       child: const Icon(
                         LucideIcons.user,
                         color: AppTheme.primaryColor,
@@ -494,7 +492,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Accept Bid',
                           style: TextStyle(
                             fontSize: 11,
@@ -505,15 +503,21 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                       ],
                     ),
                     onTap: () async {
-                      final acceptResult = await PassengerApiService.acceptBidOffer(
-                        sessionId: _sessionId!,
-                        offerId: offer['id'] as String,
-                      );
-                      if (acceptResult != null && acceptResult['ride_id'] != null) {
+                      final acceptResult =
+                          await PassengerApiService.acceptBidOffer(
+                            sessionId: _sessionId!,
+                            offerId: offer['id'] as String,
+                          );
+                      if (acceptResult != null &&
+                          acceptResult['ride_id'] != null) {
                         _pollTimer?.cancel();
-                        final committedRideId = acceptResult['ride_id'] as String;
+                        final committedRideId =
+                            acceptResult['ride_id'] as String;
                         final prefs = await SharedPreferences.getInstance();
-                        await prefs.setString('active_ride_id', committedRideId);
+                        await prefs.setString(
+                          'active_ride_id',
+                          committedRideId,
+                        );
 
                         if (mounted) {
                           context.pushReplacementNamed(

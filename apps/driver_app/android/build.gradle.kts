@@ -1,4 +1,4 @@
-/// Android build configurations mapping build caches and Mapbox Maven releases.
+/// Passenger app root Android build configuration: maps build caching and Mapbox Maven releases.
 allprojects {
     repositories {
         google()

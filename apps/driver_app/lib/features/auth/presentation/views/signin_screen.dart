@@ -1,3 +1,6 @@
+/// Driver sign-in screen: manages authentication inputs, credentials validation, and error states.
+library;
+
 import 'dart:async';
 import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
@@ -14,15 +17,39 @@ class SigninScreen extends StatefulWidget {
 }
 
 class _SigninScreenState extends State<SigninScreen> {
-  final TextEditingController _emailController = .new();
-  final TextEditingController _passwordController = .new();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
   bool isChecked = false;
   bool _isLoading = false;
 
+  String? _emailError;
+  String? _passwordError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(_clearEmailError);
+    _passwordController.addListener(_clearPasswordError);
+  }
+
+  void _clearEmailError() {
+    if (_emailError != null) {
+      setState(() => _emailError = null);
+    }
+  }
+
+  void _clearPasswordError() {
+    if (_passwordError != null) {
+      setState(() => _passwordError = null);
+    }
+  }
+
   @override
   void dispose() {
+    _emailController.removeListener(_clearEmailError);
+    _passwordController.removeListener(_clearPasswordError);
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -32,13 +59,12 @@ class _SigninScreenState extends State<SigninScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
+    setState(() {
+      _emailError = email.isEmpty ? 'Email is required' : null;
+      _passwordError = password.isEmpty ? 'Password is required' : null;
+    });
+
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter both email and password'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
       return;
     }
 
@@ -62,15 +88,11 @@ class _SigninScreenState extends State<SigninScreen> {
         context.goNamed('DriverDashboard');
       }
     } else {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid email or password'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      setState(() {
+        _isLoading = false;
+        _emailError = 'Invalid email or password';
+        _passwordError = 'Invalid email or password';
+      });
     }
   }
 
@@ -81,13 +103,6 @@ class _SigninScreenState extends State<SigninScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
-          onPressed: () => context.pop(),
-        ),
         centerTitle: true,
         title: Image.asset(
           'assets/logo/applogo.png',
@@ -133,6 +148,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         hintText: 'Email',
+                        errorText: _emailError,
                         prefixIcon: Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: const Icon(LucideIcons.mail, size: 20),
@@ -151,6 +167,20 @@ class _SigninScreenState extends State<SigninScreen> {
                             width: 1.5,
                           ),
                         ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: BorderSide(
+                            color: AppTheme.cancel,
+                            width: 1.0,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: BorderSide(
+                            color: AppTheme.cancel,
+                            width: 1.5,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -160,6 +190,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
                         hintText: 'Password',
+                        errorText: _passwordError,
                         prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: Icon(LucideIcons.lock, size: 20),
@@ -186,6 +217,20 @@ class _SigninScreenState extends State<SigninScreen> {
                           borderRadius: BorderRadius.circular(32),
                           borderSide: const BorderSide(
                             color: AppTheme.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: BorderSide(
+                            color: AppTheme.cancel,
+                            width: 1.0,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: BorderSide(
+                            color: AppTheme.cancel,
                             width: 1.5,
                           ),
                         ),
