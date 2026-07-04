@@ -3,4 +3,13 @@
  */
 import { PrismaClient } from '@prisma/client';
 
-export const prisma = new PrismaClient();
+let _prisma: PrismaClient | null = null;
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(target, prop, receiver) {
+    if (!_prisma) {
+      _prisma = new PrismaClient();
+    }
+    return Reflect.get(_prisma, prop, receiver);
+  }
+});

@@ -1,4 +1,6 @@
 /// Driver API Service: manages server communication for driver authentication, online status updates, and ride acceptance.
+library;
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:driver_app/core/config/env_config.dart';
@@ -8,10 +10,6 @@ class DriverApiService {
 
   static final String _baseUrl = EnvConfig.driverServiceUrl;
 
-  /**
-   * Authenticates a driver via POST /drivers/login.
-   * Returns the raw JSON response containing driver profile and token, or null on failure.
-   */
   static Future<Map<String, dynamic>?> login({
     required String email,
     required String password,
@@ -34,10 +32,6 @@ class DriverApiService {
     }
   }
 
-  /**
-   * Toggles online/offline status for a driver via POST /drivers/:id/online.
-   * Returns true if status was successfully updated on the server.
-   */
   static Future<bool> toggleOnline({
     required String driverId,
     required bool isOnline,
@@ -60,9 +54,6 @@ class DriverApiService {
     }
   }
 
-  /**
-   * Calculates dynamic fare estimate via POST /bids/fare.
-   */
   static Future<Map<String, dynamic>?> fetchFareEstimate({
     required double distanceKm,
     required double durationMinutes,
@@ -87,10 +78,6 @@ class DriverApiService {
     }
   }
 
-  /**
-   * Fetches active, non-expired bid sessions from the bidding-service.
-   * Returns a list of bid session maps.
-   */
   static Future<List<dynamic>> fetchActiveBids(String driverId) async {
     try {
       final response = await http.get(
@@ -106,10 +93,6 @@ class DriverApiService {
     }
   }
 
-  /**
-   * Places an offer (bid) on a passenger's bid session via POST /bids/:id/offer.
-   * Returns true if successfully submitted.
-   */
   static Future<bool> placeBid({
     required String sessionId,
     required String driverId,
@@ -119,16 +102,19 @@ class DriverApiService {
     double? proposedFare,
   }) async {
     try {
+      final Map<String, dynamic> bodyData = {
+        'driver_id': driverId,
+        'driver_name': driverName,
+        'plate_number': plateNumber,
+        'vehicle_type': vehicleType,
+      };
+      if (proposedFare != null) {
+        bodyData['proposed_fare'] = proposedFare;
+      }
       final response = await http.post(
         Uri.parse('$_baseUrl/bids/$sessionId/offer'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'driver_id': driverId,
-          'driver_name': driverName,
-          'plate_number': plateNumber,
-          'vehicle_type': vehicleType,
-          if (proposedFare != null) 'proposed_fare': proposedFare,
-        }),
+        body: jsonEncode(bodyData),
       );
       return response.statusCode == 201;
     } catch (_) {
@@ -136,10 +122,6 @@ class DriverApiService {
     }
   }
 
-  /**
-   * Cancels a pending offer placed by a driver on a session via POST /bids/:id/cancel-offer.
-   * Returns true if successfully withdrawn.
-   */
   static Future<bool> cancelBid({
     required String sessionId,
     required String driverId,
@@ -158,10 +140,6 @@ class DriverApiService {
     }
   }
 
-  /**
-   * Fetches the driver's trip history via GET /drivers/:id/trips.
-   * Returns a list of completed/canceled trips.
-   */
   static Future<List<dynamic>> fetchTripHistory(String driverId) async {
     try {
       final response = await http.get(
@@ -174,6 +152,36 @@ class DriverApiService {
       return [];
     } catch (_) {
       return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>?> fetchStats(String driverId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/drivers/$driverId/stats'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> fetchProfile(String driverId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/drivers/$driverId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 }

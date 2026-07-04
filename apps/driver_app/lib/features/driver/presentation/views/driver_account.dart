@@ -1,10 +1,77 @@
+/// Driver Account Screen: displays driver profile, vehicle information, and lifetime ride stats.
+library;
+
+import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class DriverAccountScreen extends StatelessWidget {
+class DriverAccountScreen extends StatefulWidget {
   const DriverAccountScreen({super.key});
+
+  @override
+  State<DriverAccountScreen> createState() => _DriverAccountScreenState();
+}
+
+class _DriverAccountScreenState extends State<DriverAccountScreen> {
+  String _name = '';
+  String _vehicleType = '';
+  String _plateNumber = '';
+  String _rating = '5.0';
+
+  int? _totalTrips;
+  double? _lifetimeEarnings;
+  double? _acceptanceRate;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCachedProfile();
+    _fetchUpdatedData();
+  }
+
+  Future<void> _loadCachedProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _name = prefs.getString('driver_name') ?? 'Driver';
+        _vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
+        _plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
+        _rating = prefs.getString('rating') ?? '5.0';
+      });
+    }
+  }
+
+  Future<void> _fetchUpdatedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final driverId = prefs.getString('driver_id') ?? '';
+    if (driverId.isEmpty) return;
+
+    final profile = await DriverApiService.fetchProfile(driverId);
+    if (profile != null && mounted) {
+      setState(() {
+        _name = profile['name'] as String? ?? _name;
+        _vehicleType = profile['vehicleType'] as String? ?? _vehicleType;
+        _plateNumber = profile['plateNumber'] as String? ?? _plateNumber;
+        _rating = (profile['rating'] ?? 5.0).toString();
+      });
+      await prefs.setString('driver_name', _name);
+      await prefs.setString('vehicle_type', _vehicleType);
+      await prefs.setString('plate_number', _plateNumber);
+      await prefs.setString('rating', _rating);
+    }
+
+    final stats = await DriverApiService.fetchStats(driverId);
+    if (stats != null && mounted) {
+      setState(() {
+        _totalTrips = stats['totalTrips'] as int?;
+        _lifetimeEarnings = (stats['lifetimeEarnings'] as num?)?.toDouble();
+        _acceptanceRate = (stats['acceptanceRate'] as num?)?.toDouble();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +118,7 @@ class DriverAccountScreen extends StatelessWidget {
               context,
               LucideIcons.shield_check,
               'Vehicle Info',
-              'Plate, franchise details',
+              'Plate: $_plateNumber, Type: $_vehicleType',
               () {},
             ),
             _tile(
@@ -100,22 +167,22 @@ class DriverAccountScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Xyrel D. Tenefrancia',
-                  style: TextStyle(
+                  _name.isEmpty ? 'Driver' : _name,
+                  style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
-                  'BaoBao Driver  •  ZDN-1234',
-                  style: TextStyle(
+                  '$_vehicleType  •  $_plateNumber',
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppTheme.tertiaryColor,
                     fontWeight: FontWeight.w500,
@@ -131,7 +198,7 @@ class DriverAccountScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              '★ 4.9',
+              '★ $_rating',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
@@ -145,13 +212,17 @@ class DriverAccountScreen extends StatelessWidget {
   }
 
   Widget _buildStatsRow() {
+    final tripsStr = _totalTrips != null ? _totalTrips.toString() : '0';
+    final earningsStr = _lifetimeEarnings != null ? '₱${_lifetimeEarnings!.toStringAsFixed(0)}' : '₱0';
+    final acceptanceStr = _acceptanceRate != null ? '${_acceptanceRate!.toStringAsFixed(0)}%' : '0%';
+
     return Row(
       children: [
-        _statCard('1,284', 'Total Trips'),
+        _statCard(tripsStr, 'Total Trips'),
         const SizedBox(width: 12),
-        _statCard('₱42,500', 'Lifetime Earn.'),
+        _statCard(earningsStr, 'Lifetime Earn.'),
         const SizedBox(width: 12),
-        _statCard('98%', 'Acceptance'),
+        _statCard(acceptanceStr, 'Acceptance'),
       ],
     );
   }

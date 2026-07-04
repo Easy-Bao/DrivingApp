@@ -1,9 +1,13 @@
+/// Driver Earnings Screen: displays weekly earnings summaries, stats, and a daily breakdown chart.
+library;
+
+import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Redesigned earnings screen — data-driven layout ready for repository injection.
 class DriverEarningsScreen extends StatefulWidget {
   const DriverEarningsScreen({super.key});
 
@@ -14,15 +18,20 @@ class DriverEarningsScreen extends StatefulWidget {
 class _DriverEarningsScreenState extends State<DriverEarningsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
+  bool _isLoading = true;
+  double _weekTotal = 0;
+  int _weekTripsCount = 0;
+  double _hoursOnline = 0;
+  String _rating = '4.9';
 
-  final _dailyData = const [
-    _EarnDay('Mon', 120),
-    _EarnDay('Tue', 280),
-    _EarnDay('Wed', 195),
-    _EarnDay('Thu', 340),
-    _EarnDay('Fri', 410),
-    _EarnDay('Sat', 520),
-    _EarnDay('Sun', 385),
+  List<_EarnDay> _dailyData = const [
+    _EarnDay('Mon', 0),
+    _EarnDay('Tue', 0),
+    _EarnDay('Wed', 0),
+    _EarnDay('Thu', 0),
+    _EarnDay('Fri', 0),
+    _EarnDay('Sat', 0),
+    _EarnDay('Sun', 0),
   ];
 
   @override
@@ -30,6 +39,74 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
     super.initState();
     _tabCtrl = TabController(length: 3, vsync: this);
     _tabCtrl.addListener(() => setState(() {}));
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final driverId = prefs.getString('driver_id') ?? '';
+    final cachedRating = prefs.getString('rating') ?? '4.9';
+    if (mounted) {
+      setState(() {
+        _rating = cachedRating;
+      });
+    }
+
+    if (driverId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    final trips = await DriverApiService.fetchTripHistory(driverId);
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final startOfWeek = DateTime(monday.year, monday.month, monday.day);
+
+    final completedTrips = trips.where((t) => t['status'] == 'completed').toList();
+    final thisWeekTrips = completedTrips.where((t) {
+      try {
+        final dt = DateTime.parse(t['created_at'] as String? ?? '').toLocal();
+        return dt.isAfter(startOfWeek) || dt.isAtSameMomentAs(startOfWeek);
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dailyAmounts = <String, double>{
+      'Mon': 0,
+      'Tue': 0,
+      'Wed': 0,
+      'Thu': 0,
+      'Fri': 0,
+      'Sat': 0,
+      'Sun': 0,
+    };
+
+    double total = 0;
+    for (final t in thisWeekTrips) {
+      try {
+        final dt = DateTime.parse(t['created_at'] as String? ?? '').toLocal();
+        final dayName = days[dt.weekday - 1];
+        final fare = (t['fare'] as num?)?.toDouble() ?? 0.0;
+        dailyAmounts[dayName] = (dailyAmounts[dayName] ?? 0) + fare;
+        total += fare;
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() {
+        _dailyData = days.map((day) => _EarnDay(day, dailyAmounts[day] ?? 0.0)).toList();
+        _weekTotal = total;
+        _weekTripsCount = thisWeekTrips.length;
+        _hoursOnline = _weekTripsCount > 0 ? (_weekTripsCount * 0.75 + 0.5) : 0.0;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -40,41 +117,42 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final weekTotal = _dailyData.fold<double>(0, (s, e) => s + e.amount);
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
-          physics: const BouncingScrollPhysics(),
-          children: [
-            const Text(
-              'Earnings',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
-                color: AppTheme.primaryColor,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  const Text(
+                    'Earnings',
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildWeekCard(_weekTotal),
+                  const SizedBox(height: 20),
+                  _buildPeriodTabs(),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Daily Breakdown',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBarChart(),
+                  const SizedBox(height: 28),
+                  _buildTripHistoryTile(),
+                ],
               ),
-            ),
-            const SizedBox(height: 20),
-            _buildWeekCard(weekTotal),
-            const SizedBox(height: 20),
-            _buildPeriodTabs(),
-            const SizedBox(height: 24),
-            const Text(
-              'Daily Breakdown',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildBarChart(),
-            const SizedBox(height: 28),
-            _buildTripHistoryTile(),
-          ],
-        ),
       ),
     );
   }
@@ -112,21 +190,21 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
           const SizedBox(height: 16),
           Row(
             children: [
-              _miniStat('24', 'Trips'),
+              _miniStat('$_weekTripsCount', 'Trips'),
               Container(
                 width: 1,
                 height: 32,
                 color: Colors.white24,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
-              _miniStat('18.5h', 'Online'),
+              _miniStat('${_hoursOnline.toStringAsFixed(1)}h', 'Online'),
               Container(
                 width: 1,
                 height: 32,
                 color: Colors.white24,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
-              _miniStat('★ 4.9', 'Rating'),
+              _miniStat('★ $_rating', 'Rating'),
             ],
           ),
         ],
@@ -189,13 +267,14 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
     final maxAmount = _dailyData
         .map((d) => d.amount)
         .reduce((a, b) => a > b ? a : b);
+    final divisor = maxAmount > 0 ? maxAmount : 1.0;
     return SizedBox(
       height: 180,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: _dailyData.map((d) {
           final isToday = d.day == 'Sun';
-          final barH = (d.amount / maxAmount) * 140;
+          final barH = (d.amount / divisor) * 140;
           return Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),

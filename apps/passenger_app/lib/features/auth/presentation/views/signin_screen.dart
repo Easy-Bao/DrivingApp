@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/core/config/env_config.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -92,11 +93,17 @@ class _SigninScreenState extends State<SigninScreen> {
         if (!mounted) return;
         context.pushNamed('PassengerHome');
       } else {
-        final errorMsg = _parseError(response.body);
-        setState(() {
-          _emailError = errorMsg;
-          _passwordError = errorMsg;
-        });
+        final errorData = _parseErrorJson(response.body);
+        final errorMsg = errorData['error'] ?? 'Login failed';
+        if (errorData['needs_verification'] == true) {
+          final verifyEmail = errorData['email'] ?? email;
+          _showOtpDialog(verifyEmail);
+        } else {
+          setState(() {
+            _emailError = errorMsg;
+            _passwordError = errorMsg;
+          });
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -111,6 +118,192 @@ class _SigninScreenState extends State<SigninScreen> {
         });
       }
     }
+  }
+
+  Map<String, dynamic> _parseErrorJson(String body) {
+    try {
+      return jsonDecode(body) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  void _showOtpDialog(String email) {
+    final otpController = TextEditingController();
+    String? otpError;
+    bool isVerifying = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: const Row(
+                children: [
+                  Icon(LucideIcons.mail, color: AppTheme.primaryColor),
+                  SizedBox(width: 10),
+                  Text(
+                    'Verify Email',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'We sent a 6-digit OTP to $email. Please enter it below to verify your account.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Enter 6-digit OTP',
+                      errorText: otpError,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(LucideIcons.key_round, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying ? null : () => Navigator.pop(dialogCtx),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () async {
+                          final code = otpController.text.trim();
+                          if (code.length != 6) {
+                            setModalState(() {
+                              otpError = 'OTP must be 6 digits';
+                            });
+                            return;
+                          }
+                          setModalState(() {
+                            isVerifying = true;
+                            otpError = null;
+                          });
+                          try {
+                            final success = await PassengerApiService.verifyOtp(
+                              email: email,
+                              code: code,
+                            );
+                            if (success) {
+                              Navigator.pop(dialogCtx);
+                              _showSuccessModal();
+                            } else {
+                              setModalState(() {
+                                otpError = 'Invalid or expired OTP';
+                                isVerifying = false;
+                              });
+                            }
+                          } catch (e) {
+                            setModalState(() {
+                              otpError = 'Verification failed: $e';
+                              isVerifying = false;
+                            });
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: isVerifying
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Verify', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSuccessModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: AppTheme.complete,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  LucideIcons.check,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Verification Successful!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Logging in shortly...',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      Navigator.pop(context);
+      _signIn();
+    });
   }
 
   String _parseError(String body) {

@@ -1,4 +1,6 @@
-/// Passenger routing registering Hono endpoints using named constants and clean parameters.
+/**
+ * Passenger routing registering Hono endpoints using named constants and clean parameters.
+ */
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
 import { PassengerRepository } from './repository.ts';
@@ -90,12 +92,23 @@ export function getPassengerRouter(repo: PassengerRepository) {
       if (!passenger) {
         return c.json({ error: 'Invalid email or password' }, 401);
       }
-      if (payload.email !== 'test@example.com' && !passenger.is_verified) {
-        return c.json({ error: 'Please verify your email first' }, 401);
-      }
       const isValid = await Bun.password.verify(payload.password, passenger.password_hash);
       if (!isValid) {
         return c.json({ error: 'Invalid email or password' }, 401);
+      }
+      if (payload.email !== 'test@example.com' && !passenger.is_verified) {
+        const otpCode = Math.floor(DEFAULT_OTP_MIN + Math.random() * DEFAULT_OTP_RANGE).toString();
+        otps.set(payload.email, { code: otpCode, expires: Date.now() + OTP_EXPIRY_MS });
+        await sendEmail({
+          to: payload.email,
+          subject: 'Verify Your EasyRide Account',
+          text: `Your OTP code is: ${otpCode}`,
+        });
+        return c.json({
+          error: 'Please verify your email first',
+          needs_verification: true,
+          email: payload.email,
+        }, 401);
       }
       const secret = process.env.JWT_SECRET || 'secret';
       const expiration = Math.floor(Date.now() / 1000) + SECONDS_PER_DAY;

@@ -1,4 +1,6 @@
-/// Driver Service entrypoint using Hono and Prisma to manage driver registration, authentication, status, and telemetry updates.
+/**
+ * Driver Service entrypoint using Hono and Prisma to manage driver registration, authentication, status, and telemetry updates.
+ */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { prisma } from './db.ts';
@@ -139,10 +141,24 @@ app.get('/drivers/:id/stats', async (c) => {
     const baseHours = todayTrips * 0.75;
     const hoursOnline = parseFloat((found.isOnline ? baseHours + 0.5 : baseHours).toFixed(1));
 
+    const completedRides = rides.filter((r: any) => r.status === 'completed');
+    const cancelledRides = rides.filter((r: any) => r.status === 'cancelled');
+
+    const totalTrips = completedRides.length;
+    const lifetimeEarnings = completedRides.reduce((sum: number, r: any) => sum + (r.fare ?? 0), 0);
+
+    const totalAssigned = completedRides.length + cancelledRides.length;
+    const acceptanceRate = totalAssigned > 0 
+      ? Math.round((completedRides.length / totalAssigned) * 100) 
+      : 98;
+
     return c.json({
       todayEarnings,
       todayTrips,
       hoursOnline,
+      lifetimeEarnings,
+      totalTrips,
+      acceptanceRate,
     });
   } catch (e: any) {
     return c.json({ error: e.message }, 400);
