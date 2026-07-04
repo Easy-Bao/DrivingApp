@@ -13,12 +13,7 @@ class DriverChatScreen extends StatefulWidget {
   final String? userId;
   final String? peerName;
 
-  const DriverChatScreen({
-    super.key,
-    this.roomId,
-    this.userId,
-    this.peerName,
-  });
+  const DriverChatScreen({super.key, this.roomId, this.userId, this.peerName});
 
   @override
   State<DriverChatScreen> createState() => _DriverChatScreenState();
@@ -30,7 +25,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   final ScrollController _scrollCtrl = ScrollController();
   final List<_Msg> _msgs = [];
   late AnimationController _typingCtrl;
-  bool _passengerTyping = false;
+  final _passengerTyping = false;
   WebSocket? _socket;
   bool _isConnected = false;
 
@@ -59,7 +54,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     final serviceUrl = EnvConfig.driverServiceUrl;
     final gatewayUrl = serviceUrl.replaceAll('8082', '8080');
     final wsScheme = gatewayUrl.startsWith('https') ? 'wss://' : 'ws://';
-    final hostPort = gatewayUrl.replaceAll('https://', '').replaceAll('http://', '');
+    final hostPort = gatewayUrl
+        .replaceAll('https://', '')
+        .replaceAll('http://', '');
     final wsUrl = '$wsScheme$hostPort/chat/ws?roomId=$rId&userId=$uId';
 
     try {
@@ -203,7 +200,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: _isConnected ? AppTheme.complete : AppTheme.cancel,
+                        color: _isConnected
+                            ? AppTheme.complete
+                            : AppTheme.cancel,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -211,7 +210,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                     Text(
                       _isConnected ? 'Connected' : 'Offline',
                       style: TextStyle(
-                        color: _isConnected ? AppTheme.complete : AppTheme.cancel,
+                        color: _isConnected
+                            ? AppTheme.complete
+                            : AppTheme.cancel,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -233,7 +234,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               physics: const BouncingScrollPhysics(),
               itemCount: _msgs.length + (_passengerTyping ? 1 : 0),
               itemBuilder: (ctx, i) {
-                if (i == _msgs.length && _passengerTyping) return _buildTyping();
+                if (i == _msgs.length && _passengerTyping) {
+                  return _buildTyping();
+                }
                 return _buildBubble(_msgs[i]);
               },
             ),
@@ -344,7 +347,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[

@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:driver_app/core/services/driver_api_service.dart';
+import 'package:driver_app/shared/widgets/custom_toast.dart';
 
 class RideAlertScreen extends StatefulWidget {
   final Map<String, dynamic>? rideData;
@@ -32,8 +33,12 @@ class _RideAlertScreenState extends State<RideAlertScreen>
     super.initState();
 
     _rideId = widget.rideData?['id'] as String? ?? 'mock_id';
-    _pickup = widget.rideData?['pickup_name'] as String? ?? 'SM City Dipolog, Rizal Ave';
-    _dropoff = widget.rideData?['dropoff_name'] as String? ?? 'Dipolog Public Market, Quezon St';
+    _pickup =
+        widget.rideData?['pickup_name'] as String? ??
+        'SM City Dipolog, Rizal Ave';
+    _dropoff =
+        widget.rideData?['dropoff_name'] as String? ??
+        'Dipolog Public Market, Quezon St';
     _distance = (widget.rideData?['distance'] ?? 3.2) as double;
     _fare = (widget.rideData?['fare'] ?? 52.00) as double;
     _duration = widget.rideData?['duration'] as String? ?? '8 min';
@@ -44,12 +49,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
     )..forward();
     _autoDecline = Timer(const Duration(seconds: 15), () {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ride request expired'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        CustomToast.show(context, 'Ride request expired', isError: true);
         context.pop();
       }
     });
@@ -62,30 +62,32 @@ class _RideAlertScreenState extends State<RideAlertScreen>
     super.dispose();
   }
 
-  void _accept() {
+  Future<void> _accept() async {
     _autoDecline?.cancel();
 
-    final passengerName = widget.rideData?['passenger_name'] as String? ?? 'Juan D. Cruz';
-    final pickupLat = (widget.rideData?['pickup_latitude'] ?? 7.828282) as double;
-    final pickupLng = (widget.rideData?['pickup_longitude'] ?? 123.434343) as double;
+    final prefs = await SharedPreferences.getInstance();
+    final driverId = prefs.getString('driver_id') ?? '';
+    final driverName = prefs.getString('driver_name') ?? 'Driver';
+    final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
+    final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    BlocProvider.of<RideFlowCubit>(context).acceptRide(
-      rideId: _rideId,
-      passengerName: passengerName,
-      pickupLat: pickupLat,
-      pickupLng: pickupLng,
+    final success = await DriverApiService.placeBid(
+      sessionId: _rideId,
+      driverId: driverId,
+      driverName: driverName,
+      plateNumber: plateNumber,
+      vehicleType: vehicleType,
+      proposedFare: _fare,
     );
 
-    context.pushReplacementNamed(
-      'EnRoutePickup',
-      extra: {
-        'pickup': _pickup,
-        'dropoff': _dropoff,
-        'distance': _distance,
-        'fare': _fare,
-        'duration': _duration,
-      },
-    );
+    if (mounted) {
+      if (success) {
+        CustomToast.show(context, 'Offer submitted! Waiting for passenger...');
+      } else {
+        CustomToast.show(context, 'Failed to submit offer.', isError: true);
+      }
+      context.pop();
+    }
   }
 
   void _decline() {

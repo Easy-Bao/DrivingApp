@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:driver_app/core/config/env_config.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
@@ -31,16 +32,23 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     _activeRideId = rideId;
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final driverId = prefs.getString('driver_id') ?? 'driver-123';
+      final driverName = prefs.getString('driver_name') ?? 'Driver Xyrel';
+      final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
+      final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
+      final rating = prefs.getString('rating') ?? '4.9';
+
       final baseUrl = EnvConfig.driverServiceUrl;
       await http.post(
         Uri.parse('$baseUrl/rides/$rideId/accept'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'driver_id': 'driver-123',
-          'driver_name': 'Driver Xyrel',
-          'driver_rating': '4.9',
-          'vehicle_type': 'Bao Bao',
-          'plate_number': 'ABC 1234',
+          'driver_id': driverId,
+          'driver_name': driverName,
+          'driver_rating': rating,
+          'vehicle_type': vehicleType,
+          'plate_number': plateNumber,
         }),
       );
     } catch (e) {

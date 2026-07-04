@@ -115,6 +115,29 @@ app.post('/rides/:id/accept', async (c) => {
     if (!driver_id || !driver_name) {
       return c.json({ error: 'driver_id and driver_name are required' }, 400);
     }
+
+    // Enforce concurrency limit & priority lock constraints
+    const activeRides = await prisma.ride.findMany({
+      where: {
+        driverId: driver_id,
+        status: { in: ['accepted', 'arrived', 'in_transit'] },
+      },
+    });
+
+    if (activeRides.length >= 5) {
+      return c.json({ error: 'Driver has reached the maximum cap of 5 concurrent accepted ride requests' }, 400);
+    }
+
+    const hasActivePriority = activeRides.some((r) => r.rideType === 'Bao Premium');
+    if (hasActivePriority) {
+      return c.json({ error: 'Driver has an active Priority Ride and cannot accept other rides' }, 400);
+    }
+
+    const targetRide = await prisma.ride.findUnique({ where: { id } });
+    if (targetRide && targetRide.rideType === 'Bao Premium' && activeRides.length > 0) {
+      return c.json({ error: 'Cannot accept a Priority Ride while having other active rides' }, 400);
+    }
+
     const updated = await prisma.ride.update({
       where: { id },
       data: {

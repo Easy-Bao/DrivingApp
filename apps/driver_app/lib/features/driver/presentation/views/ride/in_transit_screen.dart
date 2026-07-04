@@ -158,8 +158,29 @@ class _InTransitScreenState extends State<InTransitScreen> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(left: 20, top: 16),
-              child: _buildStatusBadge(),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(11),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neutralColor,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.borderSide),
+                      ),
+                      child: const Icon(
+                        LucideIcons.arrow_left,
+                        size: 18,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  _buildStatusBadge(),
+                ],
+              ),
             ),
           ),
           Align(

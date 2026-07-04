@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
+import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
 import 'package:location_service/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -119,7 +120,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   }
 
   void _confirmArrival() {
-    BlocProvider.of<RideFlowCubit>(context).arriveAtPickup('Juan D. Cruz');
+    final state = BlocProvider.of<RideFlowCubit>(context).state;
+    final passengerName = state is RideFlowEnRoutePickup ? state.passengerName : 'Passenger';
+    BlocProvider.of<RideFlowCubit>(context).arriveAtPickup(passengerName);
     context.pushReplacementNamed(
       'WaitingPassenger',
       extra: {
@@ -361,6 +364,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   }
 
   Widget _buildPassengerCard() {
+    final state = BlocProvider.of<RideFlowCubit>(context).state;
+    final passengerName = state is RideFlowEnRoutePickup ? state.passengerName : 'Passenger';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -386,19 +391,19 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Juan D. Cruz',
-                    style: TextStyle(
+                    passengerName,
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.primaryColor,
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Passenger  •  ★ 4.7',
                     style: TextStyle(
                       fontSize: 12,
@@ -437,6 +442,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               AppTheme.primaryColor,
               onTap: () async {
                 final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
+                final state = BlocProvider.of<RideFlowCubit>(context).state;
+                final passengerName = state is RideFlowEnRoutePickup ? state.passengerName : 'Passenger';
                 final prefs = await SharedPreferences.getInstance();
                 final driverId = prefs.getString('driver_id') ?? '';
                 if (mounted) {
@@ -445,7 +452,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                     extra: {
                       'roomId': rideId,
                       'userId': driverId,
-                      'peerName': 'Juan D. Cruz',
+                      'peerName': passengerName,
                     },
                   );
                 }

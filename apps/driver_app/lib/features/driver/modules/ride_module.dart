@@ -3,7 +3,6 @@ import 'package:driver_app/features/driver/presentation/views/payment/rate_passe
 import 'package:driver_app/features/driver/presentation/views/ride/complete_trip_screen.dart';
 import 'package:driver_app/features/driver/presentation/views/ride/en_route_pickup_screen.dart';
 import 'package:driver_app/features/driver/presentation/views/ride/in_transit_screen.dart';
-import 'package:driver_app/features/driver/presentation/views/ride/route_optimizer_screen.dart';
 import 'package:driver_app/features/driver/presentation/views/ride/waiting_passenger_screen.dart';
 import 'package:driver_app/core/transitions/app_transitions.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -98,13 +97,6 @@ class RideModule {
       child: (context, GoRouterState state) => const RatePassengerScreen(),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
-    ),
-    ChildRoute(
-      name: 'RouteOptimizer',
-      'ride/optimize',
-      child: (context, GoRouterState state) => const RouteOptimizerScreen(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
     ),
   ];
 }

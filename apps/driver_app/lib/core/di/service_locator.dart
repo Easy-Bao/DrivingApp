@@ -1,6 +1,7 @@
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/data/repositories/dashboard_repository.dart';
 import 'package:driver_app/features/driver/data/repositories/ride_repository.dart';
+import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:get_it/get_it.dart';
 
 /**
@@ -21,4 +22,9 @@ void setupServiceLocator() {
 
   // Live API implementation.
   getIt.registerLazySingleton<RideRepository>(() => ApiRideRepository());
+
+  // Dashboard Cubit persistent singleton
+  getIt.registerLazySingleton<DashboardCubit>(
+    () => DashboardCubit(repository: getIt<DashboardRepository>()),
+  );
 }

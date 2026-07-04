@@ -43,17 +43,8 @@ class DashboardModule {
     ChildRoute(
       name: 'DriverDashboard',
       'dashboard',
-      child: (context, GoRouterState state) => BlocProvider(
-        create: (_) {
-          // NOTE: getIt<DashboardRepository>() automatically injects the active implementation
-          // (FixtureDashboardRepository, or _ApiDashboardRepository when backend is ready)
-          // based on the single configuration line in lib/core/di/service_locator.dart.
-          final cubit = DashboardCubit(
-            repository: getIt<DashboardRepository>(),
-          );
-          unawaited(cubit.loadStats());
-          return cubit;
-        },
+      child: (context, GoRouterState state) => BlocProvider.value(
+        value: getIt<DashboardCubit>()..loadStats(),
         child: const DriverDashboardScreen(),
       ),
       transition: AppTransitions.fade,

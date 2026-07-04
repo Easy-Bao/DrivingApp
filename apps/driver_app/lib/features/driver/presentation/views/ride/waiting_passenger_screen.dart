@@ -6,7 +6,9 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
+import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:driver_app/shared/widgets/custom_toast.dart';
 
 /// Driver has arrived at pickup and is waiting for the passenger to board.
 class WaitingPassengerScreen extends StatefulWidget {
@@ -75,8 +77,31 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              const SizedBox(height: 20),
-              _buildStatusBadge(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(11),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neutralColor,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.borderSide),
+                      ),
+                      child: const Icon(
+                        LucideIcons.arrow_left,
+                        size: 18,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  _buildStatusBadge(),
+                  const Spacer(),
+                  const SizedBox(width: 40), // Balance the back button
+                ],
+              ),
               const SizedBox(height: 32),
               _buildTimer(),
               const SizedBox(height: 32),
@@ -149,6 +174,10 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
   }
 
   Widget _buildPassengerCard() {
+    final state = BlocProvider.of<RideFlowCubit>(context).state;
+    final passengerName = state is RideFlowWaitingPassenger
+        ? state.passengerName
+        : 'Passenger';
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -174,19 +203,19 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Juan D. Cruz',
-                      style: TextStyle(
+                      passengerName,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.primaryColor,
                       ),
                     ),
-                    Text(
+                    const Text(
                       'Passenger  •  ★ 4.7',
                       style: TextStyle(
                         fontSize: 12,
@@ -248,7 +277,12 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             AppTheme.neutralColor,
             AppTheme.primaryColor,
             onTap: () async {
-              final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
+              final rideId =
+                  BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
+              final state = BlocProvider.of<RideFlowCubit>(context).state;
+              final passengerName = state is RideFlowWaitingPassenger
+                  ? state.passengerName
+                  : 'Passenger';
               final prefs = await SharedPreferences.getInstance();
               final driverId = prefs.getString('driver_id') ?? '';
               if (mounted) {
@@ -257,7 +291,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                   extra: {
                     'roomId': rideId,
                     'userId': driverId,
-                    'peerName': 'Juan D. Cruz',
+                    'peerName': passengerName,
                   },
                 );
               }
@@ -273,11 +307,10 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: GestureDetector(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ride canceled — no show'),
-              behavior: SnackBarBehavior.floating,
-            ),
+          CustomToast.show(
+            context,
+            'Ride canceled — no show',
+            isError: true,
           );
           context.pop();
         },
@@ -332,7 +365,13 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     );
   }
 
-  Widget _btn(IconData icon, String label, Color bg, Color fg, {required VoidCallback onTap}) {
+  Widget _btn(
+    IconData icon,
+    String label,
+    Color bg,
+    Color fg, {
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(

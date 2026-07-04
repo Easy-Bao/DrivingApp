@@ -6,6 +6,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
 class MockRideRepo extends Mock implements RideRepository {}
 
 RideFlowCubit _makeCubit(RideRepository repo) =>
@@ -14,7 +15,10 @@ RideFlowCubit _makeCubit(RideRepository repo) =>
 void main() {
   late MockRideRepo repo;
 
-  setUp(() => repo = MockRideRepo());
+  setUp(() {
+    repo = MockRideRepo();
+    SharedPreferences.setMockInitialValues({});
+  });
 
   group('RideFlowCubit — initial state', () {
     test('initial state is Idle', () async {

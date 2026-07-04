@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:driver_app/core/config/env_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:driver_app/core/services/driver_api_service.dart';
+import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 
 import 'package:location_service/location_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
@@ -11,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:driver_app/shared/widgets/custom_toast.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
   const DriverDashboardScreen({super.key});
@@ -23,6 +27,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseCtrl;
   Timer? _rideTriggerTimer;
+  List<Map<String, dynamic>> _activeBids = [];
+  List<Map<String, dynamic>> _activeTrips = [];
 
   @override
   void initState() {
@@ -31,6 +37,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final s = BlocProvider.of<DashboardCubit>(context).state;
+        if (s.isOnline) {
+          _startPolling();
+        }
+      }
+    });
   }
 
   @override
@@ -40,81 +55,194 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     super.dispose();
   }
 
+  void _startPolling() {
+    _rideTriggerTimer?.cancel();
+    _rideTriggerTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (!mounted) return;
+      final s = BlocProvider.of<DashboardCubit>(context).state;
+      if (!s.isOnline) {
+        timer.cancel();
+        return;
+      }
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final driverId = prefs.getString('driver_id') ?? '';
+        if (driverId.isEmpty) return;
+
+        // 1. Fetch active, accepted/in transit trips assigned to this driver
+        final historyUrl = '${EnvConfig.driverServiceUrl}/drivers/$driverId/trips';
+        final historyRes = await http.get(Uri.parse(historyUrl));
+        List<Map<String, dynamic>> trips = [];
+        if (historyRes.statusCode == 200) {
+          final List<dynamic> list = jsonDecode(historyRes.body);
+          trips = list.where((r) {
+            final status = r['status'] as String?;
+            return status == 'accepted' ||
+                status == 'arrived' ||
+                status == 'in_transit';
+          }).map((r) => r as Map<String, dynamic>).toList();
+        }
+
+        // 2. Fetch available active bids in the pool
+        final bidsList = await DriverApiService.fetchActiveBids(driverId);
+        final List<Map<String, dynamic>> bids = bidsList
+            .map((b) => b as Map<String, dynamic>)
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            _activeTrips = trips;
+            _activeBids = bids;
+          });
+        }
+      } catch (e) {
+        debugPrint('Error polling: $e');
+      }
+    });
+  }
+
+  void _stopPolling() {
+    _rideTriggerTimer?.cancel();
+    _rideTriggerTimer = null;
+    if (mounted) {
+      setState(() {
+        _activeTrips = [];
+        _activeBids = [];
+      });
+    }
+  }
+
   void _toggleOnline(BuildContext context, bool currentOnline) {
     final lat = LocationService.lastPosition?.latitude ?? 7.828282;
     final lng = LocationService.lastPosition?.longitude ?? 123.434343;
 
     BlocProvider.of<DashboardCubit>(context).toggleOnline(lat: lat, lng: lng);
+  }
 
-    if (!currentOnline) {
-      _rideTriggerTimer?.cancel();
-      _rideTriggerTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
-        if (!mounted) return;
-        final s = BlocProvider.of<DashboardCubit>(context).state;
-        if (!s.isOnline) {
-          timer.cancel();
-          return;
-        }
-
-        try {
-          final baseUrl = EnvConfig.driverServiceUrl;
-          final response = await http.get(Uri.parse('$baseUrl/rides/active'));
-          if (response.statusCode == 200) {
-            final List<dynamic> list = jsonDecode(response.body);
-            if (list.isNotEmpty) {
-              timer.cancel();
-              if (mounted) {
-                final ride = list.first as Map<String, dynamic>;
-                final rideData = {
-                  'id': ride['id'],
-                  'passenger_name': ride['passenger_name'] ?? 'Passenger',
-                  'pickup_name': ride['pickup_name'] ?? 'Pickup',
-                  'dropoff_name': ride['dropoff_name'] ?? 'Dropoff',
-                  'pickup_latitude': ride['pickup_latitude'],
-                  'pickup_longitude': ride['pickup_longitude'],
-                  'dropoff_latitude': ride['dropoff_latitude'],
-                  'dropoff_longitude': ride['dropoff_longitude'],
-                  'fare': (ride['fare'] as num?)?.toDouble() ?? 50.0,
-                  'distance': 3.2,
-                  'duration': '8 min',
-                };
-                context.pushNamed('RideAlert', extra: rideData);
-              }
-            }
-          }
-        } catch (e) {
-          debugPrint('Error polling active ride requests: $e');
-        }
-      });
-    } else {
-      _rideTriggerTimer?.cancel();
+  Future<void> _acceptBid(Map<String, dynamic> bid) async {
+    if (_activeTrips.length >= 5) {
+      CustomToast.show(context, 'You cannot accept more than 5 concurrent rides.', isError: true);
+      return;
     }
+    final hasPriority = _activeTrips.any((t) => t['ride_type'] == 'Bao Premium');
+    if (hasPriority) {
+      CustomToast.show(context, 'You are locked into a Priority Ride.', isError: true);
+      return;
+    }
+    if (bid['ride_type'] == 'Bao Premium' && _activeTrips.isNotEmpty) {
+      CustomToast.show(context, 'Cannot accept a Priority Ride while having other active rides.', isError: true);
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final driverId = prefs.getString('driver_id') ?? '';
+    final driverName = prefs.getString('driver_name') ?? 'Driver';
+    final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
+    final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
+
+    final success = await DriverApiService.placeBid(
+      sessionId: bid['id'],
+      driverId: driverId,
+      driverName: driverName,
+      plateNumber: plateNumber,
+      vehicleType: vehicleType,
+      proposedFare: (bid['fare'] as num).toDouble(),
+    );
+
+    if (mounted) {
+      if (success) {
+        CustomToast.show(context, 'Offer submitted! Waiting for passenger...');
+      } else {
+        CustomToast.show(context, 'Failed to submit offer.', isError: true);
+      }
+    }
+  }
+
+  void _resumeTrip(Map<String, dynamic> trip) {
+    final status = trip['status'] as String?;
+    String routeName = 'EnRoutePickup';
+    if (status == 'arrived') {
+      routeName = 'WaitingPassenger';
+    } else if (status == 'in_transit') {
+      routeName = 'InTransit';
+    }
+
+    BlocProvider.of<RideFlowCubit>(context).acceptRide(
+      rideId: trip['id'],
+      passengerName: trip['passenger_name'] ?? 'Passenger',
+      pickupLat: (trip['pickup_latitude'] as num).toDouble(),
+      pickupLng: (trip['pickup_longitude'] as num).toDouble(),
+    );
+
+    context.pushNamed(
+      routeName,
+      extra: {
+        'pickup': trip['pickup_name'] ?? 'Pickup',
+        'dropoff': trip['dropoff_name'] ?? 'Dropoff',
+        'distance': 3.2,
+        'fare': (trip['fare'] as num).toDouble(),
+        'duration': '8 min',
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<DashboardCubit, DashboardState>(
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: AppTheme.surface,
-          body: SafeArea(
-            child: Column(
-              children: [
-                _buildTopBar(state),
-                const SizedBox(height: 20),
-                _buildStatsRow(state),
-                const SizedBox(height: 16),
-                if (state.isOnline) _buildRouteOptimizerBanner(context),
-                const Spacer(),
-                _buildStatusIndicator(state),
-                const Spacer(),
-                _buildToggleButton(context, state),
-                const SizedBox(height: 28),
-              ],
-            ),
-          ),
-        );
+    return BlocListener<DashboardCubit, DashboardState>(
+      listenWhen: (previous, current) => previous.isOnline != current.isOnline,
+      listener: (context, state) {
+        if (state.isOnline) {
+          _startPolling();
+        } else {
+          _stopPolling();
+        }
       },
+      child: BlocBuilder<DashboardCubit, DashboardState>(
+        builder: (context, state) {
+          final showFeed = state.isOnline && (_activeBids.isNotEmpty || _activeTrips.isNotEmpty);
+          return Scaffold(
+            backgroundColor: AppTheme.surface,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _buildTopBar(state),
+                  const SizedBox(height: 20),
+                  _buildStatsRow(state),
+                  const SizedBox(height: 16),
+                  if (showFeed)
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        physics: const BouncingScrollPhysics(),
+                        children: [
+                          if (_activeTrips.isNotEmpty) ...[
+                            _buildSectionLabel('YOUR ACTIVE RIDES (${_activeTrips.length}/5)'),
+                            const SizedBox(height: 10),
+                            ..._activeTrips.map(_buildActiveTripCard),
+                            const SizedBox(height: 24),
+                          ],
+                          if (_activeBids.isNotEmpty) ...[
+                            _buildSectionLabel('AVAILABLE REQUESTS (POOL FEED)'),
+                            const SizedBox(height: 10),
+                            ..._activeBids.map(_buildPoolBidCard),
+                          ],
+                        ],
+                      ),
+                    )
+                  else ...[
+                    const Spacer(),
+                    _buildStatusIndicator(state),
+                    const Spacer(),
+                  ],
+                  _buildToggleButton(context, state),
+                  const SizedBox(height: 28),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -154,8 +282,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       ),
     );
   }
-
-  // Stats Row
 
   Widget _buildStatsRow(DashboardState state) {
     return Padding(
@@ -210,54 +336,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     );
   }
 
-  // Route Optimizer Banner
-
-  Widget _buildRouteOptimizerBanner(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: GestureDetector(
-        onTap: () => context.pushNamed('RouteOptimizer'),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryColor.withValues(alpha: 0.18),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              const Icon(LucideIcons.sparkles, color: Colors.white, size: 18),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Route Optimizer',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Icon(
-                LucideIcons.chevron_right,
-                color: Colors.white.withValues(alpha: 0.5),
-                size: 16,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Status Indicator
-
   Widget _buildStatusIndicator(DashboardState state) {
     if (state.isOnline) {
       return AnimatedBuilder(
@@ -310,8 +388,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     );
   }
 
-  // Toggle Button
-
   Widget _buildToggleButton(BuildContext context, DashboardState state) {
     final isOnline = state.isOnline;
     return Padding(
@@ -346,6 +422,265 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveTripCard(Map<String, dynamic> trip) {
+    final status = trip['status'] as String? ?? 'accepted';
+    String statusLabel = 'En Route';
+    Color statusColor = AppTheme.inProgress;
+    if (status == 'arrived') {
+      statusLabel = 'Waiting Passenger';
+      statusColor = AppTheme.secondaryColor;
+    } else if (status == 'in_transit') {
+      statusLabel = 'In Transit';
+      statusColor = AppTheme.complete;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.neutralColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: statusColor == AppTheme.secondaryColor ? AppTheme.primaryColor : statusColor,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '₱${(trip['fare'] as num).toDouble().toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(LucideIcons.user, size: 14, color: AppTheme.tertiaryColor),
+              const SizedBox(width: 8),
+              Text(
+                trip['passenger_name'] ?? 'Passenger',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.tertiaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'To: ${trip['dropoff_name']}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton(
+              onPressed: () => _resumeTrip(trip),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Go to Trip Flow',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPoolBidCard(Map<String, dynamic> bid) {
+    final rating = bid['passenger_rating'] ?? '4.8';
+    final isPriority = bid['ride_type'] == 'Bao Premium';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.neutralColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isPriority ? AppTheme.secondaryColor : AppTheme.borderSide,
+          width: isPriority ? 1.5 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                bid['passenger_name'] ?? 'Passenger',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.complete.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '★ $rating',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.complete,
+                  ),
+                ),
+              ),
+              if (isPriority) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cancel.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'PRIORITY',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.cancel,
+                    ),
+                  ),
+                ),
+              ],
+              const Spacer(),
+              Text(
+                '₱${(bid['fare'] as num).toDouble().toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(LucideIcons.navigation, size: 14, color: AppTheme.tertiaryColor),
+              const SizedBox(width: 8),
+              Text(
+                '${(bid['distance'] as num).toDouble().toStringAsFixed(1)} km away',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.tertiaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'To: ${bid['dropoff_name']}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.65),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () => _acceptBid(bid),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isPriority ? AppTheme.cancel : AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      isPriority ? 'Accept Priority' : 'Accept Ride',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: AppTheme.primaryColor.withValues(alpha: 0.38),
+          letterSpacing: 1.2,
         ),
       ),
     );

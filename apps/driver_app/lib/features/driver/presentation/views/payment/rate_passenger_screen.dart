@@ -2,6 +2,7 @@ import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:driver_app/shared/widgets/custom_toast.dart';
 
 /// Driver rates the passenger after a completed trip.
 class RatePassengerScreen extends StatefulWidget {
@@ -136,13 +137,7 @@ class _RatePassengerScreenState extends State<RatePassengerScreen> {
   Widget _buildSubmitButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Rating submitted!'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppTheme.complete,
-          ),
-        );
+        CustomToast.show(context, 'Rating submitted!');
         context.goNamed('DriverDashboard');
       },
       child: AnimatedContainer(
