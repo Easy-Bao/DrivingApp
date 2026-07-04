@@ -1,3 +1,4 @@
+/// Activity Detail Map Screen: displays route map and details for past passenger trips.
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
@@ -6,6 +7,7 @@ import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 class ActivityDetailMapScreen extends StatefulWidget {
   final String placeName;
@@ -252,13 +254,16 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () =>
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Booking feature coming soon!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          ),
+                      onPressed: () {
+                        final place = PlaceModel(
+                          id: 'activity_place_${widget.placeName.replaceAll(' ', '_')}',
+                          name: widget.placeName,
+                          fullAddress: widget.placeSubtitle,
+                          latitude: widget.destinationLat,
+                          longitude: widget.destinationLng,
+                        );
+                        context.pushNamed('DestinationPreview', extra: place);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,

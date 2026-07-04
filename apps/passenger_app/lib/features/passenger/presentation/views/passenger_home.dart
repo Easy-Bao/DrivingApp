@@ -1,3 +1,4 @@
+/// Passenger Home Screen: displays active location details, suggestions, quick actions, and recent activities.
 import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:fixtures/fixtures.dart';
@@ -13,6 +14,7 @@ import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_pl
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_state.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/quick_action_model.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
+import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 /**
  * Primary home screen for the passenger-facing application shell.
@@ -617,7 +619,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
           ),
         ),
         const SizedBox(width: 12),
-        //TODO: Implement location permission handling and error feedback for the locate button.
         GestureDetector(
           onTap: () async {
             _showFeedback('Locating...');
@@ -699,10 +700,26 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   Future<void> _initLocationAndLoadData() async {
     if (!mounted) return;
     final cubit = BlocProvider.of<PassengerHomeCubit>(context);
+    
+    final hasPermission = await LocationService.checkAndRequestPermission();
+    if (!hasPermission) {
+      if (mounted) {
+        CustomToast.show(context, 'Location permission denied. Using default location.', isError: true);
+      }
+      await cubit.loadHomeData(
+        lat: MockData.defaultLat,
+        lng: MockData.defaultLng,
+      );
+      return;
+    }
+
     final position = await LocationService.getCurrentPosition();
     if (position != null) {
       await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
     } else {
+      if (mounted) {
+        CustomToast.show(context, 'Unable to acquire location coordinates. Using default.', isError: true);
+      }
       await cubit.loadHomeData(
         lat: MockData.defaultLat,
         lng: MockData.defaultLng,
@@ -808,13 +825,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   }
 
   void _showFeedback(String message) {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    CustomToast.show(context, message);
   }
 }
