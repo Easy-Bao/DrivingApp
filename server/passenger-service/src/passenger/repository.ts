@@ -22,6 +22,7 @@ export interface PassengerRepository {
   getPassengerRides(passengerId: string): Promise<RideRequest[]>;
   updatePassenger(options: UpdatePassengerOptions): Promise<Passenger>;
   getPassengerNotifications(passengerId: string): Promise<any[]>;
+  verifyPassenger(email: string): Promise<void>;
 }
 
 export class InMemoryPassengerRepository implements PassengerRepository {
@@ -47,6 +48,7 @@ export class InMemoryPassengerRepository implements PassengerRepository {
       preferred_ride_type: (req.preferred_ride_type as RideType) || null,
       created_at: new Date(),
       password_hash: passwordHash,
+      is_verified: false,
     };
     this.passengers.set(id, passenger);
     return passenger;
@@ -111,6 +113,12 @@ export class InMemoryPassengerRepository implements PassengerRepository {
     this.passengers.set(id, updated);
     return updated;
   }
+  async verifyPassenger(email: string): Promise<void> {
+    const passenger = await this.getPassengerByEmail(email);
+    if (passenger) {
+      passenger.is_verified = true;
+    }
+  }
 
   async getPassengerNotifications(passengerId: string): Promise<any[]> {
     const rides = this.rides.get(passengerId) || [];
@@ -137,14 +145,6 @@ export class InMemoryPassengerRepository implements PassengerRepository {
         });
       }
     }
-    notifications.push({
-      id: 'promo_1',
-      title: 'Weekend Promo! 🎉',
-      message: 'Get 20% off on all rides this weekend. Use code BAOWEEKEND. Valid until Sunday.',
-      timestamp: new Date().toISOString(),
-      type: 'promo',
-      isRead: false,
-    });
     return notifications;
   }
 }
@@ -178,6 +178,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
       preferred_ride_type: res.preferred_ride_type as RideType | null,
       created_at: res.created_at,
       password_hash: res.password_hash,
+      is_verified: res.is_verified,
     };
   }
 
@@ -194,6 +195,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
       preferred_ride_type: res.preferred_ride_type as RideType | null,
       created_at: res.created_at,
       password_hash: res.password_hash,
+      is_verified: res.is_verified,
     };
   }
 
@@ -210,6 +212,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
       preferred_ride_type: res.preferred_ride_type as RideType | null,
       created_at: res.created_at,
       password_hash: res.password_hash,
+      is_verified: res.is_verified,
     };
   }
 
@@ -291,7 +294,15 @@ export class PostgresPassengerRepository implements PassengerRepository {
       preferred_ride_type: res.preferred_ride_type as RideType | null,
       created_at: res.created_at,
       password_hash: res.password_hash,
+      is_verified: res.is_verified,
     };
+  }
+
+  async verifyPassenger(email: string): Promise<void> {
+    await prisma.passenger.update({
+      where: { email },
+      data: { is_verified: true },
+    });
   }
 
   async getPassengerNotifications(passengerId: string): Promise<any[]> {
@@ -394,15 +405,6 @@ export class PostgresPassengerRepository implements PassengerRepository {
         });
       }
     }
-
-    notifications.push({
-      id: 'promo_1',
-      title: 'Weekend Promo! 🎉',
-      message: 'Get 20% off on all rides this weekend. Use code BAOWEEKEND. Valid until Sunday.',
-      timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-      type: 'promo',
-      isRead: false,
-    });
 
     notifications.push({
       id: 'system_1',

@@ -15,6 +15,7 @@ model Passenger {
   preferred_ride_type String?       @map("preferred_ride_type")
   created_at          DateTime      @default(now()) @map("created_at") @db.Timestamptz
   password_hash       String        @default("") @map("password_hash")
+  is_verified         Boolean       @default(false) @map("is_verified")
   ride_requests       RideRequest[]
 
   @@map("passengers")

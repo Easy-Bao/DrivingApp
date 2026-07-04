@@ -14,7 +14,6 @@ const DEFAULT_OTP_RANGE = 900000;
 export function getPassengerRouter(repo: PassengerRepository) {
   const router = new Hono();
   const otps = new Map<string, { code: string; expires: number }>();
-  const verifiedEmails = new Set<string>();
 
   router.post('/passengers', async (c) => {
     try {
@@ -52,7 +51,7 @@ export function getPassengerRouter(repo: PassengerRepository) {
         return c.json({ error: 'Invalid or expired OTP code' }, 400);
       }
       otps.delete(email);
-      verifiedEmails.add(email);
+      await repo.verifyPassenger(email);
       return c.json({ success: true }, 200);
     } catch (e: any) {
       return c.json({ error: e.message }, 400);
@@ -91,7 +90,7 @@ export function getPassengerRouter(repo: PassengerRepository) {
       if (!passenger) {
         return c.json({ error: 'Invalid email or password' }, 401);
       }
-      if (payload.email !== 'test@example.com' && !verifiedEmails.has(payload.email)) {
+      if (payload.email !== 'test@example.com' && !passenger.is_verified) {
         return c.json({ error: 'Please verify your email first' }, 401);
       }
       const isValid = await Bun.password.verify(payload.password, passenger.password_hash);

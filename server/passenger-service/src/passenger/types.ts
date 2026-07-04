@@ -11,6 +11,7 @@ export interface Passenger {
   preferred_ride_type: RideType | null;
   created_at: Date;
   password_hash: string;
+  is_verified: boolean;
 }
 
 export interface RideRequest {
