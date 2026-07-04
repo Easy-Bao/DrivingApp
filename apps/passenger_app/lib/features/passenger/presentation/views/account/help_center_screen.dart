@@ -2,6 +2,7 @@ import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 class HelpCenterScreen extends StatefulWidget {
   const HelpCenterScreen({super.key});
@@ -348,12 +349,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
   Widget _contactBtn(IconData icon, String text) {
     return GestureDetector(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$text — coming soon!'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      ),
+      onTap: () => CustomToast.show(context, '$text — coming soon!'),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(

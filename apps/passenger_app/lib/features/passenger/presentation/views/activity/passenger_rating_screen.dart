@@ -2,6 +2,7 @@ import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 class PassengerRatingScreen extends StatefulWidget {
   const PassengerRatingScreen({super.key});
@@ -15,16 +16,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
   final TextEditingController _feedbackController = TextEditingController();
 
   void _finishRating() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Thank you for using BaoRide!',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: AppTheme.primaryColor,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    CustomToast.show(context, 'Thank you for using BaoRide!');
     // Navigate back to the home screen
     context.goNamed('PassengerHome');
   }

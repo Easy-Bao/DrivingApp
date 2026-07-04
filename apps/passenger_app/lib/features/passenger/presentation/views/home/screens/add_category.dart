@@ -6,6 +6,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
+import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 class PassengerAddCategoryScreen extends StatefulWidget {
   final Function(SavedPlaceModel) onSave;
@@ -333,11 +334,10 @@ class _PassengerAddCategoryScreenState
     }
 
     if (!_isLocationPinned) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please pin a location on the map before saving.'),
-          behavior: SnackBarBehavior.floating,
-        ),
+      CustomToast.show(
+        context,
+        'Please pin a location on the map before saving.',
+        isError: true,
       );
       return;
     }

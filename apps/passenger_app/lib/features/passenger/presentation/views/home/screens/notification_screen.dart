@@ -328,7 +328,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "We'll notify you about rides and promos",
+            "We'll notify you about rides and account activity",
             style: TextStyle(
               fontSize: 14,
               color: AppTheme.primaryColor.withValues(alpha: 0.3),
