@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 class ProfileInfoScreen extends StatefulWidget {
   const ProfileInfoScreen({super.key});
@@ -20,6 +21,10 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
   final _addressController = TextEditingController(text: 'Pagadian City, Zamboanga del Sur');
   bool _isEditing = false;
   String _passengerId = '';
+
+  String? _nameError;
+  String? _phoneError;
+  String? _emailError;
 
   @override
   void initState() {
@@ -47,18 +52,35 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
   }
 
   Future<void> _toggleEdit() async {
+    setState(() {
+      _nameError = null;
+      _phoneError = null;
+      _emailError = null;
+    });
+
     if (_isEditing) {
       final name = _nameController.text.trim();
       final phone = _phoneController.text.trim();
       final email = _emailController.text.trim();
 
-      if (name.isEmpty || phone.isEmpty || email.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please fill out all fields.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+      bool hasError = false;
+      if (name.isEmpty) {
+        setState(() => _nameError = 'Name is required');
+        hasError = true;
+      }
+      if (phone.isEmpty) {
+        setState(() => _phoneError = 'Phone is required');
+        hasError = true;
+      }
+      if (email.isEmpty) {
+        setState(() => _emailError = 'Email is required');
+        hasError = true;
+      } else if (!email.contains('@')) {
+        setState(() => _emailError = 'Please enter a valid email');
+        hasError = true;
+      }
+
+      if (hasError) {
         return;
       }
 
@@ -76,29 +98,14 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           await prefs.setString('passenger_email', updated['email'] as String);
 
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully!'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.show(context, 'Profile updated successfully!');
         } else {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to update profile details.'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.show(context, 'Failed to update profile details.', isError: true);
         }
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Connection failed: $e'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        CustomToast.show(context, 'Connection failed: $e', isError: true);
       }
     }
     setState(() => _isEditing = !_isEditing);
@@ -168,11 +175,10 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
                           color: AppTheme.primaryColor,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.surface, width: 2),
                         ),
                         child: const Icon(
                           LucideIcons.camera,
@@ -185,11 +191,11 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            _buildField('Full Name', _nameController, LucideIcons.user),
+            _buildField('Full Name', _nameController, LucideIcons.user, errorText: _nameError),
             const SizedBox(height: 16),
-            _buildField('Phone Number', _phoneController, LucideIcons.phone),
+            _buildField('Phone Number', _phoneController, LucideIcons.phone, errorText: _phoneError),
             const SizedBox(height: 16),
-            _buildField('Email', _emailController, LucideIcons.mail),
+            _buildField('Email', _emailController, LucideIcons.mail, errorText: _emailError),
             const SizedBox(height: 16),
             _buildField('Address', _addressController, LucideIcons.map_pin),
             const SizedBox(height: 32),
@@ -222,8 +228,9 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
   Widget _buildField(
     String label,
     TextEditingController controller,
-    IconData icon,
-  ) {
+    IconData icon, {
+    String? errorText,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -237,35 +244,56 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: AppTheme.neutralColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _isEditing
-                  ? AppTheme.primaryColor.withValues(alpha: 0.3)
-                  : AppTheme.borderSide,
-            ),
+        TextField(
+          controller: controller,
+          enabled: _isEditing,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
           ),
-          child: TextField(
-            controller: controller,
-            enabled: _isEditing,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.primaryColor,
+          decoration: InputDecoration(
+            errorText: errorText,
+            errorStyle: TextStyle(color: AppTheme.cancel),
+            prefixIcon: Icon(
+              icon,
+              size: 18,
+              color: AppTheme.primaryColor.withValues(alpha: 0.5),
             ),
-            decoration: InputDecoration(
-              prefixIcon: Icon(
-                icon,
-                size: 18,
-                color: AppTheme.primaryColor.withValues(alpha: 0.5),
+            filled: false,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: _isEditing
+                    ? AppTheme.primaryColor.withValues(alpha: 0.3)
+                    : AppTheme.borderSide,
               ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.borderSide),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(
+                color: AppTheme.primaryColor,
+                width: 1.5,
               ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: AppTheme.cancel),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: AppTheme.cancel,
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
             ),
           ),
         ),

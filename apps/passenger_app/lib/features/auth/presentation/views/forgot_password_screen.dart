@@ -4,6 +4,7 @@ import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -15,13 +16,26 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
+  String? _emailError;
 
   Future<void> _handleReset() async {
     final email = _emailController.text.trim();
+    
+    setState(() {
+      _emailError = null;
+    });
+
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email')),
-      );
+      setState(() {
+        _emailError = 'Please enter your email';
+      });
+      return;
+    }
+
+    if (!email.contains('@')) {
+      setState(() {
+        _emailError = 'Please enter a valid email';
+      });
       return;
     }
 
@@ -33,20 +47,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       final success = await PassengerApiService.forgotPassword(email: email);
       if (!mounted) return;
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reset link sent successfully!')),
-        );
+        CustomToast.show(context, 'Reset link sent successfully!');
         context.pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email not found or invalid.')),
-        );
+        setState(() {
+          _emailError = 'Email not found or invalid.';
+        });
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Connection error: $e')),
-      );
+      CustomToast.show(context, 'Connection error: $e', isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -131,6 +141,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
                               hintText: 'Email',
+                              errorText: _emailError,
+                              errorStyle: TextStyle(color: AppTheme.cancel),
                               prefixIcon: const Padding(
                                 padding: EdgeInsets.only(left: 10),
                                 child: Icon(LucideIcons.mail, size: 20),
@@ -148,6 +160,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 borderRadius: BorderRadius.circular(32),
                                 borderSide: const BorderSide(
                                   color: AppTheme.primaryColor,
+                                  width: 1.5,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(32),
+                                borderSide: BorderSide(color: AppTheme.cancel),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(32),
+                                borderSide: BorderSide(
+                                  color: AppTheme.cancel,
                                   width: 1.5,
                                 ),
                               ),
