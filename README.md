@@ -51,16 +51,11 @@ The following commands are configured in `melos.yaml`:
   ```bash
   melos run analyze
   ```
-* **Generate Rust FFI bindings via flutter_rust_bridge:**
-  ```bash
-  melos run gen
-  ```
-
 ---
 
 ## Coding Guidelines
 
 Please refer to the global agent configuration files (`.agent`, `.cursorrules`, `.clinerules`) in the root directory for instructions regarding:
 * SOLID design and architecture.
-* Strict naming conventions (snake_case for Rust, camelCase/PascalCase for Dart).
+* Strict naming conventions (camelCase/PascalCase for Dart).
 * Narrative and lifecycle-oriented code documentation and git commits.

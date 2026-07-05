@@ -61,27 +61,15 @@ app.*.map.json
 .clinerules
 .cursorrules
 
-# Rust build artifacts
-target/
-server/vendor/
-server/.cargo/
 
-# Node/Bun dependencies
 **/node_modules/
 
-# Local machine-specific configuration files
 .envrc
 .env.local
 
-# GitHub workflows directory
 .github/workflows/
 
-# Local direnv directory
 .direnv/
 
-# Local task runner
-# (justfile is now tracked as it is free of credentials)
-
-# AI agent local state
 skills-lock.json
 
