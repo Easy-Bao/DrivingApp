@@ -79,8 +79,8 @@ server/.cargo/
 # Local direnv directory
 .direnv/
 
-# Local task runner containing credentials
-justfile
+# Local task runner
+# (justfile is now tracked as it is free of credentials)
 
 # AI agent local state
 skills-lock.json
