@@ -1,4 +1,3 @@
-/// Email Helper: manages SMTP nodemailer configuration and real/mock email delivery.
 import nodemailer from 'nodemailer';
 
 export async function sendEmail({ to, subject, text }: { to: string; subject: string; text: string }) {

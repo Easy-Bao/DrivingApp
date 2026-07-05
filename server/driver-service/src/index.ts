@@ -1,6 +1,3 @@
-/**
- * Driver Service entrypoint using Hono and Prisma to manage driver registration, authentication, status, and telemetry updates.
- */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { prisma } from './db.ts';

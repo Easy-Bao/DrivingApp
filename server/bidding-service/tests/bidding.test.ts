@@ -1,4 +1,3 @@
-/// Bidding service unit tests: verifies fare calculation, bid session creation, active listings, driver bidding, and acceptance.
 import { expect, test, describe } from 'bun:test';
 import biddingApp from '../src/index.ts';
 
@@ -22,7 +21,7 @@ describe('Bidding Service', () => {
     expect(res.status).toBe(200);
     const data: any = await res.json();
     expect(data.base_fare).toBe(20.0);
-    expect(data.total_fare).toBe(85.0); // 20 + 5*10 + 10*1.5 = 20 + 50 + 15 = 85
+    expect(data.total_fare).toBe(85.0);
   });
 
   test('POST /bids — opens a bid session', async () => {

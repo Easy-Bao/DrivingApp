@@ -1,6 +1,3 @@
-/**
- * Passenger validation schemas: uses Zod to validate payload schemas for creating passengers, logging in, and requesting rides.
- */
 import { z } from 'zod';
 
 export const CreatePassengerSchema = z.object({

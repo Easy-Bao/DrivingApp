@@ -1,6 +1,3 @@
-/**
- * Passenger domain type definitions: represents passenger profiles and ride requests.
- */
 export type RideType = 'solo-ride' | 'share-bao';
 
 export interface Passenger {

@@ -1,4 +1,3 @@
-/// Driver service unit tests: verifies signup, login, online toggle, and active ride proxy endpoints.
 import { expect, test, describe, beforeAll } from 'bun:test';
 import driverApp from '../src/index.ts';
 import { prisma } from '../src/db.ts';

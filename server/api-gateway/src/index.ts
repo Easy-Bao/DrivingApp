@@ -1,10 +1,8 @@
-/// API Gateway routing incoming traffic to passenger, trip, driver, telemetry, and chat services.
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { createBunWebSocket } from 'hono/bun';
+import { upgradeWebSocket, websocket } from 'hono/bun';
 
 const app = new Hono();
-const { upgradeWebSocket, websocket } = createBunWebSocket();
 
 app.use('*', cors());
 
@@ -44,7 +42,7 @@ const wsHandler = upgradeWebSocket((c) => {
   let backendWs: WebSocket;
   const targetUrl = SERVICES.chat.replace(/^http/, 'ws') + '/chat/ws' + (new URL(c.req.url).search || '');
   return {
-    onOpen(event, ws) {
+    onOpen(_event, ws) {
       backendWs = new WebSocket(targetUrl);
       backendWs.onmessage = (msg) => {
         ws.send(msg.data);
@@ -53,7 +51,7 @@ const wsHandler = upgradeWebSocket((c) => {
         ws.close();
       };
     },
-    onMessage(event, ws) {
+    onMessage(event, _ws) {
       if (backendWs && backendWs.readyState === WebSocket.OPEN) {
         backendWs.send(event.data);
       }

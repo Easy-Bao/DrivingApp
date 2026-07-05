@@ -1,4 +1,4 @@
 /**
  * Shared protocols helper library: logs initialization message.
  */
-console.log("Protocols library initialized.");
+console.log("Protocols library.");

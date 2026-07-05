@@ -1,12 +1,10 @@
-/// Chat service using Hono and WebSockets to manage real-time messaging between passengers and drivers.
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { createBunWebSocket } from 'hono/bun';
+import { upgradeWebSocket, websocket } from 'hono/bun';
 import { prisma } from './db.ts';
 import { verify } from 'hono/jwt';
 
 const app = new Hono();
-const { upgradeWebSocket, websocket } = createBunWebSocket();
 
 app.use('*', cors());
 
@@ -55,7 +53,7 @@ app.get('/chat/ws', upgradeWebSocket(async (c) => {
 
   if (!roomId) {
     return {
-      onOpen(event, ws) {
+      onOpen(_event, ws) {
         ws.close(4000, 'Room ID is required');
       }
     };
@@ -64,16 +62,16 @@ app.get('/chat/ws', upgradeWebSocket(async (c) => {
   let finalUserId = userId || '';
   if (token && jwtSecret) {
     try {
-      const decoded = await verify(token, jwtSecret);
+      const decoded = await verify(token, jwtSecret, "HS256");
       if (decoded && decoded.sub) {
         finalUserId = decoded.sub.toString();
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   if (!finalUserId) {
     return {
-      onOpen(event, ws) {
+      onOpen(_event, ws) {
         ws.close(4001, 'Unauthorized');
       }
     };
@@ -85,7 +83,7 @@ app.get('/chat/ws', upgradeWebSocket(async (c) => {
 
   if (!room) {
     return {
-      onOpen(event, ws) {
+      onOpen(_event, ws) {
         ws.close(4004, 'Room not found');
       }
     };
@@ -93,14 +91,14 @@ app.get('/chat/ws', upgradeWebSocket(async (c) => {
 
   if (room.driverId !== finalUserId && room.passengerId !== finalUserId) {
     return {
-      onOpen(event, ws) {
+      onOpen(_event, ws) {
         ws.close(4003, 'Forbidden');
       }
     };
   }
 
   return {
-    async onOpen(event, ws) {
+    async onOpen(_event, ws) {
       if (!activeConnections.has(roomId)) {
         activeConnections.set(roomId, new Set());
       }
@@ -120,7 +118,7 @@ app.get('/chat/ws', upgradeWebSocket(async (c) => {
 
       ws.send(JSON.stringify({ type: 'history', messages }));
     },
-    async onMessage(event, ws) {
+    async onMessage(event, _ws) {
       try {
         const payload = JSON.parse(event.data.toString());
         const text = payload.text;
@@ -148,9 +146,9 @@ app.get('/chat/ws', upgradeWebSocket(async (c) => {
             peer.send(broadcastMsg);
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     },
-    onClose(event, ws) {
+    onClose(_event, ws) {
       const peers = activeConnections.get(roomId);
       if (peers) {
         peers.delete(ws);

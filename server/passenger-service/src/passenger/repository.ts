@@ -1,4 +1,3 @@
-/// Passenger Repository interface and implementations mapping to PostgreSQL database via Prisma client.
 import { z } from 'zod';
 import { prisma } from '../db.ts';
 import { Passenger, RideRequest, RideType } from './types.ts';
@@ -353,7 +352,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
       } else if (status === 'accepted') {
         notifications.push({
           id: `acc_${r.id}`,
-          title: 'Driver Found! 🎉',
+          title: 'Driver Found!',
           message: `Driver ${driverName || 'Matched Driver'} (${plateNumber || 'Bao Bao'}) has accepted your ride request.`,
           timestamp: baseTime,
           type: 'driver',
@@ -361,7 +360,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
         });
         notifications.push({
           id: `chat_${r.id}`,
-          title: 'Chat Available 💬',
+          title: 'Chat Available',
           message: `You can now chat with your driver, ${driverName || 'your driver'}.`,
           timestamp: baseTime,
           type: 'chat',
@@ -370,7 +369,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
       } else if (status === 'arrived') {
         notifications.push({
           id: `arr_${r.id}`,
-          title: 'Driver Arrived 📍',
+          title: 'Driver Arrived',
           message: `Your driver, ${driverName || 'your driver'}, has arrived at your pickup location.`,
           timestamp: baseTime,
           type: 'driver',
@@ -379,7 +378,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
       } else if (status === 'in_transit') {
         notifications.push({
           id: `trans_${r.id}`,
-          title: 'Trip Started 🚀',
+          title: 'Trip Started',
           message: `You are in transit to ${r.dropoff_name}.`,
           timestamp: baseTime,
           type: 'ride',
@@ -388,7 +387,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
       } else if (status === 'completed') {
         notifications.push({
           id: `comp_${r.id}`,
-          title: 'Ride Completed ✅',
+          title: 'Ride Completed',
           message: `Your trip to ${r.dropoff_name} is completed. Total fare: ₱${r.fare.toFixed(2)}`,
           timestamp: baseTime,
           type: 'ride',
@@ -406,9 +405,10 @@ export class PostgresPassengerRepository implements PassengerRepository {
       }
     }
 
+    //TODO: Remove this kind of notification
     notifications.push({
       id: 'system_1',
-      title: 'Account Security 🔒',
+      title: 'Account Security',
       message: 'A new device logged into your account. If this was not you, change your password immediately.',
       timestamp: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
       type: 'system',

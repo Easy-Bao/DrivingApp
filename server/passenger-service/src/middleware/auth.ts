@@ -1,6 +1,3 @@
-/**
- * Authentication middleware: extracts JWT token from Authorization header, validates it, and attaches the passenger ID to request context.
- */
 import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
 

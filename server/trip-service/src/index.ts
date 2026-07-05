@@ -1,4 +1,3 @@
-/// Trip Service entrypoint using Hono, Prisma, and a snake_case mapper to handle ride lifecycle endpoints.
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { prisma } from './db.ts';
@@ -116,7 +115,6 @@ app.post('/rides/:id/accept', async (c) => {
       return c.json({ error: 'driver_id and driver_name are required' }, 400);
     }
 
-    // Enforce concurrency limit & priority lock constraints
     const activeRides = await prisma.ride.findMany({
       where: {
         driverId: driver_id,

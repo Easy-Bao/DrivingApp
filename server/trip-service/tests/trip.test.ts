@@ -1,4 +1,3 @@
-/// Trip service unit tests: verifies ride creation, active listing, driver acceptance, and status transitions.
 import { expect, test, describe } from 'bun:test';
 import tripApp from '../src/index.ts';
 

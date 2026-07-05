@@ -1,4 +1,3 @@
-/// Bidding Service: manages passenger fare estimation, bid sessions, and driver offer lifecycle.
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { prisma } from './db.ts';
@@ -21,8 +20,8 @@ type FareConfig = {
 };
 
 const FARE_CONFIGS: Record<string, FareConfig> = {
-  'Solo Ride':   { base: 20, perKm: 10, perMin: 1.5, minFare: 25 },
-  'Share-Bao':   { base: 15, perKm: 7,  perMin: 1.0, minFare: 18 },
+  'Solo Ride': { base: 20, perKm: 10, perMin: 1.5, minFare: 25 },
+  'Share-Bao': { base: 15, perKm: 7, perMin: 1.0, minFare: 18 },
   'Bao Premium': { base: 35, perKm: 15, perMin: 2.0, minFare: 40 },
 };
 
@@ -173,7 +172,7 @@ app.get('/bids/active', async (c) => {
       } catch (err) {
         console.error('Failed to fetch passenger details in bidding-service:', err);
       }
-      
+
       const ratings = ['4.8', '4.9', '4.7', '5.0', '4.6'];
       const charCodeSum = s.passengerId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
       passengerRating = ratings[charCodeSum % ratings.length];
@@ -318,7 +317,7 @@ app.post('/bids/:id/accept', async (c) => {
 
     const trip = await tripRes.json() as any;
 
-    await tripRes.body?.cancel().catch(() => {});
+    await tripRes.body?.cancel().catch(() => { });
 
     const [updatedSession] = await prisma.$transaction([
       prisma.bidSession.update({
@@ -344,7 +343,7 @@ app.post('/bids/:id/accept', async (c) => {
         vehicle_type: offer.vehicleType,
         plate_number: offer.plateNumber,
       }),
-    }).catch(() => {});
+    }).catch(() => { });
 
     return c.json({
       session: mapSession(updatedSession),
