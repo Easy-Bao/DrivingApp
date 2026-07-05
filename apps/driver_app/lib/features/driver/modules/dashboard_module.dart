@@ -1,8 +1,6 @@
 import 'package:driver_app/features/driver/presentation/views/dashboard/driver_chat_screen.dart';
-import 'dart:async';
 
 import 'package:driver_app/core/di/service_locator.dart';
-import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/transitions/app_transitions.dart';
 import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/features/driver/presentation/views/dashboard/ride_alert_screen.dart';
@@ -17,9 +15,8 @@ class DashboardModule {
     ChildRoute(
       name: 'RideAlert',
       'dashboard/ride-alert',
-      child: (context, GoRouterState state) => RideAlertScreen(
-        rideData: state.extra as Map<String, dynamic>?,
-      ),
+      child: (context, GoRouterState state) =>
+          RideAlertScreen(rideData: state.extra as Map<String, dynamic>?),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),

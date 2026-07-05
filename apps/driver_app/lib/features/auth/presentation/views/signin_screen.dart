@@ -83,8 +83,14 @@ class _SigninScreenState extends State<SigninScreen> {
       await prefs.setString('driver_id', driver['id'] as String? ?? '');
       await prefs.setString('driver_name', driver['name'] as String? ?? '');
       await prefs.setString('driver_email', driver['email'] as String? ?? '');
-      await prefs.setString('vehicle_type', driver['vehicleType'] as String? ?? 'Bao Bao');
-      await prefs.setString('plate_number', driver['plateNumber'] as String? ?? 'ABC 1234');
+      await prefs.setString(
+        'vehicle_type',
+        driver['vehicleType'] as String? ?? 'Bao Bao',
+      );
+      await prefs.setString(
+        'plate_number',
+        driver['plateNumber'] as String? ?? 'ABC 1234',
+      );
       await prefs.setString('rating', (driver['rating'] ?? 5.0).toString());
 
       if (mounted) {
@@ -276,7 +282,9 @@ class _SigninScreenState extends State<SigninScreen> {
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: _isLoading ? null : () => unawaited(_handleSignIn()),
+                      onPressed: _isLoading
+                          ? null
+                          : () => unawaited(_handleSignIn()),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: AppTheme.neutralColor,

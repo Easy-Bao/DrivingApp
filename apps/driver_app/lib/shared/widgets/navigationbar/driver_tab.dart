@@ -57,14 +57,15 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
     final sel = _calcIndex(context);
 
     return PopScope(
-      canPop: _navigationHistory.length <= 1 &&
+      canPop:
+          _navigationHistory.length <= 1 &&
           _navigationHistory.isNotEmpty &&
           _navigationHistory.last == 0,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         if (_navigationHistory.length > 1) {
           setState(() {
-            _navigationHistory.removeLast(); 
+            _navigationHistory.removeLast();
             final previousIndex = _navigationHistory.last;
             _navigateToIndex(previousIndex);
           });

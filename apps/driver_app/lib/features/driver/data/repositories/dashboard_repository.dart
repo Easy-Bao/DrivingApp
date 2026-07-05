@@ -66,7 +66,9 @@ class ApiDashboardRepository implements DashboardRepository {
     if (driverId.isEmpty) return 0.0;
     try {
       final baseUrl = EnvConfig.driverServiceUrl;
-      final response = await http.get(Uri.parse('$baseUrl/drivers/$driverId/stats'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/drivers/$driverId/stats'),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return (data['todayEarnings'] as num).toDouble();
@@ -81,7 +83,9 @@ class ApiDashboardRepository implements DashboardRepository {
     if (driverId.isEmpty) return 0;
     try {
       final baseUrl = EnvConfig.driverServiceUrl;
-      final response = await http.get(Uri.parse('$baseUrl/drivers/$driverId/stats'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/drivers/$driverId/stats'),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['todayTrips'] as int;
@@ -96,7 +100,9 @@ class ApiDashboardRepository implements DashboardRepository {
     if (driverId.isEmpty) return 0.0;
     try {
       final baseUrl = EnvConfig.driverServiceUrl;
-      final response = await http.get(Uri.parse('$baseUrl/drivers/$driverId/stats'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/drivers/$driverId/stats'),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return (data['hoursOnline'] as num).toDouble();

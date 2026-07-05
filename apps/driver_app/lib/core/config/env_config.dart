@@ -17,10 +17,16 @@ class EnvConfig {
   static String get driverServiceUrl {
     final baseUrl = dotenv.env['DRIVER_SERVICE_URL'] ?? 'http://127.0.0.1:8080';
     final isPhysicalDevice = dotenv.env['PHYSICAL_DEVICE'] == 'true';
-    if (!isPhysicalDevice && !kIsWeb && Platform.isAndroid && baseUrl.contains('localhost')) {
+    if (!isPhysicalDevice &&
+        !kIsWeb &&
+        Platform.isAndroid &&
+        baseUrl.contains('localhost')) {
       return baseUrl.replaceAll('localhost', '10.0.2.2');
     }
-    if (!isPhysicalDevice && !kIsWeb && Platform.isAndroid && baseUrl.contains('127.0.0.1')) {
+    if (!isPhysicalDevice &&
+        !kIsWeb &&
+        Platform.isAndroid &&
+        baseUrl.contains('127.0.0.1')) {
       return baseUrl.replaceAll('127.0.0.1', '10.0.2.2');
     }
     return baseUrl;

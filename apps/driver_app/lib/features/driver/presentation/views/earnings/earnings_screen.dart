@@ -66,7 +66,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeek = DateTime(monday.year, monday.month, monday.day);
 
-    final completedTrips = trips.where((t) => t['status'] == 'completed').toList();
+    final completedTrips = trips
+        .where((t) => t['status'] == 'completed')
+        .toList();
     final thisWeekTrips = completedTrips.where((t) {
       try {
         final dt = DateTime.parse(t['created_at'] as String? ?? '').toLocal();
@@ -100,10 +102,14 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
 
     if (mounted) {
       setState(() {
-        _dailyData = days.map((day) => _EarnDay(day, dailyAmounts[day] ?? 0.0)).toList();
+        _dailyData = days
+            .map((day) => _EarnDay(day, dailyAmounts[day] ?? 0.0))
+            .toList();
         _weekTotal = total;
         _weekTripsCount = thisWeekTrips.length;
-        _hoursOnline = _weekTripsCount > 0 ? (_weekTripsCount * 0.75 + 0.5) : 0.0;
+        _hoursOnline = _weekTripsCount > 0
+            ? (_weekTripsCount * 0.75 + 0.5)
+            : 0.0;
         _isLoading = false;
       });
     }
@@ -121,7 +127,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
       backgroundColor: AppTheme.surface,
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              )
             : ListView(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
                 physics: const BouncingScrollPhysics(),

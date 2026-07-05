@@ -62,7 +62,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
   Future<void> _contactPassenger() async {
     final passengerId = widget.trip['passenger_id'] as String?;
     final tripId = widget.trip['id'] as String?;
-    
+
     if (passengerId == null || tripId == null) return;
 
     final prefs = await SharedPreferences.getInstance();
@@ -96,12 +96,20 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
         }
       } else {
         if (mounted) {
-          CustomToast.show(context, 'Failed to initialize chat channel.', isError: true);
+          CustomToast.show(
+            context,
+            'Failed to initialize chat channel.',
+            isError: true,
+          );
         }
       }
     } catch (e) {
       if (mounted) {
-        CustomToast.show(context, 'Connection failed to start chat.', isError: true);
+        CustomToast.show(
+          context,
+          'Connection failed to start chat.',
+          isError: true,
+        );
       }
     }
   }
@@ -110,8 +118,18 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     try {
       final dt = DateTime.parse(isoString).toLocal();
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${months[dt.month - 1]} ${dt.day}, ${dt.year} at ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } catch (_) {
@@ -173,7 +191,10 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -214,7 +235,11 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          Container(width: 1, height: 32, color: AppTheme.borderSide),
+                          Container(
+                            width: 1,
+                            height: 32,
+                            color: AppTheme.borderSide,
+                          ),
                           const Icon(
                             Icons.location_on,
                             size: 14,
@@ -264,7 +289,9 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -286,7 +313,9 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -359,7 +388,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     }
 
     final rating = _passenger?['rating'] ?? '4.8';
-    
+
     return Column(
       children: [
         Container(
@@ -410,7 +439,10 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.complete.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
@@ -449,7 +481,11 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(LucideIcons.message_square, color: Colors.white, size: 20),
+                const Icon(
+                  LucideIcons.message_square,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 const Text(
                   'Contact Passenger (Lost & Found)',

@@ -18,9 +18,8 @@ class EarningsModule {
     ChildRoute(
       name: 'DriverTripDetail',
       'earnings/trip-detail',
-      child: (context, GoRouterState state) => DriverTripDetailScreen(
-        trip: state.extra as Map<String, dynamic>,
-      ),
+      child: (context, GoRouterState state) =>
+          DriverTripDetailScreen(trip: state.extra as Map<String, dynamic>),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

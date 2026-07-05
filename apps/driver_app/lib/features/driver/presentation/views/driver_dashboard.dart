@@ -124,13 +124,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   void _toggleOnline(BuildContext context, bool currentOnline) {
     final pos = LocationService.lastPosition;
     if (pos != null) {
-      BlocProvider.of<DashboardCubit>(context).toggleOnline(lat: pos.latitude, lng: pos.longitude);
+      BlocProvider.of<DashboardCubit>(
+        context,
+      ).toggleOnline(lat: pos.latitude, lng: pos.longitude);
     } else {
-      unawaited(LocationService.getCurrentPosition().then((p) {
-        if (p != null && context.mounted) {
-          BlocProvider.of<DashboardCubit>(context).toggleOnline(lat: p.latitude, lng: p.longitude);
-        }
-      }));
+      unawaited(
+        LocationService.getCurrentPosition().then((p) {
+          if (p != null && context.mounted) {
+            BlocProvider.of<DashboardCubit>(
+              context,
+            ).toggleOnline(lat: p.latitude, lng: p.longitude);
+          }
+        }),
+      );
     }
   }
 

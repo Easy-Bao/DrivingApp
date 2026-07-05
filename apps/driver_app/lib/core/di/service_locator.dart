@@ -14,16 +14,10 @@ import 'package:get_it/get_it.dart';
 final GetIt getIt = GetIt.instance;
 
 void setupServiceLocator() {
-  // Driver Feature Repositories
-  // Wired to live backend via GET /drivers/:id/stats.
   getIt.registerLazySingleton<DashboardRepository>(
     () => ApiDashboardRepository(),
   );
-
-  // Live API implementation.
   getIt.registerLazySingleton<RideRepository>(() => ApiRideRepository());
-
-  // Dashboard Cubit persistent singleton
   getIt.registerLazySingleton<DashboardCubit>(
     () => DashboardCubit(repository: getIt<DashboardRepository>()),
   );

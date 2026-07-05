@@ -1,3 +1,5 @@
+library;
+
 /// Trip history screen: displays a chronological list of completed and canceled trips for the authenticated driver.
 import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
@@ -10,7 +12,8 @@ class DriverTripHistoryScreen extends StatefulWidget {
   const DriverTripHistoryScreen({super.key});
 
   @override
-  State<DriverTripHistoryScreen> createState() => _DriverTripHistoryScreenState();
+  State<DriverTripHistoryScreen> createState() =>
+      _DriverTripHistoryScreenState();
 }
 
 class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
@@ -57,8 +60,18 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
         return 'Yesterday';
       } else {
         const months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
         ];
         return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
       }
@@ -108,54 +121,54 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
           : _trips.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        LucideIcons.history,
-                        size: 64,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No trip history found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    LucideIcons.history,
+                    size: 64,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: grouped.keys.length,
-                  itemBuilder: (context, groupIndex) {
-                    final date = grouped.keys.elementAt(groupIndex);
-                    final trips = grouped[date]!;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20, bottom: 12),
-                          child: Text(
-                            date,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No trip history found',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+              physics: const BouncingScrollPhysics(),
+              itemCount: grouped.keys.length,
+              itemBuilder: (context, groupIndex) {
+                final date = grouped.keys.elementAt(groupIndex);
+                final trips = grouped[date]!;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20, bottom: 12),
+                      child: Text(
+                        date,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                          letterSpacing: 0.5,
                         ),
-                        ...trips.map(_buildTripCard),
-                      ],
-                    );
-                  },
-                ),
+                      ),
+                    ),
+                    ...trips.map(_buildTripCard),
+                  ],
+                );
+              },
+            ),
     );
   }
 
@@ -243,7 +256,10 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),

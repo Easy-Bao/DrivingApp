@@ -45,7 +45,9 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   Future<void> _loadRoute() async {
-    final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+    final pos =
+        await LocationService.getCurrentPosition() ??
+        LocationService.lastPosition;
     if (!mounted) return;
     if (pos == null) return;
     final dLat = pos.latitude;
@@ -66,12 +68,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
       }
     }
 
-    final route = await MapProvider.getRoute(
-      dLat,
-      dLng,
-      _destLat,
-      _destLng,
-    );
+    final route = await MapProvider.getRoute(dLat, dLng, _destLat, _destLng);
 
     if (!mounted) return;
     setState(() {
@@ -144,13 +141,21 @@ class _InTransitScreenState extends State<InTransitScreen> {
           Positioned.fill(
             child: SizedBox.expand(
               child: MapProvider.buildMapView(
-                latitude: LocationService.lastPosition?.latitude ??
-                    (BlocProvider.of<RideFlowCubit>(context).state is RideFlowInTransit
-                        ? (BlocProvider.of<RideFlowCubit>(context).state as RideFlowInTransit).destLat
+                latitude:
+                    LocationService.lastPosition?.latitude ??
+                    (BlocProvider.of<RideFlowCubit>(context).state
+                            is RideFlowInTransit
+                        ? (BlocProvider.of<RideFlowCubit>(context).state
+                                  as RideFlowInTransit)
+                              .destLat
                         : 0.0),
-                longitude: LocationService.lastPosition?.longitude ??
-                    (BlocProvider.of<RideFlowCubit>(context).state is RideFlowInTransit
-                        ? (BlocProvider.of<RideFlowCubit>(context).state as RideFlowInTransit).destLng
+                longitude:
+                    LocationService.lastPosition?.longitude ??
+                    (BlocProvider.of<RideFlowCubit>(context).state
+                            is RideFlowInTransit
+                        ? (BlocProvider.of<RideFlowCubit>(context).state
+                                  as RideFlowInTransit)
+                              .destLng
                         : 0.0),
                 zoom: 15.0,
                 onMapCreated: (c) {
@@ -160,7 +165,9 @@ class _InTransitScreenState extends State<InTransitScreen> {
                     if (pos != null) {
                       _drawMapElements(pos.latitude, pos.longitude);
                     } else {
-                      final rideState = BlocProvider.of<RideFlowCubit>(context).state;
+                      final rideState = BlocProvider.of<RideFlowCubit>(
+                        context,
+                      ).state;
                       if (rideState is RideFlowInTransit) {
                         _drawMapElements(rideState.destLat, rideState.destLng);
                       }

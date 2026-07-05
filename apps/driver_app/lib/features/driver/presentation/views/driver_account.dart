@@ -213,8 +213,12 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
 
   Widget _buildStatsRow() {
     final tripsStr = _totalTrips != null ? _totalTrips.toString() : '0';
-    final earningsStr = _lifetimeEarnings != null ? '₱${_lifetimeEarnings!.toStringAsFixed(0)}' : '₱0';
-    final acceptanceStr = _acceptanceRate != null ? '${_acceptanceRate!.toStringAsFixed(0)}%' : '0%';
+    final earningsStr = _lifetimeEarnings != null
+        ? '₱${_lifetimeEarnings!.toStringAsFixed(0)}'
+        : '₱0';
+    final acceptanceStr = _acceptanceRate != null
+        ? '${_acceptanceRate!.toStringAsFixed(0)}%'
+        : '0%';
 
     return Row(
       children: [

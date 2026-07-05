@@ -18,10 +18,7 @@ class DriverApiService {
       final response = await http.post(
         Uri.parse('$_baseUrl/drivers/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -42,11 +39,7 @@ class DriverApiService {
       final response = await http.post(
         Uri.parse('$_baseUrl/drivers/$driverId/online'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'isOnline': isOnline,
-          'lat': lat,
-          'lng': lng,
-        }),
+        body: jsonEncode({'isOnline': isOnline, 'lat': lat, 'lng': lng}),
       );
       return response.statusCode == 200;
     } catch (_) {
@@ -130,9 +123,7 @@ class DriverApiService {
       final response = await http.post(
         Uri.parse('$_baseUrl/bids/$sessionId/cancel-offer'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'driver_id': driverId,
-        }),
+        body: jsonEncode({'driver_id': driverId}),
       );
       return response.statusCode == 200;
     } catch (_) {
