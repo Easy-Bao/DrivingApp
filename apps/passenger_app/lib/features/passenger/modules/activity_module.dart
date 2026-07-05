@@ -1,3 +1,4 @@
+/// Activity Module: declares GoRouter route maps for passenger activity details, maps, rating, and chat.
 import 'package:core_models/core_models.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/driver_chat_screen.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/track_driver.dart';
@@ -27,10 +28,8 @@ class ActivityModule {
       name: 'ActivityTrackDriver',
       'activity/trackDriver',
       child: (context, GoRouterState state) {
-        final ride = state.extra is RideHistoryModel
-            ? state.extra as RideHistoryModel
-            : null;
-        return AcitivityTrackDriver(ride: ride);
+        final ride = state.extra as RideHistoryModel;
+        return ActivityTrackDriverScreen(ride: ride);
       },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

@@ -1,8 +1,5 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
+/// API Client library: exports low-level networking types and unified error boundaries.
 library;
 
 export 'src/api_client_base.dart';
-
-// TODO: Export any libraries intended for clients of this package.
+export 'src/network_error_handler.dart';

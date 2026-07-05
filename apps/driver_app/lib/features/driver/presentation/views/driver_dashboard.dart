@@ -1,3 +1,6 @@
+/// Driver Dashboard View: main panel displaying driver online status, earnings summary, and active ride matches.
+library;
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -8,6 +11,7 @@ import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubi
 
 import 'package:location_service/location_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
+import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +61,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   void _startPolling() {
     _rideTriggerTimer?.cancel();
-    _rideTriggerTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+    _rideTriggerTimer = Timer.periodic(const Duration(seconds: 1), (
+      timer,
+    ) async {
       if (!mounted) return;
       final s = BlocProvider.of<DashboardCubit>(context).state;
       if (!s.isOnline) {
@@ -70,21 +76,23 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         final driverId = prefs.getString('driver_id') ?? '';
         if (driverId.isEmpty) return;
 
-        // 1. Fetch active, accepted/in transit trips assigned to this driver
-        final historyUrl = '${EnvConfig.driverServiceUrl}/drivers/$driverId/trips';
+        final historyUrl =
+            '${EnvConfig.driverServiceUrl}/drivers/$driverId/trips';
         final historyRes = await http.get(Uri.parse(historyUrl));
         List<Map<String, dynamic>> trips = [];
         if (historyRes.statusCode == 200) {
           final List<dynamic> list = jsonDecode(historyRes.body);
-          trips = list.where((r) {
-            final status = r['status'] as String?;
-            return status == 'accepted' ||
-                status == 'arrived' ||
-                status == 'in_transit';
-          }).map((r) => r as Map<String, dynamic>).toList();
+          trips = list
+              .where((r) {
+                final status = r['status'] as String?;
+                return status == 'accepted' ||
+                    status == 'arrived' ||
+                    status == 'in_transit';
+              })
+              .map((r) => r as Map<String, dynamic>)
+              .toList();
         }
 
-        // 2. Fetch available active bids in the pool
         final bidsList = await DriverApiService.fetchActiveBids(driverId);
         final List<Map<String, dynamic>> bids = bidsList
             .map((b) => b as Map<String, dynamic>)
@@ -114,24 +122,44 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   void _toggleOnline(BuildContext context, bool currentOnline) {
-    final lat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final lng = LocationService.lastPosition?.longitude ?? 123.434343;
-
-    BlocProvider.of<DashboardCubit>(context).toggleOnline(lat: lat, lng: lng);
+    final pos = LocationService.lastPosition;
+    if (pos != null) {
+      BlocProvider.of<DashboardCubit>(context).toggleOnline(lat: pos.latitude, lng: pos.longitude);
+    } else {
+      unawaited(LocationService.getCurrentPosition().then((p) {
+        if (p != null && context.mounted) {
+          BlocProvider.of<DashboardCubit>(context).toggleOnline(lat: p.latitude, lng: p.longitude);
+        }
+      }));
+    }
   }
 
   Future<void> _acceptBid(Map<String, dynamic> bid) async {
     if (_activeTrips.length >= 5) {
-      CustomToast.show(context, 'You cannot accept more than 5 concurrent rides.', isError: true);
+      CustomToast.show(
+        context,
+        'You cannot accept more than 5 concurrent rides.',
+        isError: true,
+      );
       return;
     }
-    final hasPriority = _activeTrips.any((t) => t['ride_type'] == 'Bao Premium');
+    final hasPriority = _activeTrips.any(
+      (t) => t['ride_type'] == 'Bao Premium',
+    );
     if (hasPriority) {
-      CustomToast.show(context, 'You are locked into a Priority Ride.', isError: true);
+      CustomToast.show(
+        context,
+        'You are locked into a Priority Ride.',
+        isError: true,
+      );
       return;
     }
     if (bid['ride_type'] == 'Bao Premium' && _activeTrips.isNotEmpty) {
-      CustomToast.show(context, 'Cannot accept a Priority Ride while having other active rides.', isError: true);
+      CustomToast.show(
+        context,
+        'Cannot accept a Priority Ride while having other active rides.',
+        isError: true,
+      );
       return;
     }
 
@@ -147,7 +175,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       driverName: driverName,
       plateNumber: plateNumber,
       vehicleType: vehicleType,
-      proposedFare: (bid['fare'] as num).toDouble(),
+      proposedFare: SafeParse.toDouble(bid['fare']),
     );
 
     if (mounted) {
@@ -171,8 +199,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     BlocProvider.of<RideFlowCubit>(context).acceptRide(
       rideId: trip['id'],
       passengerName: trip['passenger_name'] ?? 'Passenger',
-      pickupLat: (trip['pickup_latitude'] as num).toDouble(),
-      pickupLng: (trip['pickup_longitude'] as num).toDouble(),
+      pickupLat: SafeParse.toDouble(trip['pickup_latitude']),
+      pickupLng: SafeParse.toDouble(trip['pickup_longitude']),
     );
 
     context.pushNamed(
@@ -181,7 +209,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         'pickup': trip['pickup_name'] ?? 'Pickup',
         'dropoff': trip['dropoff_name'] ?? 'Dropoff',
         'distance': 3.2,
-        'fare': (trip['fare'] as num).toDouble(),
+        'fare': SafeParse.toDouble(trip['fare']),
         'duration': '8 min',
       },
     );
@@ -200,7 +228,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       },
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
-          final showFeed = state.isOnline && (_activeBids.isNotEmpty || _activeTrips.isNotEmpty);
+          final showFeed =
+              state.isOnline &&
+              (_activeBids.isNotEmpty || _activeTrips.isNotEmpty);
           return Scaffold(
             backgroundColor: AppTheme.surface,
             body: SafeArea(
@@ -217,13 +247,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         physics: const BouncingScrollPhysics(),
                         children: [
                           if (_activeTrips.isNotEmpty) ...[
-                            _buildSectionLabel('YOUR ACTIVE RIDES (${_activeTrips.length}/5)'),
+                            _buildSectionLabel(
+                              'YOUR ACTIVE RIDES (${_activeTrips.length}/5)',
+                            ),
                             const SizedBox(height: 10),
                             ..._activeTrips.map(_buildActiveTripCard),
                             const SizedBox(height: 24),
                           ],
                           if (_activeBids.isNotEmpty) ...[
-                            _buildSectionLabel('AVAILABLE REQUESTS (POOL FEED)'),
+                            _buildSectionLabel(
+                              'AVAILABLE REQUESTS (POOL FEED)',
+                            ),
                             const SizedBox(height: 10),
                             ..._activeBids.map(_buildPoolBidCard),
                           ],
@@ -452,7 +486,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -462,13 +499,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: statusColor == AppTheme.secondaryColor ? AppTheme.primaryColor : statusColor,
+                    color: statusColor == AppTheme.secondaryColor
+                        ? AppTheme.primaryColor
+                        : statusColor,
                   ),
                 ),
               ),
               const Spacer(),
               Text(
-                '₱${(trip['fare'] as num).toDouble().toStringAsFixed(2)}',
+                '₱${SafeParse.toDouble(trip['fare']).toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -480,7 +519,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(LucideIcons.user, size: 14, color: AppTheme.tertiaryColor),
+              const Icon(
+                LucideIcons.user,
+                size: 14,
+                color: AppTheme.tertiaryColor,
+              ),
               const SizedBox(width: 8),
               Text(
                 trip['passenger_name'] ?? 'Passenger',
@@ -495,7 +538,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.tertiaryColor),
+              const Icon(
+                LucideIcons.map_pin,
+                size: 14,
+                color: AppTheme.tertiaryColor,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -582,7 +629,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               if (isPriority) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.cancel.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -599,7 +649,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ],
               const Spacer(),
               Text(
-                '₱${(bid['fare'] as num).toDouble().toStringAsFixed(2)}',
+                '₱${SafeParse.toDouble(bid['fare']).toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -611,10 +661,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(LucideIcons.navigation, size: 14, color: AppTheme.tertiaryColor),
+              const Icon(
+                LucideIcons.navigation,
+                size: 14,
+                color: AppTheme.tertiaryColor,
+              ),
               const SizedBox(width: 8),
               Text(
-                '${(bid['distance'] as num).toDouble().toStringAsFixed(1)} km away',
+                '${(bid['distance'] ?? 0).toDouble().toStringAsFixed(1)} km away',
                 style: TextStyle(
                   fontSize: 13,
                   color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -626,7 +680,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.tertiaryColor),
+              const Icon(
+                LucideIcons.map_pin,
+                size: 14,
+                color: AppTheme.tertiaryColor,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -650,7 +708,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   child: ElevatedButton(
                     onPressed: () => _acceptBid(bid),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isPriority ? AppTheme.cancel : AppTheme.primaryColor,
+                      backgroundColor: isPriority
+                          ? AppTheme.cancel
+                          : AppTheme.primaryColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -659,7 +719,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     ),
                     child: Text(
                       isPriority ? 'Accept Priority' : 'Accept Ride',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -693,8 +756,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     return 'Evening';
   }
 }
-
-// Private sub-widgets — each has a single responsibility
 
 class _StatusPill extends StatelessWidget {
   const _StatusPill({required this.isOnline, required this.isLoading});

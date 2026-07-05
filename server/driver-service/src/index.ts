@@ -148,8 +148,8 @@ app.get('/drivers/:id/stats', async (c) => {
     const lifetimeEarnings = completedRides.reduce((sum: number, r: any) => sum + (r.fare ?? 0), 0);
 
     const totalAssigned = completedRides.length + cancelledRides.length;
-    const acceptanceRate = totalAssigned > 0 
-      ? Math.round((completedRides.length / totalAssigned) * 100) 
+    const acceptanceRate = totalAssigned > 0
+      ? Math.round((completedRides.length / totalAssigned) * 100)
       : 98;
 
     return c.json({
@@ -197,5 +197,6 @@ const port = parseInt(process.env.PORT || '8082');
 
 export default {
   port,
+  hostname: '0.0.0.0',
   fetch: app.fetch,
 };

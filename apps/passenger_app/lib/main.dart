@@ -22,10 +22,6 @@ void main() async {
 
   setupServiceLocator();
 
-  /**
-   * Apply globally snappy transition timing before the router initializes.
-   * 160ms easeOutCubic replaces the default 300ms linear curve across all routes.
-   */
   AppTransitions.configure();
 
   await Modular.configure(

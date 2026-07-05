@@ -1,3 +1,4 @@
+/// Home Module: declares GoRouter route maps and configures shell layouts for passenger features.
 import 'package:passenger_app/core/di/service_locator.dart';
 import 'package:core_models/core_models.dart';
 import 'package:passenger_app/core/transitions/app_transitions.dart';
@@ -90,6 +91,7 @@ class HomeModule {
         return DestinationPreviewScreen(
           destination: place,
           preselectedRideType: state.uri.queryParameters['rideType'],
+          pickupAddress: state.uri.queryParameters['pickupAddress'],
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -106,6 +108,7 @@ class HomeModule {
           duration: data['duration'] as String,
           distanceKm: (data['distanceKm'] as num).toDouble(),
           fares: data['fares'] as Map<String, double>?,
+          pickupAddress: data['pickupAddress'] as String?,
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -122,6 +125,7 @@ class HomeModule {
           destination: data['destination'] as PlaceModel,
           distance: data['distance'] as String,
           duration: data['duration'] as String,
+          pickupAddress: data['pickupAddress'] as String?,
         );
       },
       transition: AppTransitions.modal.toTop,
@@ -142,6 +146,7 @@ class HomeModule {
           driverRating: data['driverRating'] as String?,
           vehicleType: data['vehicleType'] as String?,
           plateNumber: data['plateNumber'] as String?,
+          pickupAddress: data['pickupAddress'] as String?,
         );
       },
       transition: AppTransitions.modal.toTop,
@@ -157,9 +162,6 @@ class HomeModule {
         providers: [
           BlocProvider(
             create: (_) {
-              // NOTE: getIt<PassengerHomeRepository>() automatically injects the active implementation
-              // (FixturePassengerHomeRepository, or _ApiPassengerHomeRepository when backend is ready)
-              // based on the single configuration line in lib/core/di/service_locator.dart.
               return PassengerHomeCubit(
                 repository: getIt<PassengerHomeRepository>(),
               );

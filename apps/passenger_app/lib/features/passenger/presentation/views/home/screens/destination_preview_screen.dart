@@ -1,3 +1,6 @@
+/// Destination Preview Screen: displays routing maps, distances, travel durations, and fare estimates for booking selection.
+library;
+
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
@@ -8,21 +11,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/**
- * Screen showing a map and route preview to the selected destination.
- * Allows the passenger to review distances and trigger bookings.
- */
 class DestinationPreviewScreen extends StatefulWidget {
-  /** Selected destination place model. */
   final PlaceModel destination;
-  /** Optional preselected ride type from quick actions. */
   final String? preselectedRideType;
+  final String? pickupAddress;
 
-  /** Constructs a destination preview screen with destination details and optional preselected ride type. */
   const DestinationPreviewScreen({
     super.key,
     required this.destination,
     this.preselectedRideType,
+    this.pickupAddress,
   });
 
   @override
@@ -46,8 +44,8 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
 
   Future<void> _loadRoute() async {
     final pos = await LocationService.getCurrentPosition();
-    final oLat = pos?.latitude ?? 7.8307;
-    final oLng = pos?.longitude ?? 123.4370;
+    final oLat = pos?.latitude ?? widget.destination.latitude;
+    final oLng = pos?.longitude ?? widget.destination.longitude;
 
     final route = await MapProvider.getRoute(
       oLat,
@@ -289,6 +287,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                                     'destination': widget.destination,
                                     'distance': _distance,
                                     'duration': _duration,
+                                    'pickupAddress': widget.pickupAddress ?? 'Current Location',
                                   },
                                 );
                               } else {
@@ -300,6 +299,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                                     'duration': _duration,
                                     'distanceKm': _distanceKm,
                                     'fares': _fares,
+                                    'pickupAddress': widget.pickupAddress ?? 'Current Location',
                                   },
                                 );
                               }

@@ -43,8 +43,8 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
 
   Future<void> _loadRouteData() async {
     final position = await LocationService.getCurrentPosition();
-    final originLat = position?.latitude ?? 7.8307;
-    final originLng = position?.longitude ?? 123.4370;
+    final originLat = position?.latitude ?? widget.destinationLat;
+    final originLng = position?.longitude ?? widget.destinationLng;
 
     final place = await MapProvider.getPlaceFromCoordinates(
       widget.destinationLat,

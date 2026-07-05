@@ -1,4 +1,6 @@
-/// Screen displayed once a driver has been selected/matched for the trip, saving booking details to the backend database.
+/// Driver Matched Screen: shows driver profiles and trip summaries when passenger bookings are confirmed.
+library;
+
 import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
@@ -19,6 +21,7 @@ class DriverMatchedScreen extends StatefulWidget {
   final String? driverRating;
   final String? vehicleType;
   final String? plateNumber;
+  final String? pickupAddress;
 
   const DriverMatchedScreen({
     super.key,
@@ -31,6 +34,7 @@ class DriverMatchedScreen extends StatefulWidget {
     this.driverRating,
     this.vehicleType,
     this.plateNumber,
+    this.pickupAddress,
   });
 
   @override
@@ -61,8 +65,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       final activeRideId = prefs.getString('active_ride_id') ?? '';
       if (activeRideId.isEmpty) {
         final passengerId = prefs.getString('passenger_id') ?? '';
-        final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
-        final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
+        final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+        final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
         if (passengerId.isNotEmpty) {
           final res = await PassengerApiService.createRideRequest(
@@ -70,7 +74,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
             rideType: widget.rideType,
             pickupLat: pickupLat,
             pickupLng: pickupLng,
-            pickupName: 'Current Location',
+            pickupName: widget.pickupAddress ?? 'Current Location',
             dropoffLat: widget.destination.latitude,
             dropoffLng: widget.destination.longitude,
             dropoffName: widget.destination.name,
@@ -111,8 +115,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           child: Column(
             children: [
               const Spacer(flex: 2),
-              // Success checkmark animation
-              ScaleTransition(
+               ScaleTransition(
                 scale: _scaleAnim,
                 child: Container(
                   width: 100,
@@ -163,7 +166,6 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
               ),
               const SizedBox(height: 36),
 
-              // Dynamic Driver Information Card
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -258,7 +260,6 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
               ),
               const SizedBox(height: 20),
 
-              // Destination and Fare Summary Card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -298,7 +299,6 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
               ),
               const Spacer(flex: 2),
 
-              // Navigation button
               SizedBox(
                 width: double.infinity,
                 height: 56,

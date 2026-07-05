@@ -1,3 +1,6 @@
+/// Core Models: main entry point that exports data models, repositories, and parsing utilities.
+library;
+
 export 'src/models/driver_model.dart';
 export 'src/models/notification_model.dart';
 export 'src/models/place_model.dart';
@@ -7,6 +10,7 @@ export 'src/models/heatmap_cell.dart';
 export 'src/models/fare_result.dart';
 export 'src/models/waypoint.dart';
 export 'src/models/route_sequence_result.dart';
+export 'src/safe_parse.dart';
 
 export 'src/repositories/driver_repository.dart';
 export 'src/repositories/passenger_home_repository.dart';

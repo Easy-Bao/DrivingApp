@@ -1,3 +1,6 @@
+/// Search Destination Screen: provides autocomplete destination queries, nearby suggestions, and routing preview navigation.
+library;
+
 import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
@@ -6,16 +9,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/**
- * Screen that handles searching for destinations.
- * Provides autocompletion and nearby suggestions.
- */
 class SearchDestinationScreen extends StatefulWidget {
-  /** Optional ride type preselected from the home page quick action cards. */
   final String? preselectedRideType;
+  final String? pickupAddress;
 
-  /** Constructs a new search screen with an optional preselected ride type. */
-  const SearchDestinationScreen({super.key, this.preselectedRideType});
+  const SearchDestinationScreen({
+    super.key,
+    this.preselectedRideType,
+    this.pickupAddress,
+  });
 
   @override
   State<SearchDestinationScreen> createState() =>
@@ -52,10 +54,6 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
     if (pos != null && mounted) {
       _userLat = pos.latitude;
       _userLng = pos.longitude;
-      _loadNearbyPlaces();
-    } else {
-      _userLat = 7.8307;
-      _userLng = 123.4370;
       _loadNearbyPlaces();
     }
   }
@@ -118,14 +116,18 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
     }
   }
 
-  /** Handles final selection of a destination place, routing to the preview screen. */
   void _onPlaceSelected(PlaceModel place) {
+    final queryParams = <String, String>{};
+    if (widget.preselectedRideType != null) {
+      queryParams['rideType'] = widget.preselectedRideType!;
+    }
+    if (widget.pickupAddress != null) {
+      queryParams['pickupAddress'] = widget.pickupAddress!;
+    }
     context.pushNamed(
       'DestinationPreview',
       extra: place,
-      queryParameters: widget.preselectedRideType != null
-          ? {'rideType': widget.preselectedRideType!}
-          : {},
+      queryParameters: queryParams,
     );
   }
 

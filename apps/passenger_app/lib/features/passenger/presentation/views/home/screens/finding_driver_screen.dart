@@ -15,6 +15,7 @@ class FindingDriverScreen extends StatefulWidget {
   final PlaceModel destination;
   final String distance;
   final String duration;
+  final String? pickupAddress;
 
   const FindingDriverScreen({
     super.key,
@@ -23,6 +24,7 @@ class FindingDriverScreen extends StatefulWidget {
     required this.destination,
     required this.distance,
     required this.duration,
+    this.pickupAddress,
   });
 
   @override
@@ -66,8 +68,8 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
     _mapController = controller;
     if (!_initialized) {
       _initialized = true;
-      final lat = LocationService.lastPosition?.latitude ?? 7.828282;
-      final lng = LocationService.lastPosition?.longitude ?? 123.434343;
+      final lat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+      final lng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
       MapProvider.addMarker(controller, lat, lng, isOrigin: true);
     }
   }
@@ -78,8 +80,8 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isEmpty) return;
 
-      final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
-      final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
+      final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+      final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
       final distanceNum =
           double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ??
@@ -93,7 +95,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
         rideType: widget.rideType,
         pickupLat: pickupLat,
         pickupLng: pickupLng,
-        pickupName: 'Current Location',
+        pickupName: widget.pickupAddress ?? 'Current Location',
         dropoffLat: widget.destination.latitude,
         dropoffLng: widget.destination.longitude,
         dropoffName: widget.destination.name,
@@ -147,6 +149,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
               'driverRating': '5.0',
               'vehicleType': acceptedOffer['vehicle_type'] ?? 'Bao Bao',
               'plateNumber': acceptedOffer['plate_number'] ?? 'Unknown',
+              'pickupAddress': widget.pickupAddress ?? 'Current Location',
             },
           );
         }
@@ -166,8 +169,8 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
 
   @override
   Widget build(BuildContext context) {
-    final defaultLat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final defaultLng = LocationService.lastPosition?.longitude ?? 123.434343;
+    final defaultLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final defaultLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -532,6 +535,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                               'driverRating': '5.0',
                               'vehicleType': vehicleType,
                               'plateNumber': plateNumber,
+                              'pickupAddress': widget.pickupAddress ?? 'Current Location',
                             },
                           );
                         }

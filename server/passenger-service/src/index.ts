@@ -17,9 +17,10 @@ app.get('/', (c) => c.text('Passenger service active'));
 const passengerRouter = getPassengerRouter(repo);
 app.route('/', passengerRouter);
 
-console.log(`Passenger service is listening at: http://localhost:${port}`);
+console.log(`Passenger service is listening at: http://0.0.0.0:${port}`);
 
 export default {
   port,
+  hostname: '0.0.0.0',
   fetch: app.fetch,
 };

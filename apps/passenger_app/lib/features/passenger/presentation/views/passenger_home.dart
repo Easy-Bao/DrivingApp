@@ -16,22 +16,6 @@ import 'package:passenger_app/features/passenger/presentation/views/home/models/
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
-/**
- * Primary home screen for the passenger-facing application shell.
- *
- * This screen composes four functional regions: the header (greeting + location
- * chip), the destination search bar, the saved-place shortcut chip row, the
- * quick-action cards (Solo Ride / Share-Bao), and the recent-activity list.
- *
- * State is sourced from two cubits provided by the shell route:
- * - [PassengerHomeCubit]: owns the current-location address and recent-activity list.
- * - [SavedPlacesCubit]: owns the persisted saved-place chips. Navigation callbacks
- *   are injected into the cubit after mount via [attachContext].
- *
- * The chip row is reactive: [BlocBuilder<SavedPlacesCubit, SavedPlacesState>]
- * rebuilds whenever chips are added or removed. Long-pressing a chip presents
- * a bottom sheet with a "Remove" option backed by [SavedPlacesCubit.removePlace].
- */
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
 
@@ -121,11 +105,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     });
   }
 
-  /**
-   * Provides the cubit with a live [BuildContext] so it can build navigation
-   * callbacks that call [context.pushNamed]. This must be called after the
-   * first frame when [context] is fully mounted in the widget tree.
-   */
   void _attachSavedPlacesContext() {
     if (!mounted) return;
     BlocProvider.of<SavedPlacesCubit>(context).attachContext(context);
@@ -160,11 +139,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  /**
-   * The chip row is rebuilt reactively whenever [SavedPlacesCubit] emits a new
-   * state. Each chip supports a long-press to reveal the remove option. The
-   * "+ Add" chip is always appended after the saved chips.
-   */
   Widget _buildChipRow() {
     return BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
       builder: (context, state) {
@@ -390,10 +364,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  /**
-   * Builds the Solo Ride / Share-Bao cards with a subtle warm gradient
-   * background for a premium, elevated feel.
-   */
   Widget _buildQuickActionCards() {
     return Row(
       children: _quickActions.asMap().entries.map((entry) {
@@ -421,10 +391,13 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         icon: _iconFromName(action['iconName'] ?? ''),
         title: title,
         subtitle: action['subtitle'] ?? '',
-        onTap: () => context.pushNamed(
-          'SearchDestination',
-          queryParameters: {'rideType': title},
-        ),
+        onTap: () {
+          final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+          context.pushNamed(
+            'SearchDestination',
+            queryParameters: {'rideType': title, 'pickupAddress': address},
+          );
+        },
       );
     }).toList();
   }
@@ -525,11 +498,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  /**
-   * Renders a saved-place chip. Chips with pinned coordinates show a small
-   * green dot indicator and a warm tint, signalling that tapping them will
-   * skip the search flow entirely.
-   */
   Widget _buildSavedPlaceChip(SavedPlaceModel place) {
     final hasLocation = place.hasLocation;
     return AnimatedContainer(
@@ -583,7 +551,13 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: () => context.pushNamed('SearchDestination'),
+            onTap: () {
+              final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+              context.pushNamed(
+                'SearchDestination',
+                queryParameters: {'pickupAddress': address},
+              );
+            },
             child: Hero(
               tag: 'search_bar_field',
               child: Material(
@@ -700,11 +674,15 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   Future<void> _initLocationAndLoadData() async {
     if (!mounted) return;
     final cubit = BlocProvider.of<PassengerHomeCubit>(context);
-    
+
     final hasPermission = await LocationService.checkAndRequestPermission();
     if (!hasPermission) {
       if (mounted) {
-        CustomToast.show(context, 'Location permission denied. Using default location.', isError: true);
+        final serviceEnabled = await LocationService.isServiceEnabled();
+        final message = serviceEnabled
+            ? 'Location permission denied. Using default location.'
+            : 'Location services are disabled. Using default location.';
+        CustomToast.show(context, message, isError: true);
       }
       await cubit.loadHomeData(
         lat: MockData.defaultLat,
@@ -736,11 +714,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     await context.pushNamed('ActivityDetailMap', extra: location);
   }
 
-  /**
-   * Opens the AddCategory sheet. On save the returned [SavedPlaceModel] is
-   * passed directly to the cubit so the chip row updates and persists
-   * without requiring a setState call in this widget.
-   */
   Future _openAddCategoryScreen() async {
     final cubit = BlocProvider.of<SavedPlacesCubit>(context);
     final selectedPlace = await context.pushNamed('MapPin');
@@ -755,11 +728,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  /**
-   * Long-pressing a chip presents a bottom sheet offering removal.
-   * The index is used to call [SavedPlacesCubit.removePlace] which rebuilds
-   * the chip row and persists the change.
-   */
   Future _showChipOptions(int index, String label) async {
     await showModalBottomSheet(
       context: context,

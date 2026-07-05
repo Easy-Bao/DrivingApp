@@ -37,9 +37,10 @@ app.get('/telemetry/location/:driverId', (c) => {
 app.get('/', (c) => c.json({ status: 'Telemetry Service OK' }));
 
 const port = parseInt(process.env.PORT || '8085');
-console.log(`Telemetry Service listening on port ${port}`);
+console.log(`Telemetry Service listening at http://0.0.0.0:${port}`);
 
 export default {
   port,
+  hostname: '0.0.0.0',
   fetch: app.fetch,
 };

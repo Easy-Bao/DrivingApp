@@ -1,12 +1,13 @@
 /// Signin Screen: allows passengers to sign in with their email and password credentials.
 import 'dart:convert';
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/core/config/env_config.dart';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
+import 'package:passenger_app/core/config/env_config.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SigninScreen extends StatefulWidget {
@@ -26,294 +27,6 @@ class _SigninScreenState extends State<SigninScreen> {
 
   String? _emailError;
   String? _passwordError;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _signIn() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    setState(() {
-      _emailError = null;
-      _passwordError = null;
-    });
-
-    bool hasError = false;
-    if (email.isEmpty) {
-      _emailError = 'Please enter email';
-      hasError = true;
-    } else if (!email.contains('@')) {
-      _emailError = 'Please enter a valid email';
-      hasError = true;
-    }
-
-    if (password.isEmpty) {
-      _passwordError = 'Please enter password';
-      hasError = true;
-    }
-
-    if (hasError) {
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final url = Uri.parse('${EnvConfig.passengerServiceUrl}/passengers/login');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final token = data['token'] as String;
-        final passenger = data['passenger'] as Map<String, dynamic>;
-        
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', token);
-        await prefs.setString('passenger_id', passenger['id'] as String);
-        await prefs.setString('passenger_name', passenger['name'] as String);
-        await prefs.setString('passenger_phone', passenger['phone'] as String);
-        await prefs.setString('passenger_email', passenger['email'] as String);
-
-        if (!mounted) return;
-        context.pushNamed('PassengerHome');
-      } else {
-        final errorData = _parseErrorJson(response.body);
-        final errorMsg = errorData['error'] ?? 'Login failed';
-        if (errorData['needs_verification'] == true) {
-          final verifyEmail = errorData['email'] ?? email;
-          _showOtpDialog(verifyEmail);
-        } else {
-          setState(() {
-            _emailError = errorMsg;
-            _passwordError = errorMsg;
-          });
-        }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _emailError = 'Connection failed: $e';
-        _passwordError = 'Connection failed: $e';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Map<String, dynamic> _parseErrorJson(String body) {
-    try {
-      return jsonDecode(body) as Map<String, dynamic>;
-    } catch (_) {
-      return {};
-    }
-  }
-
-  void _showOtpDialog(String email) {
-    final otpController = TextEditingController();
-    String? otpError;
-    bool isVerifying = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AlertDialog(
-              backgroundColor: AppTheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              title: const Row(
-                children: [
-                  Icon(LucideIcons.mail, color: AppTheme.primaryColor),
-                  SizedBox(width: 10),
-                  Text(
-                    'Verify Email',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'We sent a 6-digit OTP to $email. Please enter it below to verify your account.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: otpController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Enter 6-digit OTP',
-                      errorText: otpError,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(LucideIcons.key_round, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isVerifying ? null : () => Navigator.pop(dialogCtx),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-                ),
-                ElevatedButton(
-                  onPressed: isVerifying
-                      ? null
-                      : () async {
-                          final code = otpController.text.trim();
-                          if (code.length != 6) {
-                            setModalState(() {
-                              otpError = 'OTP must be 6 digits';
-                            });
-                            return;
-                          }
-                          setModalState(() {
-                            isVerifying = true;
-                            otpError = null;
-                          });
-                          try {
-                            final success = await PassengerApiService.verifyOtp(
-                              email: email,
-                              code: code,
-                            );
-                            if (success) {
-                              Navigator.pop(dialogCtx);
-                              _showSuccessModal();
-                            } else {
-                              setModalState(() {
-                                otpError = 'Invalid or expired OTP';
-                                isVerifying = false;
-                              });
-                            }
-                          } catch (e) {
-                            setModalState(() {
-                              otpError = 'Verification failed: $e';
-                              isVerifying = false;
-                            });
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: isVerifying
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Verify', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showSuccessModal() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
-        return AlertDialog(
-          backgroundColor: AppTheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 16),
-              Container(
-                width: 72,
-                height: 72,
-                decoration: const BoxDecoration(
-                  color: AppTheme.complete,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  LucideIcons.check,
-                  color: Colors.white,
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Verification Successful!',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Logging in shortly...',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      Navigator.pop(context);
-      _signIn();
-    });
-  }
-
-  String _parseError(String body) {
-    try {
-      final data = jsonDecode(body);
-      return data['error'] ?? 'Login failed';
-    } catch (_) {
-      return 'Login failed';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -506,7 +219,9 @@ class _SigninScreenState extends State<SigninScreen> {
                         elevation: 0,
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: AppTheme.neutralColor)
+                          ? const CircularProgressIndicator(
+                              color: AppTheme.neutralColor,
+                            )
                           : const Text(
                               'Sign In',
                               style: TextStyle(
@@ -606,5 +321,297 @@ class _SigninScreenState extends State<SigninScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  String _parseError(String body) {
+    try {
+      final data = jsonDecode(body);
+      return data['error'] ?? 'Login failed';
+    } catch (_) {
+      return 'Login failed';
+    }
+  }
+
+  Map<String, dynamic> _parseErrorJson(String body) {
+    try {
+      return jsonDecode(body) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  void _showOtpDialog(String email) {
+    final otpController = TextEditingController();
+    String? otpError;
+    bool isVerifying = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: const Row(
+                children: [
+                  Icon(LucideIcons.mail, color: AppTheme.primaryColor),
+                  SizedBox(width: 10),
+                  Text(
+                    'Verify Email',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'We sent a 6-digit OTP to $email. Please enter it below to verify your account.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Enter 6-digit OTP',
+                      errorText: otpError,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(LucideIcons.key_round, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () => Navigator.pop(dialogCtx),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () async {
+                          final code = otpController.text.trim();
+                          if (code.length != 6) {
+                            setModalState(() {
+                              otpError = 'OTP must be 6 digits';
+                            });
+                            return;
+                          }
+                          setModalState(() {
+                            isVerifying = true;
+                            otpError = null;
+                          });
+                          try {
+                            final success = await PassengerApiService.verifyOtp(
+                              email: email,
+                              code: code,
+                            );
+                            if (success) {
+                              Navigator.pop(dialogCtx);
+                              _showSuccessModal();
+                            } else {
+                              setModalState(() {
+                                otpError = 'Invalid or expired OTP';
+                                isVerifying = false;
+                              });
+                            }
+                          } catch (e) {
+                            setModalState(() {
+                              otpError = 'Verification failed: $e';
+                              isVerifying = false;
+                            });
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: isVerifying
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Verify',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSuccessModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppTheme.complete,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  LucideIcons.check,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Verification Successful!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Logging in shortly...',
+                style: TextStyle(fontSize: 13, color: AppTheme.primaryColor),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      Navigator.pop(context);
+      _signIn();
+    });
+  }
+
+  Future<void> _signIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+    });
+
+    bool hasError = false;
+    if (email.isEmpty) {
+      _emailError = 'Please enter email';
+      hasError = true;
+    } else if (!email.contains('@')) {
+      _emailError = 'Please enter a valid email';
+      hasError = true;
+    }
+
+    if (password.isEmpty) {
+      _passwordError = 'Please enter password';
+      hasError = true;
+    }
+
+    if (hasError) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final url = Uri.parse(
+        '${EnvConfig.passengerServiceUrl}/passengers/login',
+      );
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final token = data['token'] as String;
+        final passenger = data['passenger'] as Map<String, dynamic>;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt_token', token);
+        await prefs.setString('passenger_id', passenger['id'] as String);
+        await prefs.setString('passenger_name', passenger['name'] as String);
+        await prefs.setString('passenger_phone', passenger['phone'] as String);
+        await prefs.setString('passenger_email', passenger['email'] as String);
+
+        if (!mounted) return;
+        context.pushNamed('PassengerHome');
+      } else {
+        final errorData = _parseErrorJson(response.body);
+        final errorMsg = errorData['error'] ?? 'Login failed';
+        if (errorData['needs_verification'] == true) {
+          final verifyEmail = errorData['email'] ?? email;
+          _showOtpDialog(verifyEmail);
+        } else {
+          setState(() {
+            _emailError = errorMsg;
+            _passwordError = errorMsg;
+          });
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _emailError = 'Connection failed: $e';
+        _passwordError = 'Connection failed: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }

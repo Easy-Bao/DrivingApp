@@ -1,3 +1,6 @@
+/// En Route Pickup Screen: displays navigation route and estimated arrival details for the driver moving toward pickup.
+library;
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
@@ -9,7 +12,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Driver is navigating to the passenger's pickup location.
 class EnRoutePickupScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;
@@ -46,21 +48,23 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
 
   Future<void> _loadRoute() async {
     final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
-    final dLat = pos?.latitude ?? 8.5879;
-    final dLng = pos?.longitude ?? 123.3402;
+    if (!mounted) return;
+    if (pos == null) return;
+    final dLat = pos.latitude;
+    final dLng = pos.longitude;
 
-    // Dynamically search passenger's coordinates
-    final places = await MapProvider.searchPlaces(widget.pickup);
-    if (places.isNotEmpty) {
-      _passengerLat = places.first.latitude;
-      _passengerLng = places.first.longitude;
+    final rideState = BlocProvider.of<RideFlowCubit>(context).state;
+    if (rideState is RideFlowEnRoutePickup) {
+      _passengerLat = rideState.pickupLat;
+      _passengerLng = rideState.pickupLng;
     } else {
-      if (widget.pickup.contains('SM City Dipolog')) {
-        _passengerLat = 8.5891;
-        _passengerLng = 123.3441;
-      } else if (widget.pickup.contains('Dipolog Public Market')) {
-        _passengerLat = 8.5862;
-        _passengerLng = 123.3392;
+      final places = await MapProvider.searchPlaces(widget.pickup);
+      if (places.isNotEmpty) {
+        _passengerLat = places.first.latitude;
+        _passengerLng = places.first.longitude;
+      } else {
+        _passengerLat = dLat;
+        _passengerLng = dLng;
       }
     }
 
@@ -85,7 +89,6 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   Future<void> _drawMapElements(double dLat, double dLng) async {
     if (_mapController == null) return;
 
-    // Driver marker
     await MapProvider.addMarker(
       _mapController!,
       dLat,
@@ -94,7 +97,6 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       label: 'Driver',
     );
 
-    // Passenger marker
     await MapProvider.addMarker(
       _mapController!,
       _passengerLat,
@@ -102,13 +104,11 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       label: 'Passenger',
     );
 
-    // Fit bounds to show both driver and passenger
     await MapProvider.fitBounds(_mapController!, [
       LatLng(dLat, dLng),
       LatLng(_passengerLat, _passengerLng),
     ]);
 
-    // Draw route polyline
     if (_route != null && _route!.polylinePoints.isNotEmpty) {
       await MapProvider.addPolyline(
         _mapController!,
@@ -142,19 +142,32 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: MapProvider.buildMapView(
-              latitude: LocationService.lastPosition?.latitude ?? 8.5879,
-              longitude: LocationService.lastPosition?.longitude ?? 123.3402,
-              zoom: 15.0,
-              onMapCreated: (c) {
-                _mapController = c;
-                if (!_isLoading) {
-                  final pos = LocationService.lastPosition;
-                  final dLat = pos?.latitude ?? 8.5879;
-                  final dLng = pos?.longitude ?? 123.3402;
-                  _drawMapElements(dLat, dLng);
-                }
-              },
+            child: SizedBox.expand(
+              child: MapProvider.buildMapView(
+                latitude: LocationService.lastPosition?.latitude ??
+                    (BlocProvider.of<RideFlowCubit>(context).state is RideFlowEnRoutePickup
+                        ? (BlocProvider.of<RideFlowCubit>(context).state as RideFlowEnRoutePickup).pickupLat
+                        : 0.0),
+                longitude: LocationService.lastPosition?.longitude ??
+                    (BlocProvider.of<RideFlowCubit>(context).state is RideFlowEnRoutePickup
+                        ? (BlocProvider.of<RideFlowCubit>(context).state as RideFlowEnRoutePickup).pickupLng
+                        : 0.0),
+                zoom: 15.0,
+                onMapCreated: (c) {
+                  _mapController = c;
+                  if (!_isLoading) {
+                    final pos = LocationService.lastPosition;
+                    if (pos != null) {
+                      _drawMapElements(pos.latitude, pos.longitude);
+                    } else {
+                      final rideState = BlocProvider.of<RideFlowCubit>(context).state;
+                      if (rideState is RideFlowEnRoutePickup) {
+                        _drawMapElements(rideState.pickupLat, rideState.pickupLng);
+                      }
+                    }
+                  }
+                },
+              ),
             ),
           ),
           SafeArea(child: _buildHeader()),

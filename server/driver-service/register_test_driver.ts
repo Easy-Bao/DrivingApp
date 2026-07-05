@@ -1,18 +1,12 @@
 import { prisma } from './src/db.ts';
 
 async function main() {
+  await prisma.driver.deleteMany();
+  console.log('Cleared all existing drivers from the database');
+
   const email = 'driver@test.com';
-  const password = 'password123';
+  const password = '@Democrito111';
   const passwordHash = await Bun.password.hash(password, { algorithm: 'bcrypt', cost: 10 });
-
-  const existing = await prisma.driver.findUnique({
-    where: { email },
-  });
-
-  if (existing) {
-    console.log('Driver driver@test.com already exists in database');
-    return;
-  }
 
   const driver = await prisma.driver.create({
     data: {

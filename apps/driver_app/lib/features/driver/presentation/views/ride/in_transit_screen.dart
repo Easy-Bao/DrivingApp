@@ -1,13 +1,16 @@
+/// In Transit Screen: renders map visualization and trip details during active ride transportation.
+library;
+
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
+import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
 import 'package:location_service/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Driver is actively transporting the passenger to their destination.
 class InTransitScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;
@@ -43,21 +46,23 @@ class _InTransitScreenState extends State<InTransitScreen> {
 
   Future<void> _loadRoute() async {
     final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
-    final dLat = pos?.latitude ?? 8.5879;
-    final dLng = pos?.longitude ?? 123.3402;
+    if (!mounted) return;
+    if (pos == null) return;
+    final dLat = pos.latitude;
+    final dLng = pos.longitude;
 
-    // Dynamically search destination coordinates
-    final places = await MapProvider.searchPlaces(widget.dropoff);
-    if (places.isNotEmpty) {
-      _destLat = places.first.latitude;
-      _destLng = places.first.longitude;
+    final rideState = BlocProvider.of<RideFlowCubit>(context).state;
+    if (rideState is RideFlowInTransit) {
+      _destLat = rideState.destLat;
+      _destLng = rideState.destLng;
     } else {
-      if (widget.dropoff.contains('Dipolog Public Market')) {
-        _destLat = 8.5862;
-        _destLng = 123.3392;
-      } else if (widget.dropoff.contains('SM City Dipolog')) {
-        _destLat = 8.5891;
-        _destLng = 123.3441;
+      final places = await MapProvider.searchPlaces(widget.dropoff);
+      if (places.isNotEmpty) {
+        _destLat = places.first.latitude;
+        _destLng = places.first.longitude;
+      } else {
+        _destLat = dLat;
+        _destLng = dLng;
       }
     }
 
@@ -82,7 +87,6 @@ class _InTransitScreenState extends State<InTransitScreen> {
   Future<void> _drawMapElements(double dLat, double dLng) async {
     if (_mapController == null) return;
 
-    // Driver/pickup marker
     await MapProvider.addMarker(
       _mapController!,
       dLat,
@@ -91,7 +95,6 @@ class _InTransitScreenState extends State<InTransitScreen> {
       label: 'Driver',
     );
 
-    // Destination marker
     await MapProvider.addMarker(
       _mapController!,
       _destLat,
@@ -99,13 +102,11 @@ class _InTransitScreenState extends State<InTransitScreen> {
       label: 'Destination',
     );
 
-    // Fit bounds to show both driver and destination
     await MapProvider.fitBounds(_mapController!, [
       LatLng(dLat, dLng),
       LatLng(_destLat, _destLng),
     ]);
 
-    // Draw route polyline
     if (_route != null && _route!.polylinePoints.isNotEmpty) {
       await MapProvider.addPolyline(
         _mapController!,
@@ -141,19 +142,32 @@ class _InTransitScreenState extends State<InTransitScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: MapProvider.buildMapView(
-              latitude: LocationService.lastPosition?.latitude ?? 8.5879,
-              longitude: LocationService.lastPosition?.longitude ?? 123.3402,
-              zoom: 15.0,
-              onMapCreated: (c) {
-                _mapController = c;
-                if (!_isLoading) {
-                  final pos = LocationService.lastPosition;
-                  final dLat = pos?.latitude ?? 8.5879;
-                  final dLng = pos?.longitude ?? 123.3402;
-                  _drawMapElements(dLat, dLng);
-                }
-              },
+            child: SizedBox.expand(
+              child: MapProvider.buildMapView(
+                latitude: LocationService.lastPosition?.latitude ??
+                    (BlocProvider.of<RideFlowCubit>(context).state is RideFlowInTransit
+                        ? (BlocProvider.of<RideFlowCubit>(context).state as RideFlowInTransit).destLat
+                        : 0.0),
+                longitude: LocationService.lastPosition?.longitude ??
+                    (BlocProvider.of<RideFlowCubit>(context).state is RideFlowInTransit
+                        ? (BlocProvider.of<RideFlowCubit>(context).state as RideFlowInTransit).destLng
+                        : 0.0),
+                zoom: 15.0,
+                onMapCreated: (c) {
+                  _mapController = c;
+                  if (!_isLoading) {
+                    final pos = LocationService.lastPosition;
+                    if (pos != null) {
+                      _drawMapElements(pos.latitude, pos.longitude);
+                    } else {
+                      final rideState = BlocProvider.of<RideFlowCubit>(context).state;
+                      if (rideState is RideFlowInTransit) {
+                        _drawMapElements(rideState.destLat, rideState.destLng);
+                      }
+                    }
+                  }
+                },
+              ),
             ),
           ),
           SafeArea(
@@ -333,6 +347,11 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   Widget _buildPassengerRow() {
+    final state = BlocProvider.of<RideFlowCubit>(context).state;
+    final passengerName = state is RideFlowInTransit
+        ? state.passengerName
+        : 'Passenger';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -356,19 +375,19 @@ class _InTransitScreenState extends State<InTransitScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Juan D. Cruz',
-                  style: TextStyle(
+                  passengerName,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                Text(
+                const Text(
                   'Aboard',
                   style: TextStyle(fontSize: 12, color: AppTheme.tertiaryColor),
                 ),

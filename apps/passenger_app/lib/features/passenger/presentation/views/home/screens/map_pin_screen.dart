@@ -18,8 +18,8 @@ class _MapPinScreenState extends State<MapPinScreen>
   String _address = 'Move the map to select a location';
   String _subAddress = '';
   bool _isGeocoding = false;
-  double _centerLat = 7.8307;
-  double _centerLng = 123.4370;
+  double _centerLat = LocationService.lastPosition?.latitude ?? 0.0;
+  double _centerLng = LocationService.lastPosition?.longitude ?? 0.0;
 
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnim;

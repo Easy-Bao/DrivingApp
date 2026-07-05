@@ -1,3 +1,6 @@
+/// Track Driver Screen: displays live map location updates and trip progress details for the passenger.
+library;
+
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
@@ -10,18 +13,17 @@ import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 
-class AcitivityTrackDriver extends StatefulWidget {
-  /// The ride being tracked. When provided, driver name and plate are
-  /// rendered dynamically from server data instead of placeholder text.
-  final RideHistoryModel? ride;
+class ActivityTrackDriverScreen extends StatefulWidget {
+  final RideHistoryModel ride;
 
-  const AcitivityTrackDriver({super.key, this.ride});
+  const ActivityTrackDriverScreen({super.key, required this.ride});
 
   @override
-  State<AcitivityTrackDriver> createState() => _AcitivityTrackDriverState();
+  State<ActivityTrackDriverScreen> createState() =>
+      _ActivityTrackDriverScreenState();
 }
 
-class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
+class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   AppMapController? _mapController;
   bool _initialized = false;
   bool _routeDrawn = false;
@@ -31,11 +33,10 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
     if (!_initialized) {
       _initialized = true;
       _routeDrawn = false;
-      final passengerLat = LocationService.lastPosition?.latitude ?? 7.828282;
+      final passengerLat = LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
       final passengerLng =
-          LocationService.lastPosition?.longitude ?? 123.434343;
+          LocationService.lastPosition?.longitude ?? widget.ride.pickupLng;
 
-      // Start driver displaced slightly to simulate movement towards user
       final driverStartLat = passengerLat + 0.006;
       final driverStartLng = passengerLng - 0.005;
 
@@ -45,7 +46,7 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
           startLng: driverStartLng,
           endLat: passengerLat,
           endLng: passengerLng,
-          rideId: widget.ride?.id,
+          rideId: widget.ride.id,
         ),
       );
     }
@@ -71,7 +72,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
         );
       }
 
-      // Clear or overwrite markers (in this simplified SDK version, we re-draw or fly to bounds)
       await MapProvider.addMarker(
         _mapController!,
         passengerLat,
@@ -85,7 +85,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
         isOrigin: false,
       );
 
-      // Re-fit camera to keep both visible
       await MapProvider.fitBounds(_mapController!, [
         LatLng(passengerLat, passengerLng),
         LatLng(driverLat, driverLng),
@@ -160,7 +159,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
             ),
           );
         } else if (state is TrackDriverCompleted) {
-          // Ride completed, transition to rating screen
           unawaited(context.pushNamed('PassengerRating'));
         } else if (state is TrackDriverCanceled) {
           context.pop();
@@ -170,22 +168,22 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
         backgroundColor: AppTheme.surface,
         body: Stack(
           children: [
-            // Map area with tracking visualization
             Positioned.fill(
               bottom: 260,
               child: Container(
                 color: AppTheme.neutralColor,
-                child: MapProvider.buildMapView(
-                  latitude: passengerLat,
-                  longitude: passengerLng,
-                  zoom: 14.5,
-                  interactive: true,
-                  onMapCreated: _onMapCreated,
+                child: SizedBox.expand(
+                  child: MapProvider.buildMapView(
+                    latitude: passengerLat,
+                    longitude: passengerLng,
+                    zoom: 14.5,
+                    interactive: true,
+                    onMapCreated: _onMapCreated,
+                  ),
                 ),
               ),
             ),
 
-            // Top navigation + ETA details
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -281,7 +279,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
               ),
             ),
 
-            // Bottom panel
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
@@ -302,7 +299,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Drag handle
                     Center(
                       child: Container(
                         width: 40,
@@ -315,7 +311,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                       ),
                     ),
 
-                    // Driver info row
                     Row(
                       children: [
                         Container(
@@ -384,7 +379,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Action buttons
                     Row(
                       children: [
                         Expanded(
@@ -415,7 +409,6 @@ class _AcitivityTrackDriverState extends State<AcitivityTrackDriver> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Cancel button
                     GestureDetector(
                       onTap: _handleCancelTrip,
                       child: Container(

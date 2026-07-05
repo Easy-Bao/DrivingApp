@@ -1,3 +1,6 @@
+/// Ride Selection Screen: displays a map route preview and list of ride tier options with dynamic fares for selection.
+library;
+
 import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
@@ -5,16 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/**
- * Screen where the passenger selects their preferred ride option.
- * Displays a real Mapbox map preview showing the route from pickup to drop-off.
- */
 class RideSelectionScreen extends StatefulWidget {
   final PlaceModel destination;
   final String distance;
   final String duration;
   final double distanceKm;
   final Map<String, double>? fares;
+  final String? pickupAddress;
 
   const RideSelectionScreen({
     super.key,
@@ -23,6 +23,7 @@ class RideSelectionScreen extends StatefulWidget {
     required this.duration,
     required this.distanceKm,
     this.fares,
+    this.pickupAddress,
   });
 
   @override
@@ -70,13 +71,12 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   Future<void> _drawRoute() async {
     if (_mapController == null) return;
 
-    final pickupLat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final pickupLng = LocationService.lastPosition?.longitude ?? 123.434343;
+    final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
     final destLat = widget.destination.latitude;
     final destLng = widget.destination.longitude;
 
     try {
-      // Get route details from Rust Mapbox wrapper
       final route = await MapProvider.getRoute(
         pickupLat,
         pickupLng,
@@ -84,7 +84,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         destLng,
       );
       if (route != null && mounted) {
-        // Add markers for pickup and drop-off
         await MapProvider.addMarker(
           _mapController!,
           pickupLat,
@@ -97,14 +96,12 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
           destLng,
           isOrigin: false,
         );
-        // Draw polyline
         await MapProvider.addPolyline(
           _mapController!,
           route.polylinePoints,
           color: AppTheme.primaryColor,
           width: 5.0,
         );
-        // Fit both inside bounds
         await MapProvider.fitBounds(_mapController!, [
           LatLng(pickupLat, pickupLng),
           LatLng(destLat, destLng),
@@ -118,32 +115,32 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final sel = _options[_selectedIdx];
-    final defaultLat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final defaultLng = LocationService.lastPosition?.longitude ?? 123.434343;
+    final defaultLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final defaultLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
-          // Map area (Replacing CustomPainter grid with MapProvider.buildMapView)
           Positioned.fill(
             bottom: MediaQuery.of(context).size.height * 0.55,
             child: Container(
               color: AppTheme.neutralColor,
-              child: MapProvider.buildMapView(
-                latitude: defaultLat,
-                longitude: defaultLng,
-                zoom: 13.5,
-                interactive: false,
-                onMapCreated: (controller) {
-                  _mapController = controller;
-                  _drawRoute();
-                },
+              child: SizedBox.expand(
+                child: MapProvider.buildMapView(
+                  latitude: defaultLat,
+                  longitude: defaultLng,
+                  zoom: 13.5,
+                  interactive: false,
+                  onMapCreated: (controller) {
+                    _mapController = controller;
+                    _drawRoute();
+                  },
+                ),
               ),
             ),
           ),
 
-          // Back button
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -172,7 +169,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
             ),
           ),
 
-          // Bottom sheet panel
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -205,7 +201,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                     ),
                   ),
 
-                  // Route summary display
                   Row(
                     children: [
                       Column(
@@ -235,9 +230,9 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Current Location',
-                              style: TextStyle(
+                            Text(
+                              widget.pickupAddress ?? 'Current Location',
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.primaryColor,
@@ -296,7 +291,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Ride options list
                   ...List.generate(_options.length, (i) {
                     final o = _options[i];
                     final isSel = i == _selectedIdx;
@@ -439,7 +433,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                     );
                   }),
 
-                  // Book button
                   SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 16, top: 4),
@@ -455,6 +448,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                               'destination': widget.destination,
                               'distance': widget.distance,
                               'duration': widget.duration,
+                              'pickupAddress': widget.pickupAddress ?? 'Current Location',
                             },
                           ),
                           style: ElevatedButton.styleFrom(

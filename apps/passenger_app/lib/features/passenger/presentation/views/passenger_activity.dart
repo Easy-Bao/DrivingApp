@@ -1,6 +1,4 @@
-/// Passenger Activity Screen: displays past and upcoming rides loaded live from
-/// the passenger-service backend, split across two tabs.
-library;
+/// Passenger Activity Screen: displays past and upcoming rides loaded live from the passenger-service backend.
 import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
@@ -30,8 +28,12 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     _tabController = TabController(length: 2, vsync: this)
       ..addListener(() => setState(() {}));
 
-    // Obtain a fresh ActivityBloc from GetIt and immediately trigger a load.
     _bloc = getIt<ActivityBloc>();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     unawaited(_loadActivity());
   }
 
@@ -41,7 +43,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     if (passengerId.isNotEmpty) {
       _bloc.add(LoadActivityEvent(passengerId: passengerId));
     } else {
-      // No logged-in user — emit an empty loaded state.
       _bloc.add(LoadActivityEvent(passengerId: ''));
     }
   }
@@ -166,7 +167,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // — Header row: date + status badge —
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -182,7 +182,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
             ],
           ),
           const SizedBox(height: 12),
-          // — Route visualization: pickup → destination —
           Row(
             children: [
               Column(
@@ -246,7 +245,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: AppTheme.borderSide),
           ),
-          // — Footer: vehicle icon + action button —
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -392,9 +390,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     );
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-
-  /// Maps server status string to a normalized display type.
   String _resolveStatusType(String status) {
     switch (status.toLowerCase()) {
       case 'completed':

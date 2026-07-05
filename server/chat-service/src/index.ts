@@ -168,6 +168,7 @@ const port = parseInt(process.env.PORT || '8086');
 
 export default {
   port,
+  hostname: '0.0.0.0',
   fetch: app.fetch,
   websocket,
 };

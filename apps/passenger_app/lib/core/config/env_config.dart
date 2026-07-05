@@ -1,3 +1,4 @@
+/// Environment Configuration: manages access to configuration parameters and maps emulator loopback addresses.
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -11,23 +12,21 @@ class EnvConfig {
   static String get mapboxSecretToken =>
       dotenv.env['MAPBOX_SECRET_TOKEN'] ?? '';
 
-  static String? get passengerServiceUrl {
-    final baseUrl = dotenv.env['PASSENGER_SERVICE_URL'];
-    if (!kIsWeb && Platform.isAndroid && baseUrl!.contains('localhost')) {
-      return baseUrl.replaceAll('localhost', '10.0.2.2');
-    }
-    return baseUrl;
-  }
+  static String? get passengerServiceUrl =>
+      _resolveEmulatorHost(dotenv.env['PASSENGER_SERVICE_URL']);
 
-  /// The base URL for the trip-service (ride lifecycle management).
-  /// On Android emulator, localhost is automatically remapped to 10.0.2.2.
-  static String? get tripServiceUrl {
-    final baseUrl = dotenv.env['TRIP_SERVICE_URL'];
-    if (baseUrl == null) return null;
-    if (!kIsWeb && Platform.isAndroid && baseUrl.contains('localhost')) {
-      return baseUrl.replaceAll('localhost', '10.0.2.2');
+  static String? get tripServiceUrl =>
+      _resolveEmulatorHost(dotenv.env['TRIP_SERVICE_URL']);
+
+  static String? _resolveEmulatorHost(String? url) {
+    if (url == null) return null;
+    final isPhysicalDevice = dotenv.env['PHYSICAL_DEVICE'] == 'true';
+    if (!isPhysicalDevice && !kIsWeb && Platform.isAndroid) {
+      return url
+          .replaceAll('localhost', '10.0.2.2')
+          .replaceAll('127.0.0.1', '10.0.2.2');
     }
-    return baseUrl;
+    return url;
   }
 }
 

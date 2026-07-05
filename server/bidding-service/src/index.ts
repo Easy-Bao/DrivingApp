@@ -415,9 +415,10 @@ app.get('/bids/:id', async (c) => {
 app.get('/', (c) => c.json({ status: 'Bidding Service OK' }));
 
 const port = parseInt(process.env.PORT || '8084');
-console.log(`Bidding Service listening on port ${port}`);
+console.log(`Bidding Service listening at http://0.0.0.0:${port}`);
 
 export default {
   port,
+  hostname: '0.0.0.0',
   fetch: app.fetch,
 };

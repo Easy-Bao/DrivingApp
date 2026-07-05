@@ -1,35 +1,32 @@
+/// Location Service: handles coordinates tracking, distance calculations, and hardware access checks.
+library;
+
 import 'package:geolocator/geolocator.dart';
 import 'map_native_service.dart';
 
-/**
- * Device location service using geolocator.
- * Provider-agnostic — works regardless of map provider.
- */
 class LocationService {
   LocationService._();
 
   static Position? _lastPosition;
   static MapNativeService? _nativeService;
 
-  /**
-   * Initializes the location service with the native FFI implementation.
-   */
   static void initialize(MapNativeService nativeService) {
     _nativeService = nativeService;
   }
 
-  /**
-   * Returns the last known position (cached).
-   */
   static Position? get lastPosition => _lastPosition;
 
-  /**
-   * Check and request location permissions.
-   * Returns true if permission is granted.
-   */
+  static Future<bool> isServiceEnabled() async {
+    return await Geolocator.isLocationServiceEnabled();
+  }
+
   static Future<bool> checkAndRequestPermission() async {
-    final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return false;
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return false;
+    }
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -42,10 +39,6 @@ class LocationService {
     return true;
   }
 
-  /**
-   * Get the current device position.
-   * Caches result for quick re-access.
-   */
   static Future<Position?> getCurrentPosition() async {
     final hasPermission = await checkAndRequestPermission();
     if (!hasPermission) return null;
@@ -58,14 +51,11 @@ class LocationService {
         ),
       );
       return _lastPosition;
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
 
-  /**
-   * Calculate distance between two coordinates in kilometers using Rust.
-   */
   static Future<double> distanceBetween(
     double startLat,
     double startLng,
