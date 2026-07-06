@@ -58,6 +58,10 @@ run-passenger:
 run-driver:
     cd apps/driver_app && flutter run
 
+# Reverse ports for all connected Android devices/emulators
+adb-reverse:
+    @./scripts/adb_reverse.sh
+
 # Start all docker compose containers in background
 docker-up:
     docker compose up -d
