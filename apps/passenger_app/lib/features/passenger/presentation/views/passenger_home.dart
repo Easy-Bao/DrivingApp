@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_state.dart';
@@ -14,6 +15,7 @@ import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_pl
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_state.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 import 'package:passenger_app/shared/widgets/custom_toast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
@@ -27,6 +29,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   late AnimationController _entranceController;
   late Animation<double> _fadeIn;
   late Animation<Offset> _slideIn;
+
+  int _notificationCount = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -98,12 +102,29 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       unawaited(_entranceController.forward());
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
+      unawaited(_loadNotificationCount());
     });
   }
 
   void _attachSavedPlacesContext() {
     if (!mounted) return;
     BlocProvider.of<SavedPlacesCubit>(context).attachContext(context);
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerId = prefs.getString('passenger_id') ?? '';
+      if (passengerId.isEmpty) return;
+      final raw = await PassengerApiService.fetchNotifications(passengerId);
+      final unread = raw.where((n) {
+        final map = n as Map<String, dynamic>;
+        final type = map['type'] as String? ?? '';
+        final isRead = map['isRead'] as bool? ?? false;
+        return (type == 'ride' || type == 'driver' || type == 'chat') && !isRead;
+      }).length;
+      if (mounted) setState(() => _notificationCount = unread);
+    } catch (_) {}
   }
 
   Widget _buildAddChip() {
@@ -223,18 +244,29 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                 onPressed: () => context.pushNamed('Notifications'),
               ),
             ),
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
+            if (_notificationCount > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    _notificationCount > 99 ? '99+' : '$_notificationCount',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                    ),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ],

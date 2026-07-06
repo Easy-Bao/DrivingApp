@@ -23,12 +23,12 @@ class LocalPassengerHomeRepository implements PassengerHomeRepository {
     try {
       final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
       if (place != null && place.fullAddress.isNotEmpty) {
-        return place.fullAddress;
+        return _shortenAddress(place.fullAddress);
       }
-      return MockData.defaultAddress;
+      return _shortenAddress(MockData.defaultAddress);
     } catch (e) {
       debugPrint('LocalPassengerHomeRepository.resolveAddress failed: $e');
-      return MockData.defaultAddress;
+      return _shortenAddress(MockData.defaultAddress);
     }
   }
 
