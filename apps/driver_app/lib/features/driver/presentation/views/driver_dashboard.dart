@@ -244,6 +244,40 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     );
   }
 
+  Future<void> _completeTripFromDashboard(Map<String, dynamic> trip) async {
+    final rideId = trip['id'] as String?;
+    if (rideId == null) return;
+
+    final cubit = BlocProvider.of<RideFlowCubit>(context);
+    cubit.resumeRide(
+      rideId: rideId,
+      status: trip['status'] ?? 'accepted',
+      passengerName: trip['passenger_name'] ?? 'Passenger',
+      pickupLat: SafeParse.toDouble(trip['pickup_latitude']),
+      pickupLng: SafeParse.toDouble(trip['pickup_longitude']),
+      destLat: SafeParse.toDouble(trip['dropoff_latitude']),
+      destLng: SafeParse.toDouble(trip['dropoff_longitude']),
+    );
+
+    await cubit.endRide(
+      distanceKm: 3.2,
+      durationMinutes: 10,
+    );
+
+    if (mounted) {
+      context.pushNamed(
+        'CompleteTripDriver',
+        extra: {
+          'pickup': trip['pickup_name'] ?? 'Pickup',
+          'dropoff': trip['dropoff_name'] ?? 'Dropoff',
+          'distance': 3.2,
+          'fare': SafeParse.toDouble(trip['fare']),
+          'duration': '10 min',
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<DashboardCubit, DashboardState>(
@@ -587,25 +621,72 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton(
-              onPressed: () => _resumeTrip(trip),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          if (status == 'in_transit')
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () => _resumeTrip(trip),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Go to Trip Flow',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                      ),
+                    ),
+                  ),
                 ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Go to Trip Flow',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () => _completeTripFromDashboard(trip),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.complete,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Complete Trip',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () => _resumeTrip(trip),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Go to Trip Flow',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
