@@ -9,9 +9,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ActivityTrackDriverScreen extends StatefulWidget {
   final RideHistoryModel ride;
@@ -27,6 +30,15 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   AppMapController? _mapController;
   bool _initialized = false;
   bool _routeDrawn = false;
+  dynamic _passengerMarkerManager;
+  dynamic _driverMarkerManager;
+  StreamSubscription<Position>? _locationSubscription;
+
+  @override
+  void dispose() {
+    _locationSubscription?.cancel();
+    super.dispose();
+  }
 
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
@@ -39,6 +51,17 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
 
       final driverStartLat = passengerLat + 0.006;
       final driverStartLng = passengerLng - 0.005;
+
+      _locationSubscription?.cancel();
+      _locationSubscription = LocationService.getPositionStream().listen((pos) async {
+        try {
+          await PassengerApiService.updateLocation(
+            rideId: widget.ride.id,
+            lat: pos.latitude,
+            lng: pos.longitude,
+          );
+        } catch (_) {}
+      });
 
       unawaited(
         BlocProvider.of<TrackDriverCubit>(context).startTracking(
@@ -72,13 +95,20 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         );
       }
 
-      await MapProvider.addMarker(
+      if (_passengerMarkerManager != null) {
+        await MapProvider.clearAnnotations(_passengerMarkerManager);
+      }
+      if (_driverMarkerManager != null) {
+        await MapProvider.clearAnnotations(_driverMarkerManager);
+      }
+
+      _passengerMarkerManager = await MapProvider.addMarker(
         _mapController!,
         passengerLat,
         passengerLng,
         isOrigin: true,
       );
-      await MapProvider.addMarker(
+      _driverMarkerManager = await MapProvider.addMarker(
         _mapController!,
         driverLat,
         driverLng,
@@ -161,7 +191,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         } else if (state is TrackDriverCompleted) {
           unawaited(context.pushNamed('PassengerRating'));
         } else if (state is TrackDriverCanceled) {
-          context.pop();
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
         }
       },
       child: Scaffold(
@@ -169,7 +201,6 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         body: Stack(
           children: [
             Positioned.fill(
-              bottom: 260,
               child: Container(
                 color: AppTheme.neutralColor,
                 child: SizedBox.expand(
@@ -195,7 +226,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        context.pop();
+                        Navigator.of(context).pop();
                       },
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -279,158 +310,187 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
               ),
             ),
 
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(32),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 30,
-                      offset: const Offset(0, -10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        margin: const EdgeInsets.only(bottom: 20),
-                        decoration: BoxDecoration(
-                          color: AppTheme.borderSide,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
+                builder: (context, state) {
+                  final driverName = state is TrackDriverInProgress
+                      ? state.driverName
+                      : (widget.ride.driverName.isNotEmpty == true
+                          ? widget.ride.driverName
+                          : 'Driver');
+                  final vehiclePlate = state is TrackDriverInProgress
+                      ? state.vehiclePlate
+                      : (widget.ride.vehiclePlate.isNotEmpty == true
+                          ? widget.ride.vehiclePlate
+                          : '—');
+                  final vehicleType = state is TrackDriverInProgress
+                      ? state.vehicleType
+                      : 'Bao Bao';
 
-                    Row(
+                  return Container(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(32),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 30,
+                          offset: const Offset(0, -10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: AppTheme.secondaryColor,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: const Icon(
-                            LucideIcons.user,
-                            color: AppTheme.primaryColor,
-                            size: 26,
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: AppTheme.borderSide,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.ride?.driverName.isNotEmpty == true
-                                    ? widget.ride!.driverName
-                                    : 'Driver',
+
+                        Row(
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: AppTheme.secondaryColor,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: const Icon(
+                                LucideIcons.user,
+                                color: AppTheme.primaryColor,
+                                size: 26,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    driverName,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '$vehicleType  •  ★ —',
+                                    style: const TextStyle(
+                                      color: AppTheme.tertiaryColor,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.neutralColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.borderSide),
+                              ),
+                              child: Text(
+                                vehiclePlate,
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   color: AppTheme.primaryColor,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              const Text(
-                                'Bao Bao  •  ★ —',
-                                style: TextStyle(
-                                  color: AppTheme.tertiaryColor,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.neutralColor,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.borderSide),
-                          ),
-                          child: Text(
-                            widget.ride?.vehiclePlate.isNotEmpty == true
-                                ? widget.ride!.vehiclePlate
-                                : '—',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor,
-                              letterSpacing: 0.5,
+                        const SizedBox(height: 20),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildActionButton(
+                                icon: LucideIcons.message_circle,
+                                label: 'Message',
+                                backgroundColor: AppTheme.neutralColor,
+                                foregroundColor: AppTheme.primaryColor,
+                                borderColor: AppTheme.borderSide,
+                                onTap: () async {
+                                  final prefs = await SharedPreferences.getInstance();
+                                  final passengerId = prefs.getString('passenger_id') ?? '';
+                                  if (context.mounted) {
+                                    unawaited(
+                                      context.pushNamed(
+                                        'DriverChat',
+                                        extra: {
+                                          'roomId': widget.ride.id,
+                                          'userId': passengerId,
+                                          'peerName': driverName,
+                                        },
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildActionButton(
+                                icon: LucideIcons.phone,
+                                label: 'Call',
+                                backgroundColor: AppTheme.primaryColor,
+                                foregroundColor: Colors.white,
+                                onTap: () {
+                                  // Direct action without double snackbar confirmation
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        GestureDetector(
+                          onTap: _handleCancelTrip,
+                          child: Container(
+                            width: double.infinity,
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cancel.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(32),
+                            ),
+                            child: const Text(
+                              'Cancel Trip',
+                              style: TextStyle(
+                                color: AppTheme.cancel,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildActionButton(
-                            icon: LucideIcons.message_circle,
-                            label: 'Message',
-                            backgroundColor: AppTheme.neutralColor,
-                            foregroundColor: AppTheme.primaryColor,
-                            borderColor: AppTheme.borderSide,
-                            onTap: () {
-                              unawaited(context.pushNamed('DriverChat'));
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildActionButton(
-                            icon: LucideIcons.phone,
-                            label: 'Call',
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            onTap: () {
-                              // Direct action without double snackbar confirmation
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    GestureDetector(
-                      onTap: _handleCancelTrip,
-                      child: Container(
-                        width: double.infinity,
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.cancel.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                        child: Text(
-                          'Cancel Trip',
-                          style: TextStyle(
-                            color: AppTheme.cancel,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ],

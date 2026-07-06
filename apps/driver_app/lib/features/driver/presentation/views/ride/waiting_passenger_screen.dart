@@ -7,6 +7,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
+import 'package:location_service/location_service.dart';
+import 'package:fixtures/fixtures.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/shared/widgets/custom_toast.dart';
 
@@ -56,6 +58,25 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
   }
 
   void _startTrip() {
+    final state = BlocProvider.of<RideFlowCubit>(context).state;
+    final passengerName = state is RideFlowWaitingPassenger
+        ? state.passengerName
+        : 'Passenger';
+
+    final pickupLat = LocationService.lastPosition?.latitude ?? MockData.defaultLat;
+    final pickupLng = LocationService.lastPosition?.longitude ?? MockData.defaultLng;
+    final destLat = pickupLat + 0.03;
+    final destLng = pickupLng + 0.03;
+
+    unawaited(
+      BlocProvider.of<RideFlowCubit>(context).startRide(
+        passengerName: passengerName,
+        destLat: destLat,
+        destLng: destLng,
+        distanceKm: widget.distance,
+      ),
+    );
+
     context.pushReplacementNamed(
       'InTransit',
       extra: {

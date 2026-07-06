@@ -123,7 +123,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            bottom: MediaQuery.of(context).size.height * 0.55,
             child: Container(
               color: AppTheme.neutralColor,
               child: SizedBox.expand(

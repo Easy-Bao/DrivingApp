@@ -56,6 +56,18 @@ class LocationService {
     }
   }
 
+  static Stream<Position> getPositionStream() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    ).map((pos) {
+      _lastPosition = pos;
+      return pos;
+    });
+  }
+
   static Future<double> distanceBetween(
     double startLat,
     double startLng,

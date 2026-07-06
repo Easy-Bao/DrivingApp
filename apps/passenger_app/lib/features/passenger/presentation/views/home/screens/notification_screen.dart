@@ -1,4 +1,4 @@
-/// Notification Screen: displays dynamic notifications built from the active user's ride history and promotion updates.
+/// The passenger notifications screen displays trip-related updates fetched dynamically from the passenger service backend including ride status transitions, driver arrival alerts, and active chat availability signals, while filtering out system security logs or promotional campaign messages to keep the user focused on their current active journey status in the app.
 library;
 
 import 'dart:async';

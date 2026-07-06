@@ -147,8 +147,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
       backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
+          Positioned.fill(
             child: MapProvider.buildMapView(
               latitude: widget.destination.latitude,
               longitude: widget.destination.longitude,

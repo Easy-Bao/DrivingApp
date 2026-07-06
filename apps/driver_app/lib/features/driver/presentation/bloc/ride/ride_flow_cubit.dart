@@ -64,6 +64,62 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
+  /// Resume ride flow state based on current backend status
+  Future<void> resumeRide({
+    required String rideId,
+    required String status,
+    required String passengerName,
+    required double pickupLat,
+    required double pickupLng,
+    required double destLat,
+    required double destLng,
+    double distanceKm = 5.2,
+  }) async {
+    _activeRideId = rideId;
+    if (status == 'accepted') {
+      emit(
+        RideFlowEnRoutePickup(
+          passengerName: passengerName,
+          pickupLat: pickupLat,
+          pickupLng: pickupLng,
+        ),
+      );
+    } else if (status == 'arrived') {
+      _waitTimer?.cancel();
+      _elapsedWaitTime = 0;
+      emit(
+        RideFlowWaitingPassenger(
+          passengerName: passengerName,
+          waitTimeSeconds: 0,
+        ),
+      );
+      _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (isClosed) return;
+        _elapsedWaitTime++;
+        emit(
+          RideFlowWaitingPassenger(
+            passengerName: passengerName,
+            waitTimeSeconds: _elapsedWaitTime,
+          ),
+        );
+      });
+    } else if (status == 'in_transit') {
+      _waitTimer?.cancel();
+      emit(
+        RideFlowInTransit(
+          passengerName: passengerName,
+          destLat: destLat,
+          destLng: destLng,
+          distanceKm: distanceKm,
+        ),
+      );
+    } else if (status == 'completed') {
+      emit(const RideFlowComplete(fare: 50.0));
+    } else {
+      emit(RideFlowInitial());
+    }
+  }
+
   // Driver has arrived at the pickup location — start waiting timer.
   Future<void> arriveAtPickup(String passengerName) async {
     _waitTimer?.cancel();

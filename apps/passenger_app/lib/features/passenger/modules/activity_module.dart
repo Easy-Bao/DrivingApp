@@ -1,4 +1,3 @@
-/// The passenger activity module configures the GoRouter modular route definitions map for the activity flow, providing push transitions and initialization rules for displaying finished trip breakdowns, real-time vehicle mapping tracking, live chat threads between clients and drivers, and star ratings feedback overlays to manage user navigation states throughout active transactions.
 library;
 
 import 'package:core_models/core_models.dart';

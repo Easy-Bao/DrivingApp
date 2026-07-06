@@ -153,6 +153,41 @@ class PassengerApiService {
     return response.statusCode == 200;
   }
 
+  static Future<Map<String, dynamic>?> fetchDriverLocation(String driverId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/telemetry/location/$driverId'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<bool> updateLocation({
+    required String rideId,
+    required double lat,
+    required double lng,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/telemetry/location'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'driverId': rideId,
+          'lat': lat,
+          'lng': lng,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<Map<String, dynamic>?> getPassengerProfile(
     String passengerId,
   ) async {

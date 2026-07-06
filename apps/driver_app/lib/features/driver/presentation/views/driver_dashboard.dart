@@ -10,6 +10,7 @@ import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 
 import 'package:location_service/location_service.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/presentation/bloc/dashboard/dashboard_cubit.dart';
@@ -31,6 +32,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseCtrl;
   Timer? _rideTriggerTimer;
+  StreamSubscription<Position>? _locationSubscription;
   List<Map<String, dynamic>> _activeBids = [];
   List<Map<String, dynamic>> _activeTrips = [];
 
@@ -56,10 +58,26 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   void dispose() {
     _pulseCtrl.dispose();
     _rideTriggerTimer?.cancel();
+    _locationSubscription?.cancel();
     super.dispose();
   }
 
   void _startPolling() {
+    _locationSubscription?.cancel();
+    _locationSubscription = LocationService.getPositionStream().listen((pos) async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final driverId = prefs.getString('driver_id') ?? '';
+        if (driverId.isNotEmpty) {
+          await DriverApiService.updateLocation(
+            driverId: driverId,
+            lat: pos.latitude,
+            lng: pos.longitude,
+          );
+        }
+      } catch (_) {}
+    });
+
     _rideTriggerTimer?.cancel();
     _rideTriggerTimer = Timer.periodic(const Duration(seconds: 1), (
       timer,
@@ -111,6 +129,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   void _stopPolling() {
+    _locationSubscription?.cancel();
+    _locationSubscription = null;
     _rideTriggerTimer?.cancel();
     _rideTriggerTimer = null;
     if (mounted) {
@@ -202,11 +222,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       routeName = 'InTransit';
     }
 
-    BlocProvider.of<RideFlowCubit>(context).acceptRide(
+    BlocProvider.of<RideFlowCubit>(context).resumeRide(
       rideId: trip['id'],
+      status: trip['status'] ?? 'accepted',
       passengerName: trip['passenger_name'] ?? 'Passenger',
       pickupLat: SafeParse.toDouble(trip['pickup_latitude']),
       pickupLng: SafeParse.toDouble(trip['pickup_longitude']),
+      destLat: SafeParse.toDouble(trip['dropoff_latitude']),
+      destLng: SafeParse.toDouble(trip['dropoff_longitude']),
     );
 
     context.pushNamed(

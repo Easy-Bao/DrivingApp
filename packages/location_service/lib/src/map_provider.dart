@@ -252,7 +252,7 @@ class MapProvider {
   /**
    * Add a point annotation (marker) to the map.
    */
-  static Future<void> addMarker(
+  static Future<dynamic> addMarker(
     AppMapController controller,
     double lat,
     double lng, {
@@ -272,6 +272,7 @@ class MapProvider {
         circleStrokeColor: 0xFFFFFFFF,
       ),
     );
+    return annotationManager;
   }
 
   /**

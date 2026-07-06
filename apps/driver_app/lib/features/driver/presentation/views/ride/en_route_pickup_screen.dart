@@ -1,9 +1,8 @@
-/// En Route Pickup Screen: displays navigation route and estimated arrival details for the driver moving toward pickup.
-library;
-
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
+import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
 import 'package:location_service/location_service.dart';
@@ -39,11 +38,49 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   RouteModel? _route;
   double _passengerLat = 8.5891;
   double _passengerLng = 123.3441;
+  Timer? _trackingTimer;
+  dynamic _driverMarkerManager;
+  dynamic _passengerMarkerManager;
 
   @override
   void initState() {
     super.initState();
     _loadRoute();
+    _startTrackingPassenger();
+  }
+
+  @override
+  void dispose() {
+    _trackingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTrackingPassenger() {
+    _trackingTimer?.cancel();
+    _trackingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      if (!mounted) return;
+      final cubit = BlocProvider.of<RideFlowCubit>(context);
+      final rideId = cubit.activeRideId;
+      if (rideId != null && rideId.isNotEmpty) {
+        try {
+          final loc = await DriverApiService.fetchPassengerLocation(rideId);
+          if (loc != null && loc['lat'] != null && loc['lng'] != null) {
+            final pLat = (loc['lat'] as num).toDouble();
+            final pLng = (loc['lng'] as num).toDouble();
+            if (mounted) {
+              setState(() {
+                _passengerLat = pLat;
+                _passengerLng = pLng;
+              });
+              final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+              final dLat = pos?.latitude ?? 7.828282;
+              final dLng = pos?.longitude ?? 123.434343;
+              await _drawMapElements(dLat, dLng);
+            }
+          }
+        } catch (_) {}
+      }
+    });
   }
 
   Future<void> _loadRoute() async {
@@ -89,7 +126,14 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   Future<void> _drawMapElements(double dLat, double dLng) async {
     if (_mapController == null) return;
 
-    await MapProvider.addMarker(
+    if (_driverMarkerManager != null) {
+      await MapProvider.clearAnnotations(_driverMarkerManager);
+    }
+    if (_passengerMarkerManager != null) {
+      await MapProvider.clearAnnotations(_passengerMarkerManager);
+    }
+
+    _driverMarkerManager = await MapProvider.addMarker(
       _mapController!,
       dLat,
       dLng,
@@ -97,7 +141,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       label: 'Driver',
     );
 
-    await MapProvider.addMarker(
+    _passengerMarkerManager = await MapProvider.addMarker(
       _mapController!,
       _passengerLat,
       _passengerLng,

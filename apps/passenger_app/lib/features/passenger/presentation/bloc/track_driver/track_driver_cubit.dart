@@ -45,20 +45,87 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     _ticker = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (isClosed) return;
 
+      bool handled = false;
+
       if (activeRideId.isNotEmpty) {
-        final statusData = await PassengerApiService.getRideStatus(activeRideId);
-        if (statusData != null) {
-          final status = statusData['status'] as String?;
-          if (status == 'completed') {
-            timer.cancel();
-            emit(TrackDriverCompleted());
-            await prefs.remove('active_ride_id');
-            return;
+        try {
+          final statusData = await PassengerApiService.getRideStatus(activeRideId);
+          if (statusData != null) {
+            final status = statusData['status'] as String?;
+            if (status == 'completed') {
+              timer.cancel();
+              emit(TrackDriverCompleted());
+              await prefs.remove('active_ride_id');
+              return;
+            }
+
+            final driverId = statusData['driver_id'] as String?;
+            final driverName = statusData['driver_name'] as String? ?? 'Driver';
+            final vehiclePlate = statusData['plate_number'] as String? ?? '—';
+            final vehicleType = statusData['vehicle_type'] as String? ?? 'Bao Bao';
+
+            double driverLat = startLat;
+            double driverLng = startLng;
+            bool locationFetched = false;
+
+            if (driverId != null && driverId.isNotEmpty) {
+              try {
+                final locData = await PassengerApiService.fetchDriverLocation(driverId);
+                if (locData != null && locData['lat'] != null && locData['lng'] != null) {
+                  driverLat = (locData['lat'] as num).toDouble();
+                  driverLng = (locData['lng'] as num).toDouble();
+                  locationFetched = true;
+                }
+              } catch (_) {}
+            }
+
+            if (!locationFetched) {
+              progress += 0.05;
+              if (progress >= 1.0) progress = 0.99;
+              final pos = _interpolate(
+                progress: progress,
+                routePoints: routePoints,
+                startLat: startLat,
+                startLng: startLng,
+                endLat: endLat,
+                endLng: endLng,
+              );
+              driverLat = pos.$1;
+              driverLng = pos.$2;
+            }
+
+            String eta = 'Calculating...';
+            if (status == 'accepted') {
+              eta = 'En-route';
+            } else if (status == 'arrived') {
+              eta = 'Arrived';
+            } else if (status == 'in_transit') {
+              eta = 'In-transit';
+            }
+
+            emit(
+              TrackDriverInProgress(
+                driverLat: driverLat,
+                driverLng: driverLng,
+                progress: progress,
+                eta: eta,
+                routePoints: routePoints,
+                driverName: driverName,
+                vehiclePlate: vehiclePlate,
+                vehicleType: vehicleType,
+              ),
+            );
+            handled = true;
           }
+        } catch (_) {}
+      }
 
-          progress += 0.05;
-          if (progress >= 1.0) progress = 0.99;
-
+      if (!handled) {
+        progress += 0.1;
+        if (progress >= 1.0) {
+          timer.cancel();
+          emit(TrackDriverCompleted());
+        } else {
           final pos = _interpolate(
             progress: progress,
             routePoints: routePoints,
@@ -67,59 +134,35 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             endLat: endLat,
             endLng: endLng,
           );
-
-          String eta = 'Calculating...';
-          if (status == 'accepted') {
-            eta = 'En-route';
-          } else if (status == 'arrived') {
-            eta = 'Arrived';
-          } else if (status == 'in_transit') {
-            eta = 'In-transit';
-          }
-
+          final etaMinutes = ((1.0 - progress) * 10).ceil();
           emit(
             TrackDriverInProgress(
               driverLat: pos.$1,
               driverLng: pos.$2,
               progress: progress,
-              eta: eta,
+              eta: etaMinutes == 1 ? '1 min' : '$etaMinutes mins',
               routePoints: routePoints,
+              driverName: 'Test Driver',
+              vehiclePlate: 'XYZ 9999',
+              vehicleType: 'Bao Bao',
             ),
           );
-          return;
         }
-      }
-
-      progress += 0.1;
-      if (progress >= 1.0) {
-        timer.cancel();
-        emit(TrackDriverCompleted());
-      } else {
-        final pos = _interpolate(
-          progress: progress,
-          routePoints: routePoints,
-          startLat: startLat,
-          startLng: startLng,
-          endLat: endLat,
-          endLng: endLng,
-        );
-        final etaMinutes = ((1.0 - progress) * 10).ceil();
-        emit(
-          TrackDriverInProgress(
-            driverLat: pos.$1,
-            driverLng: pos.$2,
-            progress: progress,
-            eta: etaMinutes == 1 ? '1 min' : '$etaMinutes mins',
-            routePoints: routePoints,
-          ),
-        );
       }
     });
   }
 
   /// Passenger canceled the trip.
-  void cancelTrip() {
+  Future<void> cancelTrip() async {
     _ticker?.cancel();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rideId = prefs.getString('active_ride_id') ?? '';
+      if (rideId.isNotEmpty) {
+        await PassengerApiService.updateRideStatus(rideId, 'canceled');
+        await prefs.remove('active_ride_id');
+      }
+    } catch (_) {}
     emit(TrackDriverCanceled());
   }
 

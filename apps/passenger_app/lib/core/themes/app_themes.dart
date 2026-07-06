@@ -12,13 +12,13 @@ class AppTheme {
   static const Color borderSide = Color(0xFFE0E0E0);
 
   // TabBar Active/Inactive Theme
-  static Color selectedItemColor = Color(0xFF222222);
-  static Color indicatorColor = Color(0xFF222222);
+  static const Color selectedItemColor = Color(0xFF222222);
+  static const Color indicatorColor = Color(0xFF222222);
   static Color unselectedItemColor = Color(0xFF222222).withValues(alpha: 0.3);
   static Color outlineBorderColor = Color(0xFF222222).withValues(alpha: 0.1);
 
   // Activtiy Status
-  static Color complete = Color(0xFF285A48);
-  static Color cancel = Color(0xFFFF3737);
-  static Color inProgress = Color(0xFF607B8B);
+  static const Color complete = Color(0xFF285A48);
+  static const Color cancel = Color(0xFFFF3737);
+  static const Color inProgress = Color(0xFF607B8B);
 }

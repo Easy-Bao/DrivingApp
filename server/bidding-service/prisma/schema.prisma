@@ -9,38 +9,38 @@ generator client {
 }
 
 model BidSession {
-  id                String        @id @default(uuid()) @db.Uuid
-  passengerId       String        @map("passenger_id") @db.Uuid
-  rideType          String        @map("ride_type")
-  pickupLatitude    Float         @map("pickup_latitude")
-  pickupLongitude   Float         @map("pickup_longitude")
-  pickupName        String        @map("pickup_name")
-  dropoffLatitude   Float         @map("dropoff_latitude")
-  dropoffLongitude  Float         @map("dropoff_longitude")
-  dropoffName       String        @map("dropoff_name")
-  distanceKm        Float         @map("distance_km")
-  durationMinutes   Float         @map("duration_minutes")
-  offeredFare       Float         @map("offered_fare")
-  status            String        @default("open")
-  acceptedDriverId  String?       @map("accepted_driver_id")
-  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  expiresAt         DateTime      @map("expires_at") @db.Timestamptz
-  offers            DriverOffer[]
+  id               String        @id @default(uuid()) @db.Uuid
+  passengerId      String        @map("passenger_id") @db.Uuid
+  rideType         String        @map("ride_type")
+  pickupLatitude   Float         @map("pickup_latitude")
+  pickupLongitude  Float         @map("pickup_longitude")
+  pickupName       String        @map("pickup_name")
+  dropoffLatitude  Float         @map("dropoff_latitude")
+  dropoffLongitude Float         @map("dropoff_longitude")
+  dropoffName      String        @map("dropoff_name")
+  distanceKm       Float         @map("distance_km")
+  durationMinutes  Float         @map("duration_minutes")
+  offeredFare      Float         @map("offered_fare")
+  status           String        @default("open")
+  acceptedDriverId String?       @map("accepted_driver_id")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt        DateTime      @map("expires_at") @db.Timestamptz
+  offers           DriverOffer[]
 
   @@map("bid_sessions")
 }
 
 model DriverOffer {
-  id            String     @id @default(uuid()) @db.Uuid
-  sessionId     String     @map("session_id") @db.Uuid
-  driverId      String     @map("driver_id")
-  driverName    String     @map("driver_name")
-  plateNumber   String     @map("plate_number")
-  vehicleType   String     @map("vehicle_type")
-  proposedFare  Float      @map("proposed_fare")
-  status        String     @default("pending")
-  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz
-  session       BidSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id           String     @id @default(uuid()) @db.Uuid
+  sessionId    String     @map("session_id") @db.Uuid
+  driverId     String     @map("driver_id")
+  driverName   String     @map("driver_name")
+  plateNumber  String     @map("plate_number")
+  vehicleType  String     @map("vehicle_type")
+  proposedFare Float      @map("proposed_fare")
+  status       String     @default("pending")
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  session      BidSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("driver_offers")
 }

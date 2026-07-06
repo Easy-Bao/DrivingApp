@@ -14,9 +14,9 @@ for device in $devices; do
   echo "📱 Device: $device"
   for port in "${ports[@]}"; do
     if adb -s "$device" reverse tcp:"$port" tcp:"$port" >/dev/null 2>&1; then
-      echo "   tcp:$port ➡️ tcp:$port"
+      echo "   tcp:$port tcp:$port"
     else
-      echo "   tcp:$port ➡️ tcp:$port (failed/already configured)"
+      echo "   tcp:$port tcp:$port (failed/already configured)"
     fi
   done
 done

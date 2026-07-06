@@ -102,8 +102,7 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
       backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.7,
+          Positioned.fill(
             child: MapProvider.buildMapView(
               latitude: widget.destinationLat,
               longitude: widget.destinationLng,
