@@ -4,6 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 
+//TODO: Improve the menu
 class PassengerShellLayout extends StatefulWidget {
   final Widget child;
   const PassengerShellLayout({super.key, required this.child});
@@ -12,8 +13,76 @@ class PassengerShellLayout extends StatefulWidget {
   State<PassengerShellLayout> createState() => _PassengerShellLayoutState();
 }
 
-class _PassengerShellLayoutState extends State<PassengerShellLayout> {
+class _PassengerShellLayoutState extends State<PassengerShellLayout>
+    with SingleTickerProviderStateMixin {
   final List<int> _navigationHistory = [];
+
+  bool _rideMenuOpen = false;
+
+  late final AnimationController _rideMenuController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 380),
+  );
+
+  late final Animation<double> _rideMenuHeight = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 0.0,
+        end: 0.55,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 35,
+    ),
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 0.55,
+        end: 0.85,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 30,
+    ),
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 0.85,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+      weight: 35,
+    ),
+  ]).animate(_rideMenuController);
+
+  late final Animation<double> _rideMenuFade = CurvedAnimation(
+    parent: _rideMenuController,
+    curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+    reverseCurve: Curves.easeIn,
+  );
+
+  @override
+  void dispose() {
+    _rideMenuController.dispose();
+    super.dispose();
+  }
+
+  void _toggleRideMenu() {
+    setState(() => _rideMenuOpen = !_rideMenuOpen);
+    if (_rideMenuOpen) {
+      _rideMenuController.forward(from: 0);
+    } else {
+      _rideMenuController.reverse();
+    }
+  }
+
+  void _closeRideMenu() {
+    if (!_rideMenuOpen) return;
+    setState(() => _rideMenuOpen = false);
+    _rideMenuController.reverse();
+  }
+
+  Future<void> _startRideFlow() async {
+    // Same flow you already had wired up (MapPin -> DestinationPreview).
+    final result = await context.pushNamed('MapPin');
+    if (!context.mounted) return;
+    if (result != null && result is PlaceModel) {
+      await context.pushNamed('DestinationPreview', extra: result);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +91,16 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
 
     return PopScope(
       canPop:
+          !_rideMenuOpen &&
           _navigationHistory.length <= 1 &&
           _navigationHistory.isNotEmpty &&
           _navigationHistory.last == 0,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        if (_rideMenuOpen) {
+          _closeRideMenu();
+          return;
+        }
         if (_navigationHistory.length > 1) {
           setState(() {
             _navigationHistory.removeLast();
@@ -43,7 +117,59 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
       },
       child: Scaffold(
         extendBody: true,
-        body: widget.child,
+        body: Stack(
+          children: [
+            widget.child,
+
+            // Dim backdrop while the ride menu is open.
+            IgnorePointer(
+              ignoring: !_rideMenuOpen,
+              child: AnimatedOpacity(
+                opacity: _rideMenuOpen ? 1 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: GestureDetector(
+                  onTap: _closeRideMenu,
+                  child: Container(color: Colors.black.withValues(alpha: 0.32)),
+                ),
+              ),
+            ),
+
+            // Ride options menu, anchored above the FAB, same width as the
+            // FAB itself (64), revealing from 0 height to full height.
+            Positioned(
+              right: 16,
+              bottom: bottomPadding + 12 + 64 + 12,
+              child: AnimatedBuilder(
+                animation: _rideMenuController,
+                builder: (context, child) {
+                  return IgnorePointer(
+                    ignoring: !_rideMenuOpen,
+                    child: Opacity(
+                      opacity: _rideMenuFade.value,
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          heightFactor: _rideMenuHeight.value.clamp(0.0, 1.0),
+                          child: child,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                child: _RideOptionsMenu(
+                  onShareRide: () {
+                    _closeRideMenu();
+                    _startRideFlow();
+                  },
+                  onSoloRide: () {
+                    _closeRideMenu();
+                    _startRideFlow();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
         bottomNavigationBar: Padding(
           padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding + 12),
           child: Row(
@@ -99,16 +225,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
               ),
               const SizedBox(width: 12),
               GestureDetector(
-                onTap: () async {
-                  final result = await context.pushNamed('MapPin');
-                  if (!context.mounted) return;
-                  if (result != null && result is PlaceModel) {
-                    await context.pushNamed(
-                      'DestinationPreview',
-                      extra: result,
-                    );
-                  }
-                },
+                onTap: _toggleRideMenu,
                 child: Container(
                   height: 64,
                   width: 64,
@@ -230,7 +347,99 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   }
 
   void _onItemTapped(int index, BuildContext context) {
+    if (_rideMenuOpen) _closeRideMenu();
     if (index == _calculateSelectedIndex(context)) return;
     _navigateToIndex(index);
+  }
+}
+
+/// Two-option ride menu shown above the nav FAB.
+/// Colors, icons, and copy left exactly as specified — adjust freely.
+class _RideOptionsMenu extends StatelessWidget {
+  final VoidCallback onShareRide;
+  final VoidCallback onSoloRide;
+
+  const _RideOptionsMenu({required this.onShareRide, required this.onSoloRide});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 64, // matches the nav FAB's width
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.outlineBorderColor.withValues(alpha: 0.16),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _RideOptionTile(
+            icon: LucideIcons.users,
+            label: 'Share Ride',
+            onTap: onShareRide,
+          ),
+          const SizedBox(height: 4),
+          _RideOptionTile(
+            icon: LucideIcons.user,
+            label: 'Solo Ride',
+            onTap: onSoloRide,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RideOptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _RideOptionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: AppTheme.primaryColor),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

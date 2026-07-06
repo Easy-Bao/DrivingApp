@@ -1,10 +1,13 @@
 /// Notification Screen: displays dynamic notifications built from the active user's ride history and promotion updates.
+library;
+
+import 'dart:async';
 import 'package:core_models/core_models.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationScreen extends StatefulWidget {
@@ -21,7 +24,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
+    unawaited(_loadNotifications());
   }
 
   Future<void> _loadNotifications() async {
@@ -37,12 +40,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final List<NotificationModel> list = [];
       
       for (final n in rawNotifications) {
-        final id = n['id'] as String;
-        final title = n['title'] as String;
-        final message = n['message'] as String;
-        final type = n['type'] as String? ?? 'system';
-        final isRead = n['isRead'] as bool? ?? false;
-        final dt = DateTime.tryParse(n['timestamp'] ?? '') ?? DateTime.now();
+        final map = n as Map<String, dynamic>;
+        final type = map['type'] as String? ?? 'system';
+        if (type != 'ride' && type != 'driver' && type != 'chat') {
+          continue;
+        }
+
+        final id = map['id'] as String;
+        final title = map['title'] as String;
+        final message = map['message'] as String;
+        final isRead = map['isRead'] as bool? ?? false;
+        final dt = DateTime.tryParse(map['timestamp'] as String? ?? '') ?? DateTime.now();
         
         list.add(NotificationModel(
           id: id,
@@ -262,7 +270,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppTheme.tertiaryColor,
                             shape: BoxShape.circle,
                           ),

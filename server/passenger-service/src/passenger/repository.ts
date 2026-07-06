@@ -405,16 +405,6 @@ export class PostgresPassengerRepository implements PassengerRepository {
       }
     }
 
-    //TODO: Remove this kind of notification
-    notifications.push({
-      id: 'system_1',
-      title: 'Account Security',
-      message: 'A new device logged into your account. If this was not you, change your password immediately.',
-      timestamp: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-      type: 'system',
-      isRead: true,
-    });
-
     return notifications;
   }
 }

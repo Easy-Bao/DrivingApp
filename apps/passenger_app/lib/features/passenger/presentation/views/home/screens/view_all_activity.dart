@@ -1,7 +1,13 @@
-import 'package:passenger_app/core/themes/app_themes.dart';
+import 'dart:async';
+
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/di/service_locator.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/features/passenger/data/repositories/activity_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerViewAllActivity extends StatefulWidget {
   const PassengerViewAllActivity({super.key});
@@ -12,58 +18,95 @@ class PassengerViewAllActivity extends StatefulWidget {
 }
 
 class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
-  final Map<String, List<Map<String, String>>> _grouped = {
-    'Today': [
-      {
-        'pickup': 'Brgy. Balangasan',
-        'dest': 'Robinson Supermarket',
-        'time': '09:15 AM',
-        'price': '₱32.50',
-        'status': 'completed',
-      },
-    ],
-    'Yesterday': [
-      {
-        'pickup': 'San Francisco St.',
-        'dest': 'Pagadian City Science HS',
-        'time': '07:30 AM',
-        'price': '₱28.00',
-        'status': 'canceled',
-      },
-      {
-        'pickup': 'Plaza Luz',
-        'dest': "Bo's Coffee",
-        'time': '02:00 PM',
-        'price': '₱15.00',
-        'status': 'completed',
-      },
-    ],
-    'Apr 30': [
-      {
-        'pickup': 'Gaisano Capital',
-        'dest': 'Tuburan District',
-        'time': '11:45 AM',
-        'price': '₱45.00',
-        'status': 'completed',
-      },
-    ],
-    'Apr 29': [
-      {
-        'pickup': 'Balangasan',
-        'dest': 'Robinson Supermarket',
-        'time': '08:00 AM',
-        'price': '₱32.50',
-        'status': 'completed',
-      },
-      {
-        'pickup': "Bo's Coffee",
-        'dest': 'Plaza Luz',
-        'time': '04:30 PM',
-        'price': '₱12.00',
-        'status': 'completed',
-      },
-    ],
-  };
+  List<RideHistoryModel> _rides = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
+
+  static const _monthAbbreviations = [
+    'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+    'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_fetchActivity());
+  }
+
+  Future<void> _fetchActivity() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerId = prefs.getString('passenger_id') ?? '';
+      if (passengerId.isNotEmpty) {
+        final repo = getIt<ActivityRepository>();
+        final list = await repo.fetchRideHistory(passengerId);
+        if (mounted) {
+          setState(() {
+            _rides = list;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _rides = [];
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _getDateKey(RideHistoryModel ride) {
+    final parts = ride.date.split(',');
+    if (parts.isEmpty) return 'Unknown';
+    final datePart = parts[0].trim();
+
+    try {
+      final now = DateTime.now();
+      final todayStr = '${_monthAbbreviations[now.month - 1]} ${now.day}';
+      final yesterday = now.subtract(const Duration(days: 1));
+      final yesterdayStr = '${_monthAbbreviations[yesterday.month - 1]} ${yesterday.day}';
+
+      if (datePart.toUpperCase() == todayStr.toUpperCase()) {
+        return 'Today';
+      } else if (datePart.toUpperCase() == yesterdayStr.toUpperCase()) {
+        return 'Yesterday';
+      }
+    } catch (_) {}
+
+    if (datePart.length >= 3) {
+      final month = datePart.substring(0, 3).toLowerCase();
+      final capitalizedMonth = month[0].toUpperCase() + month.substring(1);
+      final rest = datePart.substring(3);
+      return '$capitalizedMonth$rest';
+    }
+
+    return datePart;
+  }
+
+  Map<String, List<RideHistoryModel>> get _groupedRides {
+    final Map<String, List<RideHistoryModel>> grouped = {};
+    for (final ride in _rides) {
+      final key = _getDateKey(ride);
+      if (!grouped.containsKey(key)) {
+        grouped[key] = [];
+      }
+      grouped[key]!.add(ride);
+    }
+    return grouped;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,41 +133,86 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
         ),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        physics: const BouncingScrollPhysics(),
-        itemCount: _grouped.keys.length,
-        itemBuilder: (context, sectionIndex) {
-          final dateKey = _grouped.keys.elementAt(sectionIndex);
-          final items = _grouped[dateKey]!;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 4,
-                ),
-                child: Text(
-                  dateKey.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                    letterSpacing: 1.2,
-                  ),
-                ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.primaryColor,
               ),
-              ...items.map((item) => _buildActivityCard(item)),
-            ],
-          );
-        },
-      ),
+            )
+          : _errorMessage.isNotEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text(
+                      _errorMessage,
+                      style: TextStyle(
+                        color: AppTheme.cancel,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              : _rides.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            LucideIcons.clock,
+                            size: 48,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No activity yet',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: _groupedRides.keys.length,
+                      itemBuilder: (context, sectionIndex) {
+                        final dateKey = _groupedRides.keys.elementAt(sectionIndex);
+                        final items = _groupedRides[dateKey]!;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 4,
+                              ),
+                              child: Text(
+                                dateKey.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                            ...items.map((item) => _buildActivityCard(item)),
+                          ],
+                        );
+                      },
+                    ),
     );
   }
 
-  Widget _buildActivityCard(Map<String, String> item) {
-    final isCompleted = item['status'] == 'completed';
+  Widget _buildActivityCard(RideHistoryModel ride) {
+    final isCompleted = ride.status == 'completed';
+    final parts = ride.date.split(',');
+    final timeStr = parts.length > 1 ? parts[1].trim() : '';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(18),
@@ -139,7 +227,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                item['time']!,
+                timeStr,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -158,7 +246,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  item['status']!.toUpperCase(),
+                  ride.status.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
@@ -199,7 +287,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item['pickup']!,
+                      ride.pickup,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -208,7 +296,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      item['dest']!,
+                      ride.destination,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -219,7 +307,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                 ),
               ),
               Text(
-                item['price']!,
+                ride.price,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -242,7 +330,11 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
               ),
               TextButton(
                 onPressed: () {
-                  if (isCompleted) context.pushNamed('ActivityViewDetails');
+                  if (isCompleted) {
+                    unawaited(context.pushNamed('ActivityViewDetails', extra: ride));
+                  } else {
+                    unawaited(context.pushNamed('SearchDestination'));
+                  }
                 },
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(

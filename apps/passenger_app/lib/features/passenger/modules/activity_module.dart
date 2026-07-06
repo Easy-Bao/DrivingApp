@@ -1,12 +1,15 @@
-/// Activity Module: declares GoRouter route maps for passenger activity details, maps, rating, and chat.
+/// The passenger activity module configures the GoRouter modular route definitions map for the activity flow, providing push transitions and initialization rules for displaying finished trip breakdowns, real-time vehicle mapping tracking, live chat threads between clients and drivers, and star ratings feedback overlays to manage user navigation states throughout active transactions.
+library;
+
 import 'package:core_models/core_models.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/transitions/app_transitions.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/driver_chat_screen.dart';
+import 'package:passenger_app/features/passenger/presentation/views/activity/passenger_rating_screen.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/track_driver.dart';
 import 'package:passenger_app/features/passenger/presentation/views/activity/view_details.dart';
-import 'package:passenger_app/features/passenger/presentation/views/activity/passenger_rating_screen.dart';
 import 'package:passenger_app/features/passenger/presentation/views/passenger_activity.dart';
-import 'package:passenger_app/core/transitions/app_transitions.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 
 class ActivityModule {
   ActivityModule._();
@@ -28,7 +31,16 @@ class ActivityModule {
       name: 'ActivityTrackDriver',
       'activity/trackDriver',
       child: (context, GoRouterState state) {
-        final ride = state.extra as RideHistoryModel;
+        final ride = state.extra is RideHistoryModel
+            ? state.extra as RideHistoryModel
+            : null;
+        if (ride == null) {
+          return const Scaffold(
+            body: Center(
+              child: Text('Trip tracking data not available.'),
+            ),
+          );
+        }
         return ActivityTrackDriverScreen(ride: ride);
       },
       transition: AppTransitions.push.toLeft,

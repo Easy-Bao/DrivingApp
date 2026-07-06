@@ -181,7 +181,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       driverName: driverName,
       plateNumber: plateNumber,
       vehicleType: vehicleType,
-      proposedFare: SafeParse.toDouble(bid['fare']),
+      proposedFare: SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']),
     );
 
     if (mounted) {
@@ -655,7 +655,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ],
               const Spacer(),
               Text(
-                '₱${SafeParse.toDouble(bid['fare']).toStringAsFixed(2)}',
+                '₱${SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']).toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -674,7 +674,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
               const SizedBox(width: 8),
               Text(
-                '${(bid['distance'] ?? 0).toDouble().toStringAsFixed(1)} km away',
+                '${(bid['distance_km'] ?? bid['distance'] ?? 0).toDouble().toStringAsFixed(1)} km away',
                 style: TextStyle(
                   fontSize: 13,
                   color: AppTheme.primaryColor.withValues(alpha: 0.6),

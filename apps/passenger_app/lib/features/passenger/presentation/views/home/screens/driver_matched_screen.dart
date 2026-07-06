@@ -2,14 +2,15 @@
 library;
 
 import 'dart:async';
+
 import 'package:core_models/core_models.dart';
-import 'package:location_service/location_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverMatchedScreen extends StatefulWidget {
   final String rideType;
@@ -46,6 +47,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
   late AnimationController _scaleCtrl;
   late Animation<double> _scaleAnim;
   Timer? _autoNav;
+  RideHistoryModel? _createdRide;
 
   @override
   void initState() {
@@ -56,34 +58,72 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
     );
     _scaleAnim = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
     unawaited(_scaleCtrl.forward());
-    _saveRideAndStartTimer();
+    unawaited(_saveRideAndStartTimer());
   }
 
   Future<void> _saveRideAndStartTimer() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final activeRideId = prefs.getString('active_ride_id') ?? '';
+      var activeRideId = prefs.getString('active_ride_id') ?? '';
+      var pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+      var pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+      var pickupName = widget.pickupAddress ?? 'Current Location';
+      var driverName = widget.driverName ?? 'Driver';
+      var vehiclePlate = widget.plateNumber ?? 'ABC 1234';
+
       if (activeRideId.isEmpty) {
         final passengerId = prefs.getString('passenger_id') ?? '';
-        final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-        final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
-
         if (passengerId.isNotEmpty) {
           final res = await PassengerApiService.createRideRequest(
             passengerId: passengerId,
             rideType: widget.rideType,
             pickupLat: pickupLat,
             pickupLng: pickupLng,
-            pickupName: widget.pickupAddress ?? 'Current Location',
+            pickupName: pickupName,
             dropoffLat: widget.destination.latitude,
             dropoffLng: widget.destination.longitude,
             dropoffName: widget.destination.name,
             fare: widget.fare,
           );
           if (res != null && res['id'] != null) {
-            await prefs.setString('active_ride_id', res['id'] as String);
+            activeRideId = res['id'] as String;
+            await prefs.setString('active_ride_id', activeRideId);
+
+            pickupLat = SafeParse.toDouble(res['pickup_latitude']);
+            pickupLng = SafeParse.toDouble(res['pickup_longitude']);
+            pickupName = res['pickup_name'] as String? ?? pickupName;
+            driverName = res['driver_name'] as String? ?? driverName;
+            vehiclePlate = res['plate_number'] as String? ?? vehiclePlate;
           }
         }
+      } else {
+        final res = await PassengerApiService.getRideStatus(activeRideId);
+        if (res != null) {
+          pickupLat = SafeParse.toDouble(res['pickup_latitude']);
+          pickupLng = SafeParse.toDouble(res['pickup_longitude']);
+          pickupName = res['pickup_name'] as String? ?? pickupName;
+          driverName = res['driver_name'] as String? ?? driverName;
+          vehiclePlate = res['plate_number'] as String? ?? vehiclePlate;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _createdRide = RideHistoryModel(
+            id: activeRideId,
+            pickup: pickupName,
+            destination: widget.destination.name,
+            pickupLat: pickupLat,
+            pickupLng: pickupLng,
+            destLat: widget.destination.latitude,
+            destLng: widget.destination.longitude,
+            date: DateTime.now().toLocal().toString(),
+            price: '₱${widget.fare.toStringAsFixed(2)}',
+            status: 'accepted',
+            driverName: driverName,
+            vehiclePlate: vehiclePlate,
+          );
+        });
       }
     } catch (e) {
       debugPrint('Error creating ride request in DB: $e');
@@ -102,7 +142,22 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
 
   void _goToTracking() {
     if (!mounted) return;
-    context.goNamed('ActivityTrackDriver');
+    final ride = _createdRide ??
+        RideHistoryModel(
+          id: '',
+          pickup: widget.pickupAddress ?? 'Current Location',
+          destination: widget.destination.name,
+          pickupLat: LocationService.lastPosition?.latitude ?? widget.destination.latitude,
+          pickupLng: LocationService.lastPosition?.longitude ?? widget.destination.longitude,
+          destLat: widget.destination.latitude,
+          destLng: widget.destination.longitude,
+          date: DateTime.now().toLocal().toString(),
+          price: '₱${widget.fare.toStringAsFixed(2)}',
+          status: 'accepted',
+          driverName: widget.driverName ?? 'Driver',
+          vehiclePlate: widget.plateNumber ?? 'ABC 1234',
+        );
+    context.goNamed('ActivityTrackDriver', extra: ride);
   }
 
   @override
