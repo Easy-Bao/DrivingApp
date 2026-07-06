@@ -1,10 +1,20 @@
-import { expect, test, describe } from 'bun:test';
+import { expect, test, describe, spyOn, beforeAll, afterAll } from 'bun:test';
 import tripApp from '../src/index.ts';
 
 const TEST_PASSENGER_ID = crypto.randomUUID();
 let rideId = '';
 
-describe('Trip Service', () => {
+describe('Trip Service Endpoints', () => {
+  beforeAll(() => {
+    spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ name: 'Test User' }), { status: 200 })
+    );
+  });
+
+  afterAll(() => {
+    global.fetch = typeof global.fetch === 'function' ? global.fetch : fetch;
+  });
+
   test('POST /rides — creates a ride request', async () => {
     const res = await tripApp.fetch(
       new Request('http://localhost/rides', {
