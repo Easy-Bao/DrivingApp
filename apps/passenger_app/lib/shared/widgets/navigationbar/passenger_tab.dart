@@ -1,8 +1,10 @@
-import 'package:core_models/core_models.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 
 //TODO: Improve the menu
 class PassengerShellLayout extends StatefulWidget {
@@ -75,14 +77,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
     _rideMenuController.reverse();
   }
 
-  Future<void> _startRideFlow() async {
-    // Same flow you already had wired up (MapPin -> DestinationPreview).
-    final result = await context.pushNamed('MapPin');
-    if (!context.mounted) return;
-    if (result != null && result is PlaceModel) {
-      await context.pushNamed('DestinationPreview', extra: result);
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -159,11 +154,31 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
                 child: _RideOptionsMenu(
                   onShareRide: () {
                     _closeRideMenu();
-                    _startRideFlow();
+                    String? address;
+                    try {
+                      address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+                    } catch (_) {}
+                    context.pushNamed(
+                      'SearchDestination',
+                      queryParameters: {
+                        'rideType': 'Share Ride',
+                        if (address != null) 'pickupAddress': address,
+                      },
+                    );
                   },
                   onSoloRide: () {
                     _closeRideMenu();
-                    _startRideFlow();
+                    String? address;
+                    try {
+                      address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+                    } catch (_) {}
+                    context.pushNamed(
+                      'SearchDestination',
+                      queryParameters: {
+                        'rideType': 'Solo Ride',
+                        if (address != null) 'pickupAddress': address,
+                      },
+                    );
                   },
                 ),
               ),
