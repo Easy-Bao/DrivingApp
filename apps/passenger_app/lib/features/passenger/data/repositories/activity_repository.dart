@@ -8,6 +8,14 @@ const _monthAbbreviations = [
   'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
 ];
 
+String _shortenAddress(String fullAddress) {
+  final parts = fullAddress.split(',').map((p) => p.trim()).toList();
+  if (parts.length >= 2) {
+    return '${parts[parts.length - 2]}, ${parts.last}';
+  }
+  return fullAddress;
+}
+
 abstract class ActivityRepository {
   Future<List<RideHistoryModel>> fetchRideHistory(String passengerId);
 }
@@ -47,8 +55,8 @@ class ApiActivityRepository implements ActivityRepository {
 
     return RideHistoryModel(
       id: raw['id'] as String? ?? '',
-      pickup: raw['pickup_name'] as String? ?? '',
-      destination: raw['dropoff_name'] as String? ?? '',
+      pickup: _shortenAddress(raw['pickup_name'] as String? ?? ''),
+      destination: _shortenAddress(raw['dropoff_name'] as String? ?? ''),
       pickupLat: SafeParse.toDouble(raw['pickup_latitude']),
       pickupLng: SafeParse.toDouble(raw['pickup_longitude']),
       destLat: SafeParse.toDouble(raw['dropoff_latitude']),

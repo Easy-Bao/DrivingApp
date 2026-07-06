@@ -6,6 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 
+String _shortenAddress(String fullAddress) {
+  final parts = fullAddress.split(',').map((p) => p.trim()).toList();
+  if (parts.length >= 2) {
+    return '${parts[parts.length - 2]}, ${parts.last}';
+  }
+  return fullAddress;
+}
+
 class LocalPassengerHomeRepository implements PassengerHomeRepository {
   @override
   Future<String> resolveAddress({
@@ -36,16 +44,18 @@ class LocalPassengerHomeRepository implements PassengerHomeRepository {
       final Set<String> seenDestinations = {};
       final List<Map<String, dynamic>> list = [];
       for (final r in rawRides) {
-        final destName = r['dropoff_name'] as String;
-        if (!seenDestinations.contains(destName)) {
-          seenDestinations.add(destName);
-          list.add({
-            'title': destName,
-            'subtitle': r['pickup_name'] as String? ?? 'Previous Trip',
-            'lat': (r['dropoff_latitude'] as num).toDouble(),
-            'lng': (r['dropoff_longitude'] as num).toDouble(),
-          });
-        }
+        final status = r['status'] as String? ?? '';
+        if (status != 'completed') continue;
+        final destName = r['dropoff_name'] as String? ?? '';
+        if (destName.isEmpty || seenDestinations.contains(destName)) continue;
+        seenDestinations.add(destName);
+        final pickupName = r['pickup_name'] as String? ?? 'Previous Trip';
+        list.add({
+          'title': _shortenAddress(destName),
+          'subtitle': _shortenAddress(pickupName),
+          'lat': (r['dropoff_latitude'] as num).toDouble(),
+          'lng': (r['dropoff_longitude'] as num).toDouble(),
+        });
         if (list.length >= 5) break;
       }
       return list;

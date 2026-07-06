@@ -263,21 +263,48 @@ export class PostgresPassengerRepository implements PassengerRepository {
       where: { passenger_id: passengerId },
       orderBy: { created_at: 'desc' },
     });
-    return rows.map((r) => ({
-      id: r.id,
-      passenger_id: r.passenger_id,
-      ride_type: r.ride_type as RideType,
-      pickup_latitude: r.pickup_latitude,
-      pickup_longitude: r.pickup_longitude,
-      pickup_name: r.pickup_name,
-      dropoff_latitude: r.dropoff_latitude,
-      dropoff_longitude: r.dropoff_longitude,
-      dropoff_name: r.dropoff_name,
-      fare: r.fare,
-      status: r.status,
-      created_at: r.created_at,
-      password_hash: '',
-    }));
+
+    const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+
+    const enriched = await Promise.all(
+      rows.map(async (r) => {
+        let status = r.status;
+        let driverName = '';
+        let plateNumber = '';
+
+        try {
+          const tripRes = await fetch(`${tripServiceUrl}/rides/${r.id}`);
+          if (tripRes.ok) {
+            const trip = await tripRes.json() as Record<string, unknown>;
+            status = (trip.status as string) || status;
+            driverName = (trip.driver_name as string) || '';
+            plateNumber = (trip.plate_number as string) || '';
+          }
+        } catch {
+          // trip-service unreachable — preserve local status
+        }
+
+        return {
+          id: r.id,
+          passenger_id: r.passenger_id,
+          ride_type: r.ride_type as RideType,
+          pickup_latitude: r.pickup_latitude,
+          pickup_longitude: r.pickup_longitude,
+          pickup_name: r.pickup_name,
+          dropoff_latitude: r.dropoff_latitude,
+          dropoff_longitude: r.dropoff_longitude,
+          dropoff_name: r.dropoff_name,
+          fare: r.fare,
+          status,
+          created_at: r.created_at,
+          driver_name: driverName,
+          plate_number: plateNumber,
+          password_hash: '',
+        };
+      }),
+    );
+
+    return enriched;
   }
 
   async updatePassenger({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {

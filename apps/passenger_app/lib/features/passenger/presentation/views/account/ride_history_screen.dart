@@ -44,22 +44,22 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
       }
       final rawRides = await PassengerApiService.fetchRideHistory(passengerId);
       final mapped = rawRides.map((r) {
-        final dt = DateTime.tryParse(r['created_at'] ?? '') ?? DateTime.now();
+        final dt = DateTime.tryParse(r['created_at']?.toString() ?? '') ?? DateTime.now();
         final formattedDate = '${_monthName(dt.month)} ${dt.day.toString().padLeft(2, '0')}, ${_formatTime(dt)}';
-        
+        final status = r['status'] as String? ?? 'requested';
         return RideHistoryModel(
           id: r['id'] as String,
-          pickup: r['pickup_name'] as String,
-          destination: r['dropoff_name'] as String,
+          pickup: _shortenAddress(r['pickup_name'] as String? ?? ''),
+          destination: _shortenAddress(r['dropoff_name'] as String? ?? ''),
           pickupLat: (r['pickup_latitude'] as num).toDouble(),
           pickupLng: (r['pickup_longitude'] as num).toDouble(),
           destLat: (r['dropoff_latitude'] as num).toDouble(),
           destLng: (r['dropoff_longitude'] as num).toDouble(),
           date: formattedDate,
           price: '₱${(r['fare'] as num).toStringAsFixed(2)}',
-          status: r['status'] as String? ?? 'completed',
-          driverName: r['status'] == 'completed' ? 'Juan dela Cruz' : '',
-          vehiclePlate: r['status'] == 'completed' ? 'ABC 1234' : '',
+          status: status,
+          driverName: r['driver_name'] as String? ?? '',
+          vehiclePlate: r['plate_number'] as String? ?? '',
         );
       }).toList();
 
@@ -70,6 +70,14 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
     } catch (e) {
       setState(() => _isLoading = false);
     }
+  }
+
+  String _shortenAddress(String fullAddress) {
+    final parts = fullAddress.split(',').map((p) => p.trim()).toList();
+    if (parts.length >= 2) {
+      return '${parts[parts.length - 2]}, ${parts.last}';
+    }
+    return fullAddress;
   }
 
   String _monthName(int month) {
