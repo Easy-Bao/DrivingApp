@@ -53,15 +53,18 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       final driverStartLng = passengerLng - 0.005;
 
       _locationSubscription?.cancel();
-      _locationSubscription = LocationService.getPositionStream().listen((pos) async {
-        try {
-          await PassengerApiService.updateLocation(
-            rideId: widget.ride.id,
-            lat: pos.latitude,
-            lng: pos.longitude,
-          );
-        } catch (_) {}
-      });
+      _locationSubscription = LocationService.getPositionStream().listen(
+        (pos) async {
+          try {
+            await PassengerApiService.updateLocation(
+              rideId: widget.ride.id,
+              lat: pos.latitude,
+              lng: pos.longitude,
+            );
+          } catch (_) {}
+        },
+        onError: (_) {},
+      );
 
       unawaited(
         BlocProvider.of<TrackDriverCubit>(context).startTracking(
@@ -310,10 +313,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
               ),
             ),
 
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+            Align(
+              alignment: Alignment.bottomCenter,
               child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
                 builder: (context, state) {
                   final driverName = state is TrackDriverInProgress
