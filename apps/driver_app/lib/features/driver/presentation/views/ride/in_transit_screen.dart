@@ -5,6 +5,9 @@ import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
+import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:location_service/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -37,11 +40,45 @@ class _InTransitScreenState extends State<InTransitScreen> {
   RouteModel? _route;
   double _destLat = 8.5862;
   double _destLng = 123.3392;
+  Timer? _trackingTimer;
+  dynamic _driverMarkerManager;
+  dynamic _destMarkerManager;
 
   @override
   void initState() {
     super.initState();
     _loadRoute();
+    _startTracking();
+  }
+
+  @override
+  void dispose() {
+    _trackingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTracking() {
+    _trackingTimer?.cancel();
+    _trackingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      if (!mounted) return;
+      try {
+        final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+        if (pos != null) {
+          final prefs = await SharedPreferences.getInstance();
+          final driverId = prefs.getString('driver_id') ?? '';
+          if (driverId.isNotEmpty) {
+            await DriverApiService.updateLocation(
+              driverId: driverId,
+              lat: pos.latitude,
+              lng: pos.longitude,
+            );
+          }
+          if (mounted) {
+            await _drawMapElements(pos.latitude, pos.longitude);
+          }
+        }
+      } catch (_) {}
+    });
   }
 
   Future<void> _loadRoute() async {
@@ -84,25 +121,34 @@ class _InTransitScreenState extends State<InTransitScreen> {
   Future<void> _drawMapElements(double dLat, double dLng) async {
     if (_mapController == null) return;
 
-    await MapProvider.addMarker(
-      _mapController!,
-      dLat,
-      dLng,
-      isOrigin: true,
-      label: 'Driver',
-    );
+    try {
+      if (_driverMarkerManager != null) {
+        await MapProvider.clearAnnotations(_driverMarkerManager);
+      }
+      if (_destMarkerManager != null) {
+        await MapProvider.clearAnnotations(_destMarkerManager);
+      }
 
-    await MapProvider.addMarker(
-      _mapController!,
-      _destLat,
-      _destLng,
-      label: 'Destination',
-    );
+      _driverMarkerManager = await MapProvider.addMarker(
+        _mapController!,
+        dLat,
+        dLng,
+        isOrigin: true,
+        label: 'Driver',
+      );
 
-    await MapProvider.fitBounds(_mapController!, [
-      LatLng(dLat, dLng),
-      LatLng(_destLat, _destLng),
-    ]);
+      _destMarkerManager = await MapProvider.addMarker(
+        _mapController!,
+        _destLat,
+        _destLng,
+        label: 'Destination',
+      );
+
+      await MapProvider.fitBounds(_mapController!, [
+        LatLng(dLat, dLng),
+        LatLng(_destLat, _destLng),
+      ]);
+    } catch (_) {}
 
     if (_route != null && _route!.polylinePoints.isNotEmpty) {
       await MapProvider.addPolyline(

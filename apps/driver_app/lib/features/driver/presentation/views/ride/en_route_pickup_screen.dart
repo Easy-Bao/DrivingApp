@@ -61,25 +61,39 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       if (!mounted) return;
       final cubit = BlocProvider.of<RideFlowCubit>(context);
       final rideId = cubit.activeRideId;
-      if (rideId != null && rideId.isNotEmpty) {
-        try {
-          final loc = await DriverApiService.fetchPassengerLocation(rideId);
-          if (loc != null && loc['lat'] != null && loc['lng'] != null) {
-            final pLat = (loc['lat'] as num).toDouble();
-            final pLng = (loc['lng'] as num).toDouble();
-            if (mounted) {
-              setState(() {
-                _passengerLat = pLat;
-                _passengerLng = pLng;
-              });
-              final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
-              final dLat = pos?.latitude ?? 7.828282;
-              final dLng = pos?.longitude ?? 123.434343;
-              await _drawMapElements(dLat, dLng);
-            }
+      if (rideId == null || rideId.isEmpty) return;
+
+      try {
+        final loc = await DriverApiService.fetchPassengerLocation(rideId);
+        if (loc != null && loc['lat'] != null && loc['lng'] != null) {
+          final pLat = (loc['lat'] as num).toDouble();
+          final pLng = (loc['lng'] as num).toDouble();
+          if (mounted) {
+            setState(() {
+              _passengerLat = pLat;
+              _passengerLng = pLng;
+            });
           }
-        } catch (_) {}
-      }
+        }
+      } catch (_) {}
+
+      try {
+        final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+        if (pos != null) {
+          final prefs = await SharedPreferences.getInstance();
+          final driverId = prefs.getString('driver_id') ?? '';
+          if (driverId.isNotEmpty) {
+            await DriverApiService.updateLocation(
+              driverId: driverId,
+              lat: pos.latitude,
+              lng: pos.longitude,
+            );
+          }
+          if (mounted) {
+            await _drawMapElements(pos.latitude, pos.longitude);
+          }
+        }
+      } catch (_) {}
     });
   }
 
