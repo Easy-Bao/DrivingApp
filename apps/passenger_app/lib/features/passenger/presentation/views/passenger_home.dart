@@ -1,7 +1,5 @@
 /// Passenger Home Screen: displays active location details, suggestions, quick actions, and recent activities.
 import 'dart:async';
-import 'package:core_models/core_models.dart';
-import 'package:fixtures/fixtures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -598,14 +596,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       if (mounted) {
         final serviceEnabled = await LocationService.isServiceEnabled();
         final message = serviceEnabled
-            ? 'Location permission denied. Using default location.'
-            : 'Location services are disabled. Using default location.';
+            ? 'Location permission denied. Enable it in Settings to see your location.'
+            : 'Location services are disabled. Enable them in Settings.';
         CustomToast.show(context, message, isError: true);
       }
-      await cubit.loadHomeData(
-        lat: MockData.defaultLat,
-        lng: MockData.defaultLng,
-      );
       return;
     }
 
@@ -614,12 +608,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
     } else {
       if (mounted) {
-        CustomToast.show(context, 'Unable to acquire location coordinates. Using default.', isError: true);
+        CustomToast.show(
+          context,
+          'Unable to acquire your location. Check GPS signal.',
+          isError: true,
+        );
       }
-      await cubit.loadHomeData(
-        lat: MockData.defaultLat,
-        lng: MockData.defaultLng,
-      );
     }
 
     _locationSubscription?.cancel();

@@ -1,5 +1,4 @@
 import 'package:core_models/core_models.dart';
-import 'package:fixtures/fixtures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -29,8 +28,8 @@ class _PassengerAddCategoryScreenState
   IconData selectedIcon = LucideIcons.map_pin;
   String? _errorMessage;
   bool _isLocationPinned = false;
-  double _lat = MockData.defaultLat;
-  double _lng = MockData.defaultLng;
+  double _lat = 0.0;
+  double _lng = 0.0;
   AppMapController? _mapController;
 
   final List<IconData> _availableIcons = [

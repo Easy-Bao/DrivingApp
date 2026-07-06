@@ -1,11 +1,11 @@
 /// Geocoding and history synchronization adapter: fetches recent locations and resolves coordinates dynamically.
 import 'package:location_service/location_service.dart';
 import 'package:core_models/core_models.dart';
-import 'package:fixtures/fixtures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 
+/// Shortens a full address to its last two comma-separated segments (e.g. "Barangay, City").
 String _shortenAddress(String fullAddress) {
   final parts = fullAddress.split(',').map((p) => p.trim()).toList();
   if (parts.length >= 2) {
@@ -25,10 +25,10 @@ class LocalPassengerHomeRepository implements PassengerHomeRepository {
       if (place != null && place.fullAddress.isNotEmpty) {
         return _shortenAddress(place.fullAddress);
       }
-      return _shortenAddress(MockData.defaultAddress);
+      return '';
     } catch (e) {
       debugPrint('LocalPassengerHomeRepository.resolveAddress failed: $e');
-      return _shortenAddress(MockData.defaultAddress);
+      return '';
     }
   }
 

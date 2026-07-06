@@ -3,36 +3,8 @@ library;
 
 import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
-import 'package:fixtures/fixtures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
-
-class FixtureDriverRepository implements DriverRepository {
-  @override
-  Future<List<DriverModel>> getNearbyDrivers({
-    required double lat,
-    required double lng,
-  }) async {
-    await Future.delayed(const Duration(seconds: 2));
-    final rawDrivers = MockData.getNearbyDrivers(lat: lat, lng: lng);
-    return rawDrivers
-        .map(
-          (d) => DriverModel(
-            id: d['id'] as String,
-            name: d['name'] as String,
-            vehicleType: d['vehicleType'] as String,
-            plateNumber: d['plateNumber'] as String,
-            rating: d['rating'] as double,
-            lat: d['lat'] as double,
-            lng: d['lng'] as double,
-            distanceKm: d['distanceKm'] as double,
-            etaMinutes: (d['etaMinutes'] as num).toDouble(),
-            score: d['score'] as double,
-          ),
-        )
-        .toList();
-  }
-}
 
 class LocalDriverRepository implements DriverRepository {
   @override

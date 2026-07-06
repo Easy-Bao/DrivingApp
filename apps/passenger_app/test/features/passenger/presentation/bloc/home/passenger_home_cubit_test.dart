@@ -1,5 +1,4 @@
 import 'package:core_models/core_models.dart';
-import 'package:fixtures/fixtures.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_state.dart';
 import 'package:bloc_test/bloc_test.dart';
@@ -23,16 +22,17 @@ void main() {
   setUp(() => repo = MockHomeRepo());
 
   group('PassengerHomeCubit — initial state', () {
-    test('starts with default address and empty locations', () async {
+    test('starts with empty address and no locations', () async {
       final cubit = _makeCubit(repo);
       expect(cubit.state.isLoading, isFalse);
-      expect(cubit.state.currentAddress, MockData.defaultAddress);
+      expect(cubit.state.currentAddress, '');
       expect(cubit.state.recentLocations, isEmpty);
       await cubit.close();
     });
   });
 
   group('PassengerHomeCubit — loadHomeData()', () {
+    const resolvedAddress = 'Tuburan, Pagadian';
     final mockLocations = [
       {'title': 'Plaza Luz', 'subtitle': 'San Francisco', 'lat': 7.8275, 'lng': 123.4365},
     ];
@@ -45,7 +45,7 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => MockData.defaultAddress);
+        ).thenAnswer((_) async => resolvedAddress);
         when(() => repo.getRecentLocations())
             .thenAnswer((_) async => mockLocations);
         return _makeCubit(repo);
@@ -55,7 +55,7 @@ void main() {
         const PassengerHomeState(isLoading: true),
         PassengerHomeState(
           isLoading: false,
-          currentAddress: MockData.defaultAddress,
+          currentAddress: resolvedAddress,
           recentLocations: mockLocations,
         ),
       ],
