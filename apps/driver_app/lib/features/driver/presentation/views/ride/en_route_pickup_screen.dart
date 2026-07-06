@@ -153,6 +153,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       dLng,
       isOrigin: true,
       label: 'Driver',
+      color: const Color(0xFF222222),
     );
 
     _passengerMarkerManager = await MapProvider.addMarker(
@@ -160,6 +161,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       _passengerLat,
       _passengerLng,
       label: 'Passenger',
+      color: const Color(0xFF2E7D32),
     );
 
     await MapProvider.fitBounds(_mapController!, [

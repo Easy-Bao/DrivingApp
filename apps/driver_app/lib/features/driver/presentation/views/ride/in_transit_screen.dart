@@ -135,6 +135,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
         dLng,
         isOrigin: true,
         label: 'Driver',
+        color: const Color(0xFF222222),
       );
 
       _destMarkerManager = await MapProvider.addMarker(

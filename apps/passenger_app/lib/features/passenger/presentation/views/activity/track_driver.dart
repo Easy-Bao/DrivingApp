@@ -110,12 +110,14 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         passengerLat,
         passengerLng,
         isOrigin: true,
+        color: const Color(0xFF222222),
       );
       _driverMarkerManager = await MapProvider.addMarker(
         _mapController!,
         driverLat,
         driverLng,
         isOrigin: false,
+        color: const Color(0xFFE53935),
       );
 
       await MapProvider.fitBounds(_mapController!, [

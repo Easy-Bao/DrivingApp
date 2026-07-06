@@ -258,16 +258,21 @@ class MapProvider {
     double lng, {
     String? label,
     bool isOrigin = false,
+    Color? color,
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
     final annotationManager = await mapCtrl.annotations
         .createCircleAnnotationManager();
 
+    final markerColor = color != null 
+        ? color.toARGB32() 
+        : (isOrigin ? 0xFF222222 : 0xFF607B8B);
+
     await annotationManager.create(
       mapbox.CircleAnnotationOptions(
         geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
         circleRadius: isOrigin ? 8.0 : 10.0,
-        circleColor: isOrigin ? 0xFF222222 : 0xFF607B8B,
+        circleColor: markerColor,
         circleStrokeWidth: 3.0,
         circleStrokeColor: 0xFFFFFFFF,
       ),
