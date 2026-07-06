@@ -12,7 +12,6 @@ import 'package:passenger_app/features/passenger/presentation/bloc/home/passenge
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_state.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_state.dart';
-import 'package:passenger_app/features/passenger/presentation/views/home/models/quick_action_model.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
@@ -25,8 +24,6 @@ class PassengerHomeScreen extends StatefulWidget {
 
 class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     with SingleTickerProviderStateMixin {
-  List<QuickActionModel> _quickActions = [];
-
   late AnimationController _entranceController;
   late Animation<double> _fadeIn;
   late Animation<Offset> _slideIn;
@@ -54,8 +51,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                   const SizedBox(height: 16),
                   _buildChipRow(),
                   const SizedBox(height: 24),
-                  _buildQuickActionCards(),
-                  const SizedBox(height: 32),
                   _buildRecentActivityHeader(),
                   Expanded(child: _buildRecentActivityList()),
                 ],
@@ -67,8 +62,11 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
+  StreamSubscription? _locationSubscription;
+
   @override
   void dispose() {
+    _locationSubscription?.cancel();
     _entranceController.dispose();
     super.dispose();
   }
@@ -94,8 +92,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
             curve: Curves.easeOutCubic,
           ),
         );
-
-    _buildQuickActions();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _attachSavedPlacesContext();
@@ -315,92 +311,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.neutralColor,
-              AppTheme.secondaryColor.withValues(alpha: 0.18),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.borderSide),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: AppTheme.primaryColor, size: 28),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildQuickActionCards() {
-    return Row(
-      children: _quickActions.asMap().entries.map((entry) {
-        final isLast = entry.key == _quickActions.length - 1;
-        final action = entry.value;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: isLast ? 0 : 12),
-            child: _buildQuickActionCard(
-              icon: action.icon,
-              title: action.title,
-              subtitle: action.subtitle,
-              onTap: action.onTap,
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  void _buildQuickActions() {
-    _quickActions = MockData.getQuickActions().map((action) {
-      final title = action['title'] ?? '';
-      return QuickActionModel(
-        icon: _iconFromName(action['iconName'] ?? ''),
-        title: title,
-        subtitle: action['subtitle'] ?? '',
-        onTap: () {
-          final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
-          context.pushNamed(
-            'SearchDestination',
-            queryParameters: {'rideType': title, 'pickupAddress': address},
-          );
-        },
-      );
-    }).toList();
-  }
 
   Widget _buildRecentActivityHeader() {
     return Row(
@@ -547,71 +458,46 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   }
 
   Widget _buildSearchBar() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
-              context.pushNamed(
-                'SearchDestination',
-                queryParameters: {'pickupAddress': address},
-              );
-            },
-            child: Hero(
-              tag: 'search_bar_field',
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.neutralColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.borderSide),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        LucideIcons.search,
-                        color: AppTheme.primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Enter destination',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: () async {
-            _showFeedback('Locating...');
-            await _initLocationAndLoadData();
-          },
+    return GestureDetector(
+      onTap: () {
+        final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+        context.pushNamed(
+          'SearchDestination',
+          queryParameters: {'pickupAddress': address},
+        );
+      },
+      child: Hero(
+        tag: 'search_bar_field',
+        child: Material(
+          color: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              LucideIcons.locate_fixed,
               color: AppTheme.neutralColor,
-              size: 24,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.borderSide),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  LucideIcons.search,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Enter destination',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -703,6 +589,17 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         lng: MockData.defaultLng,
       );
     }
+
+    _locationSubscription?.cancel();
+    _locationSubscription = LocationService.getPositionStream().listen(
+      (pos) async {
+        if (!mounted) return;
+        try {
+          await cubit.loadHomeData(lat: pos.latitude, lng: pos.longitude);
+        } catch (_) {}
+      },
+      onError: (_) {},
+    );
   }
 
   Future<void> _loadSavedPlaces() async {

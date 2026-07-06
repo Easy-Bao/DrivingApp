@@ -57,7 +57,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  void _startTrip() {
+  Future<void> _startTrip() async {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
     final passengerName = state is RideFlowWaitingPassenger
         ? state.passengerName
@@ -65,28 +65,39 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
 
     final pickupLat = LocationService.lastPosition?.latitude ?? MockData.defaultLat;
     final pickupLng = LocationService.lastPosition?.longitude ?? MockData.defaultLng;
-    final destLat = pickupLat + 0.03;
-    final destLng = pickupLng + 0.03;
 
-    unawaited(
-      BlocProvider.of<RideFlowCubit>(context).startRide(
-        passengerName: passengerName,
-        destLat: destLat,
-        destLng: destLng,
-        distanceKm: widget.distance,
-      ),
+    double destLat = pickupLat + 0.03;
+    double destLng = pickupLng + 0.03;
+
+    try {
+      final places = await MapProvider.searchPlaces(widget.dropoff);
+      if (places.isNotEmpty) {
+        destLat = places.first.latitude;
+        destLng = places.first.longitude;
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    await BlocProvider.of<RideFlowCubit>(context).startRide(
+      passengerName: passengerName,
+      destLat: destLat,
+      destLng: destLng,
+      distanceKm: widget.distance,
     );
 
-    context.pushReplacementNamed(
-      'InTransit',
-      extra: {
-        'pickup': widget.pickup,
-        'dropoff': widget.dropoff,
-        'distance': widget.distance,
-        'fare': widget.fare,
-        'duration': widget.duration,
-      },
-    );
+    if (mounted) {
+      context.pushReplacementNamed(
+        'InTransit',
+        extra: {
+          'pickup': widget.pickup,
+          'dropoff': widget.dropoff,
+          'distance': widget.distance,
+          'fare': widget.fare,
+          'duration': widget.duration,
+        },
+      );
+    }
   }
 
   @override
