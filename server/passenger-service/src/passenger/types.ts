@@ -24,5 +24,4 @@ export interface RideRequest {
   fare: number;
   status: string;
   created_at: Date;
-  password_hash: String;
 }

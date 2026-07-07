@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
 
 import { getPassengerRouter } from './passenger/routes.ts';
-import { InMemoryPassengerRepository, PostgresPassengerRepository } from './passenger/repository.ts';
+import { InMemoryPassengerRepository, PrismaPassengerRepository } from './passenger/index.ts';
 
 const port = parseInt(process.env.PORT || '8081', 10);
 const databaseUrl = process.env.DATABASE_URL;
 
 const repo = databaseUrl
-  ? new PostgresPassengerRepository()
+  ? new PrismaPassengerRepository()
   : new InMemoryPassengerRepository();
 
 const app = new Hono();

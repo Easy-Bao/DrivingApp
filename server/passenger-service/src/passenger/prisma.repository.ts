@@ -1,140 +1,9 @@
-import { z } from 'zod';
 import { prisma } from '../db.ts';
 import { Passenger, RideRequest, RideType } from './types.ts';
-import { CreatePassengerSchema, CreateRideSchema } from './schema.ts';
+import { CreatePassengerRequest, CreateRideRequest } from './schema.ts';
+import { PassengerRepository, UpdatePassengerOptions } from './passenger.repository.ts';
 
-export type CreatePassengerRequest = z.infer<typeof CreatePassengerSchema>;
-export type CreateRideRequest = z.infer<typeof CreateRideSchema>;
-
-export interface UpdatePassengerOptions {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-}
-
-export interface PassengerRepository {
-  createPassenger(req: CreatePassengerRequest): Promise<Passenger>;
-  getPassenger(id: string): Promise<Passenger | null>;
-  getPassengerByEmail(email: string): Promise<Passenger | null>;
-  createRideRequest(req: CreateRideRequest): Promise<RideRequest>;
-  getPassengerRides(passengerId: string): Promise<RideRequest[]>;
-  updatePassenger(options: UpdatePassengerOptions): Promise<Passenger>;
-  getPassengerNotifications(passengerId: string): Promise<any[]>;
-  verifyPassenger(email: string): Promise<void>;
-}
-
-export class InMemoryPassengerRepository implements PassengerRepository {
-  private passengers = new Map<string, Passenger>();
-  private rides = new Map<string, RideRequest[]>();
-
-  async createPassenger(req: CreatePassengerRequest): Promise<Passenger> {
-    for (const p of this.passengers.values()) {
-      if (p.email === req.email) {
-        throw new Error(`A passenger with email ${req.email} already exists`);
-      }
-    }
-    const id = crypto.randomUUID();
-    const passwordHash = await Bun.password.hash(req.password, {
-      algorithm: 'bcrypt',
-      cost: 10,
-    });
-    const passenger: Passenger = {
-      id,
-      name: req.name,
-      email: req.email,
-      phone: req.phone,
-      preferred_ride_type: (req.preferred_ride_type as RideType) || null,
-      created_at: new Date(),
-      password_hash: passwordHash,
-      is_verified: false,
-    };
-    this.passengers.set(id, passenger);
-    return passenger;
-  }
-
-  async getPassenger(id: string): Promise<Passenger | null> {
-    return this.passengers.get(id) || null;
-  }
-
-  async getPassengerByEmail(email: string): Promise<Passenger | null> {
-    for (const p of this.passengers.values()) {
-      if (p.email === email) {
-        return p;
-      }
-    }
-    return null;
-  }
-
-  async createRideRequest(req: CreateRideRequest): Promise<RideRequest> {
-    if (!this.passengers.has(req.passenger_id)) {
-      throw new Error(`Passenger ID ${req.passenger_id} not found`);
-    }
-    const id = crypto.randomUUID();
-    const ride: RideRequest = {
-      id,
-      passenger_id: req.passenger_id,
-      ride_type: req.ride_type as RideType,
-      pickup_latitude: req.pickup_latitude,
-      pickup_longitude: req.pickup_longitude,
-      pickup_name: req.pickup_name,
-      dropoff_latitude: req.dropoff_latitude,
-      dropoff_longitude: req.dropoff_longitude,
-      dropoff_name: req.dropoff_name,
-      fare: req.fare,
-      status: 'requested',
-      created_at: new Date(),
-    };
-    const userRides = this.rides.get(req.passenger_id) || [];
-    userRides.push(ride);
-    this.rides.set(req.passenger_id, userRides);
-    return ride;
-  }
-
-  async getPassengerRides(passengerId: string): Promise<RideRequest[]> {
-    if (!this.passengers.has(passengerId)) {
-      throw new Error(`Passenger ID ${passengerId} not found`);
-    }
-    return this.rides.get(passengerId) || [];
-  }
-
-  async updatePassenger({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
-    const passenger = this.passengers.get(id);
-    if (!passenger) {
-      throw new Error(`Passenger ID ${id} not found`);
-    }
-    const updated: Passenger = {
-      ...passenger,
-      name,
-      phone,
-      email,
-    };
-    this.passengers.set(id, updated);
-    return updated;
-  }
-  async verifyPassenger(email: string): Promise<void> {
-    const passenger = await this.getPassengerByEmail(email);
-    if (passenger) {
-      passenger.is_verified = true;
-    }
-  }
-
-  async getPassengerNotifications(passengerId: string): Promise<any[]> {
-    const rides = this.rides.get(passengerId) || [];
-    const notifications: any[] = [];
-    for (const r of rides) {
-      const tripInfo: TripInfo = {
-        status: r.status,
-        driverName: '',
-        plateNumber: '',
-      };
-      notifications.push(...buildNotificationsForRide(r, tripInfo));
-    }
-    return notifications;
-  }
-}
-
-export class PostgresPassengerRepository implements PassengerRepository {
+export class PrismaPassengerRepository implements PassengerRepository {
   async createPassenger(req: CreatePassengerRequest): Promise<Passenger> {
     const existing = await prisma.passenger.findUnique({
       where: { email: req.email },
@@ -168,9 +37,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
   }
 
   async getPassenger(id: string): Promise<Passenger | null> {
-    const res = await prisma.passenger.findUnique({
-      where: { id },
-    });
+    const res = await prisma.passenger.findUnique({ where: { id } });
     if (!res) return null;
     return {
       id: res.id,
@@ -185,9 +52,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
   }
 
   async getPassengerByEmail(email: string): Promise<Passenger | null> {
-    const res = await prisma.passenger.findUnique({
-      where: { email },
-    });
+    const res = await prisma.passenger.findUnique({ where: { email } });
     if (!res) return null;
     return {
       id: res.id,
@@ -202,9 +67,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
   }
 
   async createRideRequest(req: CreateRideRequest): Promise<RideRequest> {
-    const passenger = await prisma.passenger.findUnique({
-      where: { id: req.passenger_id },
-    });
+    const passenger = await prisma.passenger.findUnique({ where: { id: req.passenger_id } });
     if (!passenger) {
       throw new Error(`Passenger ID ${req.passenger_id} not found`);
     }
@@ -239,9 +102,7 @@ export class PostgresPassengerRepository implements PassengerRepository {
   }
 
   async getPassengerRides(passengerId: string): Promise<RideRequest[]> {
-    const passenger = await prisma.passenger.findUnique({
-      where: { id: passengerId },
-    });
+    const passenger = await prisma.passenger.findUnique({ where: { id: passengerId } });
     if (!passenger) {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
@@ -285,7 +146,6 @@ export class PostgresPassengerRepository implements PassengerRepository {
           created_at: r.created_at,
           driver_name: driverName,
           plate_number: plateNumber,
-          password_hash: '',
         };
       }),
     );

@@ -3,7 +3,7 @@
  */
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
-import { PassengerRepository } from './repository.ts';
+import { PassengerRepository } from './index.ts';
 import { CreatePassengerSchema, LoginSchema, CreateRideSchema } from './schema.ts';
 import { sendEmail } from './email.ts';
 
