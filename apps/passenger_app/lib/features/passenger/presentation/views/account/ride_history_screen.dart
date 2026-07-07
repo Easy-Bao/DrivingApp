@@ -1,7 +1,8 @@
 /// Ride History Screen: displays a list of past and canceled trips fetched from the database for the active passenger.
 import 'package:core_models/core_models.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/di/service_locator.dart';
+import 'package:passenger_app/features/passenger/data/repositories/activity_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -42,26 +43,8 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
         setState(() => _isLoading = false);
         return;
       }
-      final rawRides = await PassengerApiService.fetchRideHistory(passengerId);
-      final mapped = rawRides.map((r) {
-        final dt = DateTime.tryParse(r['created_at']?.toString() ?? '') ?? DateTime.now();
-        final formattedDate = '${_monthName(dt.month)} ${dt.day.toString().padLeft(2, '0')}, ${_formatTime(dt)}';
-        final status = r['status'] as String? ?? 'requested';
-        return RideHistoryModel(
-          id: r['id'] as String,
-          pickup: _shortenAddress(r['pickup_name'] as String? ?? ''),
-          destination: _shortenAddress(r['dropoff_name'] as String? ?? ''),
-          pickupLat: (r['pickup_latitude'] as num).toDouble(),
-          pickupLng: (r['pickup_longitude'] as num).toDouble(),
-          destLat: (r['dropoff_latitude'] as num).toDouble(),
-          destLng: (r['dropoff_longitude'] as num).toDouble(),
-          date: formattedDate,
-          price: '₱${(r['fare'] as num).toStringAsFixed(2)}',
-          status: status,
-          driverName: r['driver_name'] as String? ?? '',
-          vehiclePlate: r['plate_number'] as String? ?? '',
-        );
-      }).toList();
+      final repository = getIt<ActivityRepository>();
+      final mapped = await repository.fetchRideHistory(passengerId);
 
       setState(() {
         _dbRides = mapped;
@@ -70,26 +53,6 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
     } catch (e) {
       setState(() => _isLoading = false);
     }
-  }
-
-  String _shortenAddress(String fullAddress) {
-    final parts = fullAddress.split(',').map((p) => p.trim()).toList();
-    if (parts.length >= 2) {
-      return '${parts[parts.length - 2]}, ${parts.last}';
-    }
-    return fullAddress;
-  }
-
-  String _monthName(int month) {
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    if (month >= 1 && month <= 12) return months[month - 1];
-    return 'JAN';
-  }
-
-  String _formatTime(DateTime dt) {
-    final hr = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
-    final period = dt.hour >= 12 ? 'PM' : 'AM';
-    return '${hr.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} $period';
   }
 
   List<RideHistoryModel> _filteredRides(int tabIndex) {

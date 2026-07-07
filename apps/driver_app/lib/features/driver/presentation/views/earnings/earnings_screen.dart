@@ -1,7 +1,8 @@
 /// Driver Earnings Screen: displays weekly earnings summaries, stats, and a daily breakdown chart.
 library;
 
-import 'package:driver_app/core/services/driver_api_service.dart';
+import 'package:driver_app/core/di/service_locator.dart';
+import 'package:driver_app/features/driver/data/repositories/driver_activity_repository.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -61,7 +62,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
       return;
     }
 
-    final trips = await DriverApiService.fetchTripHistory(driverId);
+    final trips = await getIt<DriverActivityRepository>().fetchTripHistory(driverId);
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeek = DateTime(monday.year, monday.month, monday.day);
