@@ -8,7 +8,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
 import 'package:location_service/location_service.dart';
-import 'package:fixtures/fixtures.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/shared/widgets/custom_toast.dart';
 
@@ -57,14 +56,17 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
+  static const double _defaultLat = 7.8286;
+  static const double _defaultLng = 123.4361;
+
   Future<void> _startTrip() async {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
     final passengerName = state is RideFlowWaitingPassenger
         ? state.passengerName
         : 'Passenger';
 
-    final pickupLat = LocationService.lastPosition?.latitude ?? MockData.defaultLat;
-    final pickupLng = LocationService.lastPosition?.longitude ?? MockData.defaultLng;
+    final pickupLat = LocationService.lastPosition?.latitude ?? _defaultLat;
+    final pickupLng = LocationService.lastPosition?.longitude ?? _defaultLng;
 
     double destLat = pickupLat + 0.03;
     double destLng = pickupLng + 0.03;

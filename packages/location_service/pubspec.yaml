@@ -17,8 +17,6 @@ dependencies:
   http: ^1.2.0
   core_models:
     path: ../core_models
-  fixtures:
-    path: ../fixtures
 
 dev_dependencies:
   flutter_test:

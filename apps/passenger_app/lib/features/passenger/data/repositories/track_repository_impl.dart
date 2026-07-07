@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart';
 /// The repository delegates to [getRoutePolyline], which calls the Mapbox routing API.
 /// If the lookup fails, a straight-line interpolation between start and end is returned
 /// as a graceful fallback so the map route layer always has something to display.
-class LocalTrackRepository implements TrackRepository {
+class TrackRepositoryImpl implements TrackRepository {
   @override
   Future<List<List<double>>?> getRoutePolyline({
     required double startLat,
@@ -26,7 +26,7 @@ class LocalTrackRepository implements TrackRepository {
       }
       return _linearInterpolation(startLat, startLng, endLat, endLng);
     } catch (e) {
-      debugPrint('LocalTrackRepository.getRoutePolyline failed: $e');
+      debugPrint('TrackRepositoryImpl.getRoutePolyline failed: $e');
       return _linearInterpolation(startLat, startLng, endLat, endLng);
     }
   }

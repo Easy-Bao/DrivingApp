@@ -4,10 +4,11 @@ library;
 import 'package:core_models/core_models.dart';
 import 'package:get_it/get_it.dart';
 import 'package:passenger_app/features/passenger/data/repositories/activity_repository.dart';
-import 'package:passenger_app/features/passenger/data/repositories/driver_repository.dart';
-import 'package:passenger_app/features/passenger/data/repositories/local_saved_places_repository.dart';
-import 'package:passenger_app/features/passenger/data/repositories/local_passenger_home_repository.dart';
-import 'package:passenger_app/features/passenger/data/repositories/local_track_repository.dart';
+import 'package:passenger_app/features/passenger/data/repositories/activity_repository_impl.dart';
+import 'package:passenger_app/features/passenger/data/repositories/driver_repository_impl.dart';
+import 'package:passenger_app/features/passenger/data/repositories/saved_places_repository_impl.dart';
+import 'package:passenger_app/features/passenger/data/repositories/passenger_home_repository_impl.dart';
+import 'package:passenger_app/features/passenger/data/repositories/track_repository_impl.dart';
 import 'package:passenger_app/features/passenger/data/repositories/saved_places_repository.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_cubit.dart';
@@ -15,16 +16,16 @@ import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_pl
 final GetIt getIt = GetIt.instance;
 
 void setupServiceLocator() {
-  getIt.registerLazySingleton<DriverRepository>(() => ApiDriverRepository());
-  getIt.registerLazySingleton<TrackRepository>(() => LocalTrackRepository());
+  getIt.registerLazySingleton<DriverRepository>(() => DriverRepositoryImpl());
+  getIt.registerLazySingleton<TrackRepository>(() => TrackRepositoryImpl());
   getIt.registerLazySingleton<PassengerHomeRepository>(
-    () => LocalPassengerHomeRepository(),
+    () => PassengerHomeRepositoryImpl(),
   );
   getIt.registerLazySingleton<SavedPlacesRepository>(
-    () => LocalSavedPlacesRepository(),
+    () => SavedPlacesRepositoryImpl(),
   );
   getIt.registerLazySingleton<ActivityRepository>(
-    () => ApiActivityRepository(),
+    () => ActivityRepositoryImpl(),
   );
   getIt.registerFactory<SavedPlacesCubit>(
     () => SavedPlacesCubit(repository: getIt<SavedPlacesRepository>()),

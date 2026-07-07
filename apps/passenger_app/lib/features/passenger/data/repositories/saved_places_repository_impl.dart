@@ -20,7 +20,7 @@ import 'package:passenger_app/features/passenger/presentation/views/home/models/
  * Storage key: [_storageKey] — a versioned constant so future schema migrations
  * can bump the version suffix without reading stale data.
  */
-class LocalSavedPlacesRepository implements SavedPlacesRepository {
+class SavedPlacesRepositoryImpl implements SavedPlacesRepository {
   static const String _storageKey = 'passenger_saved_places_v1';
 
   @override

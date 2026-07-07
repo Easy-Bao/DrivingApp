@@ -19,8 +19,7 @@ class AppWidget extends StatelessWidget {
         // FindingDriverBloc spans the finding → matched flow.
         BlocProvider<FindingDriverBloc>(
           create: (_) {
-            // NOTE: getIt<DriverRepository>() automatically injects the active implementation
-                        // (e.g. FixtureDriverRepository, or _ApiDriverRepository when backend is ready).
+            // NOTE: getIt<DriverRepository>() automatically injects the active DriverRepositoryImpl.
             return FindingDriverBloc(repository: getIt<DriverRepository>());
           },
         ),
@@ -28,8 +27,7 @@ class AppWidget extends StatelessWidget {
         // TrackDriverCubit spans the activity tracking flow.
         BlocProvider<TrackDriverCubit>(
           create: (_) {
-            // NOTE: getIt<TrackRepository>() automatically injects the active implementation
-            // (e.g. FixtureTrackRepository, or _ApiTrackRepository when backend is ready).
+            // NOTE: getIt<TrackRepository>() automatically injects the active TrackRepositoryImpl.
             return TrackDriverCubit(repository: getIt<TrackRepository>());
           },
         ),
