@@ -123,26 +123,12 @@ export class InMemoryPassengerRepository implements PassengerRepository {
     const rides = this.rides.get(passengerId) || [];
     const notifications: any[] = [];
     for (const r of rides) {
-      const baseTime = r.created_at.toISOString();
-      if (r.status === 'requested') {
-        notifications.push({
-          id: `req_${r.id}`,
-          title: 'Finding Driver',
-          message: `Your ride request to ${r.dropoff_name} is active. Finding a driver...`,
-          timestamp: baseTime,
-          type: 'ride',
-          isRead: false,
-        });
-      } else if (r.status === 'completed') {
-        notifications.push({
-          id: `comp_${r.id}`,
-          title: 'Ride Completed',
-          message: `Your trip to ${r.dropoff_name} is completed. Total fare: ₱${r.fare.toFixed(2)}`,
-          timestamp: baseTime,
-          type: 'ride',
-          isRead: true,
-        });
-      }
+      const tripInfo: TripInfo = {
+        status: r.status,
+        driverName: '',
+        plateNumber: '',
+      };
+      notifications.push(...buildNotificationsForRide(r, tripInfo));
     }
     return notifications;
   }
@@ -347,91 +333,130 @@ export class PostgresPassengerRepository implements PassengerRepository {
     const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
 
     for (const r of rides) {
-      let status = r.status;
-      let driverName = '';
-      let plateNumber = '';
-
-      try {
-        const tRes = await fetch(`${tripServiceUrl}/rides/${r.id}`);
-        if (tRes.ok) {
-          const trip = await tRes.json();
-          if (trip) {
-            status = trip.status || status;
-            driverName = trip.driver_name || '';
-            plateNumber = trip.plate_number || '';
-          }
-        }
-      } catch (err) {
-        console.error(`Failed to fetch ride ${r.id} status from trip-service:`, err);
-      }
-
-      const baseTime = r.created_at.toISOString();
-
-      if (status === 'requested') {
-        notifications.push({
-          id: `req_${r.id}`,
-          title: 'Finding Driver',
-          message: `Your ride request to ${r.dropoff_name} is active. Finding a driver...`,
-          timestamp: baseTime,
-          type: 'ride',
-          isRead: false,
-        });
-      } else if (status === 'accepted') {
-        notifications.push({
-          id: `acc_${r.id}`,
-          title: 'Driver Found!',
-          message: `Driver ${driverName || 'Matched Driver'} (${plateNumber || 'Bao Bao'}) has accepted your ride request.`,
-          timestamp: baseTime,
-          type: 'driver',
-          isRead: false,
-        });
-        notifications.push({
-          id: `chat_${r.id}`,
-          title: 'Chat Available',
-          message: `You can now chat with your driver, ${driverName || 'your driver'}.`,
-          timestamp: baseTime,
-          type: 'chat',
-          isRead: false,
-        });
-      } else if (status === 'arrived') {
-        notifications.push({
-          id: `arr_${r.id}`,
-          title: 'Driver Arrived',
-          message: `Your driver, ${driverName || 'your driver'}, has arrived at your pickup location.`,
-          timestamp: baseTime,
-          type: 'driver',
-          isRead: false,
-        });
-      } else if (status === 'in_transit') {
-        notifications.push({
-          id: `trans_${r.id}`,
-          title: 'Trip Started',
-          message: `You are in transit to ${r.dropoff_name}.`,
-          timestamp: baseTime,
-          type: 'ride',
-          isRead: false,
-        });
-      } else if (status === 'completed') {
-        notifications.push({
-          id: `comp_${r.id}`,
-          title: 'Ride Completed',
-          message: `Your trip to ${r.dropoff_name} is completed. Total fare: ₱${r.fare.toFixed(2)}`,
-          timestamp: baseTime,
-          type: 'ride',
-          isRead: true,
-        });
-      } else if (status === 'canceled') {
-        notifications.push({
-          id: `canc_${r.id}`,
-          title: 'Ride Canceled ❌',
-          message: `Your ride to ${r.dropoff_name} was canceled.`,
-          timestamp: baseTime,
-          type: 'ride',
-          isRead: true,
-        });
-      }
+      const tripInfo = await fetchTripStatus(r.id, r.status, tripServiceUrl);
+      notifications.push(...buildNotificationsForRide(r, tripInfo));
     }
 
     return notifications;
   }
+}
+
+interface TripInfo {
+  status: string;
+  driverName: string;
+  plateNumber: string;
+}
+
+async function fetchTripStatus(
+  rideId: string,
+  defaultStatus: string,
+  tripServiceUrl: string
+): Promise<TripInfo> {
+  try {
+    const response = await fetch(`${tripServiceUrl}/rides/${rideId}`);
+    if (response.ok) {
+      const trip = await response.json();
+      if (trip) {
+        return {
+          status: trip.status || defaultStatus,
+          driverName: trip.driver_name || '',
+          plateNumber: trip.plate_number || '',
+        };
+      }
+    }
+  } catch (err) {
+    console.error(`Failed to fetch ride ${rideId} status from trip-service:`, err);
+  }
+  return {
+    status: defaultStatus,
+    driverName: '',
+    plateNumber: '',
+  };
+}
+
+function buildNotificationsForRide(
+  ride: { id: string; dropoff_name: string; fare: number; created_at: Date },
+  tripInfo: TripInfo
+): any[] {
+  const notifications: any[] = [];
+  const baseTime = ride.created_at.toISOString();
+  const { status, driverName, plateNumber } = tripInfo;
+
+  switch (status) {
+    case 'requested':
+      notifications.push({
+        id: `req_${ride.id}`,
+        title: 'Finding Driver',
+        message: `Your ride request to ${ride.dropoff_name} is active. Finding a driver...`,
+        timestamp: baseTime,
+        type: 'ride',
+        isRead: false,
+      });
+      break;
+
+    case 'accepted':
+      notifications.push({
+        id: `acc_${ride.id}`,
+        title: 'Driver Found!',
+        message: `Driver ${driverName || 'Matched Driver'} (${plateNumber || 'Bao Bao'}) has accepted your ride request.`,
+        timestamp: baseTime,
+        type: 'driver',
+        isRead: false,
+      });
+      notifications.push({
+        id: `chat_${ride.id}`,
+        title: 'Chat Available',
+        message: `You can now chat with your driver, ${driverName || 'your driver'}.`,
+        timestamp: baseTime,
+        type: 'chat',
+        isRead: false,
+      });
+      break;
+
+    case 'arrived':
+      notifications.push({
+        id: `arr_${ride.id}`,
+        title: 'Driver Arrived',
+        message: `Your driver, ${driverName || 'your driver'}, has arrived at your pickup location.`,
+        timestamp: baseTime,
+        type: 'driver',
+        isRead: false,
+      });
+      break;
+
+    case 'in_transit':
+      notifications.push({
+        id: `trans_${ride.id}`,
+        title: 'Trip Started',
+        message: `You are in transit to ${ride.dropoff_name}.`,
+        timestamp: baseTime,
+        type: 'ride',
+        isRead: false,
+      });
+      break;
+
+    case 'completed':
+      notifications.push({
+        id: `comp_${ride.id}`,
+        title: 'Ride Completed',
+        message: `Your trip to ${ride.dropoff_name} is completed. Total fare: ₱${ride.fare.toFixed(2)}`,
+        timestamp: baseTime,
+        type: 'ride',
+        isRead: true,
+      });
+      break;
+
+    case 'canceled':
+      notifications.push({
+        id: `canc_${ride.id}`,
+        title: 'Ride Canceled ❌',
+        message: `Your ride to ${ride.dropoff_name} was canceled.`,
+        timestamp: baseTime,
+        type: 'ride',
+        isRead: true,
+      });
+      break;
+  }
+
+  return notifications;
 }
