@@ -14,33 +14,33 @@ const jwtSecret = process.env.JWT_SECRET;
 
 export const chatRouter = new Hono();
 
-chatRouter.post('/rooms', async (c) => {
+chatRouter.post('/rooms', async (context) => {
   try {
-    const { roomId, driverId, passengerId } = await c.req.json();
+    const { roomId, driverId, passengerId } = await context.req.json();
     if (!roomId || !driverId || !passengerId) {
-      return c.json({ error: 'roomId, driverId, and passengerId are required' }, 400);
+      return context.json({ error: 'roomId, driverId, and passengerId are required' }, 400);
     }
     await upsertRoom(roomId, driverId, passengerId);
-    return c.json({ success: true }, 201);
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
+    return context.json({ success: true }, 201);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 500);
   }
 });
 
-chatRouter.get('/rooms/:roomId/messages', async (c) => {
-  const roomId = c.req.param('roomId');
+chatRouter.get('/rooms/:roomId/messages', async (context) => {
+  const roomId = context.req.param('roomId');
   try {
     const res = await getRoomMessages(roomId);
-    return c.json(res);
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
+    return context.json(res);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 500);
   }
 });
 
-chatRouter.get('/ws', upgradeWebSocket(async (c) => {
-  const roomId = c.req.query('roomId');
-  const userId = c.req.query('userId');
-  const token = c.req.query('token');
+chatRouter.get('/ws', upgradeWebSocket(async (context) => {
+  const roomId = context.req.query('roomId');
+  const userId = context.req.query('userId');
+  const token = context.req.query('token');
 
   if (!roomId) {
     return {
@@ -79,8 +79,8 @@ chatRouter.get('/ws', upgradeWebSocket(async (c) => {
           room = await upsertRoom(roomId, ride.driver_id, ride.passenger_id);
         }
       }
-    } catch (err) {
-      console.error(`Failed to dynamically resolve chat room ${roomId} from trip-service:`, err);
+    } catch (error) {
+      console.error(`Failed to dynamically resolve chat room ${roomId} from trip-service:`, error);
     }
   }
 

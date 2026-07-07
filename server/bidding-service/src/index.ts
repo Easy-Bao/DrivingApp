@@ -8,7 +8,7 @@ app.use('*', cors());
 
 app.route('/bids', bidsRouter);
 
-app.get('/', (c) => c.json({ status: 'Bidding Service OK' }));
+app.get('/', (context) => context.json({ status: 'Bidding Service OK' }));
 
 const port = parseInt(process.env.PORT || '8084');
 

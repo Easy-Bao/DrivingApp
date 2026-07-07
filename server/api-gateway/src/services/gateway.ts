@@ -9,17 +9,17 @@ export const SERVICES = {
   chat: process.env.CHAT_SERVICE_URL || 'http://127.0.0.1:8086',
 };
 
-export async function handleProxy(c: any, targetBaseUrl: string) {
-  const url = new URL(c.req.url);
+export async function handleProxy(context: any, targetBaseUrl: string) {
+  const url = new URL(context.req.url);
   const targetUrl = `${targetBaseUrl}${url.pathname}${url.search}`;
-  const headers = new Headers(c.req.raw.headers);
+  const headers = new Headers(context.req.raw.headers);
   headers.set('host', new URL(targetBaseUrl).host);
-  const body = c.req.method === 'GET' || c.req.method === 'HEAD'
+  const body = context.req.method === 'GET' || context.req.method === 'HEAD'
     ? undefined
-    : await c.req.raw.clone().arrayBuffer();
+    : await context.req.raw.clone().arrayBuffer();
   try {
     const res = await fetch(targetUrl, {
-      method: c.req.method,
+      method: context.req.method,
       headers,
       body,
     });
@@ -27,14 +27,14 @@ export async function handleProxy(c: any, targetBaseUrl: string) {
       status: res.status,
       headers: res.headers,
     });
-  } catch (e: any) {
-    return c.json({ error: 'Service Unavailable', details: e.message }, 502);
+  } catch (error: any) {
+    return context.json({ error: 'Service Unavailable', details: error.message }, 502);
   }
 }
 
-export const wsHandler = upgradeWebSocket((c) => {
+export const wsHandler = upgradeWebSocket((context) => {
   let backendWs: WebSocket;
-  const targetUrl = SERVICES.chat.replace(/^http/, 'ws') + '/chat/ws' + (new URL(c.req.url).search || '');
+  const targetUrl = SERVICES.chat.replace(/^http/, 'ws') + '/chat/ws' + (new URL(context.req.url).search || '');
   return {
     onOpen(_event, ws) {
       backendWs = new WebSocket(targetUrl);

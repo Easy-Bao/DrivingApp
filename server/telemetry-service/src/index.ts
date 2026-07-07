@@ -8,7 +8,7 @@ app.use('*', cors());
 
 app.route('/telemetry', telemetryRouter);
 
-app.get('/', (c) => c.json({ status: 'Telemetry Service OK' }));
+app.get('/', (context) => context.json({ status: 'Telemetry Service OK' }));
 
 const port = parseInt(process.env.PORT || '8085');
 

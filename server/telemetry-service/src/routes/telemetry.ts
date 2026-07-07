@@ -3,19 +3,19 @@ import { updateLocation, getLocation } from '../services/telemetry.ts';
 
 export const telemetryRouter = new Hono();
 
-telemetryRouter.post('/location', async (c) => {
+telemetryRouter.post('/location', async (context) => {
   try {
-    const { driverId, lat, lng } = await c.req.json();
+    const { driverId, lat, lng } = await context.req.json();
     updateLocation(driverId, lat, lng);
-    return c.json({ success: true });
-  } catch (e: any) {
-    return c.json({ error: e.message }, 400);
+    return context.json({ success: true });
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
   }
 });
 
-telemetryRouter.get('/location/:driverId', (c) => {
-  const driverId = c.req.param('driverId');
+telemetryRouter.get('/location/:driverId', (context) => {
+  const driverId = context.req.param('driverId');
   const loc = getLocation(driverId);
-  if (!loc) return c.json({ error: 'No location telemetry found' }, 404);
-  return c.json(loc);
+  if (!loc) return context.json({ error: 'No location telemetry found' }, 404);
+  return context.json(loc);
 });

@@ -9,7 +9,7 @@ app.use('*', cors());
 
 app.route('/chat', chatRouter);
 
-app.get('/', (c) => c.json({ status: 'Chat Service OK' }));
+app.get('/', (context) => context.json({ status: 'Chat Service OK' }));
 
 const port = parseInt(process.env.PORT || '8086');
 

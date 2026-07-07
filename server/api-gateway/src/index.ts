@@ -9,7 +9,7 @@ app.use('*', cors());
 
 app.route('/', gatewayRouter);
 
-app.get('/', (c) => c.json({ status: 'Gateway OK' }));
+app.get('/', (context) => context.json({ status: 'Gateway OK' }));
 
 const port = parseInt(process.env.PORT || '8080');
 

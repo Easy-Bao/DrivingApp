@@ -8,7 +8,7 @@ app.use('*', cors());
 
 app.route('/rides', ridesRouter);
 
-app.get('/', (c) => c.json({ status: 'Trip Service OK' }));
+app.get('/', (context) => context.json({ status: 'Trip Service OK' }));
 
 const port = parseInt(process.env.PORT || '8083');
 
