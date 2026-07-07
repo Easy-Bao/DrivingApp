@@ -30,4 +30,36 @@ describe('Telemetry Service Endpoints', () => {
     expect(data.lng).toBe(123.434343);
     expect(data.updatedAt).toBeDefined();
   });
+
+  test('POST /telemetry/location - rejects GPS spoofing with 400', async () => {
+    await app.fetch(
+      new Request('http://localhost/telemetry/location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driverId: 'driver-spoof',
+          lat: 7.828282,
+          lng: 123.434343,
+        }),
+      })
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 15));
+
+    const res = await app.fetch(
+      new Request('http://localhost/telemetry/location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driverId: 'driver-spoof',
+          lat: 8.500000,
+          lng: 124.500000,
+        }),
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const data: any = await res.json();
+    expect(data.error).toBe('GPS_SPOOFING_DETECTED');
+  });
 });

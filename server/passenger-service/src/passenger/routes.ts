@@ -6,6 +6,7 @@ import { sign } from 'hono/jwt';
 import { PassengerRepository } from './index.ts';
 import { CreatePassengerSchema, LoginSchema, CreateRideSchema } from './schema.ts';
 import { sendEmail } from './email.ts';
+import { authMiddleware } from '../middleware/auth.ts';
 
 const OTP_EXPIRY_MS = 10 * 60 * 1000;
 const TEST_OTP_CODE = '123456';
@@ -126,8 +127,12 @@ export function getPassengerRouter(repo: PassengerRepository) {
     }
   });
 
-  router.get('/passengers/:id', async (c) => {
+  router.get('/passengers/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
+    const passengerId = c.get('passengerId');
+    if (passengerId !== id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
     try {
       const passenger = await repo.getPassenger(id);
       if (!passenger) {
@@ -140,8 +145,12 @@ export function getPassengerRouter(repo: PassengerRepository) {
     }
   });
 
-  router.put('/passengers/:id', async (c) => {
+  router.put('/passengers/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
+    const passengerId = c.get('passengerId');
+    if (passengerId !== id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
     try {
       const body = await c.req.json();
       const { name, phone, email } = body;
@@ -156,10 +165,14 @@ export function getPassengerRouter(repo: PassengerRepository) {
     }
   });
 
-  router.post('/rides', async (c) => {
+  router.post('/rides', authMiddleware, async (c) => {
     try {
       const body = await c.req.json();
       const payload = CreateRideSchema.parse(body);
+      const passengerId = c.get('passengerId');
+      if (passengerId !== payload.passenger_id) {
+        return c.json({ error: 'Forbidden' }, 403);
+      }
       const ride = await repo.createRideRequest(payload);
       return c.json(ride, 201);
     } catch (e: any) {
@@ -167,8 +180,12 @@ export function getPassengerRouter(repo: PassengerRepository) {
     }
   });
 
-  router.get('/passengers/:id/rides', async (c) => {
+  router.get('/passengers/:id/rides', authMiddleware, async (c) => {
     const id = c.req.param('id');
+    const passengerId = c.get('passengerId');
+    if (passengerId !== id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
     try {
       const rides = await repo.getPassengerRides(id);
       return c.json(rides, 200);
@@ -177,8 +194,12 @@ export function getPassengerRouter(repo: PassengerRepository) {
     }
   });
 
-  router.get('/passengers/:id/notifications', async (c) => {
+  router.get('/passengers/:id/notifications', authMiddleware, async (c) => {
     const id = c.req.param('id');
+    const passengerId = c.get('passengerId');
+    if (passengerId !== id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
     try {
       const notifications = await repo.getPassengerNotifications(id);
       return c.json(notifications, 200);

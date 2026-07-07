@@ -210,4 +210,34 @@ class DriverApiService {
       return null;
     }
   }
+
+  static Future<Map<String, dynamic>?> fetchPassengerProfile(String passengerId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/passengers/$passengerId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/rides/$rideId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 }

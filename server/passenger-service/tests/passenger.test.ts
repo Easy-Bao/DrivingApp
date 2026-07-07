@@ -9,6 +9,7 @@ describe('Passenger Account Endpoints', () => {
   app.route('/', getPassengerRouter(repo));
 
   let passengerId = '';
+  let token = '';
 
   test('POST /passengers - creates passenger successfully', async () => {
     const res = await app.request('/passengers', {
@@ -64,10 +65,15 @@ describe('Passenger Account Endpoints', () => {
     const data: any = await res.json();
     expect(data.token).toBeDefined();
     expect(data.passenger.id).toBeDefined();
+    token = data.token;
   });
 
   test('GET /passengers/:id - retrieves passenger profile', async () => {
-    const res = await app.request(`/passengers/${passengerId}`);
+    const res = await app.request(`/passengers/${passengerId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
     expect(res.status).toBe(200);
     const data: any = await res.json();
@@ -75,10 +81,23 @@ describe('Passenger Account Endpoints', () => {
     expect(data.name).toBe('Test User');
   });
 
+  test('GET /passengers/:id - rejects accessing another passenger profile with 403', async () => {
+    const res = await app.request('/passengers/another-passenger-uuid', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    expect(res.status).toBe(403);
+  });
+
   test('PUT /passengers/:id - updates passenger profile', async () => {
     const res = await app.request(`/passengers/${passengerId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         name: 'Updated User Name',
         phone: '9999999999',

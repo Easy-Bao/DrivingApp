@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/core/services/driver_api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
 import 'package:location_service/location_service.dart';
@@ -503,7 +504,25 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               'Call',
               AppTheme.primaryColor,
               Colors.white,
-              onTap: () {},
+              onTap: () async {
+                try {
+                  final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
+                  if (rideId.isNotEmpty) {
+                    final ride = await DriverApiService.getRideStatus(rideId);
+                    final passengerId = ride?['passenger_id'] as String?;
+                    if (passengerId != null && passengerId.isNotEmpty) {
+                      final passenger = await DriverApiService.fetchPassengerProfile(passengerId);
+                      final phone = passenger?['phone'] as String?;
+                      if (phone != null && phone.isNotEmpty) {
+                        final uri = Uri.parse('tel:$phone');
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri);
+                        }
+                      }
+                    }
+                  }
+                } catch (_) {}
+              },
             ),
           ),
           const SizedBox(width: 12),

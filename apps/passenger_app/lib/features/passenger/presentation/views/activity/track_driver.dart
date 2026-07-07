@@ -12,9 +12,10 @@ import 'package:location_service/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 
 class ActivityTrackDriverScreen extends StatefulWidget {
   final RideHistoryModel ride;
@@ -461,8 +462,25 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                 label: 'Call',
                                 backgroundColor: AppTheme.primaryColor,
                                 foregroundColor: Colors.white,
-                                onTap: () {
-                                  // Direct action without double snackbar confirmation
+                                onTap: () async {
+                                  try {
+                                    final prefs = await SharedPreferences.getInstance();
+                                    final activeRideId = prefs.getString('active_ride_id') ?? widget.ride.id;
+                                    if (activeRideId.isNotEmpty) {
+                                      final statusData = await PassengerApiService.getRideStatus(activeRideId);
+                                      final driverId = statusData?['driver_id'] as String?;
+                                      if (driverId != null && driverId.isNotEmpty) {
+                                        final driverProfile = await PassengerApiService.getDriverProfile(driverId);
+                                        final phone = driverProfile?['phone'] as String?;
+                                        if (phone != null && phone.isNotEmpty) {
+                                          final uri = Uri.parse('tel:$phone');
+                                          if (await canLaunchUrl(uri)) {
+                                            await launchUrl(uri);
+                                          }
+                                        }
+                                      }
+                                    }
+                                  } catch (_) {}
                                 },
                               ),
                             ),

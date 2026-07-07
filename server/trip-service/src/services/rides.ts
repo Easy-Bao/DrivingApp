@@ -22,7 +22,11 @@ export async function acceptRideRequest(id: string, driverData: any) {
 
     const targetRide = await tx.ride.findUnique({ where: { id } });
     if (!targetRide) {
-      throw new Error("Ride not found")
+      throw new Error("Ride not found");
+    }
+
+    if (targetRide.status !== 'requested') {
+      throw new Error("Ride already accepted");
     }
 
     if (targetRide.rideType === 'Bao Premium' && activeRides.length > 0) {

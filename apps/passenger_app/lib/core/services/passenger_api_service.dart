@@ -339,4 +339,19 @@ class PassengerApiService {
       return [];
     }
   }
+
+  static Future<Map<String, dynamic>?> getDriverProfile(String driverId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/drivers/$driverId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 }

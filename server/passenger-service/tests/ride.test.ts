@@ -9,6 +9,7 @@ describe('Ride Request & Notification Endpoints', () => {
   app.route('/', getPassengerRouter(repo));
 
   let passengerId = '';
+  let token = '';
 
   test('POST /rides - requests a ride successfully', async () => {
     const pRes = await app.request('/passengers', {
@@ -34,9 +35,23 @@ describe('Ride Request & Notification Endpoints', () => {
       }),
     });
 
-    const res = await app.request('/rides', {
+    const loginRes = await app.request('/passengers/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'rider@example.com',
+        password: 'password123',
+      }),
+    });
+    const loginData: any = await loginRes.json();
+    token = loginData.token;
+
+    const res = await app.request('/rides', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         passenger_id: passengerId,
         ride_type: 'solo-ride',
@@ -58,7 +73,11 @@ describe('Ride Request & Notification Endpoints', () => {
   });
 
   test('GET /passengers/:id/rides - lists all rides for passenger', async () => {
-    const res = await app.request(`/passengers/${passengerId}/rides`);
+    const res = await app.request(`/passengers/${passengerId}/rides`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
     expect(res.status).toBe(200);
     const data: any = await res.json();
@@ -68,7 +87,11 @@ describe('Ride Request & Notification Endpoints', () => {
   });
 
   test('GET /passengers/:id/notifications - retrieves passenger notifications', async () => {
-    const res = await app.request(`/passengers/${passengerId}/notifications`);
+    const res = await app.request(`/passengers/${passengerId}/notifications`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
     expect(res.status).toBe(200);
     const data: any = await res.json();

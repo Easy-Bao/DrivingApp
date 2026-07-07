@@ -10,6 +10,8 @@ import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_stat
 import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/shared/widgets/custom_toast.dart';
+import 'package:driver_app/core/services/driver_api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Driver has arrived at pickup and is waiting for the passenger to board.
 class WaitingPassengerScreen extends StatefulWidget {
@@ -300,7 +302,27 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             'Call',
             AppTheme.primaryColor,
             Colors.white,
-            onTap: () {},
+            onTap: () async {
+              try {
+                final rideId =
+                    BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
+                if (rideId.isNotEmpty) {
+                  final ride = await DriverApiService.getRideStatus(rideId);
+                  final passengerId = ride?['passenger_id'] as String?;
+                  if (passengerId != null && passengerId.isNotEmpty) {
+                    final passenger =
+                        await DriverApiService.fetchPassengerProfile(passengerId);
+                    final phone = passenger?['phone'] as String?;
+                    if (phone != null && phone.isNotEmpty) {
+                      final uri = Uri.parse('tel:$phone');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    }
+                  }
+                }
+              } catch (_) {}
+            },
           ),
         ),
         const SizedBox(width: 12),

@@ -68,7 +68,22 @@ chatRouter.get('/ws', upgradeWebSocket(async (c) => {
     };
   }
 
-  const room = await getRoomDetails(roomId);
+  let room = await getRoomDetails(roomId);
+  if (!room) {
+    const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+    try {
+      const response = await fetch(`${tripServiceUrl}/rides/${roomId}`);
+      if (response.ok) {
+        const ride = await response.json() as any;
+        if (ride && ride.driver_id && ride.passenger_id) {
+          room = await upsertRoom(roomId, ride.driver_id, ride.passenger_id);
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to dynamically resolve chat room ${roomId} from trip-service:`, err);
+    }
+  }
+
   if (!room) {
     return {
       onOpen(_event, ws) {
