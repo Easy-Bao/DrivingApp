@@ -154,7 +154,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   }
 
   String _fmtTime(DateTime t) {
-    final h = textTheme.hour % 12 == 0 ? 12 : textTheme.hour % 12;
+    final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
     return "$h:${t.minute.toString().padLeft(2, '0')} ${t.hour >= 12 ? 'PM' : 'AM'}";
   }
 
@@ -250,7 +250,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               itemCount: _quickReplies.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, itemIndex) => GestureDetector(
-                onTap: () => _send(_quickReplies[i]),
+                onTap: () => _send(_quickReplies[itemIndex]),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -262,7 +262,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                     border: Border.all(color: AppTheme.borderSide),
                   ),
                   child: Text(
-                    _quickReplies[i],
+                    _quickReplies[itemIndex],
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -469,7 +469,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                       margin: EdgeInsets.only(right: i < 2 ? 4 : 0),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withValues(
-                          alpha: 0.2 + (t * 0.5),
+                          alpha: 0.2 + (textTheme * 0.5),
                         ),
                         shape: BoxShape.circle,
                       ),

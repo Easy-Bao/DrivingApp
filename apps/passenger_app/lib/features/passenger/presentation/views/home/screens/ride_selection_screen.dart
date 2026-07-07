@@ -45,7 +45,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         'Solo Ride',
         'Direct booking, just you',
         LucideIcons.bike,
-        f['Solo Ride'] ?? (20.0 + km * 10),
+        formattedFare['Solo Ride'] ?? (20.0 + km * 10),
         '3 min',
         null,
       ),
@@ -53,7 +53,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         'Share-Bao',
         'Pasabay, split the fare',
         LucideIcons.users,
-        f['Share-Bao'] ?? (15.0 + km * 7),
+        formattedFare['Share-Bao'] ?? (15.0 + km * 7),
         '5 min',
         'Cheapest',
       ),
@@ -61,7 +61,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         'Bao Premium',
         'Priority pickup, top rated',
         LucideIcons.crown,
-        f['Bao Premium'] ?? (35.0 + km * 15),
+        formattedFare['Bao Premium'] ?? (35.0 + km * 15),
         '2 min',
         'Fastest',
       ),
@@ -322,7 +322,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(
-                                o.icon,
+                                mapOffset.icon,
                                 size: 20,
                                 color: isSel
                                     ? Colors.white
@@ -337,14 +337,14 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                   Row(
                                     children: [
                                       Text(
-                                        o.name,
+                                        mapOffset.name,
                                         style: const TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w800,
                                           color: AppTheme.primaryColor,
                                         ),
                                       ),
-                                      if (o.badge != null) ...[
+                                      if (mapOffset.badge != null) ...[
                                         const SizedBox(width: 8),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
@@ -352,7 +352,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                             vertical: 2,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: o.badge == 'Cheapest'
+                                            color: mapOffset.badge == 'Cheapest'
                                                 ? AppTheme.complete.withValues(
                                                     alpha: 0.15,
                                                   )
@@ -363,11 +363,11 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                             ),
                                           ),
                                           child: Text(
-                                            o.badge!,
+                                            mapOffset.badge!,
                                             style: TextStyle(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
-                                              color: o.badge == 'Cheapest'
+                                              color: mapOffset.badge == 'Cheapest'
                                                   ? AppTheme.complete
                                                   : AppTheme.tertiaryColor,
                                             ),
@@ -378,7 +378,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    o.subtitle,
+                                    mapOffset.subtitle,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: AppTheme.primaryColor.withValues(
@@ -393,7 +393,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  '₱${o.fare.toStringAsFixed(2)}',
+                                  '₱${mapOffset.fare.toStringAsFixed(2)}',
                                   style: const TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.w900,
@@ -401,7 +401,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '~${o.eta}',
+                                  '~${mapOffset.eta}',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: AppTheme.primaryColor.withValues(

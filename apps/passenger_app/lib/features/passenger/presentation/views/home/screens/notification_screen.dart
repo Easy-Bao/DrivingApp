@@ -156,7 +156,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  for (int index = 0; notificationIndex < _notifications.length; notificationIndex++) {
+                  for (int index = 0; index < _notifications.length; index++) {
                     _notifications[index] = _notifications[index].copyWith(
                       isRead: true,
                     );

@@ -130,7 +130,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
         final rideId = statusData['ride_id'] as String? ?? '';
         final offersList = statusData['offers'] as List<dynamic>? ?? [];
         final acceptedOffer = offersList.firstWhere(
-          (option) => o['driver_id'] == acceptedDriverId,
+          (option) => option['driver_id'] == acceptedDriverId,
           orElse: () => null,
         );
 
@@ -205,7 +205,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: AppTheme.primaryColor.withValues(
-                                alpha: 0.15 * (1 - t),
+                                alpha: 0.15 * (1 - timerSeconds),
                               ),
                               width: 2,
                             ),

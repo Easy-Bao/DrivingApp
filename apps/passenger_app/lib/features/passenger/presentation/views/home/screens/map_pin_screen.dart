@@ -127,7 +127,7 @@ class _MapPinScreenState extends State<MapPinScreen>
             latitude: _centerLat,
             longitude: _centerLng,
             zoom: 15.0,
-            onMapCreated: (coordinate) => _mapController = c,
+            onMapCreated: (coordinate) => _mapController = coordinate,
           ),
           Center(
             child: Stack(

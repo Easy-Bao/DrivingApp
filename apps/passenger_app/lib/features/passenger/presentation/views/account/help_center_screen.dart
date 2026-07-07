@@ -76,15 +76,15 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   List<Map<String, String>> get _filteredFaqs {
     var list = _faqs;
     if (_selectedCategory != 'All') {
-      list = list.where((faqItem) => f['cat'] == _selectedCategory).toList();
+      list = list.where((faqItem) => faqItem['cat'] == _selectedCategory).toList();
     }
     final searchQuery = _searchController.text.trim().toLowerCase();
-    if (q.isNotEmpty) {
+    if (searchQuery.isNotEmpty) {
       list = list
           .where(
             (faqItem) =>
-                f['q']!.toLowerCase().contains(q) ||
-                f['a']!.toLowerCase().contains(q),
+                faqItem['q']!.toLowerCase().contains(searchQuery) ||
+                faqItem['a']!.toLowerCase().contains(searchQuery),
           )
           .toList();
     }

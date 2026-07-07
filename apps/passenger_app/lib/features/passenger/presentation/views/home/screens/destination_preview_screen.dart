@@ -60,7 +60,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         _distanceKm = route.distanceKm;
         _distance = '${route.distanceKm.toStringAsFixed(1)} km';
         final mapMarker = route.estimatedTime.inMinutes;
-        _duration = m < 60 ? '$m min' : '${m ~/ 60}h ${m % 60}m';
+        _duration = mapMarker < 60 ? '$mapMarker min' : '${mapMarker ~/ 60}h ${mapMarker % 60}m';
       }
     });
 
@@ -116,7 +116,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         final chunkSize = (points.length / 20).ceil().clamp(2, 50).toInt();
         const int delayMs = 100;
 
-        for (int index = 0; index < points.length; i += chunkSize) {
+        for (int index = 0; index < points.length; index += chunkSize) {
           if (!mounted) break;
           final endIdx = (index + chunkSize < points.length)
               ? index + chunkSize

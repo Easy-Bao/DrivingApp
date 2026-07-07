@@ -41,7 +41,7 @@ class TrackRepositoryImpl implements TrackRepository {
     int steps = 5,
   }) {
     final points = <List<double>>[];
-    for (var index = 0; i <= steps; i++) {
+    for (var index = 0; index <= steps; index++) {
       final t = index / steps;
       points.add([
         startLat + (endLat - startLat) * t,
