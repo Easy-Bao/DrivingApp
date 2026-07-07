@@ -264,8 +264,8 @@ class MapProvider {
     final annotationManager = await mapCtrl.annotations
         .createCircleAnnotationManager();
 
-    final markerColor = color != null 
-        ? color.toARGB32() 
+    final markerColor = color != null
+        ? color.toARGB32()
         : (isOrigin ? 0xFF222222 : 0xFF607B8B);
 
     await annotationManager.create(
