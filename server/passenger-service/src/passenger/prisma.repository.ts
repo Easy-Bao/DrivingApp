@@ -37,7 +37,9 @@ export class PrismaPassengerRepository implements PassengerRepository {
   }
 
   async getPassenger(id: string): Promise<Passenger | null> {
-    const res = await prisma.passenger.findUnique({ where: { id } });
+    const res = await prisma.passenger.findUnique({
+      where: { id },
+    });
     if (!res) return null;
     return {
       id: res.id,
@@ -52,7 +54,9 @@ export class PrismaPassengerRepository implements PassengerRepository {
   }
 
   async getPassengerByEmail(email: string): Promise<Passenger | null> {
-    const res = await prisma.passenger.findUnique({ where: { email } });
+    const res = await prisma.passenger.findUnique({
+      where: { email },
+    });
     if (!res) return null;
     return {
       id: res.id,
@@ -67,7 +71,9 @@ export class PrismaPassengerRepository implements PassengerRepository {
   }
 
   async createRideRequest(req: CreateRideRequest): Promise<RideRequest> {
-    const passenger = await prisma.passenger.findUnique({ where: { id: req.passenger_id } });
+    const passenger = await prisma.passenger.findUnique({
+      where: { id: req.passenger_id },
+    });
     if (!passenger) {
       throw new Error(`Passenger ID ${req.passenger_id} not found`);
     }
@@ -102,7 +108,9 @@ export class PrismaPassengerRepository implements PassengerRepository {
   }
 
   async getPassengerRides(passengerId: string): Promise<RideRequest[]> {
-    const passenger = await prisma.passenger.findUnique({ where: { id: passengerId } });
+    const passenger = await prisma.passenger.findUnique({
+      where: { id: passengerId },
+    });
     if (!passenger) {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
@@ -146,6 +154,7 @@ export class PrismaPassengerRepository implements PassengerRepository {
           created_at: r.created_at,
           driver_name: driverName,
           plate_number: plateNumber,
+          password_hash: '',
         };
       }),
     );

@@ -11,7 +11,6 @@ describe('Ride Request & Notification Endpoints', () => {
   let passengerId = '';
 
   test('POST /rides - requests a ride successfully', async () => {
-    // 1. Create a passenger first so that the ride can associate
     const pRes = await app.request('/passengers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -26,7 +25,6 @@ describe('Ride Request & Notification Endpoints', () => {
     const pData: any = await pRes.json();
     passengerId = pData.passenger.id;
 
-    // 2. Verify the passenger
     await app.request('/passengers/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -36,7 +34,6 @@ describe('Ride Request & Notification Endpoints', () => {
       }),
     });
 
-    // 3. Make ride request
     const res = await app.request('/rides', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
