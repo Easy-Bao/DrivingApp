@@ -97,50 +97,57 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
             const SizedBox(height: 28),
             _buildSectionLabel('ACTIVITY'),
             const SizedBox(height: 12),
-            _tile(
-              context,
-              LucideIcons.history,
-              'Trip History',
-              'View past rides',
-              () => context.pushNamed('DriverTripHistory'),
-            ),
-            _tile(
-              context,
-              LucideIcons.wallet,
-              'Earnings',
-              'View earnings breakdown',
-              () => context.goNamed('DriverEarnings'),
-            ),
+            ..._buildActivityItems(context).map((item) => _tile(context, item)),
             const SizedBox(height: 24),
             _buildSectionLabel('ACCOUNT'),
             const SizedBox(height: 12),
-            _tile(
-              context,
-              LucideIcons.shield_check,
-              'Vehicle Info',
-              'Plate: $_plateNumber, Type: $_vehicleType',
-              () {},
-            ),
-            _tile(
-              context,
-              LucideIcons.message_circle_question_mark,
-              'Help Center',
-              'Support and FAQs',
-              () {},
-            ),
-            _tile(
-              context,
-              LucideIcons.info,
-              'About BaoRide',
-              'Version 1.0.0',
-              () {},
-            ),
+            ..._buildAccountItems(context).map((item) => _tile(context, item)),
             const SizedBox(height: 32),
             _buildLogoutButton(context),
           ],
         ),
       ),
     );
+  }
+
+  List<_DriverAccountMenuItem> _buildActivityItems(BuildContext context) {
+    return [
+      _DriverAccountMenuItem(
+        icon: LucideIcons.history,
+        title: 'Trip History',
+        subtitle: 'View past rides',
+        onTap: () => context.pushNamed('DriverTripHistory'),
+      ),
+      _DriverAccountMenuItem(
+        icon: LucideIcons.wallet,
+        title: 'Earnings',
+        subtitle: 'View earnings breakdown',
+        onTap: () => context.goNamed('DriverEarnings'),
+      ),
+    ];
+  }
+
+  List<_DriverAccountMenuItem> _buildAccountItems(BuildContext context) {
+    return [
+      _DriverAccountMenuItem(
+        icon: LucideIcons.shield_check,
+        title: 'Vehicle Info',
+        subtitle: 'Plate: $_plateNumber, Type: $_vehicleType',
+        onTap: () {},
+      ),
+      _DriverAccountMenuItem(
+        icon: LucideIcons.message_circle_question_mark,
+        title: 'Help Center',
+        subtitle: 'Support and FAQs',
+        onTap: () {},
+      ),
+      _DriverAccountMenuItem(
+        icon: LucideIcons.info,
+        title: 'About BaoRide',
+        subtitle: 'Version 1.0.0',
+        onTap: () {},
+      ),
+    ];
   }
 
   Widget _buildProfileCard() {
@@ -280,13 +287,10 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
 
   Widget _tile(
     BuildContext context,
-    IconData icon,
-    String title,
-    String sub,
-    VoidCallback onTap,
+    _DriverAccountMenuItem item,
   ) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: item.onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(16),
@@ -303,7 +307,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
                 color: AppTheme.secondaryColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, size: 18, color: AppTheme.primaryColor),
+              child: Icon(item.icon, size: 18, color: AppTheme.primaryColor),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -311,7 +315,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    item.title,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -319,7 +323,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
                     ),
                   ),
                   Text(
-                    sub,
+                    item.subtitle,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppTheme.primaryColor.withValues(alpha: 0.4),
@@ -368,4 +372,18 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
       ),
     );
   }
+}
+
+class _DriverAccountMenuItem {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _DriverAccountMenuItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 }

@@ -95,41 +95,13 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
               _buildProfileHeader(),
               const SizedBox(height: 40),
               _buildSectionTitle('Activity'),
-              _buildAccountTile(
-                context,
-                LucideIcons.history,
-                'Ride History',
-                'View your past trips',
-                () => context.pushNamed('RideHistory'),
-              ),
+              ..._buildActivityItems(context).map((item) => _buildAccountTile(context, item)),
               const SizedBox(height: 32),
               _buildSectionTitle('Personal'),
-              _buildAccountTile(
-                context,
-                LucideIcons.user,
-                'Profile Info',
-                'Update name and details',
-                () async {
-                  await context.pushNamed('ProfileInfo');
-                  unawaited(_loadProfile());
-                },
-              ),
+              ..._buildPersonalItems(context).map((item) => _buildAccountTile(context, item)),
               const SizedBox(height: 32),
               _buildSectionTitle('Support'),
-              _buildAccountTile(
-                context,
-                LucideIcons.message_circle_question_mark,
-                'Help Center',
-                'Get support and FAQs',
-                () => context.pushNamed('HelpCenter'),
-              ),
-              _buildAccountTile(
-                context,
-                LucideIcons.info,
-                'About BaoRide',
-                'Version 1.0.0',
-                () {},
-              ),
+              ..._buildSupportItems(context).map((item) => _buildAccountTile(context, item)),
               const SizedBox(height: 40),
               _buildLogoutButton(context),
               const SizedBox(height: 40),
@@ -138,6 +110,48 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
         ),
       ),
     );
+  }
+
+  List<_AccountMenuItem> _buildActivityItems(BuildContext context) {
+    return [
+      _AccountMenuItem(
+        icon: LucideIcons.history,
+        title: 'Ride History',
+        subtitle: 'View your past trips',
+        onTap: () => context.pushNamed('RideHistory'),
+      ),
+    ];
+  }
+
+  List<_AccountMenuItem> _buildPersonalItems(BuildContext context) {
+    return [
+      _AccountMenuItem(
+        icon: LucideIcons.user,
+        title: 'Profile Info',
+        subtitle: 'Update name and details',
+        onTap: () async {
+          await context.pushNamed('ProfileInfo');
+          unawaited(_loadProfile());
+        },
+      ),
+    ];
+  }
+
+  List<_AccountMenuItem> _buildSupportItems(BuildContext context) {
+    return [
+      _AccountMenuItem(
+        icon: LucideIcons.message_circle_question_mark,
+        title: 'Help Center',
+        subtitle: 'Get support and FAQs',
+        onTap: () => context.pushNamed('HelpCenter'),
+      ),
+      _AccountMenuItem(
+        icon: LucideIcons.info,
+        title: 'About BaoRide',
+        subtitle: 'Version 1.0.0',
+        onTap: () {},
+      ),
+    ];
   }
 
   Widget _buildProfileHeader() {
@@ -210,10 +224,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
 
   Widget _buildAccountTile(
     BuildContext context,
-    IconData icon,
-    String title,
-    String subtitle,
-    VoidCallback onTap,
+    _AccountMenuItem item,
   ) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
@@ -223,10 +234,10 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
           color: AppTheme.neutralColor,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: AppTheme.primaryColor, size: 20),
+        child: Icon(item.icon, color: AppTheme.primaryColor, size: 20),
       ),
       title: Text(
-        title,
+        item.title,
         style: const TextStyle(
           fontWeight: FontWeight.w700,
           fontSize: 16,
@@ -234,7 +245,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
         ),
       ),
       subtitle: Text(
-        subtitle,
+        item.subtitle,
         style: TextStyle(
           color: AppTheme.primaryColor.withValues(alpha: 0.5),
           fontSize: 13,
@@ -245,7 +256,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
         size: 18,
         color: AppTheme.borderSide,
       ),
-      onTap: onTap,
+      onTap: item.onTap,
     );
   }
 
@@ -280,4 +291,18 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
       ),
     );
   }
+}
+
+class _AccountMenuItem {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _AccountMenuItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 }
