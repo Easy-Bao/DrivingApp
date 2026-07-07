@@ -1,5 +1,5 @@
 name: driver_app
-description: "A Booking App Project"
+description: "EasyRide Driver App by ZervX"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -79,6 +79,12 @@ dev_dependencies:
   freezed: ^3.0.0
   json_serializable: ^6.9.4
   build_runner: ^2.4.15
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  image_path: "assets/app-icon/easy-ride.png"
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

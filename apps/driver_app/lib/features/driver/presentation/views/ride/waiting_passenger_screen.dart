@@ -53,9 +53,9 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
   }
 
   String get _waitFormatted {
-    final m = _waitSeconds ~/ 60;
-    final s = _waitSeconds % 60;
-    return '${minuteseconds.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    final elapsedMinutes = _waitSeconds ~/ 60;
+    final elapsedSeconds = _waitSeconds % 60;
+    return '${elapsedMinutes.toString().padLeft(2, '0')}:${elapsedSeconds.toString().padLeft(2, '0')}';
   }
 
   static const double _defaultLat = 7.8286;

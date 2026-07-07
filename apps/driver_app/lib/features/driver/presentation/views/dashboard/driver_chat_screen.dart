@@ -147,9 +147,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     });
   }
 
-  String _fmtTime(DateTime t) {
-    final h = textTheme.hour % 12 == 0 ? 12 : textTheme.hour % 12;
-    return "$h:${t.minute.toString().padLeft(2, '0')} ${t.hour >= 12 ? 'PM' : 'AM'}";
+  String _fmtTime(DateTime dateTime) {
+    final hourDisplay = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    return "$hourDisplay:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.hour >= 12 ? 'PM' : 'AM'}";
   }
 
   @override
@@ -250,7 +250,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               itemCount: _quickReplies.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, itemIndex) => GestureDetector(
-                onTap: () => _send(_quickReplies[i]),
+                onTap: () => _send(_quickReplies[itemIndex]),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -262,7 +262,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                     border: Border.all(color: AppTheme.borderSide),
                   ),
                   child: Text(
-                    _quickReplies[i],
+                    _quickReplies[itemIndex],
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -463,15 +463,15 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               builder: (ctx, _) {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: List.generate(3, (i) {
-                    final textTheme = (_typingCtrl.value + i * 0.2) % 1.0;
+                  children: List.generate(3, (dotIndex) {
+                    final animationProgress = (_typingCtrl.value + dotIndex * 0.2) % 1.0;
                     return Container(
                       width: 7,
                       height: 7,
-                      margin: EdgeInsets.only(right: i < 2 ? 4 : 0),
+                      margin: EdgeInsets.only(right: dotIndex < 2 ? 4 : 0),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withValues(
-                          alpha: 0.2 + (t * 0.5),
+                          alpha: 0.2 + (animationProgress * 0.5),
                         ),
                         shape: BoxShape.circle,
                       ),
