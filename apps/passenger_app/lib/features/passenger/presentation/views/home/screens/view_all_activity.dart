@@ -58,10 +58,10 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
           });
         }
       }
-    } catch (e) {
+    } catch (error) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = error.toString();
           _isLoading = false;
         });
       }

@@ -50,7 +50,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
         _dbRides = mapped;
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (error) {
       setState(() => _isLoading = false);
     }
   }

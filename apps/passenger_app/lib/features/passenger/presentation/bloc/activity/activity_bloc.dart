@@ -61,10 +61,10 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
               .where((r) => _upcomingStatuses.contains(r.status))
               .toList();
       emit(ActivityLoaded(past: past, upcoming: upcoming));
-    } on ActivityRepositoryException catch (e) {
-      emit(ActivityError(message: e.message));
-    } catch (e) {
-      emit(ActivityError(message: 'Unexpected error: $e'));
+    } on ActivityRepositoryException catch (error) {
+      emit(ActivityError(message: error.message));
+    } catch (error) {
+      emit(ActivityError(message: 'Unexpected error: $error'));
     }
   }
 }

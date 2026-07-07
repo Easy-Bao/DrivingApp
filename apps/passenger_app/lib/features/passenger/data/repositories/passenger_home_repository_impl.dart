@@ -26,8 +26,8 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
         return _shortenAddress(place.fullAddress);
       }
       return '';
-    } catch (e) {
-      debugPrint('PassengerHomeRepositoryImpl.resolveAddress failed: $e');
+    } catch (error) {
+      debugPrint('PassengerHomeRepositoryImpl.resolveAddress failed: $error');
       return '';
     }
   }
@@ -41,8 +41,8 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
       }
       final rawRides = await PassengerApiService.fetchRideHistory(passengerId);
       return _filterAndFormatRecentLocations(rawRides);
-    } catch (e) {
-      debugPrint('PassengerHomeRepositoryImpl.getRecentLocations failed: $e');
+    } catch (error) {
+      debugPrint('PassengerHomeRepositoryImpl.getRecentLocations failed: $error');
       return [];
     }
   }

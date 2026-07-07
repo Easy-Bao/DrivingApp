@@ -199,7 +199,7 @@ class PassengerApiService {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
       return null;
-    } catch (e) {
+    } catch (error) {
       return null;
     }
   }

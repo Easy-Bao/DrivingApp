@@ -9,12 +9,12 @@ export interface UpdatePassengerOptions {
 }
 
 export interface PassengerRepository {
-  createPassenger(req: CreatePassengerRequest): Promise<Passenger>;
-  getPassenger(id: string): Promise<Passenger | null>;
-  getPassengerByEmail(email: string): Promise<Passenger | null>;
-  createRideRequest(req: CreateRideRequest): Promise<RideRequest>;
-  getPassengerRides(passengerId: string): Promise<RideRequest[]>;
-  updatePassenger(options: UpdatePassengerOptions): Promise<Passenger>;
-  getPassengerNotifications(passengerId: string): Promise<any[]>;
-  verifyPassenger(email: string): Promise<void>;
+  registerPassenger(passengerDetails: CreatePassengerRequest): Promise<Passenger>;
+  retrievePassengerProfile(passengerId: string): Promise<Passenger | null>;
+  retrievePassengerByEmail(passengerEmail: string): Promise<Passenger | null>;
+  registerRideRequest(rideDetails: CreateRideRequest): Promise<RideRequest>;
+  retrievePassengerRideHistory(passengerId: string): Promise<RideRequest[]>;
+  updatePassengerProfile(options: UpdatePassengerOptions): Promise<Passenger>;
+  retrievePassengerNotifications(passengerId: string): Promise<any[]>;
+  verifyPassengerOtp(passengerEmail: string): Promise<void>;
 }

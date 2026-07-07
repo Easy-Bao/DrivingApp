@@ -67,8 +67,8 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         ],
         padding: 40.0,
       );
-    } catch (e) {
-      debugPrint('ActivityViewDetails._onMapCreated failed: $e');
+    } catch (error) {
+      debugPrint('ActivityViewDetails._onMapCreated failed: $error');
     }
   }
 

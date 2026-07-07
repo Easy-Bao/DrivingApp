@@ -122,8 +122,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             _activeBids = bids;
           });
         }
-      } catch (e) {
-        debugPrint('Error polling: $e');
+      } catch (error) {
+        debugPrint('Error polling: $error');
       }
     });
   }

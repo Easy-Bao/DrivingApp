@@ -25,9 +25,9 @@ class ActivityRepositoryImpl implements ActivityRepository {
       return rawList
           .map((raw) => _mapToModel(raw as Map<String, dynamic>))
           .toList();
-    } catch (e) {
-      debugPrint('ActivityRepositoryImpl.fetchRideHistory failed: $e');
-      throw ActivityRepositoryException('Failed to load ride history: $e');
+    } catch (error) {
+      debugPrint('ActivityRepositoryImpl.fetchRideHistory failed: $error');
+      throw ActivityRepositoryException('Failed to load ride history: $error');
     }
   }
 

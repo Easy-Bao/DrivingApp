@@ -51,8 +51,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           'plate_number': plateNumber,
         }),
       );
-    } catch (e) {
-      debugPrint('Error accepting ride on backend: $e');
+    } catch (error) {
+      debugPrint('Error accepting ride on backend: $error');
     }
 
     emit(
@@ -133,8 +133,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'status': 'arrived'}),
         );
-      } catch (e) {
-        debugPrint('Error updating status to arrived: $e');
+      } catch (error) {
+        debugPrint('Error updating status to arrived: $error');
       }
     }
 
@@ -173,8 +173,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'status': 'in_transit'}),
         );
-      } catch (e) {
-        debugPrint('Error updating status to in_transit: $e');
+      } catch (error) {
+        debugPrint('Error updating status to in_transit: $error');
       }
     }
 
@@ -203,8 +203,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'status': 'completed'}),
         );
-      } catch (e) {
-        debugPrint('Error updating status to completed: $e');
+      } catch (error) {
+        debugPrint('Error updating status to completed: $error');
       }
     }
 

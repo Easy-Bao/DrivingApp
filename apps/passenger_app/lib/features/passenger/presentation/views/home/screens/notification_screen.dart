@@ -68,7 +68,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         _notifications = list;
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (error) {
       setState(() => _isLoading = false);
     }
   }
@@ -156,8 +156,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  for (int i = 0; i < _notifications.length; i++) {
-                    _notifications[i] = _notifications[i].copyWith(
+                  for (int index = 0; notificationIndex < _notifications.length; notificationIndex++) {
+                    _notifications[index] = _notifications[index].copyWith(
                       isRead: true,
                     );
                   }

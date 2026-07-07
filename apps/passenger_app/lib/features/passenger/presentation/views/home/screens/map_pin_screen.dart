@@ -127,7 +127,7 @@ class _MapPinScreenState extends State<MapPinScreen>
             latitude: _centerLat,
             longitude: _centerLng,
             zoom: 15.0,
-            onMapCreated: (c) => _mapController = c,
+            onMapCreated: (coordinate) => _mapController = c,
           ),
           Center(
             child: Stack(
@@ -274,13 +274,13 @@ class _MapPinScreenState extends State<MapPinScreen>
                   icon: LucideIcons.plus,
                   onTap: () async {
                     if (_mapController != null) {
-                      final c = await MapProvider.getCameraCenter(
+                      final coordinate = await MapProvider.getCameraCenter(
                         _mapController!,
                       );
                       await MapProvider.moveCamera(
                         _mapController!,
-                        c.latitude,
-                        c.longitude,
+                        coordinate.latitude,
+                        coordinate.longitude,
                         zoom: 17.0,
                       );
                     }
@@ -291,13 +291,13 @@ class _MapPinScreenState extends State<MapPinScreen>
                   icon: LucideIcons.minus,
                   onTap: () async {
                     if (_mapController != null) {
-                      final c = await MapProvider.getCameraCenter(
+                      final coordinate = await MapProvider.getCameraCenter(
                         _mapController!,
                       );
                       await MapProvider.moveCamera(
                         _mapController!,
-                        c.latitude,
-                        c.longitude,
+                        coordinate.latitude,
+                        coordinate.longitude,
                         zoom: 13.0,
                       );
                     }

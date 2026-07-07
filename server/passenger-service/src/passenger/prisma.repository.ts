@@ -4,154 +4,154 @@ import { CreatePassengerRequest, CreateRideRequest } from './schema.ts';
 import { PassengerRepository, UpdatePassengerOptions } from './passenger.repository.ts';
 
 export class PrismaPassengerRepository implements PassengerRepository {
-  async createPassenger(req: CreatePassengerRequest): Promise<Passenger> {
-    const existing = await prisma.passenger.findUnique({
-      where: { email: req.email },
+  async registerPassenger(passengerDetails: CreatePassengerRequest): Promise<Passenger> {
+    const existingPassenger = await prisma.passenger.findUnique({
+      where: { email: passengerDetails.email },
     });
-    if (existing) {
-      throw new Error(`A passenger with email ${req.email} already exists`);
+    if (existingPassenger) {
+      throw new Error(`A passenger with email ${passengerDetails.email} already exists`);
     }
-    const passwordHash = await Bun.password.hash(req.password, {
+    const passwordHash = await Bun.password.hash(passengerDetails.password, {
       algorithm: 'bcrypt',
       cost: 10,
     });
-    const res = await prisma.passenger.create({
+    const createdPassenger = await prisma.passenger.create({
       data: {
-        name: req.name,
-        email: req.email,
-        phone: req.phone,
-        preferred_ride_type: req.preferred_ride_type || null,
+        name: passengerDetails.name,
+        email: passengerDetails.email,
+        phone: passengerDetails.phone,
+        preferred_ride_type: passengerDetails.preferred_ride_type || null,
         password_hash: passwordHash,
       },
     });
     return {
-      id: res.id,
-      name: res.name,
-      email: res.email,
-      phone: res.phone,
-      preferred_ride_type: res.preferred_ride_type as RideType | null,
-      created_at: res.created_at,
-      password_hash: res.password_hash,
-      is_verified: res.is_verified,
+      id: createdPassenger.id,
+      name: createdPassenger.name,
+      email: createdPassenger.email,
+      phone: createdPassenger.phone,
+      preferred_ride_type: createdPassenger.preferred_ride_type as RideType | null,
+      created_at: createdPassenger.created_at,
+      password_hash: createdPassenger.password_hash,
+      is_verified: createdPassenger.is_verified,
     };
   }
 
-  async getPassenger(id: string): Promise<Passenger | null> {
-    const res = await prisma.passenger.findUnique({
-      where: { id },
+  async retrievePassengerProfile(passengerId: string): Promise<Passenger | null> {
+    const fetchedPassenger = await prisma.passenger.findUnique({
+      where: { id: passengerId },
     });
-    if (!res) return null;
+    if (!fetchedPassenger) return null;
     return {
-      id: res.id,
-      name: res.name,
-      email: res.email,
-      phone: res.phone,
-      preferred_ride_type: res.preferred_ride_type as RideType | null,
-      created_at: res.created_at,
-      password_hash: res.password_hash,
-      is_verified: res.is_verified,
+      id: fetchedPassenger.id,
+      name: fetchedPassenger.name,
+      email: fetchedPassenger.email,
+      phone: fetchedPassenger.phone,
+      preferred_ride_type: fetchedPassenger.preferred_ride_type as RideType | null,
+      created_at: fetchedPassenger.created_at,
+      password_hash: fetchedPassenger.password_hash,
+      is_verified: fetchedPassenger.is_verified,
     };
   }
 
-  async getPassengerByEmail(email: string): Promise<Passenger | null> {
-    const res = await prisma.passenger.findUnique({
-      where: { email },
+  async retrievePassengerByEmail(passengerEmail: string): Promise<Passenger | null> {
+    const fetchedPassenger = await prisma.passenger.findUnique({
+      where: { email: passengerEmail },
     });
-    if (!res) return null;
+    if (!fetchedPassenger) return null;
     return {
-      id: res.id,
-      name: res.name,
-      email: res.email,
-      phone: res.phone,
-      preferred_ride_type: res.preferred_ride_type as RideType | null,
-      created_at: res.created_at,
-      password_hash: res.password_hash,
-      is_verified: res.is_verified,
+      id: fetchedPassenger.id,
+      name: fetchedPassenger.name,
+      email: fetchedPassenger.email,
+      phone: fetchedPassenger.phone,
+      preferred_ride_type: fetchedPassenger.preferred_ride_type as RideType | null,
+      created_at: fetchedPassenger.created_at,
+      password_hash: fetchedPassenger.password_hash,
+      is_verified: fetchedPassenger.is_verified,
     };
   }
 
-  async createRideRequest(req: CreateRideRequest): Promise<RideRequest> {
+  async registerRideRequest(rideDetails: CreateRideRequest): Promise<RideRequest> {
     const passenger = await prisma.passenger.findUnique({
-      where: { id: req.passenger_id },
+      where: { id: rideDetails.passenger_id },
     });
     if (!passenger) {
-      throw new Error(`Passenger ID ${req.passenger_id} not found`);
+      throw new Error(`Passenger ID ${rideDetails.passenger_id} not found`);
     }
-    const res = await prisma.rideRequest.create({
+    const createdRideRequest = await prisma.rideRequest.create({
       data: {
-        passenger_id: req.passenger_id,
-        ride_type: req.ride_type,
-        pickup_latitude: req.pickup_latitude,
-        pickup_longitude: req.pickup_longitude,
-        pickup_name: req.pickup_name,
-        dropoff_latitude: req.dropoff_latitude,
-        dropoff_longitude: req.dropoff_longitude,
-        dropoff_name: req.dropoff_name,
-        fare: req.fare,
+        passenger_id: rideDetails.passenger_id,
+        ride_type: rideDetails.ride_type,
+        pickup_latitude: rideDetails.pickup_latitude,
+        pickup_longitude: rideDetails.pickup_longitude,
+        pickup_name: rideDetails.pickup_name,
+        dropoff_latitude: rideDetails.dropoff_latitude,
+        dropoff_longitude: rideDetails.dropoff_longitude,
+        dropoff_name: rideDetails.dropoff_name,
+        fare: rideDetails.fare,
         status: 'requested',
       },
     });
     return {
-      id: res.id,
-      passenger_id: res.passenger_id,
-      ride_type: res.ride_type as RideType,
-      pickup_latitude: res.pickup_latitude,
-      pickup_longitude: res.pickup_longitude,
-      pickup_name: res.pickup_name,
-      dropoff_latitude: res.dropoff_latitude,
-      dropoff_longitude: res.dropoff_longitude,
-      dropoff_name: res.dropoff_name,
-      fare: res.fare,
-      status: res.status,
-      created_at: res.created_at,
+      id: createdRideRequest.id,
+      passenger_id: createdRideRequest.passenger_id,
+      ride_type: createdRideRequest.ride_type as RideType,
+      pickup_latitude: createdRideRequest.pickup_latitude,
+      pickup_longitude: createdRideRequest.pickup_longitude,
+      pickup_name: createdRideRequest.pickup_name,
+      dropoff_latitude: createdRideRequest.dropoff_latitude,
+      dropoff_longitude: createdRideRequest.dropoff_longitude,
+      dropoff_name: createdRideRequest.dropoff_name,
+      fare: createdRideRequest.fare,
+      status: createdRideRequest.status,
+      created_at: createdRideRequest.created_at,
     };
   }
 
-  async getPassengerRides(passengerId: string): Promise<RideRequest[]> {
+  async retrievePassengerRideHistory(passengerId: string): Promise<RideRequest[]> {
     const passenger = await prisma.passenger.findUnique({
       where: { id: passengerId },
     });
     if (!passenger) {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
-    const rows = await prisma.rideRequest.findMany({
+    const rideRequestRecords = await prisma.rideRequest.findMany({
       where: { passenger_id: passengerId },
       orderBy: { created_at: 'desc' },
     });
 
     const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
 
-    const enriched = await Promise.all(
-      rows.map(async (r) => {
-        let status = r.status;
+    const enrichedRideRequests = await Promise.all(
+      rideRequestRecords.map(async (rideRequest) => {
+        let currentStatus = rideRequest.status;
         let driverName = '';
         let plateNumber = '';
 
         try {
-          const tripRes = await fetch(`${tripServiceUrl}/rides/${r.id}`);
-          if (tripRes.ok) {
-            const trip = await tripRes.json() as Record<string, unknown>;
-            status = (trip.status as string) || status;
-            driverName = (trip.driver_name as string) || '';
-            plateNumber = (trip.plate_number as string) || '';
+          const tripResponse = await fetch(`${tripServiceUrl}/rides/${rideRequest.id}`);
+          if (tripResponse.ok) {
+            const tripDetails = await tripResponse.json() as Record<string, unknown>;
+            currentStatus = (tripDetails.status as string) || currentStatus;
+            driverName = (tripDetails.driver_name as string) || '';
+            plateNumber = (tripDetails.plate_number as string) || '';
           }
         } catch {
           // trip-service unreachable — preserve local status
         }
 
         return {
-          id: r.id,
-          passenger_id: r.passenger_id,
-          ride_type: r.ride_type as RideType,
-          pickup_latitude: r.pickup_latitude,
-          pickup_longitude: r.pickup_longitude,
-          pickup_name: r.pickup_name,
-          dropoff_latitude: r.dropoff_latitude,
-          dropoff_longitude: r.dropoff_longitude,
-          dropoff_name: r.dropoff_name,
-          fare: r.fare,
-          status,
-          created_at: r.created_at,
+          id: rideRequest.id,
+          passenger_id: rideRequest.passenger_id,
+          ride_type: rideRequest.ride_type as RideType,
+          pickup_latitude: rideRequest.pickup_latitude,
+          pickup_longitude: rideRequest.pickup_longitude,
+          pickup_name: rideRequest.pickup_name,
+          dropoff_latitude: rideRequest.dropoff_latitude,
+          dropoff_longitude: rideRequest.dropoff_longitude,
+          dropoff_name: rideRequest.dropoff_name,
+          fare: rideRequest.fare,
+          status: currentStatus,
+          created_at: rideRequest.created_at,
           driver_name: driverName,
           plate_number: plateNumber,
           password_hash: '',
@@ -159,54 +159,54 @@ export class PrismaPassengerRepository implements PassengerRepository {
       }),
     );
 
-    return enriched;
+    return enrichedRideRequests;
   }
 
-  async updatePassenger({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
-    const res = await prisma.passenger.update({
+  async updatePassengerProfile({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
+    const updatedPassenger = await prisma.passenger.update({
       where: { id },
       data: { name, phone, email },
     });
     return {
-      id: res.id,
-      name: res.name,
-      email: res.email,
-      phone: res.phone,
-      preferred_ride_type: res.preferred_ride_type as RideType | null,
-      created_at: res.created_at,
-      password_hash: res.password_hash,
-      is_verified: res.is_verified,
+      id: updatedPassenger.id,
+      name: updatedPassenger.name,
+      email: updatedPassenger.email,
+      phone: updatedPassenger.phone,
+      preferred_ride_type: updatedPassenger.preferred_ride_type as RideType | null,
+      created_at: updatedPassenger.created_at,
+      password_hash: updatedPassenger.password_hash,
+      is_verified: updatedPassenger.is_verified,
     };
   }
 
-  async verifyPassenger(email: string): Promise<void> {
+  async verifyPassengerOtp(passengerEmail: string): Promise<void> {
     await prisma.passenger.update({
-      where: { email },
+      where: { email: passengerEmail },
       data: { is_verified: true },
     });
   }
 
-  async getPassengerNotifications(passengerId: string): Promise<any[]> {
+  async retrievePassengerNotifications(passengerId: string): Promise<any[]> {
     const passenger = await prisma.passenger.findUnique({
       where: { id: passengerId },
     });
     if (!passenger) {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
-    const rides = await prisma.rideRequest.findMany({
+    const rideRequests = await prisma.rideRequest.findMany({
       where: { passenger_id: passengerId },
       orderBy: { created_at: 'desc' },
     });
 
-    const notifications: any[] = [];
+    const notificationsList: any[] = [];
     const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
 
-    for (const r of rides) {
-      const tripInfo = await fetchTripStatus(r.id, r.status, tripServiceUrl);
-      notifications.push(...buildNotificationsForRide(r, tripInfo));
+    for (const rideRequest of rideRequests) {
+      const tripDetails = await fetchTripStatus(rideRequest.id, rideRequest.status, tripServiceUrl);
+      notificationsList.push(...buildNotificationsForRide(rideRequest, tripDetails));
     }
 
-    return notifications;
+    return notificationsList;
   }
 }
 
@@ -224,17 +224,17 @@ async function fetchTripStatus(
   try {
     const response = await fetch(`${tripServiceUrl}/rides/${rideId}`);
     if (response.ok) {
-      const trip = await response.json();
-      if (trip) {
+      const tripDetails = await response.json();
+      if (tripDetails) {
         return {
-          status: trip.status || defaultStatus,
-          driverName: trip.driver_name || '',
-          plateNumber: trip.plate_number || '',
+          status: tripDetails.status || defaultStatus,
+          driverName: tripDetails.driver_name || '',
+          plateNumber: tripDetails.plate_number || '',
         };
       }
     }
-  } catch (err) {
-    console.error(`Failed to fetch ride ${rideId} status from trip-service:`, err);
+  } catch (error) {
+    console.error(`Failed to fetch ride ${rideId} status from trip-service:`, error);
   }
   return {
     status: defaultStatus,
@@ -244,19 +244,19 @@ async function fetchTripStatus(
 }
 
 function buildNotificationsForRide(
-  ride: { id: string; dropoff_name: string; fare: number; created_at: Date },
-  tripInfo: TripInfo
+  rideRequest: { id: string; dropoff_name: string; fare: number; created_at: Date },
+  tripDetails: TripInfo
 ): any[] {
-  const notifications: any[] = [];
-  const baseTime = ride.created_at.toISOString();
-  const { status, driverName, plateNumber } = tripInfo;
+  const notificationsList: any[] = [];
+  const baseTime = rideRequest.created_at.toISOString();
+  const { status, driverName, plateNumber } = tripDetails;
 
   switch (status) {
     case 'requested':
-      notifications.push({
-        id: `req_${ride.id}`,
+      notificationsList.push({
+        id: `req_${rideRequest.id}`,
         title: 'Finding Driver',
-        message: `Your ride request to ${ride.dropoff_name} is active. Finding a driver...`,
+        message: `Your ride request to ${rideRequest.dropoff_name} is active. Finding a driver...`,
         timestamp: baseTime,
         type: 'ride',
         isRead: false,
@@ -264,16 +264,16 @@ function buildNotificationsForRide(
       break;
 
     case 'accepted':
-      notifications.push({
-        id: `acc_${ride.id}`,
+      notificationsList.push({
+        id: `acc_${rideRequest.id}`,
         title: 'Driver Found!',
         message: `Driver ${driverName || 'Matched Driver'} (${plateNumber || 'Bao Bao'}) has accepted your ride request.`,
         timestamp: baseTime,
         type: 'driver',
         isRead: false,
       });
-      notifications.push({
-        id: `chat_${ride.id}`,
+      notificationsList.push({
+        id: `chat_${rideRequest.id}`,
         title: 'Chat Available',
         message: `You can now chat with your driver, ${driverName || 'your driver'}.`,
         timestamp: baseTime,
@@ -283,8 +283,8 @@ function buildNotificationsForRide(
       break;
 
     case 'arrived':
-      notifications.push({
-        id: `arr_${ride.id}`,
+      notificationsList.push({
+        id: `arr_${rideRequest.id}`,
         title: 'Driver Arrived',
         message: `Your driver, ${driverName || 'your driver'}, has arrived at your pickup location.`,
         timestamp: baseTime,
@@ -294,10 +294,10 @@ function buildNotificationsForRide(
       break;
 
     case 'in_transit':
-      notifications.push({
-        id: `trans_${ride.id}`,
+      notificationsList.push({
+        id: `trans_${rideRequest.id}`,
         title: 'Trip Started',
-        message: `You are in transit to ${ride.dropoff_name}.`,
+        message: `You are in transit to ${rideRequest.dropoff_name}.`,
         timestamp: baseTime,
         type: 'ride',
         isRead: false,
@@ -305,10 +305,10 @@ function buildNotificationsForRide(
       break;
 
     case 'completed':
-      notifications.push({
-        id: `comp_${ride.id}`,
+      notificationsList.push({
+        id: `comp_${rideRequest.id}`,
         title: 'Ride Completed',
-        message: `Your trip to ${ride.dropoff_name} is completed. Total fare: ₱${ride.fare.toFixed(2)}`,
+        message: `Your trip to ${rideRequest.dropoff_name} is completed. Total fare: ₱${rideRequest.fare.toFixed(2)}`,
         timestamp: baseTime,
         type: 'ride',
         isRead: true,
@@ -316,10 +316,10 @@ function buildNotificationsForRide(
       break;
 
     case 'canceled':
-      notifications.push({
-        id: `canc_${ride.id}`,
+      notificationsList.push({
+        id: `canc_${rideRequest.id}`,
         title: 'Ride Canceled ❌',
-        message: `Your ride to ${ride.dropoff_name} was canceled.`,
+        message: `Your ride to ${rideRequest.dropoff_name} was canceled.`,
         timestamp: baseTime,
         type: 'ride',
         isRead: true,
@@ -327,5 +327,5 @@ function buildNotificationsForRide(
       break;
   }
 
-  return notifications;
+  return notificationsList;
 }

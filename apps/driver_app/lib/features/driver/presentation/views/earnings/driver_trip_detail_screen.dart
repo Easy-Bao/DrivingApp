@@ -51,7 +51,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
           _errorMessage = 'Passenger profile not found.';
         });
       }
-    } catch (e) {
+    } catch (error) {
       setState(() {
         _isLoading = false;
         _errorMessage = 'Failed to load passenger profile.';
@@ -103,7 +103,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
           );
         }
       }
-    } catch (e) {
+    } catch (error) {
       if (mounted) {
         CustomToast.show(
           context,

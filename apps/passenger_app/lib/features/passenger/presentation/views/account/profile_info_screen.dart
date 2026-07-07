@@ -103,9 +103,9 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           if (!mounted) return;
           CustomToast.show(context, 'Failed to update profile details.', isError: true);
         }
-      } catch (e) {
+      } catch (error) {
         if (!mounted) return;
-        CustomToast.show(context, 'Connection failed: $e', isError: true);
+        CustomToast.show(context, 'Connection failed: $error', isError: true);
       }
     }
     setState(() => _isEditing = !_isEditing);

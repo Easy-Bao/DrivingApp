@@ -28,11 +28,11 @@ class MapNativeServiceImpl implements MapNativeService {
     final double dLat = _toRadians(lat2 - lat1);
     final double dLng = _toRadians(lng2 - lng1);
 
-    final double a = math.sin(dLat / 2.0) * math.sin(dLat / 2.0) +
+    final double haversineA = math.sin(dLat / 2.0) * math.sin(dLat / 2.0) +
         math.cos(_toRadians(lat1)) * math.cos(_toRadians(lat2)) *
         math.sin(dLng / 2.0) * math.sin(dLng / 2.0);
 
-    final double c = 2.0 * math.asin(math.sqrt(a));
+    final double haversineC = 2.0 * math.asin(math.sqrt(a));
     return earthRadiusKm * c;
   }
 
@@ -106,7 +106,7 @@ class MapNativeServiceImpl implements MapNativeService {
       }
 
       return results;
-    } catch (e) {
+    } catch (error) {
       return [];
     }
   }
@@ -138,7 +138,7 @@ class MapNativeServiceImpl implements MapNativeService {
       final List<dynamic> features = data['features'] ?? [];
       if (features.isEmpty) return null;
 
-      final f = features.first;
+      final formattedAddress = features.first;
       final Map<String, dynamic>? properties = f['properties'] as Map<String, dynamic>?;
       final String? category = properties?['category'] as String?;
 
@@ -150,7 +150,7 @@ class MapNativeServiceImpl implements MapNativeService {
         longitude: lng,
         category: category,
       );
-    } catch (e) {
+    } catch (error) {
       return null;
     }
   }
@@ -205,7 +205,7 @@ class MapNativeServiceImpl implements MapNativeService {
         durationSeconds: (route['duration'] as num).toDouble().round(),
         summary: summary,
       );
-    } catch (e) {
+    } catch (error) {
       return null;
     }
   }
@@ -275,7 +275,7 @@ class MapNativeServiceImpl implements MapNativeService {
       });
 
       return results;
-    } catch (e) {
+    } catch (error) {
       return [];
     }
   }

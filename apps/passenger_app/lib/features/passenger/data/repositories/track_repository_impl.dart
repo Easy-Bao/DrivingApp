@@ -25,8 +25,8 @@ class TrackRepositoryImpl implements TrackRepository {
         return route.polylinePoints;
       }
       return _linearInterpolation(startLat, startLng, endLat, endLng);
-    } catch (e) {
-      debugPrint('TrackRepositoryImpl.getRoutePolyline failed: $e');
+    } catch (error) {
+      debugPrint('TrackRepositoryImpl.getRoutePolyline failed: $error');
       return _linearInterpolation(startLat, startLng, endLat, endLng);
     }
   }
@@ -41,8 +41,8 @@ class TrackRepositoryImpl implements TrackRepository {
     int steps = 5,
   }) {
     final points = <List<double>>[];
-    for (var i = 0; i <= steps; i++) {
-      final t = i / steps;
+    for (var index = 0; i <= steps; i++) {
+      final t = index / steps;
       points.add([
         startLat + (endLat - startLat) * t,
         startLng + (endLng - startLng) * t,

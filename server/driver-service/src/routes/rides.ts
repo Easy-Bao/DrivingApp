@@ -1,14 +1,14 @@
 import { Hono } from 'hono';
-import { getActiveRides } from '../services/drivers.ts';
+import { retrieveActiveRideRequests } from '../services/drivers.ts';
 
 export const ridesRouter = new Hono();
 
-ridesRouter.get('/active', async (c) => {
+ridesRouter.get('/active', async (context) => {
   try {
-    const data = await getActiveRides();
-    return c.json(data);
-  } catch (e: any) {
-    const msg = e.message;
-    return c.json({ error: 'Trip service unavailable', details: msg }, 502);
+    const activeRideRequests = await retrieveActiveRideRequests();
+    return context.json(activeRideRequests);
+  } catch (error: any) {
+    const errorMessage = error.message;
+    return context.json({ error: 'Trip service unavailable', details: errorMessage }, 502);
   }
 });

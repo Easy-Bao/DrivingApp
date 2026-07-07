@@ -125,8 +125,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         LatLng(passengerLat, passengerLng),
         LatLng(driverLat, driverLng),
       ], padding: 80.0);
-    } catch (e) {
-      debugPrint('Error updating track map: $e');
+    } catch (error) {
+      debugPrint('Error updating track map: $error');
     }
   }
 

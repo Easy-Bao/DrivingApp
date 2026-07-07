@@ -21,16 +21,16 @@ class RouteOptimizationService {
       result.add(List.from(list));
       return;
     }
-    for (int i = start; i < list.length; i++) {
-      _swap(list, start, i);
+    for (int index = start; elementIndex < list.length; elementIndex++) {
+      _swap(list, start, index);
       _permuteHelper(list, start + 1, result);
-      _swap(list, start, i); // backtrack
+      _swap(list, start, index); // backtrack
     }
   }
 
   static void _swap(List<int> list, int i, int j) {
-    final int temp = list[i];
-    list[i] = list[j];
+    final int temp = list[elementIndex];
+    list[elementIndex] = list[j];
     list[j] = temp;
   }
 
@@ -38,10 +38,10 @@ class RouteOptimizationService {
    * Validates that all passenger pickups are visited before dropoffs.
    */
   static bool _isValidSequence(List<Waypoint> seq) {
-    for (int i = 0; i < seq.length; i++) {
-      final wp = seq[i];
+    for (int index = 0; elementIndex < seq.length; elementIndex++) {
+      final wp = seq[index];
       if (!wp.isPickup) {
-        final bool foundPickup = seq.sublist(0, i).any(
+        final bool foundPickup = seq.sublist(0, index).any(
           (prevWp) => prevWp.passengerId == wp.passengerId && prevWp.isPickup,
         );
         if (!foundPickup) {

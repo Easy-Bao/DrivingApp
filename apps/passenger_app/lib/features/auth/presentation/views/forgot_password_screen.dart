@@ -54,9 +54,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           _emailError = 'Email not found or invalid.';
         });
       }
-    } catch (e) {
+    } catch (error) {
       if (!mounted) return;
-      CustomToast.show(context, 'Connection error: $e', isError: true);
+      CustomToast.show(context, 'Connection error: $error', isError: true);
     } finally {
       if (mounted) {
         setState(() {

@@ -83,8 +83,8 @@ class MapProvider {
         if (p.distanceKm == null) return true;
         return p.distanceKm! <= 30.0;
       }).toList();
-    } catch (e) {
-      debugPrint('MapProvider.searchPlaces error: $e');
+    } catch (error) {
+      debugPrint('MapProvider.searchPlaces error: $error');
       return [];
     }
   }
@@ -108,8 +108,8 @@ class MapProvider {
         lat: lat,
         lng: lng,
       );
-    } catch (e) {
-      debugPrint('MapProvider.getPlaceFromCoordinates error: $e');
+    } catch (error) {
+      debugPrint('MapProvider.getPlaceFromCoordinates error: $error');
       return null;
     }
   }
@@ -138,8 +138,8 @@ class MapProvider {
         destLat: destLat,
         destLng: destLng,
       );
-    } catch (e) {
-      debugPrint('MapProvider.getRoute error: $e');
+    } catch (error) {
+      debugPrint('MapProvider.getRoute error: $error');
       return null;
     }
   }
@@ -163,8 +163,8 @@ class MapProvider {
         lat: lat,
         lng: lng,
       );
-    } catch (e) {
-      debugPrint('MapProvider.getNearbyPOIs error: $e');
+    } catch (error) {
+      debugPrint('MapProvider.getNearbyPOIs error: $error');
       return [];
     }
   }
@@ -341,8 +341,8 @@ class MapProvider {
     if (manager != null) {
       try {
         await manager.deleteAll();
-      } catch (e) {
-        debugPrint('Error clearing annotations: $e');
+      } catch (error) {
+        debugPrint('Error clearing annotations: $error');
       }
     }
   }

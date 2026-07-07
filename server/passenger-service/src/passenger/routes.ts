@@ -14,15 +14,15 @@ const SECONDS_PER_DAY = 24 * 60 * 60;
 const DEFAULT_OTP_MIN = 100000;
 const DEFAULT_OTP_RANGE = 900000;
 
-export function getPassengerRouter(repo: PassengerRepository) {
+export function getPassengerRouter(passengerRepository: PassengerRepository) {
   const router = new Hono();
   const otps = new Map<string, { code: string; expires: number }>();
 
-  router.post('/passengers', async (c) => {
+  router.post('/passengers', async (context) => {
     try {
-      const body = await c.req.json();
+      const body = await context.req.json();
       const payload = CreatePassengerSchema.parse(body);
-      const passenger = await repo.createPassenger(payload);
+      const passenger = await passengerRepository.registerPassenger(payload);
       const { password_hash, ...passengerWithoutPassword } = passenger as any;
       const otpCode = Math.floor(DEFAULT_OTP_MIN + Math.random() * DEFAULT_OTP_RANGE).toString();
       otps.set(payload.email, { code: otpCode, expires: Date.now() + OTP_EXPIRY_MS });
@@ -31,46 +31,46 @@ export function getPassengerRouter(repo: PassengerRepository) {
         subject: 'Verify Your EasyRide Account',
         text: `Your OTP code is: ${otpCode}`,
       });
-      return c.json({
+      return context.json({
         needs_verification: true,
         email: payload.email,
         passenger: passengerWithoutPassword,
       }, 201);
-    } catch (e: any) {
-      return c.json({ error: e.message || 'Validation failed' }, 400);
+    } catch (error: any) {
+      return context.json({ error: error.message || 'Validation failed' }, 400);
     }
   });
 
-  router.post('/passengers/verify-otp', async (c) => {
+  router.post('/passengers/verify-otp', async (context) => {
     try {
-      const body = await c.req.json();
+      const body = await context.req.json();
       const { email, code } = body;
       if (!email || !code) {
-        return c.json({ error: 'Email and code are required' }, 400);
+        return context.json({ error: 'Email and code are required' }, 400);
       }
       const record = otps.get(email);
       const isCodeValid = code === TEST_OTP_CODE || (record && record.code === code && record.expires >= Date.now());
       if (!isCodeValid) {
-        return c.json({ error: 'Invalid or expired OTP code' }, 400);
+        return context.json({ error: 'Invalid or expired OTP code' }, 400);
       }
       otps.delete(email);
-      await repo.verifyPassenger(email);
-      return c.json({ success: true }, 200);
-    } catch (e: any) {
-      return c.json({ error: e.message }, 400);
+      await passengerRepository.verifyPassengerOtp(email);
+      return context.json({ success: true }, 200);
+    } catch (error: any) {
+      return context.json({ error: error.message }, 400);
     }
   });
 
-  router.post('/passengers/forgot-password', async (c) => {
+  router.post('/passengers/forgot-password', async (context) => {
     try {
-      const body = await c.req.json();
+      const body = await context.req.json();
       const { email } = body;
       if (!email) {
-        return c.json({ error: 'Email is required' }, 400);
+        return context.json({ error: 'Email is required' }, 400);
       }
-      const passenger = await repo.getPassengerByEmail(email);
+      const passenger = await passengerRepository.retrievePassengerByEmail(email);
       if (!passenger) {
-        return c.json({ error: 'No passenger registered with this email' }, 404);
+        return context.json({ error: 'No passenger registered with this email' }, 404);
       }
       const resetToken = Math.random().toString(36).substring(2, 10).toUpperCase();
       const appUrl = process.env.APP_URL || 'http://127.0.0.1:8081';
@@ -79,23 +79,23 @@ export function getPassengerRouter(repo: PassengerRepository) {
         subject: 'Reset Your EasyRide Password',
         text: `Click here to reset your password: ${appUrl}/reset-password?token=${resetToken}`,
       });
-      return c.json({ success: true }, 200);
-    } catch (e: any) {
-      return c.json({ error: e.message }, 400);
+      return context.json({ success: true }, 200);
+    } catch (error: any) {
+      return context.json({ error: error.message }, 400);
     }
   });
 
-  router.post('/passengers/login', async (c) => {
+  router.post('/passengers/login', async (context) => {
     try {
-      const body = await c.req.json();
+      const body = await context.req.json();
       const payload = LoginSchema.parse(body);
-      const passenger = await repo.getPassengerByEmail(payload.email);
+      const passenger = await passengerRepository.retrievePassengerByEmail(payload.email);
       if (!passenger) {
-        return c.json({ error: 'Invalid email or password' }, 401);
+        return context.json({ error: 'Invalid email or password' }, 401);
       }
       const isValid = await Bun.password.verify(payload.password, passenger.password_hash);
       if (!isValid) {
-        return c.json({ error: 'Invalid email or password' }, 401);
+        return context.json({ error: 'Invalid email or password' }, 401);
       }
       if (payload.email !== 'test@example.com' && !passenger.is_verified) {
         const otpCode = Math.floor(DEFAULT_OTP_MIN + Math.random() * DEFAULT_OTP_RANGE).toString();
@@ -105,7 +105,7 @@ export function getPassengerRouter(repo: PassengerRepository) {
           subject: 'Verify Your EasyRide Account',
           text: `Your OTP code is: ${otpCode}`,
         });
-        return c.json({
+        return context.json({
           error: 'Please verify your email first',
           needs_verification: true,
           email: payload.email,
@@ -121,90 +121,90 @@ export function getPassengerRouter(repo: PassengerRepository) {
         secret
       );
       const { password_hash, ...passengerWithoutPassword } = passenger as any;
-      return c.json({ token, passenger: passengerWithoutPassword }, 200);
-    } catch (e: any) {
-      return c.json({ error: e.message || 'Validation failed' }, 400);
+      return context.json({ token, passenger: passengerWithoutPassword }, 200);
+    } catch (error: any) {
+      return context.json({ error: error.message || 'Validation failed' }, 400);
     }
   });
 
-  router.get('/passengers/:id', authMiddleware, async (c) => {
-    const id = c.req.param('id');
-    const passengerId = c.get('passengerId');
+  router.get('/passengers/:id', authMiddleware, async (context) => {
+    const id = context.req.param('id');
+    const passengerId = context.get('passengerId');
     if (passengerId !== id) {
-      return c.json({ error: 'Forbidden' }, 403);
+      return context.json({ error: 'Forbidden' }, 403);
     }
     try {
-      const passenger = await repo.getPassenger(id);
+      const passenger = await passengerRepository.retrievePassengerProfile(id);
       if (!passenger) {
-        return c.json({ error: `Passenger not found: ${id}` }, 404);
+        return context.json({ error: `Passenger not found: ${id}` }, 404);
       }
       const { password_hash, ...passengerWithoutPassword } = passenger as any;
-      return c.json(passengerWithoutPassword, 200);
-    } catch (e: any) {
-      return c.json({ error: e.message }, 500);
+      return context.json(passengerWithoutPassword, 200);
+    } catch (error: any) {
+      return context.json({ error: error.message }, 500);
     }
   });
 
-  router.put('/passengers/:id', authMiddleware, async (c) => {
-    const id = c.req.param('id');
-    const passengerId = c.get('passengerId');
+  router.put('/passengers/:id', authMiddleware, async (context) => {
+    const id = context.req.param('id');
+    const passengerId = context.get('passengerId');
     if (passengerId !== id) {
-      return c.json({ error: 'Forbidden' }, 403);
+      return context.json({ error: 'Forbidden' }, 403);
     }
     try {
-      const body = await c.req.json();
+      const body = await context.req.json();
       const { name, phone, email } = body;
       if (!name || !phone || !email) {
-        return c.json({ error: 'Name, phone, and email are required' }, 400);
+        return context.json({ error: 'Name, phone, and email are required' }, 400);
       }
-      const updated = await repo.updatePassenger({ id, name, phone, email });
+      const updated = await passengerRepository.updatePassengerProfile({ id, name, phone, email });
       const { password_hash, ...passengerWithoutPassword } = updated as any;
-      return c.json(passengerWithoutPassword, 200);
-    } catch (e: any) {
-      return c.json({ error: e.message }, 400);
+      return context.json(passengerWithoutPassword, 200);
+    } catch (error: any) {
+      return context.json({ error: error.message }, 400);
     }
   });
 
-  router.post('/rides', authMiddleware, async (c) => {
+  router.post('/rides', authMiddleware, async (context) => {
     try {
-      const body = await c.req.json();
+      const body = await context.req.json();
       const payload = CreateRideSchema.parse(body);
-      const passengerId = c.get('passengerId');
+      const passengerId = context.get('passengerId');
       if (passengerId !== payload.passenger_id) {
-        return c.json({ error: 'Forbidden' }, 403);
+        return context.json({ error: 'Forbidden' }, 403);
       }
-      const ride = await repo.createRideRequest(payload);
-      return c.json(ride, 201);
-    } catch (e: any) {
-      return c.json({ error: e.message || 'Validation failed' }, 400);
+      const ride = await passengerRepository.registerRideRequest(payload);
+      return context.json(ride, 201);
+    } catch (error: any) {
+      return context.json({ error: error.message || 'Validation failed' }, 400);
     }
   });
 
-  router.get('/passengers/:id/rides', authMiddleware, async (c) => {
-    const id = c.req.param('id');
-    const passengerId = c.get('passengerId');
+  router.get('/passengers/:id/rides', authMiddleware, async (context) => {
+    const id = context.req.param('id');
+    const passengerId = context.get('passengerId');
     if (passengerId !== id) {
-      return c.json({ error: 'Forbidden' }, 403);
+      return context.json({ error: 'Forbidden' }, 403);
     }
     try {
-      const rides = await repo.getPassengerRides(id);
-      return c.json(rides, 200);
-    } catch (e: any) {
-      return c.json({ error: e.message }, 404);
+      const rides = await passengerRepository.retrievePassengerRideHistory(id);
+      return context.json(rides, 200);
+    } catch (error: any) {
+      return context.json({ error: error.message }, 404);
     }
   });
 
-  router.get('/passengers/:id/notifications', authMiddleware, async (c) => {
-    const id = c.req.param('id');
-    const passengerId = c.get('passengerId');
+  router.get('/passengers/:id/notifications', authMiddleware, async (context) => {
+    const id = context.req.param('id');
+    const passengerId = context.get('passengerId');
     if (passengerId !== id) {
-      return c.json({ error: 'Forbidden' }, 403);
+      return context.json({ error: 'Forbidden' }, 403);
     }
     try {
-      const notifications = await repo.getPassengerNotifications(id);
-      return c.json(notifications, 200);
-    } catch (e: any) {
-      return c.json({ error: e.message }, 404);
+      const notifications = await passengerRepository.retrievePassengerNotifications(id);
+      return context.json(notifications, 200);
+    } catch (error: any) {
+      return context.json({ error: error.message }, 404);
     }
   });
 

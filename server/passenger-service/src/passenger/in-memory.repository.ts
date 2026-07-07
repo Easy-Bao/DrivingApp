@@ -3,104 +3,104 @@ import { CreatePassengerRequest, CreateRideRequest } from './schema.ts';
 import { PassengerRepository, UpdatePassengerOptions } from './passenger.repository.ts';
 
 export class InMemoryPassengerRepository implements PassengerRepository {
-  private passengers = new Map<string, Passenger>();
-  private rides = new Map<string, RideRequest[]>();
+  private passengersMap = new Map<string, Passenger>();
+  private ridesMap = new Map<string, RideRequest[]>();
 
-  async createPassenger(req: CreatePassengerRequest): Promise<Passenger> {
-    for (const p of this.passengers.values()) {
-      if (p.email === req.email) {
-        throw new Error(`A passenger with email ${req.email} already exists`);
+  async registerPassenger(passengerDetails: CreatePassengerRequest): Promise<Passenger> {
+    for (const passengerRecord of this.passengersMap.values()) {
+      if (passengerRecord.email === passengerDetails.email) {
+        throw new Error(`A passenger with email ${passengerDetails.email} already exists`);
       }
     }
-    const id = crypto.randomUUID();
-    const passwordHash = await Bun.password.hash(req.password, {
+    const passengerId = crypto.randomUUID();
+    const passwordHash = await Bun.password.hash(passengerDetails.password, {
       algorithm: 'bcrypt',
       cost: 10,
     });
-    const passenger: Passenger = {
-      id,
-      name: req.name,
-      email: req.email,
-      phone: req.phone,
-      preferred_ride_type: (req.preferred_ride_type as RideType) || null,
+    const passengerRecord: Passenger = {
+      id: passengerId,
+      name: passengerDetails.name,
+      email: passengerDetails.email,
+      phone: passengerDetails.phone,
+      preferred_ride_type: (passengerDetails.preferred_ride_type as RideType) || null,
       created_at: new Date(),
       password_hash: passwordHash,
       is_verified: false,
     };
-    this.passengers.set(id, passenger);
-    return passenger;
+    this.passengersMap.set(passengerId, passengerRecord);
+    return passengerRecord;
   }
 
-  async getPassenger(id: string): Promise<Passenger | null> {
-    return this.passengers.get(id) || null;
+  async retrievePassengerProfile(passengerId: string): Promise<Passenger | null> {
+    return this.passengersMap.get(passengerId) || null;
   }
 
-  async getPassengerByEmail(email: string): Promise<Passenger | null> {
-    for (const p of this.passengers.values()) {
-      if (p.email === email) return p;
+  async retrievePassengerByEmail(passengerEmail: string): Promise<Passenger | null> {
+    for (const passengerRecord of this.passengersMap.values()) {
+      if (passengerRecord.email === passengerEmail) return passengerRecord;
     }
     return null;
   }
 
-  async createRideRequest(req: CreateRideRequest): Promise<RideRequest> {
-    if (!this.passengers.has(req.passenger_id)) {
-      throw new Error(`Passenger ID ${req.passenger_id} not found`);
+  async registerRideRequest(rideDetails: CreateRideRequest): Promise<RideRequest> {
+    if (!this.passengersMap.has(rideDetails.passenger_id)) {
+      throw new Error(`Passenger ID ${rideDetails.passenger_id} not found`);
     }
-    const id = crypto.randomUUID();
-    const ride: RideRequest = {
-      id,
-      passenger_id: req.passenger_id,
-      ride_type: req.ride_type as RideType,
-      pickup_latitude: req.pickup_latitude,
-      pickup_longitude: req.pickup_longitude,
-      pickup_name: req.pickup_name,
-      dropoff_latitude: req.dropoff_latitude,
-      dropoff_longitude: req.dropoff_longitude,
-      dropoff_name: req.dropoff_name,
-      fare: req.fare,
+    const rideRequestId = crypto.randomUUID();
+    const rideRequestRecord: RideRequest = {
+      id: rideRequestId,
+      passenger_id: rideDetails.passenger_id,
+      ride_type: rideDetails.ride_type as RideType,
+      pickup_latitude: rideDetails.pickup_latitude,
+      pickup_longitude: rideDetails.pickup_longitude,
+      pickup_name: rideDetails.pickup_name,
+      dropoff_latitude: rideDetails.dropoff_latitude,
+      dropoff_longitude: rideDetails.dropoff_longitude,
+      dropoff_name: rideDetails.dropoff_name,
+      fare: rideDetails.fare,
       status: 'requested',
       created_at: new Date(),
     };
-    const userRides = this.rides.get(req.passenger_id) || [];
-    userRides.push(ride);
-    this.rides.set(req.passenger_id, userRides);
-    return ride;
+    const userRidesList = this.ridesMap.get(rideDetails.passenger_id) || [];
+    userRidesList.push(rideRequestRecord);
+    this.ridesMap.set(rideDetails.passenger_id, userRidesList);
+    return rideRequestRecord;
   }
 
-  async getPassengerRides(passengerId: string): Promise<RideRequest[]> {
-    if (!this.passengers.has(passengerId)) {
+  async retrievePassengerRideHistory(passengerId: string): Promise<RideRequest[]> {
+    if (!this.passengersMap.has(passengerId)) {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
-    return this.rides.get(passengerId) || [];
+    return this.ridesMap.get(passengerId) || [];
   }
 
-  async updatePassenger({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
-    const passenger = this.passengers.get(id);
-    if (!passenger) {
+  async updatePassengerProfile({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
+    const passengerRecord = this.passengersMap.get(id);
+    if (!passengerRecord) {
       throw new Error(`Passenger ID ${id} not found`);
     }
-    const updated: Passenger = { ...passenger, name, phone, email };
-    this.passengers.set(id, updated);
-    return updated;
+    const updatedPassengerRecord: Passenger = { ...passengerRecord, name, phone, email };
+    this.passengersMap.set(id, updatedPassengerRecord);
+    return updatedPassengerRecord;
   }
 
-  async verifyPassenger(email: string): Promise<void> {
-    const passenger = await this.getPassengerByEmail(email);
-    if (passenger) passenger.is_verified = true;
+  async verifyPassengerOtp(passengerEmail: string): Promise<void> {
+    const passengerRecord = await this.retrievePassengerByEmail(passengerEmail);
+    if (passengerRecord) passengerRecord.is_verified = true;
   }
 
-  async getPassengerNotifications(passengerId: string): Promise<any[]> {
-    const rides = this.rides.get(passengerId) || [];
-    const notifications: any[] = [];
-    for (const r of rides) {
-      const tripInfo: TripInfo = {
-        status: r.status,
+  async retrievePassengerNotifications(passengerId: string): Promise<any[]> {
+    const rideRequestsList = this.ridesMap.get(passengerId) || [];
+    const notificationsList: any[] = [];
+    for (const rideRequestRecord of rideRequestsList) {
+      const tripDetails: TripInfo = {
+        status: rideRequestRecord.status,
         driverName: '',
         plateNumber: '',
       };
-      notifications.push(...buildNotificationsForRide(r, tripInfo));
+      notificationsList.push(...buildNotificationsForRide(rideRequestRecord, tripDetails));
     }
-    return notifications;
+    return notificationsList;
   }
 }
 
@@ -111,19 +111,19 @@ interface TripInfo {
 }
 
 function buildNotificationsForRide(
-  ride: { id: string; dropoff_name: string; fare: number; created_at: Date },
-  tripInfo: TripInfo
+  rideRequestRecord: { id: string; dropoff_name: string; fare: number; created_at: Date },
+  tripDetails: TripInfo
 ): any[] {
-  const notifications: any[] = [];
-  const baseTime = ride.created_at.toISOString();
-  const { status, driverName, plateNumber } = tripInfo;
+  const notificationsList: any[] = [];
+  const baseTime = rideRequestRecord.created_at.toISOString();
+  const { status, driverName, plateNumber } = tripDetails;
 
   switch (status) {
     case 'requested':
-      notifications.push({
-        id: `req_${ride.id}`,
+      notificationsList.push({
+        id: `req_${rideRequestRecord.id}`,
         title: 'Finding Driver',
-        message: `Your ride request to ${ride.dropoff_name} is active. Finding a driver...`,
+        message: `Your ride request to ${rideRequestRecord.dropoff_name} is active. Finding a driver...`,
         timestamp: baseTime,
         type: 'ride',
         isRead: false,
@@ -131,16 +131,16 @@ function buildNotificationsForRide(
       break;
 
     case 'accepted':
-      notifications.push({
-        id: `acc_${ride.id}`,
+      notificationsList.push({
+        id: `acc_${rideRequestRecord.id}`,
         title: 'Driver Found!',
         message: `Driver ${driverName || 'Matched Driver'} (${plateNumber || 'Bao Bao'}) has accepted your ride request.`,
         timestamp: baseTime,
         type: 'driver',
         isRead: false,
       });
-      notifications.push({
-        id: `chat_${ride.id}`,
+      notificationsList.push({
+        id: `chat_${rideRequestRecord.id}`,
         title: 'Chat Available',
         message: `You can now chat with your driver, ${driverName || 'your driver'}.`,
         timestamp: baseTime,
@@ -150,8 +150,8 @@ function buildNotificationsForRide(
       break;
 
     case 'arrived':
-      notifications.push({
-        id: `arr_${ride.id}`,
+      notificationsList.push({
+        id: `arr_${rideRequestRecord.id}`,
         title: 'Driver Arrived',
         message: `Your driver, ${driverName || 'your driver'}, has arrived at your pickup location.`,
         timestamp: baseTime,
@@ -161,10 +161,10 @@ function buildNotificationsForRide(
       break;
 
     case 'in_transit':
-      notifications.push({
-        id: `trans_${ride.id}`,
+      notificationsList.push({
+        id: `trans_${rideRequestRecord.id}`,
         title: 'Trip Started',
-        message: `You are in transit to ${ride.dropoff_name}.`,
+        message: `You are in transit to ${rideRequestRecord.dropoff_name}.`,
         timestamp: baseTime,
         type: 'ride',
         isRead: false,
@@ -172,10 +172,10 @@ function buildNotificationsForRide(
       break;
 
     case 'completed':
-      notifications.push({
-        id: `comp_${ride.id}`,
+      notificationsList.push({
+        id: `comp_${rideRequestRecord.id}`,
         title: 'Ride Completed',
-        message: `Your trip to ${ride.dropoff_name} is completed. Total fare: ₱${ride.fare.toFixed(2)}`,
+        message: `Your trip to ${rideRequestRecord.dropoff_name} is completed. Total fare: ₱${rideRequestRecord.fare.toFixed(2)}`,
         timestamp: baseTime,
         type: 'ride',
         isRead: true,
@@ -183,10 +183,10 @@ function buildNotificationsForRide(
       break;
 
     case 'canceled':
-      notifications.push({
-        id: `canc_${ride.id}`,
+      notificationsList.push({
+        id: `canc_${rideRequestRecord.id}`,
         title: 'Ride Canceled ❌',
-        message: `Your ride to ${ride.dropoff_name} was canceled.`,
+        message: `Your ride to ${rideRequestRecord.dropoff_name} was canceled.`,
         timestamp: baseTime,
         type: 'ride',
         isRead: true,
@@ -194,5 +194,5 @@ function buildNotificationsForRide(
       break;
   }
 
-  return notifications;
+  return notificationsList;
 }

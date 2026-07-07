@@ -125,8 +125,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           );
         });
       }
-    } catch (e) {
-      debugPrint('Error creating ride request in DB: $e');
+    } catch (error) {
+      debugPrint('Error creating ride request in DB: $error');
     }
     if (mounted) {
       _autoNav = Timer(const Duration(seconds: 4), _goToTracking);

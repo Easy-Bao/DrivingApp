@@ -28,8 +28,8 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
       final rawPlaces = await _repository.loadPlaces();
       final models = rawPlaces.map((raw) => _buildModel(raw)).toList();
       emit(SavedPlacesState(places: models, isLoading: false));
-    } catch (e, stack) {
-      debugPrint('Error loading saved places: $e\n$stack');
+    } catch (error, stackTrace) {
+      debugPrint('Error loading saved places: $error\n$stackTrace');
       emit(SavedPlacesState(places: const [], isLoading: false));
     }
   }

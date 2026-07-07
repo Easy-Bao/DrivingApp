@@ -1,119 +1,119 @@
 import { Hono } from 'hono';
 import {
-  signupDriver,
-  loginDriver,
-  getOnlineDrivers,
+  registerDriver,
+  authenticateDriver,
+  retrieveOnlineDrivers,
   updateDriverOnlineStatus,
-  getDriverById,
-  getDriverStats,
-  getDriverTrips,
+  retrieveDriverProfile,
+  retrieveDriverStats,
+  retrieveDriverTripHistory,
 } from '../services/drivers.ts';
 
 export const driversRouter = new Hono();
 
-driversRouter.post('/signup', async (c) => {
+driversRouter.post('/signup', async (context) => {
   try {
-    const body = await c.req.json();
+    const body = await context.req.json();
     try {
-      const driver = await signupDriver(body);
-      return c.json(driver, 201);
-    } catch (err: any) {
-      if (err.message === 'A driver with this email already exists') {
-        return c.json({ error: err.message }, 409);
+      const driver = await registerDriver(body);
+      return context.json(driver, 201);
+    } catch (error: any) {
+      if (error.message === 'A driver with this email already exists') {
+        return context.json({ error: error.message }, 409);
       }
-      return c.json({ error: err.message }, 400);
+      return context.json({ error: error.message }, 400);
     }
-  } catch (e: any) {
-    return c.json({ error: e.message }, 400);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
   }
 });
 
-driversRouter.post('/login', async (c) => {
+driversRouter.post('/login', async (context) => {
   try {
-    const body = await c.req.json();
+    const body = await context.req.json();
     try {
-      const driver = await loginDriver(body);
-      return c.json({ driver }, 200);
-    } catch (err: any) {
-      if (err.message === 'Invalid email or password') {
-        return c.json({ error: err.message }, 401);
+      const driver = await authenticateDriver(body);
+      return context.json({ driver }, 200);
+    } catch (error: any) {
+      if (error.message === 'Invalid email or password') {
+        return context.json({ error: error.message }, 401);
       }
-      return c.json({ error: err.message }, 400);
+      return context.json({ error: error.message }, 400);
     }
-  } catch (e: any) {
-    return c.json({ error: e.message }, 400);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
   }
 });
 
-driversRouter.get('/online', async (c) => {
+driversRouter.get('/online', async (context) => {
   try {
-    const list = await getOnlineDrivers();
-    return c.json(list);
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
+    const list = await retrieveOnlineDrivers();
+    return context.json(list);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 500);
   }
 });
 
-driversRouter.post('/:id/online', async (c) => {
-  const id = c.req.param('id');
+driversRouter.post('/:id/online', async (context) => {
+  const id = context.req.param('id');
   try {
-    const body = await c.req.json();
+    const body = await context.req.json();
     const updated = await updateDriverOnlineStatus(id, body);
-    return c.json(updated);
-  } catch (e: any) {
-    return c.json({ error: e.message }, 400);
+    return context.json(updated);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
   }
 });
 
-driversRouter.get('/:id', async (c) => {
-  const id = c.req.param('id');
+driversRouter.get('/:id', async (context) => {
+  const id = context.req.param('id');
   try {
     try {
-      const driver = await getDriverById(id);
-      return c.json(driver);
-    } catch (err: any) {
-      if (err.message === 'Driver not found') {
-        return c.json({ error: err.message }, 404);
+      const driver = await retrieveDriverProfile(id);
+      return context.json(driver);
+    } catch (error: any) {
+      if (error.message === 'Driver not found') {
+        return context.json({ error: error.message }, 404);
       }
-      return c.json({ error: err.message }, 400);
+      return context.json({ error: error.message }, 400);
     }
-  } catch (e: any) {
-    return c.json({ error: e.message }, 400);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
   }
 });
 
-driversRouter.get('/:id/stats', async (c) => {
-  const id = c.req.param('id');
+driversRouter.get('/:id/stats', async (context) => {
+  const id = context.req.param('id');
   try {
     try {
-      const stats = await getDriverStats(id);
-      return c.json(stats);
-    } catch (err: any) {
-      if (err.message === 'Driver not found') {
-        return c.json({ error: err.message }, 404);
+      const stats = await retrieveDriverStats(id);
+      return context.json(stats);
+    } catch (error: any) {
+      if (error.message === 'Driver not found') {
+        return context.json({ error: error.message }, 404);
       }
-      return c.json({ error: err.message }, 400);
+      return context.json({ error: error.message }, 400);
     }
-  } catch (e: any) {
-    return c.json({ error: e.message }, 400);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
   }
 });
 
-driversRouter.get('/:id/trips', async (c) => {
-  const id = c.req.param('id');
+driversRouter.get('/:id/trips', async (context) => {
+  const id = context.req.param('id');
   try {
     try {
-      const trips = await getDriverTrips(id);
-      return c.json(trips);
-    } catch (err: any) {
-      if (err.message.includes('Trip service failed')) {
-        const parts = err.message.split(' ');
+      const trips = await retrieveDriverTripHistory(id);
+      return context.json(trips);
+    } catch (error: any) {
+      if (error.message.includes('Trip service failed')) {
+        const parts = error.message.split(' ');
         const status = parseInt(parts[parts.length - 1]);
-        return c.json({ error: 'Trip service failed' }, status as any);
+        return context.json({ error: 'Trip service failed' }, status as any);
       }
-      return c.json({ error: err.message }, 400);
+      return context.json({ error: error.message }, 400);
     }
-  } catch (e: any) {
-    return c.json({ error: e.message }, 400);
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
   }
 });

@@ -39,7 +39,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   void initState() {
     super.initState();
     final km = widget.distanceKm;
-    final f = widget.fares ?? {};
+    final formattedFare = widget.fares ?? {};
     _options = [
       _RideOption(
         'Solo Ride',
@@ -107,8 +107,8 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
           LatLng(destLat, destLng),
         ], padding: 60.0);
       }
-    } catch (e) {
-      debugPrint('Error drawing route preview: $e');
+    } catch (error) {
+      debugPrint('Error drawing route preview: $error');
     }
   }
 
@@ -291,7 +291,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                   const SizedBox(height: 8),
 
                   ...List.generate(_options.length, (i) {
-                    final o = _options[i];
+                    final mapOffset = _options[i];
                     final isSel = i == _selectedIdx;
                     return GestureDetector(
                       onTap: () => setState(() => _selectedIdx = i),

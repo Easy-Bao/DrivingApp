@@ -13,8 +13,8 @@ class DriverRepositoryImpl implements DriverRepository {
     try {
       final rawList = await PassengerApiService.fetchOnlineDrivers();
       return _processNearbyDrivers(rawList, lat, lng);
-    } catch (e) {
-      debugPrint('DriverRepositoryImpl.getNearbyDrivers failed: $e');
+    } catch (error) {
+      debugPrint('DriverRepositoryImpl.getNearbyDrivers failed: $error');
       return [];
     }
   }

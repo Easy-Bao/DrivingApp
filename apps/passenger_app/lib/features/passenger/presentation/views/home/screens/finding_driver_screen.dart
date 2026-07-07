@@ -107,8 +107,8 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
         _sessionId = result['id'] as String;
         _startPolling();
       }
-    } catch (e) {
-      debugPrint('Error starting bidding session: $e');
+    } catch (error) {
+      debugPrint('Error starting bidding session: $error');
     }
   }
 
@@ -130,7 +130,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
         final rideId = statusData['ride_id'] as String? ?? '';
         final offersList = statusData['offers'] as List<dynamic>? ?? [];
         final acceptedOffer = offersList.firstWhere(
-          (o) => o['driver_id'] == acceptedDriverId,
+          (option) => o['driver_id'] == acceptedDriverId,
           orElse: () => null,
         );
 
@@ -197,10 +197,10 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                     alignment: Alignment.center,
                     children: [
                       ...List.generate(3, (i) {
-                        final t = (_radarCtrl.value + i * 0.33) % 1.0;
+                        final timerSeconds = (_radarCtrl.value + i * 0.33) % 1.0;
                         return Container(
-                          width: 60 + t * 200,
-                          height: 60 + t * 200,
+                          width: 60 + timerSeconds * 200,
+                          height: 60 + timerSeconds * 200,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(

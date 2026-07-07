@@ -2,15 +2,15 @@ import { prisma } from '../db.ts';
 
 const TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
 
-export async function signupDriver(data: any) {
-  const { name, email, phone, vehicleType, plateNumber, password } = data;
+export async function registerDriver(driverDetails: any) {
+  const { name, email, phone, vehicleType, plateNumber, password } = driverDetails;
   if (!name || !email || !phone || !vehicleType || !plateNumber || !password) {
     throw new Error('All fields are required');
   }
-  const existing = await prisma.driver.findUnique({
+  const existingDriver = await prisma.driver.findUnique({
     where: { email },
   });
-  if (existing) {
+  if (existingDriver) {
     throw new Error('A driver with this email already exists');
   }
   const passwordHash = await Bun.password.hash(password, { algorithm: 'bcrypt', cost: 10 });
@@ -24,95 +24,95 @@ export async function signupDriver(data: any) {
       passwordHash,
     },
   });
-  const { passwordHash: _, ...safe } = newDriver;
-  return safe;
+  const { passwordHash: _, ...safeDriverData } = newDriver;
+  return safeDriverData;
 }
 
-export async function loginDriver(credentials: any) {
+export async function authenticateDriver(credentials: any) {
   const { email, password } = credentials;
   if (!email || !password) {
     throw new Error('Email and password are required');
   }
-  const found = await prisma.driver.findUnique({
+  const foundDriver = await prisma.driver.findUnique({
     where: { email },
   });
-  if (!found) {
+  if (!foundDriver) {
     throw new Error('Invalid email or password');
   }
-  const valid = await Bun.password.verify(password, found.passwordHash);
-  if (!valid) {
+  const isPasswordValid = await Bun.password.verify(password, foundDriver.passwordHash);
+  if (!isPasswordValid) {
     throw new Error('Invalid email or password');
   }
-  const { passwordHash: _, ...safe } = found;
-  return safe;
+  const { passwordHash: _, ...safeDriverData } = foundDriver;
+  return safeDriverData;
 }
 
-export async function getOnlineDrivers() {
-  const list = await prisma.driver.findMany({
+export async function retrieveOnlineDrivers() {
+  const onlineDriversList = await prisma.driver.findMany({
     where: { isOnline: true },
   });
-  return list.map(({ passwordHash: _, ...safe }) => safe);
+  return onlineDriversList.map(({ passwordHash: _, ...safeDriverData }) => safeDriverData);
 }
 
-export async function updateDriverOnlineStatus(id: string, onlineData: any) {
-  const { isOnline, lat, lng } = onlineData;
+export async function updateDriverOnlineStatus(driverId: string, onlineStatusDetails: any) {
+  const { isOnline, lat, lng } = onlineStatusDetails;
   const updateData: any = { isOnline };
   if (lat != null) updateData.lat = lat;
   if (lng != null) updateData.lng = lng;
-  const updated = await prisma.driver.update({
-    where: { id },
+  const updatedDriver = await prisma.driver.update({
+    where: { id: driverId },
     data: updateData,
   });
-  const { passwordHash: _, ...safe } = updated;
-  return safe;
+  const { passwordHash: _, ...safeDriverData } = updatedDriver;
+  return safeDriverData;
 }
 
-export async function getDriverById(id: string) {
-  const found = await prisma.driver.findUnique({
-    where: { id },
+export async function retrieveDriverProfile(driverId: string) {
+  const foundDriver = await prisma.driver.findUnique({
+    where: { id: driverId },
   });
-  if (!found) {
+  if (!foundDriver) {
     throw new Error('Driver not found');
   }
-  const { passwordHash: _, ...safe } = found;
-  return safe;
+  const { passwordHash: _, ...safeDriverData } = foundDriver;
+  return safeDriverData;
 }
 
-export async function getDriverStats(id: string) {
-  const found = await prisma.driver.findUnique({
-    where: { id },
+export async function retrieveDriverStats(driverId: string) {
+  const foundDriver = await prisma.driver.findUnique({
+    where: { id: driverId },
   });
-  if (!found) {
+  if (!foundDriver) {
     throw new Error('Driver not found');
   }
-  let rides: any[] = [];
+  let driverRides: any[] = [];
   try {
-    const res = await fetch(`${TRIP_SERVICE_URL}/rides/driver/${id}`);
-    if (res.ok) {
-      rides = await res.json() as any[];
+    const tripServiceResponse = await fetch(`${TRIP_SERVICE_URL}/rides/driver/${driverId}`);
+    if (tripServiceResponse.ok) {
+      driverRides = await tripServiceResponse.json() as any[];
     }
-  } catch (err) {
-    console.error('Failed to fetch rides from trip-service:', err);
+  } catch (error) {
+    console.error('Failed to fetch rides from trip-service:', error);
   }
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const todayRides = rides.filter((r: any) => {
-    const createdAt = new Date(r.created_at);
-    return createdAt >= startOfToday && r.status === 'completed';
+  const todayRides = driverRides.filter((rideRecord: any) => {
+    const createdAt = new Date(rideRecord.created_at);
+    return createdAt >= startOfToday && rideRecord.status === 'completed';
   });
 
-  const todayEarnings = todayRides.reduce((sum: number, r: any) => sum + (r.fare ?? 0), 0);
+  const todayEarnings = todayRides.reduce((accumulatedFare: number, rideRecord: any) => accumulatedFare + (rideRecord.fare ?? 0), 0);
   const todayTrips = todayRides.length;
   const baseHours = todayTrips * 0.75;
-  const hoursOnline = parseFloat((found.isOnline ? baseHours + 0.5 : baseHours).toFixed(1));
+  const hoursOnline = parseFloat((foundDriver.isOnline ? baseHours + 0.5 : baseHours).toFixed(1));
 
-  const completedRides = rides.filter((r: any) => r.status === 'completed');
-  const cancelledRides = rides.filter((r: any) => r.status === 'cancelled');
+  const completedRides = driverRides.filter((rideRecord: any) => rideRecord.status === 'completed');
+  const cancelledRides = driverRides.filter((rideRecord: any) => rideRecord.status === 'cancelled');
 
   const totalTrips = completedRides.length;
-  const lifetimeEarnings = completedRides.reduce((sum: number, r: any) => sum + (r.fare ?? 0), 0);
+  const lifetimeEarnings = completedRides.reduce((accumulatedFare: number, rideRecord: any) => accumulatedFare + (rideRecord.fare ?? 0), 0);
 
   const totalAssigned = completedRides.length + cancelledRides.length;
   const acceptanceRate = totalAssigned > 0
@@ -129,18 +129,18 @@ export async function getDriverStats(id: string) {
   };
 }
 
-export async function getDriverTrips(id: string) {
-  const res = await fetch(`${TRIP_SERVICE_URL}/rides/driver/${id}`);
-  if (!res.ok) {
-    throw new Error('Trip service failed with status ' + res.status);
+export async function retrieveDriverTripHistory(driverId: string) {
+  const tripServiceResponse = await fetch(`${TRIP_SERVICE_URL}/rides/driver/${driverId}`);
+  if (!tripServiceResponse.ok) {
+    throw new Error('Trip service failed with status ' + tripServiceResponse.status);
   }
-  return await res.json();
+  return await tripServiceResponse.json();
 }
 
-export async function getActiveRides() {
-  const res = await fetch(`${TRIP_SERVICE_URL}/rides/active`);
-  if (!res.ok) {
-    throw new Error('Trip service unavailable with status ' + res.status);
+export async function retrieveActiveRideRequests() {
+  const tripServiceResponse = await fetch(`${TRIP_SERVICE_URL}/rides/active`);
+  if (!tripServiceResponse.ok) {
+    throw new Error('Trip service unavailable with status ' + tripServiceResponse.status);
   }
-  return await res.json();
+  return await tripServiceResponse.json();
 }

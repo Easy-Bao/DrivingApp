@@ -441,9 +441,9 @@ class _SigninScreenState extends State<SigninScreen> {
                                 isVerifying = false;
                               });
                             }
-                          } catch (e) {
+                          } catch (error) {
                             setModalState(() {
-                              otpError = 'Verification failed: $e';
+                              otpError = 'Verification failed: $error';
                               isVerifying = false;
                             });
                           }
@@ -600,11 +600,11 @@ class _SigninScreenState extends State<SigninScreen> {
           });
         }
       }
-    } catch (e) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
-        _emailError = 'Connection failed: $e';
-        _passwordError = 'Connection failed: $e';
+        _emailError = 'Connection failed: $error';
+        _passwordError = 'Connection failed: $error';
       });
     } finally {
       if (mounted) {
