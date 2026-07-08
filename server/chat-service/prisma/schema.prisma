@@ -13,6 +13,8 @@ model Room {
   driverId    String    @map("driver_id")
   passengerId String    @map("passenger_id")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  resolved    Boolean   @default(false)
+
   messages    Message[]
 
   @@map("rooms")

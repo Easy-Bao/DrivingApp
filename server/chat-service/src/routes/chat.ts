@@ -8,6 +8,7 @@ import {
   addMessageToHistory,
   getRecentRoomMessages,
   activeConnections,
+  resolveRoom,
 } from '../services/chat.ts';
 
 const jwtSecret = process.env.JWT_SECRET;
@@ -37,6 +38,29 @@ chatRouter.get('/rooms/:roomId/messages', async (context) => {
   }
 });
 
+chatRouter.post('/rooms/:roomId/resolve', async (context) => {
+  const chatRoomIdentifier = context.req.param('roomId');
+  try {
+    await resolveRoom(chatRoomIdentifier);
+
+    // Broadcast lock to all connected clients
+    const activeRoomPeers = activeConnections.get(chatRoomIdentifier);
+    if (activeRoomPeers) {
+      const lockWarningMessage = JSON.stringify({
+        type: 'locked',
+        reason: 'This conversation has been resolved.',
+      });
+      for (const activePeer of activeRoomPeers) {
+        activePeer.send(lockWarningMessage);
+      }
+    }
+
+    return context.json({ success: true });
+  } catch (caughtError: any) {
+    return context.json({ error: caughtError.message }, 500);
+  }
+});
+
 chatRouter.get('/ws', upgradeWebSocket(async (context) => {
   const roomId = context.req.query('roomId');
   const userId = context.req.query('userId');
@@ -53,9 +77,9 @@ chatRouter.get('/ws', upgradeWebSocket(async (context) => {
   let finalUserId = userId || '';
   if (token && jwtSecret) {
     try {
-      const decoded = await verify(token, jwtSecret, "HS256");
-      if (decoded && decoded.sub) {
-        finalUserId = decoded.sub.toString();
+      const decodedTokenClaims = await verify(token, jwtSecret, "HS256");
+      if (decodedTokenClaims && decodedTokenClaims.sub) {
+        finalUserId = decodedTokenClaims.sub.toString();
       }
     } catch (_) { }
   }
@@ -69,19 +93,24 @@ chatRouter.get('/ws', upgradeWebSocket(async (context) => {
   }
 
   let room = await getRoomDetails(roomId);
-  if (!room) {
-    const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
-    try {
-      const response = await fetch(`${tripServiceUrl}/rides/${roomId}`);
-      if (response.ok) {
-        const ride = await response.json() as any;
-        if (ride && ride.driver_id && ride.passenger_id) {
-          room = await upsertRoom(roomId, ride.driver_id, ride.passenger_id);
-        }
+  let isRoomLocked = false;
+  let lockReason = '';
+
+  const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+  let completedAtString: string | null = null;
+  try {
+    const response = await fetch(`${tripServiceUrl}/rides/${roomId}`);
+    if (response.ok) {
+      const ride = await response.json() as any;
+      if (!room && ride && ride.driver_id && ride.passenger_id) {
+        room = await upsertRoom(roomId, ride.driver_id, ride.passenger_id);
       }
-    } catch (error) {
-      console.error(`Failed to dynamically resolve chat room ${roomId} from trip-service:`, error);
+      if (ride && ride.completed_at) {
+        completedAtString = ride.completed_at;
+      }
     }
+  } catch (error) {
+    console.error(`Failed to dynamically resolve ride status for ${roomId} from trip-service:`, error);
   }
 
   if (!room) {
@@ -90,6 +119,21 @@ chatRouter.get('/ws', upgradeWebSocket(async (context) => {
         ws.close(4004, 'Room not found');
       }
     };
+  }
+
+  if (room.resolved) {
+    isRoomLocked = true;
+    lockReason = 'This conversation has been resolved.';
+  }
+
+  if (completedAtString) {
+    const completedAt = new Date(completedAtString);
+    const msSinceCompletion = Date.now() - completedAt.getTime();
+    const hoursSinceCompletion = msSinceCompletion / (1000 * 60 * 60);
+    if (hoursSinceCompletion > 48) {
+      isRoomLocked = true;
+      lockReason = 'This chat session has expired.';
+    }
   }
 
   if (room.driverId !== finalUserId && room.passengerId !== finalUserId) {
@@ -108,17 +152,24 @@ chatRouter.get('/ws', upgradeWebSocket(async (context) => {
       activeConnections.get(roomId)!.add(ws);
 
       const msgHistory = await getRecentRoomMessages(roomId, 50);
-      const messages = msgHistory.map((m) => ({
-        senderId: m.senderId,
-        text: m.message,
-        createdAt: m.createdAt,
+      const messages = msgHistory.map((messageItem) => ({
+        senderId: messageItem.senderId,
+        text: messageItem.message,
+        createdAt: messageItem.createdAt,
       }));
 
       ws.send(JSON.stringify({ type: 'history', messages }));
+
+      if (isRoomLocked) {
+        ws.send(JSON.stringify({ type: 'locked', reason: lockReason }));
+      }
     },
-    async onMessage(event, _ws) {
+    async onMessage(websocketMessageEvent, _ws) {
+      if (isRoomLocked) {
+        return;
+      }
       try {
-        const payload = JSON.parse(event.data.toString());
+        const payload = JSON.parse(websocketMessageEvent.data.toString());
         const text = payload.text;
         if (!text) return;
 
@@ -132,19 +183,19 @@ chatRouter.get('/ws', upgradeWebSocket(async (context) => {
           createdAt: new Date().toISOString(),
         });
 
-        const peers = activeConnections.get(roomId);
-        if (peers) {
-          for (const peer of peers) {
-            peer.send(broadcastMsg);
+        const activeRoomPeers = activeConnections.get(roomId);
+        if (activeRoomPeers) {
+          for (const activePeer of activeRoomPeers) {
+            activePeer.send(broadcastMsg);
           }
         }
       } catch (_) { }
     },
     onClose(_event, ws) {
-      const peers = activeConnections.get(roomId);
-      if (peers) {
-        peers.delete(ws);
-        if (peers.size === 0) {
+      const activeRoomPeers = activeConnections.get(roomId);
+      if (activeRoomPeers) {
+        activeRoomPeers.delete(ws);
+        if (activeRoomPeers.size === 0) {
           activeConnections.delete(roomId);
         }
       }

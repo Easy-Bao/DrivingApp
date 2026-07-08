@@ -22,6 +22,8 @@ model Ride {
   fare             Float
   status           String
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz
+
   driverId         String?  @map("driver_id")
   driverName       String?  @map("driver_name")
   driverRating     String?  @map("driver_rating")

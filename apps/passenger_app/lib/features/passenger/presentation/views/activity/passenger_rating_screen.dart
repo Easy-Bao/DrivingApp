@@ -21,6 +21,64 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
     context.goNamed('PassengerHome');
   }
 
+  Future<void> _checkForgottenItemsAndFinish() async {
+    final bool? confirmFinishRatingSession = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext checkBelongingsDialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: AppTheme.surface,
+          title: const Row(
+            children: [
+              Icon(LucideIcons.triangle_alert, color: Colors.orange, size: 24),
+              SizedBox(width: 12),
+              Text(
+                'Check Your Belongings',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Please take a moment to ensure you have not left any personal items behind in the vehicle.',
+            style: TextStyle(
+              color: AppTheme.primaryColor,
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(checkBelongingsDialogContext).pop(false),
+              child: Text(
+                'Check Again',
+                style: TextStyle(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: () => Navigator.of(checkBelongingsDialogContext).pop(true),
+              child: const Text('All Good'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmFinishRatingSession == true && mounted) {
+      _finishRating();
+    }
+  }
+
   @override
   void dispose() {
     _feedbackController.dispose();
@@ -159,7 +217,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
               ),
               const SizedBox(height: 16),
               GestureDetector(
-                onTap: _finishRating,
+                onTap: _checkForgottenItemsAndFinish,
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 18),

@@ -44,3 +44,11 @@ export async function getRecentRoomMessages(roomId: string, limit = 50) {
     take: limit,
   });
 }
+
+export async function resolveRoom(roomId: string) {
+  return await prisma.room.update({
+    where: { id: roomId },
+    data: { resolved: true },
+  });
+}
+

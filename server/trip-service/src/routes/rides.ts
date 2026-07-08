@@ -97,16 +97,20 @@ ridesRouter.post('/:id/accept', async (context) => {
 });
 
 ridesRouter.post('/:id/status', async (context) => {
-  const id = context.req.param('id');
+  const rideIdentifier = context.req.param('id');
   try {
-    const { status } = await context.req.json();
-    const updated = await prisma.ride.update({
-      where: { id },
-      data: { status },
+    const { status: rideStatus } = await context.req.json();
+    const isTerminalStatus = rideStatus === 'completed' || rideStatus === 'canceled' || rideStatus === 'cancelled';
+    const updatedRideRecord = await prisma.ride.update({
+      where: { id: rideIdentifier },
+      data: {
+        status: rideStatus,
+        completedAt: isTerminalStatus ? new Date() : undefined,
+      },
     });
-    return context.json(mapRideToSnakeCase(updated));
-  } catch (error: any) {
-    return context.json({ error: error.message }, 400);
+    return context.json(mapRideToSnakeCase(updatedRideRecord));
+  } catch (caughtError: any) {
+    return context.json({ error: caughtError.message }, 400);
   }
 });
 
