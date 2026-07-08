@@ -194,7 +194,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
           if (!_isChatRoomLocked)
             TextButton(
               onPressed: _resolveChatRoom,
-              child: const Text(
+              child: Text(
                 'Resolve',
                 style: TextStyle(
                   color: AppTheme.cancel,
