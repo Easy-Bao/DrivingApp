@@ -5,6 +5,12 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/core/config/env_config.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/shared/widgets/driver_profile_details_sheet.dart';
 
 /**
  * Trip details screen for a completed ride.
@@ -26,6 +32,80 @@ class ActivityViewDetails extends StatefulWidget {
 }
 
 class _ActivityViewDetailsState extends State<ActivityViewDetails> {
+  Map<String, dynamic>? _detailedRideData;
+  bool _showLostFoundChat = false;
+  String _passengerId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadDetailedRideInfo());
+  }
+
+  Future<void> _loadDetailedRideInfo() async {
+    final ride = widget.ride;
+    if (ride == null) return;
+
+    final sharedPreferencesInstance = await SharedPreferences.getInstance();
+    final passengerId = sharedPreferencesInstance.getString('passenger_id') ?? '';
+
+    final retrievedRideData = await PassengerApiService.getRideStatus(ride.id);
+    bool isWithinGracePeriodWindow = false;
+    try {
+      final rideCompletedTime = DateTime.parse(ride.date).toLocal();
+      final elapsedTimeSinceCompletion = DateTime.now().difference(rideCompletedTime);
+      if (elapsedTimeSinceCompletion.inHours < 48) {
+        isWithinGracePeriodWindow = true;
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() {
+        _passengerId = passengerId;
+        _detailedRideData = retrievedRideData;
+        _showLostFoundChat = isWithinGracePeriodWindow && retrievedRideData != null && retrievedRideData['driver_id'] != null;
+      });
+    }
+  }
+
+  Future<void> _initiateLostFoundChat() async {
+    final ride = widget.ride;
+    final retrievedRideData = _detailedRideData;
+    if (ride == null || retrievedRideData == null || _passengerId.isEmpty) return;
+
+    final driverId = retrievedRideData['driver_id'] as String?;
+    if (driverId == null || driverId.isEmpty) return;
+
+    try {
+      final passengerServiceUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8081';
+      final apiGatewayUrl = passengerServiceUrl.replaceAll('8081', '8080');
+      final chatRoomInitializationUrl = '$apiGatewayUrl/chat/rooms';
+
+      final initializeRoomResponse = await http.post(
+        Uri.parse(chatRoomInitializationUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'roomId': ride.id,
+          'driverId': driverId,
+          'passengerId': _passengerId,
+        }),
+      );
+
+      if (initializeRoomResponse.statusCode == 201 || initializeRoomResponse.statusCode == 200) {
+        if (mounted) {
+          unawaited(context.pushNamed(
+            'DriverChat',
+            extra: {
+              'roomId': ride.id,
+              'userId': _passengerId,
+              'peerName': retrievedRideData['driver_name'] ?? 'Driver',
+            },
+          ));
+        }
+      }
+    } catch (_) {}
+  }
+
   Future<void> _onMapCreated(AppMapController controller) async {
     final ride = widget.ride;
     if (ride == null) return;
@@ -128,46 +208,68 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
             ),
             const SizedBox(height: 24),
             // — Driver info row —
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 25,
-                  backgroundColor: AppTheme.secondaryColor,
-                  child: Icon(Icons.person, color: AppTheme.primaryColor),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        ride?.driverName.isNotEmpty == true
-                            ? ride!.driverName
-                            : 'Driver',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      Text(
-                        ride?.vehiclePlate.isNotEmpty == true
-                            ? ride!.vehiclePlate
-                            : '—',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.tertiaryColor,
-                        ),
-                      ),
-                    ],
+            GestureDetector(
+              onTap: () {
+                final retrievedRideData = _detailedRideData;
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (BuildContext sheetContext) => DriverProfileDetailsSheet(
+                    driverId: retrievedRideData?['driver_id'] as String? ?? 'driver-id-xyz',
+                    driverName: retrievedRideData?['driver_name'] as String? ?? ride?.driverName ?? 'Driver',
+                    vehicleType: retrievedRideData?['vehicle_type'] as String? ?? 'Bao Bao',
+                    plateNumber: retrievedRideData?['plate_number'] as String? ?? ride?.vehiclePlate ?? 'ABC 1234',
+                    rating: retrievedRideData?['driver_rating'] as String? ?? '5.0',
                   ),
-                ),
-                const Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
-                const Text(
-                  ' —',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
+                );
+              },
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 25,
+                    backgroundColor: AppTheme.secondaryColor,
+                    child: Icon(Icons.person, color: AppTheme.primaryColor),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ride?.driverName.isNotEmpty == true
+                              ? ride!.driverName
+                              : 'Driver',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        Text(
+                          ride?.vehiclePlate.isNotEmpty == true
+                              ? ride!.vehiclePlate
+                              : '—',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.tertiaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_showLostFoundChat)
+                    IconButton(
+                      icon: const Icon(LucideIcons.message_square, color: AppTheme.primaryColor),
+                      onPressed: _initiateLostFoundChat,
+                    ),
+                  const Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
+                  Text(
+                    ' ${_detailedRideData?['driver_rating'] ?? '—'}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),

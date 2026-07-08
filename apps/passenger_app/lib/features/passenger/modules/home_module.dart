@@ -142,6 +142,7 @@ class HomeModule {
           destination: data['destination'] as PlaceModel,
           distance: data['distance'] as String,
           duration: data['duration'] as String,
+          driverId: data['driverId'] as String?,
           driverName: data['driverName'] as String?,
           driverRating: data['driverRating'] as String?,
           vehicleType: data['vehicleType'] as String?,

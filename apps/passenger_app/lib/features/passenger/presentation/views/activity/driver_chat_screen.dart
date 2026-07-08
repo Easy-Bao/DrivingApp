@@ -7,6 +7,7 @@ import 'package:passenger_app/core/config/env_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:http/http.dart' as http;
 
 class DriverChatScreen extends StatefulWidget {
   final String? roomId;
@@ -35,6 +36,29 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   bool _driverTyping = false;
   WebSocket? _socket;
   bool _isConnected = false;
+  bool _isChatRoomLocked = false;
+  String _lockWarningMessageText = '';
+
+  Future<void> _resolveChatRoom() async {
+    final chatRoomId = widget.roomId ?? 'test-room-123';
+    try {
+      final passengerServiceUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8081';
+      final apiGatewayUrl = passengerServiceUrl.replaceAll('8081', '8080');
+      final resolveEndpointUrl = '$apiGatewayUrl/chat/rooms/$chatRoomId/resolve';
+
+      final resolveResponse = await http.post(
+        Uri.parse(resolveEndpointUrl),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (resolveResponse.statusCode == 200) {
+        setState(() {
+          _isChatRoomLocked = true;
+          _lockWarningMessageText = 'This conversation has been resolved.';
+        });
+      }
+    } catch (_) {}
+  }
 
   final _quickReplies = [
     "I'm here",
@@ -105,6 +129,11 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               );
             });
             _scrollDown();
+          } else if (data['type'] == 'locked') {
+            setState(() {
+              _isChatRoomLocked = true;
+              _lockWarningMessageText = data['reason'] as String? ?? 'This conversation is locked.';
+            });
           }
         },
         onError: (_) {
@@ -131,6 +160,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   }
 
   void _send(String text) {
+    if (_isChatRoomLocked) return;
     if (text.trim().isEmpty) return;
     if (_socket != null && _isConnected) {
       _socket!.add(jsonEncode({'text': text.trim()}));
@@ -166,6 +196,19 @@ class _DriverChatScreenState extends State<DriverChatScreen>
         backgroundColor: AppTheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
+        actions: [
+          if (!_isChatRoomLocked)
+            TextButton(
+              onPressed: _resolveChatRoom,
+              child: const Text(
+                'Resolve',
+                style: TextStyle(
+                  color: AppTheme.cancel,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+        ],
         leading: IconButton(
           icon: const Icon(
             LucideIcons.arrow_left,
@@ -241,38 +284,39 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               },
             ),
           ),
-          SizedBox(
-            height: 44,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              physics: const BouncingScrollPhysics(),
-              itemCount: _quickReplies.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, itemIndex) => GestureDetector(
-                onTap: () => _send(_quickReplies[itemIndex]),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.neutralColor,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.borderSide),
-                  ),
-                  child: Text(
-                    _quickReplies[itemIndex],
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
+          if (!_isChatRoomLocked)
+            SizedBox(
+              height: 44,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                physics: const BouncingScrollPhysics(),
+                itemCount: _quickReplies.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, itemIndex) => GestureDetector(
+                  onTap: () => _send(_quickReplies[itemIndex]),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.neutralColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.borderSide),
+                    ),
+                    child: Text(
+                      _quickReplies[itemIndex],
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
           const SizedBox(height: 8),
           SafeArea(
             child: Container(
@@ -297,12 +341,13 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                       ),
                       child: TextField(
                         controller: _msgCtrl,
+                        readOnly: _isChatRoomLocked,
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppTheme.primaryColor,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Type a message...',
+                          hintText: _isChatRoomLocked ? _lockWarningMessageText : 'Type a message...',
                           hintStyle: TextStyle(
                             color: AppTheme.primaryColor.withValues(alpha: 0.4),
                             fontSize: 14,
@@ -312,18 +357,18 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                             vertical: 12,
                           ),
                         ),
-                        onSubmitted: _send,
+                        onSubmitted: _isChatRoomLocked ? null : _send,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   GestureDetector(
-                    onTap: () => _send(_msgCtrl.text),
+                    onTap: _isChatRoomLocked ? null : () => _send(_msgCtrl.text),
                     child: Container(
                       width: 48,
                       height: 48,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primaryColor,
+                      decoration: BoxDecoration(
+                        color: _isChatRoomLocked ? Colors.grey : AppTheme.primaryColor,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(

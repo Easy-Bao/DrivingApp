@@ -70,10 +70,11 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     if (driverId.isEmpty) return;
 
     try {
-      // 1. Create/upsert the chat room in the backend via proxy gateway
-      final url = '${EnvConfig.driverServiceUrl}/chat/rooms';
-      final response = await http.post(
-        Uri.parse(url),
+      final driverServiceUrl = EnvConfig.driverServiceUrl;
+      final gatewayUrl = driverServiceUrl.replaceAll('8082', '8080');
+      final chatRoomsEndpointUrl = '$gatewayUrl/chat/rooms';
+      final initializeChatResponse = await http.post(
+        Uri.parse(chatRoomsEndpointUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'roomId': tripId,
@@ -82,7 +83,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
         }),
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (initializeChatResponse.statusCode == 201 || initializeChatResponse.statusCode == 200) {
         if (mounted) {
           // 2. Push to Driver Chat
           context.pushNamed(

@@ -12,12 +12,15 @@ import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:passenger_app/shared/widgets/driver_profile_details_sheet.dart';
+
 class DriverMatchedScreen extends StatefulWidget {
   final String rideType;
   final double fare;
   final PlaceModel destination;
   final String distance;
   final String duration;
+  final String? driverId;
   final String? driverName;
   final String? driverRating;
   final String? vehicleType;
@@ -31,6 +34,7 @@ class DriverMatchedScreen extends StatefulWidget {
     required this.destination,
     required this.distance,
     required this.duration,
+    this.driverId,
     this.driverName,
     this.driverRating,
     this.vehicleType,
@@ -221,15 +225,30 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
               ),
               const SizedBox(height: 36),
 
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.borderSide),
-                ),
-                child: Column(
-                  children: [
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (BuildContext sheetContext) => DriverProfileDetailsSheet(
+                      driverId: widget.driverId ?? 'driver-id-xyz',
+                      driverName: widget.driverName ?? 'Driver',
+                      vehicleType: widget.vehicleType ?? 'Bao Bao',
+                      plateNumber: widget.plateNumber ?? 'ABC 1234',
+                      rating: widget.driverRating ?? '5.0',
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.neutralColor,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppTheme.borderSide),
+                  ),
+                  child: Column(
+                    children: [
                     Row(
                       children: [
                         Container(
@@ -312,7 +331,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                     ),
                   ],
                 ),
-              ),
+              ),),
               const SizedBox(height: 20),
 
               Container(
