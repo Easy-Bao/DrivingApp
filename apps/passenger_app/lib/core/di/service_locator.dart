@@ -11,6 +11,7 @@ import 'package:passenger_app/features/passenger/data/repositories/passenger_hom
 import 'package:passenger_app/features/passenger/data/repositories/track_repository_impl.dart';
 import 'package:passenger_app/features/passenger/data/repositories/saved_places_repository.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/activity/activity_bloc.dart';
+import 'package:passenger_app/core/services/bid_session_service.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_cubit.dart';
 
 final GetIt getIt = GetIt.instance;
@@ -33,4 +34,5 @@ void setupServiceLocator() {
   getIt.registerFactory<ActivityBloc>(
     () => ActivityBloc(repository: getIt<ActivityRepository>()),
   );
+  getIt.registerLazySingleton<BidSessionService>(() => BidSessionService());
 }

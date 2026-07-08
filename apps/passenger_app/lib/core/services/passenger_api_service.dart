@@ -354,4 +354,19 @@ class PassengerApiService {
       return null;
     }
   }
+
+  static Future<Map<String, dynamic>?> fetchDriverStats(String driverId) async {
+    try {
+      final driverStatsResponse = await http.get(
+        Uri.parse('$_baseUrl/drivers/$driverId/stats'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (driverStatsResponse.statusCode == 200) {
+        return jsonDecode(driverStatsResponse.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 }
