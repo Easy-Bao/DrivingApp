@@ -2,7 +2,7 @@
  * Passenger routing registering Hono endpoints using named constants and clean parameters.
  */
 import { Hono } from 'hono';
-import { sign } from 'hono/jwt';
+import { sign, verify } from 'hono/jwt';
 import { PassengerRepository } from './index.ts';
 import { CreatePassengerSchema, LoginSchema, CreateRideSchema } from './schema.ts';
 import { sendEmail } from './email.ts';
@@ -127,19 +127,34 @@ export function getPassengerRouter(passengerRepository: PassengerRepository) {
     }
   });
 
-  router.get('/passengers/:id', authMiddleware, async (context) => {
-    const id = context.req.param('id');
-    const passengerId = context.get('passengerId');
-    if (passengerId !== id) {
-      return context.json({ error: 'Forbidden' }, 403);
-    }
-    try {
-      const passenger = await passengerRepository.retrievePassengerProfile(id);
-      if (!passenger) {
-        return context.json({ error: `Passenger not found: ${id}` }, 404);
+  router.get('/passengers/:id', async (context) => {
+    const passengerIdFromRoute = context.req.param('id');
+    const authorizationHeader = context.req.header('Authorization');
+
+    if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
+      const token = authorizationHeader.substring(7);
+      const secret = process.env.JWT_SECRET || 'secret';
+      try {
+        const payload = await verify(token, secret, "HS256");
+        if (!payload || typeof payload.sub !== 'string') {
+          return context.json({ error: 'Unauthorized' }, 401);
+        }
+        const passengerIdFromToken = payload.sub;
+        if (passengerIdFromToken !== passengerIdFromRoute) {
+          return context.json({ error: 'Forbidden' }, 403);
+        }
+      } catch (error) {
+        return context.json({ error: 'Unauthorized' }, 401);
       }
-      const { password_hash, ...passengerWithoutPassword } = passenger as any;
-      return context.json(passengerWithoutPassword, 200);
+    }
+
+    try {
+      const passengerProfile = await passengerRepository.retrievePassengerProfile(passengerIdFromRoute);
+      if (!passengerProfile) {
+        return context.json({ error: `Passenger not found: ${passengerIdFromRoute}` }, 404);
+      }
+      const { password_hash, ...passengerProfileWithoutPassword } = passengerProfile as any;
+      return context.json(passengerProfileWithoutPassword, 200);
     } catch (error: any) {
       return context.json({ error: error.message }, 500);
     }

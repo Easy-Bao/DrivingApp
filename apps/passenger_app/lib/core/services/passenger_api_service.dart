@@ -4,11 +4,24 @@ library;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:passenger_app/core/config/env_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerApiService {
   PassengerApiService._();
 
   static final String _baseUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8080';
+
+  static Future<Map<String, String>> _getRequestHeaders() async {
+    final SharedPreferences prefsInstance = await SharedPreferences.getInstance();
+    final String jsonWebToken = prefsInstance.getString('jwt_token') ?? '';
+    final Map<String, String> requestHeaders = {
+      'Content-Type': 'application/json',
+    };
+    if (jsonWebToken.isNotEmpty) {
+      requestHeaders['Authorization'] = 'Bearer $jsonWebToken';
+    }
+    return requestHeaders;
+  }
 
   static Future<Map<String, dynamic>?> registerPassenger({
     required String name,
@@ -62,9 +75,10 @@ class PassengerApiService {
     required String phone,
     required String email,
   }) async {
+    final Map<String, String> requestHeaders = await _getRequestHeaders();
     final response = await http.put(
       Uri.parse('$_baseUrl/passengers/$id'),
-      headers: {'Content-Type': 'application/json'},
+      headers: requestHeaders,
       body: jsonEncode({
         'name': name,
         'phone': phone,
@@ -89,9 +103,10 @@ class PassengerApiService {
     required double fare,
   }) async {
     final typeParam = rideType.toLowerCase().contains('share') ? 'share-bao' : 'solo-ride';
+    final Map<String, String> requestHeaders = await _getRequestHeaders();
     final response = await http.post(
       Uri.parse('$_baseUrl/rides'),
-      headers: {'Content-Type': 'application/json'},
+      headers: requestHeaders,
       body: jsonEncode({
         'passenger_id': passengerId,
         'ride_type': typeParam,
@@ -111,8 +126,10 @@ class PassengerApiService {
   }
 
   static Future<List<dynamic>> fetchRideHistory(String passengerId) async {
+    final Map<String, String> requestHeaders = await _getRequestHeaders();
     final response = await http.get(
       Uri.parse('$_baseUrl/passengers/$passengerId/rides'),
+      headers: requestHeaders,
     );
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
@@ -122,8 +139,10 @@ class PassengerApiService {
 
   static Future<List<dynamic>> fetchNotifications(String passengerId) async {
     try {
+      final Map<String, String> requestHeaders = await _getRequestHeaders();
       final response = await http.get(
         Uri.parse('$_baseUrl/passengers/$passengerId/notifications'),
+        headers: requestHeaders,
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
@@ -192,8 +211,10 @@ class PassengerApiService {
     String passengerId,
   ) async {
     try {
+      final Map<String, String> requestHeaders = await _getRequestHeaders();
       final response = await http.get(
         Uri.parse('$_baseUrl/passengers/$passengerId'),
+        headers: requestHeaders,
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
