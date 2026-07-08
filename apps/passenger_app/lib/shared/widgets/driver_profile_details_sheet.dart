@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
@@ -12,13 +12,13 @@ class DriverProfileDetailsSheet extends StatefulWidget {
   final String rating;
 
   const DriverProfileDetailsSheet({
-    key,
+    super.key,
     required this.driverId,
     required this.driverName,
     required this.vehicleType,
     required this.plateNumber,
     required this.rating,
-  }) : super(key: key);
+  });
 
   @override
   State<DriverProfileDetailsSheet> createState() => _DriverProfileDetailsSheetState();
@@ -32,7 +32,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   @override
   void initState() {
     super.initState();
-    _loadDriverProfileStats();
+    unawaited(_loadDriverProfileStats());
   }
 
   Future<void> _loadDriverProfileStats() async {

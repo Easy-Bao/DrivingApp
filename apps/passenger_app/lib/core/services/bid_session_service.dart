@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
-import 'package:flutter/foundation.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -185,9 +184,9 @@ class BidSessionService {
 
   void dispose() {
     _pollTimer?.cancel();
-    _offersController.close();
-    _driverFoundController.close();
-    _statusController.close();
+    unawaited(_offersController.close());
+    unawaited(_driverFoundController.close());
+    unawaited(_statusController.close());
   }
 
   void _startPolling() {

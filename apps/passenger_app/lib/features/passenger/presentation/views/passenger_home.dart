@@ -85,9 +85,15 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
 
   @override
   void dispose() {
-    _locationSubscription?.cancel();
-    _bidSessionStatusSubscription?.cancel();
-    _bidSessionMatchSubscription?.cancel();
+    if (_locationSubscription != null) {
+      unawaited(_locationSubscription!.cancel());
+    }
+    if (_bidSessionStatusSubscription != null) {
+      unawaited(_bidSessionStatusSubscription!.cancel());
+    }
+    if (_bidSessionMatchSubscription != null) {
+      unawaited(_bidSessionMatchSubscription!.cancel());
+    }
     _entranceController.dispose();
     super.dispose();
   }
@@ -147,16 +153,18 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     return GestureDetector(
       onTap: () {
         if (activeTrip != null) {
-          context.pushNamed(
-            'FindingDriver',
-            extra: {
-              'rideType': activeTrip.rideType,
-              'fare': activeTrip.fare,
-              'destination': activeTrip.destination,
-              'distance': activeTrip.distance,
-              'duration': activeTrip.duration,
-              'pickupAddress': activeTrip.pickupAddress,
-            },
+          unawaited(
+            context.pushNamed(
+              'FindingDriver',
+              extra: {
+                'rideType': activeTrip.rideType,
+                'fare': activeTrip.fare,
+                'destination': activeTrip.destination,
+                'distance': activeTrip.distance,
+                'duration': activeTrip.duration,
+                'pickupAddress': activeTrip.pickupAddress,
+              },
+            ),
           );
         }
       },
