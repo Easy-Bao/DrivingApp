@@ -8,6 +8,8 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/core/di/service_locator.dart';
+import 'package:passenger_app/core/services/bid_session_service.dart';
 
 class FindingDriverScreen extends StatefulWidget {
   final String rideType;
@@ -40,7 +42,10 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
 
   String? _sessionId;
   List<dynamic> _offers = [];
-  Timer? _pollTimer;
+
+  StreamSubscription? _offersSubscription;
+  StreamSubscription? _driverFoundSubscription;
+  late BidSessionService _bidSessionService;
 
   @override
   void initState() {
@@ -53,14 +58,83 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..repeat();
-    _startBookingFlow();
+
+    _bidSessionService = getIt<BidSessionService>();
+    _initializeBookingSearchFlow();
+  }
+
+  Future<void> _initializeBookingSearchFlow() async {
+    _bidSessionService.setForeground(true);
+
+    _offersSubscription = _bidSessionService.offersStream.listen((updatedOffersList) {
+      if (mounted) {
+        setState(() {
+          _offers = updatedOffersList;
+        });
+      }
+    });
+
+    _driverFoundSubscription = _bidSessionService.driverFoundStream.listen((driverMatchResult) {
+      if (mounted) {
+        context.pushReplacementNamed(
+          'DriverMatched',
+          extra: driverMatchResult.toNavigationExtra(),
+        );
+      }
+    });
+
+    if (_bidSessionService.isActive) {
+      setState(() {
+        _sessionId = _bidSessionService.sessionId;
+        _offers = _bidSessionService.offers;
+      });
+    } else {
+      final sharedPreferencesInstance = await SharedPreferences.getInstance();
+      final passengerId = sharedPreferencesInstance.getString('passenger_id') ?? '';
+      if (passengerId.isEmpty) return;
+
+      final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+      final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+
+      final distanceNum =
+          double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+          1.0;
+      final durationNum =
+          double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+          5.0;
+
+      final tripMetadata = BidSessionTrip(
+        rideType: widget.rideType,
+        fare: widget.fare,
+        destination: widget.destination,
+        distance: widget.distance,
+        duration: widget.duration,
+        pickupAddress: widget.pickupAddress,
+      );
+
+      await _bidSessionService.startSession(
+        trip: tripMetadata,
+        passengerId: passengerId,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        distanceKm: distanceNum,
+        durationMinutes: durationNum,
+      );
+
+      if (mounted) {
+        setState(() {
+          _sessionId = _bidSessionService.sessionId;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
     _radarCtrl.dispose();
     _dotCtrl.dispose();
-    _pollTimer?.cancel();
+    _offersSubscription?.cancel();
+    _driverFoundSubscription?.cancel();
     super.dispose();
   }
 
@@ -74,94 +148,13 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
     }
   }
 
-  Future<void> _startBookingFlow() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final passengerId = prefs.getString('passenger_id') ?? '';
-      if (passengerId.isEmpty) return;
-
-      final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-      final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
-
-      final distanceNum =
-          double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ??
-          1.0;
-      final durationNum =
-          double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
-          5.0;
-
-      final result = await PassengerApiService.openBidSession(
-        passengerId: passengerId,
-        rideType: widget.rideType,
-        pickupLat: pickupLat,
-        pickupLng: pickupLng,
-        pickupName: widget.pickupAddress ?? 'Current Location',
-        dropoffLat: widget.destination.latitude,
-        dropoffLng: widget.destination.longitude,
-        dropoffName: widget.destination.name,
-        distanceKm: distanceNum,
-        durationMinutes: durationNum,
-      );
-
-      if (result != null && result['id'] != null) {
-        _sessionId = result['id'] as String;
-        _startPolling();
-      }
-    } catch (error) {
-      debugPrint('Error starting bidding session: $error');
-    }
-  }
-
-  void _startPolling() {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
-      if (!mounted || _sessionId == null) return;
-      final offers = await PassengerApiService.pollBidOffers(_sessionId!);
-      if (mounted) {
-        setState(() {
-          _offers = offers;
-        });
-      }
-
-      final statusData = await PassengerApiService.getBidSession(_sessionId!);
-      if (statusData != null && statusData['status'] == 'accepted') {
-        timer.cancel();
-        final acceptedDriverId = statusData['accepted_driver_id'] as String?;
-        final rideId = statusData['ride_id'] as String? ?? '';
-        final offersList = statusData['offers'] as List<dynamic>? ?? [];
-        final acceptedOffer = offersList.firstWhere(
-          (option) => option['driver_id'] == acceptedDriverId,
-          orElse: () => null,
-        );
-
-        if (mounted && acceptedOffer != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('active_ride_id', rideId);
-          context.pushReplacementNamed(
-            'DriverMatched',
-            extra: {
-              'rideType': widget.rideType,
-              'fare': (acceptedOffer['proposed_fare'] as num).toDouble(),
-              'destination': widget.destination,
-              'distance': widget.distance,
-              'duration': widget.duration,
-              'driverName': acceptedOffer['driver_name'] ?? 'Driver',
-              'driverRating': '5.0',
-              'vehicleType': acceptedOffer['vehicle_type'] ?? 'Bao Bao',
-              'plateNumber': acceptedOffer['plate_number'] ?? 'Unknown',
-              'pickupAddress': widget.pickupAddress ?? 'Current Location',
-            },
-          );
-        }
-      }
-    });
+  void _handleBackground() {
+    _bidSessionService.backgroundSearch();
+    context.pop();
   }
 
   Future<void> _handleCancel() async {
-    _pollTimer?.cancel();
-    if (_sessionId != null) {
-      await PassengerApiService.cancelBidSession(_sessionId!);
-    }
+    await _bidSessionService.cancelSession();
     if (mounted) {
       context.pop();
     }
@@ -242,7 +235,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: GestureDetector(
-                onTap: _handleCancel,
+                onTap: _handleBackground,
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -506,40 +499,13 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                       ],
                     ),
                     onTap: () async {
-                      final acceptResult =
-                          await PassengerApiService.acceptBidOffer(
-                            sessionId: _sessionId!,
-                            offerId: offer['id'] as String,
-                          );
-                      if (acceptResult != null &&
-                          acceptResult['ride_id'] != null) {
-                        _pollTimer?.cancel();
-                        final committedRideId =
-                            acceptResult['ride_id'] as String;
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setString(
-                          'active_ride_id',
-                          committedRideId,
-                        );
-
-                        if (mounted) {
-                          context.pushReplacementNamed(
-                            'DriverMatched',
-                            extra: {
-                              'rideType': widget.rideType,
-                              'fare': proposedFare,
-                              'destination': widget.destination,
-                              'distance': widget.distance,
-                              'duration': widget.duration,
-                              'driverName': driverName,
-                              'driverRating': '5.0',
-                              'vehicleType': vehicleType,
-                              'plateNumber': plateNumber,
-                              'pickupAddress': widget.pickupAddress ?? 'Current Location',
-                            },
-                          );
-                        }
-                      }
+                      await _bidSessionService.acceptOffer(
+                        offerId: offer['id'] as String,
+                        driverName: driverName,
+                        vehicleType: vehicleType,
+                        plateNumber: plateNumber,
+                        proposedFare: proposedFare,
+                      );
                     },
                   ),
                 );

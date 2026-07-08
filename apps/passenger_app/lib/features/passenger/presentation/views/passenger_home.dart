@@ -15,6 +15,8 @@ import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_pl
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 import 'package:passenger_app/shared/widgets/custom_toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/core/di/service_locator.dart';
+import 'package:passenger_app/core/services/bid_session_service.dart';
 
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
@@ -40,24 +42,35 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
           opacity: _fadeIn,
           child: SlideTransition(
             position: _slideIn,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildHeader(),
-                  const SizedBox(height: 12),
-                  _buildLocationRow(),
-                  const SizedBox(height: 24),
-                  _buildSearchBar(),
-                  const SizedBox(height: 16),
-                  _buildChipRow(),
-                  const SizedBox(height: 24),
-                  _buildRecentActivityHeader(),
-                  Expanded(child: _buildRecentActivityList()),
-                ],
-              ),
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildHeader(),
+                      const SizedBox(height: 12),
+                      _buildLocationRow(),
+                      const SizedBox(height: 24),
+                      _buildSearchBar(),
+                      const SizedBox(height: 16),
+                      _buildChipRow(),
+                      const SizedBox(height: 24),
+                      _buildRecentActivityHeader(),
+                      Expanded(child: _buildRecentActivityList()),
+                    ],
+                  ),
+                ),
+                if (_bidSessionService.isActive)
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    bottom: 16,
+                    child: _buildBackgroundSearchingBanner(),
+                  ),
+              ],
             ),
           ),
         ),
@@ -66,10 +79,15 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   }
 
   StreamSubscription? _locationSubscription;
+  StreamSubscription? _bidSessionStatusSubscription;
+  StreamSubscription? _bidSessionMatchSubscription;
+  late BidSessionService _bidSessionService;
 
   @override
   void dispose() {
     _locationSubscription?.cancel();
+    _bidSessionStatusSubscription?.cancel();
+    _bidSessionMatchSubscription?.cancel();
     _entranceController.dispose();
     super.dispose();
   }
@@ -96,6 +114,25 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
           ),
         );
 
+    _bidSessionService = getIt<BidSessionService>();
+    _bidSessionService.setForeground(false);
+
+    _bidSessionStatusSubscription = _bidSessionService.statusStream.listen((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+
+    _bidSessionMatchSubscription = _bidSessionService.driverFoundStream.listen((driverMatchResult) {
+      if (mounted) {
+        CustomToast.show(context, 'Driver Found! Matching you now.');
+        context.pushReplacementNamed(
+          'DriverMatched',
+          extra: driverMatchResult.toNavigationExtra(),
+        );
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _attachSavedPlacesContext();
       unawaited(_entranceController.forward());
@@ -103,6 +140,85 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       await _initLocationAndLoadData();
       unawaited(_loadNotificationCount());
     });
+  }
+
+  Widget _buildBackgroundSearchingBanner() {
+    final activeTrip = _bidSessionService.trip;
+    return GestureDetector(
+      onTap: () {
+        if (activeTrip != null) {
+          context.pushNamed(
+            'FindingDriver',
+            extra: {
+              'rideType': activeTrip.rideType,
+              'fare': activeTrip.fare,
+              'destination': activeTrip.destination,
+              'distance': activeTrip.distance,
+              'duration': activeTrip.duration,
+              'pickupAddress': activeTrip.pickupAddress,
+            },
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Searching for drivers...',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    activeTrip?.destination.name ?? 'Destination',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    maxLines: 1,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              LucideIcons.chevron_right,
+              color: Colors.white,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _attachSavedPlacesContext() {
