@@ -143,7 +143,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
 
   void _handleBackground() {
     _bidSessionService.backgroundSearch();
-    context.pop();
+    context.goNamed('PassengerHome');
   }
 
   Future<void> _handleCancel() async {
@@ -158,104 +158,111 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
     final defaultLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
     final defaultLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
-    return Scaffold(
-      backgroundColor: AppTheme.surface,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              color: AppTheme.neutralColor,
-              child: MapProvider.buildMapView(
-                latitude: defaultLat,
-                longitude: defaultLng,
-                zoom: 14.5,
-                interactive: true,
-                onMapCreated: _onMapCreated,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBackground();
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.surface,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                color: AppTheme.neutralColor,
+                child: MapProvider.buildMapView(
+                  latitude: defaultLat,
+                  longitude: defaultLng,
+                  zoom: 14.5,
+                  interactive: true,
+                  onMapCreated: _onMapCreated,
+                ),
               ),
             ),
-          ),
-          if (_offers.isEmpty)
-            Center(
-              child: AnimatedBuilder(
-                animation: _radarCtrl,
-                builder: (ctx, _) {
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      ...List.generate(3, (i) {
-                        final timerSeconds = (_radarCtrl.value + i * 0.33) % 1.0;
-                        return Container(
-                          width: 60 + timerSeconds * 200,
-                          height: 60 + timerSeconds * 200,
+            if (_offers.isEmpty)
+              Center(
+                child: AnimatedBuilder(
+                  animation: _radarCtrl,
+                  builder: (ctx, _) {
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        ...List.generate(3, (i) {
+                          final timerSeconds = (_radarCtrl.value + i * 0.33) % 1.0;
+                          return Container(
+                            width: 60 + timerSeconds * 200,
+                            height: 60 + timerSeconds * 200,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.15 * (1 - timerSeconds),
+                                ),
+                                width: 2,
+                              ),
+                            ),
+                          );
+                        }),
+                        Container(
+                          width: 60,
+                          height: 60,
                           decoration: BoxDecoration(
+                            color: AppTheme.primaryColor,
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.15 * (1 - timerSeconds),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.3,
+                                ),
+                                blurRadius: 20,
                               ),
-                              width: 2,
-                            ),
+                            ],
                           ),
-                        );
-                      }),
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.3,
-                              ),
-                              blurRadius: 20,
-                            ),
-                          ],
+                          child: const Icon(
+                            LucideIcons.navigation,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
-                        child: const Icon(
-                          LucideIcons.navigation,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: GestureDetector(
-                onTap: _handleBackground,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 15,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    LucideIcons.arrow_left,
-                    color: AppTheme.primaryColor,
-                    size: 20,
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: GestureDetector(
+                  onTap: _handleBackground,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      LucideIcons.arrow_left,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: _offers.isEmpty ? _buildSearchingPanel() : _buildBidsPanel(),
-          ),
-        ],
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _offers.isEmpty ? _buildSearchingPanel() : _buildBidsPanel(),
+            ),
+          ],
+        ),
       ),
     );
   }
