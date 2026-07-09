@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 
 class MapPinScreen extends StatefulWidget {
   const MapPinScreen({super.key});
@@ -30,11 +32,12 @@ class _MapPinScreenState extends State<MapPinScreen>
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
-    )..repeat(reverse: true);
+    );
+    unawaited(_pulseController.repeat(reverse: true));
     _pulseAnim = Tween<double>(begin: 0.88, end: 1.12).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    _initLocation();
+    unawaited(_initLocation());
   }
 
   @override
@@ -59,7 +62,7 @@ class _MapPinScreenState extends State<MapPinScreen>
           zoom: 15.0,
         );
       }
-      _reverseGeocode(_centerLat, _centerLng);
+      unawaited(_reverseGeocode(_centerLat, _centerLng));
     }
   }
 
@@ -90,7 +93,7 @@ class _MapPinScreenState extends State<MapPinScreen>
         pos.longitude,
         zoom: 16.0,
       );
-      _reverseGeocode(pos.latitude, pos.longitude);
+      unawaited(_reverseGeocode(pos.latitude, pos.longitude));
     }
   }
 
@@ -98,7 +101,7 @@ class _MapPinScreenState extends State<MapPinScreen>
   Future<void> _updatePin() async {
     if (_mapController == null) return;
     final center = await MapProvider.getCameraCenter(_mapController!);
-    _reverseGeocode(center.latitude, center.longitude);
+    unawaited(_reverseGeocode(center.latitude, center.longitude));
   }
 
   /// Packages the selected coordinates and address into a PlaceModel and returns it.
@@ -201,9 +204,9 @@ class _MapPinScreenState extends State<MapPinScreen>
                       Container(
                         width: 3,
                         height: 16,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: AppTheme.primaryColor,
-                          borderRadius: const BorderRadius.vertical(
+                          borderRadius: BorderRadius.vertical(
                             bottom: Radius.circular(2),
                           ),
                         ),
@@ -240,7 +243,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                       ),
                     ],
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
@@ -248,7 +251,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                         color: AppTheme.primaryColor,
                         size: 13,
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         'Pin a location',
                         style: TextStyle(
@@ -335,7 +338,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                           color: AppTheme.neutralColor,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           LucideIcons.map_pin,
                           color: AppTheme.primaryColor,
                           size: 18,
@@ -346,7 +349,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Selected location',
                               style: TextStyle(
                                 fontSize: 10,
@@ -381,7 +384,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                                 const SizedBox(height: 2),
                                 Text(
                                   _subAddress,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     color: AppTheme.tertiaryColor,
                                   ),
@@ -403,7 +406,7 @@ class _MapPinScreenState extends State<MapPinScreen>
                             color: AppTheme.neutralColor,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             LucideIcons.refresh_cw,
                             color: AppTheme.tertiaryColor,
                             size: 14,
@@ -463,9 +466,9 @@ class _MapPinScreenState extends State<MapPinScreen>
                         ),
                         elevation: 0,
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(LucideIcons.check, size: 18),
                           SizedBox(width: 8),
                           Text(

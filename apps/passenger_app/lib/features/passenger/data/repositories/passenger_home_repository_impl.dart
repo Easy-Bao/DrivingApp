@@ -1,9 +1,10 @@
 /// Geocoding and history synchronization adapter: fetches recent locations and resolves coordinates dynamically.
-import 'package:location_service/location_service.dart';
+library;
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Shortens a full address to its last two comma-separated segments (e.g. "Barangay, City").
 String _shortenAddress(String fullAddress) {
@@ -55,7 +56,7 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
   List<Map<String, dynamic>> _filterAndFormatRecentLocations(List<dynamic> rawRides) {
     final Set<String> seenDestinations = {};
     final List<Map<String, dynamic>> list = [];
-    for (final r in rawRides) {
+    for (final r in rawRides.cast<Map<String, dynamic>>()) {
       final status = r['status'] as String? ?? '';
       if (status != 'completed') continue;
       final destName = r['dropoff_name'] as String? ?? '';

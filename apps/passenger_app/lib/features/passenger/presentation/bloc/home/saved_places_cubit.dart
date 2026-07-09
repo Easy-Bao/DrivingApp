@@ -1,12 +1,16 @@
 /// Saved Places Cubit: manages local saved places shortcut configurations and handles reactive tap navigation actions.
+library;
+
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/features/passenger/data/repositories/saved_places_repository.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_state.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_state.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
@@ -17,6 +21,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
       : _repository = repository,
         super(const SavedPlacesState());
 
+  // ignore: use_setters_to_change_properties
   void attachContext(BuildContext context) {
     _context = context;
   }
@@ -30,7 +35,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
       emit(SavedPlacesState(places: models, isLoading: false));
     } catch (error, stackTrace) {
       debugPrint('Error loading saved places: $error\n$stackTrace');
-      emit(SavedPlacesState(places: const [], isLoading: false));
+      emit(const SavedPlacesState(places: [], isLoading: false));
     }
   }
 
@@ -66,16 +71,20 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
           longitude: place.longitude!,
         );
         final address = BlocProvider.of<PassengerHomeCubit>(ctx).state.currentAddress;
-        ctx.pushNamed(
-          'DestinationPreview',
-          extra: syntheticPlace,
-          queryParameters: {'pickupAddress': address},
+        unawaited(
+          ctx.pushNamed(
+            'DestinationPreview',
+            extra: syntheticPlace,
+            queryParameters: {'pickupAddress': address},
+          ),
         );
       } else {
         final address = BlocProvider.of<PassengerHomeCubit>(ctx).state.currentAddress;
-        ctx.pushNamed(
-          'SearchDestination',
-          queryParameters: {'pickupAddress': address},
+        unawaited(
+          ctx.pushNamed(
+            'SearchDestination',
+            queryParameters: {'pickupAddress': address},
+          ),
         );
       }
     };

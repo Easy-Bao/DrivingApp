@@ -219,9 +219,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              BlocProvider.of<TrackDriverCubit>(context).cancelTrip();
+              unawaited(BlocProvider.of<TrackDriverCubit>(context).cancelTrip());
             },
-            child: Text(
+            child: const Text(
               'Cancel Trip',
               style: TextStyle(
                 color: AppTheme.cancel,

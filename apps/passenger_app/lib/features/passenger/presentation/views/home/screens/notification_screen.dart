@@ -200,7 +200,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           color: AppTheme.cancel.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           LucideIcons.trash_2,
                           color: AppTheme.cancel,
                           size: 20,

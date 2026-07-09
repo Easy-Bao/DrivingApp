@@ -1,4 +1,5 @@
 /// Environment Configuration: manages access to configuration parameters and maps emulator loopback addresses.
+library;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

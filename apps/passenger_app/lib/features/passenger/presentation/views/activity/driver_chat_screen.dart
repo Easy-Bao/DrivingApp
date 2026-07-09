@@ -34,7 +34,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   final ScrollController _scrollCtrl = ScrollController();
   final List<_Msg> _msgs = [];
   late AnimationController _typingCtrl;
-  bool _driverTyping = false;
+  final bool _driverTyping = false;
   WebSocket? _socket;
   bool _isConnected = false;
   bool _isChatRoomLocked = false;
@@ -92,7 +92,8 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     _typingCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
-    )..repeat(reverse: true);
+    );
+    unawaited(_typingCtrl.repeat(reverse: true));
     unawaited(_connectWebSocket());
     unawaited(_checkTripStatus());
   }
@@ -111,7 +112,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     try {
       final socket = await WebSocket.connect(wsUrl);
       if (!mounted) {
-        socket.close();
+        unawaited(socket.close());
         return;
       }
       _socket = socket;
@@ -119,12 +120,12 @@ class _DriverChatScreenState extends State<DriverChatScreen>
 
       socket.listen(
         (event) {
-          final data = jsonDecode(event as String);
+          final data = jsonDecode(event as String) as Map<String, dynamic>;
           if (data['type'] == 'history') {
             final list = data['messages'] as List;
             setState(() {
               _msgs.clear();
-              for (final m in list) {
+              for (final m in list.cast<Map<String, dynamic>>()) {
                 final isDriver = m['senderId'] != uId;
                 _msgs.add(
                   _Msg(
@@ -186,17 +187,19 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       _msgCtrl.clear();
       _scrollDown();
     } else {
-      _connectWebSocket();
+      unawaited(_connectWebSocket());
     }
   }
 
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+        unawaited(
+          _scrollCtrl.animateTo(
+            _scrollCtrl.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          ),
         );
       }
     });
@@ -219,7 +222,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
           if (_isTripFinished && !_isChatRoomLocked)
             TextButton(
               onPressed: _resolveChatRoom,
-              child: Text(
+              child: const Text(
                 'Resolve',
                 style: TextStyle(
                   color: AppTheme.cancel,

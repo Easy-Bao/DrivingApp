@@ -1,4 +1,5 @@
 /// Passenger Activity Screen: displays past and upcoming rides loaded live from the passenger-service backend.
+library;
 import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
@@ -241,8 +242,8 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: AppTheme.borderSide),
           ),
           Row(
@@ -298,7 +299,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: 4,
-      itemBuilder: (_, __) => Container(
+      itemBuilder: (_, _) => Container(
         margin: const EdgeInsets.only(bottom: 12),
         height: 160,
         decoration: BoxDecoration(

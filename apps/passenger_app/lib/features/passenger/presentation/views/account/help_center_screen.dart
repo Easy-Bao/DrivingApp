@@ -1,7 +1,7 @@
-import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 class HelpCenterScreen extends StatefulWidget {
@@ -264,7 +264,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 Expanded(
                   child: Text(
                     faq['q']!,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.primaryColor,

@@ -1,15 +1,16 @@
 /// Passenger matching screen: handles real-time driver bidding lifecycle, offer polling, and accept flows.
+library;
 import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passenger_app/core/di/service_locator.dart';
 import 'package:passenger_app/core/services/bid_session_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FindingDriverScreen extends StatefulWidget {
   final String rideType;
@@ -37,10 +38,8 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
     with TickerProviderStateMixin {
   late AnimationController _radarCtrl;
   late AnimationController _dotCtrl;
-  AppMapController? _mapController;
   bool _initialized = false;
 
-  String? _sessionId;
   List<dynamic> _offers = [];
 
   StreamSubscription? _offersSubscription;
@@ -53,14 +52,16 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
     _radarCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat();
+    );
+    unawaited(_radarCtrl.repeat());
     _dotCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
-    )..repeat();
+    );
+    unawaited(_dotCtrl.repeat());
 
     _bidSessionService = getIt<BidSessionService>();
-    _initializeBookingSearchFlow();
+    unawaited(_initializeBookingSearchFlow());
   }
 
   Future<void> _initializeBookingSearchFlow() async {
@@ -85,7 +86,6 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
 
     if (_bidSessionService.isActive) {
       setState(() {
-        _sessionId = _bidSessionService.sessionId;
         _offers = _bidSessionService.offers;
       });
     } else {
@@ -120,12 +120,6 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
         distanceKm: distanceNum,
         durationMinutes: durationNum,
       );
-
-      if (mounted) {
-        setState(() {
-          _sessionId = _bidSessionService.sessionId;
-        });
-      }
     }
   }
 
@@ -133,18 +127,17 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
   void dispose() {
     _radarCtrl.dispose();
     _dotCtrl.dispose();
-    _offersSubscription?.cancel();
-    _driverFoundSubscription?.cancel();
+    unawaited(_offersSubscription?.cancel());
+    unawaited(_driverFoundSubscription?.cancel());
     super.dispose();
   }
 
   void _onMapCreated(AppMapController controller) {
-    _mapController = controller;
     if (!_initialized) {
       _initialized = true;
       final lat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
       final lng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
-      MapProvider.addMarker(controller, lat, lng, isOrigin: true);
+      unawaited(MapProvider.addMarker(controller, lat, lng, isOrigin: true));
     }
   }
 
@@ -372,7 +365,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                 color: AppTheme.cancel.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(32),
               ),
-              child: Text(
+              child: const Text(
                 'Cancel Search',
                 style: TextStyle(
                   color: AppTheme.cancel,
@@ -438,7 +431,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
               shrinkWrap: true,
               itemCount: _offers.length,
               itemBuilder: (context, index) {
-                final offer = _offers[index];
+                final offer = _offers[index] as Map<String, dynamic>;
                 final driverName = offer['driver_name'] as String? ?? 'Driver';
                 final vehicleType =
                     offer['vehicle_type'] as String? ?? 'Bao Bao';
@@ -488,7 +481,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        const Text(
                           'Accept Bid',
                           style: TextStyle(
                             fontSize: 11,
@@ -523,7 +516,7 @@ class _FindingDriverScreenState extends State<FindingDriverScreen>
                 color: AppTheme.cancel.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(32),
               ),
-              child: Text(
+              child: const Text(
                 'Cancel Search',
                 style: TextStyle(
                   color: AppTheme.cancel,

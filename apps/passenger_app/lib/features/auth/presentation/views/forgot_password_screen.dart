@@ -1,9 +1,10 @@
 /// Forgot Password Screen: lets passengers request password recovery emails.
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/shared/widgets/custom_toast.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -142,7 +143,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             decoration: InputDecoration(
                               hintText: 'Email',
                               errorText: _emailError,
-                              errorStyle: TextStyle(color: AppTheme.cancel),
+                              errorStyle: const TextStyle(color: AppTheme.cancel),
                               prefixIcon: const Padding(
                                 padding: EdgeInsets.only(left: 10),
                                 child: Icon(LucideIcons.mail, size: 20),
@@ -165,11 +166,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(32),
-                                borderSide: BorderSide(color: AppTheme.cancel),
+                                borderSide: const BorderSide(color: AppTheme.cancel),
                               ),
                               focusedErrorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(32),
-                                borderSide: BorderSide(
+                                borderSide: const BorderSide(
                                   color: AppTheme.cancel,
                                   width: 1.5,
                                 ),

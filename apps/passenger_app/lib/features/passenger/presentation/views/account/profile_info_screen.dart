@@ -1,11 +1,15 @@
 /// Profile Info Screen: lets passengers view and update their profile details in the database.
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
+library;
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/shared/widgets/custom_toast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileInfoScreen extends StatefulWidget {
   const ProfileInfoScreen({super.key});
@@ -29,7 +33,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    unawaited(_loadProfile());
   }
 
   @override
@@ -254,7 +258,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           ),
           decoration: InputDecoration(
             errorText: errorText,
-            errorStyle: TextStyle(color: AppTheme.cancel),
+            errorStyle: const TextStyle(color: AppTheme.cancel),
             prefixIcon: Icon(
               icon,
               size: 18,
@@ -282,11 +286,11 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: AppTheme.cancel),
+              borderSide: const BorderSide(color: AppTheme.cancel),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: AppTheme.cancel,
                 width: 1.5,
               ),

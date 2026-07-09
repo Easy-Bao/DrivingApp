@@ -1,6 +1,6 @@
 import 'package:core_models/core_models.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_state.dart';
 
 /// Manages the passenger home screen state.
 class PassengerHomeCubit extends Cubit<PassengerHomeState> {

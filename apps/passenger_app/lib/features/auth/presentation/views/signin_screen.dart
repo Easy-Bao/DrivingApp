@@ -1,4 +1,7 @@
 /// Signin Screen: allows passengers to sign in with their email and password credentials.
+library;
+
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -88,7 +91,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       decoration: InputDecoration(
                         hintText: 'Email',
                         errorText: _emailError,
-                        errorStyle: TextStyle(color: AppTheme.cancel),
+                        errorStyle: const TextStyle(color: AppTheme.cancel),
                         prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: Icon(LucideIcons.mail, size: 20),
@@ -109,11 +112,11 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(32),
-                          borderSide: BorderSide(color: AppTheme.cancel),
+                          borderSide: const BorderSide(color: AppTheme.cancel),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(32),
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: AppTheme.cancel,
                             width: 1.5,
                           ),
@@ -128,7 +131,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       decoration: InputDecoration(
                         hintText: 'Password',
                         errorText: _passwordError,
-                        errorStyle: TextStyle(color: AppTheme.cancel),
+                        errorStyle: const TextStyle(color: AppTheme.cancel),
                         prefixIcon: const Padding(
                           padding: EdgeInsetsGeometry.only(left: 10),
                           child: Icon(LucideIcons.lock, size: 20),
@@ -160,11 +163,11 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(32),
-                          borderSide: BorderSide(color: AppTheme.cancel),
+                          borderSide: const BorderSide(color: AppTheme.cancel),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(32),
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: AppTheme.cancel,
                             width: 1.5,
                           ),
@@ -194,7 +197,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            context.pushNamed('ForgotPassword');
+                            unawaited(context.pushNamed('ForgotPassword'));
                           },
                           child: const Text(
                             'Forgot Password?',
@@ -300,7 +303,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            context.pushNamed('Signup');
+                            unawaited(context.pushNamed('Signup'));
                           },
                           child: const Text(
                             'Sign up',
@@ -330,15 +333,6 @@ class _SigninScreenState extends State<SigninScreen> {
     super.dispose();
   }
 
-  String _parseError(String body) {
-    try {
-      final data = jsonDecode(body);
-      return data['error'] ?? 'Login failed';
-    } catch (_) {
-      return 'Login failed';
-    }
-  }
-
   Map<String, dynamic> _parseErrorJson(String body) {
     try {
       return jsonDecode(body) as Map<String, dynamic>;
@@ -352,12 +346,13 @@ class _SigninScreenState extends State<SigninScreen> {
     String? otpError;
     bool isVerifying = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
+    unawaited(
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (builderCtx, setModalState) {
             return AlertDialog(
               backgroundColor: AppTheme.surface,
               shape: RoundedRectangleBorder(
@@ -382,7 +377,7 @@ class _SigninScreenState extends State<SigninScreen> {
                 children: [
                   Text(
                     'We sent a 6-digit OTP to $email. Please enter it below to verify your account.',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: AppTheme.primaryColor,
                     ),
@@ -433,8 +428,12 @@ class _SigninScreenState extends State<SigninScreen> {
                               code: code,
                             );
                             if (success) {
-                              Navigator.pop(dialogCtx);
-                              _showSuccessModal();
+                              if (dialogCtx.mounted) {
+                                Navigator.pop(dialogCtx);
+                              }
+                              if (mounted) {
+                                _showSuccessModal();
+                              }
                             } else {
                               setModalState(() {
                                 otpError = 'Invalid or expired OTP';
@@ -473,60 +472,62 @@ class _SigninScreenState extends State<SigninScreen> {
           },
         );
       },
-    );
+    ));
   }
 
   void _showSuccessModal() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
-        return AlertDialog(
-          backgroundColor: AppTheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 16),
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppTheme.complete,
-                  shape: BoxShape.circle,
+    unawaited(
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) {
+          return AlertDialog(
+            backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.complete,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    LucideIcons.check,
+                    color: Colors.white,
+                    size: 40,
+                  ),
                 ),
-                child: const Icon(
-                  LucideIcons.check,
-                  color: Colors.white,
-                  size: 40,
+                const SizedBox(height: 20),
+                const Text(
+                  'Verification Successful!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Verification Successful!',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
+                const SizedBox(height: 8),
+                const Text(
+                  'Logging in shortly...',
+                  style: TextStyle(fontSize: 13, color: AppTheme.primaryColor),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Logging in shortly...',
-                style: TextStyle(fontSize: 13, color: AppTheme.primaryColor),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
     );
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
       Navigator.pop(context);
-      _signIn();
+      unawaited(_signIn());
     });
   }
 
@@ -574,7 +575,7 @@ class _SigninScreenState extends State<SigninScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
         final token = data['token'] as String;
         final passenger = data['passenger'] as Map<String, dynamic>;
 
@@ -586,7 +587,7 @@ class _SigninScreenState extends State<SigninScreen> {
         await prefs.setString('passenger_email', passenger['email'] as String);
 
         if (!mounted) return;
-        context.pushNamed('PassengerHome');
+        unawaited(context.pushNamed('PassengerHome'));
       } else {
         final errorData = _parseErrorJson(response.body);
         final errorMsg = errorData['error'] ?? 'Login failed';

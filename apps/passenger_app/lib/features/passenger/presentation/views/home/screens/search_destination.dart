@@ -2,12 +2,13 @@
 library;
 
 import 'dart:async';
+
 import 'package:core_models/core_models.dart';
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 
 class SearchDestinationScreen extends StatefulWidget {
   final String? preselectedRideType;
@@ -37,7 +38,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
   @override
   void initState() {
     super.initState();
-    _initLocation();
+    unawaited(_initLocation());
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -54,7 +55,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
     if (pos != null && mounted) {
       _userLat = pos.latitude;
       _userLng = pos.longitude;
-      _loadNearbyPlaces();
+      unawaited(_loadNearbyPlaces());
     }
   }
 
@@ -124,14 +125,16 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
     if (widget.pickupAddress != null) {
       queryParams['pickupAddress'] = widget.pickupAddress!;
     }
-    context.pushNamed(
-      'DestinationPreview',
-      extra: place,
-      queryParameters: queryParams,
+    unawaited(
+      context.pushNamed(
+        'DestinationPreview',
+        extra: place,
+        queryParameters: queryParams,
+      ),
     );
   }
 
-  void _openMapPin() async {
+  Future<void> _openMapPin() async {
     final result = await context.pushNamed('MapPin');
     if (result != null && result is PlaceModel) {
       _onPlaceSelected(result);

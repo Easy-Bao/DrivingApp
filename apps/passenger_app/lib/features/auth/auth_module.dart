@@ -1,9 +1,9 @@
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/transitions/app_transitions.dart';
 import 'package:passenger_app/features/auth/presentation/views/forgot_password_screen.dart';
 import 'package:passenger_app/features/auth/presentation/views/onboarding_screen.dart';
 import 'package:passenger_app/features/auth/presentation/views/signin_screen.dart';
 import 'package:passenger_app/features/auth/presentation/views/signup_screen.dart';
-import 'package:passenger_app/core/transitions/app_transitions.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 
 class AuthModule extends Module {
   @override

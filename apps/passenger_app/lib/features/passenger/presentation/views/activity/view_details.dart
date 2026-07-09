@@ -1,16 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/config/env_config.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/shared/widgets/driver_profile_details_sheet.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /**
  * Trip details screen for a completed ride.
@@ -211,16 +212,18 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
             GestureDetector(
               onTap: () {
                 final retrievedRideData = _detailedRideData;
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (BuildContext sheetContext) => DriverProfileDetailsSheet(
-                    driverId: retrievedRideData?['driver_id'] as String? ?? 'driver-id-xyz',
-                    driverName: retrievedRideData?['driver_name'] as String? ?? ride?.driverName ?? 'Driver',
-                    vehicleType: retrievedRideData?['vehicle_type'] as String? ?? 'Bao Bao',
-                    plateNumber: retrievedRideData?['plate_number'] as String? ?? ride?.vehiclePlate ?? 'ABC 1234',
-                    rating: retrievedRideData?['driver_rating'] as String? ?? '5.0',
+                unawaited(
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (BuildContext sheetContext) => DriverProfileDetailsSheet(
+                      driverId: retrievedRideData?['driver_id'] as String? ?? 'driver-id-xyz',
+                      driverName: retrievedRideData?['driver_name'] as String? ?? ride?.driverName ?? 'Driver',
+                      vehicleType: retrievedRideData?['vehicle_type'] as String? ?? 'Bao Bao',
+                      plateNumber: retrievedRideData?['plate_number'] as String? ?? ride?.vehiclePlate ?? 'ABC 1234',
+                      rating: retrievedRideData?['driver_rating'] as String? ?? '5.0',
+                    ),
                   ),
                 );
               },

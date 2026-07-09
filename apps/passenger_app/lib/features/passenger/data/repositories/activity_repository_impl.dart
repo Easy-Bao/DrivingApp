@@ -1,8 +1,9 @@
 /// Activity Repository: defines contracts and maps backend JSON payloads to typed ride history records.
+library;
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
-import 'activity_repository.dart';
+import 'package:passenger_app/features/passenger/data/repositories/activity_repository.dart';
 
 const _monthAbbreviations = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',

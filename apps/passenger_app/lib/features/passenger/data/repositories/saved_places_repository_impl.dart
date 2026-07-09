@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:passenger_app/features/passenger/data/repositories/saved_places_repository.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /**
  * SharedPreferences-backed implementation of [SavedPlacesRepository].

@@ -4,12 +4,12 @@ library;
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 
 class DestinationPreviewScreen extends StatefulWidget {
   final PlaceModel destination;
@@ -278,28 +278,32 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                           ? null
                           : () {
                               if (widget.preselectedRideType != null) {
-                                context.pushNamed(
-                                  'FindingDriver',
-                                  extra: {
-                                    'rideType': widget.preselectedRideType!,
-                                    'fare': _fares[widget.preselectedRideType!] ?? (20.0 + _distanceKm * 10),
-                                    'destination': widget.destination,
-                                    'distance': _distance,
-                                    'duration': _duration,
-                                    'pickupAddress': widget.pickupAddress ?? 'Current Location',
-                                  },
+                                unawaited(
+                                  context.pushNamed(
+                                    'FindingDriver',
+                                    extra: {
+                                      'rideType': widget.preselectedRideType!,
+                                      'fare': _fares[widget.preselectedRideType!] ?? (20.0 + _distanceKm * 10),
+                                      'destination': widget.destination,
+                                      'distance': _distance,
+                                      'duration': _duration,
+                                      'pickupAddress': widget.pickupAddress ?? 'Current Location',
+                                    },
+                                  ),
                                 );
                               } else {
-                                context.pushNamed(
-                                  'RideSelection',
-                                  extra: {
-                                    'destination': widget.destination,
-                                    'distance': _distance,
-                                    'duration': _duration,
-                                    'distanceKm': _distanceKm,
-                                    'fares': _fares,
-                                    'pickupAddress': widget.pickupAddress ?? 'Current Location',
-                                  },
+                                unawaited(
+                                  context.pushNamed(
+                                    'RideSelection',
+                                    extra: {
+                                      'destination': widget.destination,
+                                      'distance': _distance,
+                                      'duration': _duration,
+                                      'distanceKm': _distanceKm,
+                                      'fares': _fares,
+                                      'pickupAddress': widget.pickupAddress ?? 'Current Location',
+                                    },
+                                  ),
                                 );
                               }
                             },

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -318,7 +320,7 @@ class _PassengerAddCategoryScreenState
       _isLocationPinned = true;
       _controller.text = widget.initialPlace!.name;
     } else {
-      _initLocation();
+      unawaited(_initLocation());
     }
   }
 
@@ -398,6 +400,6 @@ class _PassengerAddCategoryScreenState
 
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
-    MapProvider.addMarker(controller, _lat, _lng, isOrigin: false);
+    unawaited(MapProvider.addMarker(controller, _lat, _lng, isOrigin: false));
   }
 }

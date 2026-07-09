@@ -1,12 +1,14 @@
 /// Ride Selection Screen: displays a map route preview and list of ride tier options with dynamic fares for selection.
 library;
 
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 
 class RideSelectionScreen extends StatefulWidget {
   final PlaceModel destination;
@@ -133,7 +135,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                   interactive: false,
                   onMapCreated: (controller) {
                     _mapController = controller;
-                    _drawRoute();
+                    unawaited(_drawRoute());
                   },
                 ),
               ),

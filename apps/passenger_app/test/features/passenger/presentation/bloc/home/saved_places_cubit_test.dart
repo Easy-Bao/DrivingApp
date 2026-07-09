@@ -1,10 +1,11 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/features/passenger/data/repositories/saved_places_repository.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_state.dart';
-import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 
 class MockSavedPlacesRepository extends Mock implements SavedPlacesRepository {}
 
@@ -20,7 +21,7 @@ void main() {
       final cubit = SavedPlacesCubit(repository: mockRepository);
       expect(cubit.state.isLoading, isTrue);
       expect(cubit.state.places, isEmpty);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     blocTest<SavedPlacesCubit, SavedPlacesState>(

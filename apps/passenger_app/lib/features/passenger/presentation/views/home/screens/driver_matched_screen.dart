@@ -10,9 +10,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:passenger_app/shared/widgets/driver_profile_details_sheet.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverMatchedScreen extends StatefulWidget {
   final String rideType;
@@ -227,16 +226,18 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
 
               GestureDetector(
                 onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (BuildContext sheetContext) => DriverProfileDetailsSheet(
-                      driverId: widget.driverId ?? 'driver-id-xyz',
-                      driverName: widget.driverName ?? 'Driver',
-                      vehicleType: widget.vehicleType ?? 'Bao Bao',
-                      plateNumber: widget.plateNumber ?? 'ABC 1234',
-                      rating: widget.driverRating ?? '5.0',
+                  unawaited(
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (BuildContext sheetContext) => DriverProfileDetailsSheet(
+                        driverId: widget.driverId ?? 'driver-id-xyz',
+                        driverName: widget.driverName ?? 'Driver',
+                        vehicleType: widget.vehicleType ?? 'Bao Bao',
+                        plateNumber: widget.plateNumber ?? 'ABC 1234',
+                        rating: widget.driverRating ?? '5.0',
+                      ),
                     ),
                   );
                 },

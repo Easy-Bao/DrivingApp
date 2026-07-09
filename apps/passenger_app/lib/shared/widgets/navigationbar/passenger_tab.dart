@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -65,16 +67,16 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
   void _toggleRideMenu() {
     setState(() => _rideMenuOpen = !_rideMenuOpen);
     if (_rideMenuOpen) {
-      _rideMenuController.forward(from: 0);
+      unawaited(_rideMenuController.forward(from: 0));
     } else {
-      _rideMenuController.reverse();
+      unawaited(_rideMenuController.reverse());
     }
   }
 
   void _closeRideMenu() {
     if (!_rideMenuOpen) return;
     setState(() => _rideMenuOpen = false);
-    _rideMenuController.reverse();
+    unawaited(_rideMenuController.reverse());
   }
 
 
@@ -158,12 +160,14 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
                     try {
                       address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
                     } catch (_) {}
-                    context.pushNamed(
-                      'SearchDestination',
-                      queryParameters: {
-                        'rideType': 'Share Ride',
-                        if (address != null) 'pickupAddress': address,
-                      },
+                    unawaited(
+                      context.pushNamed(
+                        'SearchDestination',
+                        queryParameters: {
+                          'rideType': 'Share Ride',
+                          'pickupAddress': ?address,
+                        },
+                      ),
                     );
                   },
                   onSoloRide: () {
@@ -172,12 +176,14 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
                     try {
                       address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
                     } catch (_) {}
-                    context.pushNamed(
-                      'SearchDestination',
-                      queryParameters: {
-                        'rideType': 'Solo Ride',
-                        if (address != null) 'pickupAddress': address,
-                      },
+                    unawaited(
+                      context.pushNamed(
+                        'SearchDestination',
+                        queryParameters: {
+                          'rideType': 'Solo Ride',
+                          'pickupAddress': ?address,
+                        },
+                      ),
                     );
                   },
                 ),

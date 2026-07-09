@@ -1,6 +1,9 @@
 /// Home Module: declares GoRouter route maps and configures shell layouts for passenger features.
-import 'package:passenger_app/core/di/service_locator.dart';
+library;
 import 'package:core_models/core_models.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/di/service_locator.dart';
 import 'package:passenger_app/core/transitions/app_transitions.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_places_cubit.dart';
@@ -16,8 +19,6 @@ import 'package:passenger_app/features/passenger/presentation/views/home/screens
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/search_destination.dart';
 import 'package:passenger_app/features/passenger/presentation/views/home/screens/view_all_activity.dart';
 import 'package:passenger_app/features/passenger/presentation/views/passenger_home.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 
 class HomeModule {
   HomeModule._();
@@ -36,7 +37,7 @@ class HomeModule {
     ChildRoute(
       name: 'ViewAllSuggestions',
       'home/suggestions',
-      child: (context, GoRouterState state) => PassengerViewAllActivity(),
+      child: (context, GoRouterState state) => const PassengerViewAllActivity(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

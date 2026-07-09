@@ -145,7 +145,7 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
                     padding: const EdgeInsets.all(24.0),
                     child: Text(
                       _errorMessage,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppTheme.cancel,
                         fontWeight: FontWeight.w600,
                       ),

@@ -1,11 +1,15 @@
 /// Ride History Screen: displays a list of past and canceled trips fetched from the database for the active passenger.
+library;
+
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
-import 'package:passenger_app/core/di/service_locator.dart';
-import 'package:passenger_app/features/passenger/data/repositories/activity_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/di/service_locator.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/features/passenger/data/repositories/activity_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RideHistoryScreen extends StatefulWidget {
@@ -26,7 +30,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() => setState(() {}));
-    _loadRides();
+    unawaited(_loadRides());
   }
 
   @override

@@ -1,10 +1,10 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:core_models/core_models.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';
-import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
 class MockDriverRepo extends Mock implements DriverRepository {}
 

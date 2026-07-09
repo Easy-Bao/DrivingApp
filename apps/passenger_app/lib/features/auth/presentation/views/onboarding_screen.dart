@@ -1,6 +1,8 @@
-import 'package:passenger_app/core/themes/app_themes.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 
 class OnBoardingScreen extends StatelessWidget {
   const OnBoardingScreen({super.key});
@@ -74,7 +76,7 @@ class OnBoardingScreen extends StatelessWidget {
                           height: 60,
                           child: ElevatedButton(
                             onPressed: () {
-                              context.pushNamed('Signin');
+                              unawaited(context.pushNamed('Signin'));
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryColor,

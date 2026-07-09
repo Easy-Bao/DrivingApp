@@ -1,6 +1,6 @@
-import 'package:location_service/location_service.dart';
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
+import 'package:location_service/location_service.dart';
 
 /// Track and route calculation repository adapter.
 ///

@@ -4,6 +4,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 
 class CustomToast {
+  CustomToast._();
+
   static void show(
     BuildContext context,
     String message, {
@@ -64,12 +66,12 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
-    _controller.forward();
+    unawaited(_controller.forward());
 
     // Start fade out slightly before dismissal
     Timer(const Duration(milliseconds: 2700), () {
       if (mounted) {
-        _controller.reverse();
+        unawaited(_controller.reverse());
       }
     });
   }

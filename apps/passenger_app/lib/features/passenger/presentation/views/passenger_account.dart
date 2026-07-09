@@ -1,11 +1,12 @@
 /// Passenger Account Screen: displays account settings, support information, and handles logging out.
 library;
 import 'dart:async';
-import 'package:passenger_app/core/services/passenger_api_service.dart';
-import 'package:passenger_app/core/themes/app_themes.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerAccountScreen extends StatefulWidget {
@@ -74,11 +75,11 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
+                  children: [
                     Text(
                       'Account',
                       style: TextStyle(
@@ -103,7 +104,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
               _buildSectionTitle('Support'),
               ..._buildSupportItems(context).map((item) => _buildAccountTile(context, item)),
               const SizedBox(height: 40),
-              _buildLogoutButton(context),
+              _buildLogoutButton(),
               const SizedBox(height: 40),
             ],
           ),
@@ -260,7 +261,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context) {
+  Widget _buildLogoutButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: TextButton(
