@@ -72,6 +72,19 @@ ridesRouter.get('/driver/:driverId', async (context) => {
   }
 });
 
+ridesRouter.get('/passenger/:passengerId', async (context) => {
+  const passengerId = context.req.param('passengerId');
+  try {
+    const list = await prisma.ride.findMany({
+      where: { passengerId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return context.json(list.map(mapRideToSnakeCase));
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
+  }
+});
+
 ridesRouter.post('/:id/accept', async (context) => {
   const id = context.req.param('id');
   try {
@@ -108,6 +121,16 @@ ridesRouter.post('/:id/status', async (context) => {
         completedAt: isTerminalStatus ? new Date() : undefined,
       },
     });
+
+    if (isTerminalStatus) {
+      const chatServiceUrl = process.env.CHAT_SERVICE_URL || 'http://127.0.0.1:8086';
+      fetch(`${chatServiceUrl}/rooms/${rideIdentifier}/resolve`, {
+        method: 'POST',
+      }).catch((err) => {
+        console.error('Failed to auto-resolve chat room:', err);
+      });
+    }
+
     return context.json(mapRideToSnakeCase(updatedRideRecord));
   } catch (caughtError: any) {
     return context.json({ error: caughtError.message }, 400);

@@ -114,52 +114,69 @@ export class PrismaPassengerRepository implements PassengerRepository {
     if (!passenger) {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
-    const rideRequestRecords = await prisma.rideRequest.findMany({
-      where: { passenger_id: passengerId },
-      orderBy: { created_at: 'desc' },
-    });
 
     const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+    const ridesMap = new Map<string, RideRequest>();
 
-    const enrichedRideRequests = await Promise.all(
-      rideRequestRecords.map(async (rideRequest) => {
-        let currentStatus = rideRequest.status;
-        let driverName = '';
-        let plateNumber = '';
-
-        try {
-          const tripResponse = await fetch(`${tripServiceUrl}/rides/${rideRequest.id}`);
-          if (tripResponse.ok) {
-            const tripDetails = await tripResponse.json() as Record<string, unknown>;
-            currentStatus = (tripDetails.status as string) || currentStatus;
-            driverName = (tripDetails.driver_name as string) || '';
-            plateNumber = (tripDetails.plate_number as string) || '';
-          }
-        } catch {
-          // trip-service unreachable — preserve local status
-        }
-
-        return {
-          id: rideRequest.id,
-          passenger_id: rideRequest.passenger_id,
-          ride_type: rideRequest.ride_type as RideType,
-          pickup_latitude: rideRequest.pickup_latitude,
-          pickup_longitude: rideRequest.pickup_longitude,
-          pickup_name: rideRequest.pickup_name,
-          dropoff_latitude: rideRequest.dropoff_latitude,
-          dropoff_longitude: rideRequest.dropoff_longitude,
-          dropoff_name: rideRequest.dropoff_name,
-          fare: rideRequest.fare,
-          status: currentStatus,
-          created_at: rideRequest.created_at,
-          driver_name: driverName,
-          plate_number: plateNumber,
+    try {
+      const localRecords = await prisma.rideRequest.findMany({
+        where: { passenger_id: passengerId },
+        orderBy: { created_at: 'desc' },
+      });
+      for (const rec of localRecords) {
+        ridesMap.set(rec.id, {
+          id: rec.id,
+          passenger_id: rec.passenger_id,
+          ride_type: rec.ride_type as RideType,
+          pickup_latitude: rec.pickup_latitude,
+          pickup_longitude: rec.pickup_longitude,
+          pickup_name: rec.pickup_name,
+          dropoff_latitude: rec.dropoff_latitude,
+          dropoff_longitude: rec.dropoff_longitude,
+          dropoff_name: rec.dropoff_name,
+          fare: rec.fare,
+          status: rec.status,
+          created_at: rec.created_at,
+          driver_name: '',
+          plate_number: '',
           password_hash: '',
-        };
-      }),
-    );
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch local ride requests:', err);
+    }
 
-    return enrichedRideRequests;
+    try {
+      const tripResponse = await fetch(`${tripServiceUrl}/rides/passenger/${passengerId}`);
+      if (tripResponse.ok) {
+        const trips = await tripResponse.json() as any[];
+        for (const trip of trips) {
+          ridesMap.set(trip.id, {
+            id: trip.id,
+            passenger_id: trip.passenger_id,
+            ride_type: trip.ride_type as RideType,
+            pickup_latitude: trip.pickup_latitude,
+            pickup_longitude: trip.pickup_longitude,
+            pickup_name: trip.pickup_name,
+            dropoff_latitude: trip.dropoff_latitude,
+            dropoff_longitude: trip.dropoff_longitude,
+            dropoff_name: trip.dropoff_name,
+            fare: trip.fare,
+            status: trip.status,
+            created_at: new Date(trip.created_at),
+            driver_name: trip.driver_name || '',
+            plate_number: trip.plate_number || '',
+            password_hash: '',
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch rides from trip-service:', err);
+    }
+
+    const list = Array.from(ridesMap.values());
+    list.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+    return list;
   }
 
   async updatePassengerProfile({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
