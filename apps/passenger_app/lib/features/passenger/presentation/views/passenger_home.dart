@@ -1,11 +1,16 @@
 /// Passenger Home Screen: displays active location details, suggestions, quick actions, and recent activities.
+library;
+
 import 'dart:async';
+
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:core_models/core_models.dart';
+import 'package:passenger_app/core/di/service_locator.dart';
+import 'package:passenger_app/core/services/bid_session_service.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/home/passenger_home_cubit.dart';
@@ -15,8 +20,6 @@ import 'package:passenger_app/features/passenger/presentation/bloc/home/saved_pl
 import 'package:passenger_app/features/passenger/presentation/views/home/models/saved_place_model.dart';
 import 'package:passenger_app/shared/widgets/custom_toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:passenger_app/core/di/service_locator.dart';
-import 'package:passenger_app/core/services/bid_session_service.dart';
 
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
@@ -38,39 +41,44 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeIn,
-          child: SlideTransition(
-            position: _slideIn,
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildHeader(),
-                      const SizedBox(height: 12),
-                      _buildLocationRow(),
-                      const SizedBox(height: 24),
-                      _buildSearchBar(),
-                      const SizedBox(height: 16),
-                      _buildChipRow(),
-                      const SizedBox(height: 24),
-                      _buildRecentActivityHeader(),
-                      Expanded(child: _buildRecentActivityList()),
-                    ],
-                  ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: FadeTransition(
+              opacity: _fadeIn,
+              child: SlideTransition(
+                position: _slideIn,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 20),
+                          _buildHeader(),
+                          const SizedBox(height: 12),
+                          _buildLocationRow(),
+                          const SizedBox(height: 24),
+                          _buildSearchBar(),
+                          const SizedBox(height: 16),
+                          _buildChipRow(),
+                          const SizedBox(height: 24),
+                          _buildRecentActivityHeader(),
+                          Expanded(child: _buildRecentActivityList()),
+                        ],
+                      ),
+                    ),
+                    if (_bidSessionService.isActive)
+                      Positioned(
+                        left: 20,
+                        right: 20,
+                        bottom: 16,
+                        child: _buildBackgroundSearchingBanner(),
+                      ),
+                  ],
                 ),
-                if (_bidSessionService.isActive)
-                  Positioned(
-                    left: 20,
-                    right: 20,
-                    bottom: 16,
-                    child: _buildBackgroundSearchingBanner(),
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -503,8 +511,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         if (state.isLoading) {
           return ListView.builder(
             padding: const EdgeInsets.only(bottom: 20),
-            itemCount: 3,
-            itemBuilder: (_, __) => _buildShimmerListItem(),
+            itemCount: state.recentLocations.isEmpty ? 3 : state.recentLocations.length,
+            itemBuilder: (_, _) => _buildShimmerListItem(),
           );
         }
         if (state.recentLocations.isEmpty) {
@@ -616,9 +624,11 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     return GestureDetector(
       onTap: () {
         final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
-        context.pushNamed(
-          'SearchDestination',
-          queryParameters: {'pickupAddress': address},
+        unawaited(
+          context.pushNamed(
+            'SearchDestination',
+            queryParameters: {'pickupAddress': address},
+          ),
         );
       },
       child: Hero(
@@ -718,8 +728,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
 
     final hasPermission = await LocationService.checkAndRequestPermission();
     if (!hasPermission) {
+      final serviceEnabled = await LocationService.isServiceEnabled();
       if (mounted) {
-        final serviceEnabled = await LocationService.isServiceEnabled();
         final message = serviceEnabled
             ? 'Location permission denied. Enable it in Settings to see your location.'
             : 'Location services are disabled. Enable them in Settings.';
@@ -741,7 +751,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       }
     }
 
-    _locationSubscription?.cancel();
+    unawaited(_locationSubscription?.cancel());
     _locationSubscription = LocationService.getPositionStream().listen(
       (pos) async {
         if (!mounted) return;
@@ -838,9 +848,5 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         ),
       ),
     );
-  }
-
-  void _showFeedback(String message) {
-    CustomToast.show(context, message);
   }
 }
