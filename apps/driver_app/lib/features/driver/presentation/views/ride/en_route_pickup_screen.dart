@@ -1,16 +1,20 @@
 import 'dart:async';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/core/themes/app_themes.dart';
+import 'package:driver_app/core/config/env_config.dart';
 import 'package:driver_app/core/services/driver_api_service.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
-import 'package:location_service/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:http/http.dart' as http;
+import 'package:location_service/location_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EnRoutePickupScreen extends StatefulWidget {
   final String pickup;
@@ -43,6 +47,10 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   dynamic _driverMarkerManager;
   dynamic _passengerMarkerManager;
 
+  int _unreadChatMessagesCount = 0;
+  int _viewedPassengerMessagesCount = 0;
+  bool _isInitialChatMessagesCountFetched = false;
+
   @override
   void initState() {
     super.initState();
@@ -56,11 +64,46 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
     super.dispose();
   }
 
+  Future<void> _updateUnreadMessagesCount() async {
+    try {
+      final cubit = BlocProvider.of<RideFlowCubit>(context);
+      final rideId = cubit.activeRideId;
+      if (rideId == null || rideId.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final driverIdentifier = prefs.getString('driver_id') ?? '';
+      if (driverIdentifier.isEmpty) return;
+
+      final driverServiceEndpointUrl = EnvConfig.driverServiceUrl;
+      final apiGatewayEndpointUrl = driverServiceEndpointUrl.replaceAll('8082', '8080');
+      final chatMessagesEndpointUri = Uri.parse('$apiGatewayEndpointUrl/chat/rooms/$rideId/messages');
+
+      final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
+      if (chatMessagesHttpResponse.statusCode == 200) {
+        final List<dynamic> chatMessagesList = jsonDecode(chatMessagesHttpResponse.body);
+        final passengerChatMessagesList = chatMessagesList.where((m) => m is Map<String, dynamic> && m['senderId'] != driverIdentifier).toList();
+        final currentPassengerMessagesCount = passengerChatMessagesList.length;
+
+        if (mounted) {
+          setState(() {
+            if (!_isInitialChatMessagesCountFetched) {
+              _viewedPassengerMessagesCount = currentPassengerMessagesCount;
+              _isInitialChatMessagesCountFetched = true;
+            } else if (currentPassengerMessagesCount > _viewedPassengerMessagesCount) {
+              _unreadChatMessagesCount = currentPassengerMessagesCount - _viewedPassengerMessagesCount;
+            }
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
   void _startTrackingPassenger() {
     _trackingTimer?.cancel();
     _trackingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (!mounted) return;
       final cubit = BlocProvider.of<RideFlowCubit>(context);
+      await _updateUnreadMessagesCount();
       final rideId = cubit.activeRideId;
       if (rideId == null || rideId.isEmpty) return;
 
@@ -532,6 +575,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               'Chat',
               AppTheme.neutralColor,
               AppTheme.primaryColor,
+              displayNotificationBadge: _unreadChatMessagesCount > 0,
+              notificationBadgeCount: _unreadChatMessagesCount,
               onTap: () async {
                 final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
                 final state = BlocProvider.of<RideFlowCubit>(context).state;
@@ -539,7 +584,10 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                 final prefs = await SharedPreferences.getInstance();
                 final driverId = prefs.getString('driver_id') ?? '';
                 if (mounted) {
-                  context.pushNamed(
+                  setState(() {
+                    _unreadChatMessagesCount = 0;
+                  });
+                  await context.pushNamed(
                     'DriverChat',
                     extra: {
                       'roomId': rideId,
@@ -547,6 +595,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                       'peerName': passengerName,
                     },
                   );
+                  _isInitialChatMessagesCountFetched = false;
+                  await _updateUnreadMessagesCount();
                 }
               },
             ),
@@ -556,7 +606,15 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
     );
   }
 
-  Widget _actionBtn(IconData icon, String label, Color bg, Color fg, {required VoidCallback onTap}) {
+  Widget _actionBtn(
+    IconData icon,
+    String label,
+    Color bg,
+    Color fg, {
+    required VoidCallback onTap,
+    bool displayNotificationBadge = false,
+    int notificationBadgeCount = 0,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -571,7 +629,12 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: fg, size: 16),
+            Badge(
+              label: Text('$notificationBadgeCount'),
+              isLabelVisible: displayNotificationBadge && notificationBadgeCount > 0,
+              backgroundColor: const Color(0xFFE53935),
+              child: Icon(icon, color: fg, size: 16),
+            ),
             const SizedBox(width: 6),
             Text(
               label,

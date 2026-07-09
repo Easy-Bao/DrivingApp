@@ -1,16 +1,19 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:driver_app/core/config/env_config.dart';
+import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';
+import 'package:driver_app/shared/widgets/custom_toast.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:driver_app/shared/widgets/custom_toast.dart';
-import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Driver has arrived at pickup and is waiting for the passenger to board.
@@ -38,11 +41,20 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
   int _waitSeconds = 0;
   Timer? _waitTimer;
 
+  int _unreadChatMessagesCount = 0;
+  int _viewedPassengerMessagesCount = 0;
+  bool _isInitialChatMessagesCountFetched = false;
+
   @override
   void initState() {
     super.initState();
-    _waitTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _waitSeconds++);
+    _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (mounted) {
+        setState(() => _waitSeconds++);
+        if (_waitSeconds % 2 == 0) {
+          await _updateUnreadMessagesCount();
+        }
+      }
     });
   }
 
@@ -50,6 +62,40 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
   void dispose() {
     _waitTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _updateUnreadMessagesCount() async {
+    try {
+      final cubit = BlocProvider.of<RideFlowCubit>(context);
+      final rideId = cubit.activeRideId;
+      if (rideId == null || rideId.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final driverIdentifier = prefs.getString('driver_id') ?? '';
+      if (driverIdentifier.isEmpty) return;
+
+      final driverServiceEndpointUrl = EnvConfig.driverServiceUrl;
+      final apiGatewayEndpointUrl = driverServiceEndpointUrl.replaceAll('8082', '8080');
+      final chatMessagesEndpointUri = Uri.parse('$apiGatewayEndpointUrl/chat/rooms/$rideId/messages');
+
+      final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
+      if (chatMessagesHttpResponse.statusCode == 200) {
+        final List<dynamic> chatMessagesList = jsonDecode(chatMessagesHttpResponse.body);
+        final passengerChatMessagesList = chatMessagesList.where((m) => m is Map<String, dynamic> && m['senderId'] != driverIdentifier).toList();
+        final currentPassengerMessagesCount = passengerChatMessagesList.length;
+
+        if (mounted) {
+          setState(() {
+            if (!_isInitialChatMessagesCountFetched) {
+              _viewedPassengerMessagesCount = currentPassengerMessagesCount;
+              _isInitialChatMessagesCountFetched = true;
+            } else if (currentPassengerMessagesCount > _viewedPassengerMessagesCount) {
+              _unreadChatMessagesCount = currentPassengerMessagesCount - _viewedPassengerMessagesCount;
+            }
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   String get _waitFormatted {
@@ -332,6 +378,8 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             'Chat',
             AppTheme.neutralColor,
             AppTheme.primaryColor,
+            displayNotificationBadge: _unreadChatMessagesCount > 0,
+            notificationBadgeCount: _unreadChatMessagesCount,
             onTap: () async {
               final rideId =
                   BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
@@ -342,7 +390,10 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
               final prefs = await SharedPreferences.getInstance();
               final driverId = prefs.getString('driver_id') ?? '';
               if (mounted) {
-                context.pushNamed(
+                setState(() {
+                  _unreadChatMessagesCount = 0;
+                });
+                await context.pushNamed(
                   'DriverChat',
                   extra: {
                     'roomId': rideId,
@@ -350,6 +401,8 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                     'peerName': passengerName,
                   },
                 );
+                _isInitialChatMessagesCountFetched = false;
+                await _updateUnreadMessagesCount();
               }
             },
           ),
@@ -427,6 +480,8 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     Color bg,
     Color fg, {
     required VoidCallback onTap,
+    bool displayNotificationBadge = false,
+    int notificationBadgeCount = 0,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -442,7 +497,12 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: fg, size: 16),
+            Badge(
+              label: Text('$notificationBadgeCount'),
+              isLabelVisible: displayNotificationBadge && notificationBadgeCount > 0,
+              backgroundColor: const Color(0xFFE53935),
+              child: Icon(icon, color: fg, size: 16),
+            ),
             const SizedBox(width: 6),
             Text(
               label,

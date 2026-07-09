@@ -2,20 +2,23 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:http/http.dart' as http;
+import 'package:location_service/location_service.dart';
+import 'package:passenger_app/core/config/env_config.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
+import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 
 class ActivityTrackDriverScreen extends StatefulWidget {
   final RideHistoryModel ride;
@@ -35,10 +38,60 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   dynamic _driverMarkerManager;
   StreamSubscription<Position>? _locationSubscription;
 
+  int _unreadChatMessagesCount = 0;
+  int _viewedDriverMessagesCount = 0;
+  bool _isInitialChatMessagesCountFetched = false;
+  Timer? _chatMessagesPollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startChatMessagesPolling();
+  }
+
   @override
   void dispose() {
-    _locationSubscription?.cancel();
+    if (_locationSubscription != null) {
+      unawaited(_locationSubscription!.cancel());
+    }
+    _chatMessagesPollTimer?.cancel();
     super.dispose();
+  }
+
+  void _startChatMessagesPolling() {
+    _chatMessagesPollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      await _updateUnreadMessagesCount();
+    });
+  }
+
+  Future<void> _updateUnreadMessagesCount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerIdentifier = prefs.getString('passenger_id') ?? '';
+      if (passengerIdentifier.isEmpty) return;
+
+      final passengerServiceEndpointUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8081';
+      final apiGatewayEndpointUrl = passengerServiceEndpointUrl.replaceAll('8081', '8080');
+      final chatMessagesEndpointUri = Uri.parse('$apiGatewayEndpointUrl/chat/rooms/${widget.ride.id}/messages');
+
+      final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
+      if (chatMessagesHttpResponse.statusCode == 200) {
+        final List<dynamic> chatMessagesList = jsonDecode(chatMessagesHttpResponse.body);
+        final driverChatMessagesList = chatMessagesList.where((m) => m is Map<String, dynamic> && m['senderId'] != passengerIdentifier).toList();
+        final currentDriverMessagesCount = driverChatMessagesList.length;
+
+        if (mounted) {
+          setState(() {
+            if (!_isInitialChatMessagesCountFetched) {
+              _viewedDriverMessagesCount = currentDriverMessagesCount;
+              _isInitialChatMessagesCountFetched = true;
+            } else if (currentDriverMessagesCount > _viewedDriverMessagesCount) {
+              _unreadChatMessagesCount = currentDriverMessagesCount - _viewedDriverMessagesCount;
+            }
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   void _onMapCreated(AppMapController controller) {
@@ -53,7 +106,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       final driverStartLat = passengerLat + 0.006;
       final driverStartLng = passengerLng - 0.005;
 
-      _locationSubscription?.cancel();
+      if (_locationSubscription != null) {
+        unawaited(_locationSubscription!.cancel());
+      }
       _locationSubscription = LocationService.getPositionStream().listen(
         (pos) async {
           try {
@@ -437,20 +492,25 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                 backgroundColor: AppTheme.neutralColor,
                                 foregroundColor: AppTheme.primaryColor,
                                 borderColor: AppTheme.borderSide,
+                                displayNotificationBadge: _unreadChatMessagesCount > 0,
+                                notificationBadgeCount: _unreadChatMessagesCount,
                                 onTap: () async {
                                   final prefs = await SharedPreferences.getInstance();
                                   final passengerId = prefs.getString('passenger_id') ?? '';
                                   if (context.mounted) {
-                                    unawaited(
-                                      context.pushNamed(
-                                        'DriverChat',
-                                        extra: {
-                                          'roomId': widget.ride.id,
-                                          'userId': passengerId,
-                                          'peerName': driverName,
-                                        },
-                                      ),
+                                    setState(() {
+                                      _unreadChatMessagesCount = 0;
+                                    });
+                                    await context.pushNamed(
+                                      'DriverChat',
+                                      extra: {
+                                        'roomId': widget.ride.id,
+                                        'userId': passengerId,
+                                        'peerName': driverName,
+                                      },
                                     );
+                                    _isInitialChatMessagesCountFetched = false;
+                                    await _updateUnreadMessagesCount();
                                   }
                                 },
                               ),
@@ -527,6 +587,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
     required Color foregroundColor,
     Color? borderColor,
     required VoidCallback onTap,
+    bool displayNotificationBadge = false,
+    int notificationBadgeCount = 0,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -540,7 +602,12 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: foregroundColor, size: 18),
+            Badge(
+              label: Text('$notificationBadgeCount'),
+              isLabelVisible: displayNotificationBadge && notificationBadgeCount > 0,
+              backgroundColor: const Color(0xFFE53935),
+              child: Icon(icon, color: foregroundColor, size: 18),
+            ),
             const SizedBox(width: 8),
             Text(
               label,
