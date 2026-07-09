@@ -122,15 +122,6 @@ ridesRouter.post('/:id/status', async (context) => {
       },
     });
 
-    if (isTerminalStatus) {
-      const chatServiceUrl = process.env.CHAT_SERVICE_URL || 'http://127.0.0.1:8086';
-      fetch(`${chatServiceUrl}/rooms/${rideIdentifier}/resolve`, {
-        method: 'POST',
-      }).catch((err) => {
-        console.error('Failed to auto-resolve chat room:', err);
-      });
-    }
-
     return context.json(mapRideToSnakeCase(updatedRideRecord));
   } catch (caughtError: any) {
     return context.json({ error: caughtError.message }, 400);

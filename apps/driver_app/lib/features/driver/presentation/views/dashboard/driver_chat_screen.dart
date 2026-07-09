@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/core/config/env_config.dart';
+import 'package:driver_app/core/services/driver_api_service.dart';
+import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -31,6 +32,23 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   bool _isConnected = false;
   bool _isChatRoomLocked = false;
   String _lockWarningMessageText = '';
+  bool _isTripFinished = false;
+
+  Future<void> _checkTripStatus() async {
+    final rId = widget.roomId ?? '';
+    if (rId.isEmpty) return;
+    try {
+      final res = await DriverApiService.getRideStatus(rId);
+      if (res != null) {
+        final status = res['status'] as String?;
+        if (status == 'completed' || status == 'canceled' || status == 'cancelled') {
+          setState(() {
+            _isTripFinished = true;
+          });
+        }
+      }
+    } catch (_) {}
+  }
 
   Future<void> _resolveChatRoom() async {
     final chatRoomId = widget.roomId ?? 'test-room-123';
@@ -69,6 +87,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       duration: const Duration(milliseconds: 600),
     )..repeat(reverse: true);
     unawaited(_connectWebSocket());
+    unawaited(_checkTripStatus());
   }
 
   Future<void> _connectWebSocket() async {
@@ -191,7 +210,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
-          if (!_isChatRoomLocked)
+          if (_isTripFinished && !_isChatRoomLocked)
             TextButton(
               onPressed: _resolveChatRoom,
               child: Text(
