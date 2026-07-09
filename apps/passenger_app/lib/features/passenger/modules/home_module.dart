@@ -28,6 +28,7 @@ class HomeModule {
       'home/search',
       child: (context, GoRouterState state) => SearchDestinationScreen(
         preselectedRideType: state.uri.queryParameters['rideType'],
+        pickupAddress: state.uri.queryParameters['pickupAddress'],
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
