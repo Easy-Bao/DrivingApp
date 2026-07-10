@@ -79,10 +79,10 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   }
 
   final _quickReplies = [
-    "I'm here",
-    'On my way',
-    '5 minutes',
+    'Where are you?',
+    "I'm at the pickup location",
     'Wait please',
+    'Coming out now',
     'Thank you!',
   ];
 
