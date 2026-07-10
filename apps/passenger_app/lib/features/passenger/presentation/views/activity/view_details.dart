@@ -78,7 +78,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
     if (driverId == null || driverId.isEmpty) return;
 
     try {
-      final passengerServiceUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8081';
+      final passengerServiceUrl = EnvConfig.passengerServiceUrl;
       final apiGatewayUrl = passengerServiceUrl.replaceAll('8081', '8080');
       final chatRoomInitializationUrl = '$apiGatewayUrl/chat/rooms';
 

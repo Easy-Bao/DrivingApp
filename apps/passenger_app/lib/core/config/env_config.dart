@@ -11,11 +11,11 @@ class EnvConfig {
   static String get mapboxSecretToken =>
       dotenv.env['MAPBOX_SECRET_TOKEN'] ?? '';
 
-  static String? get passengerServiceUrl =>
-      _resolveEmulatorHost(dotenv.env['PASSENGER_SERVICE_URL']);
+  static String get passengerServiceUrl =>
+      _resolveEmulatorHost(dotenv.env['PASSENGER_SERVICE_URL']) ?? 'http://127.0.0.1:8080';
 
-  static String? get tripServiceUrl =>
-      _resolveEmulatorHost(dotenv.env['TRIP_SERVICE_URL']);
+  static String get tripServiceUrl =>
+      _resolveEmulatorHost(dotenv.env['TRIP_SERVICE_URL']) ?? 'http://127.0.0.1:8080';
 
   static String? _resolveEmulatorHost(String? url) {
     if (url == null) return null;

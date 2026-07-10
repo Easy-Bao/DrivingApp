@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -8,6 +6,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:passenger_app/core/config/env_config.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
+import 'package:passenger_app/core/services/passenger_chat_service.dart';
 import 'package:passenger_app/core/themes/app_themes.dart';
 
 class DriverChatScreen extends StatefulWidget {
@@ -32,14 +31,12 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _msgCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
-  final List<_Msg> _msgs = [];
   late AnimationController _typingCtrl;
   final bool _driverTyping = false;
-  WebSocket? _socket;
-  bool _isConnected = false;
-  bool _isChatRoomLocked = false;
-  String _lockWarningMessageText = '';
   bool _isTripFinished = false;
+
+  late PassengerChatService _chatService;
+  StreamSubscription<void>? _chatUpdatesSubscription;
 
   Future<void> _checkTripStatus() async {
     final rId = widget.roomId ?? '';
@@ -48,7 +45,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       final res = await PassengerApiService.getRideStatus(rId);
       if (res != null) {
         final status = res['status'] as String?;
-        if (status == 'completed' || status == 'canceled' || status == 'cancelled') {
+        if (status == 'completed' || status == 'cancelled' || status == 'cancelled') {
           setState(() {
             _isTripFinished = true;
           });
@@ -58,9 +55,12 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   }
 
   Future<void> _resolveChatRoom() async {
-    final chatRoomId = widget.roomId ?? 'test-room-123';
+    final chatRoomId = widget.roomId;
+    if (chatRoomId == null || chatRoomId.isEmpty) {
+      throw ArgumentError('Room ID cannot be empty');
+    }
     try {
-      final passengerServiceUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8081';
+      final passengerServiceUrl = EnvConfig.passengerServiceUrl;
       final apiGatewayUrl = passengerServiceUrl.replaceAll('8081', '8080');
       final resolveEndpointUrl = '$apiGatewayUrl/chat/rooms/$chatRoomId/resolve';
 
@@ -70,10 +70,10 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       );
 
       if (resolveResponse.statusCode == 200) {
-        setState(() {
-          _isChatRoomLocked = true;
-          _lockWarningMessageText = 'This conversation has been resolved.';
-        });
+        unawaited(_chatService.connectToChatRoom(
+          roomId: chatRoomId,
+          jsonWebToken: widget.token,
+        ));
       }
     } catch (_) {}
   }
@@ -94,85 +94,38 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       duration: const Duration(milliseconds: 600),
     );
     unawaited(_typingCtrl.repeat(reverse: true));
-    unawaited(_connectWebSocket());
-    unawaited(_checkTripStatus());
-  }
 
-  Future<void> _connectWebSocket() async {
-    final rId = widget.roomId ?? 'test-room-123';
-    final uId = widget.userId ?? 'passenger-id-xyz';
-    final tok = widget.token ?? '';
+    final currentRoomId = widget.roomId;
+    final currentUserId = widget.userId;
 
-    final serviceUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8081';
-    final gatewayUrl = serviceUrl.replaceAll('8081', '8080');
-    final wsScheme = gatewayUrl.startsWith('https') ? 'wss://' : 'ws://';
-    final hostPort = gatewayUrl.replaceAll('https://', '').replaceAll('http://', '');
-    final wsUrl = '$wsScheme$hostPort/chat/ws?roomId=$rId&userId=$uId&token=$tok';
-
-    try {
-      final socket = await WebSocket.connect(wsUrl);
-      if (!mounted) {
-        unawaited(socket.close());
-        return;
-      }
-      _socket = socket;
-      setState(() => _isConnected = true);
-
-      socket.listen(
-        (event) {
-          final data = jsonDecode(event as String) as Map<String, dynamic>;
-          if (data['type'] == 'history') {
-            final list = data['messages'] as List;
-            setState(() {
-              _msgs.clear();
-              for (final m in list.cast<Map<String, dynamic>>()) {
-                final isDriver = m['senderId'] != uId;
-                _msgs.add(
-                  _Msg(
-                    m['text'] as String,
-                    isDriver,
-                    DateTime.parse(m['createdAt'] as String).toLocal(),
-                  ),
-                );
-              }
-            });
-            _scrollDown();
-          } else if (data['type'] == 'message') {
-            final isDriver = data['senderId'] != uId;
-            setState(() {
-              _msgs.add(
-                _Msg(
-                  data['text'] as String,
-                  isDriver,
-                  DateTime.parse(data['createdAt'] as String).toLocal(),
-                ),
-              );
-            });
-            _scrollDown();
-          } else if (data['type'] == 'locked') {
-            setState(() {
-              _isChatRoomLocked = true;
-              _lockWarningMessageText = data['reason'] as String? ?? 'This conversation is locked.';
-            });
-          }
-        },
-        onError: (_) {
-          setState(() => _isConnected = false);
-        },
-        onDone: () {
-          setState(() => _isConnected = false);
-        },
-      );
-    } catch (_) {
-      setState(() => _isConnected = false);
+    if (currentRoomId == null || currentRoomId.isEmpty) {
+      throw ArgumentError('Room ID must be supplied and cannot be null or empty.');
     }
+    if (currentUserId == null || currentUserId.isEmpty) {
+      throw ArgumentError('User ID must be supplied and cannot be null or empty.');
+    }
+
+    _chatService = PassengerChatService(currentPassengerId: currentUserId);
+
+    _chatUpdatesSubscription = _chatService.chatUpdatesStream.listen((_) {
+      if (mounted) {
+        setState(() {});
+        _scrollDown();
+      }
+    });
+
+    unawaited(_chatService.connectToChatRoom(
+      roomId: currentRoomId,
+      jsonWebToken: widget.token,
+    ));
+
+    unawaited(_checkTripStatus());
   }
 
   @override
   void dispose() {
-    if (_socket != null) {
-      unawaited(_socket!.close());
-    }
+    unawaited(_chatUpdatesSubscription?.cancel());
+    unawaited(_chatService.disconnectChatRoom());
     _msgCtrl.dispose();
     _scrollCtrl.dispose();
     _typingCtrl.dispose();
@@ -180,14 +133,21 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   }
 
   void _send(String text) {
-    if (_isChatRoomLocked) return;
+    if (_chatService.isRoomLocked) return;
     if (text.trim().isEmpty) return;
-    if (_socket != null && _isConnected) {
-      _socket!.add(jsonEncode({'text': text.trim()}));
+
+    if (_chatService.isConnectionActive) {
+      _chatService.sendMessageToRoom(text);
       _msgCtrl.clear();
       _scrollDown();
     } else {
-      unawaited(_connectWebSocket());
+      final currentRoomId = widget.roomId;
+      if (currentRoomId != null && currentRoomId.isNotEmpty) {
+        unawaited(_chatService.connectToChatRoom(
+          roomId: currentRoomId,
+          jsonWebToken: widget.token,
+        ));
+      }
     }
   }
 
@@ -219,7 +179,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
-          if (_isTripFinished && !_isChatRoomLocked)
+          if (_isTripFinished && !_chatService.isRoomLocked)
             TextButton(
               onPressed: _resolveChatRoom,
               child: const Text(
@@ -271,15 +231,15 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: _isConnected ? AppTheme.complete : AppTheme.cancel,
+                        color: _chatService.isConnectionActive ? AppTheme.complete : AppTheme.cancel,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _isConnected ? 'Connected' : 'Offline',
+                      _chatService.isConnectionActive ? 'Connected' : 'Offline',
                       style: TextStyle(
-                        color: _isConnected ? AppTheme.complete : AppTheme.cancel,
+                        color: _chatService.isConnectionActive ? AppTheme.complete : AppTheme.cancel,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -299,14 +259,14 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               controller: _scrollCtrl,
               padding: const EdgeInsets.all(16),
               physics: const BouncingScrollPhysics(),
-              itemCount: _msgs.length + (_driverTyping ? 1 : 0),
+              itemCount: _chatService.chatHistoryMessages.length + (_driverTyping ? 1 : 0),
               itemBuilder: (ctx, i) {
-                if (i == _msgs.length && _driverTyping) return _buildTyping();
-                return _buildBubble(_msgs[i]);
+                if (i == _chatService.chatHistoryMessages.length && _driverTyping) return _buildTyping();
+                return _buildBubble(_chatService.chatHistoryMessages[i]);
               },
             ),
           ),
-          if (!_isChatRoomLocked)
+          if (!_chatService.isRoomLocked)
             SizedBox(
               height: 44,
               child: ListView.separated(
@@ -363,13 +323,13 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                       ),
                       child: TextField(
                         controller: _msgCtrl,
-                        readOnly: _isChatRoomLocked,
+                        readOnly: _chatService.isRoomLocked,
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppTheme.primaryColor,
                         ),
                         decoration: InputDecoration(
-                          hintText: _isChatRoomLocked ? _lockWarningMessageText : 'Type a message...',
+                          hintText: _chatService.isRoomLocked ? _chatService.lockReasonMessage : 'Type a message...',
                           hintStyle: TextStyle(
                             color: AppTheme.primaryColor.withValues(alpha: 0.4),
                             fontSize: 14,
@@ -379,18 +339,18 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                             vertical: 12,
                           ),
                         ),
-                        onSubmitted: _isChatRoomLocked ? null : _send,
+                        onSubmitted: _chatService.isRoomLocked ? null : _send,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   GestureDetector(
-                    onTap: _isChatRoomLocked ? null : () => _send(_msgCtrl.text),
+                    onTap: _chatService.isRoomLocked ? null : () => _send(_msgCtrl.text),
                     child: Container(
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: _isChatRoomLocked ? Colors.grey : AppTheme.primaryColor,
+                        color: _chatService.isRoomLocked ? Colors.grey : AppTheme.primaryColor,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -409,7 +369,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     );
   }
 
-  Widget _buildBubble(_Msg m) {
+  Widget _buildBubble(PassengerChatMessage m) {
     final isMe = !m.isDriver;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -463,7 +423,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _fmtTime(m.time),
+                        _fmtTime(m.createdAt),
                         style: TextStyle(
                           fontSize: 10,
                           color: isMe
@@ -550,11 +510,4 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       ),
     );
   }
-}
-
-class _Msg {
-  final String text;
-  final bool isDriver;
-  final DateTime time;
-  _Msg(this.text, this.isDriver, this.time);
 }

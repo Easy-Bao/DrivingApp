@@ -67,7 +67,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       final passengerIdentifier = prefs.getString('passenger_id') ?? '';
       if (passengerIdentifier.isEmpty) return;
 
-      final passengerServiceEndpointUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8081';
+      final passengerServiceEndpointUrl = EnvConfig.passengerServiceUrl;
       final apiGatewayEndpointUrl = passengerServiceEndpointUrl.replaceAll('8081', '8080');
       final chatMessagesEndpointUri = Uri.parse('$apiGatewayEndpointUrl/chat/rooms/${widget.ride.id}/messages');
 

@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PassengerApiService {
   PassengerApiService._();
 
-  static final String _baseUrl = EnvConfig.passengerServiceUrl ?? 'http://127.0.0.1:8080';
+  static final String _baseUrl = EnvConfig.passengerServiceUrl;
 
   static Future<Map<String, String>> _getRequestHeaders() async {
     final SharedPreferences prefsInstance = await SharedPreferences.getInstance();
