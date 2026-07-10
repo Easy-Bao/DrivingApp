@@ -693,6 +693,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final rating = bid['passenger_rating'] ?? '4.8';
     final isPriority = bid['ride_type'] == 'Bao Premium';
 
+    final Position? driverPos = LocationService.lastPosition;
+    final double passengerLat = SafeParse.toDouble(bid['pickup_latitude'] ?? 0.0);
+    final double passengerLng = SafeParse.toDouble(bid['pickup_longitude'] ?? 0.0);
+
+    double distanceToPassenger = SafeParse.toDouble(bid['distance_km'] ?? bid['distance'] ?? 1.5);
+    if (driverPos != null && passengerLat != 0.0 && passengerLng != 0.0) {
+      distanceToPassenger = MapNativeServiceImpl.calculateHaversine(
+        driverPos.latitude,
+        driverPos.longitude,
+        passengerLat,
+        passengerLng,
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -775,11 +789,33 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
               const SizedBox(width: 8),
               Text(
-                '${(bid['distance_km'] ?? bid['distance'] ?? 0).toDouble().toStringAsFixed(1)} km away',
+                '${distanceToPassenger.toStringAsFixed(1)} km away',
                 style: TextStyle(
                   fontSize: 13,
                   color: AppTheme.primaryColor.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(
+                LucideIcons.map_pin,
+                size: 14,
+                color: AppTheme.primaryColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'From: ${bid['pickup_name'] ?? 'Current Location'}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.65),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

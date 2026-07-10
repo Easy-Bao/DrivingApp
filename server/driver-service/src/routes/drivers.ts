@@ -7,6 +7,7 @@ import {
   retrieveDriverProfile,
   retrieveDriverStats,
   retrieveDriverTripHistory,
+  retrieveDriverReviews,
 } from '../services/drivers.ts';
 
 export const driversRouter = new Hono();
@@ -113,6 +114,16 @@ driversRouter.get('/:id/trips', async (context) => {
       }
       return context.json({ error: error.message }, 400);
     }
+  } catch (error: any) {
+    return context.json({ error: error.message }, 400);
+  }
+});
+
+driversRouter.get('/:id/reviews', async (context) => {
+  const id = context.req.param('id');
+  try {
+    const reviews = await retrieveDriverReviews(id);
+    return context.json(reviews);
   } catch (error: any) {
     return context.json({ error: error.message }, 400);
   }

@@ -45,6 +45,7 @@ export async function createBidSession(data: any) {
     dropoff_name,
     distance_km,
     duration_minutes,
+    target_driver_id,
   } = data;
 
   const dKm = parseFloat(distance_km ?? 0);
@@ -65,6 +66,7 @@ export async function createBidSession(data: any) {
       distanceKm: dKm,
       durationMinutes: dMin,
       offeredFare: fare.total_fare,
+      targetDriverId: target_driver_id ?? null,
       status: 'open',
       expiresAt,
     },
@@ -85,8 +87,15 @@ export async function getActiveBidSessions(driverId?: string) {
     include: { offers: true },
   });
 
+  // Filter sessions so a driver only sees open sessions that are either public (no target)
+  // or specifically directed/booked for their driver ID.
   const visible = driverId
-    ? sessions.filter((s) => !s.offers.some((o) => o.driverId === driverId))
+    ? sessions.filter((s) => {
+        if (s.targetDriverId && s.targetDriverId !== driverId) {
+          return false;
+        }
+        return !s.offers.some((o) => o.driverId === driverId);
+      })
     : sessions;
 
   return await Promise.all(visible.map(async (s) => {

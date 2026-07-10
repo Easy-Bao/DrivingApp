@@ -61,38 +61,34 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       }
     }
 
-    final driverIdHashValue = widget.driverId.hashCode.abs();
-    final passengerNamesPool = ['Maria Santos', 'John Doe', 'Aria Cruz', 'Carlos Diaz', 'Sophia Lim'];
-    final reviewsPool = [
-      'Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.',
-      'Very professional driver. Got me to my destination quickly and safely.',
-      'Highly recommend! Very pleasant conversation and smooth driving.',
-      'Excellent service. Helped me with my heavy bags.',
-      'Punctual and very respectful driver. The Bao was in top condition.',
-    ];
-    final ratingsPool = [5.0, 4.8, 5.0, 4.9, 5.0];
+    final List<Map<String, dynamic>> dynamicReviews = [];
+    try {
+      final rawReviews = await PassengerApiService.fetchDriverReviews(widget.driverId);
+      for (final r in rawReviews) {
+        if (r is Map<String, dynamic>) {
+          final createdAtStr = r['createdAt'] ?? r['created_at'];
+          String dateFormatted = 'Recent';
+          if (createdAtStr != null) {
+            try {
+              final parsedDate = DateTime.parse(createdAtStr as String);
+              final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+              dateFormatted = '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
+            } catch (_) {}
+          }
 
-    final totalReviewsCount = (driverIdHashValue % 3) + 2;
-    final List<Map<String, dynamic>> simulatedReviews = [];
-    for (int reviewIndex = 0; reviewIndex < totalReviewsCount; reviewIndex++) {
-      final selectedPassengerIndex = (driverIdHashValue + reviewIndex) % passengerNamesPool.length;
-      final selectedReviewIndex = (driverIdHashValue + reviewIndex) % reviewsPool.length;
-      final selectedRatingIndex = (driverIdHashValue + reviewIndex) % ratingsPool.length;
-      
-      final daysAgo = reviewIndex * 2 + 1;
-      final reviewDateString = 'July ${8 - daysAgo}, 2026';
-
-      simulatedReviews.add({
-        'passengerName': passengerNamesPool[selectedPassengerIndex],
-        'comment': reviewsPool[selectedReviewIndex],
-        'rating': ratingsPool[selectedRatingIndex],
-        'date': reviewDateString,
-      });
-    }
+          dynamicReviews.add({
+            'passengerName': r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
+            'comment': r['comment'] ?? '',
+            'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
+            'date': dateFormatted,
+          });
+        }
+      }
+    } catch (_) {}
 
     if (mounted) {
       setState(() {
-        _driverReviewsList = simulatedReviews;
+        _driverReviewsList = dynamicReviews;
         _isLoadingStats = false;
       });
     }

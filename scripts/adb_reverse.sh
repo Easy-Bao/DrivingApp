@@ -11,7 +11,7 @@ ports=(8080 8081 8082 8083 8084 8085 8086)
 
 echo "Reversing ports for all connected Android devices..."
 for device in $devices; do
-  echo "📱 Device: $device"
+  echo "Device: $device"
   for port in "${ports[@]}"; do
     if adb -s "$device" reverse tcp:"$port" tcp:"$port" >/dev/null 2>&1; then
       echo "   tcp:$port tcp:$port"

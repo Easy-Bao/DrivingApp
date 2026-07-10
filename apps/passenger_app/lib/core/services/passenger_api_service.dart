@@ -257,6 +257,7 @@ class PassengerApiService {
     required String dropoffName,
     required double distanceKm,
     required double durationMinutes,
+    String? targetDriverId,
   }) async {
     try {
       final response = await http.post(
@@ -273,6 +274,7 @@ class PassengerApiService {
           'dropoff_name': dropoffName,
           'distance_km': distanceKm,
           'duration_minutes': durationMinutes,
+          'target_driver_id': targetDriverId,
         }),
       );
       if (response.statusCode == 201) {
@@ -385,6 +387,21 @@ class PassengerApiService {
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  static Future<List<dynamic>> fetchDriverReviews(String driverId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/drivers/$driverId/reviews'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      return [];
+    } catch (_) {
+      return [];
     }
   }
 }

@@ -24,3 +24,15 @@ model Driver {
 
   @@map("drivers")
 }
+
+model Review {
+  id            String   @id @default(uuid()) @db.Uuid
+  driverId      String   @map("driver_id") @db.Uuid
+  passengerName String   @map("passenger_name")
+  rating        Float
+  comment       String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("reviews")
+}
+

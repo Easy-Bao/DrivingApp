@@ -14,6 +14,7 @@ export function mapSession(session: any) {
     offered_fare: session.offeredFare,
     status: session.status,
     accepted_driver_id: session.acceptedDriverId,
+    target_driver_id: session.targetDriverId,
     created_at: session.createdAt instanceof Date ? session.createdAt.toISOString() : session.createdAt,
     expires_at: session.expiresAt instanceof Date ? session.expiresAt.toISOString() : session.expiresAt,
   };

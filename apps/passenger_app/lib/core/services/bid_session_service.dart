@@ -105,6 +105,7 @@ class BidSessionService {
     required double pickupLng,
     required double distanceKm,
     required double durationMinutes,
+    String? targetDriverId,
   }) async {
     await cancelSession(notify: false);
 
@@ -119,6 +120,7 @@ class BidSessionService {
       dropoffName: trip.destination.name,
       distanceKm: distanceKm,
       durationMinutes: durationMinutes,
+      targetDriverId: targetDriverId,
     );
 
     if (result == null || result['id'] == null) {

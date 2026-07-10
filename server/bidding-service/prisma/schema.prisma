@@ -23,6 +23,7 @@ model BidSession {
   offeredFare      Float         @map("offered_fare")
   status           String        @default("open")
   acceptedDriverId String?       @map("accepted_driver_id")
+  targetDriverId   String?       @map("target_driver_id")
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
   expiresAt        DateTime      @map("expires_at") @db.Timestamptz
   offers           DriverOffer[]
