@@ -6,7 +6,6 @@ import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Manages real-time driver position tracking for the passenger.
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final TrackRepository _repository;
   Timer? _ticker;

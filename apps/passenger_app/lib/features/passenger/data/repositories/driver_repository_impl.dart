@@ -1,5 +1,3 @@
-/// Driver Repository implementation: manages driver discovery and ranks nearby drivers using real-time backend updates.
-library;
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:location_service/location_service.dart';

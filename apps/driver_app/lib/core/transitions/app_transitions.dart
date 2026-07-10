@@ -1,6 +1,3 @@
-/// Registry of snappy route transition settings mapping all moves to none.
-library;
-
 import 'package:go_router_modular/go_router_modular.dart';
 
 class AppTransitions {

@@ -1,6 +1,3 @@
-/// Track Driver Screen: displays live map location updates and trip progress details for the passenger.
-library;
-
 import 'dart:async';
 import 'dart:convert';
 

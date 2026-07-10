@@ -4,7 +4,6 @@ import 'package:core_models/core_models.dart';
 import 'package:passenger_app/core/services/passenger_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Trip metadata kept alive while a bid session runs in the background.
 class BidSessionTrip {
   const BidSessionTrip({
     required this.rideType,
@@ -23,7 +22,6 @@ class BidSessionTrip {
   final String? pickupAddress;
 }
 
-/// Emitted when a driver accepts the passenger's bid session.
 class DriverMatchResult {
   const DriverMatchResult({
     required this.trip,
@@ -57,7 +55,6 @@ class DriverMatchResult {
   }
 }
 
-/// Keeps bid-session polling alive when the passenger leaves the finding screen.
 class BidSessionService {
   BidSessionService();
 

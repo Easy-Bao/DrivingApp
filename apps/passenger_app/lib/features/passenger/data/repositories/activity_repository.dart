@@ -1,5 +1,3 @@
-/// Activity Repository: defines contracts and exception types for ride history records.
-library;
 import 'package:core_models/core_models.dart';
 
 abstract class ActivityRepository {

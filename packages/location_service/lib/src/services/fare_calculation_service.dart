@@ -1,5 +1,3 @@
-/// Pricing configuration and fare calculation service.
-library;
 import 'package:core_models/core_models.dart';
 
 /**

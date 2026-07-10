@@ -1,5 +1,3 @@
-/// Unit tests for RideFlowCubit managing driver state transitions.
-library;
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_state.dart';

@@ -1,8 +1,7 @@
 import 'package:core_models/core_models.dart';
 import 'package:equatable/equatable.dart';
 
-/// All fields default to empty/zero — the UI can distinguish between
-/// "not yet loaded" and "loaded as zero" using [isLoadingStats].
+
 class DashboardState extends Equatable {
   final bool isOnline;
   final bool isLoadingStats;

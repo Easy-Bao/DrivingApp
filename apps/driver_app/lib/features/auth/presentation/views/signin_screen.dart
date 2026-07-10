@@ -1,6 +1,3 @@
-/// Driver sign-in screen: manages authentication inputs, credentials validation, and error states.
-library;
-
 import 'dart:async';
 import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';

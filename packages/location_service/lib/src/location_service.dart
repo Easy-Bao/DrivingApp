@@ -1,6 +1,3 @@
-/// Location Service: handles coordinates tracking, distance calculations, and hardware access checks.
-library;
-
 import 'package:geolocator/geolocator.dart';
 import 'map_native_service.dart';
 

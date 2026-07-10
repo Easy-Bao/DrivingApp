@@ -1,6 +1,3 @@
-/// Profile Info Screen: lets passengers view and update their profile details in the database.
-library;
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';

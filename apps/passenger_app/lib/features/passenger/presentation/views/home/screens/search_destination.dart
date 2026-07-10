@@ -1,6 +1,3 @@
-/// Search Destination Screen: provides autocomplete destination queries, nearby suggestions, and routing preview navigation.
-library;
-
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

@@ -4,7 +4,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/shared/widgets/custom_toast.dart';
 
-/// Driver rates the passenger after a completed trip.
 class RatePassengerScreen extends StatefulWidget {
   const RatePassengerScreen({super.key});
 

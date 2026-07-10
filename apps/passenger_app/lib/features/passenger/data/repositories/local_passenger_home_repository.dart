@@ -1,5 +1,3 @@
-/// Geocoding and history synchronization adapter: fetches recent locations and resolves coordinates dynamically.
-library;
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:location_service/location_service.dart';

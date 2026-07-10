@@ -1,6 +1,3 @@
-/// Service Locator: handles dependency injection registration for repositories and state management units.
-library;
-
 import 'package:core_models/core_models.dart';
 import 'package:get_it/get_it.dart';
 import 'package:passenger_app/core/services/bid_session_service.dart';

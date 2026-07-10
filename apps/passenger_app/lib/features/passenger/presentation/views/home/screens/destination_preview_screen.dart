@@ -1,6 +1,3 @@
-/// Destination Preview Screen: displays routing maps, distances, travel durations, and fare estimates for booking selection.
-library;
-
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

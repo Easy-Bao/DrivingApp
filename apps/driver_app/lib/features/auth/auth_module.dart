@@ -1,6 +1,3 @@
-/// Authentication module: defines the routing paths for driver sign-in and password recovery.
-library;
-
 import 'package:driver_app/features/auth/presentation/views/forgot_password_screen.dart';
 import 'package:driver_app/features/auth/presentation/views/signin_screen.dart';
 import 'package:driver_app/core/transitions/app_transitions.dart';

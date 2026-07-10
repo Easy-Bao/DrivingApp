@@ -1,5 +1,3 @@
-/// Unit tests for TrackDriverCubit with mocked repository and shared preferences.
-library;
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';

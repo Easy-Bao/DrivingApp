@@ -1,6 +1,3 @@
-/// Saved Places Cubit: manages local saved places shortcut configurations and handles reactive tap navigation actions.
-library;
-
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

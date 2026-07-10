@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Immutable state for the passenger home screen.
 class PassengerHomeState extends Equatable {
   final bool isLoading;
   final String currentAddress;

@@ -1,6 +1,3 @@
-/// Driver Earnings Screen: displays weekly earnings summaries, stats, and a daily breakdown chart.
-library;
-
 import 'package:driver_app/core/di/service_locator.dart';
 import 'package:driver_app/features/driver/data/repositories/driver_activity_repository.dart';
 import 'package:driver_app/core/themes/app_themes.dart';

@@ -1,6 +1,3 @@
-/// Driver Account Screen: displays driver profile, vehicle information, and lifetime ride stats.
-library;
-
 import 'package:driver_app/core/services/driver_api_service.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';

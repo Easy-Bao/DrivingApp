@@ -1,6 +1,3 @@
-/// Ride Selection Screen: displays a map route preview and list of ride tier options with dynamic fares for selection.
-library;
-
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

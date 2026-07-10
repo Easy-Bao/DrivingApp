@@ -1,5 +1,3 @@
-/// Activity Detail Map Screen: displays route map and details for past passenger trips.
-library;
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

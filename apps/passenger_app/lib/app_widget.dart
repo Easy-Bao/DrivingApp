@@ -6,9 +6,6 @@ import 'package:passenger_app/core/di/service_locator.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
 
-/// Note: DashboardCubit and PassengerHomeCubit are provided at the route
-/// level in their respective modules (DashboardModule, HomeModule) so they
-/// can be scoped to their screens and re-created on each visit.
 class AppWidget extends StatelessWidget {
   const AppWidget({super.key});
 

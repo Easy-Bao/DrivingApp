@@ -1,6 +1,3 @@
-/// Driver Matched Screen: shows driver profiles and trip summaries when passenger bookings are confirmed.
-library;
-
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

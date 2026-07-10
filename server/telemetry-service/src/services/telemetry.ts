@@ -7,17 +7,17 @@ export interface Coordinate {
 export const locations = new Map<string, Coordinate>();
 
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const earthRadiusKm = 6371; // Earth's radius in km
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const haversineA =
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const haversineC = 2 * Math.atan2(Math.sqrt(haversineA), Math.sqrt(1 - haversineA));
-  return earthRadiusKm * haversineC;
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 export function updateLocation(driverId: string, lat: string | number, lng: string | number) {
@@ -33,7 +33,6 @@ export function updateLocation(driverId: string, lat: string | number, lng: stri
       const distance = calculateDistanceKm(prev.lat, prev.lng, parsedLat, parsedLng);
       const velocityKmh = (distance / timeDiffSeconds) * 3600;
 
-      // Safe threshold: 150 km/h max land speed
       if (velocityKmh > 150) {
         console.warn(`GPS Spoofing detected for driver ${driverId}: speed of ${velocityKmh.toFixed(1)} km/h exceeds 150 km/h threshold.`);
         throw new Error("GPS_SPOOFING_DETECTED");

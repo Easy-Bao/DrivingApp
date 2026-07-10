@@ -1,4 +1,3 @@
-/// Safe Parse utility: provides static functions for type-safe numeric and string parsing with fallbacks.
 class SafeParse {
   SafeParse._();
 

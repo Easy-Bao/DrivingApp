@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Confirmation screen shown immediately after completing a trip.
-/// Shows route summary and routes to fare summary.
 class CompleteTripScreen extends StatelessWidget {
   final String pickup;
   final String dropoff;

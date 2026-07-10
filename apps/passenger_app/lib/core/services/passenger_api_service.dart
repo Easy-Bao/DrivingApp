@@ -1,6 +1,3 @@
-/// Passenger API Service: manages server communication for authentication, OTP verification, ride requests, and profile updates.
-library;
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:passenger_app/core/config/env_config.dart';

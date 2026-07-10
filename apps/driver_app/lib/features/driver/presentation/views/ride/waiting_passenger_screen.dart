@@ -16,7 +16,6 @@ import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Driver has arrived at pickup and is waiting for the passenger to board.
 class WaitingPassengerScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;

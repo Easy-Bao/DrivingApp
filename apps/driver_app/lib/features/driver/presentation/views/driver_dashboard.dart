@@ -1,6 +1,3 @@
-/// Driver Dashboard View: main panel displaying driver online status, earnings summary, and active ride matches.
-library;
-
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;

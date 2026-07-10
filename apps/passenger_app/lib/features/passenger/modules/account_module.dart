@@ -1,5 +1,3 @@
-/// Account Module: registers routes for passenger profile info, support help, and ride history.
-library;
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/core/transitions/app_transitions.dart';
 import 'package:passenger_app/features/passenger/presentation/views/account/help_center_screen.dart';

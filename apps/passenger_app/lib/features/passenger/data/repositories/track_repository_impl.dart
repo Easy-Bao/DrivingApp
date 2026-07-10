@@ -2,15 +2,11 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:location_service/location_service.dart';
 
-/// Track and route calculation repository adapter.
-///
-/// Fetches real-world road-snapped route coordinates using [MapProvider.getRoute].
-///
-/// **Lifecycle & Execution Flow:**
-/// Route snapping begins when the presentation layer requests a snap-to-road polyline.
-/// The repository delegates to [getRoutePolyline], which calls the Mapbox routing API.
-/// If the lookup fails, a straight-line interpolation between start and end is returned
-/// as a graceful fallback so the map route layer always has something to display.
+/**
+ * Fetches road-snapped route coordinates via Mapbox. If the routing API is
+ * unreachable or returns no data, falls back to a straight-line interpolation
+ * between start and end so the map route layer always has something to render.
+ */
 class TrackRepositoryImpl implements TrackRepository {
   @override
   Future<List<List<double>>?> getRoutePolyline({
@@ -31,8 +27,7 @@ class TrackRepositoryImpl implements TrackRepository {
     }
   }
 
-  /// Generates a 5-point straight-line interpolation between two coordinates when
-  /// the routing API is unreachable or returns no data.
+  /** Generates a 5-point straight-line interpolation when the routing API is unreachable. */
   List<List<double>> _linearInterpolation(
     double startLat,
     double startLng,

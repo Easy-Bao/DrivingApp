@@ -1,5 +1,3 @@
-/// Passenger Activity Screen: displays past and upcoming rides loaded live from the passenger-service backend.
-library;
 import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';

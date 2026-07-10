@@ -1,6 +1,3 @@
-/// Signin Screen: allows passengers to sign in with their email and password credentials.
-library;
-
 import 'dart:async';
 import 'dart:convert';
 

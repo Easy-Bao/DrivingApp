@@ -9,10 +9,8 @@ part of 'activity_bloc.dart';
  */
 abstract class ActivityState {}
 
-/// Initial state before any event is dispatched.
 class ActivityInitial extends ActivityState {}
 
-/// Emitted while the server request is in flight.
 class ActivityLoading extends ActivityState {}
 
 /**
@@ -28,7 +26,6 @@ class ActivityLoaded extends ActivityState {
   ActivityLoaded({required this.past, required this.upcoming});
 }
 
-/// Emitted when the network call or mapping fails.
 class ActivityError extends ActivityState {
   final String message;
   ActivityError({required this.message});

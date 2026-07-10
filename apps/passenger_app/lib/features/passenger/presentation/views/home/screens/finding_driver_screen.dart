@@ -1,5 +1,3 @@
-/// Passenger matching screen: handles real-time driver bidding lifecycle, offer polling, and accept flows.
-library;
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

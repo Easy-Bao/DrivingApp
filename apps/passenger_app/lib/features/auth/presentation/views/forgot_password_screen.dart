@@ -1,5 +1,3 @@
-/// Forgot Password Screen: lets passengers request password recovery emails.
-library;
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -21,7 +19,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _handleReset() async {
     final email = _emailController.text.trim();
-    
+
     setState(() {
       _emailError = null;
     });
@@ -143,7 +141,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             decoration: InputDecoration(
                               hintText: 'Email',
                               errorText: _emailError,
-                              errorStyle: const TextStyle(color: AppTheme.cancel),
+                              errorStyle: const TextStyle(
+                                color: AppTheme.cancel,
+                              ),
                               prefixIcon: const Padding(
                                 padding: EdgeInsets.only(left: 10),
                                 child: Icon(LucideIcons.mail, size: 20),
@@ -166,7 +166,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(32),
-                                borderSide: const BorderSide(color: AppTheme.cancel),
+                                borderSide: const BorderSide(
+                                  color: AppTheme.cancel,
+                                ),
                               ),
                               focusedErrorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(32),

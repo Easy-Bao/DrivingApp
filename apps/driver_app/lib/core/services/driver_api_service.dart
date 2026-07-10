@@ -1,6 +1,3 @@
-/// Driver API Service: manages server communication for driver authentication, online status updates, and ride acceptance.
-library;
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:driver_app/core/config/env_config.dart';

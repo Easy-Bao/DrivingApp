@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -374,8 +373,6 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
   }
 }
 
-/// Two-option ride menu shown above the nav FAB.
-/// Colors, icons, and copy left exactly as specified — adjust freely.
 class _RideOptionsMenu extends StatelessWidget {
   final VoidCallback onShareRide;
   final VoidCallback onSoloRide;

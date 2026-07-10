@@ -1,6 +1,3 @@
-/// Centralized environment configuration for driver_app resolving Android localhost emulation.
-library;
-
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

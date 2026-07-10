@@ -1,6 +1,3 @@
-/// Passenger Home Screen: displays active location details, suggestions, quick actions, and recent activities.
-library;
-
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

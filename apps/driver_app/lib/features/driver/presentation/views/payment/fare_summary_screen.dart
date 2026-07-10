@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Displays fare breakdown and prompts the driver to confirm cash collection.
 class FareSummaryScreen extends StatelessWidget {
   final String pickup;
   final String dropoff;

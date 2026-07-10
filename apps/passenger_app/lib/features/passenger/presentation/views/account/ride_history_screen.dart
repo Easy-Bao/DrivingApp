@@ -1,6 +1,3 @@
-/// Ride History Screen: displays a list of past and canceled trips fetched from the database for the active passenger.
-library;
-
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

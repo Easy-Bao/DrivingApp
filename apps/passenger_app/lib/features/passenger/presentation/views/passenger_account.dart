@@ -1,5 +1,3 @@
-/// Passenger Account Screen: displays account settings, support information, and handles logging out.
-library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';

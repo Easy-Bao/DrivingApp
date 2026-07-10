@@ -1,6 +1,3 @@
-/// Signup Screen: facilitates passenger account creation and email OTP verification.
-library;
-
 import 'dart:async';
 import 'dart:convert';
 

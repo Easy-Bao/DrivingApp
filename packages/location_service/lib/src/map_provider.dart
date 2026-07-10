@@ -185,7 +185,7 @@ class MapProvider {
   }) {
     return mapbox.MapWidget(
       styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
-      cameraOptions: mapbox.CameraOptions(
+      viewport: mapbox.CameraViewportState(
         center: mapbox.Point(coordinates: mapbox.Position(longitude, latitude)),
         zoom: zoom,
       ),

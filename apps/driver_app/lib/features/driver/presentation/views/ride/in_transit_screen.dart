@@ -1,6 +1,3 @@
-/// In Transit Screen: renders map visualization and trip details during active ride transportation.
-library;
-
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/core/themes/app_themes.dart';
 import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';

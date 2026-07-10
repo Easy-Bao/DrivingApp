@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_event.dart';
 import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_state.dart';
 
-/// Manages the driver-search lifecycle for the passenger.
 class FindingDriverBloc extends Bloc<FindingDriverEvent, FindingDriverState> {
   final DriverRepository _repository;
 
