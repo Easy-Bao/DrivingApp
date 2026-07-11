@@ -148,6 +148,7 @@ class HomeModule {
           vehicleType: data['vehicleType'] as String?,
           plateNumber: data['plateNumber'] as String?,
           pickupAddress: data['pickupAddress'] as String?,
+          createdRide: data['createdRide'] as RideHistoryModel?,
         );
       },
       transition: AppTransitions.modal.toTop,

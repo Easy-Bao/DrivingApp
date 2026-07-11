@@ -19,6 +19,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   List<Map<String, dynamic>> _reviews = [];
   bool _isLoadingReviews = false;
 
+  double? _pickupLat;
+  double? _pickupLng;
+  String? _pickupName;
+  double? _dropoffLat;
+  double? _dropoffLng;
+  String? _dropoffName;
+  double? _fare;
+  String? _rideType;
+
   BookingBloc({
     required DriverRepository driverRepository,
     required BidSessionService bidSessionService,
@@ -130,6 +139,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       return;
     }
 
+    _pickupLat = event.pickupLat;
+    _pickupLng = event.pickupLng;
+    _pickupName = event.trip.pickupAddress ?? 'Current Location';
+    _dropoffLat = event.trip.destination.latitude;
+    _dropoffLng = event.trip.destination.longitude;
+    _dropoffName = event.trip.destination.name;
+    _fare = event.trip.fare;
+    _rideType = event.trip.rideType;
+
     _subscribeToSession();
 
     await _bidSessionService.startSession(
@@ -155,6 +173,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(const BookingFailure('Passenger ID is missing.'));
       return;
     }
+
+    _pickupLat = event.pickupLat;
+    _pickupLng = event.pickupLng;
+    _pickupName = event.trip.pickupAddress ?? 'Current Location';
+    _dropoffLat = event.trip.destination.latitude;
+    _dropoffLng = event.trip.destination.longitude;
+    _dropoffName = event.trip.destination.name;
+    _fare = event.trip.fare;
+    _rideType = event.trip.rideType;
 
     _subscribeToSession();
 
@@ -204,12 +231,58 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  void _onDriverMatched(
+  Future<void> _onDriverMatched(
     DriverMatchedEvent event,
     Emitter<BookingState> emit,
-  ) {
+  ) async {
     _cleanupSubscriptions();
-    emit(BookingDriverMatched(event.matchResult));
+
+    final prefs = await SharedPreferences.getInstance();
+    final passengerId = prefs.getString('passenger_id') ?? '';
+    
+    RideHistoryModel? createdRide;
+    
+    if (passengerId.isNotEmpty) {
+      try {
+        final res = await PassengerApiService.createRideRequest(
+          passengerId: passengerId,
+          rideType: _rideType ?? 'Bao Bao Standard',
+          pickupLat: _pickupLat ?? 0.0,
+          pickupLng: _pickupLng ?? 0.0,
+          pickupName: _pickupName ?? 'Current Location',
+          dropoffLat: _dropoffLat ?? 0.0,
+          dropoffLng: _dropoffLng ?? 0.0,
+          dropoffName: _dropoffName ?? 'Destination',
+          fare: _fare ?? 0.0,
+        );
+        if (res != null && res['id'] != null) {
+          final activeRideId = res['id'] as String;
+          await prefs.setString('active_ride_id', activeRideId);
+          
+          createdRide = RideHistoryModel(
+            id: activeRideId,
+            pickup: res['pickup_name'] as String? ?? _pickupName ?? '',
+            destination: _dropoffName ?? '',
+            pickupLat: SafeParse.toDouble(res['pickup_latitude']),
+            pickupLng: SafeParse.toDouble(res['pickup_longitude']),
+            destLat: _dropoffLat ?? 0.0,
+            destLng: _dropoffLng ?? 0.0,
+            date: DateTime.now().toLocal().toString(),
+            price: '₱${(_fare ?? 0.0).toStringAsFixed(2)}',
+            status: 'accepted',
+            driverName: res['driver_name'] as String? ?? event.matchResult.driverName,
+            vehiclePlate: res['plate_number'] as String? ?? event.matchResult.plateNumber,
+          );
+        }
+      } catch (error) {
+        // Fallback to offline/mock model if API fails
+      }
+    }
+
+    emit(BookingDriverMatched(
+      matchResult: event.matchResult,
+      createdRide: createdRide,
+    ));
   }
 
   Future<void> _onAcceptBidOffer(

@@ -47,8 +47,12 @@ class BookingOffersReceived extends BookingState {
 
 class BookingDriverMatched extends BookingState {
   final DriverMatchResult matchResult;
+  final RideHistoryModel? createdRide;
 
-  const BookingDriverMatched(this.matchResult);
+  const BookingDriverMatched({
+    required this.matchResult,
+    this.createdRide,
+  });
 }
 
 class BookingCanceled extends BookingState {}

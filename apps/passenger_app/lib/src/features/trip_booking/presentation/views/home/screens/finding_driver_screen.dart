@@ -210,9 +210,11 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                 label: state.driver.name,
               ));
             } else if (state is BookingDriverMatched) {
+              final navExtra = state.matchResult.toNavigationExtra();
+              navExtra['createdRide'] = state.createdRide;
               context.pushReplacementNamed(
                 'DriverMatched',
-                extra: state.matchResult.toNavigationExtra(),
+                extra: navExtra,
               );
             } else if (state is BookingCanceled) {
               context.pop();
