@@ -3,7 +3,7 @@ import 'package:driver_app/src/features/driver_dispatch/data/repositories/dashbo
 import 'package:driver_app/src/features/driver_dispatch/data/repositories/ride_repository_impl.dart';
 import 'package:driver_app/src/features/driver_dispatch/data/repositories/driver_activity_repository.dart';
 import 'package:driver_app/src/features/driver_dispatch/data/repositories/driver_activity_repository_impl.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:get_it/get_it.dart';
 

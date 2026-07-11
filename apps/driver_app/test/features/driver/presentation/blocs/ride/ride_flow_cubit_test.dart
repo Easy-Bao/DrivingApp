@@ -1,6 +1,6 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_state.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

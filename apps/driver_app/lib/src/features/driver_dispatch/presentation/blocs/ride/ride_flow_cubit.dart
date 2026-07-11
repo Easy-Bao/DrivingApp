@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_state.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Manages the sequential ride lifecycle: initial → en-route → waiting → in-transit → complete.

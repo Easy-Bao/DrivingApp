@@ -4,14 +4,14 @@ import 'package:http/http.dart' as http;
 import 'package:driver_app/src/core/config/env_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 
 import 'package:location_service/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/dashboard/dashboard_cubit.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/dashboard/dashboard_state.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';

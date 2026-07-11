@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:chat_service/chat_service.dart';
-import 'package:driver_app/src/core/config/env_config.dart';
+import 'package:driver_app/src/core/config/environment_config.dart';
+import 'package:driver_app/src/core/network/api_endpoints.dart';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
@@ -49,12 +50,12 @@ class _DriverChatScreenState extends State<DriverChatScreen>
 
   Future<void> _resolveChatRoom() async {
     final chatRoomId = widget.roomId;
-    if (chatRoomId == null || chatRoomId.isEmpty) {
-      throw ArgumentError('Room ID cannot be empty');
+    final currentUserId = widget.userId;
+    if (chatRoomId == null || chatRoomId.isEmpty || currentUserId == null || currentUserId.isEmpty) {
+      throw ArgumentError('Room ID and User ID cannot be empty');
     }
     try {
-      final driverServiceUrl = EnvConfig.driverServiceUrl;
-      final gatewayUrl = driverServiceUrl.replaceAll('8082', '8080');
+      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
       final resolveEndpointUrl = '$gatewayUrl/chat/rooms/$chatRoomId/resolve';
 
       final resolveResponse = await http.post(
@@ -63,11 +64,13 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       );
 
       if (resolveResponse.statusCode == 200) {
-        final driverServiceBaseUrl = EnvConfig.driverServiceUrl;
-        final gatewayBaseUrl = driverServiceBaseUrl.replaceAll('8082', '8080');
+        final wsUri = ApiEndpoints.buildChatWebSocketUri(
+          roomId: chatRoomId,
+          userId: currentUserId,
+        );
         unawaited(_chatService.connectToChatRoom(
           roomId: chatRoomId,
-          gatewayUrl: gatewayBaseUrl,
+          chatUri: wsUri,
         ));
       }
     } catch (_) {}
@@ -108,11 +111,13 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       }
     });
 
-    final driverServiceBaseUrl = EnvConfig.driverServiceUrl;
-    final gatewayBaseUrl = driverServiceBaseUrl.replaceAll('8082', '8080');
+    final wsUri = ApiEndpoints.buildChatWebSocketUri(
+      roomId: currentRoomId,
+      userId: currentUserId,
+    );
     unawaited(_chatService.connectToChatRoom(
       roomId: currentRoomId,
-      gatewayUrl: gatewayBaseUrl,
+      chatUri: wsUri,
     ));
 
     unawaited(_checkTripStatus());
@@ -138,12 +143,15 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       _scrollDown();
     } else {
       final currentRoomId = widget.roomId;
-      if (currentRoomId != null && currentRoomId.isNotEmpty) {
-        final driverServiceBaseUrl = EnvConfig.driverServiceUrl;
-        final gatewayBaseUrl = driverServiceBaseUrl.replaceAll('8082', '8080');
+      final currentUserId = widget.userId;
+      if (currentRoomId != null && currentRoomId.isNotEmpty && currentUserId != null && currentUserId.isNotEmpty) {
+        final wsUri = ApiEndpoints.buildChatWebSocketUri(
+          roomId: currentRoomId,
+          userId: currentUserId,
+        );
         unawaited(_chatService.connectToChatRoom(
           roomId: currentRoomId,
-          gatewayUrl: gatewayBaseUrl,
+          chatUri: wsUri,
         ));
       }
     }
@@ -372,9 +380,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: isMe
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[

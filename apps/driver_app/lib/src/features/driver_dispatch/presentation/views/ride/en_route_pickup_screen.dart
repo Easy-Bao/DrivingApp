@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:driver_app/src/core/config/env_config.dart';
+import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_state.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
 import 'package:flutter/material.dart';
@@ -119,9 +119,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       final driverIdentifier = prefs.getString('driver_id') ?? '';
       if (driverIdentifier.isEmpty) return;
 
-      final driverServiceEndpointUrl = EnvConfig.driverServiceUrl;
-      final apiGatewayEndpointUrl = driverServiceEndpointUrl.replaceAll('8082', '8080');
-      final chatMessagesEndpointUri = Uri.parse('$apiGatewayEndpointUrl/chat/rooms/$rideId/messages');
+      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
+      final chatMessagesEndpointUri = Uri.parse('$gatewayUrl/chat/rooms/$rideId/messages');
 
       final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
       if (chatMessagesHttpResponse.statusCode == 200) {

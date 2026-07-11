@@ -2,7 +2,7 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/views/dashb
 
 import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/core/transitions/app_transitions.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/views/dashboard/ride_alert_screen.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/views/driver_dashboard.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

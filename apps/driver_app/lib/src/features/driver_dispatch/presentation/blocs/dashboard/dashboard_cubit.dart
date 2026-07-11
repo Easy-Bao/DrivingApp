@@ -1,5 +1,5 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/dashboard/dashboard_state.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Manages the driver's dashboard state.

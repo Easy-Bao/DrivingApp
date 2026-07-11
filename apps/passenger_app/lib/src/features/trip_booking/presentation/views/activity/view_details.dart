@@ -7,7 +7,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/config/env_config.dart';
+import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
@@ -78,9 +78,8 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
     if (driverId == null || driverId.isEmpty) return;
 
     try {
-      final passengerServiceUrl = EnvConfig.passengerServiceUrl;
-      final apiGatewayUrl = passengerServiceUrl.replaceAll('8081', '8080');
-      final chatRoomInitializationUrl = '$apiGatewayUrl/chat/rooms';
+      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
+      final chatRoomInitializationUrl = '$gatewayUrl/chat/rooms';
 
       final initializeRoomResponse = await http.post(
         Uri.parse(chatRoomInitializationUrl),

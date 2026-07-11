@@ -1,6 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/bloc/home/passenger_home_state.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_state.dart';
 
 class PassengerHomeCubit extends Cubit<PassengerHomeState> {
   final PassengerHomeRepository _repository;

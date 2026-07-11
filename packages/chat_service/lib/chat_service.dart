@@ -37,8 +37,7 @@ class ChatService {
 
   Future<void> connectToChatRoom({
     required String roomId,
-    required String gatewayUrl,
-    String? jsonWebToken,
+    required Uri chatUri,
   }) async {
     if (roomId.isEmpty) {
       throw ArgumentError('Room ID cannot be empty');
@@ -47,17 +46,8 @@ class ChatService {
       throw ArgumentError('User ID cannot be empty');
     }
 
-    final wsProtocolScheme = gatewayUrl.startsWith('https') ? 'wss://' : 'ws://';
-    final hostPortAddress = gatewayUrl
-        .replaceAll('https://', '')
-        .replaceAll('http://', '');
-    final tokenQueryParam = jsonWebToken != null ? '&token=$jsonWebToken' : '';
-    final completeWebSocketUrl =
-        '$wsProtocolScheme$hostPortAddress/chat/ws?roomId=$roomId&userId=$_currentUserId$tokenQueryParam';
-
     try {
-      // ignore: close_sinks
-      final socket = await WebSocket.connect(completeWebSocketUrl);
+      final socket = await WebSocket.connect(chatUri.toString());
       _webSocketConnection = socket;
       _isConnectionActive = true;
       _chatUpdateStreamController.add(null);

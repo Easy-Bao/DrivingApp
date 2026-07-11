@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TrackDriverCubit extends Cubit<TrackDriverState> {

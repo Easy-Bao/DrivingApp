@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:driver_app/src/core/config/env_config.dart';
+import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_state.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:driver_app/src/shared/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,11 +47,12 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
   @override
   void initState() {
     super.initState();
+    final cubit = BlocProvider.of<RideFlowCubit>(context);
     _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (mounted) {
         setState(() => _waitSeconds++);
         if (_waitSeconds % 2 == 0) {
-          await _updateUnreadMessagesCount();
+          await _updateUnreadMessagesCount(cubit);
         }
       }
     });
@@ -63,9 +64,8 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     super.dispose();
   }
 
-  Future<void> _updateUnreadMessagesCount() async {
+  Future<void> _updateUnreadMessagesCount(RideFlowCubit cubit) async {
     try {
-      final cubit = BlocProvider.of<RideFlowCubit>(context);
       final rideId = cubit.activeRideId;
       if (rideId == null || rideId.isEmpty) return;
 
@@ -73,9 +73,8 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
       final driverIdentifier = prefs.getString('driver_id') ?? '';
       if (driverIdentifier.isEmpty) return;
 
-      final driverServiceEndpointUrl = EnvConfig.driverServiceUrl;
-      final apiGatewayEndpointUrl = driverServiceEndpointUrl.replaceAll('8082', '8080');
-      final chatMessagesEndpointUri = Uri.parse('$apiGatewayEndpointUrl/chat/rooms/$rideId/messages');
+      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
+      final chatMessagesEndpointUri = Uri.parse('$gatewayUrl/chat/rooms/$rideId/messages');
 
       final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
       if (chatMessagesHttpResponse.statusCode == 200) {
@@ -386,6 +385,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
               final passengerName = state is RideFlowWaitingPassenger
                   ? state.passengerName
                   : 'Passenger';
+              final cubit = BlocProvider.of<RideFlowCubit>(context);
               final prefs = await SharedPreferences.getInstance();
               final driverId = prefs.getString('driver_id') ?? '';
               if (mounted) {
@@ -401,7 +401,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                   },
                 );
                 _isInitialChatMessagesCountFetched = false;
-                await _updateUnreadMessagesCount();
+                await _updateUnreadMessagesCount(cubit);
               }
             },
           ),

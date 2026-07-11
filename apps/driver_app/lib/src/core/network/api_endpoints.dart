@@ -1,0 +1,24 @@
+import 'package:driver_app/src/core/config/environment_config.dart';
+
+class ApiEndpoints {
+  ApiEndpoints._();
+
+  static Uri buildChatWebSocketUri({
+    required String roomId,
+    required String userId,
+    String? token,
+  }) {
+    final baseUri = Uri.parse(EnvironmentConfig.webSocketBaseUrl);
+    final params = {
+      'roomId': roomId,
+      'userId': userId,
+    };
+    if (token != null) {
+      params['token'] = token;
+    }
+    return baseUri.replace(
+      path: '/chat/ws',
+      queryParameters: params,
+    );
+  }
+}

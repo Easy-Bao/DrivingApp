@@ -9,11 +9,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/config/env_config.dart';
+import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/bloc/track_driver/track_driver_cubit.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_cubit.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -67,9 +67,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       final passengerIdentifier = prefs.getString('passenger_id') ?? '';
       if (passengerIdentifier.isEmpty) return;
 
-      final passengerServiceEndpointUrl = EnvConfig.passengerServiceUrl;
-      final apiGatewayEndpointUrl = passengerServiceEndpointUrl.replaceAll('8081', '8080');
-      final chatMessagesEndpointUri = Uri.parse('$apiGatewayEndpointUrl/chat/rooms/${widget.ride.id}/messages');
+      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
+      final chatMessagesEndpointUri = Uri.parse('$gatewayUrl/chat/rooms/${widget.ride.id}/messages');
 
       final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
       if (chatMessagesHttpResponse.statusCode == 200) {

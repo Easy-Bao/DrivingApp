@@ -6,8 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/trip_booking/data/repositories/saved_places_repository.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/bloc/home/passenger_home_cubit.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/bloc/home/saved_places_state.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_state.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/home/models/saved_place_model.dart';
 
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {

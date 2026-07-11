@@ -5,22 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
-import 'package:passenger_app/src/core/config/env_config.dart';
+import 'package:passenger_app/src/core/config/environment_config.dart';
+import 'package:passenger_app/src/core/network/api_endpoints.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
 class DriverChatScreen extends StatefulWidget {
   final String? roomId;
   final String? userId;
-  final String? token;
   final String? peerName;
+  final String? token;
 
   const DriverChatScreen({
     super.key,
     this.roomId,
     this.userId,
-    this.token,
     this.peerName,
+    this.token,
   });
 
   @override
@@ -32,7 +33,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   final TextEditingController _msgCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
   late AnimationController _typingCtrl;
-  final bool _driverTyping = false;
+  final _driverTyping = false;
   bool _isTripFinished = false;
 
   late ChatService _chatService;
@@ -45,7 +46,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       final res = await PassengerApiService.getRideStatus(rId);
       if (res != null) {
         final status = res['status'] as String?;
-        if (status == 'completed' || status == 'cancelled') {
+        if (status == 'completed' || status == 'canceled' || status == 'cancelled') {
           setState(() {
             _isTripFinished = true;
           });
@@ -56,13 +57,13 @@ class _DriverChatScreenState extends State<DriverChatScreen>
 
   Future<void> _resolveChatRoom() async {
     final chatRoomId = widget.roomId;
-    if (chatRoomId == null || chatRoomId.isEmpty) {
-      throw ArgumentError('Room ID cannot be empty');
+    final currentUserId = widget.userId;
+    if (chatRoomId == null || chatRoomId.isEmpty || currentUserId == null || currentUserId.isEmpty) {
+      throw ArgumentError('Room ID and User ID cannot be empty');
     }
     try {
-      final passengerServiceUrl = EnvConfig.passengerServiceUrl;
-      final apiGatewayUrl = passengerServiceUrl.replaceAll('8081', '8080');
-      final resolveEndpointUrl = '$apiGatewayUrl/chat/rooms/$chatRoomId/resolve';
+      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
+      final resolveEndpointUrl = '$gatewayUrl/chat/rooms/$chatRoomId/resolve';
 
       final resolveResponse = await http.post(
         Uri.parse(resolveEndpointUrl),
@@ -70,11 +71,14 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       );
 
       if (resolveResponse.statusCode == 200) {
-        final gatewayBaseUrl = EnvConfig.passengerServiceUrl.replaceAll('8081', '8080');
+        final wsUri = ApiEndpoints.buildChatWebSocketUri(
+          roomId: chatRoomId,
+          userId: currentUserId,
+          token: widget.token,
+        );
         unawaited(_chatService.connectToChatRoom(
           roomId: chatRoomId,
-          gatewayUrl: gatewayBaseUrl,
-          jsonWebToken: widget.token,
+          chatUri: wsUri,
         ));
       }
     } catch (_) {}
@@ -116,11 +120,14 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       }
     });
 
-    final gatewayBaseUrl = EnvConfig.passengerServiceUrl.replaceAll('8081', '8080');
+    final wsUri = ApiEndpoints.buildChatWebSocketUri(
+      roomId: currentRoomId,
+      userId: currentUserId,
+      token: widget.token,
+    );
     unawaited(_chatService.connectToChatRoom(
       roomId: currentRoomId,
-      gatewayUrl: gatewayBaseUrl,
-      jsonWebToken: widget.token,
+      chatUri: wsUri,
     ));
 
     unawaited(_checkTripStatus());
@@ -146,12 +153,16 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       _scrollDown();
     } else {
       final currentRoomId = widget.roomId;
-      if (currentRoomId != null && currentRoomId.isNotEmpty) {
-        final gatewayBaseUrl = EnvConfig.passengerServiceUrl.replaceAll('8081', '8080');
+      final currentUserId = widget.userId;
+      if (currentRoomId != null && currentRoomId.isNotEmpty && currentUserId != null && currentUserId.isNotEmpty) {
+        final wsUri = ApiEndpoints.buildChatWebSocketUri(
+          roomId: currentRoomId,
+          userId: currentUserId,
+          token: widget.token,
+        );
         unawaited(_chatService.connectToChatRoom(
           roomId: currentRoomId,
-          gatewayUrl: gatewayBaseUrl,
-          jsonWebToken: widget.token,
+          chatUri: wsUri,
         ));
       }
     }
@@ -160,20 +171,18 @@ class _DriverChatScreenState extends State<DriverChatScreen>
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {
-        unawaited(
-          _scrollCtrl.animateTo(
-            _scrollCtrl.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          ),
-        );
+        unawaited(_scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        ));
       }
     });
   }
 
-  String _fmtTime(DateTime t) {
-    final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
-    return "$h:${t.minute.toString().padLeft(2, '0')} ${t.hour >= 12 ? 'PM' : 'AM'}";
+  String _fmtTime(DateTime dateTime) {
+    final hourDisplay = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    return "$hourDisplay:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.hour >= 12 ? 'PM' : 'AM'}";
   }
 
   @override
@@ -237,7 +246,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: _chatService.isConnectionActive ? AppTheme.complete : AppTheme.cancel,
+                        color: _chatService.isConnectionActive
+                            ? AppTheme.complete
+                            : AppTheme.cancel,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -245,7 +256,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                     Text(
                       _chatService.isConnectionActive ? 'Connected' : 'Offline',
                       style: TextStyle(
-                        color: _chatService.isConnectionActive ? AppTheme.complete : AppTheme.cancel,
+                        color: _chatService.isConnectionActive
+                            ? AppTheme.complete
+                            : AppTheme.cancel,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -265,9 +278,13 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               controller: _scrollCtrl,
               padding: const EdgeInsets.all(16),
               physics: const BouncingScrollPhysics(),
-              itemCount: _chatService.chatHistoryMessages.length + (_driverTyping ? 1 : 0),
+              itemCount: _chatService.chatHistoryMessages.length +
+                  (_driverTyping ? 1 : 0),
               itemBuilder: (ctx, i) {
-                if (i == _chatService.chatHistoryMessages.length && _driverTyping) return _buildTyping();
+                if (i == _chatService.chatHistoryMessages.length &&
+                    _driverTyping) {
+                  return _buildTyping();
+                }
                 return _buildBubble(_chatService.chatHistoryMessages[i]);
               },
             ),
@@ -335,7 +352,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                           color: AppTheme.primaryColor,
                         ),
                         decoration: InputDecoration(
-                          hintText: _chatService.isRoomLocked ? _chatService.lockReasonMessage : 'Type a message...',
+                          hintText: _chatService.isRoomLocked
+                              ? _chatService.lockReasonMessage
+                              : 'Type a message...',
                           hintStyle: TextStyle(
                             color: AppTheme.primaryColor.withValues(alpha: 0.4),
                             fontSize: 14,
@@ -351,12 +370,16 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                   ),
                   const SizedBox(width: 10),
                   GestureDetector(
-                    onTap: _chatService.isRoomLocked ? null : () => _send(_msgCtrl.text),
+                    onTap: _chatService.isRoomLocked
+                        ? null
+                        : () => _send(_msgCtrl.text),
                     child: Container(
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: _chatService.isRoomLocked ? Colors.grey : AppTheme.primaryColor,
+                        color: _chatService.isRoomLocked
+                            ? Colors.grey
+                            : AppTheme.primaryColor,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -494,15 +517,16 @@ class _DriverChatScreenState extends State<DriverChatScreen>
               builder: (ctx, _) {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: List.generate(3, (i) {
-                    final textTheme = (_typingCtrl.value + i * 0.2) % 1.0;
+                  children: List.generate(3, (dotIndex) {
+                    final animationProgress =
+                        (_typingCtrl.value + dotIndex * 0.2) % 1.0;
                     return Container(
                       width: 7,
                       height: 7,
-                      margin: EdgeInsets.only(right: i < 2 ? 4 : 0),
+                      margin: EdgeInsets.only(right: dotIndex < 2 ? 4 : 0),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withValues(
-                          alpha: 0.2 + (textTheme * 0.5),
+                          alpha: 0.2 + (animationProgress * 0.5),
                         ),
                         shape: BoxShape.circle,
                       ),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:driver_app/src/core/config/env_config.dart';
+import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/shared/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
@@ -70,8 +71,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     if (driverId.isEmpty) return;
 
     try {
-      final driverServiceUrl = EnvConfig.driverServiceUrl;
-      final gatewayUrl = driverServiceUrl.replaceAll('8082', '8080');
+      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
       final chatRoomsEndpointUrl = '$gatewayUrl/chat/rooms';
       final initializeChatResponse = await http.post(
         Uri.parse(chatRoomsEndpointUrl),
