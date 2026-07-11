@@ -41,8 +41,8 @@ class EnRoutePickupScreen extends StatefulWidget {
 class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   double _sliderVal = 0;
   bool _isLoading = true;
-  double _passengerLat = 8.5891;
-  double _passengerLng = 123.3441;
+  double _passengerLat = 0.0;
+  double _passengerLng = 0.0;
   Timer? _trackingTimer;
 
   int _unreadChatMessagesCount = 0;

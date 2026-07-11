@@ -36,8 +36,8 @@ class InTransitScreen extends StatefulWidget {
 
 class _InTransitScreenState extends State<InTransitScreen> {
   bool _isLoading = true;
-  double _destLat = 8.5862;
-  double _destLng = 123.3392;
+  double _destLat = 0.0;
+  double _destLng = 0.0;
   Timer? _trackingTimer;
 
   @override
