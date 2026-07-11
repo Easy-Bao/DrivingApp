@@ -1,7 +1,7 @@
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
-import 'package:driver_app/core/config/env_config.dart';
-import 'package:driver_app/core/di/service_locator.dart';
+import 'package:driver_app/src/core/config/env_config.dart';
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router_modular/go_router_modular.dart';

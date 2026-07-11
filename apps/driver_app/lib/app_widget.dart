@@ -1,6 +1,6 @@
-import 'package:driver_app/core/di/service_locator.dart';
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/features/driver/presentation/bloc/ride/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/bloc/ride/ride_flow_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';

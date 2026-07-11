@@ -2,9 +2,8 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/core/di/service_locator.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/finding_driver/finding_driver_bloc.dart';
-import 'package:passenger_app/features/passenger/presentation/bloc/track_driver/track_driver_cubit.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/bloc/track_driver/track_driver_cubit.dart';
 
 class AppWidget extends StatelessWidget {
   const AppWidget({super.key});
@@ -13,14 +12,6 @@ class AppWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        // FindingDriverBloc spans the finding → matched flow.
-        BlocProvider<FindingDriverBloc>(
-          create: (_) {
-            // NOTE: getIt<DriverRepository>() automatically injects the active DriverRepositoryImpl.
-            return FindingDriverBloc(repository: getIt<DriverRepository>());
-          },
-        ),
-
         // TrackDriverCubit spans the activity tracking flow.
         BlocProvider<TrackDriverCubit>(
           create: (_) {

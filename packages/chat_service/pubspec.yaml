@@ -1,0 +1,12 @@
+name: chat_service
+description: "Shared WebSocket Chat Service for Rider and Driver apps."
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter

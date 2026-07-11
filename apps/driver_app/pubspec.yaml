@@ -63,6 +63,9 @@ dependencies:
   core_models:
     path: ../../packages/core_models
 
+  chat_service:
+    path: ../../packages/chat_service
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
