@@ -1,92 +1,68 @@
-import 'dart:async';
-
-import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/trip_booking/data/repositories/saved_places_repository.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
+import 'package:passenger_app/src/features/trip_booking/data/models/saved_place_model.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/repositories/saved_places_repository.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_state.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/views/home/models/saved_place_model.dart';
 
+/**
+ * Cubit managing passenger saved place shortcut chips.
+ * Entirely decoupled from BuildContext and UI navigation.
+ */
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   final SavedPlacesRepository _repository;
-  BuildContext? _context;
 
   SavedPlacesCubit({required SavedPlacesRepository repository})
       : _repository = repository,
         super(const SavedPlacesState());
 
-  // ignore: use_setters_to_change_properties
-  void attachContext(BuildContext context) {
-    _context = context;
-  }
-
+  /**
+   * Loads all pinned shortcuts from local storage.
+   */
   Future<void> loadPlaces() async {
     emit(state.copyWith(isLoading: true));
 
     try {
       final rawPlaces = await _repository.loadPlaces();
-      final models = rawPlaces.map((raw) => _buildModel(raw)).toList();
+      final models = rawPlaces.map((raw) => SavedPlaceModel.fromJson(raw)).toList();
       emit(SavedPlacesState(places: models, isLoading: false));
     } catch (error, stackTrace) {
-      debugPrint('Error loading saved places: $error\n$stackTrace');
+      debugPrint('Error loading saved places in cubit: $error\n$stackTrace');
       emit(const SavedPlacesState(places: [], isLoading: false));
     }
   }
 
-  Future<void> addPlace(SavedPlaceModel place) async {
-    final wired = place.copyWith(onTap: _buildOnTap(place));
-    final updated = [...state.places, wired];
+  /**
+   * Adds a new pinned shortcut and updates storage.
+   */
+  Future<void> addPlace(SavedPlace place) async {
+    final updated = [...state.places, place];
     emit(state.copyWith(places: updated));
-    await _repository.savePlaces(updated);
+    try {
+      await _repository.savePlaces(updated);
+    } catch (error) {
+      debugPrint('Error saving places in cubit: $error');
+    }
   }
 
+  /**
+   * Removes a pinned shortcut at [index] and updates storage.
+   */
   Future<void> removePlace(int index) async {
+    if (index < 0 || index >= state.places.length) return;
     final updated = [...state.places]..removeAt(index);
     emit(state.copyWith(places: updated));
-    await _repository.savePlaces(updated);
+    try {
+      await _repository.savePlaces(updated);
+    } catch (error) {
+      debugPrint('Error saving places after deletion: $error');
+    }
   }
 
-  SavedPlaceModel _buildModel(Map<String, dynamic> raw) {
-    final place = SavedPlaceModel.fromJson(raw, () {});
-    return place.copyWith(onTap: _buildOnTap(place));
-  }
-
-  VoidCallback _buildOnTap(SavedPlaceModel place) {
-    return () {
-      final ctx = _context;
-      if (ctx == null || !ctx.mounted) return;
-
-      if (place.hasLocation) {
-        final syntheticPlace = PlaceModel(
-          id: 'saved_${place.label.toLowerCase().replaceAll(' ', '_')}',
-          name: place.label,
-          fullAddress: place.savedAddress ?? place.label,
-          latitude: place.latitude!,
-          longitude: place.longitude!,
-        );
-        final address = BlocProvider.of<PassengerHomeCubit>(ctx).state.currentAddress;
-        unawaited(
-          ctx.pushNamed(
-            'DestinationPreview',
-            extra: syntheticPlace,
-            queryParameters: {'pickupAddress': address},
-          ),
-        );
-      } else {
-        final address = BlocProvider.of<PassengerHomeCubit>(ctx).state.currentAddress;
-        unawaited(
-          ctx.pushNamed(
-            'SearchDestination',
-            queryParameters: {'pickupAddress': address},
-          ),
-        );
-      }
-    };
-  }
-
+  /**
+   * Helper utility mapping a dynamic icon name back to its respective [IconData].
+   */
   static IconData iconFromName(String iconName) {
     switch (iconName) {
       case 'house':

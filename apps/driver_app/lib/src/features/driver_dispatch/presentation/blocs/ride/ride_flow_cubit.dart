@@ -4,12 +4,13 @@ import 'package:http/http.dart' as http;
 import 'package:driver_app/src/core/config/env_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// Manages the sequential ride lifecycle: initial → en-route → waiting → in-transit → complete.
+/**
+ * Cubit managing sequential driver ride states: en-route, waiting, in-transit, complete.
+ */
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
   Timer? _waitTimer;
@@ -22,7 +23,9 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     : _repository = repository,
       super(RideFlowInitial());
 
-  /// Driver accepted a ride request — begin navigating to pickup.
+  /**
+   * Accepts the passenger ride request on the backend and updates local flow state.
+   */
   Future<void> acceptRide({
     required String rideId,
     required String passengerName,
@@ -64,7 +67,9 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
-  /// Resume ride flow state based on current backend status
+  /**
+   * Resumes the ride flow state based on the current active database trip status.
+   */
   Future<void> resumeRide({
     required String rideId,
     required String status,
@@ -120,7 +125,9 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
   }
 
-  // Driver has arrived at the pickup location — start waiting timer.
+  /**
+   * Signals arrival at pickup and starts wait time tick.
+   */
   Future<void> arriveAtPickup(String passengerName) async {
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
@@ -156,7 +163,9 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     });
   }
 
-  // Passenger is aboard — begin trip to destination.
+  /**
+   * Starts transit movement along destination coordinates.
+   */
   Future<void> startRide({
     required String passengerName,
     required double destLat,
@@ -188,7 +197,9 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
-  // Driver has reached the destination — compute and display the final fare.
+  /**
+   * Completes the active ride and computes final customer fare billing.
+   */
   Future<void> endRide({
     required double distanceKm,
     required double durationMinutes,
@@ -214,12 +225,15 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         durationMinutes: durationMinutes,
       );
       emit(RideFlowComplete(fare: fareResult.totalFare));
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Error loading dynamic fare calculation: $error. Falling back to default.');
       emit(const RideFlowComplete(fare: 50.0));
     }
   }
 
-  // Resets the ride flow back to idle.
+  /**
+   * Resets the active ride state back to initial idle view.
+   */
   void reset() {
     _waitTimer?.cancel();
     _activeRideId = null;

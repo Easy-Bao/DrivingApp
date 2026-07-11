@@ -1,25 +1,14 @@
 import 'dart:convert';
-
-import 'package:passenger_app/src/features/trip_booking/data/repositories/saved_places_repository.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/views/home/models/saved_place_model.dart';
+import 'package:passenger_app/src/features/trip_booking/data/models/saved_place_model.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/repositories/saved_places_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /**
  * SharedPreferences-backed implementation of [SavedPlacesRepository].
  *
- * Lifecycle and persistence strategy:
- * On first launch (no key present), [loadPlaces] seeds three default shortcuts
- * (Home, Campus, Work) without pinned coordinates. These defaults signal to the
- * presentation layer that tapping them should open SearchDestination rather than
- * DestinationPreview, since no coordinate is yet associated.
- *
- * On subsequent launches, the JSON array previously written by [savePlaces] is
- * decoded and returned as a list of raw maps. The [onTap] callbacks are not
- * stored because Dart callbacks are non-serialisable; they are injected by the
- * cubit after decoding based on each entry's coordinates.
- *
- * Storage key: [_storageKey] — a versioned constant so future schema migrations
- * can bump the version suffix without reading stale data.
+ * Seeds three default shortcuts (Home, Campus, Work) on the first run,
+ * and encodes/decodes list objects as JSON for simple storage persistence.
  */
 class SavedPlacesRepositoryImpl implements SavedPlacesRepository {
   static const String _storageKey = 'passenger_saved_places_v1';
@@ -35,15 +24,32 @@ class SavedPlacesRepositoryImpl implements SavedPlacesRepository {
           .toList();
     }
 
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .cast<Map<String, dynamic>>()
-        .toList();
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded.cast<Map<String, dynamic>>().toList();
+    } catch (error) {
+      // Re-seed defaults if storage format is corrupt
+      return SavedPlaceModel.defaults
+          .map((d) => Map<String, dynamic>.from(d))
+          .toList();
+    }
   }
 
   @override
-  Future<void> savePlaces(List<SavedPlaceModel> places) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_storageKey, SavedPlaceModel.encodeList(places));
+  Future<void> savePlaces(List<SavedPlace> places) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final models = places.map((p) => SavedPlaceModel(
+        label: p.label,
+        iconName: p.iconName,
+        savedAddress: p.savedAddress,
+        latitude: p.latitude,
+        longitude: p.longitude,
+      )).toList();
+      await prefs.setString(_storageKey, SavedPlaceModel.encodeList(models));
+    } catch (error) {
+      // Ensure we fail cleanly on write error
+      throw Exception('Failed to write saved places to storage: $error');
+    }
   }
 }

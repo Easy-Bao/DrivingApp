@@ -17,7 +17,6 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
 
   void _finishRating() {
     CustomToast.show(context, 'Thank you for using BaoRide!');
-    // Navigate back to the home screen
     context.goNamed('PassengerHome');
   }
 

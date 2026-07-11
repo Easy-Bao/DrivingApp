@@ -1,7 +1,7 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
-import 'package:passenger_app/src/features/trip_booking/data/repositories/activity_repository.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
 
 const _monthAbbreviations = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',

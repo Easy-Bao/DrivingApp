@@ -1,12 +1,16 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/profile/profile_cubit.dart';
 
+/**
+ * Screen displaying the passenger's account menu options and syncing profile details.
+ * Delegates data retrieval and persistence entirely to the [ProfileCubit] state machine.
+ */
 class PassengerAccountScreen extends StatefulWidget {
   const PassengerAccountScreen({super.key});
 
@@ -15,102 +19,6 @@ class PassengerAccountScreen extends StatefulWidget {
 }
 
 class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
-  String _name = '';
-  String _phone = '';
-  String _email = '';
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadProfile());
-  }
-
-  /// Loads passenger profile from SharedPreferences first for instant display,
-  /// then refreshes from the backend and caches the latest values.
-  Future<void> _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    // Render cached values immediately (fast first paint).
-    if (mounted) {
-      setState(() {
-        _name = prefs.getString('passenger_name') ?? '';
-        _phone = prefs.getString('passenger_phone') ?? '';
-        _email = prefs.getString('passenger_email') ?? '';
-      });
-    }
-
-    // Sync from server and update cache.
-    final passengerId = prefs.getString('passenger_id') ?? '';
-    if (passengerId.isEmpty) return;
-
-    final profile = await PassengerApiService.getPassengerProfile(passengerId);
-    if (profile == null || !mounted) return;
-
-    final name = profile['name'] as String? ?? _name;
-    final phone = profile['phone'] as String? ?? _phone;
-    final email = profile['email'] as String? ?? _email;
-
-    await prefs.setString('passenger_name', name);
-    await prefs.setString('passenger_phone', phone);
-    await prefs.setString('passenger_email', email);
-
-    if (mounted) {
-      setState(() {
-        _name = name;
-        _phone = phone;
-        _email = email;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Account',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
-                        letterSpacing: -1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              _buildProfileHeader(),
-              const SizedBox(height: 40),
-              _buildSectionTitle('Activity'),
-              ..._buildActivityItems(context).map((item) => _buildAccountTile(context, item)),
-              const SizedBox(height: 32),
-              _buildSectionTitle('Personal'),
-              ..._buildPersonalItems(context).map((item) => _buildAccountTile(context, item)),
-              const SizedBox(height: 32),
-              _buildSectionTitle('Support'),
-              ..._buildSupportItems(context).map((item) => _buildAccountTile(context, item)),
-              const SizedBox(height: 40),
-              _buildLogoutButton(),
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   List<_AccountMenuItem> _buildActivityItems(BuildContext context) {
     return [
       _AccountMenuItem(
@@ -130,7 +38,9 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
         subtitle: 'Update name and details',
         onTap: () async {
           await context.pushNamed('ProfileInfo');
-          unawaited(_loadProfile());
+          if (context.mounted) {
+            unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
+          }
         },
       ),
     ];
@@ -153,7 +63,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
     ];
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(ProfileState state) {
     return Center(
       child: Column(
         children: [
@@ -173,7 +83,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _name.isNotEmpty ? _name : '—',
+            state.name.isNotEmpty ? state.name : '—',
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -182,25 +92,24 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            _phone.isNotEmpty ? _phone : '—',
+            state.phone.isNotEmpty ? state.phone : '—',
             style: TextStyle(
               fontSize: 14,
               color: AppTheme.primaryColor.withValues(alpha: 0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
-          if (_email.isNotEmpty) ...
-            [
-              const SizedBox(height: 2),
-              Text(
-                _email,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.45),
-                  fontWeight: FontWeight.w400,
-                ),
+          if (state.email.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              state.email,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.primaryColor.withValues(alpha: 0.45),
+                fontWeight: FontWeight.w400,
               ),
-            ],
+            ),
+          ],
         ],
       ),
     );
@@ -208,85 +117,113 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Text(
-        title.toUpperCase(),
+        title,
         style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
           color: AppTheme.primaryColor.withValues(alpha: 0.4),
-          letterSpacing: 1.5,
+          letterSpacing: 0.5,
         ),
       ),
     );
   }
 
-  Widget _buildAccountTile(
-    BuildContext context,
-    _AccountMenuItem item,
-  ) {
+  Widget _buildAccountTile(BuildContext context, _AccountMenuItem item) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppTheme.neutralColor,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.borderSide),
         ),
-        child: Icon(item.icon, color: AppTheme.primaryColor, size: 20),
+        child: Icon(item.icon, size: 20, color: AppTheme.primaryColor),
       ),
       title: Text(
         item.title,
         style: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 16,
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
           color: AppTheme.primaryColor,
         ),
       ),
       subtitle: Text(
         item.subtitle,
         style: TextStyle(
+          fontSize: 12,
           color: AppTheme.primaryColor.withValues(alpha: 0.5),
-          fontSize: 13,
+          fontWeight: FontWeight.w500,
         ),
       ),
       trailing: const Icon(
         LucideIcons.chevron_right,
-        size: 18,
-        color: AppTheme.borderSide,
+        size: 16,
+        color: AppTheme.primaryColor,
       ),
       onTap: item.onTap,
     );
   }
 
-  Widget _buildLogoutButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: TextButton(
-        onPressed: () async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
-          if (!mounted) return;
-          context.goNamed('Signin');
-        },
-        style: TextButton.styleFrom(
-          foregroundColor: Colors.redAccent,
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.log_out, size: 18),
-            SizedBox(width: 10),
-            Text(
-              'Log Out',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<ProfileCubit>(
+      create: (_) {
+        final cubit = getIt<ProfileCubit>();
+        unawaited(cubit.loadProfile());
+        return cubit;
+      },
+      child: BlocBuilder<ProfileCubit, ProfileState>(
+        builder: (context, state) {
+          return Scaffold(
+            backgroundColor: AppTheme.surface,
+            body: SafeArea(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Account',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryColor,
+                              letterSpacing: -1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildProfileHeader(state),
+                    const SizedBox(height: 40),
+                    _buildSectionTitle('Activity'),
+                    ..._buildActivityItems(context)
+                        .map((item) => _buildAccountTile(context, item)),
+                    const SizedBox(height: 32),
+                    _buildSectionTitle('Personal'),
+                    ..._buildPersonalItems(context)
+                        .map((item) => _buildAccountTile(context, item)),
+                    const SizedBox(height: 32),
+                    _buildSectionTitle('Support'),
+                    ..._buildSupportItems(context)
+                        .map((item) => _buildAccountTile(context, item)),
+                    const SizedBox(height: 36),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -298,7 +235,7 @@ class _AccountMenuItem {
   final String subtitle;
   final VoidCallback onTap;
 
-  const _AccountMenuItem({
+  _AccountMenuItem({
     required this.icon,
     required this.title,
     required this.subtitle,

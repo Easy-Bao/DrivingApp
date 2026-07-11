@@ -6,11 +6,11 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/views/home/models/saved_place_model.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
 
 class PassengerAddCategoryScreen extends StatefulWidget {
-  final Function(SavedPlaceModel) onSave;
+  final Function(SavedPlace) onSave;
   final PlaceModel? initialPlace;
 
   const PassengerAddCategoryScreen({
@@ -348,13 +348,12 @@ class _PassengerAddCategoryScreenState
     });
 
     final iconName = _iconNameFromData(selectedIcon);
-    final newPlace = SavedPlaceModel(
+    final newPlace = SavedPlace(
       label: label,
       iconName: iconName,
       latitude: _lat,
       longitude: _lng,
       savedAddress: label,
-      onTap: () {},
     );
 
     widget.onSave(newPlace);

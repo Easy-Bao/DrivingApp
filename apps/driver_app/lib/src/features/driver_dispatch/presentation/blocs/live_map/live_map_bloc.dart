@@ -5,6 +5,10 @@ import 'package:location_service/location_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_state.dart';
 
+/**
+ * BLoC managing maps rendering, markers, route overlay calculations,
+ * and animations independently from trip business logic.
+ */
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   AppMapController? _mapController;
   final List<dynamic> _markerManagers = [];
@@ -93,7 +97,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     for (final manager in _markerManagers) {
       try {
         await MapProvider.clearAnnotations(manager);
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('Error clearing driver map marker: $error');
+      }
     }
     _markerManagers.clear();
   }

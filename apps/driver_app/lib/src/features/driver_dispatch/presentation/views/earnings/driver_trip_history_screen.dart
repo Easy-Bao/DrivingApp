@@ -1,5 +1,5 @@
 import 'package:driver_app/src/core/di/service_locator.dart';
-import 'package:driver_app/src/features/driver_dispatch/data/repositories/driver_activity_repository.dart';
+import 'package:driver_app/src/features/driver_dispatch/domain/repositories/driver_activity_repository.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';

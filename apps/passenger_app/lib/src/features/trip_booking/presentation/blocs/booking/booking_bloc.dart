@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:core_models/core_models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/bid_session_service.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
@@ -7,6 +8,12 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booki
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/**
+ * BLoC responsible for orchestrating the trip booking and driver bidding lifecycle.
+ *
+ * Coordinates searching, showing nearby drivers, streaming bids, accepting offers,
+ * and dispatch updates.
+ */
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
   final BidSessionService _bidSessionService;
@@ -70,7 +77,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           } else {
             _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
           }
-        } catch (_) {
+        } catch (error) {
+          debugPrint('Error loading driver stats, fallback to seed: $error');
           _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
         }
 
@@ -94,7 +102,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
                   final parsedDate = DateTime.parse(createdAtStr as String);
                   final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                   dateFormatted = '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
-                } catch (_) {}
+                } catch (error) {
+                  debugPrint('Failed to parse review date: $error');
+                }
               }
               processedReviews.add({
                 'passengerName': r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
@@ -105,7 +115,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             }
           }
           _reviews = processedReviews;
-        } catch (_) {
+        } catch (error) {
+          debugPrint('Failed to process reviews: $error');
           _reviews = const [];
         } finally {
           _isLoadingReviews = false;
@@ -275,7 +286,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           );
         }
       } catch (error) {
-        // Fallback to offline/mock model if API fails
+        debugPrint('Error creating ride request, falling back to matched result: $error');
       }
     }
 

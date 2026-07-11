@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/transitions/app_transitions.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_cubit.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/views/home/models/saved_place_model.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/home/screens/activity_detail_map_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/home/screens/add_category.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/home/screens/destination_preview_screen.dart';
@@ -44,7 +44,7 @@ class HomeModule {
       'home/add-category',
       child: (context, GoRouterState state) {
         final extra = state.extra as Map<String, dynamic>?;
-        final onSave = extra?['onSave'] as Function(SavedPlaceModel)?;
+        final onSave = extra?['onSave'] as Function(SavedPlace)?;
         final place = extra?['place'] as PlaceModel?;
         return PassengerAddCategoryScreen(
           onSave: onSave ?? (_) {},

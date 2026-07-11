@@ -10,11 +10,11 @@ import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/bid_session_service.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_state.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_state.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/views/home/models/saved_place_model.dart';
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -145,7 +145,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _attachSavedPlacesContext();
       unawaited(_entranceController.forward());
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
@@ -234,10 +233,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  void _attachSavedPlacesContext() {
-    if (!mounted) return;
-    BlocProvider.of<SavedPlacesCubit>(context).attachContext(context);
-  }
+
 
   Future<void> _loadNotificationCount() async {
     try {
@@ -314,7 +310,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
-                    onTap: place.onTap,
+                    onTap: () => _handleSavedPlaceTap(place),
                     onLongPress: () => _showChipOptions(index, place.label),
                     child: _buildSavedPlaceChip(place),
                   ),
@@ -569,7 +565,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  Widget _buildSavedPlaceChip(SavedPlaceModel place) {
+  Widget _buildSavedPlaceChip(SavedPlace place) {
     final hasLocation = place.hasLocation;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -777,7 +773,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     await context.pushNamed(
       'PassengerAddCategory',
       extra: {
-        'onSave': (SavedPlaceModel newPlace) => cubit.addPlace(newPlace),
+        'onSave': (SavedPlace newPlace) => cubit.addPlace(newPlace),
         'place': selectedPlace,
       },
     );
@@ -845,5 +841,39 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         ),
       ),
     );
+  }
+
+  /**
+   * Evaluates the selected saved place shortcut. If coordinates are present, 
+   * it pushes the DestinationPreview screen directly. Otherwise, it launches 
+   * the SearchDestination screen to allow the user to lookup the coordinates.
+   */
+  void _handleSavedPlaceTap(SavedPlace place) {
+    if (!mounted) return;
+    if (place.hasLocation) {
+      final syntheticPlace = PlaceModel(
+        id: 'saved_${place.label.toLowerCase().replaceAll(' ', '_')}',
+        name: place.label,
+        fullAddress: place.savedAddress ?? place.label,
+        latitude: place.latitude!,
+        longitude: place.longitude!,
+      );
+      final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+      unawaited(
+        context.pushNamed(
+          'DestinationPreview',
+          extra: syntheticPlace,
+          queryParameters: {'pickupAddress': address},
+        ),
+      );
+    } else {
+      final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+      unawaited(
+        context.pushNamed(
+          'SearchDestination',
+          queryParameters: {'pickupAddress': address},
+        ),
+      );
+    }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/features/trip_booking/data/repositories/activity_repository.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
 
 part 'activity_event.dart';
 part 'activity_state.dart';
@@ -19,10 +19,10 @@ part 'activity_state.dart';
 class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   final ActivityRepository _repository;
 
-  /// Status values that belong to the "Past" tab.
+  // Status values that belong to the "Past" tab.
   static const _pastStatuses = {'completed', 'canceled', 'cancelled'};
 
-  /// Status values that belong to the "Upcoming" tab.
+  // Status values that belong to the "Upcoming" tab.
   static const _upcomingStatuses = {'in_progress', 'requested', 'accepted'};
 
   ActivityBloc({required ActivityRepository repository})
@@ -64,7 +64,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     } on ActivityRepositoryException catch (error) {
       emit(ActivityError(message: error.message));
     } catch (error) {
-      emit(ActivityError(message: 'Unexpected error: $error'));
+      emit(ActivityError(message: error.toString()));
     }
   }
 }

@@ -1,11 +1,15 @@
 import 'dart:async';
-
 import 'package:core_models/core_models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/**
+ * Cubit responsible for tracking driver location and status updates during 
+ * active passenger ride bookings.
+ */
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final TrackRepository _repository;
   Timer? _ticker;
@@ -14,9 +18,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     : _repository = repository,
       super(TrackDriverInitial());
 
-  /// Starts tracking a driver's progress from [startLat,startLng] to [endLat,endLng].
-  ///
-  /// Fetches a route polyline then simulates movement along it every 1.5 seconds.
+  /**
+   * Starts periodic sync calls querying driver location updates and ride status.
+   */
   Future<void> startTracking({
     required double startLat,
     required double startLng,
@@ -75,7 +79,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                   driverLng = (locData['lng'] as num).toDouble();
                   locationFetched = true;
                 }
-              } catch (_) {}
+              } catch (error) {
+                debugPrint('Error fetching driver coordinate location: $error');
+              }
             }
 
             if (!locationFetched) {
@@ -116,7 +122,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             );
             handled = true;
           }
-        } catch (_) {}
+        } catch (error) {
+          debugPrint('Error in track driver sync cycle: $error');
+        }
       }
 
       if (!handled) {
@@ -151,7 +159,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     });
   }
 
-  /// Passenger canceled the trip.
+  /**
+   * Cancelels the ride booking and terminates tracking.
+   */
   Future<void> cancelTrip() async {
     _ticker?.cancel();
     try {
@@ -161,7 +171,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         await PassengerApiService.updateRideStatus(rideId, 'canceled');
         await prefs.remove('active_ride_id');
       }
-    } catch (_) {}
+    } catch (error) {
+      debugPrint('Error canceling trip in track cubit: $error');
+    }
     emit(TrackDriverCanceled());
   }
 
@@ -171,7 +183,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     return super.close();
   }
 
-  /// Interpolates position along the polyline or falls back to straight-line.
   (double lat, double lng) _interpolate({
     required double progress,
     required List<List<double>>? routePoints,
@@ -187,7 +198,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
       final t = fractionalIndex - index;
       final p1 = routePoints[index];
       final p2 = routePoints[nextIndex];
-      // polylinePoints are [lng, lat]
       return (p1[1] + (p2[1] - p1[1]) * t, p1[0] + (p2[0] - p1[0]) * t);
     }
     return (
