@@ -2,12 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Service wrapper communicating with the Passenger backend REST APIs.
 class PassengerApiService {
-  /// The base backend endpoint URI.
   final Uri baseUrl;
 
-  /// Creates an instance of [PassengerApiService] configured with a [baseUrl].
   PassengerApiService({required this.baseUrl});
 
   Future<Map<String, String>> _getRequestHeaders() async {
@@ -23,7 +20,6 @@ class PassengerApiService {
     return requestHeaders;
   }
 
-  /// Registers a new passenger user.
   Future<Map<String, dynamic>?> registerPassenger({
     required String name,
     required String email,
@@ -46,7 +42,6 @@ class PassengerApiService {
     return null;
   }
 
-  /// Verifies an OTP code for a passenger email.
   Future<bool> verifyOtp({required String email, required String code}) async {
     final response = await http.post(
       baseUrl.replace(path: '/passengers/verify-otp'),
@@ -56,7 +51,6 @@ class PassengerApiService {
     return response.statusCode == 200;
   }
 
-  /// Initiates password recovery.
   Future<bool> forgotPassword({required String email}) async {
     final response = await http.post(
       baseUrl.replace(path: '/passengers/forgot-password'),
@@ -66,7 +60,6 @@ class PassengerApiService {
     return response.statusCode == 200;
   }
 
-  /// Updates profile information for a passenger.
   Future<Map<String, dynamic>?> updateProfile({
     required String id,
     required String name,
@@ -85,7 +78,6 @@ class PassengerApiService {
     return null;
   }
 
-  /// Submits a ride request to the match maker.
   Future<Map<String, dynamic>?> createRideRequest({
     required String passengerId,
     required String rideType,
@@ -122,7 +114,6 @@ class PassengerApiService {
     return null;
   }
 
-  /// Fetches historical rides completed by the passenger.
   Future<List<dynamic>> fetchRideHistory(String passengerId) async {
     final Map<String, String> requestHeaders = await _getRequestHeaders();
     final response = await http.get(
@@ -135,7 +126,6 @@ class PassengerApiService {
     return [];
   }
 
-  /// Fetches recent notifications received by the passenger.
   Future<List<dynamic>> fetchNotifications(String passengerId) async {
     try {
       final Map<String, String> requestHeaders = await _getRequestHeaders();
@@ -152,7 +142,6 @@ class PassengerApiService {
     }
   }
 
-  /// Retrieves the current status details of a specific ride.
   Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
     final response = await http.get(baseUrl.replace(path: '/rides/$rideId'));
     if (response.statusCode == 200) {
@@ -161,7 +150,6 @@ class PassengerApiService {
     return null;
   }
 
-  /// Updates status for an active ride.
   Future<bool> updateRideStatus(String rideId, String status) async {
     final response = await http.post(
       baseUrl.replace(path: '/rides/$rideId/status'),
@@ -171,7 +159,6 @@ class PassengerApiService {
     return response.statusCode == 200;
   }
 
-  /// Fetches the current location telemetry of a driver.
   Future<Map<String, dynamic>?> fetchDriverLocation(String driverId) async {
     try {
       final response = await http.get(
@@ -186,7 +173,6 @@ class PassengerApiService {
     }
   }
 
-  /// Submits telemetry location update for a ride tracking session.
   Future<bool> updateLocation({
     required String rideId,
     required double lat,
@@ -204,7 +190,6 @@ class PassengerApiService {
     }
   }
 
-  /// Retrieves detailed profile metadata for a passenger.
   Future<Map<String, dynamic>?> getPassengerProfile(String passengerId) async {
     try {
       final Map<String, String> requestHeaders = await _getRequestHeaders();
@@ -221,7 +206,6 @@ class PassengerApiService {
     }
   }
 
-  /// Fetches standard fare pricing estimates based on trip parameters.
   Future<Map<String, dynamic>?> fetchFareEstimate({
     required String rideType,
     required double distanceKm,
@@ -246,7 +230,6 @@ class PassengerApiService {
     }
   }
 
-  /// Starts a bidding session on the gateway.
   Future<Map<String, dynamic>?> openBidSession({
     required String passengerId,
     required String rideType,
@@ -287,7 +270,6 @@ class PassengerApiService {
     }
   }
 
-  /// Retrieves list of offers received for a bid session.
   Future<List<dynamic>> pollBidOffers(String sessionId) async {
     try {
       final response = await http.get(
@@ -302,7 +284,6 @@ class PassengerApiService {
     }
   }
 
-  /// Accepts a driver's bid offer.
   Future<Map<String, dynamic>?> acceptBidOffer({
     required String sessionId,
     required String offerId,
@@ -322,7 +303,6 @@ class PassengerApiService {
     }
   }
 
-  /// Cancels an active bid session.
   Future<bool> cancelBidSession(String sessionId) async {
     try {
       final response = await http.delete(
@@ -334,7 +314,6 @@ class PassengerApiService {
     }
   }
 
-  /// Retrieves the active metadata of a bid session.
   Future<Map<String, dynamic>?> getBidSession(String sessionId) async {
     try {
       final response = await http.get(
@@ -349,7 +328,6 @@ class PassengerApiService {
     }
   }
 
-  /// Fetches list of drivers currently active on the grid.
   Future<List<dynamic>> fetchOnlineDrivers() async {
     try {
       final response = await http.get(baseUrl.replace(path: '/drivers/online'));
@@ -362,7 +340,6 @@ class PassengerApiService {
     }
   }
 
-  /// Retrieves a driver's registration profile details.
   Future<Map<String, dynamic>?> getDriverProfile(String driverId) async {
     try {
       final response = await http.get(
@@ -378,7 +355,6 @@ class PassengerApiService {
     }
   }
 
-  /// Fetches trip volume and scoring statistics for a driver.
   Future<Map<String, dynamic>?> fetchDriverStats(String driverId) async {
     try {
       final driverStatsResponse = await http.get(
@@ -394,7 +370,6 @@ class PassengerApiService {
     }
   }
 
-  /// Retrieves reviews and comment history posted for a driver.
   Future<List<dynamic>> fetchDriverReviews(String driverId) async {
     try {
       final response = await http.get(

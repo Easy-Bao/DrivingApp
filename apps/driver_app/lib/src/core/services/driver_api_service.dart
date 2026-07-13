@@ -1,15 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-/// Service wrapper communicating with the Driver backend REST APIs.
 class DriverApiService {
-  /// The base backend endpoint URI.
   final Uri baseUrl;
 
-  /// Creates an instance of [DriverApiService] configured with a [baseUrl].
   DriverApiService({required this.baseUrl});
 
-  /// Logs in a driver user with credentials.
   Future<Map<String, dynamic>?> login({
     required String email,
     required String password,
@@ -29,7 +25,6 @@ class DriverApiService {
     }
   }
 
-  /// Toggles the online state of a driver with coordinates.
   Future<bool> toggleOnline({
     required String driverId,
     required bool isOnline,
@@ -48,7 +43,6 @@ class DriverApiService {
     }
   }
 
-  /// Fetches standard fare pricing estimates.
   Future<Map<String, dynamic>?> fetchFareEstimate({
     required double distanceKm,
     required double durationMinutes,
@@ -73,7 +67,6 @@ class DriverApiService {
     }
   }
 
-  /// Fetches current active bids open on the gateway.
   Future<List<dynamic>> fetchActiveBids(String driverId) async {
     try {
       final response = await http.get(
@@ -92,7 +85,6 @@ class DriverApiService {
     }
   }
 
-  /// Submits a bid offer on an active session.
   Future<bool> placeBid({
     required String sessionId,
     required String driverId,
@@ -122,7 +114,6 @@ class DriverApiService {
     }
   }
 
-  /// Cancels a submitted bid offer.
   Future<bool> cancelBid({
     required String sessionId,
     required String driverId,
@@ -139,7 +130,6 @@ class DriverApiService {
     }
   }
 
-  /// Fetches historical trips completed by a driver.
   Future<List<dynamic>> fetchTripHistory(String driverId) async {
     try {
       final response = await http.get(
@@ -155,7 +145,6 @@ class DriverApiService {
     }
   }
 
-  /// Fetches volume and scoring statistics for a driver.
   Future<Map<String, dynamic>?> fetchStats(String driverId) async {
     try {
       final response = await http.get(
@@ -171,7 +160,6 @@ class DriverApiService {
     }
   }
 
-  /// Retrieves profile information for a driver.
   Future<Map<String, dynamic>?> fetchProfile(String driverId) async {
     try {
       final response = await http.get(
@@ -187,7 +175,6 @@ class DriverApiService {
     }
   }
 
-  /// Submits telemetry location coordinates update.
   Future<bool> updateLocation({
     required String driverId,
     required double lat,
@@ -205,7 +192,6 @@ class DriverApiService {
     }
   }
 
-  /// Retrieves passenger GPS coordinate update for a ride tracking session.
   Future<Map<String, dynamic>?> fetchPassengerLocation(String rideId) async {
     try {
       final response = await http.get(
@@ -220,7 +206,6 @@ class DriverApiService {
     }
   }
 
-  /// Retrieves passenger's profile info.
   Future<Map<String, dynamic>?> fetchPassengerProfile(
     String passengerId,
   ) async {
@@ -238,7 +223,6 @@ class DriverApiService {
     }
   }
 
-  /// Retrieves details of an active ride.
   Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
     try {
       final response = await http.get(
