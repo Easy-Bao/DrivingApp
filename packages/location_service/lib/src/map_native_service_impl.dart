@@ -4,22 +4,16 @@ import 'package:http/http.dart' as http;
 import 'package:core_models/core_models.dart';
 import 'map_native_service.dart';
 
-/**
- * Concrete implementation of [MapNativeService] invoking Mapbox APIs directly over HTTP.
- * This class eliminates FFI dependencies by implementing the geocoding, reverse-geocoding,
- * routing, and mathematical computations in pure Dart.
- */
+/// Concrete implementation of [MapNativeService] invoking Mapbox APIs directly over HTTP.
+/// This class eliminates FFI dependencies by implementing the geocoding, reverse-geocoding,
+/// routing, and mathematical computations in pure Dart.
 class MapNativeServiceImpl implements MapNativeService {
-  /**
-   * Helper method to convert degrees to radians.
-   */
+  /// Helper method to convert degrees to radians.
   static double _toRadians(double degree) {
     return degree * math.pi / 180.0;
   }
 
-  /**
-   * Calculates the great-circle distance between two points in kilometers.
-   */
+  /// Calculates the great-circle distance between two points in kilometers.
   static double calculateHaversine(
     double lat1,
     double lng1,

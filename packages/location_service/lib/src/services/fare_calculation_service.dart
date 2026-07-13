@@ -1,8 +1,6 @@
 import 'package:core_models/core_models.dart';
 
-/**
- * Configuration parameters for fare calculations.
- */
+/// Configuration parameters for fare calculations.
 class FareConfig {
   final double baseFare;
   final double perKmRate;
@@ -19,13 +17,9 @@ class FareConfig {
   });
 }
 
-/**
- * Service to compute ride fares based on travel metrics and configs.
- */
+/// Service to compute ride fares based on travel metrics and configs.
 class FareCalculationService {
-  /**
-   * Computes itemized fare breakdown and rounds the final sum to the nearest ₱0.50.
-   */
+  /// Computes itemized fare breakdown and rounds the final sum to the nearest ₱0.50.
   static FareResult computeFare({
     required double distanceKm,
     required double durationMinutes,
@@ -40,7 +34,9 @@ class FareCalculationService {
         : 0.0;
 
     final double rawTotal = subtotal + surgeCharge;
-    final double enforcedMin = rawTotal < config.minimumFare ? config.minimumFare : rawTotal;
+    final double enforcedMin = rawTotal < config.minimumFare
+        ? config.minimumFare
+        : rawTotal;
 
     // Round to nearest ₱0.50
     final double totalFare = (enforcedMin * 2.0).round() / 2.0;
@@ -54,9 +50,7 @@ class FareCalculationService {
     );
   }
 
-  /**
-   * Computes the fare with default BaoBao pricing configs.
-   */
+  /// Computes the fare with default BaoBao pricing configs.
   static FareResult computeFareDefault({
     required double distanceKm,
     required double durationMinutes,

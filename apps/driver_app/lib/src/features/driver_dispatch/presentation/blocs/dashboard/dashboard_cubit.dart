@@ -3,10 +3,8 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashb
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/**
- * Cubit responsible for managing the driver's online/offline status, stats,
- * and surge heatmap display on the dashboard map view.
- */
+/// Cubit responsible for managing the driver's online/offline status, stats,
+/// and surge heatmap display on the dashboard map view.
 class DashboardCubit extends Cubit<DashboardState> {
   final DashboardRepository _repository;
 
@@ -14,9 +12,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     : _repository = repository,
       super(const DashboardState());
 
-  /**
-   * Loads all driver dashboard stats (earnings, trip counts, online hours) in parallel.
-   */
+  /// Loads all driver dashboard stats (earnings, trip counts, online hours) in parallel.
   Future<void> loadStats() async {
     emit(state.copyWith(isLoadingStats: true));
     try {
@@ -39,10 +35,8 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  /**
-   * Toggles the driver's active online/offline dispatch status.
-   * Fetches local surge heatmap cells immediately upon going online.
-   */
+  /// Toggles the driver's active online/offline dispatch status.
+  /// Fetches local surge heatmap cells immediately upon going online.
   Future<void> toggleOnline({required double lat, required double lng}) async {
     final goingOnline = !state.isOnline;
 

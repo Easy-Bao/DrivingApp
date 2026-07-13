@@ -10,6 +10,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/config/environment_config.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_cubit.dart';
@@ -56,7 +57,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   }
 
   void _startChatMessagesPolling() {
-    _chatMessagesPollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+    _chatMessagesPollTimer = Timer.periodic(const Duration(seconds: 2), (
+      timer,
+    ) async {
       await _updateUnreadMessagesCount();
     });
   }
@@ -68,12 +71,22 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       if (passengerIdentifier.isEmpty) return;
 
       final gatewayUrl = EnvironmentConfig.httpBaseUrl;
-      final chatMessagesEndpointUri = Uri.parse('$gatewayUrl/chat/rooms/${widget.ride.id}/messages');
+      final chatMessagesEndpointUri = Uri.parse(
+        '$gatewayUrl/chat/rooms/${widget.ride.id}/messages',
+      );
 
       final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
       if (chatMessagesHttpResponse.statusCode == 200) {
-        final List<dynamic> chatMessagesList = jsonDecode(chatMessagesHttpResponse.body);
-        final driverChatMessagesList = chatMessagesList.where((m) => m is Map<String, dynamic> && m['senderId'] != passengerIdentifier).toList();
+        final List<dynamic> chatMessagesList = jsonDecode(
+          chatMessagesHttpResponse.body,
+        );
+        final driverChatMessagesList = chatMessagesList
+            .where(
+              (m) =>
+                  m is Map<String, dynamic> &&
+                  m['senderId'] != passengerIdentifier,
+            )
+            .toList();
         final currentDriverMessagesCount = driverChatMessagesList.length;
 
         if (mounted) {
@@ -81,8 +94,10 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
             if (!_isInitialChatMessagesCountFetched) {
               _viewedDriverMessagesCount = currentDriverMessagesCount;
               _isInitialChatMessagesCountFetched = true;
-            } else if (currentDriverMessagesCount > _viewedDriverMessagesCount) {
-              _unreadChatMessagesCount = currentDriverMessagesCount - _viewedDriverMessagesCount;
+            } else if (currentDriverMessagesCount >
+                _viewedDriverMessagesCount) {
+              _unreadChatMessagesCount =
+                  currentDriverMessagesCount - _viewedDriverMessagesCount;
             }
           });
         }
@@ -95,7 +110,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
     if (!_initialized) {
       _initialized = true;
       _routeDrawn = false;
-      final passengerLat = LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
+      final passengerLat =
+          LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
       final passengerLng =
           LocationService.lastPosition?.longitude ?? widget.ride.pickupLng;
 
@@ -105,18 +121,17 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       if (_locationSubscription != null) {
         unawaited(_locationSubscription!.cancel());
       }
-      _locationSubscription = LocationService.getPositionStream().listen(
-        (pos) async {
-          try {
-            await PassengerApiService.updateLocation(
-              rideId: widget.ride.id,
-              lat: pos.latitude,
-              lng: pos.longitude,
-            );
-          } catch (_) {}
-        },
-        onError: (_) {},
-      );
+      _locationSubscription = LocationService.getPositionStream().listen((
+        pos,
+      ) async {
+        try {
+          await getIt<PassengerApiService>().updateLocation(
+            rideId: widget.ride.id,
+            lat: pos.latitude,
+            lng: pos.longitude,
+          );
+        } catch (_) {}
+      }, onError: (_) {});
 
       unawaited(
         BlocProvider.of<TrackDriverCubit>(context).startTracking(
@@ -215,7 +230,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              unawaited(BlocProvider.of<TrackDriverCubit>(context).cancelTrip());
+              unawaited(
+                BlocProvider.of<TrackDriverCubit>(context).cancelTrip(),
+              );
             },
             child: const Text(
               'Cancel Trip',
@@ -374,13 +391,13 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                   final driverName = state is TrackDriverInProgress
                       ? state.driverName
                       : (widget.ride.driverName.isNotEmpty == true
-                          ? widget.ride.driverName
-                          : 'Driver');
+                            ? widget.ride.driverName
+                            : 'Driver');
                   final vehiclePlate = state is TrackDriverInProgress
                       ? state.vehiclePlate
                       : (widget.ride.vehiclePlate.isNotEmpty == true
-                          ? widget.ride.vehiclePlate
-                          : '—');
+                            ? widget.ride.vehiclePlate
+                            : '—');
                   final vehicleType = state is TrackDriverInProgress
                       ? state.vehicleType
                       : 'Bao Bao';
@@ -488,11 +505,15 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                 backgroundColor: AppTheme.neutralColor,
                                 foregroundColor: AppTheme.primaryColor,
                                 borderColor: AppTheme.borderSide,
-                                displayNotificationBadge: _unreadChatMessagesCount > 0,
-                                notificationBadgeCount: _unreadChatMessagesCount,
+                                displayNotificationBadge:
+                                    _unreadChatMessagesCount > 0,
+                                notificationBadgeCount:
+                                    _unreadChatMessagesCount,
                                 onTap: () async {
-                                  final prefs = await SharedPreferences.getInstance();
-                                  final passengerId = prefs.getString('passenger_id') ?? '';
+                                  final prefs =
+                                      await SharedPreferences.getInstance();
+                                  final passengerId =
+                                      prefs.getString('passenger_id') ?? '';
                                   if (context.mounted) {
                                     setState(() {
                                       _unreadChatMessagesCount = 0;
@@ -520,14 +541,24 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                 foregroundColor: Colors.white,
                                 onTap: () async {
                                   try {
-                                    final prefs = await SharedPreferences.getInstance();
-                                    final activeRideId = prefs.getString('active_ride_id') ?? widget.ride.id;
+                                    final prefs =
+                                        await SharedPreferences.getInstance();
+                                    final activeRideId =
+                                        prefs.getString('active_ride_id') ??
+                                        widget.ride.id;
                                     if (activeRideId.isNotEmpty) {
-                                      final statusData = await PassengerApiService.getRideStatus(activeRideId);
-                                      final driverId = statusData?['driver_id'] as String?;
-                                      if (driverId != null && driverId.isNotEmpty) {
-                                        final driverProfile = await PassengerApiService.getDriverProfile(driverId);
-                                        final phone = driverProfile?['phone'] as String?;
+                                      final statusData =
+                                          await getIt<PassengerApiService>()
+                                              .getRideStatus(activeRideId);
+                                      final driverId =
+                                          statusData?['driver_id'] as String?;
+                                      if (driverId != null &&
+                                          driverId.isNotEmpty) {
+                                        final driverProfile =
+                                            await getIt<PassengerApiService>()
+                                                .getDriverProfile(driverId);
+                                        final phone =
+                                            driverProfile?['phone'] as String?;
                                         if (phone != null && phone.isNotEmpty) {
                                           final uri = Uri.parse('tel:$phone');
                                           if (await canLaunchUrl(uri)) {
@@ -600,7 +631,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           children: [
             Badge(
               label: Text('$notificationBadgeCount'),
-              isLabelVisible: displayNotificationBadge && notificationBadgeCount > 0,
+              isLabelVisible:
+                  displayNotificationBadge && notificationBadgeCount > 0,
               backgroundColor: const Color(0xFFE53935),
               child: Icon(icon, color: foregroundColor, size: 18),
             ),

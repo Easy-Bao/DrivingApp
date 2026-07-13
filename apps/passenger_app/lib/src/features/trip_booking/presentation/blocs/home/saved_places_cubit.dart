@@ -6,26 +6,24 @@ import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_pl
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/saved_places_repository.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_state.dart';
 
-/**
- * Cubit managing passenger saved place shortcut chips.
- * Entirely decoupled from BuildContext and UI navigation.
- */
+/// Cubit managing passenger saved place shortcut chips.
+/// Entirely decoupled from BuildContext and UI navigation.
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   final SavedPlacesRepository _repository;
 
   SavedPlacesCubit({required SavedPlacesRepository repository})
-      : _repository = repository,
-        super(const SavedPlacesState());
+    : _repository = repository,
+      super(const SavedPlacesState());
 
-  /**
-   * Loads all pinned shortcuts from local storage.
-   */
+  /// Loads all pinned shortcuts from local storage.
   Future<void> loadPlaces() async {
     emit(state.copyWith(isLoading: true));
 
     try {
       final rawPlaces = await _repository.loadPlaces();
-      final models = rawPlaces.map((raw) => SavedPlaceModel.fromJson(raw)).toList();
+      final models = rawPlaces
+          .map((raw) => SavedPlaceModel.fromJson(raw))
+          .toList();
       emit(SavedPlacesState(places: models, isLoading: false));
     } catch (error, stackTrace) {
       debugPrint('Error loading saved places in cubit: $error\n$stackTrace');
@@ -33,9 +31,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
     }
   }
 
-  /**
-   * Adds a new pinned shortcut and updates storage.
-   */
+  /// Adds a new pinned shortcut and updates storage.
   Future<void> addPlace(SavedPlace place) async {
     final updated = [...state.places, place];
     emit(state.copyWith(places: updated));
@@ -46,9 +42,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
     }
   }
 
-  /**
-   * Removes a pinned shortcut at [index] and updates storage.
-   */
+  /// Removes a pinned shortcut at [index] and updates storage.
   Future<void> removePlace(int index) async {
     if (index < 0 || index >= state.places.length) return;
     final updated = [...state.places]..removeAt(index);
@@ -60,9 +54,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
     }
   }
 
-  /**
-   * Helper utility mapping a dynamic icon name back to its respective [IconData].
-   */
+  /// Helper utility mapping a dynamic icon name back to its respective [IconData].
   static IconData iconFromName(String iconName) {
     switch (iconName) {
       case 'house':

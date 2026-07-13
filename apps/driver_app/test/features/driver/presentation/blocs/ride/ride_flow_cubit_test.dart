@@ -1,27 +1,35 @@
 import 'package:core_models/core_models.dart';
+import 'package:driver_app/src/core/services/driver_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
+
 class MockRideRepo extends Mock implements RideRepository {}
 
-RideFlowCubit _makeCubit(RideRepository repo) =>
-    RideFlowCubit(repository: repo);
+class MockDriverApiService extends Mock implements DriverApiService {
+  @override
+  Uri get baseUrl => Uri.parse('http://localhost:8080');
+}
+
+RideFlowCubit _makeCubit(RideRepository repo, DriverApiService api) =>
+    RideFlowCubit(repository: repo, apiService: api);
 
 void main() {
   late MockRideRepo repo;
+  late MockDriverApiService mockApiService;
 
   setUp(() {
     repo = MockRideRepo();
+    mockApiService = MockDriverApiService();
     SharedPreferences.setMockInitialValues({});
   });
 
   group('RideFlowCubit — initial state', () {
     test('initial state is Idle', () async {
-      final cubit = _makeCubit(repo);
+      final cubit = _makeCubit(repo, mockApiService);
       expect(cubit.state, isA<RideFlowInitial>());
       await cubit.close();
     });
@@ -30,7 +38,7 @@ void main() {
   group('RideFlowCubit — acceptRide()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowEnRoutePickup with correct data',
-      build: () => _makeCubit(repo),
+      build: () => _makeCubit(repo, mockApiService),
       act: (cubit) => cubit.acceptRide(
         rideId: 'test-ride-id',
         passengerName: 'Juan Dela Cruz',
@@ -50,7 +58,7 @@ void main() {
   group('RideFlowCubit — arriveAtPickup()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowWaitingPassenger starting at 0 seconds',
-      build: () => _makeCubit(repo),
+      build: () => _makeCubit(repo, mockApiService),
       act: (cubit) => cubit.arriveAtPickup('Juan Dela Cruz'),
       expect: () => [
         const RideFlowWaitingPassenger(
@@ -64,7 +72,7 @@ void main() {
   group('RideFlowCubit — startRide()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowInTransit with correct trip data',
-      build: () => _makeCubit(repo),
+      build: () => _makeCubit(repo, mockApiService),
       act: (cubit) => cubit.startRide(
         passengerName: 'Juan Dela Cruz',
         destLat: 7.85,
@@ -100,7 +108,7 @@ void main() {
             totalFare: 73.6,
           ),
         );
-        return _makeCubit(repo);
+        return _makeCubit(repo, mockApiService);
       },
       act: (cubit) => cubit.endRide(distanceKm: 3.2, durationMinutes: 8.0),
       expect: () => [const RideFlowComplete(fare: 73.6)],
@@ -115,7 +123,7 @@ void main() {
             durationMinutes: any(named: 'durationMinutes'),
           ),
         ).thenThrow(Exception('fare computation failed'));
-        return _makeCubit(repo);
+        return _makeCubit(repo, mockApiService);
       },
       act: (cubit) => cubit.endRide(distanceKm: 3.2, durationMinutes: 8.0),
       expect: () => [const RideFlowComplete(fare: 50.0)],
@@ -125,7 +133,7 @@ void main() {
   group('RideFlowCubit — reset()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'returns to RideFlowInitial from any state',
-      build: () => _makeCubit(repo),
+      build: () => _makeCubit(repo, mockApiService),
       seed: () => const RideFlowComplete(fare: 150.0),
       act: (cubit) => cubit.reset(),
       expect: () => [isA<RideFlowInitial>()],

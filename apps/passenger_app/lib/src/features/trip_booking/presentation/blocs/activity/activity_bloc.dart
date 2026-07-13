@@ -5,17 +5,15 @@ import 'package:passenger_app/src/features/trip_booking/domain/repositories/acti
 part 'activity_event.dart';
 part 'activity_state.dart';
 
-/**
- * BLoC managing the passenger Activity screen lifecycle.
- *
- * Handles two events:
- * - [LoadActivityEvent]: emits [ActivityLoading] → [ActivityLoaded] or [ActivityError].
- * - [RefreshActivityEvent]: same pipeline but used after a pull-to-refresh gesture.
- *
- * Rides returned by the repository are split into [past] (completed, canceled)
- * and [upcoming] (in_progress, requested, accepted) so both tab views can
- * display without redundant filtering.
- */
+/// BLoC managing the passenger Activity screen lifecycle.
+///
+/// Handles two events:
+/// - [LoadActivityEvent]: emits [ActivityLoading] → [ActivityLoaded] or [ActivityError].
+/// - [RefreshActivityEvent]: same pipeline but used after a pull-to-refresh gesture.
+///
+/// Rides returned by the repository are split into [past] (completed, canceled)
+/// and [upcoming] (in_progress, requested, accepted) so both tab views can
+/// display without redundant filtering.
 class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   final ActivityRepository _repository;
 
@@ -54,12 +52,12 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   ) async {
     try {
       final rides = await _repository.fetchRideHistory(passengerId);
-      final past =
-          rides.where((r) => _pastStatuses.contains(r.status)).toList();
-      final upcoming =
-          rides
-              .where((r) => _upcomingStatuses.contains(r.status))
-              .toList();
+      final past = rides
+          .where((r) => _pastStatuses.contains(r.status))
+          .toList();
+      final upcoming = rides
+          .where((r) => _upcomingStatuses.contains(r.status))
+          .toList();
       emit(ActivityLoaded(past: past, upcoming: upcoming));
     } on ActivityRepositoryException catch (error) {
       emit(ActivityError(message: error.message));

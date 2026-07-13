@@ -27,10 +27,7 @@ class BookingSearching extends BookingState {
   final bool isDirect;
   final DriverModel? targetDriver;
 
-  const BookingSearching({
-    required this.isDirect,
-    this.targetDriver,
-  });
+  const BookingSearching({required this.isDirect, this.targetDriver});
 }
 
 class BookingOffersReceived extends BookingState {
@@ -49,10 +46,7 @@ class BookingDriverMatched extends BookingState {
   final DriverMatchResult matchResult;
   final RideHistoryModel? createdRide;
 
-  const BookingDriverMatched({
-    required this.matchResult,
-    this.createdRide,
-  });
+  const BookingDriverMatched({required this.matchResult, this.createdRide});
 }
 
 class BookingCanceled extends BookingState {}

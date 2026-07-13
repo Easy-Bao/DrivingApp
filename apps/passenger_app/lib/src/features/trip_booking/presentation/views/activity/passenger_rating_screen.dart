@@ -25,7 +25,9 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
       context: context,
       builder: (BuildContext checkBelongingsDialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           backgroundColor: AppTheme.surface,
           title: const Row(
             children: [
@@ -43,14 +45,12 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
           ),
           content: const Text(
             'Please take a moment to ensure you have not left any personal items behind in the vehicle.',
-            style: TextStyle(
-              color: AppTheme.primaryColor,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: AppTheme.primaryColor, fontSize: 14),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(checkBelongingsDialogContext).pop(false),
+              onPressed: () =>
+                  Navigator.of(checkBelongingsDialogContext).pop(false),
               child: Text(
                 'Check Again',
                 style: TextStyle(
@@ -63,9 +63,12 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
-              onPressed: () => Navigator.of(checkBelongingsDialogContext).pop(true),
+              onPressed: () =>
+                  Navigator.of(checkBelongingsDialogContext).pop(true),
               child: const Text('All Good'),
             ),
           ],

@@ -70,8 +70,10 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   Future<void> _drawRoute() async {
     if (_mapController == null) return;
 
-    final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final pickupLat =
+        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final pickupLng =
+        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
     final destLat = widget.destination.latitude;
     final destLng = widget.destination.longitude;
 
@@ -114,8 +116,10 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final sel = _options[_selectedIdx];
-    final defaultLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final defaultLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final defaultLat =
+        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final defaultLng =
+        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -366,7 +370,8 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                                             style: TextStyle(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
-                                              color: mapOffset.badge == 'Cheapest'
+                                              color:
+                                                  mapOffset.badge == 'Cheapest'
                                                   ? AppTheme.complete
                                                   : AppTheme.tertiaryColor,
                                             ),
@@ -446,7 +451,8 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                               'destination': widget.destination,
                               'distance': widget.distance,
                               'duration': widget.duration,
-                              'pickupAddress': widget.pickupAddress ?? 'Current Location',
+                              'pickupAddress':
+                                  widget.pickupAddress ?? 'Current Location',
                             },
                           ),
                           style: ElevatedButton.styleFrom(

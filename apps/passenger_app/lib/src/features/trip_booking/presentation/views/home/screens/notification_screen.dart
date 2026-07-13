@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,10 +34,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         setState(() => _isLoading = false);
         return;
       }
-      
-      final rawNotifications = await PassengerApiService.fetchNotifications(passengerId);
+
+      final rawNotifications = await getIt<PassengerApiService>()
+          .fetchNotifications(passengerId);
       final List<NotificationModel> list = [];
-      
+
       for (final n in rawNotifications) {
         final map = n as Map<String, dynamic>;
         final type = map['type'] as String? ?? 'system';
@@ -47,16 +50,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
         final title = map['title'] as String;
         final message = map['message'] as String;
         final isRead = map['isRead'] as bool? ?? false;
-        final dt = DateTime.tryParse(map['timestamp'] as String? ?? '') ?? DateTime.now();
-        
-        list.add(NotificationModel(
-          id: id,
-          title: title,
-          message: message,
-          timestamp: dt,
-          type: type,
-          isRead: isRead,
-        ));
+        final dt =
+            DateTime.tryParse(map['timestamp'] as String? ?? '') ??
+            DateTime.now();
+
+        list.add(
+          NotificationModel(
+            id: id,
+            title: title,
+            message: message,
+            timestamp: dt,
+            type: type,
+            isRead: isRead,
+          ),
+        );
       }
 
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
@@ -173,40 +180,38 @@ class _NotificationScreenState extends State<NotificationScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: AppTheme.primaryColor,
-              ),
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
           : _notifications.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: _notifications.length,
-                  itemBuilder: (context, index) {
-                    final notification = _notifications[index];
-                    return Dismissible(
-                      key: Key(notification.id),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (_) => _dismissNotification(index),
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 24),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.cancel.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(
-                          LucideIcons.trash_2,
-                          color: AppTheme.cancel,
-                          size: 20,
-                        ),
-                      ),
-                      child: _buildNotificationCard(notification, index),
-                    );
-                  },
-                ),
+          ? _buildEmptyState()
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              physics: const BouncingScrollPhysics(),
+              itemCount: _notifications.length,
+              itemBuilder: (context, index) {
+                final notification = _notifications[index];
+                return Dismissible(
+                  key: Key(notification.id),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (_) => _dismissNotification(index),
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 24),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cancel.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      LucideIcons.trash_2,
+                      color: AppTheme.cancel,
+                      size: 20,
+                    ),
+                  ),
+                  child: _buildNotificationCard(notification, index),
+                );
+              },
+            ),
     );
   }
 

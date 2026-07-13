@@ -1,3 +1,4 @@
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
 
 import 'package:driver_app/src/core/themes/app_themes.dart';
@@ -71,7 +72,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
     final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    final success = await DriverApiService.placeBid(
+    final success = await getIt<DriverApiService>().placeBid(
       sessionId: _rideId,
       driverId: driverId,
       driverName: driverName,

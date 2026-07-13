@@ -259,7 +259,9 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                           latitude: widget.destinationLat,
                           longitude: widget.destinationLng,
                         );
-                        unawaited(context.pushNamed('DestinationPreview', extra: place));
+                        unawaited(
+                          context.pushNamed('DestinationPreview', extra: place),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,

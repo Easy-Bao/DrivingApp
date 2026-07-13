@@ -23,8 +23,18 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
   String _errorMessage = '';
 
   static const _monthAbbreviations = [
-    'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-    'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+    'JAN',
+    'FEB',
+    'MAR',
+    'APR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AUG',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DEC',
   ];
 
   @override
@@ -77,7 +87,8 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
       final now = DateTime.now();
       final todayStr = '${_monthAbbreviations[now.month - 1]} ${now.day}';
       final yesterday = now.subtract(const Duration(days: 1));
-      final yesterdayStr = '${_monthAbbreviations[yesterday.month - 1]} ${yesterday.day}';
+      final yesterdayStr =
+          '${_monthAbbreviations[yesterday.month - 1]} ${yesterday.day}';
 
       if (datePart.toUpperCase() == todayStr.toUpperCase()) {
         return 'Today';
@@ -135,76 +146,74 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: AppTheme.primaryColor,
-              ),
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
           : _errorMessage.isNotEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Text(
-                      _errorMessage,
-                      style: const TextStyle(
-                        color: AppTheme.cancel,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  _errorMessage,
+                  style: const TextStyle(
+                    color: AppTheme.cancel,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          : _rides.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    LucideIcons.clock,
+                    size: 48,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No activity yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
                     ),
                   ),
-                )
-              : _rides.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            LucideIcons.clock,
-                            size: 48,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.25),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No activity yet',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              physics: const BouncingScrollPhysics(),
+              itemCount: _groupedRides.keys.length,
+              itemBuilder: (context, sectionIndex) {
+                final dateKey = _groupedRides.keys.elementAt(sectionIndex);
+                final items = _groupedRides[dateKey]!;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 4,
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: _groupedRides.keys.length,
-                      itemBuilder: (context, sectionIndex) {
-                        final dateKey = _groupedRides.keys.elementAt(sectionIndex);
-                        final items = _groupedRides[dateKey]!;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 4,
-                              ),
-                              child: Text(
-                                dateKey.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ),
-                            ...items.map((item) => _buildActivityCard(item)),
-                          ],
-                        );
-                      },
+                      child: Text(
+                        dateKey.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
                     ),
+                    ...items.map((item) => _buildActivityCard(item)),
+                  ],
+                );
+              },
+            ),
     );
   }
 
@@ -331,7 +340,9 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
               TextButton(
                 onPressed: () {
                   if (isCompleted) {
-                    unawaited(context.pushNamed('ActivityViewDetails', extra: ride));
+                    unawaited(
+                      context.pushNamed('ActivityViewDetails', extra: ride),
+                    );
                   } else {
                     unawaited(context.pushNamed('SearchDestination'));
                   }

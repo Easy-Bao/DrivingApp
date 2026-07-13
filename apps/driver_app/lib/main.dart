@@ -1,6 +1,6 @@
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
-import 'package:driver_app/src/core/config/env_config.dart';
+import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,7 +15,7 @@ void main() async {
   final nativeService = MapNativeServiceImpl();
   LocationService.initialize(nativeService);
   await MapProvider.initialize(
-    token: EnvConfig.mapboxPublicToken,
+    token: EnvironmentConfig.mapboxPublicToken,
     nativeService: nativeService,
   );
 

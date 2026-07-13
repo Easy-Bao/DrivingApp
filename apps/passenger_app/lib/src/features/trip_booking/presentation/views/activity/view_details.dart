@@ -8,21 +8,20 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/config/environment_config.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/**
- * Trip details screen for a completed ride.
- *
- * Receives a [RideHistoryModel] via GoRouter's `extra` argument.
- * Renders a live Mapbox map with the route between pickup and drop-off,
- * fare breakdown, timeline, and a re-book button.
- *
- * If `extra` is null (e.g. navigated without a model), the screen shows
- * a graceful fallback rather than crashing.
- */
+/// Trip details screen for a completed ride.
+///
+/// Receives a [RideHistoryModel] via GoRouter's `extra` argument.
+/// Renders a live Mapbox map with the route between pickup and drop-off,
+/// fare breakdown, timeline, and a re-book button.
+///
+/// If `extra` is null (e.g. navigated without a model), the screen shows
+/// a graceful fallback rather than crashing.
 class ActivityViewDetails extends StatefulWidget {
   final RideHistoryModel? ride;
 
@@ -48,13 +47,18 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
     if (ride == null) return;
 
     final sharedPreferencesInstance = await SharedPreferences.getInstance();
-    final passengerId = sharedPreferencesInstance.getString('passenger_id') ?? '';
+    final passengerId =
+        sharedPreferencesInstance.getString('passenger_id') ?? '';
 
-    final retrievedRideData = await PassengerApiService.getRideStatus(ride.id);
+    final retrievedRideData = await getIt<PassengerApiService>().getRideStatus(
+      ride.id,
+    );
     bool isWithinGracePeriodWindow = false;
     try {
       final rideCompletedTime = DateTime.parse(ride.date).toLocal();
-      final elapsedTimeSinceCompletion = DateTime.now().difference(rideCompletedTime);
+      final elapsedTimeSinceCompletion = DateTime.now().difference(
+        rideCompletedTime,
+      );
       if (elapsedTimeSinceCompletion.inHours < 48) {
         isWithinGracePeriodWindow = true;
       }
@@ -64,7 +68,10 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
       setState(() {
         _passengerId = passengerId;
         _detailedRideData = retrievedRideData;
-        _showLostFoundChat = isWithinGracePeriodWindow && retrievedRideData != null && retrievedRideData['driver_id'] != null;
+        _showLostFoundChat =
+            isWithinGracePeriodWindow &&
+            retrievedRideData != null &&
+            retrievedRideData['driver_id'] != null;
       });
     }
   }
@@ -72,7 +79,9 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
   Future<void> _initiateLostFoundChat() async {
     final ride = widget.ride;
     final retrievedRideData = _detailedRideData;
-    if (ride == null || retrievedRideData == null || _passengerId.isEmpty) return;
+    if (ride == null || retrievedRideData == null || _passengerId.isEmpty) {
+      return;
+    }
 
     final driverId = retrievedRideData['driver_id'] as String?;
     if (driverId == null || driverId.isEmpty) return;
@@ -91,16 +100,19 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         }),
       );
 
-      if (initializeRoomResponse.statusCode == 201 || initializeRoomResponse.statusCode == 200) {
+      if (initializeRoomResponse.statusCode == 201 ||
+          initializeRoomResponse.statusCode == 200) {
         if (mounted) {
-          unawaited(context.pushNamed(
-            'DriverChat',
-            extra: {
-              'roomId': ride.id,
-              'userId': _passengerId,
-              'peerName': retrievedRideData['driver_name'] ?? 'Driver',
-            },
-          ));
+          unawaited(
+            context.pushNamed(
+              'DriverChat',
+              extra: {
+                'roomId': ride.id,
+                'userId': _passengerId,
+                'peerName': retrievedRideData['driver_name'] ?? 'Driver',
+              },
+            ),
+          );
         }
       }
     } catch (_) {}
@@ -139,14 +151,10 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         );
       }
 
-      await MapProvider.fitBounds(
-        controller,
-        [
-          LatLng(ride.pickupLat, ride.pickupLng),
-          LatLng(ride.destLat, ride.destLng),
-        ],
-        padding: 40.0,
-      );
+      await MapProvider.fitBounds(controller, [
+        LatLng(ride.pickupLat, ride.pickupLng),
+        LatLng(ride.destLat, ride.destLng),
+      ], padding: 40.0);
     } catch (error) {
       debugPrint('ActivityViewDetails._onMapCreated failed: $error');
     }
@@ -170,7 +178,10 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
+          icon: const Icon(
+            LucideIcons.arrow_left,
+            color: AppTheme.primaryColor,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -216,13 +227,26 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (BuildContext sheetContext) => DriverProfileDetailsSheet(
-                      driverId: retrievedRideData?['driver_id'] as String? ?? 'driver-id-xyz',
-                      driverName: retrievedRideData?['driver_name'] as String? ?? ride?.driverName ?? 'Driver',
-                      vehicleType: retrievedRideData?['vehicle_type'] as String? ?? 'Bao Bao',
-                      plateNumber: retrievedRideData?['plate_number'] as String? ?? ride?.vehiclePlate ?? 'ABC 1234',
-                      rating: retrievedRideData?['driver_rating'] as String? ?? '5.0',
-                    ),
+                    builder: (BuildContext sheetContext) =>
+                        DriverProfileDetailsSheet(
+                          driverId:
+                              retrievedRideData?['driver_id'] as String? ??
+                              'driver-id-xyz',
+                          driverName:
+                              retrievedRideData?['driver_name'] as String? ??
+                              ride?.driverName ??
+                              'Driver',
+                          vehicleType:
+                              retrievedRideData?['vehicle_type'] as String? ??
+                              'Bao Bao',
+                          plateNumber:
+                              retrievedRideData?['plate_number'] as String? ??
+                              ride?.vehiclePlate ??
+                              'ABC 1234',
+                          rating:
+                              retrievedRideData?['driver_rating'] as String? ??
+                              '5.0',
+                        ),
                   ),
                 );
               },
@@ -262,10 +286,17 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
                   ),
                   if (_showLostFoundChat)
                     IconButton(
-                      icon: const Icon(LucideIcons.message_square, color: AppTheme.primaryColor),
+                      icon: const Icon(
+                        LucideIcons.message_square,
+                        color: AppTheme.primaryColor,
+                      ),
                       onPressed: _initiateLostFoundChat,
                     ),
-                  const Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
+                  const Icon(
+                    Icons.star,
+                    color: AppTheme.primaryColor,
+                    size: 16,
+                  ),
                   Text(
                     ' ${_detailedRideData?['driver_rating'] ?? '—'}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -294,12 +325,14 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
             child: ElevatedButton.icon(
               onPressed: () {
                 // Navigate to search with the same destination pre-filled.
-                unawaited(context.pushNamed(
-                  'SearchDestination',
-                  queryParameters: ride != null
-                      ? {'destination': ride.destination}
-                      : {},
-                ));
+                unawaited(
+                  context.pushNamed(
+                    'SearchDestination',
+                    queryParameters: ride != null
+                        ? {'destination': ride.destination}
+                        : {},
+                  ),
+                );
               },
               icon: const Icon(Icons.refresh),
               label: const Text(
@@ -345,10 +378,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
             children: [
               const Text(
                 'Fare Summary',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
               Text(
                 ride?.price ?? '—',
@@ -377,16 +407,8 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
         ),
         const SizedBox(height: 16),
-        _timelineItem(
-          ride?.pickup ?? 'Pickup',
-          ride?.date ?? '',
-          true,
-        ),
-        _timelineItem(
-          ride?.destination ?? 'Destination',
-          '',
-          false,
-        ),
+        _timelineItem(ride?.pickup ?? 'Pickup', ride?.date ?? '', true),
+        _timelineItem(ride?.destination ?? 'Destination', '', false),
       ],
     );
   }
@@ -419,7 +441,11 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               color: AppTheme.primaryColor,
             ),
             if (isTop)
-              Container(width: 2, height: 30, color: AppTheme.outlineBorderColor),
+              Container(
+                width: 2,
+                height: 30,
+                color: AppTheme.outlineBorderColor,
+              ),
           ],
         ),
         const SizedBox(width: 15),

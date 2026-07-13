@@ -5,10 +5,8 @@ import 'package:location_service/location_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_state.dart';
 
-/**
- * BLoC managing maps rendering, markers, route overlay calculations,
- * and animations independently from trip business logic.
- */
+/// BLoC managing maps rendering, markers, route overlay calculations,
+/// and animations independently from trip business logic.
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   AppMapController? _mapController;
   final List<dynamic> _markerManagers = [];
@@ -78,12 +76,14 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       );
     }
 
-    emit(LiveMapRouteUpdated(
-      driverLat: event.driverLat,
-      driverLng: event.driverLng,
-      passengerLat: event.passengerLat,
-      passengerLng: event.passengerLng,
-    ));
+    emit(
+      LiveMapRouteUpdated(
+        driverLat: event.driverLat,
+        driverLng: event.driverLng,
+        passengerLat: event.passengerLat,
+        passengerLng: event.passengerLng,
+      ),
+    );
   }
 
   Future<void> _onClearMap(

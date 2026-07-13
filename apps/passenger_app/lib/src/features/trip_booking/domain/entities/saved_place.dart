@@ -1,7 +1,5 @@
-/**
- * Domain entity representing a passenger's pinned location shortcut (e.g., "Home", "Campus").
- * Entirely decoupled from JSON parsing schemas and UI tap callbacks.
- */
+/// Domain entity representing a passenger's pinned location shortcut (e.g., "Home", "Campus").
+/// Entirely decoupled from JSON parsing schemas and UI tap callbacks.
 class SavedPlace {
   final String label;
   final String iconName;
@@ -17,6 +15,6 @@ class SavedPlace {
     this.longitude,
   });
 
-  /** Returns true if coordinates are present to skip the lookup flow. */
+  /// Returns true if coordinates are present to skip the lookup flow.
   bool get hasLocation => latitude != null && longitude != null;
 }

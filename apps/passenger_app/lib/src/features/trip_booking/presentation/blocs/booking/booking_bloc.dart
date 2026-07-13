@@ -8,15 +8,14 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booki
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/**
- * BLoC responsible for orchestrating the trip booking and driver bidding lifecycle.
- *
- * Coordinates searching, showing nearby drivers, streaming bids, accepting offers,
- * and dispatch updates.
- */
+/// BLoC responsible for orchestrating the trip booking and driver bidding lifecycle.
+///
+/// Coordinates searching, showing nearby drivers, streaming bids, accepting offers,
+/// and dispatch updates.
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
   final BidSessionService _bidSessionService;
+  final PassengerApiService _apiService;
 
   StreamSubscription<List<dynamic>>? _offersSubscription;
   StreamSubscription<DriverMatchResult>? _driverFoundSubscription;
@@ -38,9 +37,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   BookingBloc({
     required DriverRepository driverRepository,
     required BidSessionService bidSessionService,
-  })  : _driverRepository = driverRepository,
-        _bidSessionService = bidSessionService,
-        super(BookingInitial()) {
+    required PassengerApiService apiService,
+  }) : _driverRepository = driverRepository,
+       _bidSessionService = bidSessionService,
+       _apiService = apiService,
+       super(BookingInitial()) {
     on<LocateNearestDriverEvent>(_onLocateNearestDriver);
     on<StartDirectBookingEvent>(_onStartDirectBooking);
     on<StartOpenBookingEvent>(_onStartOpenBooking);
@@ -71,7 +72,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         _nearestDriver = closestDriver;
 
         try {
-          final stats = await PassengerApiService.fetchDriverStats(closestDriver.id);
+          final stats = await _apiService.fetchDriverStats(closestDriver.id);
           if (stats != null && stats['totalTrips'] != null) {
             _totalTrips = stats['totalTrips'] as int;
           } else {
@@ -84,14 +85,18 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
         try {
           _isLoadingReviews = true;
-          emit(NearestDriverFound(
-            driver: closestDriver,
-            totalTrips: _totalTrips,
-            reviews: const [],
-            isLoadingReviews: true,
-          ));
+          emit(
+            NearestDriverFound(
+              driver: closestDriver,
+              totalTrips: _totalTrips,
+              reviews: const [],
+              isLoadingReviews: true,
+            ),
+          );
 
-          final rawReviews = await PassengerApiService.fetchDriverReviews(closestDriver.id);
+          final rawReviews = await _apiService.fetchDriverReviews(
+            closestDriver.id,
+          );
           final List<Map<String, dynamic>> processedReviews = [];
           for (final r in rawReviews) {
             if (r is Map<String, dynamic>) {
@@ -100,14 +105,29 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
               if (createdAtStr != null) {
                 try {
                   final parsedDate = DateTime.parse(createdAtStr as String);
-                  final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                  dateFormatted = '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
+                  final months = [
+                    'Jan',
+                    'Feb',
+                    'Mar',
+                    'Apr',
+                    'May',
+                    'Jun',
+                    'Jul',
+                    'Aug',
+                    'Sep',
+                    'Oct',
+                    'Nov',
+                    'Dec',
+                  ];
+                  dateFormatted =
+                      '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
                 } catch (error) {
                   debugPrint('Failed to parse review date: $error');
                 }
               }
               processedReviews.add({
-                'passengerName': r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
+                'passengerName':
+                    r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
                 'comment': r['comment'] ?? '',
                 'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
                 'date': dateFormatted,
@@ -122,12 +142,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           _isLoadingReviews = false;
         }
 
-        emit(NearestDriverFound(
-          driver: closestDriver,
-          totalTrips: _totalTrips,
-          reviews: _reviews,
-          isLoadingReviews: _isLoadingReviews,
-        ));
+        emit(
+          NearestDriverFound(
+            driver: closestDriver,
+            totalTrips: _totalTrips,
+            reviews: _reviews,
+            isLoadingReviews: _isLoadingReviews,
+          ),
+        );
       } else {
         emit(const BookingFailure('No drivers nearby.'));
       }
@@ -216,29 +238,32 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       add(UpdateOffersEvent(offers));
     });
 
-    _driverFoundSubscription = _bidSessionService.driverFoundStream.listen((matchedResult) {
+    _driverFoundSubscription = _bidSessionService.driverFoundStream.listen((
+      matchedResult,
+    ) {
       add(DriverMatchedEvent(matchedResult));
     });
   }
 
-  void _onUpdateOffers(
-    UpdateOffersEvent event,
-    Emitter<BookingState> emit,
-  ) {
+  void _onUpdateOffers(UpdateOffersEvent event, Emitter<BookingState> emit) {
     if (state is BookingSearching) {
       final current = state as BookingSearching;
-      emit(BookingOffersReceived(
-        offers: event.offers,
-        isDirect: current.isDirect,
-        targetDriver: current.targetDriver,
-      ));
+      emit(
+        BookingOffersReceived(
+          offers: event.offers,
+          isDirect: current.isDirect,
+          targetDriver: current.targetDriver,
+        ),
+      );
     } else if (state is BookingOffersReceived) {
       final current = state as BookingOffersReceived;
-      emit(BookingOffersReceived(
-        offers: event.offers,
-        isDirect: current.isDirect,
-        targetDriver: current.targetDriver,
-      ));
+      emit(
+        BookingOffersReceived(
+          offers: event.offers,
+          isDirect: current.isDirect,
+          targetDriver: current.targetDriver,
+        ),
+      );
     }
   }
 
@@ -250,12 +275,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     final prefs = await SharedPreferences.getInstance();
     final passengerId = prefs.getString('passenger_id') ?? '';
-    
+
     RideHistoryModel? createdRide;
-    
+
     if (passengerId.isNotEmpty) {
       try {
-        final res = await PassengerApiService.createRideRequest(
+        final res = await _apiService.createRideRequest(
           passengerId: passengerId,
           rideType: _rideType ?? 'Bao Bao Standard',
           pickupLat: _pickupLat ?? 0.0,
@@ -269,7 +294,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         if (res != null && res['id'] != null) {
           final activeRideId = res['id'] as String;
           await prefs.setString('active_ride_id', activeRideId);
-          
+
           createdRide = RideHistoryModel(
             id: activeRideId,
             pickup: res['pickup_name'] as String? ?? _pickupName ?? '',
@@ -281,19 +306,25 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             date: DateTime.now().toLocal().toString(),
             price: '₱${(_fare ?? 0.0).toStringAsFixed(2)}',
             status: 'accepted',
-            driverName: res['driver_name'] as String? ?? event.matchResult.driverName,
-            vehiclePlate: res['plate_number'] as String? ?? event.matchResult.plateNumber,
+            driverName:
+                res['driver_name'] as String? ?? event.matchResult.driverName,
+            vehiclePlate:
+                res['plate_number'] as String? ?? event.matchResult.plateNumber,
           );
         }
       } catch (error) {
-        debugPrint('Error creating ride request, falling back to matched result: $error');
+        debugPrint(
+          'Error creating ride request, falling back to matched result: $error',
+        );
       }
     }
 
-    emit(BookingDriverMatched(
-      matchResult: event.matchResult,
-      createdRide: createdRide,
-    ));
+    emit(
+      BookingDriverMatched(
+        matchResult: event.matchResult,
+        createdRide: createdRide,
+      ),
+    );
   }
 
   Future<void> _onAcceptBidOffer(

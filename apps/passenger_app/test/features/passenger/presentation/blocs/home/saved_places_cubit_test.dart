@@ -28,7 +28,7 @@ void main() {
       'loadPlaces emits loaded places with isLoading false on success',
       build: () {
         when(() => mockRepository.loadPlaces()).thenAnswer(
-          (_) async => [
+          (_) async => <Map<String, dynamic>>[
             {'label': 'Home', 'iconName': 'house'},
             {'label': 'Work', 'iconName': 'briefcase'},
           ],
@@ -49,7 +49,9 @@ void main() {
     blocTest<SavedPlacesCubit, SavedPlacesState>(
       'loadPlaces handles error and emits isLoading false (or preserves state)',
       build: () {
-        when(() => mockRepository.loadPlaces()).thenThrow(Exception('Storage error'));
+        when(
+          () => mockRepository.loadPlaces(),
+        ).thenThrow(Exception('Storage error'));
         return SavedPlacesCubit(repository: mockRepository);
       },
       act: (cubit) => cubit.loadPlaces(),

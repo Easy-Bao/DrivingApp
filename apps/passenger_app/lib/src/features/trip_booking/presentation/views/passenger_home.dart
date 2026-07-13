@@ -134,7 +134,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       }
     });
 
-    _bidSessionMatchSubscription = _bidSessionService.driverFoundStream.listen((driverMatchResult) {
+    _bidSessionMatchSubscription = _bidSessionService.driverFoundStream.listen((
+      driverMatchResult,
+    ) {
       if (mounted) {
         CustomToast.show(context, 'Driver Found! Matching you now.');
         context.pushReplacementNamed(
@@ -233,19 +235,20 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-
-
   Future<void> _loadNotificationCount() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isEmpty) return;
-      final raw = await PassengerApiService.fetchNotifications(passengerId);
+      final raw = await getIt<PassengerApiService>().fetchNotifications(
+        passengerId,
+      );
       final unread = raw.where((n) {
         final map = n as Map<String, dynamic>;
         final type = map['type'] as String? ?? '';
         final isRead = map['isRead'] as bool? ?? false;
-        return (type == 'ride' || type == 'driver' || type == 'chat') && !isRead;
+        return (type == 'ride' || type == 'driver' || type == 'chat') &&
+            !isRead;
       }).length;
       if (mounted) setState(() => _notificationCount = unread);
     } catch (_) {}
@@ -374,7 +377,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                 top: 8,
                 child: Container(
                   padding: const EdgeInsets.all(3),
-                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
                   decoration: const BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
@@ -467,8 +473,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-
-
   Widget _buildRecentActivityHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -504,7 +508,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         if (state.isLoading) {
           return ListView.builder(
             padding: const EdgeInsets.only(bottom: 20),
-            itemCount: state.recentLocations.isEmpty ? 3 : state.recentLocations.length,
+            itemCount: state.recentLocations.isEmpty
+                ? 3
+                : state.recentLocations.length,
             itemBuilder: (_, _) => _buildShimmerListItem(),
           );
         }
@@ -616,7 +622,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   Widget _buildSearchBar() {
     return GestureDetector(
       onTap: () {
-        final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+        final address = BlocProvider.of<PassengerHomeCubit>(
+          context,
+        ).state.currentAddress;
         unawaited(
           context.pushNamed(
             'SearchDestination',
@@ -745,15 +753,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     }
 
     unawaited(_locationSubscription?.cancel());
-    _locationSubscription = LocationService.getPositionStream().listen(
-      (pos) async {
-        if (!mounted) return;
-        try {
-          await cubit.loadHomeData(lat: pos.latitude, lng: pos.longitude);
-        } catch (_) {}
-      },
-      onError: (_) {},
-    );
+    _locationSubscription = LocationService.getPositionStream().listen((
+      pos,
+    ) async {
+      if (!mounted) return;
+      try {
+        await cubit.loadHomeData(lat: pos.latitude, lng: pos.longitude);
+      } catch (_) {}
+    }, onError: (_) {});
   }
 
   Future<void> _loadSavedPlaces() async {
@@ -843,11 +850,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  /**
-   * Evaluates the selected saved place shortcut. If coordinates are present, 
-   * it pushes the DestinationPreview screen directly. Otherwise, it launches 
-   * the SearchDestination screen to allow the user to lookup the coordinates.
-   */
+  /// Evaluates the selected saved place shortcut. If coordinates are present,
+  /// it pushes the DestinationPreview screen directly. Otherwise, it launches
+  /// the SearchDestination screen to allow the user to lookup the coordinates.
   void _handleSavedPlaceTap(SavedPlace place) {
     if (!mounted) return;
     if (place.hasLocation) {
@@ -858,7 +863,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         latitude: place.latitude!,
         longitude: place.longitude!,
       );
-      final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+      final address = BlocProvider.of<PassengerHomeCubit>(
+        context,
+      ).state.currentAddress;
       unawaited(
         context.pushNamed(
           'DestinationPreview',
@@ -867,7 +874,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         ),
       );
     } else {
-      final address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+      final address = BlocProvider.of<PassengerHomeCubit>(
+        context,
+      ).state.currentAddress;
       unawaited(
         context.pushNamed(
           'SearchDestination',

@@ -14,8 +14,12 @@ class AppTheme {
   // TabBar Active/Inactive Theme
   static const Color selectedItemColor = Color(0xFF222222);
   static const Color indicatorColor = Color(0xFF222222);
-  static Color unselectedItemColor = const Color(0xFF222222).withValues(alpha: 0.3);
-  static Color outlineBorderColor = const Color(0xFF222222).withValues(alpha: 0.1);
+  static Color unselectedItemColor = const Color(
+    0xFF222222,
+  ).withValues(alpha: 0.3);
+  static Color outlineBorderColor = const Color(
+    0xFF222222,
+  ).withValues(alpha: 0.1);
 
   // Activtiy Status
   static const Color complete = Color(0xFF285A48);

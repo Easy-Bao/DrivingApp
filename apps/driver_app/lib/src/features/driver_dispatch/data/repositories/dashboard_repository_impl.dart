@@ -1,14 +1,15 @@
-import 'dart:convert';
 import 'package:core_models/core_models.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:driver_app/src/core/config/env_config.dart';
+import 'package:driver_app/src/core/services/driver_api_service.dart';
 
-/**
- * API-backed implementation of [DashboardRepository].
- * Designed to fetch data directly from backend server endpoints.
- */
+/// API-backed implementation of [DashboardRepository] utilizing [DriverApiService].
 class DashboardRepositoryImpl implements DashboardRepository {
+  final DriverApiService _apiService;
+
+  /// Creates a [DashboardRepositoryImpl] with constructor dependency injection.
+  DashboardRepositoryImpl({required DriverApiService apiService})
+    : _apiService = apiService;
+
   Future<String> _getDriverId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('driver_id') ?? '';
@@ -19,12 +20,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final driverId = await _getDriverId();
     if (driverId.isEmpty) return 0.0;
     try {
-      final baseUrl = EnvConfig.driverServiceUrl;
-      final response = await http.get(
-        Uri.parse('$baseUrl/drivers/$driverId/stats'),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      final data = await _apiService.fetchStats(driverId);
+      if (data != null && data['todayEarnings'] != null) {
         return (data['todayEarnings'] as num).toDouble();
       }
     } catch (_) {}
@@ -36,12 +33,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final driverId = await _getDriverId();
     if (driverId.isEmpty) return 0;
     try {
-      final baseUrl = EnvConfig.driverServiceUrl;
-      final response = await http.get(
-        Uri.parse('$baseUrl/drivers/$driverId/stats'),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      final data = await _apiService.fetchStats(driverId);
+      if (data != null && data['todayTrips'] != null) {
         return data['todayTrips'] as int;
       }
     } catch (_) {}
@@ -53,12 +46,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final driverId = await _getDriverId();
     if (driverId.isEmpty) return 0.0;
     try {
-      final baseUrl = EnvConfig.driverServiceUrl;
-      final response = await http.get(
-        Uri.parse('$baseUrl/drivers/$driverId/stats'),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      final data = await _apiService.fetchStats(driverId);
+      if (data != null && data['hoursOnline'] != null) {
         return (data['hoursOnline'] as num).toDouble();
       }
     } catch (_) {}
@@ -74,7 +63,6 @@ class DashboardRepositoryImpl implements DashboardRepository {
     required List<double> requestLats,
     required List<double> requestLngs,
   }) async {
-    // Generate surge heatmap coordinates dynamically around the user's location
     const surgeOffsets = [
       {'latOffset': 0.002, 'lngOffset': -0.002, 'intensity': 2.5},
       {'latOffset': -0.001, 'lngOffset': 0.003, 'intensity': 1.8},

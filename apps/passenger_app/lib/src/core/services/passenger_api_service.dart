@@ -1,15 +1,18 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:passenger_app/src/core/config/env_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Service wrapper communicating with the Passenger backend REST APIs.
 class PassengerApiService {
-  PassengerApiService._();
+  /// The base backend endpoint URI.
+  final Uri baseUrl;
 
-  static final String _baseUrl = EnvConfig.passengerServiceUrl;
+  /// Creates an instance of [PassengerApiService] configured with a [baseUrl].
+  PassengerApiService({required this.baseUrl});
 
-  static Future<Map<String, String>> _getRequestHeaders() async {
-    final SharedPreferences prefsInstance = await SharedPreferences.getInstance();
+  Future<Map<String, String>> _getRequestHeaders() async {
+    final SharedPreferences prefsInstance =
+        await SharedPreferences.getInstance();
     final String jsonWebToken = prefsInstance.getString('jwt_token') ?? '';
     final Map<String, String> requestHeaders = {
       'Content-Type': 'application/json',
@@ -20,14 +23,15 @@ class PassengerApiService {
     return requestHeaders;
   }
 
-  static Future<Map<String, dynamic>?> registerPassenger({
+  /// Registers a new passenger user.
+  Future<Map<String, dynamic>?> registerPassenger({
     required String name,
     required String email,
     required String phone,
     required String password,
   }) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/passengers'),
+      baseUrl.replace(path: '/passengers'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'name': name,
@@ -42,31 +46,28 @@ class PassengerApiService {
     return null;
   }
 
-  static Future<bool> verifyOtp({
-    required String email,
-    required String code,
-  }) async {
+  /// Verifies an OTP code for a passenger email.
+  Future<bool> verifyOtp({required String email, required String code}) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/passengers/verify-otp'),
+      baseUrl.replace(path: '/passengers/verify-otp'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'code': code,
-      }),
+      body: jsonEncode({'email': email, 'code': code}),
     );
     return response.statusCode == 200;
   }
 
-  static Future<bool> forgotPassword({required String email}) async {
+  /// Initiates password recovery.
+  Future<bool> forgotPassword({required String email}) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/passengers/forgot-password'),
+      baseUrl.replace(path: '/passengers/forgot-password'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email}),
     );
     return response.statusCode == 200;
   }
 
-  static Future<Map<String, dynamic>?> updateProfile({
+  /// Updates profile information for a passenger.
+  Future<Map<String, dynamic>?> updateProfile({
     required String id,
     required String name,
     required String phone,
@@ -74,13 +75,9 @@ class PassengerApiService {
   }) async {
     final Map<String, String> requestHeaders = await _getRequestHeaders();
     final response = await http.put(
-      Uri.parse('$_baseUrl/passengers/$id'),
+      baseUrl.replace(path: '/passengers/$id'),
       headers: requestHeaders,
-      body: jsonEncode({
-        'name': name,
-        'phone': phone,
-        'email': email,
-      }),
+      body: jsonEncode({'name': name, 'phone': phone, 'email': email}),
     );
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
@@ -88,7 +85,8 @@ class PassengerApiService {
     return null;
   }
 
-  static Future<Map<String, dynamic>?> createRideRequest({
+  /// Submits a ride request to the match maker.
+  Future<Map<String, dynamic>?> createRideRequest({
     required String passengerId,
     required String rideType,
     required double pickupLat,
@@ -99,10 +97,12 @@ class PassengerApiService {
     required String dropoffName,
     required double fare,
   }) async {
-    final typeParam = rideType.toLowerCase().contains('share') ? 'share-bao' : 'solo-ride';
+    final typeParam = rideType.toLowerCase().contains('share')
+        ? 'share-bao'
+        : 'solo-ride';
     final Map<String, String> requestHeaders = await _getRequestHeaders();
     final response = await http.post(
-      Uri.parse('$_baseUrl/rides'),
+      baseUrl.replace(path: '/rides'),
       headers: requestHeaders,
       body: jsonEncode({
         'passenger_id': passengerId,
@@ -122,10 +122,11 @@ class PassengerApiService {
     return null;
   }
 
-  static Future<List<dynamic>> fetchRideHistory(String passengerId) async {
+  /// Fetches historical rides completed by the passenger.
+  Future<List<dynamic>> fetchRideHistory(String passengerId) async {
     final Map<String, String> requestHeaders = await _getRequestHeaders();
     final response = await http.get(
-      Uri.parse('$_baseUrl/passengers/$passengerId/rides'),
+      baseUrl.replace(path: '/passengers/$passengerId/rides'),
       headers: requestHeaders,
     );
     if (response.statusCode == 200) {
@@ -134,11 +135,12 @@ class PassengerApiService {
     return [];
   }
 
-  static Future<List<dynamic>> fetchNotifications(String passengerId) async {
+  /// Fetches recent notifications received by the passenger.
+  Future<List<dynamic>> fetchNotifications(String passengerId) async {
     try {
       final Map<String, String> requestHeaders = await _getRequestHeaders();
       final response = await http.get(
-        Uri.parse('$_baseUrl/passengers/$passengerId/notifications'),
+        baseUrl.replace(path: '/passengers/$passengerId/notifications'),
         headers: requestHeaders,
       );
       if (response.statusCode == 200) {
@@ -150,29 +152,30 @@ class PassengerApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/rides/$rideId'),
-    );
+  /// Retrieves the current status details of a specific ride.
+  Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
+    final response = await http.get(baseUrl.replace(path: '/rides/$rideId'));
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
     return null;
   }
 
-  static Future<bool> updateRideStatus(String rideId, String status) async {
+  /// Updates status for an active ride.
+  Future<bool> updateRideStatus(String rideId, String status) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/rides/$rideId/status'),
+      baseUrl.replace(path: '/rides/$rideId/status'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'status': status}),
     );
     return response.statusCode == 200;
   }
 
-  static Future<Map<String, dynamic>?> fetchDriverLocation(String driverId) async {
+  /// Fetches the current location telemetry of a driver.
+  Future<Map<String, dynamic>?> fetchDriverLocation(String driverId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/telemetry/location/$driverId'),
+        baseUrl.replace(path: '/telemetry/location/$driverId'),
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -183,20 +186,17 @@ class PassengerApiService {
     }
   }
 
-  static Future<bool> updateLocation({
+  /// Submits telemetry location update for a ride tracking session.
+  Future<bool> updateLocation({
     required String rideId,
     required double lat,
     required double lng,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/telemetry/location'),
+        baseUrl.replace(path: '/telemetry/location'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'driverId': rideId,
-          'lat': lat,
-          'lng': lng,
-        }),
+        body: jsonEncode({'driverId': rideId, 'lat': lat, 'lng': lng}),
       );
       return response.statusCode == 200;
     } catch (_) {
@@ -204,32 +204,32 @@ class PassengerApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> getPassengerProfile(
-    String passengerId,
-  ) async {
+  /// Retrieves detailed profile metadata for a passenger.
+  Future<Map<String, dynamic>?> getPassengerProfile(String passengerId) async {
     try {
       final Map<String, String> requestHeaders = await _getRequestHeaders();
       final response = await http.get(
-        Uri.parse('$_baseUrl/passengers/$passengerId'),
+        baseUrl.replace(path: '/passengers/$passengerId'),
         headers: requestHeaders,
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
       return null;
-    } catch (error) {
+    } catch (_) {
       return null;
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchFareEstimate({
+  /// Fetches standard fare pricing estimates based on trip parameters.
+  Future<Map<String, dynamic>?> fetchFareEstimate({
     required String rideType,
     required double distanceKm,
     required double durationMinutes,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/bids/fare'),
+        baseUrl.replace(path: '/bids/fare'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'ride_type': rideType,
@@ -246,7 +246,8 @@ class PassengerApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> openBidSession({
+  /// Starts a bidding session on the gateway.
+  Future<Map<String, dynamic>?> openBidSession({
     required String passengerId,
     required String rideType,
     required double pickupLat,
@@ -261,7 +262,7 @@ class PassengerApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/bids'),
+        baseUrl.replace(path: '/bids'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'passenger_id': passengerId,
@@ -286,10 +287,11 @@ class PassengerApiService {
     }
   }
 
-  static Future<List<dynamic>> pollBidOffers(String sessionId) async {
+  /// Retrieves list of offers received for a bid session.
+  Future<List<dynamic>> pollBidOffers(String sessionId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/bids/$sessionId/offers'),
+        baseUrl.replace(path: '/bids/$sessionId/offers'),
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
@@ -300,17 +302,16 @@ class PassengerApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> acceptBidOffer({
+  /// Accepts a driver's bid offer.
+  Future<Map<String, dynamic>?> acceptBidOffer({
     required String sessionId,
     required String offerId,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/bids/$sessionId/accept'),
+        baseUrl.replace(path: '/bids/$sessionId/accept'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'offer_id': offerId,
-        }),
+        body: jsonEncode({'offer_id': offerId}),
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -321,10 +322,11 @@ class PassengerApiService {
     }
   }
 
-  static Future<bool> cancelBidSession(String sessionId) async {
+  /// Cancels an active bid session.
+  Future<bool> cancelBidSession(String sessionId) async {
     try {
       final response = await http.delete(
-        Uri.parse('$_baseUrl/bids/$sessionId'),
+        baseUrl.replace(path: '/bids/$sessionId'),
       );
       return response.statusCode == 200;
     } catch (_) {
@@ -332,10 +334,11 @@ class PassengerApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> getBidSession(String sessionId) async {
+  /// Retrieves the active metadata of a bid session.
+  Future<Map<String, dynamic>?> getBidSession(String sessionId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/bids/$sessionId'),
+        baseUrl.replace(path: '/bids/$sessionId'),
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -346,11 +349,10 @@ class PassengerApiService {
     }
   }
 
-  static Future<List<dynamic>> fetchOnlineDrivers() async {
+  /// Fetches list of drivers currently active on the grid.
+  Future<List<dynamic>> fetchOnlineDrivers() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/drivers/online'),
-      );
+      final response = await http.get(baseUrl.replace(path: '/drivers/online'));
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
       }
@@ -360,10 +362,11 @@ class PassengerApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> getDriverProfile(String driverId) async {
+  /// Retrieves a driver's registration profile details.
+  Future<Map<String, dynamic>?> getDriverProfile(String driverId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/drivers/$driverId'),
+        baseUrl.replace(path: '/drivers/$driverId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -375,10 +378,11 @@ class PassengerApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchDriverStats(String driverId) async {
+  /// Fetches trip volume and scoring statistics for a driver.
+  Future<Map<String, dynamic>?> fetchDriverStats(String driverId) async {
     try {
       final driverStatsResponse = await http.get(
-        Uri.parse('$_baseUrl/drivers/$driverId/stats'),
+        baseUrl.replace(path: '/drivers/$driverId/stats'),
         headers: {'Content-Type': 'application/json'},
       );
       if (driverStatsResponse.statusCode == 200) {
@@ -390,10 +394,11 @@ class PassengerApiService {
     }
   }
 
-  static Future<List<dynamic>> fetchDriverReviews(String driverId) async {
+  /// Retrieves reviews and comment history posted for a driver.
+  Future<List<dynamic>> fetchDriverReviews(String driverId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/drivers/$driverId/reviews'),
+        baseUrl.replace(path: '/drivers/$driverId/reviews'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {

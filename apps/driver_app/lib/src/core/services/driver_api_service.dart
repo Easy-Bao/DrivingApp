@@ -1,19 +1,22 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:driver_app/src/core/config/env_config.dart';
 
+/// Service wrapper communicating with the Driver backend REST APIs.
 class DriverApiService {
-  DriverApiService._();
+  /// The base backend endpoint URI.
+  final Uri baseUrl;
 
-  static final String _baseUrl = EnvConfig.driverServiceUrl;
+  /// Creates an instance of [DriverApiService] configured with a [baseUrl].
+  DriverApiService({required this.baseUrl});
 
-  static Future<Map<String, dynamic>?> login({
+  /// Logs in a driver user with credentials.
+  Future<Map<String, dynamic>?> login({
     required String email,
     required String password,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/drivers/login'),
+        baseUrl.replace(path: '/drivers/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -26,7 +29,8 @@ class DriverApiService {
     }
   }
 
-  static Future<bool> toggleOnline({
+  /// Toggles the online state of a driver with coordinates.
+  Future<bool> toggleOnline({
     required String driverId,
     required bool isOnline,
     required double lat,
@@ -34,7 +38,7 @@ class DriverApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/drivers/$driverId/online'),
+        baseUrl.replace(path: '/drivers/$driverId/online'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'isOnline': isOnline, 'lat': lat, 'lng': lng}),
       );
@@ -44,14 +48,15 @@ class DriverApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchFareEstimate({
+  /// Fetches standard fare pricing estimates.
+  Future<Map<String, dynamic>?> fetchFareEstimate({
     required double distanceKm,
     required double durationMinutes,
     String rideType = 'Solo Ride',
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/bids/fare'),
+        baseUrl.replace(path: '/bids/fare'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'ride_type': rideType,
@@ -68,10 +73,14 @@ class DriverApiService {
     }
   }
 
-  static Future<List<dynamic>> fetchActiveBids(String driverId) async {
+  /// Fetches current active bids open on the gateway.
+  Future<List<dynamic>> fetchActiveBids(String driverId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/bids/active?driver_id=$driverId'),
+        baseUrl.replace(
+          path: '/bids/active',
+          queryParameters: {'driver_id': driverId},
+        ),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -83,7 +92,8 @@ class DriverApiService {
     }
   }
 
-  static Future<bool> placeBid({
+  /// Submits a bid offer on an active session.
+  Future<bool> placeBid({
     required String sessionId,
     required String driverId,
     required String driverName,
@@ -102,7 +112,7 @@ class DriverApiService {
         bodyData['proposed_fare'] = proposedFare;
       }
       final response = await http.post(
-        Uri.parse('$_baseUrl/bids/$sessionId/offer'),
+        baseUrl.replace(path: '/bids/$sessionId/offer'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(bodyData),
       );
@@ -112,13 +122,14 @@ class DriverApiService {
     }
   }
 
-  static Future<bool> cancelBid({
+  /// Cancels a submitted bid offer.
+  Future<bool> cancelBid({
     required String sessionId,
     required String driverId,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/bids/$sessionId/cancel-offer'),
+        baseUrl.replace(path: '/bids/$sessionId/cancel-offer'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'driver_id': driverId}),
       );
@@ -128,10 +139,11 @@ class DriverApiService {
     }
   }
 
-  static Future<List<dynamic>> fetchTripHistory(String driverId) async {
+  /// Fetches historical trips completed by a driver.
+  Future<List<dynamic>> fetchTripHistory(String driverId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/drivers/$driverId/trips'),
+        baseUrl.replace(path: '/drivers/$driverId/trips'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -143,10 +155,11 @@ class DriverApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchStats(String driverId) async {
+  /// Fetches volume and scoring statistics for a driver.
+  Future<Map<String, dynamic>?> fetchStats(String driverId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/drivers/$driverId/stats'),
+        baseUrl.replace(path: '/drivers/$driverId/stats'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -158,10 +171,11 @@ class DriverApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchProfile(String driverId) async {
+  /// Retrieves profile information for a driver.
+  Future<Map<String, dynamic>?> fetchProfile(String driverId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/drivers/$driverId'),
+        baseUrl.replace(path: '/drivers/$driverId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -173,14 +187,15 @@ class DriverApiService {
     }
   }
 
-  static Future<bool> updateLocation({
+  /// Submits telemetry location coordinates update.
+  Future<bool> updateLocation({
     required String driverId,
     required double lat,
     required double lng,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/telemetry/location'),
+        baseUrl.replace(path: '/telemetry/location'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'driverId': driverId, 'lat': lat, 'lng': lng}),
       );
@@ -190,12 +205,11 @@ class DriverApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchPassengerLocation(
-    String rideId,
-  ) async {
+  /// Retrieves passenger GPS coordinate update for a ride tracking session.
+  Future<Map<String, dynamic>?> fetchPassengerLocation(String rideId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/telemetry/location/$rideId'),
+        baseUrl.replace(path: '/telemetry/location/$rideId'),
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -206,12 +220,13 @@ class DriverApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchPassengerProfile(
+  /// Retrieves passenger's profile info.
+  Future<Map<String, dynamic>?> fetchPassengerProfile(
     String passengerId,
   ) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/passengers/$passengerId'),
+        baseUrl.replace(path: '/passengers/$passengerId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -223,10 +238,11 @@ class DriverApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
+  /// Retrieves details of an active ride.
+  Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/rides/$rideId'),
+        baseUrl.replace(path: '/rides/$rideId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {

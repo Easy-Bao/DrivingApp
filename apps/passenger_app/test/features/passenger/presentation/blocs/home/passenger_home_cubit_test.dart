@@ -34,7 +34,12 @@ void main() {
   group('PassengerHomeCubit — loadHomeData()', () {
     const resolvedAddress = 'Tuburan, Pagadian';
     final mockLocations = [
-      {'title': 'Plaza Luz', 'subtitle': 'San Francisco', 'lat': 7.8275, 'lng': 123.4365},
+      {
+        'title': 'Plaza Luz',
+        'subtitle': 'San Francisco',
+        'lat': 7.8275,
+        'lng': 123.4365,
+      },
     ];
 
     blocTest<PassengerHomeCubit, PassengerHomeState>(
@@ -46,8 +51,9 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer((_) async => resolvedAddress);
-        when(() => repo.getRecentLocations())
-            .thenAnswer((_) async => mockLocations);
+        when(
+          () => repo.getRecentLocations(),
+        ).thenAnswer((_) async => mockLocations);
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
@@ -70,8 +76,9 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenThrow(Exception('geocode error'));
-        when(() => repo.getRecentLocations())
-            .thenThrow(Exception('network error'));
+        when(
+          () => repo.getRecentLocations(),
+        ).thenThrow(Exception('network error'));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),

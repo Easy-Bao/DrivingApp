@@ -3,9 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/heatmap_cell.freezed.dart';
 part 'generated/heatmap_cell.g.dart';
 
-/**
- * HeatmapCell represents density markers on a map grid.
- */
+/// HeatmapCell represents density markers on a map grid.
 @freezed
 abstract class HeatmapCell with _$HeatmapCell {
   const factory HeatmapCell({

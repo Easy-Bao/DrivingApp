@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 
-/**
- * Data layer model for a passenger-defined saved-place shortcut.
- * Extends the domain entity [SavedPlace] to implement JSON serialization.
- */
+/// Data layer model for a passenger-defined saved-place shortcut.
+/// Extends the domain entity [SavedPlace] to implement JSON serialization.
 class SavedPlaceModel extends SavedPlace {
   const SavedPlaceModel({
     required super.label,
@@ -14,14 +12,14 @@ class SavedPlaceModel extends SavedPlace {
     super.longitude,
   });
 
-  /** Mappings for default seed records on initial boot. */
+  /// Mappings for default seed records on initial boot.
   static List<Map<String, String>> get defaults => const [
     {'label': 'Home', 'iconName': 'house'},
     {'label': 'Campus', 'iconName': 'graduation_cap'},
     {'label': 'Work', 'iconName': 'briefcase'},
   ];
 
-  /** Serialises this model to a JSON map. */
+  /// Serialises this model to a JSON map.
   Map<String, dynamic> toJson() => {
     'label': label,
     'iconName': iconName,
@@ -30,7 +28,7 @@ class SavedPlaceModel extends SavedPlace {
     if (longitude != null) 'longitude': longitude,
   };
 
-  /** Deserialises a JSON map into a [SavedPlaceModel]. */
+  /// Deserialises a JSON map into a [SavedPlaceModel].
   factory SavedPlaceModel.fromJson(Map<String, dynamic> json) {
     return SavedPlaceModel(
       label: json['label'] as String,
@@ -41,7 +39,7 @@ class SavedPlaceModel extends SavedPlace {
     );
   }
 
-  /** Helper method to encode a list of places to a JSON string. */
+  /// Helper method to encode a list of places to a JSON string.
   static String encodeList(List<SavedPlaceModel> places) {
     return jsonEncode(places.map((p) => p.toJson()).toList());
   }

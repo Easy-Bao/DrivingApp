@@ -3,9 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/ride_history_model.freezed.dart';
 part 'generated/ride_history_model.g.dart';
 
-/**
- * RideHistoryModel represents a past passenger trip or driving log.
- */
+/// RideHistoryModel represents a past passenger trip or driving log.
 @freezed
 abstract class RideHistoryModel with _$RideHistoryModel {
   const factory RideHistoryModel({

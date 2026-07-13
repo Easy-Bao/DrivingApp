@@ -8,17 +8,11 @@ class ApiEndpoints {
     required String userId,
     String? token,
   }) {
-    final baseUri = Uri.parse(EnvironmentConfig.webSocketBaseUrl);
-    final params = {
-      'roomId': roomId,
-      'userId': userId,
-    };
+    final baseUri = EnvironmentConfig.webSocketBaseUri;
+    final params = {'roomId': roomId, 'userId': userId};
     if (token != null) {
       params['token'] = token;
     }
-    return baseUri.replace(
-      path: '/chat/ws',
-      queryParameters: params,
-    );
+    return baseUri.replace(path: '/chat/ws', queryParameters: params);
   }
 }

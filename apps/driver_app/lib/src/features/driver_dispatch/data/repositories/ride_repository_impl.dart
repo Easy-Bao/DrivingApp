@@ -2,17 +2,20 @@ import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
 
-/**
- * API-backed implementation of [RideRepository].
- * Designed to interact directly with backend server endpoints.
- */
+/// API-backed implementation of [RideRepository].
+/// Designed to interact directly with backend server endpoints.
 class RideRepositoryImpl implements RideRepository {
+  final DriverApiService _apiService;
+
+  RideRepositoryImpl({required DriverApiService apiService})
+    : _apiService = apiService;
+
   @override
   Future<FareResult> getFare({
     required double distanceKm,
     required double durationMinutes,
   }) async {
-    final fare = await DriverApiService.fetchFareEstimate(
+    final fare = await _apiService.fetchFareEstimate(
       distanceKm: distanceKm,
       durationMinutes: durationMinutes,
     );

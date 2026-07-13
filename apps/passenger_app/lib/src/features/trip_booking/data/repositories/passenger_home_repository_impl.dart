@@ -13,6 +13,11 @@ String _shortenAddress(String fullAddress) {
 }
 
 class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
+  final PassengerApiService _apiService;
+
+  PassengerHomeRepositoryImpl({required PassengerApiService apiService})
+    : _apiService = apiService;
+
   @override
   Future<String> resolveAddress({
     required double lat,
@@ -37,10 +42,12 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
       if (passengerId.isEmpty) {
         return [];
       }
-      final rawRides = await PassengerApiService.fetchRideHistory(passengerId);
+      final rawRides = await _apiService.fetchRideHistory(passengerId);
       return _filterAndFormatRecentLocations(rawRides);
     } catch (error) {
-      debugPrint('PassengerHomeRepositoryImpl.getRecentLocations failed: $error');
+      debugPrint(
+        'PassengerHomeRepositoryImpl.getRecentLocations failed: $error',
+      );
       return [];
     }
   }
@@ -50,7 +57,9 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
     return prefs.getString('passenger_id') ?? '';
   }
 
-  List<Map<String, dynamic>> _filterAndFormatRecentLocations(List<dynamic> rawRides) {
+  List<Map<String, dynamic>> _filterAndFormatRecentLocations(
+    List<dynamic> rawRides,
+  ) {
     final Set<String> seenDestinations = {};
     final List<Map<String, dynamic>> list = [];
     for (final r in rawRides.cast<Map<String, dynamic>>()) {

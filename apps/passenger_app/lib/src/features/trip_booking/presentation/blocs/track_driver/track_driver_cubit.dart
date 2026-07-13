@@ -6,21 +6,21 @@ import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/**
- * Cubit responsible for tracking driver location and status updates during 
- * active passenger ride bookings.
- */
+/// Cubit responsible for tracking driver location and status updates during
+/// active passenger ride bookings.
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final TrackRepository _repository;
+  final PassengerApiService _apiService;
   Timer? _ticker;
 
-  TrackDriverCubit({required TrackRepository repository})
-    : _repository = repository,
-      super(TrackDriverInitial());
+  TrackDriverCubit({
+    required TrackRepository repository,
+    required PassengerApiService apiService,
+  }) : _repository = repository,
+       _apiService = apiService,
+       super(TrackDriverInitial());
 
-  /**
-   * Starts periodic sync calls querying driver location updates and ride status.
-   */
+  /// Starts periodic sync calls querying driver location updates and ride status.
   Future<void> startTracking({
     required double startLat,
     required double startLng,
@@ -52,7 +52,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
       if (activeRideId.isNotEmpty) {
         try {
-          final statusData = await PassengerApiService.getRideStatus(activeRideId);
+          final statusData = await _apiService.getRideStatus(activeRideId);
           if (statusData != null) {
             final status = statusData['status'] as String?;
             if (status == 'completed') {
@@ -65,7 +65,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             final driverId = statusData['driver_id'] as String?;
             final driverName = statusData['driver_name'] as String? ?? 'Driver';
             final vehiclePlate = statusData['plate_number'] as String? ?? '—';
-            final vehicleType = statusData['vehicle_type'] as String? ?? 'Bao Bao';
+            final vehicleType =
+                statusData['vehicle_type'] as String? ?? 'Bao Bao';
 
             double driverLat = startLat;
             double driverLng = startLng;
@@ -73,8 +74,10 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
             if (driverId != null && driverId.isNotEmpty) {
               try {
-                final locData = await PassengerApiService.fetchDriverLocation(driverId);
-                if (locData != null && locData['lat'] != null && locData['lng'] != null) {
+                final locData = await _apiService.fetchDriverLocation(driverId);
+                if (locData != null &&
+                    locData['lat'] != null &&
+                    locData['lng'] != null) {
                   driverLat = (locData['lat'] as num).toDouble();
                   driverLng = (locData['lng'] as num).toDouble();
                   locationFetched = true;
@@ -159,16 +162,14 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     });
   }
 
-  /**
-   * Cancelels the ride booking and terminates tracking.
-   */
+  /// Cancelels the ride booking and terminates tracking.
   Future<void> cancelTrip() async {
     _ticker?.cancel();
     try {
       final prefs = await SharedPreferences.getInstance();
       final rideId = prefs.getString('active_ride_id') ?? '';
       if (rideId.isNotEmpty) {
-        await PassengerApiService.updateRideStatus(rideId, 'canceled');
+        await _apiService.updateRideStatus(rideId, 'canceled');
         await prefs.remove('active_ride_id');
       }
     } catch (error) {

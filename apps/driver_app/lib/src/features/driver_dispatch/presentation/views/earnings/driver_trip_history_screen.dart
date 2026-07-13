@@ -35,7 +35,9 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
       }
       return;
     }
-    final trips = await getIt<DriverActivityRepository>().fetchTripHistory(driverId);
+    final trips = await getIt<DriverActivityRepository>().fetchTripHistory(
+      driverId,
+    );
     if (mounted) {
       setState(() {
         _trips = trips;

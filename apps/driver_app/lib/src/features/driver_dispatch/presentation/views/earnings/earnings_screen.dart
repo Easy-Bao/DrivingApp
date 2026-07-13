@@ -59,7 +59,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
       return;
     }
 
-    final trips = await getIt<DriverActivityRepository>().fetchTripHistory(driverId);
+    final trips = await getIt<DriverActivityRepository>().fetchTripHistory(
+      driverId,
+    );
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeek = DateTime(monday.year, monday.month, monday.day);

@@ -26,8 +26,7 @@ class ChatService {
 
   final _chatUpdateStreamController = StreamController<void>.broadcast();
 
-  ChatService({required String currentUserId})
-      : _currentUserId = currentUserId;
+  ChatService({required String currentUserId}) : _currentUserId = currentUserId;
 
   List<ChatMessage> get chatHistoryMessages => _chatHistoryMessages;
   bool get isConnectionActive => _isConnectionActive;
@@ -54,7 +53,8 @@ class ChatService {
 
       socket.listen(
         (event) {
-          final eventDataMap = jsonDecode(event as String) as Map<String, dynamic>;
+          final eventDataMap =
+              jsonDecode(event as String) as Map<String, dynamic>;
           final eventType = eventDataMap['type'];
 
           if (eventType == 'history') {
@@ -69,7 +69,10 @@ class ChatService {
                     text: msg['text'] as String? ?? '',
                     senderId: senderId,
                     isFromPeer: isFromPeer,
-                    createdAt: DateTime.parse(msg['createdAt'] as String? ?? DateTime.now().toIso8601String()).toLocal(),
+                    createdAt: DateTime.parse(
+                      msg['createdAt'] as String? ??
+                          DateTime.now().toIso8601String(),
+                    ).toLocal(),
                   ),
                 );
               }
@@ -83,13 +86,17 @@ class ChatService {
                 text: eventDataMap['text'] as String? ?? '',
                 senderId: senderId,
                 isFromPeer: isFromPeer,
-                createdAt: DateTime.parse(eventDataMap['createdAt'] as String? ?? DateTime.now().toIso8601String()).toLocal(),
+                createdAt: DateTime.parse(
+                  eventDataMap['createdAt'] as String? ??
+                      DateTime.now().toIso8601String(),
+                ).toLocal(),
               ),
             );
             _chatUpdateStreamController.add(null);
           } else if (eventType == 'locked') {
             _isRoomLocked = true;
-            _lockReasonMessage = eventDataMap['reason'] as String? ?? 'This conversation is locked.';
+            _lockReasonMessage = eventDataMap['reason'] as String? ??
+                'This conversation is locked.';
             _chatUpdateStreamController.add(null);
           }
         },

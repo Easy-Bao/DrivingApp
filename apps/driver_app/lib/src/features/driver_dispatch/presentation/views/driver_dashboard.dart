@@ -1,7 +1,8 @@
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:driver_app/src/core/config/env_config.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
@@ -61,12 +62,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   void _startPolling() {
     _locationSubscription?.cancel();
-    _locationSubscription = LocationService.getPositionStream().listen((pos) async {
+    _locationSubscription = LocationService.getPositionStream().listen((
+      pos,
+    ) async {
       try {
         final prefs = await SharedPreferences.getInstance();
         final driverId = prefs.getString('driver_id') ?? '';
         if (driverId.isNotEmpty) {
-          await DriverApiService.updateLocation(
+          await getIt<DriverApiService>().updateLocation(
             driverId: driverId,
             lat: pos.latitude,
             lng: pos.longitude,
@@ -91,9 +94,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         final driverId = prefs.getString('driver_id') ?? '';
         if (driverId.isEmpty) return;
 
-        final historyUrl =
-            '${EnvConfig.driverServiceUrl}/drivers/$driverId/trips';
-        final historyRes = await http.get(Uri.parse(historyUrl));
+        final historyRes = await http.get(
+          getIt<DriverApiService>().baseUrl.replace(
+            path: '/drivers/$driverId/trips',
+          ),
+        );
         List<Map<String, dynamic>> trips = [];
         if (historyRes.statusCode == 200) {
           final List<dynamic> list = jsonDecode(historyRes.body);
@@ -108,7 +113,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               .toList();
         }
 
-        final bidsList = await DriverApiService.fetchActiveBids(driverId);
+        final bidsList = await getIt<DriverApiService>().fetchActiveBids(
+          driverId,
+        );
         final List<Map<String, dynamic>> bids = bidsList
             .map((b) => b as Map<String, dynamic>)
             .toList();
@@ -192,7 +199,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
     final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    final success = await DriverApiService.placeBid(
+    final success = await getIt<DriverApiService>().placeBid(
       sessionId: bid['id'],
       driverId: driverId,
       driverName: driverName,
@@ -256,10 +263,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       destLng: SafeParse.toDouble(trip['dropoff_longitude']),
     );
 
-    await cubit.endRide(
-      distanceKm: 3.2,
-      durationMinutes: 10,
-    );
+    await cubit.endRide(distanceKm: 3.2, durationMinutes: 10);
 
     if (mounted) {
       context.pushNamed(
@@ -636,7 +640,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                       ),
                       child: const Text(
                         'Go to Trip Flow',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
@@ -657,7 +664,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                       ),
                       child: const Text(
                         'Complete Trip',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
@@ -694,10 +704,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final isPriority = bid['ride_type'] == 'Bao Premium';
 
     final Position? driverPos = LocationService.lastPosition;
-    final double passengerLat = SafeParse.toDouble(bid['pickup_latitude'] ?? 0.0);
-    final double passengerLng = SafeParse.toDouble(bid['pickup_longitude'] ?? 0.0);
+    final double passengerLat = SafeParse.toDouble(
+      bid['pickup_latitude'] ?? 0.0,
+    );
+    final double passengerLng = SafeParse.toDouble(
+      bid['pickup_longitude'] ?? 0.0,
+    );
 
-    double distanceToPassenger = SafeParse.toDouble(bid['distance_km'] ?? bid['distance'] ?? 1.5);
+    double distanceToPassenger = SafeParse.toDouble(
+      bid['distance_km'] ?? bid['distance'] ?? 1.5,
+    );
     if (driverPos != null && passengerLat != 0.0 && passengerLng != 0.0) {
       distanceToPassenger = MapNativeServiceImpl.calculateHaversine(
         driverPos.latitude,

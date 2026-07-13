@@ -32,7 +32,8 @@ class PassengerModule extends Module {
         ChildRoute(
           name: 'PassengerAccount',
           'account',
-          child: (context, GoRouterState state) => const PassengerAccountScreen(),
+          child: (context, GoRouterState state) =>
+              const PassengerAccountScreen(),
           transition: AppTransitions.fade,
           transitionDuration: AppTransitions.fadeDuration,
         ),

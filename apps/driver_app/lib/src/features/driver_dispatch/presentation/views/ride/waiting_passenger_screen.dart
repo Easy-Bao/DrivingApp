@@ -1,3 +1,4 @@
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -74,12 +75,22 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
       if (driverIdentifier.isEmpty) return;
 
       final gatewayUrl = EnvironmentConfig.httpBaseUrl;
-      final chatMessagesEndpointUri = Uri.parse('$gatewayUrl/chat/rooms/$rideId/messages');
+      final chatMessagesEndpointUri = Uri.parse(
+        '$gatewayUrl/chat/rooms/$rideId/messages',
+      );
 
       final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
       if (chatMessagesHttpResponse.statusCode == 200) {
-        final List<dynamic> chatMessagesList = jsonDecode(chatMessagesHttpResponse.body);
-        final passengerChatMessagesList = chatMessagesList.where((m) => m is Map<String, dynamic> && m['senderId'] != driverIdentifier).toList();
+        final List<dynamic> chatMessagesList = jsonDecode(
+          chatMessagesHttpResponse.body,
+        );
+        final passengerChatMessagesList = chatMessagesList
+            .where(
+              (m) =>
+                  m is Map<String, dynamic> &&
+                  m['senderId'] != driverIdentifier,
+            )
+            .toList();
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (mounted) {
@@ -87,8 +98,10 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             if (!_isInitialChatMessagesCountFetched) {
               _viewedPassengerMessagesCount = currentPassengerMessagesCount;
               _isInitialChatMessagesCountFetched = true;
-            } else if (currentPassengerMessagesCount > _viewedPassengerMessagesCount) {
-              _unreadChatMessagesCount = currentPassengerMessagesCount - _viewedPassengerMessagesCount;
+            } else if (currentPassengerMessagesCount >
+                _viewedPassengerMessagesCount) {
+              _unreadChatMessagesCount =
+                  currentPassengerMessagesCount - _viewedPassengerMessagesCount;
             }
           });
         }
@@ -351,11 +364,13 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                 final rideId =
                     BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
                 if (rideId.isNotEmpty) {
-                  final ride = await DriverApiService.getRideStatus(rideId);
+                  final ride = await getIt<DriverApiService>().getRideStatus(
+                    rideId,
+                  );
                   final passengerId = ride?['passenger_id'] as String?;
                   if (passengerId != null && passengerId.isNotEmpty) {
-                    final passenger =
-                        await DriverApiService.fetchPassengerProfile(passengerId);
+                    final passenger = await getIt<DriverApiService>()
+                        .fetchPassengerProfile(passengerId);
                     final phone = passenger?['phone'] as String?;
                     if (phone != null && phone.isNotEmpty) {
                       final uri = Uri.parse('tel:$phone');
@@ -415,11 +430,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: GestureDetector(
         onTap: () {
-          CustomToast.show(
-            context,
-            'Ride canceled — no show',
-            isError: true,
-          );
+          CustomToast.show(context, 'Ride canceled — no show', isError: true);
           context.pop();
         },
         child: Text(
@@ -498,7 +509,8 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
           children: [
             Badge(
               label: Text('$notificationBadgeCount'),
-              isLabelVisible: displayNotificationBadge && notificationBadgeCount > 0,
+              isLabelVisible:
+                  displayNotificationBadge && notificationBadgeCount > 0,
               backgroundColor: const Color(0xFFE53935),
               child: Icon(icon, color: fg, size: 16),
             ),

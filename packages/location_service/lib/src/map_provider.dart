@@ -5,26 +5,20 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'location_service.dart';
 import 'map_native_service.dart';
 
-/**
- * Simple representation of geographical coordinates (latitude and longitude).
- */
+/// Simple representation of geographical coordinates (latitude and longitude).
 class LatLng {
   final double latitude;
   final double longitude;
   const LatLng(this.latitude, this.longitude);
 }
 
-/**
- * The map controller wrapper. Screens hold this to manipulate the map.
- * Internally wraps the native controller (MapboxMap or GoogleMapController).
- */
+/// The map controller wrapper. Screens hold this to manipulate the map.
+/// Internally wraps the native controller (MapboxMap or GoogleMapController).
 class AppMapController {
   final dynamic _native;
   AppMapController(this._native);
 
-  /**
-   * Access native controller only within this file's implementation.
-   */
+  /// Access native controller only within this file's implementation.
   dynamic get native => _native;
 }
 
@@ -35,9 +29,7 @@ class MapProvider {
   static String? _token;
   static MapNativeService? _nativeService;
 
-  /**
-   * Initialize the map SDK. Call once in main.dart.
-   */
+  /// Initialize the map SDK. Call once in main.dart.
   static Future<void> initialize({
     required String token,
     required MapNativeService nativeService,
@@ -49,10 +41,8 @@ class MapProvider {
     _initialized = true;
   }
 
-  /**
-   * Forward geocoding: search for places by text query.
-   * [proximity] biases results toward the user's location.
-   */
+  /// Forward geocoding: search for places by text query.
+  /// [proximity] biases results toward the user's location.
   static Future<List<PlaceModel>> searchPlaces(
     String query, {
     double? lat,
@@ -89,9 +79,7 @@ class MapProvider {
     }
   }
 
-  /**
-   * Reverse geocoding: get place info from coordinates.
-   */
+  /// Reverse geocoding: get place info from coordinates.
   static Future<PlaceModel?> getPlaceFromCoordinates(
     double lat,
     double lng,
@@ -114,10 +102,8 @@ class MapProvider {
     }
   }
 
-  /**
-   * Get a driving route between two points.
-   * Returns a RouteModel with decoded polyline coordinates.
-   */
+  /// Get a driving route between two points.
+  /// Returns a RouteModel with decoded polyline coordinates.
   static Future<RouteModel?> getRoute(
     double originLat,
     double originLng,
@@ -144,9 +130,7 @@ class MapProvider {
     }
   }
 
-  /**
-   * Dynamically extract all Points of Interest from the map within a radius.
-   */
+  /// Dynamically extract all Points of Interest from the map within a radius.
   static Future<List<PlaceModel>> getNearbyPOIs({
     required double lat,
     required double lng,
@@ -169,10 +153,8 @@ class MapProvider {
     }
   }
 
-  /**
-   * Build a map widget. This is the ONLY place the native map widget is used.
-   * All screens call this method instead of using MapboxMap/GoogleMap directly.
-   */
+  /// Build a map widget. This is the ONLY place the native map widget is used.
+  /// All screens call this method instead of using MapboxMap/GoogleMap directly.
   static Widget buildMapView({
     required double latitude,
     required double longitude,
@@ -213,9 +195,7 @@ class MapProvider {
     );
   }
 
-  /**
-   * Move camera to a position.
-   */
+  /// Move camera to a position.
   static Future<void> moveCamera(
     AppMapController controller,
     double lat,
@@ -236,9 +216,7 @@ class MapProvider {
     }
   }
 
-  /**
-   * Get the current center coordinates of the map.
-   */
+  /// Get the current center coordinates of the map.
   static Future<LatLng> getCameraCenter(AppMapController controller) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
     final camera = await mapCtrl.getCameraState();
@@ -249,9 +227,7 @@ class MapProvider {
     );
   }
 
-  /**
-   * Add a point annotation (marker) to the map.
-   */
+  /// Add a point annotation (marker) to the map.
   static Future<dynamic> addMarker(
     AppMapController controller,
     double lat,
@@ -280,10 +256,8 @@ class MapProvider {
     return annotationManager;
   }
 
-  /**
-   * Add a polyline (route line) to the map.
-   * [points] is [[lng, lat], ...]
-   */
+  /// Add a polyline (route line) to the map.
+  /// [points] is [[lng, lat], ...]
   static Future<void> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
@@ -306,10 +280,8 @@ class MapProvider {
     );
   }
 
-  /**
-   * Add a subset of polyline points (for animated progressive reveal).
-   * Returns the annotation manager so it can be cleared on next frame.
-   */
+  /// Add a subset of polyline points (for animated progressive reveal).
+  /// Returns the annotation manager so it can be cleared on next frame.
   static Future<dynamic> addAnimatedPolylineSegment(
     AppMapController controller,
     List<List<double>> points, {
@@ -334,9 +306,7 @@ class MapProvider {
     return annotationManager;
   }
 
-  /**
-   * Clears an annotation manager.
-   */
+  /// Clears an annotation manager.
   static Future<void> clearAnnotations(dynamic manager) async {
     if (manager != null) {
       try {
@@ -347,9 +317,7 @@ class MapProvider {
     }
   }
 
-  /**
-   * Fit the map camera to show all given coordinates with padding.
-   */
+  /// Fit the map camera to show all given coordinates with padding.
   static Future<void> fitBounds(
     AppMapController controller,
     List<LatLng> points, {

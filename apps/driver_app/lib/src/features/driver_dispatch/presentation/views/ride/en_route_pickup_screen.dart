@@ -72,7 +72,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       if (rideId == null || rideId.isEmpty) return;
 
       try {
-        final loc = await DriverApiService.fetchPassengerLocation(rideId);
+        final loc = await getIt<DriverApiService>().fetchPassengerLocation(
+          rideId,
+        );
         if (loc != null && loc['lat'] != null && loc['lng'] != null) {
           final pLat = (loc['lat'] as num).toDouble();
           final pLng = (loc['lng'] as num).toDouble();
@@ -86,24 +88,28 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       } catch (_) {}
 
       try {
-        final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+        final pos =
+            await LocationService.getCurrentPosition() ??
+            LocationService.lastPosition;
         if (pos != null) {
           final prefs = await SharedPreferences.getInstance();
           final driverId = prefs.getString('driver_id') ?? '';
           if (driverId.isNotEmpty) {
-            await DriverApiService.updateLocation(
+            await getIt<DriverApiService>().updateLocation(
               driverId: driverId,
               lat: pos.latitude,
               lng: pos.longitude,
             );
           }
           if (mounted) {
-            mapBloc.add(UpdateLocationsAndDrawRouteEvent(
-              driverLat: pos.latitude,
-              driverLng: pos.longitude,
-              passengerLat: _passengerLat,
-              passengerLng: _passengerLng,
-            ));
+            mapBloc.add(
+              UpdateLocationsAndDrawRouteEvent(
+                driverLat: pos.latitude,
+                driverLng: pos.longitude,
+                passengerLat: _passengerLat,
+                passengerLng: _passengerLng,
+              ),
+            );
           }
         }
       } catch (_) {}
@@ -120,12 +126,22 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       if (driverIdentifier.isEmpty) return;
 
       final gatewayUrl = EnvironmentConfig.httpBaseUrl;
-      final chatMessagesEndpointUri = Uri.parse('$gatewayUrl/chat/rooms/$rideId/messages');
+      final chatMessagesEndpointUri = Uri.parse(
+        '$gatewayUrl/chat/rooms/$rideId/messages',
+      );
 
       final chatMessagesHttpResponse = await http.get(chatMessagesEndpointUri);
       if (chatMessagesHttpResponse.statusCode == 200) {
-        final List<dynamic> chatMessagesList = jsonDecode(chatMessagesHttpResponse.body);
-        final passengerChatMessagesList = chatMessagesList.where((m) => m is Map<String, dynamic> && m['senderId'] != driverIdentifier).toList();
+        final List<dynamic> chatMessagesList = jsonDecode(
+          chatMessagesHttpResponse.body,
+        );
+        final passengerChatMessagesList = chatMessagesList
+            .where(
+              (m) =>
+                  m is Map<String, dynamic> &&
+                  m['senderId'] != driverIdentifier,
+            )
+            .toList();
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (mounted) {
@@ -133,8 +149,10 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
             if (!_isInitialChatMessagesCountFetched) {
               _viewedPassengerMessagesCount = currentPassengerMessagesCount;
               _isInitialChatMessagesCountFetched = true;
-            } else if (currentPassengerMessagesCount > _viewedPassengerMessagesCount) {
-              _unreadChatMessagesCount = currentPassengerMessagesCount - _viewedPassengerMessagesCount;
+            } else if (currentPassengerMessagesCount >
+                _viewedPassengerMessagesCount) {
+              _unreadChatMessagesCount =
+                  currentPassengerMessagesCount - _viewedPassengerMessagesCount;
             }
           });
         }
@@ -143,7 +161,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   }
 
   Future<void> _loadRoute() async {
-    final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+    final pos =
+        await LocationService.getCurrentPosition() ??
+        LocationService.lastPosition;
     if (!mounted) return;
     if (pos == null) return;
 
@@ -171,12 +191,14 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   }
 
   void _triggerDrawRoute(BuildContext context, double dLat, double dLng) {
-    BlocProvider.of<LiveMapBloc>(context).add(UpdateLocationsAndDrawRouteEvent(
-      driverLat: dLat,
-      driverLng: dLng,
-      passengerLat: _passengerLat,
-      passengerLng: _passengerLng,
-    ));
+    BlocProvider.of<LiveMapBloc>(context).add(
+      UpdateLocationsAndDrawRouteEvent(
+        driverLat: dLat,
+        driverLng: dLng,
+        passengerLat: _passengerLat,
+        passengerLng: _passengerLng,
+      ),
+    );
   }
 
   void _onMapCreated(AppMapController controller, BuildContext context) {
@@ -184,11 +206,13 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
     final defaultLat = pos?.latitude ?? _passengerLat;
     final defaultLng = pos?.longitude ?? _passengerLng;
 
-    BlocProvider.of<LiveMapBloc>(context).add(InitializeMapEvent(
-      controller: controller,
-      defaultLat: defaultLat,
-      defaultLng: defaultLng,
-    ));
+    BlocProvider.of<LiveMapBloc>(context).add(
+      InitializeMapEvent(
+        controller: controller,
+        defaultLat: defaultLat,
+        defaultLng: defaultLng,
+      ),
+    );
 
     if (!_isLoading) {
       _triggerDrawRoute(context, defaultLat, defaultLng);
@@ -197,7 +221,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
 
   void _confirmArrival(BuildContext context) {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowEnRoutePickup ? state.passengerName : 'Passenger';
+    final passengerName = state is RideFlowEnRoutePickup
+        ? state.passengerName
+        : 'Passenger';
     BlocProvider.of<RideFlowCubit>(context).arriveAtPickup(passengerName);
     context.pushReplacementNamed(
       'WaitingPassenger',
@@ -218,10 +244,16 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
-          final defaultLat = LocationService.lastPosition?.latitude ??
-              (rideCubitState is RideFlowEnRoutePickup ? rideCubitState.pickupLat : 0.0);
-          final defaultLng = LocationService.lastPosition?.longitude ??
-              (rideCubitState is RideFlowEnRoutePickup ? rideCubitState.pickupLng : 0.0);
+          final defaultLat =
+              LocationService.lastPosition?.latitude ??
+              (rideCubitState is RideFlowEnRoutePickup
+                  ? rideCubitState.pickupLat
+                  : 0.0);
+          final defaultLng =
+              LocationService.lastPosition?.longitude ??
+              (rideCubitState is RideFlowEnRoutePickup
+                  ? rideCubitState.pickupLng
+                  : 0.0);
 
           return Scaffold(
             backgroundColor: AppTheme.surface,
@@ -274,7 +306,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               ],
             ),
           );
-        }
+        },
       ),
     );
   }
@@ -448,7 +480,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
 
   Widget _buildPassengerCard(BuildContext context) {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowEnRoutePickup ? state.passengerName : 'Passenger';
+    final passengerName = state is RideFlowEnRoutePickup
+        ? state.passengerName
+        : 'Passenger';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -518,10 +552,13 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                   final rideCubit = BlocProvider.of<RideFlowCubit>(context);
                   final rideId = rideCubit.activeRideId ?? '';
                   if (rideId.isNotEmpty) {
-                    final ride = await DriverApiService.getRideStatus(rideId);
+                    final ride = await getIt<DriverApiService>().getRideStatus(
+                      rideId,
+                    );
                     final passengerId = ride?['passenger_id'] as String?;
                     if (passengerId != null && passengerId.isNotEmpty) {
-                      final passenger = await DriverApiService.fetchPassengerProfile(passengerId);
+                      final passenger = await getIt<DriverApiService>()
+                          .fetchPassengerProfile(passengerId);
                       final phone = passenger?['phone'] as String?;
                       if (phone != null && phone.isNotEmpty) {
                         final uri = Uri.parse('tel:$phone');
@@ -545,9 +582,12 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               displayNotificationBadge: _unreadChatMessagesCount > 0,
               notificationBadgeCount: _unreadChatMessagesCount,
               onTap: () async {
-                final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
+                final rideId =
+                    BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
                 final state = BlocProvider.of<RideFlowCubit>(context).state;
-                final passengerName = state is RideFlowEnRoutePickup ? state.passengerName : 'Passenger';
+                final passengerName = state is RideFlowEnRoutePickup
+                    ? state.passengerName
+                    : 'Passenger';
                 final prefs = await SharedPreferences.getInstance();
                 final driverId = prefs.getString('driver_id') ?? '';
                 if (!context.mounted) return;
@@ -564,7 +604,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                 );
                 if (!context.mounted) return;
                 _isInitialChatMessagesCountFetched = false;
-                await _updateUnreadMessagesCount(BlocProvider.of<RideFlowCubit>(context));
+                await _updateUnreadMessagesCount(
+                  BlocProvider.of<RideFlowCubit>(context),
+                );
               },
             ),
           ),
@@ -598,7 +640,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
           children: [
             Badge(
               label: Text('$notificationBadgeCount'),
-              isLabelVisible: displayNotificationBadge && notificationBadgeCount > 0,
+              isLabelVisible:
+                  displayNotificationBadge && notificationBadgeCount > 0,
               backgroundColor: const Color(0xFFE53935),
               child: Icon(icon, color: fg, size: 16),
             ),

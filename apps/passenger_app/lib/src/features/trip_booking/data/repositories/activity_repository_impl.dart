@@ -4,8 +4,18 @@ import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
 
 const _monthAbbreviations = [
-  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
 ];
 
 String _shortenAddress(String fullAddress) {
@@ -17,10 +27,15 @@ String _shortenAddress(String fullAddress) {
 }
 
 class ActivityRepositoryImpl implements ActivityRepository {
+  final PassengerApiService _apiService;
+
+  ActivityRepositoryImpl({required PassengerApiService apiService})
+    : _apiService = apiService;
+
   @override
   Future<List<RideHistoryModel>> fetchRideHistory(String passengerId) async {
     try {
-      final rawList = await PassengerApiService.fetchRideHistory(passengerId);
+      final rawList = await _apiService.fetchRideHistory(passengerId);
       return rawList
           .map((raw) => _mapToModel(raw as Map<String, dynamic>))
           .toList();

@@ -1,6 +1,8 @@
 import 'package:core_models/core_models.dart';
 import 'package:get_it/get_it.dart';
+import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/services/bid_session_service.dart';
+import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/data/repositories/activity_repository_impl.dart';
 import 'package:passenger_app/src/features/trip_booking/data/repositories/driver_repository_impl.dart';
 import 'package:passenger_app/src/features/trip_booking/data/repositories/passenger_home_repository_impl.dart';
@@ -14,37 +16,54 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/profile/profile_cubit.dart';
 
+/// Global service locator instance.
 final GetIt getIt = GetIt.instance;
 
+/// Sets up global dependency registrations for constructor injection.
 void setupServiceLocator() {
-  getIt.registerLazySingleton<DriverRepository>(() => DriverRepositoryImpl());
-  getIt.registerLazySingleton<TrackRepository>(() => TrackRepositoryImpl());
-  getIt.registerLazySingleton<PassengerHomeRepository>(
-    () => PassengerHomeRepositoryImpl(),
+  getIt.registerLazySingleton<PassengerApiService>(
+    () => PassengerApiService(baseUrl: EnvironmentConfig.passengerServiceUri),
   );
+
+  getIt.registerLazySingleton<DriverRepository>(
+    () => DriverRepositoryImpl(apiService: getIt<PassengerApiService>()),
+  );
+
+  getIt.registerLazySingleton<TrackRepository>(() => TrackRepositoryImpl());
+
+  getIt.registerLazySingleton<PassengerHomeRepository>(
+    () => PassengerHomeRepositoryImpl(apiService: getIt<PassengerApiService>()),
+  );
+
   getIt.registerLazySingleton<SavedPlacesRepository>(
     () => SavedPlacesRepositoryImpl(),
   );
+
   getIt.registerLazySingleton<ActivityRepository>(
-    () => ActivityRepositoryImpl(),
+    () => ActivityRepositoryImpl(apiService: getIt<PassengerApiService>()),
   );
+
   getIt.registerFactory<SavedPlacesCubit>(
     () => SavedPlacesCubit(repository: getIt<SavedPlacesRepository>()),
   );
+
   getIt.registerFactory<ActivityBloc>(
     () => ActivityBloc(repository: getIt<ActivityRepository>()),
   );
-  getIt.registerLazySingleton<BidSessionService>(() => BidSessionService());
+
+  getIt.registerLazySingleton<BidSessionService>(
+    () => BidSessionService(apiService: getIt<PassengerApiService>()),
+  );
+
   getIt.registerFactory<BookingBloc>(
     () => BookingBloc(
       driverRepository: getIt<DriverRepository>(),
       bidSessionService: getIt<BidSessionService>(),
+      apiService: getIt<PassengerApiService>(),
     ),
   );
-  getIt.registerFactory<LiveMapBloc>(
-    () => LiveMapBloc(),
-  );
-  getIt.registerFactory<ProfileCubit>(
-    () => ProfileCubit(),
-  );
+
+  getIt.registerFactory<LiveMapBloc>(() => LiveMapBloc());
+
+  getIt.registerFactory<ProfileCubit>(() => ProfileCubit());
 }

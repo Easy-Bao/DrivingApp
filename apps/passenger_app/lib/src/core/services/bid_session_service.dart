@@ -56,7 +56,10 @@ class DriverMatchResult {
 }
 
 class BidSessionService {
-  BidSessionService();
+  final PassengerApiService _apiService;
+
+  BidSessionService({required PassengerApiService apiService})
+    : _apiService = apiService;
 
   String? _sessionId;
   BidSessionTrip? _trip;
@@ -109,7 +112,7 @@ class BidSessionService {
   }) async {
     await cancelSession(notify: false);
 
-    final result = await PassengerApiService.openBidSession(
+    final result = await _apiService.openBidSession(
       passengerId: passengerId,
       rideType: trip.rideType,
       pickupLat: pickupLat,
@@ -146,7 +149,7 @@ class BidSessionService {
       return;
     }
 
-    final acceptResult = await PassengerApiService.acceptBidOffer(
+    final acceptResult = await _apiService.acceptBidOffer(
       sessionId: _sessionId!,
       offerId: offerId,
     );
@@ -176,7 +179,7 @@ class BidSessionService {
   Future<void> cancelSession({bool notify = true}) async {
     _pollTimer?.cancel();
     if (_sessionId != null) {
-      await PassengerApiService.cancelBidSession(_sessionId!);
+      await _apiService.cancelBidSession(_sessionId!);
     }
     _clearSessionState(notify: notify);
   }
@@ -197,12 +200,12 @@ class BidSessionService {
         return;
       }
 
-      final offers = await PassengerApiService.pollBidOffers(sessionId);
+      final offers = await _apiService.pollBidOffers(sessionId);
       _offers = offers;
       _offersController.add(_offers);
       _notifyStatus();
 
-      final statusData = await PassengerApiService.getBidSession(sessionId);
+      final statusData = await _apiService.getBidSession(sessionId);
       if (statusData == null || statusData['status'] != 'accepted') {
         return;
       }

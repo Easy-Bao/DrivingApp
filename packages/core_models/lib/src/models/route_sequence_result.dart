@@ -4,9 +4,7 @@ import 'waypoint.dart';
 part 'generated/route_sequence_result.freezed.dart';
 part 'generated/route_sequence_result.g.dart';
 
-/**
- * RouteSequenceResult represents calculated metrics of an optimized path traversal.
- */
+/// RouteSequenceResult represents calculated metrics of an optimized path traversal.
 @freezed
 abstract class RouteSequenceResult with _$RouteSequenceResult {
   const factory RouteSequenceResult({

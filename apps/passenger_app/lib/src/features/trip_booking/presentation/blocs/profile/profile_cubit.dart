@@ -1,12 +1,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/**
- * State snapshot representing the passenger profile information.
- */
+/// State snapshot representing the passenger profile information.
 class ProfileState extends Equatable {
   final String name;
   final String phone;
@@ -42,17 +41,13 @@ class ProfileState extends Equatable {
   List<Object?> get props => [name, phone, email, isLoading, errorMessage];
 }
 
-/**
- * Cubit responsible for loading, caching, and syncing passenger profile details.
- * Decouples account view widgets from SharedPreferences and remote API clients.
- */
+/// Cubit responsible for loading, caching, and syncing passenger profile details.
+/// Decouples account view widgets from SharedPreferences and remote API clients.
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit() : super(const ProfileState());
 
-  /**
-   * Loads local cached profile values for rapid paint, then refreshes and
-   * writes the latest snapshot from the API service into local storage.
-   */
+  /// Loads local cached profile values for rapid paint, then refreshes and
+  /// writes the latest snapshot from the API service into local storage.
   Future<void> loadProfile() async {
     emit(state.copyWith(isLoading: true));
 
@@ -62,17 +57,21 @@ class ProfileCubit extends Cubit<ProfileState> {
       final cachedPhone = prefs.getString('passenger_phone') ?? '';
       final cachedEmail = prefs.getString('passenger_email') ?? '';
 
-      emit(ProfileState(
-        name: cachedName,
-        phone: cachedPhone,
-        email: cachedEmail,
-        isLoading: false,
-      ));
+      emit(
+        ProfileState(
+          name: cachedName,
+          phone: cachedPhone,
+          email: cachedEmail,
+          isLoading: false,
+        ),
+      );
 
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isEmpty) return;
 
-      final profile = await PassengerApiService.getPassengerProfile(passengerId);
+      final profile = await getIt<PassengerApiService>().getPassengerProfile(
+        passengerId,
+      );
       if (profile != null) {
         final name = profile['name'] as String? ?? cachedName;
         final phone = profile['phone'] as String? ?? cachedPhone;
@@ -82,12 +81,14 @@ class ProfileCubit extends Cubit<ProfileState> {
         await prefs.setString('passenger_phone', phone);
         await prefs.setString('passenger_email', email);
 
-        emit(ProfileState(
-          name: name,
-          phone: phone,
-          email: email,
-          isLoading: false,
-        ));
+        emit(
+          ProfileState(
+            name: name,
+            phone: phone,
+            email: email,
+            isLoading: false,
+          ),
+        );
       }
     } catch (e, stackTrace) {
       debugPrint('Error syncing profile values in cubit: $e\n$stackTrace');

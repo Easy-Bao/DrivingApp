@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
@@ -21,7 +23,8 @@ class DriverProfileDetailsSheet extends StatefulWidget {
   });
 
   @override
-  State<DriverProfileDetailsSheet> createState() => _DriverProfileDetailsSheetState();
+  State<DriverProfileDetailsSheet> createState() =>
+      _DriverProfileDetailsSheetState();
 }
 
 class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
@@ -37,7 +40,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Future<void> _loadDriverProfileStats() async {
     try {
-      final statsData = await PassengerApiService.fetchDriverStats(widget.driverId);
+      final statsData = await getIt<PassengerApiService>().fetchDriverStats(
+        widget.driverId,
+      );
       if (statsData != null && statsData['totalTrips'] != null) {
         if (mounted) {
           setState(() {
@@ -63,7 +68,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
     final List<Map<String, dynamic>> dynamicReviews = [];
     try {
-      final rawReviews = await PassengerApiService.fetchDriverReviews(widget.driverId);
+      final rawReviews = await getIt<PassengerApiService>().fetchDriverReviews(
+        widget.driverId,
+      );
       for (final r in rawReviews) {
         if (r is Map<String, dynamic>) {
           final createdAtStr = r['createdAt'] ?? r['created_at'];
@@ -71,13 +78,28 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           if (createdAtStr != null) {
             try {
               final parsedDate = DateTime.parse(createdAtStr as String);
-              final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-              dateFormatted = '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
+              final months = [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec',
+              ];
+              dateFormatted =
+                  '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
             } catch (_) {}
           }
 
           dynamicReviews.add({
-            'passengerName': r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
+            'passengerName':
+                r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
             'comment': r['comment'] ?? '',
             'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
             'date': dateFormatted,
@@ -124,7 +146,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               ),
             ),
           ),
-          
+
           Row(
             children: [
               Container(
@@ -167,11 +189,11 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
           const Divider(height: 1, color: AppTheme.borderSide),
           const SizedBox(height: 20),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -190,7 +212,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
           const Text(
             'Passenger Reviews',
@@ -201,7 +223,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           if (_isLoadingStats)
             const Center(
               child: Padding(
@@ -256,7 +278,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                               reviewItem['date'] as String,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.4,
+                                ),
                               ),
                             ),
                           ],
@@ -264,10 +288,16 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 14,
+                              color: Colors.amber,
+                            ),
                             const SizedBox(width: 4),
                             Text(
-                              (reviewItem['rating'] as double).toStringAsFixed(1),
+                              (reviewItem['rating'] as double).toStringAsFixed(
+                                1,
+                              ),
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,

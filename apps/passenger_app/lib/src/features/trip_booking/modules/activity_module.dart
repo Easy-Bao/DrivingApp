@@ -35,9 +35,7 @@ class ActivityModule {
             : null;
         if (ride == null) {
           return const Scaffold(
-            body: Center(
-              child: Text('Trip tracking data not available.'),
-            ),
+            body: Center(child: Text('Trip tracking data not available.')),
           );
         }
         return ActivityTrackDriverScreen(ride: ride);
@@ -79,4 +77,3 @@ class ActivityModule {
     ),
   ];
 }
-

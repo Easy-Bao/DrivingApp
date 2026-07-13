@@ -1,12 +1,8 @@
 import 'package:core_models/core_models.dart';
 
-/**
- * Interface isolating Mapbox/native FFI operations from LocationService and MapProvider.
- */
+/// Interface isolating Mapbox/native FFI operations from LocationService and MapProvider.
 abstract class MapNativeService {
-  /**
-   * Search for places based on a query string.
-   */
+  /// Search for places based on a query string.
   Future<List<PlaceModel>> searchPlaces({
     required String token,
     required String query,
@@ -16,18 +12,14 @@ abstract class MapNativeService {
     double? userLng,
   });
 
-  /**
-   * Resolve a place model from geographical coordinates.
-   */
+  /// Resolve a place model from geographical coordinates.
   Future<PlaceModel?> reverseGeocode({
     required String token,
     required double lat,
     required double lng,
   });
 
-  /**
-   * Fetch route details (polyline, distance, duration) between two locations.
-   */
+  /// Fetch route details (polyline, distance, duration) between two locations.
   Future<RouteModel?> getRoute({
     required String token,
     required double originLat,
@@ -36,18 +28,14 @@ abstract class MapNativeService {
     required double destLng,
   });
 
-  /**
-   * Retrieve nearby points of interest within a geographical range.
-   */
+  /// Retrieve nearby points of interest within a geographical range.
   Future<List<PlaceModel>> getNearbyPois({
     required String token,
     required double lat,
     required double lng,
   });
 
-  /**
-   * Calculate haversine distance between two coordinates.
-   */
+  /// Calculate haversine distance between two coordinates.
   Future<double> haversineDistance({
     required double lat1,
     required double lng1,

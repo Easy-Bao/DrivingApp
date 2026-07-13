@@ -6,9 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:passenger_app/src/core/config/environment_config.dart';
 
-/**
- * State representing connection status and messages in the chat room.
- */
+/// State representing connection status and messages in the chat room.
 class ChatState extends Equatable {
   final List<ChatMessage> messages;
   final bool isConnecting;
@@ -45,53 +43,58 @@ class ChatState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [messages, isConnecting, isConnected, isRoomLocked, lockReasonMessage, errorMessage];
+  List<Object?> get props => [
+    messages,
+    isConnecting,
+    isConnected,
+    isRoomLocked,
+    lockReasonMessage,
+    errorMessage,
+  ];
 }
 
-/**
- * Cubit responsible for managing socket connections, messaging streams,
- * and resolving the chat room session. Decouples chat views from API and WS logic.
- */
+/// Cubit responsible for managing socket connections, messaging streams,
+/// and resolving the chat room session. Decouples chat views from API and WS logic.
 class ChatCubit extends Cubit<ChatState> {
   final ChatService _chatService;
   StreamSubscription? _chatSubscription;
 
   ChatCubit({required String currentUserId})
-      : _chatService = ChatService(currentUserId: currentUserId),
-        super(const ChatState()) {
+    : _chatService = ChatService(currentUserId: currentUserId),
+      super(const ChatState()) {
     _chatSubscription = _chatService.chatUpdatesStream.listen((_) {
-      emit(state.copyWith(
-        messages: List.from(_chatService.chatHistoryMessages),
-        isConnected: _chatService.isConnectionActive,
-        isRoomLocked: _chatService.isRoomLocked,
-        lockReasonMessage: _chatService.lockReasonMessage,
-      ));
+      emit(
+        state.copyWith(
+          messages: List.from(_chatService.chatHistoryMessages),
+          isConnected: _chatService.isConnectionActive,
+          isRoomLocked: _chatService.isRoomLocked,
+          lockReasonMessage: _chatService.lockReasonMessage,
+        ),
+      );
     });
   }
 
-  /**
-   * Initiates socket handshake with the chat service for [roomId].
-   */
+  /// Initiates socket handshake with the chat service for [roomId].
   Future<void> connect(String roomId, Uri wsUri) async {
     emit(state.copyWith(isConnecting: true));
     try {
       await _chatService.connectToChatRoom(roomId: roomId, chatUri: wsUri);
-      emit(state.copyWith(
-        isConnecting: false,
-        isConnected: _chatService.isConnectionActive,
-        isRoomLocked: _chatService.isRoomLocked,
-        lockReasonMessage: _chatService.lockReasonMessage,
-        messages: List.from(_chatService.chatHistoryMessages),
-      ));
+      emit(
+        state.copyWith(
+          isConnecting: false,
+          isConnected: _chatService.isConnectionActive,
+          isRoomLocked: _chatService.isRoomLocked,
+          lockReasonMessage: _chatService.lockReasonMessage,
+          messages: List.from(_chatService.chatHistoryMessages),
+        ),
+      );
     } catch (e, stackTrace) {
       debugPrint('Error connecting to chat room: $e\n$stackTrace');
       emit(state.copyWith(isConnecting: false, errorMessage: e.toString()));
     }
   }
 
-  /**
-   * Dispatches a text message to the socket if room is active.
-   */
+  /// Dispatches a text message to the socket if room is active.
   void sendMessage(String text) {
     if (state.isRoomLocked) return;
     if (text.trim().isEmpty) return;
@@ -101,9 +104,7 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
-  /**
-   * Resolves/locks the chat room by hitting the HTTP gateway.
-   */
+  /// Resolves/locks the chat room by hitting the HTTP gateway.
   Future<void> resolveChatRoom(String roomId, String userId, Uri wsUri) async {
     try {
       final gatewayUrl = EnvironmentConfig.httpBaseUrl;

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
@@ -57,25 +58,45 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         _distanceKm = route.distanceKm;
         _distance = '${route.distanceKm.toStringAsFixed(1)} km';
         final mapMarker = route.estimatedTime.inMinutes;
-        _duration = mapMarker < 60 ? '$mapMarker min' : '${mapMarker ~/ 60}h ${mapMarker % 60}m';
+        _duration = mapMarker < 60
+            ? '$mapMarker min'
+            : '${mapMarker ~/ 60}h ${mapMarker % 60}m';
       }
     });
 
     if (route != null) {
       final mins = route.estimatedTime.inMinutes.toDouble();
       final estimates = await Future.wait([
-        PassengerApiService.fetchFareEstimate(rideType: 'Solo Ride', distanceKm: route.distanceKm, durationMinutes: mins),
-        PassengerApiService.fetchFareEstimate(rideType: 'Share-Bao', distanceKm: route.distanceKm, durationMinutes: mins),
-        PassengerApiService.fetchFareEstimate(rideType: 'Bao Premium', distanceKm: route.distanceKm, durationMinutes: mins),
+        getIt<PassengerApiService>().fetchFareEstimate(
+          rideType: 'Solo Ride',
+          distanceKm: route.distanceKm,
+          durationMinutes: mins,
+        ),
+        getIt<PassengerApiService>().fetchFareEstimate(
+          rideType: 'Share-Bao',
+          distanceKm: route.distanceKm,
+          durationMinutes: mins,
+        ),
+        getIt<PassengerApiService>().fetchFareEstimate(
+          rideType: 'Bao Premium',
+          distanceKm: route.distanceKm,
+          durationMinutes: mins,
+        ),
       ]);
 
       double solo = 20.0 + route.distanceKm * 10;
       double share = 15.0 + route.distanceKm * 7;
       double premium = 35.0 + route.distanceKm * 15;
 
-      if (estimates[0] != null) solo = (estimates[0]!['total_fare'] as num).toDouble();
-      if (estimates[1] != null) share = (estimates[1]!['total_fare'] as num).toDouble();
-      if (estimates[2] != null) premium = (estimates[2]!['total_fare'] as num).toDouble();
+      if (estimates[0] != null) {
+        solo = (estimates[0]!['total_fare'] as num).toDouble();
+      }
+      if (estimates[1] != null) {
+        share = (estimates[1]!['total_fare'] as num).toDouble();
+      }
+      if (estimates[2] != null) {
+        premium = (estimates[2]!['total_fare'] as num).toDouble();
+      }
 
       if (mounted) {
         setState(() {
@@ -280,11 +301,15 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                                     'FindingDriver',
                                     extra: {
                                       'rideType': widget.preselectedRideType!,
-                                      'fare': _fares[widget.preselectedRideType!] ?? (20.0 + _distanceKm * 10),
+                                      'fare':
+                                          _fares[widget.preselectedRideType!] ??
+                                          (20.0 + _distanceKm * 10),
                                       'destination': widget.destination,
                                       'distance': _distance,
                                       'duration': _duration,
-                                      'pickupAddress': widget.pickupAddress ?? 'Current Location',
+                                      'pickupAddress':
+                                          widget.pickupAddress ??
+                                          'Current Location',
                                     },
                                   ),
                                 );
@@ -298,7 +323,9 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                                       'duration': _duration,
                                       'distanceKm': _distanceKm,
                                       'fares': _fares,
-                                      'pickupAddress': widget.pickupAddress ?? 'Current Location',
+                                      'pickupAddress':
+                                          widget.pickupAddress ??
+                                          'Current Location',
                                     },
                                   ),
                                 );

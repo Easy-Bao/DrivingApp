@@ -2,27 +2,32 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockTrackRepo extends Mock implements TrackRepository {}
 
-TrackDriverCubit _makeCubit(TrackRepository repo) =>
-    TrackDriverCubit(repository: repo);
+class MockPassengerApiService extends Mock implements PassengerApiService {}
+
+TrackDriverCubit _makeCubit(TrackRepository repo, PassengerApiService api) =>
+    TrackDriverCubit(repository: repo, apiService: api);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late MockTrackRepo repo;
+  late MockPassengerApiService mockApiService;
 
   setUp(() {
     repo = MockTrackRepo();
+    mockApiService = MockPassengerApiService();
     SharedPreferences.setMockInitialValues({});
   });
 
   group('TrackDriverCubit — initial state', () {
     test('starts with TrackDriverInitial', () async {
-      final cubit = _makeCubit(repo);
+      final cubit = _makeCubit(repo, mockApiService);
       expect(cubit.state, isA<TrackDriverInitial>());
       await cubit.close();
     });
@@ -31,7 +36,12 @@ void main() {
   group('TrackDriverCubit — cancelTrip()', () {
     blocTest<TrackDriverCubit, TrackDriverState>(
       'emits TrackDriverCanceled',
-      build: () => _makeCubit(repo),
+      build: () {
+        when(
+          () => mockApiService.updateRideStatus(any(), any()),
+        ).thenAnswer((_) async => true);
+        return _makeCubit(repo, mockApiService);
+      },
       act: (cubit) => cubit.cancelTrip(),
       expect: () => [isA<TrackDriverCanceled>()],
     );
@@ -55,7 +65,10 @@ void main() {
             [123.436, 7.830],
           ],
         );
-        return _makeCubit(repo);
+        when(
+          () => mockApiService.getRideStatus(any()),
+        ).thenAnswer((_) async => null);
+        return _makeCubit(repo, mockApiService);
       },
       act: (cubit) async {
         await cubit.startTracking(
@@ -66,9 +79,7 @@ void main() {
         );
         await Future.delayed(const Duration(milliseconds: 2200));
       },
-      expect: () => [
-        isA<TrackDriverInProgress>(),
-      ],
+      expect: () => [isA<TrackDriverInProgress>()],
       skip: 0,
     );
 
@@ -83,7 +94,10 @@ void main() {
             endLng: any(named: 'endLng'),
           ),
         ).thenAnswer((_) async => null);
-        return _makeCubit(repo);
+        when(
+          () => mockApiService.getRideStatus(any()),
+        ).thenAnswer((_) async => null);
+        return _makeCubit(repo, mockApiService);
       },
       act: (cubit) async {
         await cubit.startTracking(

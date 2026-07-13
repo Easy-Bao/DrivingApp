@@ -4,7 +4,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/app_module.dart';
 import 'package:passenger_app/app_widget.dart';
-import 'package:passenger_app/src/core/config/env_config.dart';
+import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/transitions/app_transitions.dart';
 
@@ -16,7 +16,7 @@ void main() async {
   final nativeService = MapNativeServiceImpl();
   LocationService.initialize(nativeService);
   await MapProvider.initialize(
-    token: EnvConfig.mapboxPublicToken,
+    token: EnvironmentConfig.mapboxPublicToken,
     nativeService: nativeService,
   );
 

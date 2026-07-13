@@ -58,24 +58,28 @@ class _InTransitScreenState extends State<InTransitScreen> {
     _trackingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (!mounted) return;
       try {
-        final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+        final pos =
+            await LocationService.getCurrentPosition() ??
+            LocationService.lastPosition;
         if (pos != null) {
           final prefs = await SharedPreferences.getInstance();
           final driverId = prefs.getString('driver_id') ?? '';
           if (driverId.isNotEmpty) {
-            await DriverApiService.updateLocation(
+            await getIt<DriverApiService>().updateLocation(
               driverId: driverId,
               lat: pos.latitude,
               lng: pos.longitude,
             );
           }
           if (mounted) {
-            mapBloc.add(UpdateLocationsAndDrawRouteEvent(
-              driverLat: pos.latitude,
-              driverLng: pos.longitude,
-              passengerLat: _destLat,
-              passengerLng: _destLng,
-            ));
+            mapBloc.add(
+              UpdateLocationsAndDrawRouteEvent(
+                driverLat: pos.latitude,
+                driverLng: pos.longitude,
+                passengerLat: _destLat,
+                passengerLng: _destLng,
+              ),
+            );
           }
         }
       } catch (_) {}
@@ -83,7 +87,9 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   Future<void> _loadRoute() async {
-    final pos = await LocationService.getCurrentPosition() ?? LocationService.lastPosition;
+    final pos =
+        await LocationService.getCurrentPosition() ??
+        LocationService.lastPosition;
     if (!mounted) return;
     if (pos == null) return;
     final dLat = pos.latitude;
@@ -113,12 +119,14 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   void _triggerDrawRoute(BuildContext context, double dLat, double dLng) {
-    BlocProvider.of<LiveMapBloc>(context).add(UpdateLocationsAndDrawRouteEvent(
-      driverLat: dLat,
-      driverLng: dLng,
-      passengerLat: _destLat,
-      passengerLng: _destLng,
-    ));
+    BlocProvider.of<LiveMapBloc>(context).add(
+      UpdateLocationsAndDrawRouteEvent(
+        driverLat: dLat,
+        driverLng: dLng,
+        passengerLat: _destLat,
+        passengerLng: _destLng,
+      ),
+    );
   }
 
   void _onMapCreated(AppMapController controller, BuildContext context) {
@@ -126,11 +134,13 @@ class _InTransitScreenState extends State<InTransitScreen> {
     final defaultLat = pos?.latitude ?? _destLat;
     final defaultLng = pos?.longitude ?? _destLng;
 
-    BlocProvider.of<LiveMapBloc>(context).add(InitializeMapEvent(
-      controller: controller,
-      defaultLat: defaultLat,
-      defaultLng: defaultLng,
-    ));
+    BlocProvider.of<LiveMapBloc>(context).add(
+      InitializeMapEvent(
+        controller: controller,
+        defaultLat: defaultLat,
+        defaultLng: defaultLng,
+      ),
+    );
 
     if (!_isLoading) {
       _triggerDrawRoute(context, defaultLat, defaultLng);
@@ -138,10 +148,9 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   Future<void> _completeTrip(BuildContext context) async {
-    await BlocProvider.of<RideFlowCubit>(context).endRide(
-      distanceKm: widget.distance,
-      durationMinutes: 10,
-    );
+    await BlocProvider.of<RideFlowCubit>(
+      context,
+    ).endRide(distanceKm: widget.distance, durationMinutes: 10);
     if (context.mounted) {
       context.pushReplacementNamed(
         'CompleteTripDriver',
@@ -163,10 +172,16 @@ class _InTransitScreenState extends State<InTransitScreen> {
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
-          final defaultLat = LocationService.lastPosition?.latitude ??
-              (rideCubitState is RideFlowInTransit ? rideCubitState.destLat : 0.0);
-          final defaultLng = LocationService.lastPosition?.longitude ??
-              (rideCubitState is RideFlowInTransit ? rideCubitState.destLng : 0.0);
+          final defaultLat =
+              LocationService.lastPosition?.latitude ??
+              (rideCubitState is RideFlowInTransit
+                  ? rideCubitState.destLat
+                  : 0.0);
+          final defaultLng =
+              LocationService.lastPosition?.longitude ??
+              (rideCubitState is RideFlowInTransit
+                  ? rideCubitState.destLng
+                  : 0.0);
 
           return Scaffold(
             backgroundColor: AppTheme.surface,
@@ -244,7 +259,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
               ],
             ),
           );
-        }
+        },
       ),
     );
   }
@@ -363,7 +378,9 @@ class _InTransitScreenState extends State<InTransitScreen> {
 
   Widget _buildPassengerRow(BuildContext context) {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowInTransit ? state.passengerName : 'Passenger';
+    final passengerName = state is RideFlowInTransit
+        ? state.passengerName
+        : 'Passenger';
 
     return Container(
       padding: const EdgeInsets.all(14),

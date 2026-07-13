@@ -36,12 +36,8 @@ class FindingDriverScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<BookingBloc>(
-          create: (_) => getIt<BookingBloc>(),
-        ),
-        BlocProvider<LiveMapBloc>(
-          create: (_) => getIt<LiveMapBloc>(),
-        ),
+        BlocProvider<BookingBloc>(create: (_) => getIt<BookingBloc>()),
+        BlocProvider<LiveMapBloc>(create: (_) => getIt<LiveMapBloc>()),
       ],
       child: FindingDriverScreenContent(
         rideType: rideType,
@@ -74,7 +70,8 @@ class FindingDriverScreenContent extends StatefulWidget {
   });
 
   @override
-  State<FindingDriverScreenContent> createState() => _FindingDriverScreenContentState();
+  State<FindingDriverScreenContent> createState() =>
+      _FindingDriverScreenContentState();
 }
 
 class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
@@ -97,13 +94,14 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
     );
     unawaited(_dotCtrl.repeat());
 
-    final lat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final lng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final lat =
+        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final lng =
+        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
-    BlocProvider.of<BookingBloc>(context).add(LocateNearestDriverEvent(
-      pickupLat: lat,
-      pickupLng: lng,
-    ));
+    BlocProvider.of<BookingBloc>(
+      context,
+    ).add(LocateNearestDriverEvent(pickupLat: lat, pickupLng: lng));
   }
 
   @override
@@ -116,30 +114,38 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   void _onMapCreated(AppMapController controller, BuildContext context) {
     if (!_initialized) {
       _initialized = true;
-      final lat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-      final lng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+      final lat =
+          LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+      final lng =
+          LocationService.lastPosition?.longitude ??
+          widget.destination.longitude;
 
-      BlocProvider.of<LiveMapBloc>(context).add(InitializeMapEvent(
-        controller: controller,
-        defaultLat: lat,
-        defaultLng: lng,
-      ));
+      BlocProvider.of<LiveMapBloc>(context).add(
+        InitializeMapEvent(
+          controller: controller,
+          defaultLat: lat,
+          defaultLng: lng,
+        ),
+      );
 
-      BlocProvider.of<LiveMapBloc>(context).add(AddMapMarkerEvent(
-        lat: lat,
-        lng: lng,
-        label: 'Origin',
-        isOrigin: true,
-      ));
+      BlocProvider.of<LiveMapBloc>(context).add(
+        AddMapMarkerEvent(lat: lat, lng: lng, label: 'Origin', isOrigin: true),
+      );
     }
   }
 
   void _startDirectBooking(DriverModel driver) {
-    final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final pickupLat =
+        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final pickupLng =
+        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
-    final distanceNum = double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 1.0;
-    final durationNum = double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 5.0;
+    final distanceNum =
+        double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+        1.0;
+    final durationNum =
+        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+        5.0;
 
     final tripMetadata = BidSessionTrip(
       rideType: widget.rideType,
@@ -150,21 +156,29 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
       pickupAddress: widget.pickupAddress,
     );
 
-    BlocProvider.of<BookingBloc>(context).add(StartDirectBookingEvent(
-      trip: tripMetadata,
-      pickupLat: pickupLat,
-      pickupLng: pickupLng,
-      distanceKm: distanceNum,
-      durationMinutes: durationNum,
-    ));
+    BlocProvider.of<BookingBloc>(context).add(
+      StartDirectBookingEvent(
+        trip: tripMetadata,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        distanceKm: distanceNum,
+        durationMinutes: durationNum,
+      ),
+    );
   }
 
   void _startOpenBooking() {
-    final pickupLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final pickupLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final pickupLat =
+        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final pickupLng =
+        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
-    final distanceNum = double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 1.0;
-    final durationNum = double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 5.0;
+    final distanceNum =
+        double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+        1.0;
+    final durationNum =
+        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+        5.0;
 
     final tripMetadata = BidSessionTrip(
       rideType: widget.rideType,
@@ -175,13 +189,15 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
       pickupAddress: widget.pickupAddress,
     );
 
-    BlocProvider.of<BookingBloc>(context).add(StartOpenBookingEvent(
-      trip: tripMetadata,
-      pickupLat: pickupLat,
-      pickupLng: pickupLng,
-      distanceKm: distanceNum,
-      durationMinutes: durationNum,
-    ));
+    BlocProvider.of<BookingBloc>(context).add(
+      StartOpenBookingEvent(
+        trip: tripMetadata,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        distanceKm: distanceNum,
+        durationMinutes: durationNum,
+      ),
+    );
   }
 
   void _handleCancel() {
@@ -190,8 +206,10 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
 
   @override
   Widget build(BuildContext context) {
-    final defaultLat = LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final defaultLng = LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final defaultLat =
+        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
+    final defaultLng =
+        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
     return PopScope(
       canPop: false,
@@ -204,18 +222,17 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
         body: BlocListener<BookingBloc, BookingState>(
           listener: (context, state) {
             if (state is NearestDriverFound) {
-              BlocProvider.of<LiveMapBloc>(context).add(AddMapMarkerEvent(
-                lat: state.driver.lat,
-                lng: state.driver.lng,
-                label: state.driver.name,
-              ));
+              BlocProvider.of<LiveMapBloc>(context).add(
+                AddMapMarkerEvent(
+                  lat: state.driver.lat,
+                  lng: state.driver.lng,
+                  label: state.driver.name,
+                ),
+              );
             } else if (state is BookingDriverMatched) {
               final navExtra = state.matchResult.toNavigationExtra();
               navExtra['createdRide'] = state.createdRide;
-              context.pushReplacementNamed(
-                'DriverMatched',
-                extra: navExtra,
-              );
+              context.pushReplacementNamed('DriverMatched', extra: navExtra);
             } else if (state is BookingCanceled) {
               context.pop();
             }
@@ -230,15 +247,17 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                     longitude: defaultLng,
                     zoom: 14.5,
                     interactive: true,
-                    onMapCreated: (controller) => _onMapCreated(controller, context),
+                    onMapCreated: (controller) =>
+                        _onMapCreated(controller, context),
                   ),
                 ),
               ),
               BlocBuilder<BookingBloc, BookingState>(
                 builder: (context, state) {
-                  final showRadar = state is FindingNearestDriver || 
-                                    (state is BookingSearching && state.isDirect == false) ||
-                                    (state is BookingOffersReceived && state.offers.isEmpty);
+                  final showRadar =
+                      state is FindingNearestDriver ||
+                      (state is BookingSearching && state.isDirect == false) ||
+                      (state is BookingOffersReceived && state.offers.isEmpty);
                   if (showRadar) {
                     return Center(
                       child: AnimatedBuilder(
@@ -248,7 +267,8 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                             alignment: Alignment.center,
                             children: [
                               ...List.generate(3, (i) {
-                                final timerSeconds = (_radarCtrl.value + i * 0.33) % 1.0;
+                                final timerSeconds =
+                                    (_radarCtrl.value + i * 0.33) % 1.0;
                                 return Container(
                                   width: 60 + timerSeconds * 200,
                                   height: 60 + timerSeconds * 200,
@@ -295,7 +315,10 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
               ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: GestureDetector(
                     onTap: _handleCancel,
                     child: Container(
@@ -325,7 +348,9 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                 child: BlocBuilder<BookingBloc, BookingState>(
                   builder: (context, state) {
                     if (state is FindingNearestDriver) {
-                      return _buildSearchingPanel(message: 'Locating nearest driver');
+                      return _buildSearchingPanel(
+                        message: 'Locating nearest driver',
+                      );
                     } else if (state is NearestDriverFound) {
                       return _buildNearestDriverPanel(state);
                     } else if (state is BookingSearching) {
@@ -655,7 +680,9 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                               review['date'] as String,
                               style: TextStyle(
                                 fontSize: 10,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.4,
+                                ),
                               ),
                             ),
                           ],
@@ -816,14 +843,20 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
               itemCount: offers.length,
               itemBuilder: (context, index) {
                 final offer = offers[index];
-                if (offer is! Map<String, dynamic>) return const SizedBox.shrink();
+                if (offer is! Map<String, dynamic>) {
+                  return const SizedBox.shrink();
+                }
 
-                final offerId = offer['offer_id'] as String? ?? offer['id'] as String? ?? '';
+                final offerId =
+                    offer['offer_id'] as String? ??
+                    offer['id'] as String? ??
+                    '';
                 final driverName = offer['driver_name'] as String? ?? 'Driver';
                 final vehicle = offer['vehicle_type'] as String? ?? 'Bao Bao';
                 final plate = offer['plate_number'] as String? ?? '';
                 final ratingStr = offer['driver_rating']?.toString() ?? '5.0';
-                final proposedFare = (offer['proposed_fare'] as num?)?.toDouble() ?? widget.fare;
+                final proposedFare =
+                    (offer['proposed_fare'] as num?)?.toDouble() ?? widget.fare;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -842,7 +875,11 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                           color: AppTheme.secondaryColor.withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.user, color: AppTheme.primaryColor, size: 20),
+                        child: const Icon(
+                          LucideIcons.user,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -851,21 +888,38 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                           children: [
                             Text(
                               driverName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.primaryColor),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: AppTheme.primaryColor,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               '$vehicle • $plate',
-                              style: TextStyle(fontSize: 12, color: AppTheme.primaryColor.withValues(alpha: 0.5)),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(LucideIcons.star, color: Colors.amber, size: 12),
+                                const Icon(
+                                  LucideIcons.star,
+                                  color: Colors.amber,
+                                  size: 12,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   ratingStr,
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
                                 ),
                               ],
                             ),
@@ -877,7 +931,11 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                         children: [
                           Text(
                             '₱${proposedFare.toStringAsFixed(2)}',
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryColor),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              color: AppTheme.primaryColor,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           ElevatedButton(
@@ -885,19 +943,32 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                               backgroundColor: AppTheme.primaryColor,
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
                             onPressed: () {
-                              BlocProvider.of<BookingBloc>(context).add(AcceptBidOfferEvent(
-                                    offerId: offerId,
-                                    driverName: driverName,
-                                    vehicleType: vehicle,
-                                    plateNumber: plate,
-                                    proposedFare: proposedFare,
-                                  ));
+                              BlocProvider.of<BookingBloc>(context).add(
+                                AcceptBidOfferEvent(
+                                  offerId: offerId,
+                                  driverName: driverName,
+                                  vehicleType: vehicle,
+                                  plateNumber: plate,
+                                  proposedFare: proposedFare,
+                                ),
+                              );
                             },
-                            child: const Text('Accept', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            child: const Text(
+                              'Accept',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),

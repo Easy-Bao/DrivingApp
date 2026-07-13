@@ -1,3 +1,4 @@
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
     final driverId = prefs.getString('driver_id') ?? '';
     if (driverId.isEmpty) return;
 
-    final profile = await DriverApiService.fetchProfile(driverId);
+    final profile = await getIt<DriverApiService>().fetchProfile(driverId);
     if (profile != null && mounted) {
       setState(() {
         _name = profile['name'] as String? ?? _name;
@@ -60,7 +61,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
       await prefs.setString('rating', _rating);
     }
 
-    final stats = await DriverApiService.fetchStats(driverId);
+    final stats = await getIt<DriverApiService>().fetchStats(driverId);
     if (stats != null && mounted) {
       setState(() {
         _totalTrips = stats['totalTrips'] as int?;
@@ -282,10 +283,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
     );
   }
 
-  Widget _tile(
-    BuildContext context,
-    _DriverAccountMenuItem item,
-  ) {
+  Widget _tile(BuildContext context, _DriverAccountMenuItem item) {
     return GestureDetector(
       onTap: item.onTap,
       child: Container(

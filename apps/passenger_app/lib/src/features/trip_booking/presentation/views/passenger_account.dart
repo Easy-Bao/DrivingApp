@@ -7,10 +7,8 @@ import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/profile/profile_cubit.dart';
 
-/**
- * Screen displaying the passenger's account menu options and syncing profile details.
- * Delegates data retrieval and persistence entirely to the [ProfileCubit] state machine.
- */
+/// Screen displaying the passenger's account menu options and syncing profile details.
+/// Delegates data retrieval and persistence entirely to the [ProfileCubit] state machine.
 class PassengerAccountScreen extends StatefulWidget {
   const PassengerAccountScreen({super.key});
 
@@ -207,16 +205,19 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                     _buildProfileHeader(state),
                     const SizedBox(height: 40),
                     _buildSectionTitle('Activity'),
-                    ..._buildActivityItems(context)
-                        .map((item) => _buildAccountTile(context, item)),
+                    ..._buildActivityItems(
+                      context,
+                    ).map((item) => _buildAccountTile(context, item)),
                     const SizedBox(height: 32),
                     _buildSectionTitle('Personal'),
-                    ..._buildPersonalItems(context)
-                        .map((item) => _buildAccountTile(context, item)),
+                    ..._buildPersonalItems(
+                      context,
+                    ).map((item) => _buildAccountTile(context, item)),
                     const SizedBox(height: 32),
                     _buildSectionTitle('Support'),
-                    ..._buildSupportItems(context)
-                        .map((item) => _buildAccountTile(context, item)),
+                    ..._buildSupportItems(
+                      context,
+                    ).map((item) => _buildAccountTile(context, item)),
                     const SizedBox(height: 36),
                   ],
                 ),

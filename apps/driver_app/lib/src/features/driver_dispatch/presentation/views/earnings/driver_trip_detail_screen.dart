@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:driver_app/src/core/config/env_config.dart';
+import 'package:driver_app/src/core/di/service_locator.dart';
+import 'package:driver_app/src/core/services/driver_api_service.dart';
 import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/shared/widgets/custom_toast.dart';
@@ -39,11 +40,12 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     }
 
     try {
-      final url = '${EnvConfig.driverServiceUrl}/passengers/$passengerId';
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
+      final profile = await getIt<DriverApiService>().fetchPassengerProfile(
+        passengerId,
+      );
+      if (profile != null) {
         setState(() {
-          _passenger = jsonDecode(response.body) as Map<String, dynamic>;
+          _passenger = profile;
           _isLoading = false;
         });
       } else {
@@ -83,7 +85,8 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
         }),
       );
 
-      if (initializeChatResponse.statusCode == 201 || initializeChatResponse.statusCode == 200) {
+      if (initializeChatResponse.statusCode == 201 ||
+          initializeChatResponse.statusCode == 200) {
         if (mounted) {
           // 2. Push to Driver Chat
           context.pushNamed(

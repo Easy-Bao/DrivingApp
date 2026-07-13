@@ -169,9 +169,7 @@ class HomeModule {
               );
             },
           ),
-          BlocProvider(
-            create: (_) => getIt<SavedPlacesCubit>(),
-          ),
+          BlocProvider(create: (_) => getIt<SavedPlacesCubit>()),
         ],
         child: const PassengerHomeScreen(),
       ),

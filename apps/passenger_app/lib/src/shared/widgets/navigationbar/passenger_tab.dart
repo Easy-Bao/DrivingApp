@@ -78,8 +78,6 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
     unawaited(_rideMenuController.reverse());
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final sel = _calculateSelectedIndex(context);
@@ -157,7 +155,9 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
                     _closeRideMenu();
                     String? address;
                     try {
-                      address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+                      address = BlocProvider.of<PassengerHomeCubit>(
+                        context,
+                      ).state.currentAddress;
                     } catch (_) {}
                     unawaited(
                       context.pushNamed(
@@ -173,7 +173,9 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
                     _closeRideMenu();
                     String? address;
                     try {
-                      address = BlocProvider.of<PassengerHomeCubit>(context).state.currentAddress;
+                      address = BlocProvider.of<PassengerHomeCubit>(
+                        context,
+                      ).state.currentAddress;
                     } catch (_) {}
                     unawaited(
                       context.pushNamed(

@@ -91,9 +91,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: AppTheme.primaryColor,
-              ),
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
           : Column(
               children: [
@@ -142,13 +140,17 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
                               Icon(
                                 LucideIcons.history,
                                 size: 40,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.2,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 'No rides yet',
                                 style: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

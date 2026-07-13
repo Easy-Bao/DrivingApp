@@ -1,3 +1,4 @@
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
@@ -67,7 +68,7 @@ class _SigninScreenState extends State<SigninScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await DriverApiService.login(
+    final result = await getIt<DriverApiService>().login(
       email: email,
       password: password,
     );

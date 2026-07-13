@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
@@ -19,7 +20,9 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _addressController = TextEditingController(text: 'Pagadian City, Zamboanga del Sur');
+  final _addressController = TextEditingController(
+    text: 'Pagadian City, Zamboanga del Sur',
+  );
   bool _isEditing = false;
   String _passengerId = '';
 
@@ -46,9 +49,12 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _passengerId = prefs.getString('passenger_id') ?? '';
-      _nameController.text = prefs.getString('passenger_name') ?? 'Xyrel Tenefrancia';
-      _phoneController.text = prefs.getString('passenger_phone') ?? '+63 912 345 6789';
-      _emailController.text = prefs.getString('passenger_email') ?? 'xyrel@baoride.com';
+      _nameController.text =
+          prefs.getString('passenger_name') ?? 'Xyrel Tenefrancia';
+      _phoneController.text =
+          prefs.getString('passenger_phone') ?? '+63 912 345 6789';
+      _emailController.text =
+          prefs.getString('passenger_email') ?? 'xyrel@baoride.com';
     });
   }
 
@@ -86,7 +92,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
       }
 
       try {
-        final updated = await PassengerApiService.updateProfile(
+        final updated = await getIt<PassengerApiService>().updateProfile(
           id: _passengerId,
           name: name,
           phone: phone,
@@ -102,7 +108,11 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           CustomToast.show(context, 'Profile updated successfully!');
         } else {
           if (!mounted) return;
-          CustomToast.show(context, 'Failed to update profile details.', isError: true);
+          CustomToast.show(
+            context,
+            'Failed to update profile details.',
+            isError: true,
+          );
         }
       } catch (error) {
         if (!mounted) return;
@@ -192,11 +202,26 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            _buildField('Full Name', _nameController, LucideIcons.user, errorText: _nameError),
+            _buildField(
+              'Full Name',
+              _nameController,
+              LucideIcons.user,
+              errorText: _nameError,
+            ),
             const SizedBox(height: 16),
-            _buildField('Phone Number', _phoneController, LucideIcons.phone, errorText: _phoneError),
+            _buildField(
+              'Phone Number',
+              _phoneController,
+              LucideIcons.phone,
+              errorText: _phoneError,
+            ),
             const SizedBox(height: 16),
-            _buildField('Email', _emailController, LucideIcons.mail, errorText: _emailError),
+            _buildField(
+              'Email',
+              _emailController,
+              LucideIcons.mail,
+              errorText: _emailError,
+            ),
             const SizedBox(height: 16),
             _buildField('Address', _addressController, LucideIcons.map_pin),
             const SizedBox(height: 32),
@@ -287,10 +312,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppTheme.cancel,
-                width: 1.5,
-              ),
+              borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,

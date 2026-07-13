@@ -127,7 +127,10 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
           labelColor: AppTheme.selectedItemColor,
           unselectedLabelColor: AppTheme.unselectedItemColor,
           labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-          tabs: const [Tab(text: 'Past'), Tab(text: 'Upcoming')],
+          tabs: const [
+            Tab(text: 'Past'),
+            Tab(text: 'Upcoming'),
+          ],
         ),
       ),
     );
@@ -255,8 +258,10 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
               TextButton(
                 onPressed: () => _onCardAction(statusType, ride),
                 style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 5,
+                    horizontal: 10,
+                  ),
                   minimumSize: const Size(0, 0),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),

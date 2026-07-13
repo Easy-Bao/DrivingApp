@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
-import 'package:passenger_app/src/core/config/env_config.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
@@ -21,7 +21,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _isPasswordVisible = false;
   bool isChecked = false;
@@ -103,7 +104,9 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      final url = Uri.parse('${EnvConfig.passengerServiceUrl}/passengers');
+      final url = getIt<PassengerApiService>().baseUrl.replace(
+        path: '/passengers',
+      );
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -165,120 +168,127 @@ class _SignupScreenState extends State<SignupScreen> {
         context: context,
         barrierDismissible: false,
         builder: (dialogCtx) {
-        return StatefulBuilder(
-          builder: (builderCtx, setModalState) {
-            return AlertDialog(
-              backgroundColor: AppTheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              title: const Row(
-                children: [
-                  Icon(LucideIcons.mail, color: AppTheme.primaryColor),
-                  SizedBox(width: 10),
-                  Text(
-                    'Verify Email',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'We sent a 6-digit OTP to $email. Please enter it below to verify your account.',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: otpController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Enter 6-digit OTP',
-                      errorText: otpError,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(LucideIcons.key_round, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isVerifying ? null : () => Navigator.pop(dialogCtx),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          return StatefulBuilder(
+            builder: (builderCtx, setModalState) {
+              return AlertDialog(
+                backgroundColor: AppTheme.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                ElevatedButton(
-                  onPressed: isVerifying
-                      ? null
-                      : () async {
-                          final code = otpController.text.trim();
-                          if (code.length != 6) {
-                            setModalState(() {
-                              otpError = 'OTP must be 6 digits';
-                            });
-                            return;
-                          }
-                          setModalState(() {
-                            isVerifying = true;
-                            otpError = null;
-                          });
-                          try {
-                            final success = await PassengerApiService.verifyOtp(
-                              email: email,
-                              code: code,
-                            );
-                            if (success) {
-                              if (dialogCtx.mounted) {
-                                Navigator.pop(dialogCtx);
-                              }
-                              if (mounted) {
-                                _showSuccessModal();
-                              }
-                            } else {
+                title: const Row(
+                  children: [
+                    Icon(LucideIcons.mail, color: AppTheme.primaryColor),
+                    SizedBox(width: 10),
+                    Text(
+                      'Verify Email',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'We sent a 6-digit OTP to $email. Please enter it below to verify your account.',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: otpController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: 'Enter 6-digit OTP',
+                        errorText: otpError,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(LucideIcons.key_round, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isVerifying
+                        ? null
+                        : () => Navigator.pop(dialogCtx),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: isVerifying
+                        ? null
+                        : () async {
+                            final code = otpController.text.trim();
+                            if (code.length != 6) {
                               setModalState(() {
-                                otpError = 'Invalid or expired OTP';
+                                otpError = 'OTP must be 6 digits';
+                              });
+                              return;
+                            }
+                            setModalState(() {
+                              isVerifying = true;
+                              otpError = null;
+                            });
+                            try {
+                              final success = await getIt<PassengerApiService>()
+                                  .verifyOtp(email: email, code: code);
+                              if (success) {
+                                if (dialogCtx.mounted) {
+                                  Navigator.pop(dialogCtx);
+                                }
+                                if (mounted) {
+                                  _showSuccessModal();
+                                }
+                              } else {
+                                setModalState(() {
+                                  otpError = 'Invalid or expired OTP';
+                                  isVerifying = false;
+                                });
+                              }
+                            } catch (error) {
+                              setModalState(() {
+                                otpError = 'Verification failed: $error';
                                 isVerifying = false;
                               });
                             }
-                          } catch (error) {
-                            setModalState(() {
-                              otpError = 'Verification failed: $error';
-                              isVerifying = false;
-                            });
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  child: isVerifying
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                    child: isVerifying
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Verify',
+                            style: TextStyle(color: Colors.white),
                           ),
-                        )
-                      : const Text('Verify', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    ));
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
   }
 
   void _showSuccessModal() {
@@ -287,51 +297,49 @@ class _SignupScreenState extends State<SignupScreen> {
         context: context,
         barrierDismissible: false,
         builder: (dialogCtx) {
-        return AlertDialog(
-          backgroundColor: AppTheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 16),
-              Container(
-                width: 72,
-                height: 72,
-                decoration: const BoxDecoration(
-                  color: AppTheme.complete,
-                  shape: BoxShape.circle,
+          return AlertDialog(
+            backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.complete,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    LucideIcons.check,
+                    color: Colors.white,
+                    size: 40,
+                  ),
                 ),
-                child: const Icon(
-                  LucideIcons.check,
-                  color: Colors.white,
-                  size: 40,
+                const SizedBox(height: 20),
+                const Text(
+                  'Sign Up Successful!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Sign Up Successful!',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
+                const SizedBox(height: 8),
+                const Text(
+                  'Redirecting to login shortly...',
+                  style: TextStyle(fontSize: 13, color: AppTheme.primaryColor),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Redirecting to login shortly...',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    ));
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
       Navigator.pop(context);
@@ -648,7 +656,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         elevation: 0,
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: AppTheme.neutralColor)
+                          ? const CircularProgressIndicator(
+                              color: AppTheme.neutralColor,
+                            )
                           : const Text(
                               'Sign up',
                               style: TextStyle(

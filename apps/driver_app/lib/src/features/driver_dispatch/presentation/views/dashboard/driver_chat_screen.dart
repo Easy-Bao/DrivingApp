@@ -1,3 +1,4 @@
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
 import 'package:chat_service/chat_service.dart';
 import 'package:driver_app/src/core/network/api_endpoints.dart';
@@ -9,10 +10,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/**
- * Screen enabling live chat communications between the driver and their passenger.
- * Uses [ChatCubit] to connect to WebSockets and sync messages.
- */
+/// Screen enabling live chat communications between the driver and their passenger.
+/// Uses [ChatCubit] to connect to WebSockets and sync messages.
 class DriverChatScreen extends StatefulWidget {
   final String? roomId;
   final String? userId;
@@ -34,17 +33,17 @@ class _DriverChatScreenState extends State<DriverChatScreen>
 
   late ChatCubit _chatCubit;
 
-  /**
-   * Periodically validates trip status from database to toggle locked view controls.
-   */
+  /// Periodically validates trip status from database to toggle locked view controls.
   Future<void> _checkTripStatus() async {
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
     try {
-      final res = await DriverApiService.getRideStatus(rId);
+      final res = await getIt<DriverApiService>().getRideStatus(rId);
       if (res != null) {
         final status = res['status'] as String?;
-        if (status == 'completed' || status == 'canceled' || status == 'cancelled') {
+        if (status == 'completed' ||
+            status == 'canceled' ||
+            status == 'cancelled') {
           setState(() {
             _isTripFinished = true;
           });
@@ -55,13 +54,14 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     }
   }
 
-  /**
-   * Invokes chat room resolution on HTTP gateway via cubit.
-   */
+  /// Invokes chat room resolution on HTTP gateway via cubit.
   Future<void> _resolveChatRoom() async {
     final chatRoomId = widget.roomId;
     final currentUserId = widget.userId;
-    if (chatRoomId == null || chatRoomId.isEmpty || currentUserId == null || currentUserId.isEmpty) {
+    if (chatRoomId == null ||
+        chatRoomId.isEmpty ||
+        currentUserId == null ||
+        currentUserId.isEmpty) {
       return;
     }
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
@@ -91,10 +91,14 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     final currentUserId = widget.userId;
 
     if (currentRoomId == null || currentRoomId.isEmpty) {
-      throw ArgumentError('Room ID must be supplied and cannot be null or empty.');
+      throw ArgumentError(
+        'Room ID must be supplied and cannot be null or empty.',
+      );
     }
     if (currentUserId == null || currentUserId.isEmpty) {
-      throw ArgumentError('User ID must be supplied and cannot be null or empty.');
+      throw ArgumentError(
+        'User ID must be supplied and cannot be null or empty.',
+      );
     }
 
     _chatCubit = ChatCubit(currentUserId: currentUserId);
@@ -115,9 +119,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     super.dispose();
   }
 
-  /**
-   * Forwards a text message to [ChatCubit] and scrolls down.
-   */
+  /// Forwards a text message to [ChatCubit] and scrolls down.
   void _send(String text) {
     if (text.trim().isEmpty) return;
     _chatCubit.sendMessage(text);
@@ -125,17 +127,17 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     _scrollDown();
   }
 
-  /**
-   * Triggers a post-frame scroll calculation to stick to the bottom list element.
-   */
+  /// Triggers a post-frame scroll calculation to stick to the bottom list element.
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {
-        unawaited(_scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        ));
+        unawaited(
+          _scrollCtrl.animateTo(
+            _scrollCtrl.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          ),
+        );
       }
     });
   }
@@ -244,7 +246,8 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                     controller: _scrollCtrl,
                     padding: const EdgeInsets.all(16),
                     physics: const BouncingScrollPhysics(),
-                    itemCount: chatHistoryMessages.length + (_passengerTyping ? 1 : 0),
+                    itemCount:
+                        chatHistoryMessages.length + (_passengerTyping ? 1 : 0),
                     itemBuilder: (ctx, i) {
                       if (i == chatHistoryMessages.length && _passengerTyping) {
                         return _buildTyping();
@@ -320,11 +323,15 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                                     ? state.lockReasonMessage
                                     : 'Type a message...',
                                 hintStyle: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   fontSize: 14,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                               ),
                               onSubmitted: (_) => _send(_msgCtrl.text),
                             ),
@@ -364,7 +371,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isMe
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Container(
             margin: const EdgeInsets.symmetric(vertical: 4),
