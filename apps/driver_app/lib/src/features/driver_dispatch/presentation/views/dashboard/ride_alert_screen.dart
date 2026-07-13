@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/bidding_api_service.dart';
 import 'package:driver_app/src/shared/widgets/custom_toast.dart';
 
 class RideAlertScreen extends StatefulWidget {
@@ -72,7 +72,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
     final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    final success = await getIt<DriverApiService>().placeBid(
+    final success = await getIt<BiddingApiService>().placeBid(
       sessionId: _rideId,
       driverId: driverId,
       driverName: driverName,

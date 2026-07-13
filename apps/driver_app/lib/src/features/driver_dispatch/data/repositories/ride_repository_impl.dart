@@ -1,11 +1,11 @@
 import 'package:core_models/core_models.dart';
 import 'package:location_service/location_service.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/bidding_api_service.dart';
 
 class RideRepositoryImpl implements RideRepository {
-  final DriverApiService _apiService;
+  final BiddingApiService _apiService;
 
-  RideRepositoryImpl({required DriverApiService apiService})
+  RideRepositoryImpl({required BiddingApiService apiService})
     : _apiService = apiService;
 
   Failure _mapExceptionToFailure(Object error) {

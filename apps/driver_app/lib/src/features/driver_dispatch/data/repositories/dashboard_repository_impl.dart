@@ -1,11 +1,11 @@
 import 'package:core_models/core_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
-  final DriverApiService _apiService;
+  final TripApiService _apiService;
 
-  DashboardRepositoryImpl({required DriverApiService apiService})
+  DashboardRepositoryImpl({required TripApiService apiService})
     : _apiService = apiService;
 
   Failure _mapExceptionToFailure(Object error) {

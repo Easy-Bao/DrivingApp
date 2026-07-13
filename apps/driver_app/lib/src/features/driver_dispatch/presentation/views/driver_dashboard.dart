@@ -4,7 +4,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/bidding_api_service.dart';
+import 'package:driver_app/src/core/services/telemetry_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 
 import 'package:location_service/location_service.dart';
@@ -69,7 +71,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         final prefs = await SharedPreferences.getInstance();
         final driverId = prefs.getString('driver_id') ?? '';
         if (driverId.isNotEmpty) {
-          await getIt<DriverApiService>().updateLocation(
+          await getIt<TelemetryApiService>().updateLocation(
             driverId: driverId,
             lat: pos.latitude,
             lng: pos.longitude,
@@ -95,7 +97,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         if (driverId.isEmpty) return;
 
         final historyRes = await http.get(
-          getIt<DriverApiService>().baseUrl.replace(
+          getIt<TripApiService>().baseUrl.replace(
             path: '/drivers/$driverId/trips',
           ),
         );
@@ -113,7 +115,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               .toList();
         }
 
-        final bidsList = await getIt<DriverApiService>().fetchActiveBids(
+        final bidsList = await getIt<BiddingApiService>().fetchActiveBids(
           driverId,
         );
         final List<Map<String, dynamic>> bids = bidsList
@@ -199,7 +201,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
     final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    final success = await getIt<DriverApiService>().placeBid(
+    final success = await getIt<BiddingApiService>().placeBid(
       sessionId: bid['id'],
       driverId: driverId,
       driverName: driverName,

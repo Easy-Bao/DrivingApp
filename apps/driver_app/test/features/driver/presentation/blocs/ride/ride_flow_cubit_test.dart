@@ -1,5 +1,5 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:bloc_test/bloc_test.dart';
@@ -9,21 +9,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MockRideRepo extends Mock implements RideRepository {}
 
-class MockDriverApiService extends Mock implements DriverApiService {
+class MockTripApiService extends Mock implements TripApiService {
   @override
   Uri get baseUrl => Uri.parse('http://localhost:8080');
 }
 
-RideFlowCubit _makeCubit(RideRepository repo, DriverApiService api) =>
-    RideFlowCubit(repository: repo, apiService: api);
+RideFlowCubit _makeCubit(RideRepository repo, TripApiService apiService) =>
+    RideFlowCubit(repository: repo, apiService: apiService);
 
 void main() {
   late MockRideRepo repo;
-  late MockDriverApiService mockApiService;
+  late MockTripApiService mockApiService;
 
   setUp(() {
     repo = MockRideRepo();
-    mockApiService = MockDriverApiService();
+    mockApiService = MockTripApiService();
     SharedPreferences.setMockInitialValues({});
   });
 

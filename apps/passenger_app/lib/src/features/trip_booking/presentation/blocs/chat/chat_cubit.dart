@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:chat_service/chat_service.dart';
+import 'package:core_models/core_models.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:passenger_app/src/core/config/environment_config.dart';
 
-/// State representing connection status and messages in the chat room.
 class ChatState extends Equatable {
   final List<ChatMessage> messages;
   final bool isConnecting;
@@ -53,8 +53,6 @@ class ChatState extends Equatable {
   ];
 }
 
-/// Cubit responsible for managing socket connections, messaging streams,
-/// and resolving the chat room session. Decouples chat views from API and WS logic.
 class ChatCubit extends Cubit<ChatState> {
   final ChatService _chatService;
   StreamSubscription? _chatSubscription;
@@ -74,7 +72,6 @@ class ChatCubit extends Cubit<ChatState> {
     });
   }
 
-  /// Initiates socket handshake with the chat service for [roomId].
   Future<void> connect(String roomId, Uri wsUri) async {
     emit(state.copyWith(isConnecting: true));
     try {
@@ -88,13 +85,17 @@ class ChatCubit extends Cubit<ChatState> {
           messages: List.from(_chatService.chatHistoryMessages),
         ),
       );
-    } catch (e, stackTrace) {
-      debugPrint('Error connecting to chat room: $e\n$stackTrace');
-      emit(state.copyWith(isConnecting: false, errorMessage: e.toString()));
+    } catch (error, stackTrace) {
+      debugPrint('Error connecting to chat room: $error\n$stackTrace');
+      emit(
+        state.copyWith(
+          isConnecting: false,
+          errorMessage: ErrorHandler.getErrorMessage(error),
+        ),
+      );
     }
   }
 
-  /// Dispatches a text message to the socket if room is active.
   void sendMessage(String text) {
     if (state.isRoomLocked) return;
     if (text.trim().isEmpty) return;
@@ -104,21 +105,22 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
-  /// Resolves/locks the chat room by hitting the HTTP gateway.
   Future<void> resolveChatRoom(String roomId, String userId, Uri wsUri) async {
     try {
-      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
-      final resolveEndpointUrl = '$gatewayUrl/chat/rooms/$roomId/resolve';
+      final gatewayUri = EnvironmentConfig.httpBaseUri;
+      final resolveEndpointUri = gatewayUri.replace(
+        path: '/chat/rooms/$roomId/resolve',
+      );
       final response = await http.post(
-        Uri.parse(resolveEndpointUrl),
+        resolveEndpointUri,
         headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
         await _chatService.connectToChatRoom(roomId: roomId, chatUri: wsUri);
       }
-    } catch (e, stackTrace) {
-      debugPrint('Error resolving chat room in cubit: $e\n$stackTrace');
+    } catch (error, stackTrace) {
+      debugPrint('Error resolving chat room in cubit: $error\n$stackTrace');
     }
   }
 

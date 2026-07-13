@@ -3,20 +3,20 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 
 import 'ride_flow_state.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
-  final DriverApiService _apiService;
+  final TripApiService _apiService;
   String? _activeRideId;
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
 
   RideFlowCubit({
     required RideRepository repository,
-    required DriverApiService apiService,
+    required TripApiService apiService,
   }) : _repository = repository,
        _apiService = apiService,
        super(RideFlowInitial());

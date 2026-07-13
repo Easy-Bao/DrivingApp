@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:driver_app/src/core/di/service_locator.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/telemetry_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
@@ -65,7 +65,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
           final prefs = await SharedPreferences.getInstance();
           final driverId = prefs.getString('driver_id') ?? '';
           if (driverId.isNotEmpty) {
-            await getIt<DriverApiService>().updateLocation(
+            await getIt<TelemetryApiService>().updateLocation(
               driverId: driverId,
               lat: pos.latitude,
               lng: pos.longitude,

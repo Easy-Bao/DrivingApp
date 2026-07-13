@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:driver_app/src/core/di/service_locator.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/passenger_api_service.dart';
 import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/shared/widgets/custom_toast.dart';
@@ -40,7 +40,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     }
 
     try {
-      final profile = await getIt<DriverApiService>().fetchPassengerProfile(
+      final profile = await getIt<PassengerApiService>().fetchPassengerProfile(
         passengerId,
       );
       if (profile != null) {

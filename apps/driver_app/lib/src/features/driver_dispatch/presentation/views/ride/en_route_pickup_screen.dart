@@ -3,7 +3,9 @@ import 'dart:convert';
 
 import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/di/service_locator.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/passenger_api_service.dart';
+import 'package:driver_app/src/core/services/telemetry_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
@@ -72,7 +74,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       if (rideId == null || rideId.isEmpty) return;
 
       try {
-        final loc = await getIt<DriverApiService>().fetchPassengerLocation(
+        final loc = await getIt<TelemetryApiService>().fetchPassengerLocation(
           rideId,
         );
         if (loc != null && loc['lat'] != null && loc['lng'] != null) {
@@ -95,7 +97,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
           final prefs = await SharedPreferences.getInstance();
           final driverId = prefs.getString('driver_id') ?? '';
           if (driverId.isNotEmpty) {
-            await getIt<DriverApiService>().updateLocation(
+            await getIt<TelemetryApiService>().updateLocation(
               driverId: driverId,
               lat: pos.latitude,
               lng: pos.longitude,
@@ -552,12 +554,12 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                   final rideCubit = BlocProvider.of<RideFlowCubit>(context);
                   final rideId = rideCubit.activeRideId ?? '';
                   if (rideId.isNotEmpty) {
-                    final ride = await getIt<DriverApiService>().getRideStatus(
+                    final ride = await getIt<TripApiService>().getRideStatus(
                       rideId,
                     );
                     final passengerId = ride?['passenger_id'] as String?;
                     if (passengerId != null && passengerId.isNotEmpty) {
-                      final passenger = await getIt<DriverApiService>()
+                      final passenger = await getIt<PassengerApiService>()
                           .fetchPassengerProfile(passengerId);
                       final phone = passenger?['phone'] as String?;
                       if (phone != null && phone.isNotEmpty) {

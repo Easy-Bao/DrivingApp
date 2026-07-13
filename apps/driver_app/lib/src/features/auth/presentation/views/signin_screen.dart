@@ -1,6 +1,6 @@
 import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/auth_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -68,7 +68,7 @@ class _SigninScreenState extends State<SigninScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await getIt<DriverApiService>().authenticateDriver(
+    final result = await getIt<AuthApiService>().authenticateDriver(
       email: email,
       password: password,
     );

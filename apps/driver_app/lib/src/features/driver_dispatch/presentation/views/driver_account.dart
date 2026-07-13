@@ -1,5 +1,6 @@
 import 'package:driver_app/src/core/di/service_locator.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/auth_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -47,7 +48,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
     final driverId = prefs.getString('driver_id') ?? '';
     if (driverId.isEmpty) return;
 
-    final profile = await getIt<DriverApiService>().fetchProfile(driverId);
+    final profile = await getIt<AuthApiService>().fetchProfile(driverId);
     if (profile != null && mounted) {
       setState(() {
         _name = profile['name'] as String? ?? _name;
@@ -61,7 +62,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
       await prefs.setString('rating', _rating);
     }
 
-    final stats = await getIt<DriverApiService>().fetchStats(driverId);
+    final stats = await getIt<TripApiService>().fetchStats(driverId);
     if (stats != null && mounted) {
       setState(() {
         _totalTrips = stats['totalTrips'] as int?;

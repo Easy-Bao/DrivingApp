@@ -1,11 +1,11 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/domain/repositories/driver_activity_repository.dart';
 
 class DriverActivityRepositoryImpl implements DriverActivityRepository {
-  final DriverApiService _apiService;
+  final TripApiService _apiService;
 
-  DriverActivityRepositoryImpl({required DriverApiService apiService})
+  DriverActivityRepositoryImpl({required TripApiService apiService})
     : _apiService = apiService;
 
   Failure _mapExceptionToFailure(Object error) {

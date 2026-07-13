@@ -1,6 +1,10 @@
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/core/config/environment_config.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/auth_api_service.dart';
+import 'package:driver_app/src/core/services/bidding_api_service.dart';
+import 'package:driver_app/src/core/services/passenger_api_service.dart';
+import 'package:driver_app/src/core/services/telemetry_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/data/repositories/dashboard_repository_impl.dart';
 import 'package:driver_app/src/features/driver_dispatch/data/repositories/ride_repository_impl.dart';
 import 'package:driver_app/src/features/driver_dispatch/domain/repositories/driver_activity_repository.dart';
@@ -9,25 +13,39 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashb
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:get_it/get_it.dart';
 
-/// Global service locator instance.
 final GetIt getIt = GetIt.instance;
 
-/// Sets up global dependency registrations for constructor injection.
 void setupServiceLocator() {
-  getIt.registerLazySingleton<DriverApiService>(
-    () => DriverApiService(baseUrl: EnvironmentConfig.driverServiceUri),
+  getIt.registerLazySingleton<AuthApiService>(
+    () => AuthApiService(baseUrl: EnvironmentConfig.driverServiceUri),
+  );
+
+  getIt.registerLazySingleton<BiddingApiService>(
+    () => BiddingApiService(baseUrl: EnvironmentConfig.driverServiceUri),
+  );
+
+  getIt.registerLazySingleton<TripApiService>(
+    () => TripApiService(baseUrl: EnvironmentConfig.driverServiceUri),
+  );
+
+  getIt.registerLazySingleton<TelemetryApiService>(
+    () => TelemetryApiService(baseUrl: EnvironmentConfig.driverServiceUri),
+  );
+
+  getIt.registerLazySingleton<PassengerApiService>(
+    () => PassengerApiService(baseUrl: EnvironmentConfig.driverServiceUri),
   );
 
   getIt.registerLazySingleton<DashboardRepository>(
-    () => DashboardRepositoryImpl(apiService: getIt<DriverApiService>()),
+    () => DashboardRepositoryImpl(apiService: getIt<TripApiService>()),
   );
 
   getIt.registerLazySingleton<RideRepository>(
-    () => RideRepositoryImpl(apiService: getIt<DriverApiService>()),
+    () => RideRepositoryImpl(apiService: getIt<BiddingApiService>()),
   );
 
   getIt.registerLazySingleton<DriverActivityRepository>(
-    () => DriverActivityRepositoryImpl(apiService: getIt<DriverApiService>()),
+    () => DriverActivityRepositoryImpl(apiService: getIt<TripApiService>()),
   );
 
   getIt.registerLazySingleton<DashboardCubit>(

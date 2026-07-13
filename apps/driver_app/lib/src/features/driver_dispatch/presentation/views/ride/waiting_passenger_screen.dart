@@ -3,7 +3,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:driver_app/src/core/config/environment_config.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/passenger_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
@@ -364,12 +365,12 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                 final rideId =
                     BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
                 if (rideId.isNotEmpty) {
-                  final ride = await getIt<DriverApiService>().getRideStatus(
+                  final ride = await getIt<TripApiService>().getRideStatus(
                     rideId,
                   );
                   final passengerId = ride?['passenger_id'] as String?;
                   if (passengerId != null && passengerId.isNotEmpty) {
-                    final passenger = await getIt<DriverApiService>()
+                    final passenger = await getIt<PassengerApiService>()
                         .fetchPassengerProfile(passengerId);
                     final phone = passenger?['phone'] as String?;
                     if (phone != null && phone.isNotEmpty) {

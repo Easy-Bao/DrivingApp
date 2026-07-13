@@ -2,7 +2,7 @@ import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
 import 'package:chat_service/chat_service.dart';
 import 'package:driver_app/src/core/network/api_endpoints.dart';
-import 'package:driver_app/src/core/services/driver_api_service.dart';
+import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/chat/chat_cubit.dart';
 import 'package:flutter/material.dart';
@@ -38,7 +38,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
     try {
-      final res = await getIt<DriverApiService>().getRideStatus(rId);
+      final res = await getIt<TripApiService>().getRideStatus(rId);
       if (res != null) {
         final status = res['status'] as String?;
         if (status == 'completed' ||
