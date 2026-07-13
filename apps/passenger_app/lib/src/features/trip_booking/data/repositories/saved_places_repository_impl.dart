@@ -1,35 +1,29 @@
 import 'dart:convert';
+import 'package:core_models/core_models.dart';
 import 'package:passenger_app/src/features/trip_booking/data/models/saved_place_model.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/saved_places_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// SharedPreferences-backed implementation of [SavedPlacesRepository].
-///
-/// Seeds three default shortcuts (Home, Campus, Work) on the first run,
-/// and encodes/decodes list objects as JSON for simple storage persistence.
 class SavedPlacesRepositoryImpl implements SavedPlacesRepository {
   static const String _storageKey = 'passenger_saved_places_v1';
 
   @override
   Future<List<Map<String, dynamic>>> loadPlaces() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_storageKey);
-
-    if (raw == null) {
-      return SavedPlaceModel.defaults
-          .map((d) => Map<String, dynamic>.from(d))
-          .toList();
-    }
-
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_storageKey);
+
+      if (raw == null) {
+        return SavedPlaceModel.defaults
+            .map((d) => Map<String, dynamic>.from(d))
+            .toList();
+      }
+
       final decoded = jsonDecode(raw) as List<dynamic>;
       return decoded.cast<Map<String, dynamic>>().toList();
     } catch (error) {
-      // Re-seed defaults if storage format is corrupt
-      return SavedPlaceModel.defaults
-          .map((d) => Map<String, dynamic>.from(d))
-          .toList();
+      throw const CacheFailure('Failed to load saved places from cache.');
     }
   }
 
@@ -50,8 +44,7 @@ class SavedPlacesRepositoryImpl implements SavedPlacesRepository {
           .toList();
       await prefs.setString(_storageKey, SavedPlaceModel.encodeList(models));
     } catch (error) {
-      // Ensure we fail cleanly on write error
-      throw Exception('Failed to write saved places to storage: $error');
+      throw const CacheFailure('Failed to write saved places to storage.');
     }
   }
 }

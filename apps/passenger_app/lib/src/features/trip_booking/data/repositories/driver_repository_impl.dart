@@ -1,5 +1,4 @@
 import 'package:core_models/core_models.dart';
-import 'package:flutter/foundation.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 
@@ -8,6 +7,27 @@ class DriverRepositoryImpl implements DriverRepository {
 
   DriverRepositoryImpl({required PassengerApiService apiService})
     : _apiService = apiService;
+
+  Failure _mapExceptionToFailure(Object error) {
+    if (error is ServerException) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        return const AuthFailure(
+          'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (error.statusCode == 400 || error.statusCode == 422) {
+        return const ValidationFailure('Invalid request data.');
+      }
+      return ServerFailure('Server returned status code ${error.statusCode}.');
+    }
+    if (error is DataParsingException) {
+      return ValidationFailure(error.message);
+    }
+    if (error is CacheException) {
+      return CacheFailure(error.message);
+    }
+    return ServerFailure('Unexpected system error: $error');
+  }
 
   @override
   Future<List<DriverModel>> getNearbyDrivers({
@@ -18,8 +38,7 @@ class DriverRepositoryImpl implements DriverRepository {
       final rawList = await _apiService.fetchOnlineDrivers();
       return _processNearbyDrivers(rawList, lat, lng);
     } catch (error) {
-      debugPrint('DriverRepositoryImpl.getNearbyDrivers failed: $error');
-      return [];
+      throw _mapExceptionToFailure(error);
     }
   }
 
@@ -76,7 +95,6 @@ class DriverRepositoryImpl implements DriverRepository {
     double rating,
     double etaMinutes,
   ) {
-    // Score formula: 50% distance, 30% rating gap, 20% ETA
     return (0.5 * distanceKm) + (0.3 * (5.0 - rating)) + (0.2 * etaMinutes);
   }
 

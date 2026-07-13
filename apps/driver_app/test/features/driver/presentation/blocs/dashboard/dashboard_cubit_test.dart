@@ -57,7 +57,10 @@ void main() {
       act: (cubit) => cubit.loadStats(),
       expect: () => [
         const DashboardState(isLoadingStats: true),
-        const DashboardState(isLoadingStats: false),
+        const DashboardState(
+          isLoadingStats: false,
+          errorMessage: 'An unexpected error occurred. Please try again.',
+        ),
       ],
     );
   });
@@ -109,7 +112,10 @@ void main() {
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [
         const DashboardState(isOnline: true, isLoadingHeatmap: true),
-        const DashboardState(isOnline: true),
+        const DashboardState(
+          isOnline: true,
+          errorMessage: 'An unexpected error occurred. Please try again.',
+        ),
       ],
     );
 

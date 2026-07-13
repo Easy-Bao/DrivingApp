@@ -1,5 +1,4 @@
 import 'package:core_models/core_models.dart';
-import 'package:flutter/foundation.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
 
@@ -32,6 +31,27 @@ class ActivityRepositoryImpl implements ActivityRepository {
   ActivityRepositoryImpl({required PassengerApiService apiService})
     : _apiService = apiService;
 
+  Failure _mapExceptionToFailure(Object error) {
+    if (error is ServerException) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        return const AuthFailure(
+          'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (error.statusCode == 400 || error.statusCode == 422) {
+        return const ValidationFailure('Invalid request data.');
+      }
+      return ServerFailure('Server returned status code ${error.statusCode}.');
+    }
+    if (error is DataParsingException) {
+      return ValidationFailure(error.message);
+    }
+    if (error is CacheException) {
+      return CacheFailure(error.message);
+    }
+    return ServerFailure('Unexpected system error: $error');
+  }
+
   @override
   Future<List<RideHistoryModel>> fetchRideHistory(String passengerId) async {
     try {
@@ -40,8 +60,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
           .map((raw) => _mapToModel(raw as Map<String, dynamic>))
           .toList();
     } catch (error) {
-      debugPrint('ActivityRepositoryImpl.fetchRideHistory failed: $error');
-      throw ActivityRepositoryException('Failed to load ride history: $error');
+      throw _mapExceptionToFailure(error);
     }
   }
 

@@ -9,6 +9,7 @@ class DashboardState extends Equatable {
   final int todayTrips;
   final double hoursOnline;
   final List<HeatmapCell> surgeCells;
+  final String? errorMessage;
 
   const DashboardState({
     this.isOnline = false,
@@ -18,6 +19,7 @@ class DashboardState extends Equatable {
     this.todayTrips = 0,
     this.hoursOnline = 0.0,
     this.surgeCells = const [],
+    this.errorMessage,
   });
 
   DashboardState copyWith({
@@ -28,6 +30,7 @@ class DashboardState extends Equatable {
     int? todayTrips,
     double? hoursOnline,
     List<HeatmapCell>? surgeCells,
+    String? errorMessage,
   }) {
     return DashboardState(
       isOnline: isOnline ?? this.isOnline,
@@ -37,6 +40,7 @@ class DashboardState extends Equatable {
       todayTrips: todayTrips ?? this.todayTrips,
       hoursOnline: hoursOnline ?? this.hoursOnline,
       surgeCells: surgeCells ?? this.surgeCells,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
@@ -49,5 +53,6 @@ class DashboardState extends Equatable {
     todayTrips,
     hoursOnline,
     surgeCells,
+    errorMessage,
   ];
 }

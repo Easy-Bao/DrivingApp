@@ -14,3 +14,7 @@ export 'src/repositories/passenger_home_repository.dart';
 export 'src/repositories/track_repository.dart';
 export 'src/repositories/dashboard_repository.dart';
 export 'src/repositories/ride_repository.dart';
+
+export 'src/errors/exceptions.dart';
+export 'src/errors/failures.dart';
+export 'src/errors/error_handler.dart';

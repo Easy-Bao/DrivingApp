@@ -1,5 +1,4 @@
 import 'package:core_models/core_models.dart';
-import 'package:flutter/foundation.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +17,27 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
   PassengerHomeRepositoryImpl({required PassengerApiService apiService})
     : _apiService = apiService;
 
+  Failure _mapExceptionToFailure(Object error) {
+    if (error is ServerException) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        return const AuthFailure(
+          'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (error.statusCode == 400 || error.statusCode == 422) {
+        return const ValidationFailure('Invalid request data.');
+      }
+      return ServerFailure('Server returned status code ${error.statusCode}.');
+    }
+    if (error is DataParsingException) {
+      return ValidationFailure(error.message);
+    }
+    if (error is CacheException) {
+      return CacheFailure(error.message);
+    }
+    return ServerFailure('Unexpected system error: $error');
+  }
+
   @override
   Future<String> resolveAddress({
     required double lat,
@@ -30,8 +50,7 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
       }
       return '';
     } catch (error) {
-      debugPrint('PassengerHomeRepositoryImpl.resolveAddress failed: $error');
-      return '';
+      throw _mapExceptionToFailure(error);
     }
   }
 
@@ -40,21 +59,22 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
     try {
       final passengerId = await _getPassengerId();
       if (passengerId.isEmpty) {
-        return [];
+        throw const CacheFailure('No passenger ID found in local cache.');
       }
       final rawRides = await _apiService.fetchRideHistory(passengerId);
       return _filterAndFormatRecentLocations(rawRides);
     } catch (error) {
-      debugPrint(
-        'PassengerHomeRepositoryImpl.getRecentLocations failed: $error',
-      );
-      return [];
+      throw _mapExceptionToFailure(error);
     }
   }
 
   Future<String> _getPassengerId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('passenger_id') ?? '';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('passenger_id') ?? '';
+    } catch (e) {
+      throw CacheException(message: 'Failed to access local preferences: $e');
+    }
   }
 
   List<Map<String, dynamic>> _filterAndFormatRecentLocations(

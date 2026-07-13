@@ -1,22 +1,18 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:driver_app/src/core/services/driver_api_service.dart';
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:driver_app/src/core/services/driver_api_service.dart';
 
-/// Cubit managing sequential driver ride states: en-route, waiting, in-transit, complete.
+import 'ride_flow_state.dart';
+
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
   final DriverApiService _apiService;
+  String? _activeRideId;
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
-  String? _activeRideId;
-
-  String? get activeRideId => _activeRideId;
 
   RideFlowCubit({
     required RideRepository repository,
@@ -25,7 +21,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
        _apiService = apiService,
        super(RideFlowInitial());
 
-  /// Accepts the passenger ride request on the backend and updates local flow state.
+  String? get activeRideId => _activeRideId;
+
   Future<void> acceptRide({
     required String rideId,
     required String passengerName,
@@ -42,19 +39,18 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
       final rating = prefs.getString('rating') ?? '4.9';
 
-      await http.post(
-        _apiService.baseUrl.replace(path: '/rides/$rideId/accept'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'driver_id': driverId,
-          'driver_name': driverName,
-          'driver_rating': rating,
-          'vehicle_type': vehicleType,
-          'plate_number': plateNumber,
-        }),
+      await _apiService.acceptRide(
+        rideId: rideId,
+        driverId: driverId,
+        driverName: driverName,
+        driverRating: rating,
+        vehicleType: vehicleType,
+        plateNumber: plateNumber,
       );
     } catch (error) {
-      debugPrint('Error accepting ride on backend: $error');
+      debugPrint(
+        'Error accepting ride on backend: ${ErrorHandler.getErrorMessage(error)}',
+      );
     }
 
     emit(
@@ -66,7 +62,6 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
-  /// Resumes the ride flow state based on the current active database trip status.
   Future<void> resumeRide({
     required String rideId,
     required String status,
@@ -78,35 +73,15 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     double distanceKm = 5.2,
   }) async {
     _activeRideId = rideId;
-    if (status == 'accepted') {
-      emit(
-        RideFlowEnRoutePickup(
-          passengerName: passengerName,
-          pickupLat: pickupLat,
-          pickupLng: pickupLng,
-        ),
-      );
-    } else if (status == 'arrived') {
-      _waitTimer?.cancel();
-      _elapsedWaitTime = 0;
+
+    if (status == 'arrived') {
       emit(
         RideFlowWaitingPassenger(
           passengerName: passengerName,
           waitTimeSeconds: 0,
         ),
       );
-      _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (isClosed) return;
-        _elapsedWaitTime++;
-        emit(
-          RideFlowWaitingPassenger(
-            passengerName: passengerName,
-            waitTimeSeconds: _elapsedWaitTime,
-          ),
-        );
-      });
     } else if (status == 'in_transit') {
-      _waitTimer?.cancel();
       emit(
         RideFlowInTransit(
           passengerName: passengerName,
@@ -115,27 +90,22 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           distanceKm: distanceKm,
         ),
       );
-    } else if (status == 'completed') {
-      emit(const RideFlowComplete(fare: 50.0));
     } else {
       emit(RideFlowInitial());
     }
   }
 
-  /// Signals arrival at pickup and starts wait time tick.
   Future<void> arriveAtPickup(String passengerName) async {
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
 
     if (_activeRideId != null) {
       try {
-        await http.post(
-          _apiService.baseUrl.replace(path: '/rides/$_activeRideId/status'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'status': 'arrived'}),
-        );
+        await _apiService.updateRideStatus(_activeRideId!, 'arrived');
       } catch (error) {
-        debugPrint('Error updating status to arrived: $error');
+        debugPrint(
+          'Error updating status to arrived: ${ErrorHandler.getErrorMessage(error)}',
+        );
       }
     }
 
@@ -157,7 +127,6 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     });
   }
 
-  /// Starts transit movement along destination coordinates.
   Future<void> startRide({
     required String passengerName,
     required double destLat,
@@ -168,13 +137,11 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        await http.post(
-          _apiService.baseUrl.replace(path: '/rides/$_activeRideId/status'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'status': 'in_transit'}),
-        );
+        await _apiService.updateRideStatus(_activeRideId!, 'in_transit');
       } catch (error) {
-        debugPrint('Error updating status to in_transit: $error');
+        debugPrint(
+          'Error updating status to in_transit: ${ErrorHandler.getErrorMessage(error)}',
+        );
       }
     }
 
@@ -188,7 +155,6 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     );
   }
 
-  /// Completes the active ride and computes final customer fare billing.
   Future<void> endRide({
     required double distanceKm,
     required double durationMinutes,
@@ -197,13 +163,11 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        await http.post(
-          _apiService.baseUrl.replace(path: '/rides/$_activeRideId/status'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'status': 'completed'}),
-        );
+        await _apiService.updateRideStatus(_activeRideId!, 'completed');
       } catch (error) {
-        debugPrint('Error updating status to completed: $error');
+        debugPrint(
+          'Error updating status to completed: ${ErrorHandler.getErrorMessage(error)}',
+        );
       }
     }
 
@@ -215,13 +179,12 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       emit(RideFlowComplete(fare: fareResult.totalFare));
     } catch (error) {
       debugPrint(
-        'Error loading dynamic fare calculation: $error. Falling back to default.',
+        'Error loading dynamic fare calculation: ${ErrorHandler.getErrorMessage(error)}. Falling back to default.',
       );
       emit(const RideFlowComplete(fare: 50.0));
     }
   }
 
-  /// Resets the active ride state back to initial idle view.
   void reset() {
     _waitTimer?.cancel();
     _activeRideId = null;

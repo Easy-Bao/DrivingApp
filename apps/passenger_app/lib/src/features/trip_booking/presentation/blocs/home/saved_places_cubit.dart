@@ -1,3 +1,4 @@
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -6,8 +7,6 @@ import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_pl
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/saved_places_repository.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_state.dart';
 
-/// Cubit managing passenger saved place shortcut chips.
-/// Entirely decoupled from BuildContext and UI navigation.
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   final SavedPlacesRepository _repository;
 
@@ -15,46 +14,49 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
     : _repository = repository,
       super(const SavedPlacesState());
 
-  /// Loads all pinned shortcuts from local storage.
   Future<void> loadPlaces() async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, errorMessage: null));
 
     try {
       final rawPlaces = await _repository.loadPlaces();
       final models = rawPlaces
           .map((raw) => SavedPlaceModel.fromJson(raw))
           .toList();
-      emit(SavedPlacesState(places: models, isLoading: false));
-    } catch (error, stackTrace) {
-      debugPrint('Error loading saved places in cubit: $error\n$stackTrace');
-      emit(const SavedPlacesState(places: [], isLoading: false));
+      emit(
+        SavedPlacesState(places: models, isLoading: false, errorMessage: null),
+      );
+    } catch (error) {
+      emit(
+        SavedPlacesState(
+          places: const [],
+          isLoading: false,
+          errorMessage: ErrorHandler.getErrorMessage(error),
+        ),
+      );
     }
   }
 
-  /// Adds a new pinned shortcut and updates storage.
   Future<void> addPlace(SavedPlace place) async {
     final updated = [...state.places, place];
-    emit(state.copyWith(places: updated));
+    emit(state.copyWith(places: updated, errorMessage: null));
     try {
       await _repository.savePlaces(updated);
     } catch (error) {
-      debugPrint('Error saving places in cubit: $error');
+      emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(error)));
     }
   }
 
-  /// Removes a pinned shortcut at [index] and updates storage.
   Future<void> removePlace(int index) async {
     if (index < 0 || index >= state.places.length) return;
     final updated = [...state.places]..removeAt(index);
-    emit(state.copyWith(places: updated));
+    emit(state.copyWith(places: updated, errorMessage: null));
     try {
       await _repository.savePlaces(updated);
     } catch (error) {
-      debugPrint('Error saving places after deletion: $error');
+      emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(error)));
     }
   }
 
-  /// Helper utility mapping a dynamic icon name back to its respective [IconData].
   static IconData iconFromName(String iconName) {
     switch (iconName) {
       case 'house':

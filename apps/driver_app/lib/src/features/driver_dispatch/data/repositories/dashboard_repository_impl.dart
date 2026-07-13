@@ -2,56 +2,91 @@ import 'package:core_models/core_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/src/core/services/driver_api_service.dart';
 
-/// API-backed implementation of [DashboardRepository] utilizing [DriverApiService].
 class DashboardRepositoryImpl implements DashboardRepository {
   final DriverApiService _apiService;
 
-  /// Creates a [DashboardRepositoryImpl] with constructor dependency injection.
   DashboardRepositoryImpl({required DriverApiService apiService})
     : _apiService = apiService;
 
+  Failure _mapExceptionToFailure(Object error) {
+    if (error is ServerException) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        return const AuthFailure(
+          'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (error.statusCode == 400 || error.statusCode == 422) {
+        return const ValidationFailure('Invalid request data.');
+      }
+      return ServerFailure('Server returned status code ${error.statusCode}.');
+    }
+    if (error is DataParsingException) {
+      return ValidationFailure(error.message);
+    }
+    if (error is CacheException) {
+      return CacheFailure(error.message);
+    }
+    return ServerFailure('Unexpected system error: $error');
+  }
+
   Future<String> _getDriverId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('driver_id') ?? '';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('driver_id') ?? '';
+    } catch (e) {
+      throw CacheException(message: 'Failed to access local preferences: $e');
+    }
   }
 
   @override
   Future<double> getTodayEarnings() async {
-    final driverId = await _getDriverId();
-    if (driverId.isEmpty) return 0.0;
     try {
+      final driverId = await _getDriverId();
+      if (driverId.isEmpty) {
+        throw const CacheFailure('Driver ID is not registered.');
+      }
       final data = await _apiService.fetchStats(driverId);
       if (data != null && data['todayEarnings'] != null) {
         return (data['todayEarnings'] as num).toDouble();
       }
-    } catch (_) {}
-    return 0.0;
+      return 0.0;
+    } catch (error) {
+      throw _mapExceptionToFailure(error);
+    }
   }
 
   @override
   Future<int> getTodayTrips() async {
-    final driverId = await _getDriverId();
-    if (driverId.isEmpty) return 0;
     try {
+      final driverId = await _getDriverId();
+      if (driverId.isEmpty) {
+        throw const CacheFailure('Driver ID is not registered.');
+      }
       final data = await _apiService.fetchStats(driverId);
       if (data != null && data['todayTrips'] != null) {
         return data['todayTrips'] as int;
       }
-    } catch (_) {}
-    return 0;
+      return 0;
+    } catch (error) {
+      throw _mapExceptionToFailure(error);
+    }
   }
 
   @override
   Future<double> getHoursOnline() async {
-    final driverId = await _getDriverId();
-    if (driverId.isEmpty) return 0.0;
     try {
+      final driverId = await _getDriverId();
+      if (driverId.isEmpty) {
+        throw const CacheFailure('Driver ID is not registered.');
+      }
       final data = await _apiService.fetchStats(driverId);
       if (data != null && data['hoursOnline'] != null) {
         return (data['hoursOnline'] as num).toDouble();
       }
-    } catch (_) {}
-    return 0.0;
+      return 0.0;
+    } catch (error) {
+      throw _mapExceptionToFailure(error);
+    }
   }
 
   @override

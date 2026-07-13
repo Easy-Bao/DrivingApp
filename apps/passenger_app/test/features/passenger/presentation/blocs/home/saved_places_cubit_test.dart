@@ -57,7 +57,11 @@ void main() {
       act: (cubit) => cubit.loadPlaces(),
       expect: () => [
         const SavedPlacesState(places: [], isLoading: true),
-        const SavedPlacesState(places: [], isLoading: false),
+        const SavedPlacesState(
+          places: [],
+          isLoading: false,
+          errorMessage: 'An unexpected error occurred. Please try again.',
+        ),
       ],
     );
   });

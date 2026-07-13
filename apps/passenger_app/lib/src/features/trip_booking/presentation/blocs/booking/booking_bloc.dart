@@ -154,7 +154,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         emit(const BookingFailure('No drivers nearby.'));
       }
     } catch (e) {
-      emit(BookingFailure(e.toString()));
+      emit(BookingFailure(ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -183,15 +183,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     _subscribeToSession();
 
-    await _bidSessionService.startSession(
-      trip: event.trip,
-      passengerId: passengerId,
-      pickupLat: event.pickupLat,
-      pickupLng: event.pickupLng,
-      distanceKm: event.distanceKm,
-      durationMinutes: event.durationMinutes,
-      targetDriverId: _nearestDriver!.id,
-    );
+    try {
+      await _bidSessionService.startSession(
+        trip: event.trip,
+        passengerId: passengerId,
+        pickupLat: event.pickupLat,
+        pickupLng: event.pickupLng,
+        distanceKm: event.distanceKm,
+        durationMinutes: event.durationMinutes,
+        targetDriverId: _nearestDriver!.id,
+      );
+    } catch (error) {
+      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
+    }
   }
 
   Future<void> _onStartOpenBooking(
@@ -218,14 +222,18 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     _subscribeToSession();
 
-    await _bidSessionService.startSession(
-      trip: event.trip,
-      passengerId: passengerId,
-      pickupLat: event.pickupLat,
-      pickupLng: event.pickupLng,
-      distanceKm: event.distanceKm,
-      durationMinutes: event.durationMinutes,
-    );
+    try {
+      await _bidSessionService.startSession(
+        trip: event.trip,
+        passengerId: passengerId,
+        pickupLat: event.pickupLat,
+        pickupLng: event.pickupLng,
+        distanceKm: event.distanceKm,
+        durationMinutes: event.durationMinutes,
+      );
+    } catch (error) {
+      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
+    }
   }
 
   void _subscribeToSession() {
