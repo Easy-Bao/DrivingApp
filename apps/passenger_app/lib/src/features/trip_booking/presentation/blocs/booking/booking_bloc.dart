@@ -153,8 +153,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       } else {
         emit(const BookingFailure('No drivers nearby.'));
       }
-    } catch (e) {
-      emit(BookingFailure(ErrorHandler.getErrorMessage(e)));
+    } catch (error) {
+      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
   }
 

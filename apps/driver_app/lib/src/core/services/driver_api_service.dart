@@ -14,9 +14,9 @@ class DriverApiService {
     if (response.statusCode == expectedStatus) {
       try {
         return jsonDecode(response.body) as Map<String, dynamic>;
-      } catch (e) {
+      } catch (error) {
         throw DataParsingException(
-          message: 'Failed to parse response payload: $e',
+          message: 'Failed to parse response payload: $error',
         );
       }
     }
@@ -30,9 +30,9 @@ class DriverApiService {
     if (response.statusCode == expectedStatus) {
       try {
         return jsonDecode(response.body) as List<dynamic>;
-      } catch (e) {
+      } catch (error) {
         throw DataParsingException(
-          message: 'Failed to parse response list: $e',
+          message: 'Failed to parse response list: $error',
         );
       }
     }
@@ -52,7 +52,7 @@ class DriverApiService {
     );
   }
 
-  Future<Map<String, dynamic>?> login({
+  Future<Map<String, dynamic>?> authenticateDriver({
     required String email,
     required String password,
   }) async {

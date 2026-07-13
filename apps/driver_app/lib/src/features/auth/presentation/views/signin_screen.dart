@@ -68,7 +68,7 @@ class _SigninScreenState extends State<SigninScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await getIt<DriverApiService>().login(
+    final result = await getIt<DriverApiService>().authenticateDriver(
       email: email,
       password: password,
     );

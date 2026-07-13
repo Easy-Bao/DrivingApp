@@ -72,8 +72,10 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('passenger_id') ?? '';
-    } catch (e) {
-      throw CacheException(message: 'Failed to access local preferences: $e');
+    } catch (error) {
+      throw CacheException(
+        message: 'Failed to access local preferences: $error',
+      );
     }
   }
 
