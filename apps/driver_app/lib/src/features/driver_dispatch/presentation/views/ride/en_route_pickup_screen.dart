@@ -94,13 +94,12 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
             await LocationService.getCurrentPosition() ??
             LocationService.lastPosition;
         if (pos != null) {
-          final prefs = await SharedPreferences.getInstance();
-          final driverId = prefs.getString('driver_id') ?? '';
-          if (driverId.isNotEmpty) {
-            await getIt<TelemetryApiService>().updateLocation(
-              driverId: driverId,
-              lat: pos.latitude,
-              lng: pos.longitude,
+          if (mounted) {
+            mapBloc.add(
+              DispatchTelemetryLocationEvent(
+                lat: pos.latitude,
+                lng: pos.longitude,
+              ),
             );
           }
           if (mounted) {

@@ -4,8 +4,8 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class MockRideRepo extends Mock implements RideRepository {}
 
@@ -24,13 +24,29 @@ void main() {
   setUp(() {
     repo = MockRideRepo();
     mockApiService = MockTripApiService();
-    SharedPreferences.setMockInitialValues({});
+
+    // Register active mock calls for API updates
+    when(
+      () => mockApiService.acceptRide(
+        rideId: any(named: 'rideId'),
+        driverId: any(named: 'driverId'),
+        driverName: any(named: 'driverName'),
+        driverRating: any(named: 'driverRating'),
+        vehicleType: any(named: 'vehicleType'),
+        plateNumber: any(named: 'plateNumber'),
+      ),
+    ).thenAnswer((_) async => true);
+
+    when(
+      () => mockApiService.updateRideStatus(any(), any()),
+    ).thenAnswer((_) async => true);
   });
 
   group('RideFlowCubit — initial state', () {
-    test('initial state is Idle', () async {
+    test('starts in initial state', () async {
       final cubit = _makeCubit(repo, mockApiService);
       expect(cubit.state, isA<RideFlowInitial>());
+      expect(cubit.activeRideId, isNull);
       await cubit.close();
     });
   });
@@ -100,12 +116,14 @@ void main() {
             durationMinutes: any(named: 'durationMinutes'),
           ),
         ).thenAnswer(
-          (_) async => const FareResult(
-            baseFare: 40.0,
-            distanceCharge: 25.6,
-            timeCharge: 8.0,
-            surgeCharge: 0.0,
-            totalFare: 73.6,
+          (_) async => const Right(
+            FareResult(
+              baseFare: 40.0,
+              distanceCharge: 25.6,
+              timeCharge: 8.0,
+              surgeCharge: 0.0,
+              totalFare: 73.6,
+            ),
           ),
         );
         return _makeCubit(repo, mockApiService);
@@ -122,7 +140,9 @@ void main() {
             distanceKm: any(named: 'distanceKm'),
             durationMinutes: any(named: 'durationMinutes'),
           ),
-        ).thenThrow(Exception('fare computation failed'));
+        ).thenAnswer(
+          (_) async => const Left(ServerFailure('fare computation failed')),
+        );
         return _makeCubit(repo, mockApiService);
       },
       act: (cubit) => cubit.endRide(distanceKm: 3.2, durationMinutes: 8.0),

@@ -3,6 +3,7 @@ import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/services/auth_api_service.dart';
 import 'package:driver_app/src/core/services/bidding_api_service.dart';
 import 'package:driver_app/src/core/services/passenger_api_service.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/services/telemetry_api_service.dart';
 import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/data/repositories/dashboard_repository_impl.dart';
@@ -13,9 +14,17 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashb
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:get_it/get_it.dart';
 
+/// Global service locator instance managing constructor-based dependency injection.
 final GetIt getIt = GetIt.instance;
 
+/// Configures global dependency registrations for the Driver Application.
+///
+/// Registers singletons for network services and repositories, and factories for BLoCs.
 void setupServiceLocator() {
+  getIt.registerLazySingleton<SecureSessionService>(
+    () => SecureSessionService(),
+  );
+
   getIt.registerLazySingleton<AuthApiService>(
     () => AuthApiService(baseUrl: EnvironmentConfig.driverServiceUri),
   );
@@ -52,5 +61,10 @@ void setupServiceLocator() {
     () => DashboardCubit(repository: getIt<DashboardRepository>()),
   );
 
-  getIt.registerFactory<LiveMapBloc>(() => LiveMapBloc());
+  getIt.registerFactory<LiveMapBloc>(
+    () => LiveMapBloc(
+      telemetryService: getIt<TelemetryApiService>(),
+      sessionService: getIt<SecureSessionService>(),
+    ),
+  );
 }

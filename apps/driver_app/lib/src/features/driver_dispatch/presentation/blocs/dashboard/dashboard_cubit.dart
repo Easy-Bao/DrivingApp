@@ -3,6 +3,9 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashb
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+/// Cubit managing the driver dashboard lifecycle: daily earnings, trips,
+/// hours online, and surge heatmap grid. Uses [DashboardRepository] returning
+/// `Either<Failure, T>` for type-safe error propagation.
 class DashboardCubit extends Cubit<DashboardState> {
   final DashboardRepository _repository;
 
@@ -18,12 +21,43 @@ class DashboardCubit extends Cubit<DashboardState> {
         _repository.getTodayTrips(),
         _repository.getHoursOnline(),
       ]);
+
+      // Collect the first failure across all three parallel requests, or
+      // extract success values if all three returned Right.
+      String? firstFailureMessage;
+      double todayEarnings = 0.0;
+      int todayTrips = 0;
+      double hoursOnline = 0.0;
+
+      results[0].fold(
+        (failure) => firstFailureMessage ??= failure.message,
+        (value) => todayEarnings = value as double,
+      );
+      results[1].fold(
+        (failure) => firstFailureMessage ??= failure.message,
+        (value) => todayTrips = value as int,
+      );
+      results[2].fold(
+        (failure) => firstFailureMessage ??= failure.message,
+        (value) => hoursOnline = value as double,
+      );
+
+      if (firstFailureMessage != null) {
+        emit(
+          state.copyWith(
+            isLoadingStats: false,
+            errorMessage: firstFailureMessage,
+          ),
+        );
+        return;
+      }
+
       emit(
         state.copyWith(
           isLoadingStats: false,
-          todayEarnings: results[0] as double,
-          todayTrips: results[1] as int,
-          hoursOnline: results[2] as double,
+          todayEarnings: todayEarnings,
+          todayTrips: todayTrips,
+          hoursOnline: hoursOnline,
           errorMessage: null,
         ),
       );
@@ -49,32 +83,37 @@ class DashboardCubit extends Cubit<DashboardState> {
           errorMessage: null,
         ),
       );
-      try {
-        final cells = await _repository.getSurgeHeatmap(
-          lat: lat,
-          lng: lng,
-          gridSize: 10,
-          cellSize: 0.003,
-          requestLats: [lat + 0.002, lat - 0.001, lat + 0.005],
-          requestLngs: [lng - 0.002, lng + 0.003, lng + 0.001],
-        );
-        emit(
-          state.copyWith(
-            isLoadingHeatmap: false,
-            surgeCells: cells,
-            errorMessage: null,
-          ),
-        );
-      } catch (error) {
-        debugPrint('Error loading surge heatmap: $error');
-        emit(
-          state.copyWith(
-            isLoadingHeatmap: false,
-            surgeCells: const [],
-            errorMessage: ErrorHandler.getErrorMessage(error),
-          ),
-        );
-      }
+
+      final heatmapResult = await _repository.getSurgeHeatmap(
+        lat: lat,
+        lng: lng,
+        gridSize: 10,
+        cellSize: 0.003,
+        requestLats: [lat + 0.002, lat - 0.001, lat + 0.005],
+        requestLngs: [lng - 0.002, lng + 0.003, lng + 0.001],
+      );
+
+      heatmapResult.fold(
+        (failure) {
+          debugPrint('Error loading surge heatmap: ${failure.message}');
+          emit(
+            state.copyWith(
+              isLoadingHeatmap: false,
+              surgeCells: const [],
+              errorMessage: failure.message,
+            ),
+          );
+        },
+        (cells) {
+          emit(
+            state.copyWith(
+              isLoadingHeatmap: false,
+              surgeCells: cells,
+              errorMessage: null,
+            ),
+          );
+        },
+      );
     } else {
       emit(
         state.copyWith(

@@ -1,7 +1,9 @@
 import 'package:core_models/core_models.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/domain/repositories/driver_activity_repository.dart';
 
+/// Repository implementation for reading driver trip history from the backend.
 class DriverActivityRepositoryImpl implements DriverActivityRepository {
   final TripApiService _apiService;
 
@@ -30,11 +32,11 @@ class DriverActivityRepositoryImpl implements DriverActivityRepository {
   }
 
   @override
-  Future<List<dynamic>> fetchTripHistory(String driverId) async {
+  Future<Either<Failure, List<dynamic>>> fetchTripHistory(String driverId) async {
     try {
-      return await _apiService.fetchTripHistory(driverId);
+      return Right(await _apiService.fetchTripHistory(driverId));
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 }

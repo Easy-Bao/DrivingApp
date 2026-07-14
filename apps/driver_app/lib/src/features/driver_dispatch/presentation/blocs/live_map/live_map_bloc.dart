@@ -2,19 +2,52 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location_service/location_service.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/core/services/telemetry_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_state.dart';
 
-/// BLoC managing maps rendering, markers, route overlay calculations,
-/// and animations independently from trip business logic.
+/// State controller managing map overlay layouts, marker assets, routing
+/// sequence rendering, and real-time backend telemetry dispatching.
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
+  final TelemetryApiService _telemetryService;
+  final SecureSessionService _sessionService;
+
   AppMapController? _mapController;
   final List<dynamic> _markerManagers = [];
 
-  LiveMapBloc() : super(LiveMapInitial()) {
+  final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
+      PublishSubject<DispatchTelemetryLocationEvent>();
+  late final StreamSubscription<DispatchTelemetryLocationEvent> _locationSubscription;
+
+  /// Initializes the map bloc state machine and configures telemetry rate limiting.
+  LiveMapBloc({
+    required TelemetryApiService telemetryService,
+    required SecureSessionService sessionService,
+  }) : _telemetryService = telemetryService,
+       _sessionService = sessionService,
+       super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<UpdateLocationsAndDrawRouteEvent>(_onUpdateLocationsAndDrawRoute);
     on<ClearMapEvent>(_onClearMap);
+
+    _locationSubscription = _locationSubject
+        .throttleTime(const Duration(seconds: 5))
+        .listen((event) async {
+      final driverId = await _sessionService.readDriverId();
+      if (driverId != null && driverId.isNotEmpty) {
+        await _telemetryService.updateLocation(
+          driverId: driverId,
+          lat: event.lat,
+          lng: event.lng,
+        );
+      }
+    });
+
+    on<DispatchTelemetryLocationEvent>((event, emit) {
+      _locationSubject.add(event);
+    });
   }
 
   Future<void> _onInitializeMap(
@@ -33,7 +66,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
     await _clearAllMarkers();
 
-    // Add Driver Marker
     final driverManager = await MapProvider.addMarker(
       _mapController!,
       event.driverLat,
@@ -44,7 +76,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     );
     if (driverManager != null) _markerManagers.add(driverManager);
 
-    // Add Passenger Marker
     final passengerManager = await MapProvider.addMarker(
       _mapController!,
       event.passengerLat,
@@ -54,13 +85,11 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     );
     if (passengerManager != null) _markerManagers.add(passengerManager);
 
-    // Fit bounds to show both
     await MapProvider.fitBounds(_mapController!, [
       LatLng(event.driverLat, event.driverLng),
       LatLng(event.passengerLat, event.passengerLng),
     ]);
 
-    // Fetch and Draw route polyline
     final route = await MapProvider.getRoute(
       event.driverLat,
       event.driverLng,
@@ -106,6 +135,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
   @override
   Future<void> close() async {
+    await _locationSubscription.cancel();
+    await _locationSubject.close();
     await _clearAllMarkers();
     return super.close();
   }

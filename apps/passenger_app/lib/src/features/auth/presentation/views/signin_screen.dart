@@ -7,6 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -574,6 +575,10 @@ class _SigninScreenState extends State<SigninScreen> {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final token = data['token'] as String;
         final passenger = data['passenger'] as Map<String, dynamic>;
+
+        final sessionService = getIt<SecureSessionService>();
+        await sessionService.writeAuthToken(token);
+        await sessionService.writePassengerId(passenger['id'] as String);
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwt_token', token);

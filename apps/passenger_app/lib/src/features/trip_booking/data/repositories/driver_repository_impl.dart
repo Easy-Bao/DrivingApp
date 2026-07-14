@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 
@@ -30,15 +31,15 @@ class DriverRepositoryImpl implements DriverRepository {
   }
 
   @override
-  Future<List<DriverModel>> getNearbyDrivers({
+  Future<Either<Failure, List<DriverModel>>> getNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
     try {
       final rawList = await _apiService.fetchOnlineDrivers();
-      return _processNearbyDrivers(rawList, lat, lng);
+      return Right(_processNearbyDrivers(rawList, lat, lng));
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 

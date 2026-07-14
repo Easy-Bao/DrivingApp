@@ -1,5 +1,6 @@
 import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/driver_dispatch/domain/repositories/driver_activity_repository.dart';
+import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -59,16 +60,22 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
       return;
     }
 
-    final trips = await getIt<DriverActivityRepository>().fetchTripHistory(
+    final result = await getIt<DriverActivityRepository>().fetchTripHistory(
       driverId,
     );
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeek = DateTime(monday.year, monday.month, monday.day);
 
-    final completedTrips = trips
-        .where((t) => t['status'] == 'completed')
-        .toList();
+    List<dynamic> completedTrips = [];
+    result.fold(
+      (failure) {},
+      (trips) {
+        completedTrips = trips
+            .where((t) => RideStatus.fromString(t['status'] as String? ?? '') == RideStatus.completed)
+            .toList();
+      },
+    );
     final thisWeekTrips = completedTrips.where((t) {
       try {
         final dt = DateTime.parse(t['created_at'] as String? ?? '').toLocal();

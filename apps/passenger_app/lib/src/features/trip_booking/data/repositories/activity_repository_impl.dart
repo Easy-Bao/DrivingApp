@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
 
@@ -53,14 +54,16 @@ class ActivityRepositoryImpl implements ActivityRepository {
   }
 
   @override
-  Future<List<RideHistoryModel>> fetchRideHistory(String passengerId) async {
+  Future<Either<Failure, List<RideHistoryModel>>> fetchRideHistory(
+    String passengerId,
+  ) async {
     try {
       final rawList = await _apiService.fetchRideHistory(passengerId);
-      return rawList
-          .map((raw) => _mapToModel(raw as Map<String, dynamic>))
-          .toList();
+      return Right(
+        rawList.map((raw) => _mapToModel(raw as Map<String, dynamic>)).toList(),
+      );
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 

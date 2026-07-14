@@ -2,6 +2,7 @@ export 'src/models/driver_model.dart';
 export 'src/models/notification_model.dart';
 export 'src/models/place_model.dart';
 export 'src/models/ride_history_model.dart';
+export 'src/models/ride_status.dart';
 export 'src/models/route_model.dart';
 export 'src/models/heatmap_cell.dart';
 export 'src/models/fare_result.dart';

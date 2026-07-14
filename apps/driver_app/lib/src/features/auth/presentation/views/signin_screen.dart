@@ -1,6 +1,7 @@
 import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
 import 'package:driver_app/src/core/services/auth_api_service.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -77,6 +78,7 @@ class _SigninScreenState extends State<SigninScreen> {
 
     if (result != null && result['driver'] != null) {
       final driver = result['driver'] as Map<String, dynamic>;
+      await getIt<SecureSessionService>().writeDriverId(driver['id'] as String? ?? '');
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('driver_id', driver['id'] as String? ?? '');
       await prefs.setString('driver_name', driver['name'] as String? ?? '');

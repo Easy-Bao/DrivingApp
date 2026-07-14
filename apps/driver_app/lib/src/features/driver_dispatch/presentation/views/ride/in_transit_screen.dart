@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:driver_app/src/core/di/service_locator.dart';
-import 'package:driver_app/src/core/services/telemetry_api_service.dart';
 import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
@@ -12,7 +11,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class InTransitScreen extends StatefulWidget {
   final String pickup;
@@ -62,13 +60,12 @@ class _InTransitScreenState extends State<InTransitScreen> {
             await LocationService.getCurrentPosition() ??
             LocationService.lastPosition;
         if (pos != null) {
-          final prefs = await SharedPreferences.getInstance();
-          final driverId = prefs.getString('driver_id') ?? '';
-          if (driverId.isNotEmpty) {
-            await getIt<TelemetryApiService>().updateLocation(
-              driverId: driverId,
-              lat: pos.latitude,
-              lng: pos.longitude,
+          if (mounted) {
+            mapBloc.add(
+              DispatchTelemetryLocationEvent(
+                lat: pos.latitude,
+                lng: pos.longitude,
+              ),
             );
           }
           if (mounted) {

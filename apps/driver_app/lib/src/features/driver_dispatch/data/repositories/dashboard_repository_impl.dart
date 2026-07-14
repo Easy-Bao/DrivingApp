@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/src/core/services/trip_api_service.dart';
 
@@ -41,58 +42,49 @@ class DashboardRepositoryImpl implements DashboardRepository {
   }
 
   @override
-  Future<double> getTodayEarnings() async {
+  Future<Either<Failure, double>> getTodayEarnings() async {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
-        throw const CacheFailure('Driver ID is not registered.');
+        return const Left(CacheFailure('Driver ID is not registered.'));
       }
       final data = await _apiService.fetchStats(driverId);
-      if (data != null && data['todayEarnings'] != null) {
-        return (data['todayEarnings'] as num).toDouble();
-      }
-      return 0.0;
+      return Right((data?['todayEarnings'] as num?)?.toDouble() ?? 0.0);
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<int> getTodayTrips() async {
+  Future<Either<Failure, int>> getTodayTrips() async {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
-        throw const CacheFailure('Driver ID is not registered.');
+        return const Left(CacheFailure('Driver ID is not registered.'));
       }
       final data = await _apiService.fetchStats(driverId);
-      if (data != null && data['todayTrips'] != null) {
-        return data['todayTrips'] as int;
-      }
-      return 0;
+      return Right((data?['todayTrips'] as int?) ?? 0);
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<double> getHoursOnline() async {
+  Future<Either<Failure, double>> getHoursOnline() async {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
-        throw const CacheFailure('Driver ID is not registered.');
+        return const Left(CacheFailure('Driver ID is not registered.'));
       }
       final data = await _apiService.fetchStats(driverId);
-      if (data != null && data['hoursOnline'] != null) {
-        return (data['hoursOnline'] as num).toDouble();
-      }
-      return 0.0;
+      return Right((data?['hoursOnline'] as num?)?.toDouble() ?? 0.0);
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<List<HeatmapCell>> getSurgeHeatmap({
+  Future<Either<Failure, List<HeatmapCell>>> getSurgeHeatmap({
     required double lat,
     required double lng,
     required int gridSize,
@@ -100,19 +92,24 @@ class DashboardRepositoryImpl implements DashboardRepository {
     required List<double> requestLats,
     required List<double> requestLngs,
   }) async {
-    const surgeOffsets = [
-      {'latOffset': 0.002, 'lngOffset': -0.002, 'intensity': 2.5},
-      {'latOffset': -0.001, 'lngOffset': 0.003, 'intensity': 1.8},
-      {'latOffset': 0.005, 'lngOffset': 0.001, 'intensity': 3.1},
-    ];
-    return surgeOffsets
-        .map(
-          (o) => HeatmapCell(
-            lat: lat + (o['latOffset'] ?? 0.0),
-            lng: lng + (o['lngOffset'] ?? 0.0),
-            intensity: o['intensity'] ?? 0.0,
-          ),
-        )
-        .toList();
+    try {
+      const surgeOffsets = [
+        {'latOffset': 0.002, 'lngOffset': -0.002, 'intensity': 2.5},
+        {'latOffset': -0.001, 'lngOffset': 0.003, 'intensity': 1.8},
+        {'latOffset': 0.005, 'lngOffset': 0.001, 'intensity': 3.1},
+      ];
+      final cells = surgeOffsets
+          .map(
+            (o) => HeatmapCell(
+              lat: lat + (o['latOffset'] ?? 0.0),
+              lng: lng + (o['lngOffset'] ?? 0.0),
+              intensity: o['intensity'] ?? 0.0,
+            ),
+          )
+          .toList();
+      return Right(cells);
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    }
   }
 }

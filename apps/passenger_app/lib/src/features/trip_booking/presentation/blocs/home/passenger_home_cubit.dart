@@ -1,18 +1,24 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_state.dart';
 
-/// Cubit responsible for managing the home screen data including resolving the current
-/// address from coordinates and retrieving recent pinned target locations.
+/// Cubit responsible for managing the home screen data model, specifically the active reverse-geocoded
+/// address of the passenger's current position and their historical/frequent destination pins.
 class PassengerHomeCubit extends Cubit<PassengerHomeState> {
   final PassengerHomeRepository _repository;
 
+  /// Initializes the home screen state cubit with required repo lookup services.
   PassengerHomeCubit({required PassengerHomeRepository repository})
     : _repository = repository,
       super(const PassengerHomeState());
 
-  /// Loads the current address and recent locations in parallel.
+  /// Resolves the current passenger address and recent trip locations in parallel.
+  ///
+  /// Updates [PassengerHomeState.currentAddress] and [PassengerHomeState.recentLocations]
+  /// with resolved domain data on success. If a service failures, it logs the outcome and fallback
+  /// to empty structures without crashing the screen interface.
   Future<void> loadHomeData({required double lat, required double lng}) async {
     emit(state.copyWith(isLoading: true));
     try {
@@ -20,21 +26,40 @@ class PassengerHomeCubit extends Cubit<PassengerHomeState> {
         _repository.resolveAddress(lat: lat, lng: lng),
         _repository.getRecentLocations(),
       ]);
+
+      final addressResult = results[0] as Either<Failure, String>;
+      final locationsResult = results[1] as Either<Failure, List<Map<String, dynamic>>>;
+
+      String resolvedAddress = '';
+      List<Map<String, dynamic>> resolvedLocations = [];
+
+      addressResult.fold(
+        (Failure failure) => debugPrint('Error resolving passenger address: ${failure.message}'),
+        (address) => resolvedAddress = address,
+      );
+
+      locationsResult.fold(
+        (Failure failure) => debugPrint('Error loading recent passenger locations: ${failure.message}'),
+        (locations) => resolvedLocations = locations,
+      );
+
       emit(
         state.copyWith(
           isLoading: false,
-          currentAddress: results[0] as String,
-          recentLocations: (results[1] as List).cast<Map<String, dynamic>>(),
+          currentAddress: resolvedAddress,
+          recentLocations: resolvedLocations,
         ),
       );
     } catch (error) {
-      debugPrint('Error loading passenger home data: $error');
+      debugPrint('Error executing parallel home data load: $error');
       emit(state.copyWith(isLoading: false));
     }
   }
 
-  /// Updates the displayed current address (e.g. after GPS lock).
+  /// Explicitly overrides or updates the displayed current address.
+  /// Typically called from GPS lock callbacks or manual pin drag adjustments.
   void updateAddress(String address) {
     emit(state.copyWith(currentAddress: address));
   }
 }
+

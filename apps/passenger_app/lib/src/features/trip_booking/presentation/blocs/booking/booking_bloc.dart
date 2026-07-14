@@ -56,106 +56,109 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     emit(FindingNearestDriver());
-    try {
-      final nearbyDrivers = await _driverRepository.getNearbyDrivers(
-        lat: event.pickupLat,
-        lng: event.pickupLng,
-      );
+    final result = await _driverRepository.getNearbyDrivers(
+      lat: event.pickupLat,
+      lng: event.pickupLng,
+    );
 
-      if (nearbyDrivers.isNotEmpty) {
-        DriverModel closestDriver = nearbyDrivers.first;
-        for (final d in nearbyDrivers) {
-          if (d.distanceKm < closestDriver.distanceKm) {
-            closestDriver = d;
+    await result.fold(
+      (failure) async {
+        emit(BookingFailure(failure.message));
+      },
+      (nearbyDrivers) async {
+        if (nearbyDrivers.isNotEmpty) {
+          DriverModel closestDriver = nearbyDrivers.first;
+          for (final d in nearbyDrivers) {
+            if (d.distanceKm < closestDriver.distanceKm) {
+              closestDriver = d;
+            }
           }
-        }
-        _nearestDriver = closestDriver;
+          _nearestDriver = closestDriver;
 
-        try {
-          final stats = await _apiService.fetchDriverStats(closestDriver.id);
-          if (stats != null && stats['totalTrips'] != null) {
-            _totalTrips = stats['totalTrips'] as int;
-          } else {
+          try {
+            final stats = await _apiService.fetchDriverStats(closestDriver.id);
+            if (stats != null && stats['totalTrips'] != null) {
+              _totalTrips = stats['totalTrips'] as int;
+            } else {
+              _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
+            }
+          } catch (error) {
+            debugPrint('Error loading driver stats, fallback to seed: $error');
             _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
           }
-        } catch (error) {
-          debugPrint('Error loading driver stats, fallback to seed: $error');
-          _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
-        }
 
-        try {
-          _isLoadingReviews = true;
+          try {
+            _isLoadingReviews = true;
+            emit(
+              NearestDriverFound(
+                driver: closestDriver,
+                totalTrips: _totalTrips,
+                reviews: const [],
+                isLoadingReviews: true,
+              ),
+            );
+
+            final rawReviews = await _apiService.fetchDriverReviews(
+              closestDriver.id,
+            );
+            final List<Map<String, dynamic>> processedReviews = [];
+            for (final r in rawReviews) {
+              if (r is Map<String, dynamic>) {
+                final createdAtStr = r['createdAt'] ?? r['created_at'];
+                String dateFormatted = 'Recent';
+                if (createdAtStr != null) {
+                  try {
+                    final parsedDate = DateTime.parse(createdAtStr as String);
+                    final months = [
+                      'Jan',
+                      'Feb',
+                      'Mar',
+                      'Apr',
+                      'May',
+                      'Jun',
+                      'Jul',
+                      'Aug',
+                      'Sep',
+                      'Oct',
+                      'Nov',
+                      'Dec',
+                    ];
+                    dateFormatted =
+                        '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
+                  } catch (error) {
+                    debugPrint('Failed to parse review date: $error');
+                  }
+                }
+                processedReviews.add({
+                  'passengerName':
+                      r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
+                  'comment': r['comment'] ?? '',
+                  'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
+                  'date': dateFormatted,
+                });
+              }
+            }
+            _reviews = processedReviews;
+          } catch (error) {
+            debugPrint('Failed to process reviews: $error');
+            _reviews = const [];
+          } finally {
+            _isLoadingReviews = false;
+          }
+
           emit(
             NearestDriverFound(
               driver: closestDriver,
               totalTrips: _totalTrips,
-              reviews: const [],
-              isLoadingReviews: true,
+              reviews: _reviews,
+              isLoadingReviews: _isLoadingReviews,
             ),
           );
-
-          final rawReviews = await _apiService.fetchDriverReviews(
-            closestDriver.id,
-          );
-          final List<Map<String, dynamic>> processedReviews = [];
-          for (final r in rawReviews) {
-            if (r is Map<String, dynamic>) {
-              final createdAtStr = r['createdAt'] ?? r['created_at'];
-              String dateFormatted = 'Recent';
-              if (createdAtStr != null) {
-                try {
-                  final parsedDate = DateTime.parse(createdAtStr as String);
-                  final months = [
-                    'Jan',
-                    'Feb',
-                    'Mar',
-                    'Apr',
-                    'May',
-                    'Jun',
-                    'Jul',
-                    'Aug',
-                    'Sep',
-                    'Oct',
-                    'Nov',
-                    'Dec',
-                  ];
-                  dateFormatted =
-                      '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
-                } catch (error) {
-                  debugPrint('Failed to parse review date: $error');
-                }
-              }
-              processedReviews.add({
-                'passengerName':
-                    r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
-                'comment': r['comment'] ?? '',
-                'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
-                'date': dateFormatted,
-              });
-            }
-          }
-          _reviews = processedReviews;
-        } catch (error) {
-          debugPrint('Failed to process reviews: $error');
-          _reviews = const [];
-        } finally {
-          _isLoadingReviews = false;
+        } else {
+          emit(const BookingFailure('No drivers nearby.'));
         }
-
-        emit(
-          NearestDriverFound(
-            driver: closestDriver,
-            totalTrips: _totalTrips,
-            reviews: _reviews,
-            isLoadingReviews: _isLoadingReviews,
-          ),
-        );
-      } else {
-        emit(const BookingFailure('No drivers nearby.'));
-      }
-    } catch (error) {
-      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
-    }
+      },
+    );
   }
 
   Future<void> _onStartDirectBooking(
@@ -313,7 +316,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             destLng: _dropoffLng ?? 0.0,
             date: DateTime.now().toLocal().toString(),
             price: '₱${(_fare ?? 0.0).toStringAsFixed(2)}',
-            status: 'accepted',
+            status: RideStatus.accepted.value,
             driverName:
                 res['driver_name'] as String? ?? event.matchResult.driverName,
             vehiclePlate:

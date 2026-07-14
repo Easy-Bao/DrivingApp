@@ -37,31 +37,41 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
   }
 
   Future<void> _loadRides() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final passengerId = prefs.getString('passenger_id') ?? '';
-      if (passengerId.isEmpty) {
-        setState(() => _isLoading = false);
-        return;
-      }
-      final repository = getIt<ActivityRepository>();
-      final mapped = await repository.fetchRideHistory(passengerId);
-
-      setState(() {
-        _dbRides = mapped;
-        _isLoading = false;
-      });
-    } catch (error) {
+    final prefs = await SharedPreferences.getInstance();
+    final passengerId = prefs.getString('passenger_id') ?? '';
+    if (passengerId.isEmpty) {
       setState(() => _isLoading = false);
+      return;
     }
+    final repository = getIt<ActivityRepository>();
+    final result = await repository.fetchRideHistory(passengerId);
+
+    result.fold(
+      (failure) {
+        setState(() {
+          _dbRides = const [];
+          _isLoading = false;
+        });
+      },
+      (mapped) {
+        setState(() {
+          _dbRides = mapped;
+          _isLoading = false;
+        });
+      },
+    );
   }
 
   List<RideHistoryModel> _filteredRides(int tabIndex) {
     if (tabIndex == 0) return _dbRides;
     if (tabIndex == 1) {
-      return _dbRides.where((r) => r.status == 'completed').toList();
+      return _dbRides
+          .where((r) => RideStatus.fromString(r.status) == RideStatus.completed)
+          .toList();
     }
-    return _dbRides.where((r) => r.status == 'canceled').toList();
+    return _dbRides
+        .where((r) => RideStatus.fromString(r.status) == RideStatus.cancelled)
+        .toList();
   }
 
   @override

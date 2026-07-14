@@ -72,6 +72,9 @@ class EnvironmentConfig {
   /// Returns the WebSocket base URL as a string.
   static String get webSocketBaseUrl => webSocketBaseUri.toString();
 
+  /// Retrieves the Sentry DSN for crash reporting initialization.
+  static String get sentryDsn => dotenv.env['SENTRY_DSN'] ?? '';
+
   /// Swaps loopback hosts to the Android emulator interface address (10.0.2.2)
   /// when running on an Android Virtual Device.
   static Uri _resolveUri(String rawUrl) {

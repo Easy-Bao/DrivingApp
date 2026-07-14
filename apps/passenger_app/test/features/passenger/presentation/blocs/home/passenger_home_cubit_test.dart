@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_state.dart';
@@ -50,10 +51,10 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => resolvedAddress);
+        ).thenAnswer((_) async => const Right(resolvedAddress));
         when(
           () => repo.getRecentLocations(),
-        ).thenAnswer((_) async => mockLocations);
+        ).thenAnswer((_) async => Right(mockLocations));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
@@ -75,10 +76,10 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenThrow(Exception('geocode error'));
+        ).thenAnswer((_) async => const Left(ServerFailure('geocode error')));
         when(
           () => repo.getRecentLocations(),
-        ).thenThrow(Exception('network error'));
+        ).thenAnswer((_) async => const Left(ServerFailure('network error')));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),

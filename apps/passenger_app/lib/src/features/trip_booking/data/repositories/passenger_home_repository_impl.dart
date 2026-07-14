@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,32 +40,32 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
   }
 
   @override
-  Future<String> resolveAddress({
+  Future<Either<Failure, String>> resolveAddress({
     required double lat,
     required double lng,
   }) async {
     try {
       final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
       if (place != null && place.fullAddress.isNotEmpty) {
-        return _shortenAddress(place.fullAddress);
+        return Right(_shortenAddress(place.fullAddress));
       }
-      return '';
+      return const Right('');
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getRecentLocations() async {
+  Future<Either<Failure, List<Map<String, dynamic>>>> getRecentLocations() async {
     try {
       final passengerId = await _getPassengerId();
       if (passengerId.isEmpty) {
-        throw const CacheFailure('No passenger ID found in local cache.');
+        return const Left(CacheFailure('No passenger ID found in local cache.'));
       }
       final rawRides = await _apiService.fetchRideHistory(passengerId);
-      return _filterAndFormatRecentLocations(rawRides);
+      return Right(_filterAndFormatRecentLocations(rawRides));
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 

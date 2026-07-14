@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:core_models/core_models.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 
 class PassengerApiService {
   final Uri baseUrl;
@@ -54,9 +56,8 @@ class PassengerApiService {
   }
 
   Future<Map<String, String>> _getRequestHeaders() async {
-    final SharedPreferences prefsInstance =
-        await SharedPreferences.getInstance();
-    final String jsonWebToken = prefsInstance.getString('jwt_token') ?? '';
+    final sessionService = getIt<SecureSessionService>();
+    final String jsonWebToken = await sessionService.readAuthToken() ?? '';
     final Map<String, String> requestHeaders = {
       'Content-Type': 'application/json',
     };

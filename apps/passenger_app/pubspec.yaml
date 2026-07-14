@@ -67,6 +67,12 @@ dependencies:
 
   chat_service:
     path: ../../packages/chat_service
+  fpdart: ^1.2.0
+  dio: ^5.10.0
+  sentry_flutter: ^8.14.2
+  rxdart: ^0.28.0
+  flutter_secure_storage: ^10.3.1
+  flutter_background_service: ^5.1.0
 
 dev_dependencies:
   flutter_test:

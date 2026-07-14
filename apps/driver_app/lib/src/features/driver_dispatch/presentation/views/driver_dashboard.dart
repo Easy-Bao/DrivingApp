@@ -5,9 +5,10 @@ import 'package:http/http.dart' as http;
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/src/core/services/bidding_api_service.dart';
-import 'package:driver_app/src/core/services/telemetry_api_service.dart';
 import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
 
 import 'package:location_service/location_service.dart';
 import 'package:geolocator/geolocator.dart';
@@ -35,10 +36,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   StreamSubscription<Position>? _locationSubscription;
   List<Map<String, dynamic>> _activeBids = [];
   List<Map<String, dynamic>> _activeTrips = [];
+  LiveMapBloc? _liveMapBloc;
 
   @override
   void initState() {
     super.initState();
+    _liveMapBloc = getIt<LiveMapBloc>();
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -59,6 +62,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _pulseCtrl.dispose();
     _rideTriggerTimer?.cancel();
     _locationSubscription?.cancel();
+    _liveMapBloc?.close();
     super.dispose();
   }
 
@@ -67,17 +71,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _locationSubscription = LocationService.getPositionStream().listen((
       pos,
     ) async {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final driverId = prefs.getString('driver_id') ?? '';
-        if (driverId.isNotEmpty) {
-          await getIt<TelemetryApiService>().updateLocation(
-            driverId: driverId,
-            lat: pos.latitude,
-            lng: pos.longitude,
-          );
-        }
-      } catch (_) {}
+      _liveMapBloc?.add(
+        DispatchTelemetryLocationEvent(
+          lat: pos.latitude,
+          lng: pos.longitude,
+        ),
+      );
     });
 
     _rideTriggerTimer?.cancel();

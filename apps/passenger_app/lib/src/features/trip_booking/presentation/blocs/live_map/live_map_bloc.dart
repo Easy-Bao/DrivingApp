@@ -2,20 +2,46 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_state.dart';
+import 'package:rxdart/rxdart.dart';
 
-/// BLoC managing maps rendering, markers, route overlay calculations,
-/// and animations independently from trip business logic.
+/// State controller managing map overlay layouts, marker assets, routing
+/// sequence rendering, and real-time backend telemetry dispatching for passengers.
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
+  final PassengerApiService _apiService;
+
   AppMapController? _mapController;
   final List<dynamic> _markerManagers = [];
 
-  LiveMapBloc() : super(LiveMapInitial()) {
+  final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
+      PublishSubject<DispatchTelemetryLocationEvent>();
+  late final StreamSubscription<DispatchTelemetryLocationEvent> _locationSubscription;
+
+  /// Initializes the map bloc state machine and configures telemetry rate limiting.
+  LiveMapBloc({
+    required PassengerApiService apiService,
+  }) : _apiService = apiService,
+       super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<DrawDriverToRiderRouteEvent>(_onDrawDriverToRiderRoute);
     on<AddMapMarkerEvent>(_onAddMapMarker);
     on<ClearMapAnnotationsEvent>(_onClearMapAnnotations);
+
+    _locationSubscription = _locationSubject
+        .throttleTime(const Duration(seconds: 5))
+        .listen((event) async {
+      await _apiService.updateLocation(
+        rideId: event.rideId,
+        lat: event.lat,
+        lng: event.lng,
+      );
+    });
+
+    on<DispatchTelemetryLocationEvent>((event, emit) {
+      _locationSubject.add(event);
+    });
   }
 
   Future<void> _onInitializeMap(
@@ -34,7 +60,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
     await _clearAllMarkers();
 
-    // Add Rider Marker
     final riderManager = await MapProvider.addMarker(
       _mapController!,
       event.riderLat,
@@ -44,7 +69,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     );
     if (riderManager != null) _markerManagers.add(riderManager);
 
-    // Add Driver Marker
     final driverManager = await MapProvider.addMarker(
       _mapController!,
       event.driverLat,
@@ -54,13 +78,11 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     );
     if (driverManager != null) _markerManagers.add(driverManager);
 
-    // Fit bounds to show both
     await MapProvider.fitBounds(_mapController!, [
       LatLng(event.riderLat, event.riderLng),
       LatLng(event.driverLat, event.driverLng),
     ]);
 
-    // Fetch and Draw route polyline
     final route = await MapProvider.getRoute(
       event.driverLat,
       event.driverLng,
@@ -125,6 +147,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
   @override
   Future<void> close() async {
+    await _locationSubscription.cancel();
+    await _locationSubject.close();
     await _clearAllMarkers();
     return super.close();
   }

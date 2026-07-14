@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:location_service/location_service.dart';
 import 'package:driver_app/src/core/services/bidding_api_service.dart';
 
@@ -30,7 +31,7 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
-  Future<FareResult> getFare({
+  Future<Either<Failure, FareResult>> getFare({
     required double distanceKm,
     required double durationMinutes,
   }) async {
@@ -40,34 +41,37 @@ class RideRepositoryImpl implements RideRepository {
         durationMinutes: durationMinutes,
       );
       if (fare != null) {
-        return FareResult(
-          baseFare: (fare['base_fare'] as num).toDouble(),
-          distanceCharge: (fare['distance_charge'] as num).toDouble(),
-          timeCharge: (fare['time_charge'] as num).toDouble(),
-          surgeCharge: (fare['surge_charge'] as num).toDouble(),
-          totalFare: (fare['total_fare'] as num).toDouble(),
+        return Right(
+          FareResult(
+            baseFare: (fare['base_fare'] as num).toDouble(),
+            distanceCharge: (fare['distance_charge'] as num).toDouble(),
+            timeCharge: (fare['time_charge'] as num).toDouble(),
+            surgeCharge: (fare['surge_charge'] as num).toDouble(),
+            totalFare: (fare['total_fare'] as num).toDouble(),
+          ),
         );
       }
-      throw const ServerFailure('Failed to fetch fare estimate.');
+      return const Left(ServerFailure('Failed to fetch fare estimate.'));
     } catch (error) {
-      throw _mapExceptionToFailure(error);
+      return Left(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<RouteSequenceResult> optimizeRoute({
+  Future<Either<Failure, RouteSequenceResult>> optimizeRoute({
     required double startLat,
     required double startLng,
     required List<Waypoint> waypoints,
   }) async {
     try {
-      return RouteOptimizationService.calculateOptimalRoute(
+      final result = RouteOptimizationService.calculateOptimalRoute(
         startLat: startLat,
         startLng: startLng,
         waypoints: waypoints,
       );
+      return Right(result);
     } catch (error) {
-      throw ServerFailure('Failed to optimize route sequence: $error');
+      return Left(ServerFailure('Failed to optimize route sequence: $error'));
     }
   }
 }

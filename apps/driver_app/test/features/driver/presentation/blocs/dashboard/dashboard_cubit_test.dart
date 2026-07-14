@@ -1,9 +1,10 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:core_models/core_models.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_state.dart';
-import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
 class MockDashboardRepo extends Mock implements DashboardRepository {}
 
@@ -29,9 +30,9 @@ void main() {
     blocTest<DashboardCubit, DashboardState>(
       'emits [loading=true, loaded with values] on success',
       build: () {
-        when(() => repo.getTodayEarnings()).thenAnswer((_) async => 385.50);
-        when(() => repo.getTodayTrips()).thenAnswer((_) async => 7);
-        when(() => repo.getHoursOnline()).thenAnswer((_) async => 4.5);
+        when(() => repo.getTodayEarnings()).thenAnswer((_) async => const Right(385.50));
+        when(() => repo.getTodayTrips()).thenAnswer((_) async => const Right(7));
+        when(() => repo.getHoursOnline()).thenAnswer((_) async => const Right(4.5));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadStats(),
@@ -49,9 +50,9 @@ void main() {
     blocTest<DashboardCubit, DashboardState>(
       'emits [loading=true, loading=false] on repository error',
       build: () {
-        when(() => repo.getTodayEarnings()).thenThrow(Exception('network'));
-        when(() => repo.getTodayTrips()).thenThrow(Exception('network'));
-        when(() => repo.getHoursOnline()).thenThrow(Exception('network'));
+        when(() => repo.getTodayEarnings()).thenAnswer((_) async => const Left(ServerFailure('network')));
+        when(() => repo.getTodayTrips()).thenAnswer((_) async => const Left(ServerFailure('network')));
+        when(() => repo.getHoursOnline()).thenAnswer((_) async => const Left(ServerFailure('network')));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadStats(),
@@ -59,7 +60,7 @@ void main() {
         const DashboardState(isLoadingStats: true),
         const DashboardState(
           isLoadingStats: false,
-          errorMessage: 'An unexpected error occurred. Please try again.',
+          errorMessage: 'network',
         ),
       ],
     );
@@ -84,7 +85,7 @@ void main() {
             requestLats: any(named: 'requestLats'),
             requestLngs: any(named: 'requestLngs'),
           ),
-        ).thenAnswer((_) async => mockCells);
+        ).thenAnswer((_) async => Right(mockCells));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
@@ -106,7 +107,7 @@ void main() {
             requestLats: any(named: 'requestLats'),
             requestLngs: any(named: 'requestLngs'),
           ),
-        ).thenThrow(Exception('map error'));
+        ).thenAnswer((_) async => const Left(ServerFailure('map error')));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
@@ -114,7 +115,7 @@ void main() {
         const DashboardState(isOnline: true, isLoadingHeatmap: true),
         const DashboardState(
           isOnline: true,
-          errorMessage: 'An unexpected error occurred. Please try again.',
+          errorMessage: 'map error',
         ),
       ],
     );
@@ -128,3 +129,4 @@ void main() {
     );
   });
 }
+

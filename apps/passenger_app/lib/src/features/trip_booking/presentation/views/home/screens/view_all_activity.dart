@@ -53,17 +53,28 @@ class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isNotEmpty) {
         final repo = getIt<ActivityRepository>();
-        final list = await repo.fetchRideHistory(passengerId);
+        final result = await repo.fetchRideHistory(passengerId);
         if (mounted) {
-          setState(() {
-            _rides = list;
-            _isLoading = false;
-          });
+          result.fold(
+            (failure) {
+              setState(() {
+                _rides = const [];
+                _errorMessage = failure.message;
+                _isLoading = false;
+              });
+            },
+            (list) {
+              setState(() {
+                _rides = list;
+                _isLoading = false;
+              });
+            },
+          );
         }
       } else {
         if (mounted) {
           setState(() {
-            _rides = [];
+            _rides = const [];
             _isLoading = false;
           });
         }

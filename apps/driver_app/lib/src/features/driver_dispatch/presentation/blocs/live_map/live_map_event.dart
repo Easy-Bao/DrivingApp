@@ -33,3 +33,14 @@ class UpdateLocationsAndDrawRouteEvent extends LiveMapEvent {
 class ClearMapEvent extends LiveMapEvent {
   const ClearMapEvent();
 }
+
+class DispatchTelemetryLocationEvent extends LiveMapEvent {
+  final double lat;
+  final double lng;
+
+  const DispatchTelemetryLocationEvent({
+    required this.lat,
+    required this.lng,
+  });
+}
+

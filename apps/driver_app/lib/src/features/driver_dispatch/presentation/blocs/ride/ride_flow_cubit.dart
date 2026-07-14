@@ -171,18 +171,19 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       }
     }
 
-    try {
-      final fareResult = await _repository.getFare(
-        distanceKm: distanceKm,
-        durationMinutes: durationMinutes,
-      );
-      emit(RideFlowComplete(fare: fareResult.totalFare));
-    } catch (error) {
-      debugPrint(
-        'Error loading dynamic fare calculation: ${ErrorHandler.getErrorMessage(error)}. Falling back to default.',
-      );
-      emit(const RideFlowComplete(fare: 50.0));
-    }
+    final fareResult = await _repository.getFare(
+      distanceKm: distanceKm,
+      durationMinutes: durationMinutes,
+    );
+    fareResult.fold(
+      (failure) {
+        debugPrint(
+          'Error loading dynamic fare calculation: ${failure.message}. Falling back to default.',
+        );
+        emit(const RideFlowComplete(fare: 50.0));
+      },
+      (fare) => emit(RideFlowComplete(fare: fare.totalFare)),
+    );
   }
 
   void reset() {

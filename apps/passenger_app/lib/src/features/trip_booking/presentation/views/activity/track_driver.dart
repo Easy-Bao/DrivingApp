@@ -13,6 +13,8 @@ import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_bloc.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,6 +37,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   dynamic _passengerMarkerManager;
   dynamic _driverMarkerManager;
   StreamSubscription<Position>? _locationSubscription;
+  LiveMapBloc? _liveMapBloc;
 
   int _unreadChatMessagesCount = 0;
   int _viewedDriverMessagesCount = 0;
@@ -44,6 +47,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   @override
   void initState() {
     super.initState();
+    _liveMapBloc = getIt<LiveMapBloc>();
     _startChatMessagesPolling();
   }
 
@@ -53,6 +57,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       unawaited(_locationSubscription!.cancel());
     }
     _chatMessagesPollTimer?.cancel();
+    if (_liveMapBloc != null) {
+      unawaited(_liveMapBloc!.close());
+    }
     super.dispose();
   }
 
@@ -124,13 +131,13 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       _locationSubscription = LocationService.getPositionStream().listen((
         pos,
       ) async {
-        try {
-          await getIt<PassengerApiService>().updateLocation(
-            rideId: widget.ride.id,
+        _liveMapBloc?.add(
+          DispatchTelemetryLocationEvent(
             lat: pos.latitude,
             lng: pos.longitude,
-          );
-        } catch (_) {}
+            rideId: widget.ride.id,
+          ),
+        );
       }, onError: (_) {});
 
       unawaited(

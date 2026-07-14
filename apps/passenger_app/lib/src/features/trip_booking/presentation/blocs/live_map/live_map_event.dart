@@ -47,3 +47,16 @@ class AddMapMarkerEvent extends LiveMapEvent {
 class ClearMapAnnotationsEvent extends LiveMapEvent {
   const ClearMapAnnotationsEvent();
 }
+
+class DispatchTelemetryLocationEvent extends LiveMapEvent {
+  final double lat;
+  final double lng;
+  final String rideId;
+
+  const DispatchTelemetryLocationEvent({
+    required this.lat,
+    required this.lng,
+    required this.rideId,
+  });
+}
+
