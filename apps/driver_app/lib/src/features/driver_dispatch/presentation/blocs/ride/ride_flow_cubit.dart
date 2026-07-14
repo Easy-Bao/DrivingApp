@@ -35,7 +35,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final driverId = prefs.getString('driver_id') ?? 'driver-123';
-      final driverName = prefs.getString('driver_name') ?? 'Driver Xyrel';
+      final driverName = prefs.getString('driver_name') ?? 'Driver';
       final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
       final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
       final rating = prefs.getString('rating') ?? '4.9';

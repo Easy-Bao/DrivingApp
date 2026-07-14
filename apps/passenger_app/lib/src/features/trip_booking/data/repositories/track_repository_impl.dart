@@ -42,9 +42,7 @@ class TrackRepositoryImpl implements TrackRepository {
       if (data != null) {
         return Right(RideUpdate.fromJson(data));
       }
-      return const Left(
-        ServerFailure('No status data returned from server.'),
-      );
+      return const Left(ServerFailure('No status data returned from server.'));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (error) {

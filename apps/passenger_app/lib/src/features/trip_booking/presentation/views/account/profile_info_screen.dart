@@ -50,12 +50,9 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _passengerId = prefs.getString('passenger_id') ?? '';
-      _nameController.text =
-          prefs.getString('passenger_name') ?? 'Xyrel Tenefrancia';
-      _phoneController.text =
-          prefs.getString('passenger_phone') ?? '+63 912 345 6789';
-      _emailController.text =
-          prefs.getString('passenger_email') ?? 'xyrel@baoride.com';
+      _nameController.text = prefs.getString('passenger_name') ?? '';
+      _phoneController.text = prefs.getString('passenger_phone') ?? '';
+      _emailController.text = prefs.getString('passenger_email') ?? '';
     });
   }
 

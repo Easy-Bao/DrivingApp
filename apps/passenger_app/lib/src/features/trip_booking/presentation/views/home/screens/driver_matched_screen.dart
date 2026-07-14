@@ -297,7 +297,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  widget.driverName ?? 'Xyrel D. Tenefrancia',
+                                  widget.driverName ?? 'Driver',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,

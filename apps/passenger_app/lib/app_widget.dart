@@ -16,9 +16,7 @@ class AppWidget extends StatelessWidget {
         BlocProvider<TrackDriverCubit>(
           create: (_) {
             // NOTE: getIt<TrackRepository>() automatically injects the active TrackRepositoryImpl.
-            return TrackDriverCubit(
-              repository: getIt<TrackRepository>(),
-            );
+            return TrackDriverCubit(repository: getIt<TrackRepository>());
           },
         ),
       ],

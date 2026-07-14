@@ -362,7 +362,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
               const SizedBox(height: 2),
               const Text(
-                'Driver Xyrel',
+                'Driver',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
