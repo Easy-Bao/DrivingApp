@@ -7,6 +7,7 @@ import 'package:driver_app/src/core/services/trip_api_service.dart';
 
 import 'ride_flow_state.dart';
 
+/// Ride Flow Cubit component defining application state or layout.
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
   final TripApiService _apiService;
@@ -175,15 +176,12 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       distanceKm: distanceKm,
       durationMinutes: durationMinutes,
     );
-    fareResult.fold(
-      (failure) {
-        debugPrint(
-          'Error loading dynamic fare calculation: ${failure.message}. Falling back to default.',
-        );
-        emit(const RideFlowComplete(fare: 50.0));
-      },
-      (fare) => emit(RideFlowComplete(fare: fare.totalFare)),
-    );
+    fareResult.fold((failure) {
+      debugPrint(
+        'Error loading dynamic fare calculation: ${failure.message}. Falling back to default.',
+      );
+      emit(const RideFlowComplete(fare: 50.0));
+    }, (fare) => emit(RideFlowComplete(fare: fare.totalFare)));
   }
 
   void reset() {

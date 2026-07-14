@@ -31,7 +31,9 @@ class BackgroundTelemetryService {
     DartPluginRegistrant.ensureInitialized();
 
     final dynamic backgroundInstance = service;
-    final isAndroidInstance = service.runtimeType.toString().contains('Android');
+    final isAndroidInstance = service.runtimeType.toString().contains(
+      'Android',
+    );
 
     if (isAndroidInstance) {
       backgroundInstance.on('setAsForeground').listen((event) {

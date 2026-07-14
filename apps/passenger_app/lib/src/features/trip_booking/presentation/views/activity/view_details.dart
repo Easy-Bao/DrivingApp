@@ -164,7 +164,6 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
   Widget build(BuildContext context) {
     final ride = widget.ride;
 
-    // Derive map center from ride coords, or fall back to Pagadian City center.
     final centerLat = ride != null
         ? (ride.pickupLat + ride.destLat) / 2
         : 7.8300;
@@ -197,7 +196,6 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // — Map preview —
             Container(
               height: 180,
               width: double.infinity,
@@ -218,7 +216,6 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               ),
             ),
             const SizedBox(height: 24),
-            // — Driver info row —
             GestureDetector(
               onTap: () {
                 final retrievedRideData = _detailedRideData;
@@ -308,10 +305,8 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Divider(color: AppTheme.outlineBorderColor),
             ),
-            // — Fare summary —
             _buildFareSummaryCard(ride),
             const SizedBox(height: 24),
-            // — Timeline —
             _buildTimeline(ride),
           ],
         ),
@@ -324,7 +319,6 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
             height: 56,
             child: ElevatedButton.icon(
               onPressed: () {
-                // Navigate to search with the same destination pre-filled.
                 unawaited(
                   context.pushNamed(
                     'SearchDestination',
@@ -354,7 +348,6 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
   }
 
   Widget _buildFareSummaryCard(RideHistoryModel? ride) {
-    // Parse the stored price string back to a double for breakdown calculation.
     double total = 0;
     if (ride != null) {
       final cleaned = ride.price.replaceAll(RegExp(r'[₱,]'), '').trim();

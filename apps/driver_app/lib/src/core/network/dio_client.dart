@@ -53,10 +53,14 @@ class _RetryOnNetworkFailureInterceptor extends Interceptor {
   _RetryOnNetworkFailureInterceptor({required this.dio});
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     final requestOptions = err.requestOptions;
 
-    final isNetworkError = err.type == DioExceptionType.connectionTimeout ||
+    final isNetworkError =
+        err.type == DioExceptionType.connectionTimeout ||
         err.type == DioExceptionType.sendTimeout ||
         err.type == DioExceptionType.receiveTimeout ||
         err.type == DioExceptionType.connectionError ||

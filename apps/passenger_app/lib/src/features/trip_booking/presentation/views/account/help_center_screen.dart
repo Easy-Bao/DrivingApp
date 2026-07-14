@@ -4,6 +4,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
 
+/// Help Center Screen component defining application state or layout.
 class HelpCenterScreen extends StatefulWidget {
   const HelpCenterScreen({super.key});
 
@@ -221,7 +222,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     physics: const BouncingScrollPhysics(),
-                    itemCount: filtered.length + 1, // +1 for contact card
+                    itemCount: filtered.length + 1,
                     itemBuilder: (ctx, i) {
                       if (i == filtered.length) return _buildContactCard();
                       final faq = filtered[i];

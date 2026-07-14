@@ -7,6 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
+/// Activity Detail Map Screen component defining application state or layout.
 class ActivityDetailMapScreen extends StatefulWidget {
   final String placeName;
   final String placeSubtitle;

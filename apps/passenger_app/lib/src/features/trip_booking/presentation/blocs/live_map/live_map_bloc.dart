@@ -17,13 +17,12 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
   final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
       PublishSubject<DispatchTelemetryLocationEvent>();
-  late final StreamSubscription<DispatchTelemetryLocationEvent> _locationSubscription;
+  late final StreamSubscription<DispatchTelemetryLocationEvent>
+  _locationSubscription;
 
-  /// Initializes the map bloc state machine and configures telemetry rate limiting.
-  LiveMapBloc({
-    required PassengerApiService apiService,
-  }) : _apiService = apiService,
-       super(LiveMapInitial()) {
+  LiveMapBloc({required PassengerApiService apiService})
+    : _apiService = apiService,
+      super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<DrawDriverToRiderRouteEvent>(_onDrawDriverToRiderRoute);
     on<AddMapMarkerEvent>(_onAddMapMarker);
@@ -32,12 +31,12 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
         .listen((event) async {
-      await _apiService.updateLocation(
-        rideId: event.rideId,
-        lat: event.lat,
-        lng: event.lng,
-      );
-    });
+          await _apiService.updateLocation(
+            rideId: event.rideId,
+            lat: event.lat,
+            lng: event.lng,
+          );
+        });
 
     on<DispatchTelemetryLocationEvent>((event, emit) {
       _locationSubject.add(event);

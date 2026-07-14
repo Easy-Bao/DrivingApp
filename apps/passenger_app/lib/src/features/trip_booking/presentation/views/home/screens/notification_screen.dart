@@ -9,6 +9,7 @@ import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Notification Screen component defining application state or layout.
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
 

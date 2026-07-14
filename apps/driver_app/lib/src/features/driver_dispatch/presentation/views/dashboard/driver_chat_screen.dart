@@ -33,7 +33,6 @@ class _DriverChatScreenState extends State<DriverChatScreen>
 
   late ChatCubit _chatCubit;
 
-  /// Periodically validates trip status from database to toggle locked view controls.
   Future<void> _checkTripStatus() async {
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
@@ -54,7 +53,6 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     }
   }
 
-  /// Invokes chat room resolution on HTTP gateway via cubit.
   Future<void> _resolveChatRoom() async {
     final chatRoomId = widget.roomId;
     final currentUserId = widget.userId;
@@ -119,7 +117,6 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     super.dispose();
   }
 
-  /// Forwards a text message to [ChatCubit] and scrolls down.
   void _send(String text) {
     if (text.trim().isEmpty) return;
     _chatCubit.sendMessage(text);
@@ -127,7 +124,6 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     _scrollDown();
   }
 
-  /// Triggers a post-frame scroll calculation to stick to the bottom list element.
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {

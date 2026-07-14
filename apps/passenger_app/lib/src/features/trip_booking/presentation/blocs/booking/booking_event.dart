@@ -1,5 +1,6 @@
 import 'package:passenger_app/src/core/services/bid_session_service.dart';
 
+/// Booking Event component defining application state or layout.
 abstract class BookingEvent {
   const BookingEvent();
 }

@@ -11,10 +11,6 @@ class ActivityInitial extends ActivityState {}
 
 class ActivityLoading extends ActivityState {}
 
-/// Emitted after a successful load.
-///
-/// [past] holds completed and canceled rides (newest-first).
-/// [upcoming] holds in_progress, requested, and accepted rides.
 class ActivityLoaded extends ActivityState {
   final List<RideHistoryModel> past;
   final List<RideHistoryModel> upcoming;

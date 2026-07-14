@@ -20,7 +20,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
        _apiService = apiService,
        super(TrackDriverInitial());
 
-  /// Starts periodic sync calls querying driver location updates and ride status.
   Future<void> startTracking({
     required double startLat,
     required double startLng,
@@ -162,7 +161,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     });
   }
 
-  /// Cancelels the ride booking and terminates tracking.
   Future<void> cancelTrip() async {
     _ticker?.cancel();
     try {

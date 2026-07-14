@@ -69,9 +69,7 @@ void setupServiceLocator() {
   );
 
   getIt.registerFactory<LiveMapBloc>(
-    () => LiveMapBloc(
-      apiService: getIt<PassengerApiService>(),
-    ),
+    () => LiveMapBloc(apiService: getIt<PassengerApiService>()),
   );
 
   getIt.registerFactory<ProfileCubit>(() => ProfileCubit());

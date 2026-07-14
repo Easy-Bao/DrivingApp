@@ -14,6 +14,7 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booki
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_event.dart';
 
+/// Finding Driver Screen component defining application state or layout.
 class FindingDriverScreen extends StatelessWidget {
   final String rideType;
   final double fare;

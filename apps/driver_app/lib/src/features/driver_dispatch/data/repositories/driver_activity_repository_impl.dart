@@ -32,7 +32,9 @@ class DriverActivityRepositoryImpl implements DriverActivityRepository {
   }
 
   @override
-  Future<Either<Failure, List<dynamic>>> fetchTripHistory(String driverId) async {
+  Future<Either<Failure, List<dynamic>>> fetchTripHistory(
+    String driverId,
+  ) async {
     try {
       return Right(await _apiService.fetchTripHistory(driverId));
     } catch (error) {

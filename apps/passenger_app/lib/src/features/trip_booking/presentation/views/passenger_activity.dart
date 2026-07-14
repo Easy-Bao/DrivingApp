@@ -8,6 +8,7 @@ import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/activity/activity_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Passenger Activity component defining application state or layout.
 class PassengerActivityScreen extends StatefulWidget {
   const PassengerActivityScreen({super.key});
 

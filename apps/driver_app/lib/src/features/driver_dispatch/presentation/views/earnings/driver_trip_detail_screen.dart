@@ -10,6 +10,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Driver Trip Detail Screen component defining application state or layout.
 class DriverTripDetailScreen extends StatefulWidget {
   final Map<String, dynamic> trip;
   const DriverTripDetailScreen({super.key, required this.trip});
@@ -88,7 +89,6 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
       if (initializeChatResponse.statusCode == 201 ||
           initializeChatResponse.statusCode == 200) {
         if (mounted) {
-          // 2. Push to Driver Chat
           context.pushNamed(
             'DriverChat',
             extra: {
@@ -182,7 +182,6 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status and Date
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -216,7 +215,6 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Route Details Card
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -340,7 +338,6 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Passenger Profile
             const Text(
               'PASSENGER PROFILE',
               style: TextStyle(
@@ -465,7 +462,6 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
         ),
         const SizedBox(height: 24),
 
-        // Lost & Found Contact button
         GestureDetector(
           onTap: _contactPassenger,
           child: Container(

@@ -20,6 +20,7 @@ import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// En Route Pickup Screen component defining application state or layout.
 class EnRoutePickupScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;

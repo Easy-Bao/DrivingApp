@@ -7,6 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
+/// Fetches the user's current GPS coordinates and initializes the map center.
 class MapPinScreen extends StatefulWidget {
   const MapPinScreen({super.key});
 
@@ -46,7 +47,6 @@ class _MapPinScreenState extends State<MapPinScreen>
     super.dispose();
   }
 
-  /// Fetches the user's current GPS coordinates and initializes the map center.
   Future<void> _initLocation() async {
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && mounted) {
@@ -66,7 +66,6 @@ class _MapPinScreenState extends State<MapPinScreen>
     }
   }
 
-  /// Converts the map's center coordinates into a human-readable address string.
   Future<void> _reverseGeocode(double lat, double lng) async {
     setState(() => _isGeocoding = true);
     final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
@@ -83,7 +82,6 @@ class _MapPinScreenState extends State<MapPinScreen>
     }
   }
 
-  /// Re-centers the camera onto the user's active physical location.
   Future<void> _relocate() async {
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && _mapController != null && mounted) {
@@ -97,14 +95,12 @@ class _MapPinScreenState extends State<MapPinScreen>
     }
   }
 
-  /// Refreshes the geocoding data based on the current camera crosshairs.
   Future<void> _updatePin() async {
     if (_mapController == null) return;
     final center = await MapProvider.getCameraCenter(_mapController!);
     unawaited(_reverseGeocode(center.latitude, center.longitude));
   }
 
-  /// Packages the selected coordinates and address into a PlaceModel and returns it.
   void _confirmLocation() {
     final result = PlaceModel(
       id: 'pin_${DateTime.now().millisecondsSinceEpoch}',

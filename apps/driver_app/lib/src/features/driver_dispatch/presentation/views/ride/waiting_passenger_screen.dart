@@ -18,6 +18,7 @@ import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Waiting Passenger Screen component defining application state or layout.
 class WaitingPassengerScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;
@@ -193,7 +194,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                   const Spacer(),
                   _buildStatusBadge(),
                   const Spacer(),
-                  const SizedBox(width: 40), // Balance the back button
+                  const SizedBox(width: 40),
                 ],
               ),
               const SizedBox(height: 32),

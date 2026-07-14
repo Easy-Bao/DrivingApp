@@ -1,3 +1,4 @@
+/// Live Map State component defining application state or layout.
 abstract class LiveMapState {
   const LiveMapState();
 }

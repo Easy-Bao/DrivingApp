@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// Track Driver State component defining application state or layout.
 abstract class TrackDriverState extends Equatable {
   const TrackDriverState();
 

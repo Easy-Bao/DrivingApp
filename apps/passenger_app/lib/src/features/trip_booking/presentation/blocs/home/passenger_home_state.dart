@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// Passenger Home State component defining application state or layout.
 class PassengerHomeState extends Equatable {
   final bool isLoading;
   final String currentAddress;

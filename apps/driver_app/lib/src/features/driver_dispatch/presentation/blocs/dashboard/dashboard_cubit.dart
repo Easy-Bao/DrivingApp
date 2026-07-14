@@ -22,8 +22,6 @@ class DashboardCubit extends Cubit<DashboardState> {
         _repository.getHoursOnline(),
       ]);
 
-      // Collect the first failure across all three parallel requests, or
-      // extract success values if all three returned Right.
       String? firstFailureMessage;
       double todayEarnings = 0.0;
       int todayTrips = 0;

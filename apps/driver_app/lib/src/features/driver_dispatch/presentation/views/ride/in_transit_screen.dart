@@ -12,6 +12,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 
+/// In Transit Screen component defining application state or layout.
 class InTransitScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;

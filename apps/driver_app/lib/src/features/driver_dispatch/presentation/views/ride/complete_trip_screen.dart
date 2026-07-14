@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+/// Complete Trip Screen component defining application state or layout.
 class CompleteTripScreen extends StatelessWidget {
   final String pickup;
   final String dropoff;

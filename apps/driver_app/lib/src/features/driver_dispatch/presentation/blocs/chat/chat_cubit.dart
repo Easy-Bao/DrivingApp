@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:driver_app/src/core/config/environment_config.dart';
 
+/// Chat Cubit component defining application state or layout.
 class ChatState extends Equatable {
   final List<ChatMessage> messages;
   final bool isConnecting;

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 
+/// Saved Places State component defining application state or layout.
 class SavedPlacesState extends Equatable {
   final List<SavedPlace> places;
   final bool isLoading;

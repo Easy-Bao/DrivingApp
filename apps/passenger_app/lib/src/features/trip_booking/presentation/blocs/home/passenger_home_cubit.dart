@@ -9,16 +9,10 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/
 class PassengerHomeCubit extends Cubit<PassengerHomeState> {
   final PassengerHomeRepository _repository;
 
-  /// Initializes the home screen state cubit with required repo lookup services.
   PassengerHomeCubit({required PassengerHomeRepository repository})
     : _repository = repository,
       super(const PassengerHomeState());
 
-  /// Resolves the current passenger address and recent trip locations in parallel.
-  ///
-  /// Updates [PassengerHomeState.currentAddress] and [PassengerHomeState.recentLocations]
-  /// with resolved domain data on success. If a service failures, it logs the outcome and fallback
-  /// to empty structures without crashing the screen interface.
   Future<void> loadHomeData({required double lat, required double lng}) async {
     emit(state.copyWith(isLoading: true));
     try {
@@ -28,18 +22,22 @@ class PassengerHomeCubit extends Cubit<PassengerHomeState> {
       ]);
 
       final addressResult = results[0] as Either<Failure, String>;
-      final locationsResult = results[1] as Either<Failure, List<Map<String, dynamic>>>;
+      final locationsResult =
+          results[1] as Either<Failure, List<Map<String, dynamic>>>;
 
       String resolvedAddress = '';
       List<Map<String, dynamic>> resolvedLocations = [];
 
       addressResult.fold(
-        (Failure failure) => debugPrint('Error resolving passenger address: ${failure.message}'),
+        (Failure failure) =>
+            debugPrint('Error resolving passenger address: ${failure.message}'),
         (address) => resolvedAddress = address,
       );
 
       locationsResult.fold(
-        (Failure failure) => debugPrint('Error loading recent passenger locations: ${failure.message}'),
+        (Failure failure) => debugPrint(
+          'Error loading recent passenger locations: ${failure.message}',
+        ),
         (locations) => resolvedLocations = locations,
       );
 
@@ -56,10 +54,7 @@ class PassengerHomeCubit extends Cubit<PassengerHomeState> {
     }
   }
 
-  /// Explicitly overrides or updates the displayed current address.
-  /// Typically called from GPS lock callbacks or manual pin drag adjustments.
   void updateAddress(String address) {
     emit(state.copyWith(currentAddress: address));
   }
 }
-

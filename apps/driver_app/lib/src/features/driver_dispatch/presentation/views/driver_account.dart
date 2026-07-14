@@ -7,6 +7,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Driver Account component defining application state or layout.
 class DriverAccountScreen extends StatefulWidget {
   const DriverAccountScreen({super.key});
 

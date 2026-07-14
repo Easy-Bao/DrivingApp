@@ -9,6 +9,7 @@ import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
+/// Destination Preview Screen component defining application state or layout.
 class DestinationPreviewScreen extends StatefulWidget {
   final PlaceModel destination;
   final String? preselectedRideType;

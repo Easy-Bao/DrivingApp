@@ -22,6 +22,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/shared/widgets/custom_toast.dart';
 
+/// Driver Dashboard component defining application state or layout.
 class DriverDashboardScreen extends StatefulWidget {
   const DriverDashboardScreen({super.key});
 
@@ -72,10 +73,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       pos,
     ) async {
       _liveMapBloc?.add(
-        DispatchTelemetryLocationEvent(
-          lat: pos.latitude,
-          lng: pos.longitude,
-        ),
+        DispatchTelemetryLocationEvent(lat: pos.latitude, lng: pos.longitude),
       );
     });
 

@@ -56,11 +56,14 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
   }
 
   @override
-  Future<Either<Failure, List<Map<String, dynamic>>>> getRecentLocations() async {
+  Future<Either<Failure, List<Map<String, dynamic>>>>
+  getRecentLocations() async {
     try {
       final passengerId = await _getPassengerId();
       if (passengerId.isEmpty) {
-        return const Left(CacheFailure('No passenger ID found in local cache.'));
+        return const Left(
+          CacheFailure('No passenger ID found in local cache.'),
+        );
       }
       final rawRides = await _apiService.fetchRideHistory(passengerId);
       return Right(_filterAndFormatRecentLocations(rawRides));

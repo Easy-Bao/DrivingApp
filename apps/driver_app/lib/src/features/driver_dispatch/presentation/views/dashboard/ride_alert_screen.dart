@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:driver_app/src/core/services/bidding_api_service.dart';
 import 'package:driver_app/src/shared/widgets/custom_toast.dart';
 
+/// Ride Alert Screen component defining application state or layout.
 class RideAlertScreen extends StatefulWidget {
   final Map<String, dynamic>? rideData;
   const RideAlertScreen({super.key, this.rideData});

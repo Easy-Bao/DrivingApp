@@ -9,6 +9,7 @@ import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// View All Activity component defining application state or layout.
 class PassengerViewAllActivity extends StatefulWidget {
   const PassengerViewAllActivity({super.key});
 

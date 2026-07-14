@@ -78,7 +78,9 @@ class _SigninScreenState extends State<SigninScreen> {
 
     if (result != null && result['driver'] != null) {
       final driver = result['driver'] as Map<String, dynamic>;
-      await getIt<SecureSessionService>().writeDriverId(driver['id'] as String? ?? '');
+      await getIt<SecureSessionService>().writeDriverId(
+        driver['id'] as String? ?? '',
+      );
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('driver_id', driver['id'] as String? ?? '');
       await prefs.setString('driver_name', driver['name'] as String? ?? '');

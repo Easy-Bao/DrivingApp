@@ -18,6 +18,9 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Evaluates the selected saved place shortcut. If coordinates are present,
+/// it pushes the DestinationPreview screen directly. Otherwise, it launches
+/// the SearchDestination screen to allow the user to lookup the coordinates.
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
 
@@ -850,9 +853,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  /// Evaluates the selected saved place shortcut. If coordinates are present,
-  /// it pushes the DestinationPreview screen directly. Otherwise, it launches
-  /// the SearchDestination screen to allow the user to lookup the coordinates.
   void _handleSavedPlaceTap(SavedPlace place) {
     if (!mounted) return;
     if (place.hasLocation) {

@@ -7,6 +7,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Earnings Screen component defining application state or layout.
 class DriverEarningsScreen extends StatefulWidget {
   const DriverEarningsScreen({super.key});
 
@@ -68,14 +69,15 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
     final startOfWeek = DateTime(monday.year, monday.month, monday.day);
 
     List<dynamic> completedTrips = [];
-    result.fold(
-      (failure) {},
-      (trips) {
-        completedTrips = trips
-            .where((t) => RideStatus.fromString(t['status'] as String? ?? '') == RideStatus.completed)
-            .toList();
-      },
-    );
+    result.fold((failure) {}, (trips) {
+      completedTrips = trips
+          .where(
+            (t) =>
+                RideStatus.fromString(t['status'] as String? ?? '') ==
+                RideStatus.completed,
+          )
+          .toList();
+    });
     final thisWeekTrips = completedTrips.where((t) {
       try {
         final dt = DateTime.parse(t['created_at'] as String? ?? '').toLocal();

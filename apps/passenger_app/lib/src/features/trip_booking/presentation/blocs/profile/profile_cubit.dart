@@ -42,13 +42,9 @@ class ProfileState extends Equatable {
   List<Object?> get props => [name, phone, email, isLoading, errorMessage];
 }
 
-/// Cubit responsible for loading, caching, and syncing passenger profile details.
-/// Decouples account view widgets from SharedPreferences and remote API clients.
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit() : super(const ProfileState());
 
-  /// Loads local cached profile values for rapid paint, then refreshes and
-  /// writes the latest snapshot from the API service into local storage.
   Future<void> loadProfile() async {
     emit(state.copyWith(isLoading: true));
 

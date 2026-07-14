@@ -1,5 +1,6 @@
 import 'package:location_service/location_service.dart';
 
+/// Live Map Event component defining application state or layout.
 abstract class LiveMapEvent {
   const LiveMapEvent();
 }
@@ -38,9 +39,5 @@ class DispatchTelemetryLocationEvent extends LiveMapEvent {
   final double lat;
   final double lng;
 
-  const DispatchTelemetryLocationEvent({
-    required this.lat,
-    required this.lng,
-  });
+  const DispatchTelemetryLocationEvent({required this.lat, required this.lng});
 }
-

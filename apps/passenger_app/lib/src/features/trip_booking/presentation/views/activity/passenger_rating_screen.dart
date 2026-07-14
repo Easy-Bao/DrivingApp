@@ -4,6 +4,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
 
+/// Passenger Rating Screen component defining application state or layout.
 class PassengerRatingScreen extends StatefulWidget {
   const PassengerRatingScreen({super.key});
 
@@ -94,7 +95,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.surface,
         elevation: 0,
-        automaticallyImplyLeading: false, // Prevent going back to active ride
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: Padding(
@@ -137,7 +138,6 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
               ),
               const SizedBox(height: 40),
 
-              // Star Rating
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (index) {
@@ -165,7 +165,6 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
 
               const SizedBox(height: 40),
 
-              // Feedback Text Field
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -196,7 +195,6 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
 
               const Spacer(),
 
-              // Action Buttons
               GestureDetector(
                 onTap: _finishRating,
                 child: Container(

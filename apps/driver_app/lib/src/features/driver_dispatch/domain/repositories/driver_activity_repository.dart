@@ -9,4 +9,3 @@ abstract class DriverActivityRepository {
   /// or cache errors.
   Future<Either<Failure, List<dynamic>>> fetchTripHistory(String driverId);
 }
-

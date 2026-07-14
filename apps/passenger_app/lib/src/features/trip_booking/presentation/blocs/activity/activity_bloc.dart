@@ -12,10 +12,7 @@ part 'activity_state.dart';
 class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   final ActivityRepository _repository;
 
-  static const _pastStatuses = {
-    RideStatus.completed,
-    RideStatus.cancelled,
-  };
+  static const _pastStatuses = {RideStatus.completed, RideStatus.cancelled};
 
   static const _upcomingStatuses = {
     RideStatus.requested,
@@ -24,7 +21,6 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     RideStatus.inTransit,
   };
 
-  /// Initializes the state controller with required data repository dependencies.
   ActivityBloc({required ActivityRepository repository})
     : _repository = repository,
       super(ActivityInitial()) {
@@ -52,18 +48,18 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     Emitter<ActivityState> emit,
   ) async {
     final result = await _repository.fetchRideHistory(passengerId);
-    result.fold(
-      (failure) => emit(ActivityError(message: failure.message)),
-      (rides) {
-        final past = rides
-            .where((r) => _pastStatuses.contains(RideStatus.fromString(r.status)))
-            .toList();
-        final upcoming = rides
-            .where((r) => _upcomingStatuses.contains(RideStatus.fromString(r.status)))
-            .toList();
-        emit(ActivityLoaded(past: past, upcoming: upcoming));
-      },
-    );
+    result.fold((failure) => emit(ActivityError(message: failure.message)), (
+      rides,
+    ) {
+      final past = rides
+          .where((r) => _pastStatuses.contains(RideStatus.fromString(r.status)))
+          .toList();
+      final upcoming = rides
+          .where(
+            (r) => _upcomingStatuses.contains(RideStatus.fromString(r.status)),
+          )
+          .toList();
+      emit(ActivityLoaded(past: past, upcoming: upcoming));
+    });
   }
 }
-

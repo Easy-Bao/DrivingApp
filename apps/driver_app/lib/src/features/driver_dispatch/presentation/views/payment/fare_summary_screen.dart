@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+/// Fare Summary Screen component defining application state or layout.
 class FareSummaryScreen extends StatelessWidget {
   final String pickup;
   final String dropoff;
@@ -23,7 +24,6 @@ class FareSummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final baseFare = 20.0;
     final distCharge = distance * 10.0;
-    // Surge / time charge is the remainder
     final surgePlus = (fare - baseFare - distCharge).clamp(
       0.0,
       double.infinity,

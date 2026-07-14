@@ -30,9 +30,15 @@ void main() {
     blocTest<DashboardCubit, DashboardState>(
       'emits [loading=true, loaded with values] on success',
       build: () {
-        when(() => repo.getTodayEarnings()).thenAnswer((_) async => const Right(385.50));
-        when(() => repo.getTodayTrips()).thenAnswer((_) async => const Right(7));
-        when(() => repo.getHoursOnline()).thenAnswer((_) async => const Right(4.5));
+        when(
+          () => repo.getTodayEarnings(),
+        ).thenAnswer((_) async => const Right(385.50));
+        when(
+          () => repo.getTodayTrips(),
+        ).thenAnswer((_) async => const Right(7));
+        when(
+          () => repo.getHoursOnline(),
+        ).thenAnswer((_) async => const Right(4.5));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadStats(),
@@ -50,18 +56,21 @@ void main() {
     blocTest<DashboardCubit, DashboardState>(
       'emits [loading=true, loading=false] on repository error',
       build: () {
-        when(() => repo.getTodayEarnings()).thenAnswer((_) async => const Left(ServerFailure('network')));
-        when(() => repo.getTodayTrips()).thenAnswer((_) async => const Left(ServerFailure('network')));
-        when(() => repo.getHoursOnline()).thenAnswer((_) async => const Left(ServerFailure('network')));
+        when(
+          () => repo.getTodayEarnings(),
+        ).thenAnswer((_) async => const Left(ServerFailure('network')));
+        when(
+          () => repo.getTodayTrips(),
+        ).thenAnswer((_) async => const Left(ServerFailure('network')));
+        when(
+          () => repo.getHoursOnline(),
+        ).thenAnswer((_) async => const Left(ServerFailure('network')));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadStats(),
       expect: () => [
         const DashboardState(isLoadingStats: true),
-        const DashboardState(
-          isLoadingStats: false,
-          errorMessage: 'network',
-        ),
+        const DashboardState(isLoadingStats: false, errorMessage: 'network'),
       ],
     );
   });
@@ -113,10 +122,7 @@ void main() {
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [
         const DashboardState(isOnline: true, isLoadingHeatmap: true),
-        const DashboardState(
-          isOnline: true,
-          errorMessage: 'map error',
-        ),
+        const DashboardState(isOnline: true, errorMessage: 'map error'),
       ],
     );
 
@@ -129,4 +135,3 @@ void main() {
     );
   });
 }
-
