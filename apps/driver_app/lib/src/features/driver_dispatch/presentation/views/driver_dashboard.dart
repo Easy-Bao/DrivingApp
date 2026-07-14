@@ -311,7 +311,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         children: [
                           if (_activeTrips.isNotEmpty) ...[
                             _buildSectionLabel(
-                              'YOUR ACTIVE RIDES (${_activeTrips.length}/5)',
+                              'Your active rides (${_activeTrips.length}/5)',
                             ),
                             const SizedBox(height: 10),
                             ..._activeTrips.map(_buildActiveTripCard),
@@ -319,7 +319,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                           ],
                           if (_activeBids.isNotEmpty) ...[
                             _buildSectionLabel(
-                              'AVAILABLE REQUESTS (POOL FEED)',
+                              'Available Requests',
                             ),
                             const SizedBox(height: 10),
                             ..._activeBids.map(_buildPoolBidCard),

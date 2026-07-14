@@ -148,6 +148,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           endLat: passengerLat,
           endLng: passengerLng,
           rideId: widget.ride.id,
+          driverName: widget.ride.driverName.isNotEmpty ? widget.ride.driverName : null,
+          vehiclePlate: widget.ride.vehiclePlate.isNotEmpty ? widget.ride.vehiclePlate : null,
         ),
       );
     }

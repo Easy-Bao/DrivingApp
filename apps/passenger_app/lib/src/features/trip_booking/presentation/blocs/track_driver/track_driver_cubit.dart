@@ -21,7 +21,13 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     required double endLat,
     required double endLng,
     String? rideId,
+    String? driverName,
+    String? vehiclePlate,
+    String? vehicleType,
   }) async {
+    final fallbackName = driverName ?? 'Driver';
+    final fallbackPlate = vehiclePlate ?? '—';
+    final fallbackType = vehicleType ?? 'Vehicle';
     _ticker?.cancel();
 
     final prefs = await SharedPreferences.getInstance();
@@ -138,9 +144,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               progress: progress,
               eta: etaMinutes == 1 ? '1 min' : '$etaMinutes mins',
               routePoints: routePoints,
-              driverName: 'Fallback Driver',
-              vehiclePlate: '—',
-              vehicleType: 'Bao Bao',
+              driverName: fallbackName,
+              vehiclePlate: fallbackPlate,
+              vehicleType: fallbackType,
             ),
           );
         }
