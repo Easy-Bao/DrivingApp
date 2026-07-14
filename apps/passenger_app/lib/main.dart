@@ -7,7 +7,6 @@ import 'package:passenger_app/app_widget.dart';
 import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/transitions/app_transitions.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,11 +32,5 @@ void main() async {
     debugLogEventBus: true,
   );
 
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = EnvironmentConfig.sentryDsn;
-      options.tracesSampleRate = 1.0;
-    },
-    appRunner: () => runApp(const AppWidget()),
-  );
+  runApp(const AppWidget());
 }

@@ -14,12 +14,9 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashb
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:get_it/get_it.dart';
 
-/// Global service locator instance managing constructor-based dependency injection.
+/// Dependency injection registry and service locator configuration.
 final GetIt getIt = GetIt.instance;
 
-/// Configures global dependency registrations for the Driver Application.
-///
-/// Registers singletons for network services and repositories, and factories for BLoCs.
 void setupServiceLocator() {
   getIt.registerLazySingleton<SecureSessionService>(
     () => SecureSessionService(),

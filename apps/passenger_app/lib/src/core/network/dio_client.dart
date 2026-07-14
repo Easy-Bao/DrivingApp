@@ -3,13 +3,9 @@ import 'package:dio/dio.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 
 /// Preconfigured HTTP client builder utilizing [Dio].
-///
-/// Attaches JWT headers dynamically from [SecureSessionService] and provides
-/// transparent retry policies when network dropouts occur.
 class DioClient {
   DioClient._();
 
-  /// Builds a [Dio] instance preconfigured with custom interceptors for session management.
   static Dio create({
     required Uri baseUrl,
     required SecureSessionService sessionService,
@@ -60,7 +56,6 @@ class _RetryOnNetworkFailureInterceptor extends Interceptor {
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
     final requestOptions = err.requestOptions;
 
-    // Retry only on network-related timeouts, connection dropouts, or SocketExceptions.
     final isNetworkError = err.type == DioExceptionType.connectionTimeout ||
         err.type == DioExceptionType.sendTimeout ||
         err.type == DioExceptionType.receiveTimeout ||
@@ -79,7 +74,7 @@ class _RetryOnNetworkFailureInterceptor extends Interceptor {
         final response = await dio.fetch(requestOptions);
         return handler.resolve(response);
       } catch (_) {
-        // Let the sequential error chain catch subsequent failure attempts.
+        // Fall through to error handler on consecutive failure
       }
     }
     super.onError(err, handler);
