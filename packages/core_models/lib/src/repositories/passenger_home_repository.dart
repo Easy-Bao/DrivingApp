@@ -9,10 +9,12 @@ abstract class PassengerHomeRepository {
   ///
   /// Returns [Right] with a display-ready address string or [Left] with a
   /// [Failure] if reverse geocoding fails.
-  Future<Either<Failure, String>> resolveAddress({required double lat, required double lng});
+  Future<Either<Failure, String>> resolveAddress({
+    required double lat,
+    required double lng,
+  });
 
   /// Returns [Right] with the passenger's recent destinations or [Left]
   /// with a [Failure] if the ride history lookup fails.
   Future<Either<Failure, List<Map<String, dynamic>>>> getRecentLocations();
 }
-

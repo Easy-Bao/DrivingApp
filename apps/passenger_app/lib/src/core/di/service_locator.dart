@@ -34,7 +34,9 @@ void setupServiceLocator() {
     () => DriverRepositoryImpl(apiService: getIt<PassengerApiService>()),
   );
 
-  getIt.registerLazySingleton<TrackRepository>(() => TrackRepositoryImpl());
+  getIt.registerLazySingleton<TrackRepository>(
+    () => TrackRepositoryImpl(apiService: getIt<PassengerApiService>()),
+  );
 
   getIt.registerLazySingleton<PassengerHomeRepository>(
     () => PassengerHomeRepositoryImpl(apiService: getIt<PassengerApiService>()),

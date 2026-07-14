@@ -2,23 +2,18 @@ import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Cubit responsible for tracking driver location and status updates during
-/// active passenger ride bookings.
+/// Cubit responsible for tracking driver location and status updates during active passenger ride bookings.
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final TrackRepository _repository;
-  final PassengerApiService _apiService;
   Timer? _ticker;
+  bool _isSyncing = false;
 
-  TrackDriverCubit({
-    required TrackRepository repository,
-    required PassengerApiService apiService,
-  }) : _repository = repository,
-       _apiService = apiService,
-       super(TrackDriverInitial());
+  TrackDriverCubit({required TrackRepository repository})
+    : _repository = repository,
+      super(TrackDriverInitial());
 
   Future<void> startTracking({
     required double startLat,
@@ -46,44 +41,45 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
     _ticker = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (isClosed) return;
+      if (_isSyncing) return;
 
+      _isSyncing = true;
       bool handled = false;
 
       if (activeRideId.isNotEmpty) {
-        try {
-          final statusData = await _apiService.getRideStatus(activeRideId);
-          if (statusData != null) {
-            final status = statusData['status'] as String?;
-            if (status == 'completed') {
+        final result = await _repository.getRideStatusUpdate(activeRideId);
+        await result.fold(
+          (failure) async {
+            debugPrint('Error fetching status update: ${failure.message}');
+          },
+          (rideUpdate) async {
+            if (rideUpdate.status == RideStatus.completed) {
               timer.cancel();
               emit(TrackDriverCompleted());
               await prefs.remove('active_ride_id');
+              _isSyncing = false;
               return;
             }
-
-            final driverId = statusData['driver_id'] as String?;
-            final driverName = statusData['driver_name'] as String? ?? 'Driver';
-            final vehiclePlate = statusData['plate_number'] as String? ?? '—';
-            final vehicleType =
-                statusData['vehicle_type'] as String? ?? 'Bao Bao';
 
             double driverLat = startLat;
             double driverLng = startLng;
             bool locationFetched = false;
 
+            final driverId = rideUpdate.driverId;
             if (driverId != null && driverId.isNotEmpty) {
-              try {
-                final locData = await _apiService.fetchDriverLocation(driverId);
-                if (locData != null &&
-                    locData['lat'] != null &&
-                    locData['lng'] != null) {
-                  driverLat = (locData['lat'] as num).toDouble();
-                  driverLng = (locData['lng'] as num).toDouble();
+              final locResult = await _repository.fetchDriverLocation(driverId);
+              locResult.fold(
+                (failure) {
+                  debugPrint(
+                    'Error fetching coordinate location: ${failure.message}',
+                  );
+                },
+                (coordinate) {
+                  driverLat = coordinate.$1;
+                  driverLng = coordinate.$2;
                   locationFetched = true;
-                }
-              } catch (error) {
-                debugPrint('Error fetching driver coordinate location: $error');
-              }
+                },
+              );
             }
 
             if (!locationFetched) {
@@ -97,18 +93,11 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 endLat: endLat,
                 endLng: endLng,
               );
-              driverLat = pos.$1;
-              driverLng = pos.$2;
+              driverLat = pos.lat;
+              driverLng = pos.lng;
             }
 
-            String eta = 'Calculating...';
-            if (status == 'accepted') {
-              eta = 'En-route';
-            } else if (status == 'arrived') {
-              eta = 'Arrived';
-            } else if (status == 'in_transit') {
-              eta = 'In-transit';
-            }
+            final eta = _getEtaLabel(rideUpdate.status);
 
             emit(
               TrackDriverInProgress(
@@ -117,19 +106,17 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 progress: progress,
                 eta: eta,
                 routePoints: routePoints,
-                driverName: driverName,
-                vehiclePlate: vehiclePlate,
-                vehicleType: vehicleType,
+                driverName: rideUpdate.driverName,
+                vehiclePlate: rideUpdate.vehiclePlate,
+                vehicleType: rideUpdate.vehicleType,
               ),
             );
             handled = true;
-          }
-        } catch (error) {
-          debugPrint('Error in track driver sync cycle: $error');
-        }
+          },
+        );
       }
 
-      if (!handled) {
+      if (!handled && !isClosed) {
         progress += 0.1;
         if (progress >= 1.0) {
           timer.cancel();
@@ -146,18 +133,20 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
           final etaMinutes = ((1.0 - progress) * 10).ceil();
           emit(
             TrackDriverInProgress(
-              driverLat: pos.$1,
-              driverLng: pos.$2,
+              driverLat: pos.lat,
+              driverLng: pos.lng,
               progress: progress,
               eta: etaMinutes == 1 ? '1 min' : '$etaMinutes mins',
               routePoints: routePoints,
-              driverName: 'Test Driver',
-              vehiclePlate: 'XYZ 9999',
+              driverName: 'Fallback Driver',
+              vehiclePlate: '—',
               vehicleType: 'Bao Bao',
             ),
           );
         }
       }
+
+      _isSyncing = false;
     });
   }
 
@@ -167,7 +156,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
       final prefs = await SharedPreferences.getInstance();
       final rideId = prefs.getString('active_ride_id') ?? '';
       if (rideId.isNotEmpty) {
-        await _apiService.updateRideStatus(rideId, 'canceled');
+        await _repository.updateRideStatus(rideId, RideStatus.cancelled);
         await prefs.remove('active_ride_id');
       }
     } catch (error) {
@@ -176,13 +165,26 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     emit(TrackDriverCanceled());
   }
 
+  String _getEtaLabel(RideStatus status) {
+    switch (status) {
+      case RideStatus.accepted:
+        return 'En-route';
+      case RideStatus.arrived:
+        return 'Arrived';
+      case RideStatus.inTransit:
+        return 'In-transit';
+      default:
+        return 'Calculating...';
+    }
+  }
+
   @override
   Future<void> close() {
     _ticker?.cancel();
     return super.close();
   }
 
-  (double lat, double lng) _interpolate({
+  ({double lat, double lng}) _interpolate({
     required double progress,
     required List<List<double>>? routePoints,
     required double startLat,
@@ -197,11 +199,14 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
       final t = fractionalIndex - index;
       final p1 = routePoints[index];
       final p2 = routePoints[nextIndex];
-      return (p1[1] + (p2[1] - p1[1]) * t, p1[0] + (p2[0] - p1[0]) * t);
+      return (
+        lat: p1[1] + (p2[1] - p1[1]) * t,
+        lng: p1[0] + (p2[0] - p1[0]) * t,
+      );
     }
     return (
-      startLat + (endLat - startLat) * progress,
-      startLng + (endLng - startLng) * progress,
+      lat: startLat + (endLat - startLat) * progress,
+      lng: startLng + (endLng - startLng) * progress,
     );
   }
 }
