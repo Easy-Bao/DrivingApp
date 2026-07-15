@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { websocket } from 'hono/bun';
-import { chatRouter } from './routes/chat.ts';
+import { chatRouter } from './features/chat/chat.routes.ts';
 
 const app = new Hono();
 

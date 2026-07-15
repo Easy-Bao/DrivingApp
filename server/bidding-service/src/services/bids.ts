@@ -1,8 +1,14 @@
 import { prisma } from '../db.ts';
 
 const SESSION_TTL_MS = parseInt(process.env.SESSION_TTL_MINUTES || '5') * 60 * 1000;
-const TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
-const PASSENGER_SERVICE_URL = process.env.PASSENGER_SERVICE_URL || 'http://127.0.0.1:8081';
+if (!process.env.TRIP_SERVICE_URL) {
+  throw new Error("Configuration Error: TRIP_SERVICE_URL is required but not set.");
+}
+if (!process.env.PASSENGER_SERVICE_URL) {
+  throw new Error("Configuration Error: PASSENGER_SERVICE_URL is required but not set.");
+}
+const TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL;
+const PASSENGER_SERVICE_URL = process.env.PASSENGER_SERVICE_URL;
 
 type FareConfig = {
   base: number;

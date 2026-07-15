@@ -115,7 +115,10 @@ export class PrismaPassengerRepository implements PassengerRepository {
       throw new Error(`Passenger ID ${passengerId} not found`);
     }
 
-    const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+    const tripServiceUrl = process.env.TRIP_SERVICE_URL;
+    if (!tripServiceUrl) {
+      throw new Error("Configuration Error: TRIP_SERVICE_URL is required but not set.");
+    }
     const ridesMap = new Map<string, RideRequest>();
 
     try {
@@ -216,7 +219,10 @@ export class PrismaPassengerRepository implements PassengerRepository {
     });
 
     const notificationsList: any[] = [];
-    const tripServiceUrl = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+    const tripServiceUrl = process.env.TRIP_SERVICE_URL;
+    if (!tripServiceUrl) {
+      throw new Error("Configuration Error: TRIP_SERVICE_URL is required but not set.");
+    }
 
     for (const rideRequest of rideRequests) {
       const tripDetails = await fetchTripStatus(rideRequest.id, rideRequest.status, tripServiceUrl);

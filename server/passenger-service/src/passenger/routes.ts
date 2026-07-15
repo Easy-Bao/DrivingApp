@@ -73,7 +73,10 @@ export function getPassengerRouter(passengerRepository: PassengerRepository) {
         return context.json({ error: 'No passenger registered with this email' }, 404);
       }
       const resetToken = Math.random().toString(36).substring(2, 10).toUpperCase();
-      const appUrl = process.env.APP_URL || 'http://127.0.0.1:8081';
+      const appUrl = process.env.APP_URL;
+      if (!appUrl) {
+        throw new Error("Configuration Error: APP_URL is required but not set.");
+      }
       await sendEmail({
         to: email,
         subject: 'Reset Your EasyRide Password',

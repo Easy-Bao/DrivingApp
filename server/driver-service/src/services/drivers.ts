@@ -1,6 +1,9 @@
 import { prisma } from '../db.ts';
 
-const TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
+if (!process.env.TRIP_SERVICE_URL) {
+  throw new Error("Configuration Error: TRIP_SERVICE_URL is required but not set.");
+}
+const TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL;
 
 export async function registerDriver(driverDetails: any) {
   const { name, email, phone, vehicleType, plateNumber, password } = driverDetails;

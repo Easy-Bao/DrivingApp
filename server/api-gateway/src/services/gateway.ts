@@ -1,12 +1,20 @@
 import { upgradeWebSocket } from 'hono/bun';
 
+const getRequiredEnvVar = (variableName: string): string => {
+  const value = process.env[variableName];
+  if (!value) {
+    throw new Error(`Configuration Error: Environment variable '${variableName}' is required but not set.`);
+  }
+  return value;
+};
+
 export const SERVICES = {
-  passengers: process.env.PASSENGER_SERVICE_URL || 'http://127.0.0.1:8081',
-  rides: process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083',
-  drivers: process.env.DRIVER_SERVICE_URL || 'http://127.0.0.1:8082',
-  telemetry: process.env.TELEMETRY_SERVICE_URL || 'http://127.0.0.1:8085',
-  bidding: process.env.BIDDING_SERVICE_URL || 'http://127.0.0.1:8084',
-  chat: process.env.CHAT_SERVICE_URL || 'http://127.0.0.1:8086',
+  passengers: getRequiredEnvVar('PASSENGER_SERVICE_URL'),
+  rides: getRequiredEnvVar('TRIP_SERVICE_URL'),
+  drivers: getRequiredEnvVar('DRIVER_SERVICE_URL'),
+  telemetry: getRequiredEnvVar('TELEMETRY_SERVICE_URL'),
+  bidding: getRequiredEnvVar('BIDDING_SERVICE_URL'),
+  chat: getRequiredEnvVar('CHAT_SERVICE_URL'),
 };
 
 export async function handleProxy(context: any, targetBaseUrl: string) {

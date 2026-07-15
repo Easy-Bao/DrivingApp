@@ -1,18 +1,18 @@
 /// Chat service integration tests: verifies REST room creation, WebSocket connectivity, and messaging.
 import { expect, test, describe, beforeAll, afterAll } from 'bun:test';
 import chatApp from '../src/index.ts';
-import { prisma } from '../src/db.ts';
+import { db } from '../src/shared/drizzle.ts';
+import { rooms } from '../src/db/schema.ts';
 
 let server: any;
 
 beforeAll(async () => {
   server = Bun.serve(chatApp);
-  await prisma.room.deleteMany();
+  await db.delete(rooms);
 });
 
 afterAll(async () => {
   server.stop(true);
-  await prisma.$disconnect();
 });
 
 describe('Chat Service', () => {
