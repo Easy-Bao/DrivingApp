@@ -43,6 +43,7 @@ export interface PassengerRepository {
   registerPassenger(passengerDetails: any): Promise<Passenger>;
   retrievePassengerProfile(passengerId: string): Promise<Passenger | null>;
   retrievePassengerByEmail(passengerEmail: string): Promise<Passenger | null>;
+  retrievePassengersByIds(passengerIds: string[]): Promise<Record<string, Passenger>>;
   registerRideRequest(rideDetails: any): Promise<RideRequest>;
   retrievePassengerRideHistory(passengerId: string): Promise<RideRequest[]>;
   updatePassengerProfile(options: UpdatePassengerOptions): Promise<Passenger>;

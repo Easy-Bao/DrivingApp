@@ -1,61 +1,45 @@
 /**
- * Service layer orchestrating domain logic for fare calculations, active sessions, driver offers, and trip service merges.
+ * Orchestrates the bidding session lifecycle: fare negotiation, session/offer CRUD, and the
+ * distributed accept flow. Network calls are fully delegated to PassengerClient and TripClient;
+ * pricing math to computeFareAmount. This class owns only domain-state transitions.
  */
 import { BiddingRepository } from '../entities/bidding.types.ts';
-import { CreateBidSessionSchema, PlaceOfferSchema } from '../schemas/bidding.schema.ts';
 import { HTTPException } from 'hono/http-exception';
 import { Logger } from '../../../shared/logger/logger.ts';
+import { computeFareAmount } from '../pricing/bidding.pricing.ts';
+import { PassengerClient, TripClient } from '../clients/bidding.clients.ts';
 
 const SESSION_TTL_MS = parseInt(process.env.SESSION_TTL_MINUTES || '5') * 60 * 1000;
-if (!process.env.TRIP_SERVICE_URL) {
-  throw new Error("Configuration Error: TRIP_SERVICE_URL is required but not set.");
-}
-if (!process.env.PASSENGER_SERVICE_URL) {
-  throw new Error("Configuration Error: PASSENGER_SERVICE_URL is required but not set.");
-}
-const TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL;
-const PASSENGER_SERVICE_URL = process.env.PASSENGER_SERVICE_URL;
-
-type FareConfig = {
-  base: number;
-  perKm: number;
-  perMin: number;
-  minFare: number;
-};
-
-const FARE_CONFIGS: Record<string, FareConfig> = {
-  'Solo Ride': { base: 20, perKm: 10, perMin: 1.5, minFare: 25 },
-  'Share-Bao': { base: 15, perKm: 7, perMin: 1.0, minFare: 18 },
-  'Bao Premium': { base: 35, perKm: 15, perMin: 2.0, minFare: 40 },
-};
 
 export class BiddingService {
-  private repository: BiddingRepository;
+  private readonly repository: BiddingRepository;
+  private readonly passengerClient: PassengerClient;
+  private readonly tripClient: TripClient;
 
   constructor(repository: BiddingRepository) {
+    const passengerServiceUrl = process.env.PASSENGER_SERVICE_URL;
+    const tripServiceUrl = process.env.TRIP_SERVICE_URL;
+
+    if (!passengerServiceUrl) {
+      throw new Error('Configuration Error: PASSENGER_SERVICE_URL is required but not set.');
+    }
+    if (!tripServiceUrl) {
+      throw new Error('Configuration Error: TRIP_SERVICE_URL is required but not set.');
+    }
+
     this.repository = repository;
+    this.passengerClient = new PassengerClient(passengerServiceUrl);
+    this.tripClient = new TripClient(tripServiceUrl);
   }
 
-  computeFareAmount(rideType: string, distanceKm: number, durationMinutes: number) {
-    const cfg = FARE_CONFIGS[rideType] ?? FARE_CONFIGS['Solo Ride'];
-    const distanceCharge = distanceKm * cfg.perKm;
-    const timeCharge = durationMinutes * cfg.perMin;
-    const subtotal = cfg.base + distanceCharge + timeCharge;
-    const rawTotal = Math.max(subtotal, cfg.minFare);
-    const totalFare = Math.round(rawTotal * 2) / 2;
-    return {
-      base_fare: cfg.base,
-      distance_charge: parseFloat(distanceCharge.toFixed(2)),
-      time_charge: parseFloat(timeCharge.toFixed(2)),
-      surge_charge: 0,
-      total_fare: totalFare,
-    };
+  computeFare(rideType: string, distanceKm: number, durationMinutes: number) {
+    return computeFareAmount(rideType, distanceKm, durationMinutes);
   }
 
   async createSession(payload: any) {
-    const dKm = parseFloat(payload.distance_km ?? 0);
-    const dMin = parseFloat(payload.duration_minutes ?? 0);
-    const fare = this.computeFareAmount(payload.ride_type, dKm, dMin);
+    const distanceKm = parseFloat(payload.distance_km ?? 0);
+    const durationMinutes = parseFloat(payload.duration_minutes ?? 0);
+    const fare = computeFareAmount(payload.ride_type, distanceKm, durationMinutes);
     const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
     return await this.repository.createSession({
@@ -67,8 +51,8 @@ export class BiddingService {
       dropoffLatitude: parseFloat(payload.dropoff_latitude),
       dropoffLongitude: parseFloat(payload.dropoff_longitude),
       dropoffName: payload.dropoff_name ?? 'Dropoff',
-      distanceKm: dKm,
-      durationMinutes: dMin,
+      distanceKm,
+      durationMinutes,
       offeredFare: fare.total_fare,
       targetDriverId: payload.target_driver_id ?? null,
       expiresAt,
@@ -77,75 +61,59 @@ export class BiddingService {
 
   async getActiveSessions(driverId?: string) {
     const now = new Date();
-    await this.repository.expireSessions(now);
-
     const sessions = await this.repository.findActiveSessions(now);
 
-    // Filter sessions so a driver only sees open sessions that are either public (no target)
-    // or specifically directed/booked for their driver ID.
-    const visible = driverId
-      ? sessions.filter((s) => {
-          if (s.targetDriverId && s.targetDriverId !== driverId) {
+    // Filter so a driver only sees sessions that are either public or directed at them,
+    // and excludes sessions for which they have already placed an offer.
+    const visibleSessions = driverId
+      ? sessions.filter((session) => {
+          if (session.targetDriverId && session.targetDriverId !== driverId) {
             return false;
           }
-          return !s.offers.some((o) => o.driverId === driverId);
+          return !session.offers.some((offer) => offer.driverId === driverId);
         })
       : sessions;
 
-    return await Promise.all(visible.map(async (s) => {
-      let passengerName = 'Passenger';
-      let passengerRating = '4.8';
-      try {
-        const pRes = await fetch(`${PASSENGER_SERVICE_URL}/passengers/${s.passengerId}`);
-        if (pRes.ok) {
-          const passenger = await pRes.json() as any;
-          if (passenger && passenger.name) {
-            passengerName = passenger.name;
-          }
-        }
-      } catch (err) {
-        Logger.error('Failed to fetch passenger details in bidding-service:', err);
-      }
+    const passengerIds = [...new Set(visibleSessions.map((session) => session.passengerId))];
+    const passengerMap = await this.passengerClient.fetchPassengersBatch(passengerIds);
 
-      const ratings = ['4.8', '4.9', '4.7', '5.0', '4.6'];
-      const charCodeSum = s.passengerId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-      passengerRating = ratings[charCodeSum % ratings.length];
-
+    return visibleSessions.map((session) => {
+      const passenger = passengerMap[session.passengerId];
       return {
-        id: s.id,
-        passenger_id: s.passengerId,
-        passengerName,
-        passengerRating,
-        ride_type: s.rideType,
-        pickup_latitude: s.pickupLatitude,
-        pickup_longitude: s.pickupLongitude,
-        pickup_name: s.pickupName,
-        dropoff_latitude: s.dropoffLatitude,
-        dropoff_longitude: s.dropoffLongitude,
-        dropoff_name: s.dropoffName,
-        distance_km: s.distanceKm,
-        duration_minutes: s.durationMinutes,
-        offered_fare: s.offeredFare,
-        status: s.status,
-        target_driver_id: s.targetDriverId,
-        expires_at: s.expiresAt.toISOString(),
-        created_at: s.createdAt.toISOString(),
+        id: session.id,
+        passenger_id: session.passengerId,
+        passengerName: passenger?.name ?? 'Passenger',
+        passengerRating: passenger?.rating ?? '4.8',
+        ride_type: session.rideType,
+        pickup_latitude: session.pickupLatitude,
+        pickup_longitude: session.pickupLongitude,
+        pickup_name: session.pickupName,
+        dropoff_latitude: session.dropoffLatitude,
+        dropoff_longitude: session.dropoffLongitude,
+        dropoff_name: session.dropoffName,
+        distance_km: session.distanceKm,
+        duration_minutes: session.durationMinutes,
+        offered_fare: session.offeredFare,
+        status: session.status,
+        target_driver_id: session.targetDriverId,
+        expires_at: session.expiresAt.toISOString(),
+        created_at: session.createdAt.toISOString(),
       };
-    }));
+    });
   }
 
   async getOffers(sessionId: string) {
-    const list = await this.repository.findOffersBySessionId(sessionId);
-    return list.map(o => ({
-      id: o.id,
-      session_id: o.sessionId,
-      driver_id: o.driverId,
-      driver_name: o.driverName,
-      plate_number: o.plateNumber,
-      vehicle_type: o.vehicleType,
-      proposed_fare: o.proposedFare,
-      status: o.status,
-      created_at: o.createdAt.toISOString(),
+    const offerList = await this.repository.findOffersBySessionId(sessionId);
+    return offerList.map((offer) => ({
+      id: offer.id,
+      session_id: offer.sessionId,
+      driver_id: offer.driverId,
+      driver_name: offer.driverName,
+      plate_number: offer.plateNumber,
+      vehicle_type: offer.vehicleType,
+      proposed_fare: offer.proposedFare,
+      status: offer.status,
+      created_at: offer.createdAt.toISOString(),
     }));
   }
 
@@ -162,38 +130,36 @@ export class BiddingService {
       throw new HTTPException(400, { message: 'Session has expired' });
     }
 
-    const existing = await this.repository.findPendingOffer(sessionId, offerData.driver_id);
-    if (existing) {
+    const existingOffer = await this.repository.findPendingOffer(sessionId, offerData.driver_id);
+    if (existingOffer) {
       throw new HTTPException(400, { message: 'Offer already placed' });
     }
 
+    // Enforce driver concurrency caps before persisting the offer.
     try {
-      const activeRidesRes = await fetch(`${TRIP_SERVICE_URL}/rides/driver/${offerData.driver_id}`);
-      if (activeRidesRes.ok) {
-        const rides = await activeRidesRes.json() as any[];
-        const activeRides = rides.filter((r) =>
-          r.status === 'accepted' || r.status === 'arrived' || r.status === 'in_transit'
-        );
-
-        if (activeRides.length >= 5) {
-          throw new HTTPException(400, { message: 'Driver has reached the maximum cap of 5 concurrent accepted ride requests' });
-        }
-
-        const hasActivePriority = activeRides.some((r) => r.ride_type === 'Bao Premium');
-        if (hasActivePriority) {
-          throw new HTTPException(400, { message: 'Driver has an active Priority Ride and cannot accept other rides' });
-        }
-
-        if (session.rideType === 'Bao Premium' && activeRides.length > 0) {
-          throw new HTTPException(400, { message: 'Cannot accept a Priority Ride while having other active rides' });
-        }
+      const activeRides = await this.tripClient.fetchDriverActiveRides(offerData.driver_id);
+      if (activeRides.length >= 5) {
+        throw new HTTPException(400, {
+          message: 'Driver has reached the maximum cap of 5 concurrent accepted ride requests',
+        });
+      }
+      const hasActivePriorityRide = activeRides.some((ride) => ride.ride_type === 'Bao Premium');
+      if (hasActivePriorityRide) {
+        throw new HTTPException(400, {
+          message: 'Driver has an active Priority Ride and cannot accept other rides',
+        });
+      }
+      if (session.rideType === 'Bao Premium' && activeRides.length > 0) {
+        throw new HTTPException(400, {
+          message: 'Cannot accept a Priority Ride while having other active rides',
+        });
       }
     } catch (err: any) {
       if (err instanceof HTTPException) throw err;
       Logger.error('Failed to enforce active trip constraints in bidding-service:', err);
     }
 
-    const fare = offerData.proposed_fare != null
+    const proposedFare = offerData.proposed_fare != null
       ? parseFloat(offerData.proposed_fare)
       : session.offeredFare;
 
@@ -202,7 +168,7 @@ export class BiddingService {
       driverName: offerData.driver_name,
       plateNumber: offerData.plate_number,
       vehicleType: offerData.vehicle_type,
-      proposedFare: fare,
+      proposedFare: proposedFare,
     });
 
     return {
@@ -227,59 +193,65 @@ export class BiddingService {
       throw new HTTPException(400, { message: `Session is already ${session.status}` });
     }
 
-    const offer = session.offers.find((o) => o.id === offerId && o.status === 'pending');
-    if (!offer) {
+    const winningOffer = session.offers.find(
+      (offer) => offer.id === offerId && offer.status === 'pending'
+    );
+    if (!winningOffer) {
       throw new HTTPException(404, { message: 'Offer not found or already resolved' });
     }
 
-    const tripRes = await fetch(`${TRIP_SERVICE_URL}/rides`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        passenger_id: session.passengerId,
-        ride_type: session.rideType,
-        pickup_latitude: session.pickupLatitude,
-        pickup_longitude: session.pickupLongitude,
-        pickup_name: session.pickupName,
-        dropoff_latitude: session.dropoffLatitude,
-        dropoff_longitude: session.dropoffLongitude,
-        dropoff_name: session.dropoffName,
-        fare: offer.proposedFare,
-      }),
+    // Create the remote ride record first so we obtain a trip ID, then commit the local
+    // state transition. If the local commit fails, we issue a compensating cancel to the
+    // trip service to prevent a phantom ride from persisting there (Saga rollback).
+    const trip = await this.tripClient.createRide({
+      passenger_id: session.passengerId,
+      ride_type: session.rideType,
+      pickup_latitude: session.pickupLatitude,
+      pickup_longitude: session.pickupLongitude,
+      pickup_name: session.pickupName,
+      dropoff_latitude: session.dropoffLatitude,
+      dropoff_longitude: session.dropoffLongitude,
+      dropoff_name: session.dropoffName,
+      fare: winningOffer.proposedFare,
     });
 
-    if (!tripRes.ok) {
-      const errBody = await tripRes.json() as any;
-      throw new HTTPException(500, { message: 'Failed to create trip: ' + JSON.stringify(errBody) });
+    if (!trip) {
+      throw new HTTPException(500, { message: 'Failed to create trip on trip service' });
     }
 
-    const trip = await tripRes.json() as any;
-    await tripRes.body?.cancel().catch(() => { });
+    let localResult: any;
+    try {
+      localResult = await this.repository.acceptOfferTransaction(
+        sessionId,
+        offerId,
+        winningOffer.driverId
+      );
+    } catch (localErr) {
+      Logger.error(`acceptOfferTransaction failed for session ${sessionId}; rolling back trip ${trip.id}:`, localErr);
+      await this.tripClient.cancelRide(trip.id);
+      throw new HTTPException(500, { message: 'Failed to finalise bid acceptance; trip rolled back' });
+    }
 
-    const result = await this.repository.acceptOfferTransaction(sessionId, offerId, offer.driverId);
-
-    await fetch(`${TRIP_SERVICE_URL}/rides/${trip.id}/accept`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        driver_id: offer.driverId,
-        driver_name: offer.driverName,
-        vehicle_type: offer.vehicleType,
-        plate_number: offer.plateNumber,
-      }),
-    }).catch(() => { });
+    // Non-fatal: assigns driver to the trip record. A failure here leaves the ride in a
+    // created-but-unassigned state, which can be resolved by a re-drive or admin action.
+    await this.tripClient.acceptRide(trip.id, {
+      driver_id: winningOffer.driverId,
+      driver_name: winningOffer.driverName,
+      vehicle_type: winningOffer.vehicleType,
+      plate_number: winningOffer.plateNumber,
+    });
 
     return {
       session: {
-        id: result.session.id,
-        passenger_id: result.session.passengerId,
-        status: result.session.status,
-        accepted_driver_id: result.session.acceptedDriverId,
+        id: localResult.session.id,
+        passenger_id: localResult.session.passengerId,
+        status: localResult.session.status,
+        accepted_driver_id: localResult.session.acceptedDriverId,
       },
       offer: {
-        id: result.offer.id,
-        driver_id: result.offer.driverId,
-        status: result.offer.status,
+        id: localResult.offer.id,
+        driver_id: localResult.offer.driverId,
+        status: localResult.offer.status,
       },
       rideId: trip.id,
     };
@@ -302,11 +274,11 @@ export class BiddingService {
   }
 
   async cancelOffer(sessionId: string, driverId: string) {
-    const offer = await this.repository.findPendingOffer(sessionId, driverId);
-    if (!offer) {
+    const pendingOffer = await this.repository.findPendingOffer(sessionId, driverId);
+    if (!pendingOffer) {
       throw new HTTPException(404, { message: 'No pending offer found for this driver' });
     }
-    const updated = await this.repository.updateOfferStatus(offer.id, 'rejected');
+    const updated = await this.repository.updateOfferStatus(pendingOffer.id, 'rejected');
     return {
       id: updated.id,
       session_id: updated.sessionId,
@@ -337,16 +309,16 @@ export class BiddingService {
       target_driver_id: session.targetDriverId,
       expires_at: session.expiresAt.toISOString(),
       created_at: session.createdAt.toISOString(),
-      offers: session.offers.map((o) => ({
-        id: o.id,
-        session_id: o.sessionId,
-        driver_id: o.driverId,
-        driver_name: o.driverName,
-        plate_number: o.plateNumber,
-        vehicle_type: o.vehicleType,
-        proposed_fare: o.proposedFare,
-        status: o.status,
-        created_at: o.createdAt.toISOString(),
+      offers: session.offers.map((offer) => ({
+        id: offer.id,
+        session_id: offer.sessionId,
+        driver_id: offer.driverId,
+        driver_name: offer.driverName,
+        plate_number: offer.plateNumber,
+        vehicle_type: offer.vehicleType,
+        proposed_fare: offer.proposedFare,
+        status: offer.status,
+        created_at: offer.createdAt.toISOString(),
       })),
     };
   }

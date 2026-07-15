@@ -14,6 +14,7 @@ import {
   handleCreateRideRequest,
   handleGetPassengerRideHistory,
   handleGetPassengerNotifications,
+  handleGetPassengersBatch,
 } from '../controllers/passenger.controller.ts';
 import {
   CreatePassengerSchema,
@@ -28,6 +29,7 @@ passengerRouter.post('/passengers', zValidator('json', CreatePassengerSchema), h
 passengerRouter.post('/passengers/verify-otp', handleVerifyOtp);
 passengerRouter.post('/passengers/forgot-password', handleForgotPassword);
 passengerRouter.post('/passengers/login', zValidator('json', LoginSchema), handleLoginPassenger);
+passengerRouter.post('/passengers/batch', handleGetPassengersBatch);
 passengerRouter.get('/passengers/:id', handleGetPassengerProfile);
 passengerRouter.put('/passengers/:id', authMiddleware, zValidator('json', UpdatePassengerSchema), handleUpdatePassengerProfile);
 passengerRouter.post('/rides', authMiddleware, zValidator('json', CreateRideSchema), handleCreateRideRequest);

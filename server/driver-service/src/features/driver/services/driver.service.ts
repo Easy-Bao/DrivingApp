@@ -1,21 +1,24 @@
 /**
  * Service layer orchestrating domain logic for driver accounts, online status, trip history aggregation, and reviews.
+ * All cross-service HTTP calls are delegated to TripClient to keep this class free of network concerns.
  */
 import { DriverRepository } from '../entities/driver.types.ts';
 import { CreateDriverRequest, LoginDriverRequest, UpdateOnlineStatusRequest } from '../schemas/driver.schema.ts';
 import { HTTPException } from 'hono/http-exception';
 import { Logger } from '../../../shared/logger/logger.ts';
-
-if (!process.env.TRIP_SERVICE_URL) {
-  throw new Error("Configuration Error: TRIP_SERVICE_URL is required but not set.");
-}
-const TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL;
+import { TripClient } from '../clients/driver.clients.ts';
 
 export class DriverService {
-  private repository: DriverRepository;
+  private readonly repository: DriverRepository;
+  private readonly tripClient: TripClient;
 
   constructor(repository: DriverRepository) {
+    const tripServiceUrl = process.env.TRIP_SERVICE_URL;
+    if (!tripServiceUrl) {
+      throw new Error('Configuration Error: TRIP_SERVICE_URL is required but not set.');
+    }
     this.repository = repository;
+    this.tripClient = new TripClient(tripServiceUrl);
   }
 
   async registerDriver(payload: CreateDriverRequest) {
@@ -76,34 +79,34 @@ export class DriverService {
       throw new HTTPException(404, { message: 'Driver not found' });
     }
 
-    let driverRides: any[] = [];
-    try {
-      const tripServiceResponse = await fetch(`${TRIP_SERVICE_URL}/rides/driver/${driverId}`);
-      if (tripServiceResponse.ok) {
-        driverRides = await tripServiceResponse.json() as any[];
-      }
-    } catch (error) {
-      Logger.error('Failed to fetch rides from trip-service:', error);
-    }
+    const driverRides = await this.tripClient.fetchDriverRides(driverId);
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    const todayRides = driverRides.filter((rideRecord: any) => {
+    const todayRides = driverRides.filter((rideRecord) => {
       const createdAt = new Date(rideRecord.created_at);
       return createdAt >= startOfToday && rideRecord.status === 'completed';
     });
 
-    const todayEarnings = todayRides.reduce((accumulatedFare: number, rideRecord: any) => accumulatedFare + (rideRecord.fare ?? 0), 0);
+    const todayEarnings = todayRides.reduce(
+      (accumulatedFare, rideRecord) => accumulatedFare + (rideRecord.fare ?? 0),
+      0
+    );
     const todayTrips = todayRides.length;
     const baseHours = todayTrips * 0.75;
-    const hoursOnline = parseFloat((foundDriver.isOnline ? baseHours + 0.5 : baseHours).toFixed(1));
+    const hoursOnline = parseFloat(
+      (foundDriver.isOnline ? baseHours + 0.5 : baseHours).toFixed(1)
+    );
 
-    const completedRides = driverRides.filter((rideRecord: any) => rideRecord.status === 'completed');
-    const cancelledRides = driverRides.filter((rideRecord: any) => rideRecord.status === 'cancelled');
+    const completedRides = driverRides.filter((rideRecord) => rideRecord.status === 'completed');
+    const cancelledRides = driverRides.filter((rideRecord) => rideRecord.status === 'cancelled');
 
     const totalTrips = completedRides.length;
-    const lifetimeEarnings = completedRides.reduce((accumulatedFare: number, rideRecord: any) => accumulatedFare + (rideRecord.fare ?? 0), 0);
+    const lifetimeEarnings = completedRides.reduce(
+      (accumulatedFare, rideRecord) => accumulatedFare + (rideRecord.fare ?? 0),
+      0
+    );
 
     const totalAssigned = completedRides.length + cancelledRides.length;
     const acceptanceRate = totalAssigned > 0
@@ -121,19 +124,19 @@ export class DriverService {
   }
 
   async getDriverTripHistory(driverId: string) {
-    const tripServiceResponse = await fetch(`${TRIP_SERVICE_URL}/rides/driver/${driverId}`);
-    if (!tripServiceResponse.ok) {
-      throw new HTTPException(500, { message: 'Trip service failed with status ' + tripServiceResponse.status });
+    try {
+      return await this.tripClient.fetchDriverRides(driverId);
+    } catch (err) {
+      throw new HTTPException(500, { message: 'Failed to fetch trip history from trip service' });
     }
-    return await tripServiceResponse.json();
   }
 
   async getActiveRideRequests() {
-    const tripServiceResponse = await fetch(`${TRIP_SERVICE_URL}/rides/active`);
-    if (!tripServiceResponse.ok) {
-      throw new HTTPException(500, { message: 'Trip service unavailable with status ' + tripServiceResponse.status });
+    try {
+      return await this.tripClient.fetchActiveRides();
+    } catch (err: any) {
+      throw new HTTPException(500, { message: err.message || 'Trip service unavailable' });
     }
-    return await tripServiceResponse.json();
   }
 
   async getDriverReviews(driverId: string) {
@@ -142,36 +145,36 @@ export class DriverService {
     if (!uuidFormatRegex.test(driverId)) {
       return [
         {
-          id: "mock-review-1",
+          id: 'mock-review-1',
           driverId,
-          passengerName: "Aria Cruz",
+          passengerName: 'Aria Cruz',
           rating: 5.0,
-          comment: "Highly recommend! Very pleasant conversation and smooth driving.",
-          createdAt: new Date("2026-07-07T12:00:00Z").toISOString(),
+          comment: 'Highly recommend! Very pleasant conversation and smooth driving.',
+          createdAt: new Date('2026-07-07T12:00:00Z').toISOString(),
         },
         {
-          id: "mock-review-2",
+          id: 'mock-review-2',
           driverId,
-          passengerName: "Carlos Diaz",
+          passengerName: 'Carlos Diaz',
           rating: 4.9,
-          comment: "Excellent service. Helped me with my heavy bags.",
-          createdAt: new Date("2026-07-05T12:00:00Z").toISOString(),
+          comment: 'Excellent service. Helped me with my heavy bags.',
+          createdAt: new Date('2026-07-05T12:00:00Z').toISOString(),
         },
         {
-          id: "mock-review-3",
+          id: 'mock-review-3',
           driverId,
-          passengerName: "Sophia Lim",
+          passengerName: 'Sophia Lim',
           rating: 5.0,
-          comment: "Punctual and very respectful driver. The Bao was in top condition.",
-          createdAt: new Date("2026-07-03T12:00:00Z").toISOString(),
+          comment: 'Punctual and very respectful driver. The Bao was in top condition.',
+          createdAt: new Date('2026-07-03T12:00:00Z').toISOString(),
         },
         {
-          id: "mock-review-4",
+          id: 'mock-review-4',
           driverId,
-          passengerName: "Maria Santos",
+          passengerName: 'Maria Santos',
           rating: 5.0,
-          comment: "Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.",
-          createdAt: new Date("2026-07-01T12:00:00Z").toISOString(),
+          comment: 'Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.',
+          createdAt: new Date('2026-07-01T12:00:00Z').toISOString(),
         },
       ];
     }
@@ -180,28 +183,28 @@ export class DriverService {
     if (reviews.length === 0) {
       const defaultReviews = [
         {
-          passengerName: "Aria Cruz",
+          passengerName: 'Aria Cruz',
           rating: 5.0,
-          comment: "Highly recommend! Very pleasant conversation and smooth driving.",
-          createdAt: new Date("2026-07-07T12:00:00Z"),
+          comment: 'Highly recommend! Very pleasant conversation and smooth driving.',
+          createdAt: new Date('2026-07-07T12:00:00Z'),
         },
         {
-          passengerName: "Carlos Diaz",
+          passengerName: 'Carlos Diaz',
           rating: 4.9,
-          comment: "Excellent service. Helped me with my heavy bags.",
-          createdAt: new Date("2026-07-05T12:00:00Z"),
+          comment: 'Excellent service. Helped me with my heavy bags.',
+          createdAt: new Date('2026-07-05T12:00:00Z'),
         },
         {
-          passengerName: "Sophia Lim",
+          passengerName: 'Sophia Lim',
           rating: 5.0,
-          comment: "Punctual and very respectful driver. The Bao was in top condition.",
-          createdAt: new Date("2026-07-03T12:00:00Z"),
+          comment: 'Punctual and very respectful driver. The Bao was in top condition.',
+          createdAt: new Date('2026-07-03T12:00:00Z'),
         },
         {
-          passengerName: "Maria Santos",
+          passengerName: 'Maria Santos',
           rating: 5.0,
-          comment: "Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.",
-          createdAt: new Date("2026-07-01T12:00:00Z"),
+          comment: 'Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.',
+          createdAt: new Date('2026-07-01T12:00:00Z'),
         },
       ];
 

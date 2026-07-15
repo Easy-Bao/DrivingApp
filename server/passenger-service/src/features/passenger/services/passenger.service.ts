@@ -113,6 +113,16 @@ export class PassengerService {
     return passengerProfileWithoutPassword;
   }
 
+  async getPassengersBatch(passengerIds: string[]): Promise<Record<string, any>> {
+    const passengerMap = await this.repository.retrievePassengersByIds(passengerIds);
+    return Object.fromEntries(
+      Object.entries(passengerMap).map(([id, passenger]) => {
+        const { password_hash, ...safePassenger } = passenger as any;
+        return [id, safePassenger];
+      })
+    );
+  }
+
   async updatePassengerProfile(id: string, payload: { name: string; phone: string; email: string }) {
     const updated = await this.repository.updatePassengerProfile({ id, ...payload });
     const { password_hash, ...passengerWithoutPassword } = updated as any;

@@ -15,7 +15,7 @@ export async function handleComputeFare(context: Context) {
     throw new HTTPException(400, { message: 'distance_km and duration_minutes are required' });
   }
 
-  const fareResult = biddingService.computeFareAmount(
+  const fareResult = biddingService.computeFare(
     ride_type ?? 'Solo Ride',
     parseFloat(distance_km),
     parseFloat(duration_minutes)

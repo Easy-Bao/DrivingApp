@@ -1,9 +1,6 @@
 /**
  * Integration tests validating Hono bidding endpoints (fares, sessions, driver offers, accepts, cancels) using db backend.
  */
-process.env.TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:8083';
-process.env.PASSENGER_SERVICE_URL = process.env.PASSENGER_SERVICE_URL || 'http://127.0.0.1:8081';
-
 import { expect, test, describe, beforeAll } from 'bun:test';
 import { app } from '../../src/index.ts';
 import { db } from '../../src/shared/drizzle.ts';

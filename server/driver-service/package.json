@@ -8,7 +8,7 @@
     "db:generate": "bunx drizzle-kit generate",
     "dev": "bun --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "test": "bun test"
+    "test": "bun test --env-file .env.test"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.9.0",

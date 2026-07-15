@@ -111,3 +111,12 @@ export async function handleGetPassengerNotifications(context: Context) {
   const result = await passengerService.getPassengerNotifications(id);
   return context.json(result, 200);
 }
+
+export async function handleGetPassengersBatch(context: Context) {
+  const { ids } = await context.req.json();
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new HTTPException(400, { message: 'ids must be a non-empty array of passenger IDs' });
+  }
+  const result = await passengerService.getPassengersBatch(ids);
+  return context.json(result, 200);
+}

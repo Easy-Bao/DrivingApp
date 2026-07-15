@@ -3,7 +3,7 @@
  */
 import { db } from '../../../shared/drizzle.ts';
 import { passengers, rideRequests } from '../../../db/schema.ts';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, inArray } from 'drizzle-orm';
 import {
   Passenger,
   RideRequest,
@@ -77,6 +77,15 @@ export class DrizzlePassengerRepository implements PassengerRepository {
 
     if (!fetchedPassenger) return null;
     return mapPassenger(fetchedPassenger);
+  }
+
+  async retrievePassengersByIds(passengerIds: string[]): Promise<Record<string, Passenger>> {
+    if (passengerIds.length === 0) return {};
+    const rows = await db.select()
+      .from(passengers)
+      .where(inArray(passengers.id, passengerIds));
+
+    return Object.fromEntries(rows.map((row) => [row.id, mapPassenger(row)]));
   }
 
   async retrievePassengerByEmail(passengerEmail: string): Promise<Passenger | null> {
