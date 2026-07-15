@@ -1,8 +1,8 @@
 /// Chat service integration tests: verifies REST room creation, WebSocket connectivity, and messaging.
 import { expect, test, describe, beforeAll, afterAll } from 'bun:test';
-import chatApp from '../src/index.ts';
-import { db } from '../src/shared/drizzle.ts';
-import { rooms } from '../src/db/schema.ts';
+import chatApp from '../../src/index.ts';
+import { db } from '../../src/shared/drizzle.ts';
+import { rooms } from '../../src/db/schema.ts';
 
 let server: any;
 

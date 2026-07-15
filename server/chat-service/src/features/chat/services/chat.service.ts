@@ -8,7 +8,7 @@ import {
   insertChatMessage,
   fetchRecentChatMessages,
   markChatRoomAsResolved,
-} from './chat.repository.ts';
+} from '../repositories/chat.repository.ts';
 
 /**
  * Global map storing active WebSocket connections indexed by room identifier.

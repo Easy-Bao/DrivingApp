@@ -1,8 +1,8 @@
 import 'package:chat_service/src/features/chat/domain/entities/chat_message.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'chat_message_model.freezed.dart';
-part 'chat_message_model.g.dart';
+part 'generated/chat_message_model.freezed.dart';
+part 'generated/chat_message_model.g.dart';
 
 /// Data model representing chat messages returned from or sent to API endpoints.
 @freezed

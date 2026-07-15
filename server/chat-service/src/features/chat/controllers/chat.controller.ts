@@ -3,6 +3,7 @@
  */
 import { Context } from 'hono';
 import { verify } from 'hono/jwt';
+import { HTTPException } from 'hono/http-exception';
 import {
   createOrGetChatRoom,
   getChatRoomMessages,
@@ -11,7 +12,8 @@ import {
   getRecentChatMessages,
   resolveChatRoom,
   activeChatConnectionsMap,
-} from './chat.service.ts';
+} from '../services/chat.service.ts';
+import { Logger } from '../../../shared/logger/logger.ts';
 
 if (!process.env.TRIP_SERVICE_URL) {
   throw new Error("Configuration Error: TRIP_SERVICE_URL is required but not set.");
@@ -23,16 +25,12 @@ const jwtSecret = process.env.JWT_SECRET;
  * Creates a new chat room or returns the existing matching conversation.
  */
 export async function handleCreateChatRoom(context: Context) {
-  try {
-    const { roomId, driverId, passengerId } = await context.req.json();
-    if (!roomId || !driverId || !passengerId) {
-      return context.json({ error: 'roomId, driverId, and passengerId are required' }, 400);
-    }
-    await createOrGetChatRoom(roomId, driverId, passengerId);
-    return context.json({ success: true }, 201);
-  } catch (error: any) {
-    return context.json({ error: error.message }, 500);
+  const { roomId, driverId, passengerId } = await context.req.json();
+  if (!roomId || !driverId || !passengerId) {
+    throw new HTTPException(400, { message: 'roomId, driverId, and passengerId are required' });
   }
+  await createOrGetChatRoom(roomId, driverId, passengerId);
+  return context.json({ success: true }, 201);
 }
 
 /**
@@ -40,12 +38,8 @@ export async function handleCreateChatRoom(context: Context) {
  */
 export async function handleGetChatRoomMessages(context: Context) {
   const roomId = context.req.param('roomId');
-  try {
-    const messagesList = await getChatRoomMessages(roomId);
-    return context.json(messagesList);
-  } catch (error: any) {
-    return context.json({ error: error.message }, 500);
-  }
+  const messagesList = await getChatRoomMessages(roomId);
+  return context.json(messagesList);
 }
 
 /**
@@ -53,25 +47,21 @@ export async function handleGetChatRoomMessages(context: Context) {
  */
 export async function handleResolveChatRoom(context: Context) {
   const roomId = context.req.param('roomId');
-  try {
-    await resolveChatRoom(roomId);
+  await resolveChatRoom(roomId);
 
-    // Broadcast lock to all connected clients
-    const activePeers = activeChatConnectionsMap.get(roomId);
-    if (activePeers) {
-      const lockWarningMessage = JSON.stringify({
-        type: 'locked',
-        reason: 'This conversation has been resolved.',
-      });
-      for (const peer of activePeers) {
-        peer.send(lockWarningMessage);
-      }
+  // Broadcast lock to all connected clients
+  const activePeers = activeChatConnectionsMap.get(roomId);
+  if (activePeers) {
+    const lockWarningMessage = JSON.stringify({
+      type: 'locked',
+      reason: 'This conversation has been resolved.',
+    });
+    for (const peer of activePeers) {
+      peer.send(lockWarningMessage);
     }
-
-    return context.json({ success: true });
-  } catch (error: any) {
-    return context.json({ error: error.message }, 500);
   }
+
+  return context.json({ success: true });
 }
 
 /**
@@ -125,7 +115,7 @@ export async function handleWebSocketUpgrade(context: Context) {
       }
     }
   } catch (error) {
-    console.error(`Failed to dynamically resolve ride status for ${roomId} from trip-service:`, error);
+    Logger.error(`Failed to dynamically resolve ride status for ${roomId} from trip-service:`, error);
   }
 
   if (!room) {
