@@ -1,23 +1,24 @@
+/**
+ * Entry point for passenger-service registering Hono routes and mounting error handle middleware.
+ */
 import { Hono } from 'hono';
-
-import { getPassengerRouter } from './passenger/routes.ts';
-import { InMemoryPassengerRepository, PrismaPassengerRepository } from './passenger/index.ts';
+import { passengerRouter } from './features/passenger/routes/passenger.routes.ts';
+import { globalErrorHandler } from './shared/middleware/error.ts';
 
 const port = parseInt(process.env.PORT || '8081', 10);
-const databaseUrl = process.env.DATABASE_URL;
-
-const repo = databaseUrl
-  ? new PrismaPassengerRepository()
-  : new InMemoryPassengerRepository();
 
 const app = new Hono();
 
+app.onError(globalErrorHandler);
+
 app.get('/', (c) => c.text('Passenger service active'));
 
-const passengerRouter = getPassengerRouter(repo);
+// Mount modular passenger routes
 app.route('/', passengerRouter);
 
 console.log(`Passenger service is listening at: http://0.0.0.0:${port}`);
+
+export { app };
 
 export default {
   port,

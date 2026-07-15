@@ -1,16 +1,24 @@
+/**
+ * Entry point for trip-service registering routes and mounting error handlers.
+ */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { ridesRouter } from './routes/rides.ts';
+import { ridesRouter } from './features/ride/routes/ride.routes.ts';
+import { globalErrorHandler } from './shared/middleware/error.ts';
 
 const app = new Hono();
 
 app.use('*', cors());
+app.onError(globalErrorHandler);
 
+// Mount modular ride/trip routes
 app.route('/rides', ridesRouter);
 
 app.get('/', (context) => context.json({ status: 'Trip Service OK' }));
 
 const port = parseInt(process.env.PORT || '8083');
+
+export { app };
 
 export default {
   port,
