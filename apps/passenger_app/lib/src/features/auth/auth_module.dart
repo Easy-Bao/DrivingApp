@@ -1,6 +1,5 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/transitions/app_transitions.dart';
-import 'package:passenger_app/src/features/auth/presentation/views/email_onboarding_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/forgot_password_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/onboarding_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/signin_screen.dart';
@@ -28,13 +27,6 @@ class AuthModule extends Module {
       name: 'Signup',
       '/auth/signup',
       child: (context, GoRouterState state) => const SignupScreen(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: 'EmailOnboarding',
-      '/auth/register',
-      child: (context, GoRouterState state) => const EmailOnboardingScreen(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

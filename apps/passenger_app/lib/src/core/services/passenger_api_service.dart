@@ -95,46 +95,6 @@ class PassengerApiService {
     return _parseBoolResponse(response, 200);
   }
 
-  Future<Map<String, dynamic>?> registerEmail({
-    required String email,
-    required String password,
-  }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/passengers/register-email'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-    return _parseMapResponse(response, 201);
-  }
-
-  Future<Map<String, dynamic>?> verifyEmailOtp({
-    required String email,
-    required String code,
-  }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/passengers/verify-email-otp'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'code': code}),
-    );
-    return _parseMapResponse(response, 200);
-  }
-
-  Future<Map<String, dynamic>?> completeProfile({
-    required String name,
-    required String phone,
-    required String token,
-  }) async {
-    final response = await http.put(
-      baseUrl.replace(path: '/passengers/complete-profile'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'name': name, 'phone': phone}),
-    );
-    return _parseMapResponse(response, 200);
-  }
-
   Future<bool> forgotPassword({required String email}) async {
     final response = await http.post(
       baseUrl.replace(path: '/passengers/forgot-password'),
@@ -142,6 +102,18 @@ class PassengerApiService {
       body: jsonEncode({'email': email}),
     );
     return _parseBoolResponse(response, 200);
+  }
+
+  Future<Map<String, dynamic>?> loginPassenger({
+    required String email,
+    required String password,
+  }) async {
+    final response = await http.post(
+      baseUrl.replace(path: '/passengers/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+    return _parseMapResponse(response, 200);
   }
 
   Future<Map<String, dynamic>?> updateProfile({

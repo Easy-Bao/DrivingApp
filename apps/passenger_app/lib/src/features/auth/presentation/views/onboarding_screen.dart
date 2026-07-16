@@ -76,7 +76,7 @@ class OnBoardingScreen extends StatelessWidget {
                           height: 60,
                           child: ElevatedButton(
                             onPressed: () {
-                              unawaited(context.pushNamed('EmailOnboarding'));
+                              unawaited(context.pushNamed('Signin'));
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryColor,
