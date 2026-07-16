@@ -1,6 +1,3 @@
-/**
- * Integration tests validating Hono driver endpoints using db backend.
- */
 import { expect, test, describe, beforeAll } from 'bun:test';
 import { app } from '../../src/index.ts';
 import { db } from '../../src/shared/drizzle.ts';

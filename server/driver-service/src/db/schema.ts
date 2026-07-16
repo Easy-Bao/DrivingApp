@@ -1,6 +1,3 @@
-/**
- * Database schema defining the drivers and reviews tables for Drizzle ORM in driver-service.
- */
 import { pgTable, text, timestamp, boolean, uuid, doublePrecision } from 'drizzle-orm/pg-core';
 
 export const drivers = pgTable('drivers', {
