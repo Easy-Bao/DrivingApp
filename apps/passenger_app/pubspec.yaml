@@ -60,13 +60,13 @@ dependencies:
   mapbox_maps_flutter: ^2.23.0
   geolocator: ^13.0.2
   location_service:
-    path: ../../packages/location_service
+    path: ../../packages/shared_services/location_service
 
   core_models:
     path: ../../packages/core_models
 
   chat_service:
-    path: ../../packages/chat_service
+    path: ../../packages/shared_services/chat_service
   fpdart: ^1.2.0
   dio: ^5.10.0
   rxdart: ^0.28.0
