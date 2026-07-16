@@ -116,7 +116,7 @@ packages:
   core_models:
     dependency: "direct main"
     description:
-      path: "../core_models"
+      path: "../../core_models"
       relative: true
     source: path
     version: "1.0.0"
