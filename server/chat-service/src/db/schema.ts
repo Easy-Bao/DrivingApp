@@ -1,6 +1,3 @@
-/**
- * Database schema defining the rooms and messages tables for Drizzle ORM in chat-service.
- */
 import { pgTable, text, timestamp, boolean, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const rooms = pgTable('rooms', {

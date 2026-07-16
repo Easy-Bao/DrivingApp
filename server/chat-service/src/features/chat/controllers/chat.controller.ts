@@ -1,6 +1,3 @@
-/**
- * Controller layer processing HTTP request context and mapping WebSocket connection lifecycle.
- */
 import { Context } from 'hono';
 import { verify } from 'hono/jwt';
 import { HTTPException } from 'hono/http-exception';
@@ -49,7 +46,6 @@ export async function handleResolveChatRoom(context: Context) {
   const roomId = context.req.param('roomId');
   await resolveChatRoom(roomId);
 
-  // Broadcast lock to all connected clients
   const activePeers = activeChatConnectionsMap.get(roomId);
   if (activePeers) {
     const lockWarningMessage = JSON.stringify({
