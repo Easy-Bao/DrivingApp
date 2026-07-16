@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/transitions/custom_page_transition.dart';
 
 /// Centralized screen-transition registry for the passenger application.
 ///
@@ -22,7 +23,7 @@ class AppTransitions {
   /// 160ms easeOutCubic: the universal push transition for content navigation.
   /// Short enough to feel instant on a fast device; long enough to register as
   /// intentional movement rather than a jarring cut.
-  static const push = GoTransitions.slide;
+  static const push = _CustomPushTransitions();
 
   /// 120ms easeOut fade: used for shell-level tab switches where spatial
   /// direction would be misleading (tabs do not have a linear left/right order).
@@ -49,4 +50,10 @@ class AppTransitions {
     GoTransition.defaultDuration = pushDuration;
     GoTransition.defaultCurve = Curves.easeOutCubic;
   }
+}
+
+class _CustomPushTransitions {
+  const _CustomPushTransitions();
+
+  GoTransition get toLeft => CustomPageTransition();
 }
