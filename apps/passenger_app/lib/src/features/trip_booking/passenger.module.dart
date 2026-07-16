@@ -34,8 +34,8 @@ class PassengerModule extends Module {
           'account',
           child: (context, GoRouterState state) =>
               const PassengerAccountScreen(),
-          transition: AppTransitions.fade,
-          transitionDuration: AppTransitions.fadeDuration,
+          transition: AppTransitions.none,
+          transitionDuration: Duration.zero,
         ),
       ],
     ),

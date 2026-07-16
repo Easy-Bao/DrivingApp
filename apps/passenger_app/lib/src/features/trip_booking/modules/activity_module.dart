@@ -72,8 +72,8 @@ class ActivityModule {
       name: 'PassengerActivity',
       'activity',
       child: (context, GoRouterState state) => const PassengerActivityScreen(),
-      transition: AppTransitions.fade,
-      transitionDuration: AppTransitions.fadeDuration,
+      transition: AppTransitions.none,
+      transitionDuration: Duration.zero,
     ),
   ];
 }

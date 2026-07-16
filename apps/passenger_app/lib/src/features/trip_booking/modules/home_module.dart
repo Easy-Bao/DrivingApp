@@ -173,8 +173,8 @@ class HomeModule {
         ],
         child: const PassengerHomeScreen(),
       ),
-      transition: AppTransitions.fade,
-      transitionDuration: AppTransitions.fadeDuration,
+      transition: AppTransitions.none,
+      transitionDuration: Duration.zero,
     ),
   ];
 }
