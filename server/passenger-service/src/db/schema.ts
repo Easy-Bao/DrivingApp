@@ -1,6 +1,3 @@
-/**
- * Database schema defining the passengers and ride requests tables for Drizzle ORM.
- */
 import { pgTable, text, timestamp, boolean, uuid, doublePrecision } from 'drizzle-orm/pg-core';
 
 export const passengers = pgTable('passengers', {
