@@ -235,43 +235,6 @@ export class DrizzlePassengerRepository implements PassengerRepository {
 
     return notificationsList;
   }
-
-  async registerOrUpdateEmail(email: string, passwordHash: string): Promise<Passenger> {
-    const existing = await this.retrievePassengerByEmail(email);
-    if (existing) {
-      if (existing.is_verified) {
-        throw new Error(`This email is already registered. Try logging in instead.`);
-      }
-      const [updated] = await db.update(passengers)
-        .set({ passwordHash })
-        .where(eq(passengers.email, email))
-        .returning();
-      return mapPassenger(updated);
-    }
-
-    const [created] = await db.insert(passengers)
-      .values({
-        id: crypto.randomUUID(),
-        name: '',
-        email,
-        phone: '',
-        passwordHash,
-        isVerified: false,
-      })
-      .returning();
-    return mapPassenger(created);
-  }
-
-  async completePassengerProfile(id: string, name: string, phone: string): Promise<Passenger> {
-    const [updated] = await db.update(passengers)
-      .set({ name, phone })
-      .where(eq(passengers.id, id))
-      .returning();
-    if (!updated) {
-      throw new Error(`Passenger ID ${id} not found`);
-    }
-    return mapPassenger(updated);
-  }
 }
 
 interface TripInfo {

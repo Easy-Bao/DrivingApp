@@ -6,6 +6,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/activity/activity_bloc.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Passenger Activity component defining application state or layout.
@@ -441,11 +442,11 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     switch (statusType) {
       case 'progress':
       case 'accepted':
-        unawaited(context.pushNamed('ActivityTrackDriver', extra: ride));
+        unawaited(context.pushNamed(TripRoutes.activityTrackDriver, extra: ride));
       case 'completed':
-        unawaited(context.pushNamed('ActivityViewDetails', extra: ride));
+        unawaited(context.pushNamed(TripRoutes.activityViewDetails, extra: ride));
       default:
-        unawaited(context.pushNamed('SearchDestination'));
+        unawaited(context.pushNamed(TripRoutes.searchDestination));
     }
   }
 }

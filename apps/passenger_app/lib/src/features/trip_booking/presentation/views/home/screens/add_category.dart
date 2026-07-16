@@ -9,7 +9,6 @@ import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
 
-/// Add Category component defining application state or layout.
 class PassengerAddCategoryScreen extends StatefulWidget {
   final Function(SavedPlace) onSave;
   final PlaceModel? initialPlace;

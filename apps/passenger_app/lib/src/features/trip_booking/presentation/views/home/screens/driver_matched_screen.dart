@@ -8,6 +8,7 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -185,7 +186,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           driverName: widget.driverName ?? 'Driver',
           vehiclePlate: widget.plateNumber ?? 'ABC 1234',
         );
-    context.goNamed('ActivityTrackDriver', extra: ride);
+    context.goNamed(TripRoutes.activityTrackDriver, extra: ride);
   }
 
   @override

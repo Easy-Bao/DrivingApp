@@ -6,6 +6,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/profile/profile_cubit.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 
 /// Screen displaying the passenger's account menu options and syncing profile details.
 /// Delegates data retrieval and persistence entirely to the [ProfileCubit] state machine.
@@ -23,7 +24,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
         icon: LucideIcons.history,
         title: 'Ride History',
         subtitle: 'View your past trips',
-        onTap: () => context.pushNamed('RideHistory'),
+        onTap: () => context.pushNamed(TripRoutes.rideHistory),
       ),
     ];
   }
@@ -35,7 +36,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
         title: 'Profile Info',
         subtitle: 'Update name and details',
         onTap: () async {
-          await context.pushNamed('ProfileInfo');
+          await context.pushNamed(TripRoutes.profileInfo);
           if (context.mounted) {
             unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
           }
@@ -50,7 +51,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
         icon: LucideIcons.message_circle_question_mark,
         title: 'Help Center',
         subtitle: 'Get support and FAQs',
-        onTap: () => context.pushNamed('HelpCenter'),
+        onTap: () => context.pushNamed(TripRoutes.helpCenter),
       ),
       _AccountMenuItem(
         icon: LucideIcons.info,

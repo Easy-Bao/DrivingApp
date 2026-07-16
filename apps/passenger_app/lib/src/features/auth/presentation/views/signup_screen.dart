@@ -8,6 +8,8 @@ import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -264,7 +266,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (completionResult != null) {
-        context.goNamed('PassengerHome');
+        context.goNamed(TripRoutes.passengerHome);
       } else {
         setState(() => _onboardingErrorMessage = 'Could not save profile. Please try again.');
       }
@@ -394,7 +396,7 @@ class _SignupScreenState extends State<SignupScreen> {
           const SizedBox(height: 20),
           Center(
             child: TextButton(
-              onPressed: () => context.goNamed('Signin'),
+              onPressed: () => context.goNamed(AuthRoutes.signin),
               child: RichText(
                 text: TextSpan(
                   style: const TextStyle(fontSize: 14, color: AppTheme.primaryColor),

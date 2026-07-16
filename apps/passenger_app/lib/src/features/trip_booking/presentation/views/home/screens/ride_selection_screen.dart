@@ -7,7 +7,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
-/// Ride Selection Screen component defining application state or layout.
 class RideSelectionScreen extends StatefulWidget {
   final PlaceModel destination;
   final String distance;

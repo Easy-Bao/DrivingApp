@@ -17,6 +17,7 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -275,7 +276,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         } else if (state is TrackDriverCompleted) {
           unawaited(
             context.pushNamed(
-              'PassengerRating',
+              TripRoutes.passengerRating,
               queryParameters: {
                 'driverId': state.driverId,
                 'driverName': state.driverName,
@@ -537,7 +538,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                       _unreadChatMessagesCount = 0;
                                     });
                                     await context.pushNamed(
-                                      'DriverChat',
+                                      TripRoutes.driverChat,
                                       extra: {
                                         'roomId': widget.ride.id,
                                         'userId': passengerId,

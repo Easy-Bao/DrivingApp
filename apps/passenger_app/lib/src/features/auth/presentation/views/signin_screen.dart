@@ -9,6 +9,8 @@ import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SigninScreen extends StatefulWidget {
@@ -195,7 +197,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            unawaited(context.pushNamed('ForgotPassword'));
+                            unawaited(context.pushNamed(AuthRoutes.forgotPassword));
                           },
                           child: const Text(
                             'Forgot Password?',
@@ -399,13 +401,13 @@ class _SigninScreenState extends State<SigninScreen> {
         await prefs.setString('passenger_email', passenger['email'] as String);
 
         if (!mounted) return;
-        unawaited(context.pushNamed('PassengerHome'));
+        unawaited(context.pushNamed(TripRoutes.passengerHome));
       } else {
         final errorData = _parseErrorJson(response.body);
         final errorMsg = errorData['error'] ?? 'Login failed';
         if (errorData['needs_verification'] == true) {
           final verifyEmail = errorData['email'] ?? email;
-          unawaited(context.pushNamed('VerifyOtp', queryParameters: {'email': verifyEmail}));
+          unawaited(context.pushNamed(AuthRoutes.verifyOtp, queryParameters: {'email': verifyEmail}));
         } else {
           final cleanMsg = _cleanErrorMessage(errorMsg);
           setState(() {

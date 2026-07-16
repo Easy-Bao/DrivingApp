@@ -117,25 +117,3 @@ export async function handleGetPassengersBatch(context: Context) {
   const result = await passengerService.getPassengersBatch(ids);
   return context.json(result, 200);
 }
-
-export async function handleRegisterEmail(context: Context) {
-  const body = await context.req.json();
-  const result = await passengerService.registerEmail(body);
-  return context.json(result, 201);
-}
-
-export async function handleVerifyEmailOtp(context: Context) {
-  const body = await context.req.json();
-  const result = await passengerService.verifyEmailOtp(body);
-  return context.json(result, 200);
-}
-
-export async function handleCompleteProfile(context: Context) {
-  const body = await context.req.json();
-  const passengerId = context.get('passengerId');
-  if (!passengerId) {
-    throw new HTTPException(401, { message: 'Unauthorized' });
-  }
-  const result = await passengerService.completeProfile(passengerId, body);
-  return context.json(result, 200);
-}

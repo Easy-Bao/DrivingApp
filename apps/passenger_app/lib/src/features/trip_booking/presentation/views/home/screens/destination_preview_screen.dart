@@ -8,8 +8,8 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 
-/// Destination Preview Screen component defining application state or layout.
 class DestinationPreviewScreen extends StatefulWidget {
   final PlaceModel destination;
   final String? preselectedRideType;
@@ -314,7 +314,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                               if (widget.preselectedRideType != null) {
                                 unawaited(
                                   context.pushNamed(
-                                    'FindingDriver',
+                                    TripRoutes.findingDriver,
                                     extra: {
                                       'rideType': widget.preselectedRideType!,
                                       'fare':
@@ -332,7 +332,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                               } else {
                                 unawaited(
                                   context.pushNamed(
-                                    'RideSelection',
+                                    TripRoutes.rideSelection,
                                     extra: {
                                       'destination': widget.destination,
                                       'distance': _distance,

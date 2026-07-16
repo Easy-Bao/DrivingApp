@@ -15,6 +15,7 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_state.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_state.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -164,7 +165,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         if (activeTrip != null) {
           unawaited(
             context.pushNamed(
-              'FindingDriver',
+              TripRoutes.findingDriver,
               extra: {
                 'rideType': activeTrip.rideType,
                 'fare': activeTrip.fare,
@@ -371,7 +372,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                   LucideIcons.bell,
                   color: AppTheme.primaryColor,
                 ),
-                onPressed: () => context.pushNamed('Notifications'),
+                onPressed: () => context.pushNamed(TripRoutes.notifications),
               ),
             ),
             if (_notificationCount > 0)
@@ -489,7 +490,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
           ),
         ),
         TextButton(
-          onPressed: () => context.pushNamed('ViewAllSuggestions'),
+          onPressed: () => context.pushNamed(TripRoutes.viewAllSuggestions),
           child: const Text(
             'View all',
             style: TextStyle(
@@ -630,7 +631,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         ).state.currentAddress;
         unawaited(
           context.pushNamed(
-            'SearchDestination',
+            TripRoutes.searchDestination,
             queryParameters: {'pickupAddress': address},
           ),
         );
@@ -772,12 +773,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   }
 
   Future _openActivityDetail(Map<String, dynamic> location) async {
-    await context.pushNamed('ActivityDetailMap', extra: location);
+    await context.pushNamed(TripRoutes.activityDetailMap, extra: location);
   }
 
   Future _openAddCategoryScreen() async {
     final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-    final selectedPlace = await context.pushNamed('MapPin');
+    final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
     if (selectedPlace == null || selectedPlace is! PlaceModel) return;
     if (!mounted) return;
     await context.pushNamed(
@@ -868,7 +869,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       ).state.currentAddress;
       unawaited(
         context.pushNamed(
-          'DestinationPreview',
+          TripRoutes.destinationPreview,
           extra: syntheticPlace,
           queryParameters: {'pickupAddress': address},
         ),
@@ -879,7 +880,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       ).state.currentAddress;
       unawaited(
         context.pushNamed(
-          'SearchDestination',
+          TripRoutes.searchDestination,
           queryParameters: {'pickupAddress': address},
         ),
       );

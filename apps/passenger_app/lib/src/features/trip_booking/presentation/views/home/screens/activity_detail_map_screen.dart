@@ -6,8 +6,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 
-/// Activity Detail Map Screen component defining application state or layout.
 class ActivityDetailMapScreen extends StatefulWidget {
   final String placeName;
   final String placeSubtitle;
@@ -261,7 +261,7 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                           longitude: widget.destinationLng,
                         );
                         unawaited(
-                          context.pushNamed('DestinationPreview', extra: place),
+                          context.pushNamed(TripRoutes.destinationPreview, extra: place),
                         );
                       },
                       style: ElevatedButton.styleFrom(

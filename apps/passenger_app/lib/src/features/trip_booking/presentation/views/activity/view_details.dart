@@ -11,6 +11,7 @@ import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -105,7 +106,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         if (mounted) {
           unawaited(
             context.pushNamed(
-              'DriverChat',
+              TripRoutes.driverChat,
               extra: {
                 'roomId': ride.id,
                 'userId': _passengerId,

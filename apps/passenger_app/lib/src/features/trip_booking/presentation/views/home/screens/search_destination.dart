@@ -6,8 +6,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 
-/// Search Destination component defining application state or layout.
 class SearchDestinationScreen extends StatefulWidget {
   final String? preselectedRideType;
   final String? pickupAddress;
@@ -133,7 +133,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
   }
 
   Future<void> _openMapPin() async {
-    final result = await context.pushNamed('MapPin');
+    final result = await context.pushNamed(TripRoutes.mapPin);
     if (result != null && result is PlaceModel) {
       _onPlaceSelected(result);
     }

@@ -46,6 +46,4 @@ export interface PassengerRepository {
   updatePassengerProfile(options: UpdatePassengerOptions): Promise<Passenger>;
   retrievePassengerNotifications(passengerId: string): Promise<any[]>;
   verifyPassengerOtp(passengerEmail: string): Promise<void>;
-  registerOrUpdateEmail(email: string, passwordHash: string): Promise<Passenger>;
-  completePassengerProfile(id: string, name: string, phone: string): Promise<Passenger>;
 }
