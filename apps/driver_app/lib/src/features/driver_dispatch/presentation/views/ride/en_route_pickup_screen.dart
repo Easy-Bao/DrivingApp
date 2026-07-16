@@ -6,7 +6,6 @@ import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/core/services/passenger_api_service.dart';
 import 'package:driver_app/src/core/services/telemetry_api_service.dart';
 import 'package:driver_app/src/core/services/trip_api_service.dart';
-import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
@@ -19,6 +18,7 @@ import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 /// En Route Pickup Screen component defining application state or layout.
 class EnRoutePickupScreen extends StatefulWidget {

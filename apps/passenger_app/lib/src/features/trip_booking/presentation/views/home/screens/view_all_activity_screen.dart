@@ -5,20 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/shared_ui.dart';
 
-class PassengerViewAllActivity extends StatefulWidget {
-  const PassengerViewAllActivity({super.key});
+class PassengerViewAllActivityScreen extends StatefulWidget {
+  const PassengerViewAllActivityScreen({super.key});
 
   @override
-  State<PassengerViewAllActivity> createState() =>
-      _PassengerViewAllActivityState();
+  State<PassengerViewAllActivityScreen> createState() =>
+      _PassengerViewAllActivityScreenState();
 }
 
-class _PassengerViewAllActivityState extends State<PassengerViewAllActivity> {
+class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivityScreen> {
   List<RideHistoryModel> _rides = [];
   bool _isLoading = true;
   String _errorMessage = '';

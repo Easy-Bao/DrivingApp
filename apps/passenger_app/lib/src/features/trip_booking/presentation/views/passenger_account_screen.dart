@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 /// Screen displaying the passenger's account menu options and syncing profile details.
 /// Delegates data retrieval and persistence entirely to the [ProfileCubit] state machine.

@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
-import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PassengerAddCategoryScreen extends StatefulWidget {
   final Function(SavedPlace) onSave;

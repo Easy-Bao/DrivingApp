@@ -1,10 +1,10 @@
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/transitions/app_transitions.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/forgot_password_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/onboarding_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/signin_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/signup_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/verify_otp_screen.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class AuthModule extends Module {
   @override

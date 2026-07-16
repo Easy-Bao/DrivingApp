@@ -12,16 +12,15 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Track Driver component defining application state or layout.
 class ActivityTrackDriverScreen extends StatefulWidget {
   final RideHistoryModel ride;
 

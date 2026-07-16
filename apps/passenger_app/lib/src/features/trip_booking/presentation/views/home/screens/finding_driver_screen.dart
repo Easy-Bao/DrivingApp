@@ -7,12 +7,12 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/bid_session_service.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_state.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_event.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverScreen extends StatelessWidget {
   final String rideType;

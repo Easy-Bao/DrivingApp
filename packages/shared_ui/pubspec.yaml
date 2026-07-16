@@ -1,0 +1,15 @@
+name: shared_ui
+description: Shared design system — AppTheme, CustomToast, and page transitions used by both passenger_app and driver_app.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_lucide: ^1.8.2
+  go_router_modular: ^5.0.5
+  go_transitions: ^0.8.3

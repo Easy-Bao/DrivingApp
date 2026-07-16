@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class RideSelectionScreen extends StatefulWidget {
   final PlaceModel destination;

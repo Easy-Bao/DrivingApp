@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:driver_app/src/core/themes/app_themes.dart';
+import 'package:shared_ui/src/themes/app_themes.dart';
 
 class CustomToast {
+  CustomToast._();
+
   static void show(
     BuildContext context,
     String message, {
@@ -61,12 +63,12 @@ class _ToastWidgetState extends State<_ToastWidget>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    _controller.forward();
+    unawaited(_controller.forward());
 
     // Start fade out slightly before dismissal
     Timer(const Duration(milliseconds: 2700), () {
       if (mounted) {
-        _controller.reverse();
+        unawaited(_controller.reverse());
       }
     });
   }

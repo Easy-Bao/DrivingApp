@@ -8,8 +8,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/network/api_endpoints.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/chat/chat_cubit.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 /// Screen enabling live chat communications between the passenger and their driver.
 /// Uses [ChatCubit] to connect to WebSockets and sync messages.

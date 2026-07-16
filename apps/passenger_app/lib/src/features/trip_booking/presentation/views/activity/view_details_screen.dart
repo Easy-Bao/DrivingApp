@@ -10,29 +10,21 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/config/environment_config.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/shared_ui.dart';
 
-/// Trip details screen for a completed ride.
-///
-/// Receives a [RideHistoryModel] via GoRouter's `extra` argument.
-/// Renders a live Mapbox map with the route between pickup and drop-off,
-/// fare breakdown, timeline, and a re-book button.
-///
-/// If `extra` is null (e.g. navigated without a model), the screen shows
-/// a graceful fallback rather than crashing.
-class ActivityViewDetails extends StatefulWidget {
+class ActivityViewDetailsScreen extends StatefulWidget {
   final RideHistoryModel? ride;
 
-  const ActivityViewDetails({super.key, this.ride});
+  const ActivityViewDetailsScreen({super.key, this.ride});
 
   @override
-  State<ActivityViewDetails> createState() => _ActivityViewDetailsState();
+  State<ActivityViewDetailsScreen> createState() => _ActivityViewDetailsScreenState();
 }
 
-class _ActivityViewDetailsState extends State<ActivityViewDetails> {
+class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
   Map<String, dynamic>? _detailedRideData;
   bool _showLostFoundChat = false;
   String _passengerId = '';
@@ -60,6 +52,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
       final elapsedTimeSinceCompletion = DateTime.now().difference(
         rideCompletedTime,
       );
+      // Passengers may report lost items within 48 hours of trip completion.
       if (elapsedTimeSinceCompletion.inHours < 48) {
         isWithinGracePeriodWindow = true;
       }
@@ -69,6 +62,8 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
       setState(() {
         _passengerId = passengerId;
         _detailedRideData = retrievedRideData;
+        // Lost & Found chat only surfaces when a driver is linked to the ride
+        // and the 48-hour reporting window has not elapsed.
         _showLostFoundChat =
             isWithinGracePeriodWindow &&
             retrievedRideData != null &&
@@ -77,6 +72,9 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
     }
   }
 
+  /// Creates or resumes a chat room keyed by [ride.id], then navigates to the
+  /// driver chat screen. The POST is idempotent — a 200 response means the room
+  /// already existed and is safe to join immediately.
   Future<void> _initiateLostFoundChat() async {
     final ride = widget.ride;
     final retrievedRideData = _detailedRideData;
@@ -157,7 +155,7 @@ class _ActivityViewDetailsState extends State<ActivityViewDetails> {
         LatLng(ride.destLat, ride.destLng),
       ], padding: 40.0);
     } catch (error) {
-      debugPrint('ActivityViewDetails._onMapCreated failed: $error');
+      debugPrint('ActivityViewDetailsScreen._onMapCreated failed: $error');
     }
   }
 

@@ -5,8 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
-import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});

@@ -12,7 +12,6 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_
 
 import 'package:location_service/location_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_state.dart';
@@ -20,7 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:driver_app/src/shared/widgets/custom_toast.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 /// Driver Dashboard component defining application state or layout.
 class DriverDashboardScreen extends StatefulWidget {

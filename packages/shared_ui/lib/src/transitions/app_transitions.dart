@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/transitions/custom_page_transition.dart';
+import 'package:go_transitions/go_transitions.dart';
+import 'package:shared_ui/src/transitions/custom_page_transition.dart';
 
-/// Centralized transition manager for GoRouter screens. Sets default page transition 
+/// Centralized transition manager for GoRouter screens. Sets default page transition
 /// durations and routes push navigation requests through a custom platform transition builder.
 class AppTransitions {
   AppTransitions._();

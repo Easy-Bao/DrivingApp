@@ -7,9 +7,9 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});

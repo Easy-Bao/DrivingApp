@@ -1,11 +1,11 @@
 import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/driver_dispatch/domain/repositories/driver_activity_repository.dart';
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 /// Earnings Screen component defining application state or layout.
 class DriverEarningsScreen extends StatefulWidget {

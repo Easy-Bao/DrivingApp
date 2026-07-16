@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router_modular/go_router_modular.dart';
+import 'package:go_transitions/go_transitions.dart';
 
-/// Custom transition builder mimicking native iOS navigation. Handles right-to-left pushes 
+/// Custom transition builder mimicking native iOS navigation. Handles right-to-left pushes
 /// and left-to-right pops with screen parallax and depth shadow effects.
 class CustomPageTransition extends GoTransition {
   CustomPageTransition({

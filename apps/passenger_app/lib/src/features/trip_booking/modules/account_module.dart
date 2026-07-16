@@ -1,8 +1,8 @@
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/transitions/app_transitions.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/account/help_center_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/account/profile_info_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/account/ride_history_screen.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class AccountModule {
   AccountModule._();

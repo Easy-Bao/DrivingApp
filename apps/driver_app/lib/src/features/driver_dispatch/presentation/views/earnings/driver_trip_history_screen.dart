@@ -1,10 +1,10 @@
 import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/driver_dispatch/domain/repositories/driver_activity_repository.dart';
-import 'package:driver_app/src/core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 /// Driver Trip History Screen component defining application state or layout.
 class DriverTripHistoryScreen extends StatefulWidget {
