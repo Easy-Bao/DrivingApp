@@ -71,6 +71,12 @@ dependencies:
   chat_service:
     path: ../../packages/chat_service
 
+  session_service:
+    path: ../../packages/session_service
+
+  passenger_services:
+    path: ../../packages/passenger_services
+
   fpdart: ^1.2.0
   dio: ^5.10.0
   rxdart: ^0.28.0

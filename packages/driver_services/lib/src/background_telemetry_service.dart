@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 /// Service managing background execution isolates for telemetry tracking.
@@ -30,28 +31,24 @@ class BackgroundTelemetryService {
   static void onStart(ServiceInstance service) {
     DartPluginRegistrant.ensureInitialized();
 
-    final dynamic backgroundInstance = service;
-    final isAndroidInstance = service.runtimeType.toString().contains(
-      'Android',
-    );
-
-    if (isAndroidInstance) {
-      backgroundInstance.on('setAsForeground').listen((event) {
-        backgroundInstance.setAsForegroundService();
+    if (service is AndroidServiceInstance) {
+      service.on('setAsForeground').listen((event) {
+        unawaited(service.setAsForegroundService());
       });
 
-      backgroundInstance.on('setAsBackground').listen((event) {
-        backgroundInstance.setAsBackgroundService();
+      service.on('setAsBackground').listen((event) {
+        unawaited(service.setAsBackgroundService());
       });
     }
 
     service.on('stopService').listen((event) {
-      service.stopSelf();
+      unawaited(service.stopSelf());
     });
 
     Timer.periodic(const Duration(seconds: 10), (timer) async {
-      if (isAndroidInstance) {
-        if (await backgroundInstance.isForegroundService() == true) {
+      if (service is AndroidServiceInstance) {
+        //TODO: Make configurable and no empty block
+        if (await service.isForegroundService() == true) {
           // background geohash update loop goes here
         }
       }

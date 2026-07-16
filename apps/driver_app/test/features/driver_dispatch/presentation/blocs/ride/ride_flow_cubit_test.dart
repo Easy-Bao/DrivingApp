@@ -1,5 +1,5 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/services/trip_api_service.dart';
+import 'package:driver_services/driver_services.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:bloc_test/bloc_test.dart';
@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 
+//TODO: Fix and hide localhost url
 class MockRideRepo extends Mock implements RideRepository {}
 
 class MockTripApiService extends Mock implements TripApiService {

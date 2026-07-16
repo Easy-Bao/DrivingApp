@@ -1,7 +1,7 @@
 import 'package:core_models/core_models.dart';
+import 'package:driver_services/driver_services.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:driver_app/src/core/services/trip_api_service.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
   final TripApiService _apiService;

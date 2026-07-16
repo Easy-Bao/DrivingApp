@@ -1,5 +1,5 @@
 import 'package:core_models/core_models.dart';
-import 'package:passenger_app/src/core/services/bid_session_service.dart';
+import 'package:passenger_services/passenger_services.dart';
 
 /// Booking State component defining application state or layout.
 abstract class BookingState {

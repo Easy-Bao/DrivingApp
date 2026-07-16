@@ -1,0 +1,16 @@
+name: session_service
+description: Shared secure session storage for passenger and driver apps. Manages JWT tokens and identity keys via flutter_secure_storage.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^10.3.1
+  core_models:
+    path: ../core_models
+  http: ^1.2.0

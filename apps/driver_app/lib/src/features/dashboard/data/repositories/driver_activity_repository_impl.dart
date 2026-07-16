@@ -1,7 +1,7 @@
 import 'package:core_models/core_models.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:driver_app/src/core/services/trip_api_service.dart';
 import 'package:driver_app/src/features/dashboard/domain/repositories/driver_activity_repository.dart';
+import 'package:driver_services/driver_services.dart';
+import 'package:fpdart/fpdart.dart';
 
 /// Repository implementation for reading driver trip history from the backend.
 class DriverActivityRepositoryImpl implements DriverActivityRepository {

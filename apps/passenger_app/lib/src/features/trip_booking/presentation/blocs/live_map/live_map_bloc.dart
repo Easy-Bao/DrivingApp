@@ -1,10 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_state.dart';
+import 'package:passenger_services/passenger_services.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// State controller managing map overlay layouts, marker assets, routing

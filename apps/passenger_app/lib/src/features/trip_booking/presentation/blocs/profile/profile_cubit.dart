@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
+import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// State snapshot representing the passenger profile information.

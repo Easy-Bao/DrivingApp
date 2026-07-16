@@ -7,14 +7,13 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/di/service_locator.dart';
-import 'package:passenger_app/src/core/services/bid_session_service.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_state.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_state.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
+import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 

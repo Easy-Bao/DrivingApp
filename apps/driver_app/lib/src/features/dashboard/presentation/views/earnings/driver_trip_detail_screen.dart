@@ -1,8 +1,9 @@
 import 'dart:convert';
+
 import 'package:driver_app/src/core/config/environment_config.dart';
 import 'package:driver_app/src/core/di/service_locator.dart';
-import 'package:driver_app/src/core/services/passenger_api_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
+import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';

@@ -255,6 +255,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  driver_services:
+    dependency: "direct main"
+    description:
+      path: "../../packages/driver_services"
+      relative: true
+    source: path
+    version: "0.1.0"
   equatable:
     dependency: "direct main"
     description:
@@ -964,6 +971,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.28.0"
+  session_service:
+    dependency: "direct main"
+    description:
+      path: "../../packages/session_service"
+      relative: true
+    source: path
+    version: "0.1.0"
   shared_preferences:
     dependency: "direct main"
     description:

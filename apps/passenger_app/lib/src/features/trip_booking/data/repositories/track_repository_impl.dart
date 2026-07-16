@@ -2,7 +2,7 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
+import 'package:passenger_services/passenger_services.dart';
 
 /// Fetches road-snapped route coordinates via Mapbox and manages active ride tracking.
 class TrackRepositoryImpl implements TrackRepository {

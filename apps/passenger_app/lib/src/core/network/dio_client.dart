@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:session_service/session_service.dart';
 
 /// Preconfigured HTTP client builder utilizing [Dio].
 class DioClient {

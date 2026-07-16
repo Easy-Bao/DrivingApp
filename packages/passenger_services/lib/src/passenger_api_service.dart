@@ -2,13 +2,16 @@ import 'dart:convert';
 
 import 'package:core_models/core_models.dart';
 import 'package:http/http.dart' as http;
-import 'package:passenger_app/src/core/di/service_locator.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:session_service/session_service.dart';
 
 class PassengerApiService {
   final Uri baseUrl;
+  final SecureSessionService _sessionService;
 
-  PassengerApiService({required this.baseUrl});
+  PassengerApiService({
+    required this.baseUrl,
+    required SecureSessionService sessionService,
+  }) : _sessionService = sessionService;
 
   Map<String, dynamic> _parseMapResponse(
     http.Response response,
@@ -56,8 +59,7 @@ class PassengerApiService {
   }
 
   Future<Map<String, String>> _getRequestHeaders() async {
-    final sessionService = getIt<SecureSessionService>();
-    final String jsonWebToken = await sessionService.readAuthToken() ?? '';
+    final String jsonWebToken = await _sessionService.readAuthToken() ?? '';
     final Map<String, String> requestHeaders = {
       'Content-Type': 'application/json',
     };

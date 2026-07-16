@@ -1,12 +1,13 @@
 import 'dart:async';
+
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_state.dart';
+import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location_service/location_service.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/core/services/telemetry_api_service.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_state.dart';
+import 'package:session_service/session_service.dart';
 
 /// State controller managing map overlay layouts, marker assets, routing
 /// sequence rendering, and real-time backend telemetry dispatching.

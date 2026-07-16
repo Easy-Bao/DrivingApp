@@ -1,9 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:get_it/get_it.dart';
 import 'package:passenger_app/src/core/config/environment_config.dart';
-import 'package:passenger_app/src/core/services/bid_session_service.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/trip_booking/data/repositories/activity_repository_impl.dart';
 import 'package:passenger_app/src/features/trip_booking/data/repositories/driver_repository_impl.dart';
 import 'package:passenger_app/src/features/trip_booking/data/repositories/passenger_home_repository_impl.dart';
@@ -17,8 +14,9 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/profile/profile_cubit.dart';
+import 'package:passenger_services/passenger_services.dart';
+import 'package:session_service/session_service.dart';
 
-/// Dependency injection registry and service locator configuration.
 final GetIt getIt = GetIt.instance;
 
 void setupServiceLocator() {
@@ -27,7 +25,10 @@ void setupServiceLocator() {
   );
 
   getIt.registerLazySingleton<PassengerApiService>(
-    () => PassengerApiService(baseUrl: EnvironmentConfig.passengerServiceUri),
+    () => PassengerApiService(
+      baseUrl: EnvironmentConfig.passengerServiceUri,
+      sessionService: getIt<SecureSessionService>(),
+    ),
   );
 
   getIt.registerLazySingleton<DriverRepository>(

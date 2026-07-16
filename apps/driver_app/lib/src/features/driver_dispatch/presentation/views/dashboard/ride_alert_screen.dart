@@ -1,11 +1,11 @@
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
 
+import 'package:driver_app/src/core/di/service_locator.dart';
+import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:driver_app/src/core/services/bidding_api_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 /// Ride Alert Screen component defining application state or layout.

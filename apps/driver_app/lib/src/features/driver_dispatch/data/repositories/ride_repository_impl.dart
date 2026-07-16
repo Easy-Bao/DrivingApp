@@ -1,7 +1,7 @@
 import 'package:core_models/core_models.dart';
+import 'package:driver_services/driver_services.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:location_service/location_service.dart';
-import 'package:driver_app/src/core/services/bidding_api_service.dart';
 
 class RideRepositoryImpl implements RideRepository {
   final BiddingApiService _apiService;

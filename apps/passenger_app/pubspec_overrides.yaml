@@ -1,4 +1,4 @@
-# melos_managed_dependency_overrides: chat_service,core_models,location_service,shared_ui
+# melos_managed_dependency_overrides: chat_service,core_models,location_service,shared_ui,passenger_services,session_service
 dependency_overrides:
   chat_service:
     path: ../../packages/chat_service
@@ -6,5 +6,9 @@ dependency_overrides:
     path: ../../packages/core_models
   location_service:
     path: ../../packages/location_service
+  passenger_services:
+    path: ../../packages/passenger_services
+  session_service:
+    path: ../../packages/session_service
   shared_ui:
     path: ../../packages/shared_ui

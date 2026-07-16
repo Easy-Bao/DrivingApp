@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
+import 'package:passenger_services/src/passenger_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BidSessionTrip {

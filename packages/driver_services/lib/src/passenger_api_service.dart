@@ -1,5 +1,5 @@
+import 'package:driver_services/src/base_api_client.dart';
 import 'package:http/http.dart' as http;
-import 'base_api_client.dart';
 
 class PassengerApiService extends BaseApiClient {
   PassengerApiService({required super.baseUrl});

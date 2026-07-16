@@ -1,11 +1,11 @@
 import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/services/bid_session_service.dart';
-import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_state.dart';
+import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// BLoC responsible for orchestrating the trip booking and driver bidding lifecycle.

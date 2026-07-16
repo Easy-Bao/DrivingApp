@@ -1,6 +1,7 @@
 import 'dart:convert';
+
+import 'package:driver_services/src/base_api_client.dart';
 import 'package:http/http.dart' as http;
-import 'base_api_client.dart';
 
 class TripApiService extends BaseApiClient {
   TripApiService({required super.baseUrl});
