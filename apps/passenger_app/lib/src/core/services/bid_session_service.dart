@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -185,6 +186,7 @@ class BidSessionService {
         // Absorb remote cancellation failure so that local state teardown 
         // is never blocked by temporary network outages or server exceptions, 
         // allowing the passenger to successfully cancel locally and exit the search view.
+        debugPrint('BidSessionService.cancelSession failed remotely: $error');
       }
     }
     _clearSessionState(notify: notify);
