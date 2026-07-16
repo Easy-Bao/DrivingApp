@@ -1,6 +1,3 @@
-/**
- * Controller layer processing HTTP context for telemetry endpoints, mapping outputs from TelemetryService.
- */
 import { Context } from 'hono';
 import { InMemoryTelemetryRepository } from '../repositories/telemetry.repository.ts';
 import { TelemetryService } from '../services/telemetry.service.ts';

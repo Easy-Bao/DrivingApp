@@ -1,6 +1,3 @@
-/**
- * TypeScript interface declarations representing ride database entities.
- */
 export interface Ride {
   id: string;
   passengerId: string;

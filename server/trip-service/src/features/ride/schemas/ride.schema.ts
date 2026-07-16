@@ -1,6 +1,3 @@
-/**
- * Zod validation schemas governing request inputs for ride features.
- */
 import { z } from 'zod';
 
 export const CreateRideSchema = z.object({

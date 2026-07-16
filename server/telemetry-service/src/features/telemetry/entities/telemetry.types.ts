@@ -1,6 +1,3 @@
-/**
- * TypeScript interface declarations representing telemetry coordinates.
- */
 export interface Coordinate {
   lat: number;
   lng: number;

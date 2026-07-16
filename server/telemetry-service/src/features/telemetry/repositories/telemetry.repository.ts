@@ -1,6 +1,3 @@
-/**
- * In-memory repository layer managing GPS telemetry coordinate mappings.
- */
 import { Coordinate, TelemetryRepository } from '../entities/telemetry.types.ts';
 
 export const locations = new Map<string, Coordinate>();

@@ -1,6 +1,3 @@
-/**
- * Repository layer executing Drizzle queries and transaction locks for rides table.
- */
 import { db } from '../../../shared/drizzle.ts';
 import { rides } from '../../../db/schema.ts';
 import { eq, desc, and, inArray } from 'drizzle-orm';

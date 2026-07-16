@@ -1,6 +1,3 @@
-/**
- * Zod validation schemas governing request inputs for telemetry updates.
- */
 import { z } from 'zod';
 
 export const LocationUpdateSchema = z.object({

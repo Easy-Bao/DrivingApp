@@ -1,6 +1,3 @@
-/**
- * Controller layer processing HTTP request context for ride endpoints, mapping outputs to snake_case.
- */
 import { Context } from 'hono';
 import { DrizzleRideRepository } from '../repositories/ride.repository.ts';
 import { RideService } from '../services/ride.service.ts';
