@@ -1,6 +1,3 @@
-/**
- * Repository layer executing Drizzle queries for passenger database operations and trip-service merges.
- */
 import { db } from '../../../shared/drizzle.ts';
 import { passengers, rideRequests } from '../../../db/schema.ts';
 import { eq, desc, inArray } from 'drizzle-orm';

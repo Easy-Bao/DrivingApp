@@ -1,6 +1,3 @@
-/**
- * TypeScript type and interface declarations representing driver and review database entities.
- */
 export interface Driver {
   id: string;
   name: string;

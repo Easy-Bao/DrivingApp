@@ -1,6 +1,3 @@
-/**
- * Zod validation schemas governing request inputs for driver features.
- */
 import { z } from 'zod';
 
 export const CreateDriverSchema = z.object({

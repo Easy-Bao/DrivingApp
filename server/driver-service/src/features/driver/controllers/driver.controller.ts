@@ -1,6 +1,3 @@
-/**
- * Controller layer processing HTTP context for driver endpoints, mapping outputs from DriverService.
- */
 import { Context } from 'hono';
 import { DrizzleDriverRepository } from '../repositories/driver.repository.ts';
 import { DriverService } from '../services/driver.service.ts';

@@ -1,6 +1,3 @@
-/**
- * TypeScript type and interface declarations representing passenger database entities and update options.
- */
 export type RideType = 'solo-ride' | 'share-bao';
 
 export interface Passenger {

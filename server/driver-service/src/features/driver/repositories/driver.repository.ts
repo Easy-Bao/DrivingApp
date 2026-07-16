@@ -1,6 +1,3 @@
-/**
- * Repository layer executing Drizzle queries for driver database operations.
- */
 import { db } from '../../../shared/drizzle.ts';
 import { drivers, reviews } from '../../../db/schema.ts';
 import { eq, desc } from 'drizzle-orm';

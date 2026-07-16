@@ -1,6 +1,3 @@
-/**
- * Zod validation schemas governing request inputs for passenger features.
- */
 import { z } from 'zod';
 
 export const CreatePassengerSchema = z.object({

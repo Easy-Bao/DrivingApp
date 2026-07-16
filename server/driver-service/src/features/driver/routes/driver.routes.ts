@@ -1,6 +1,3 @@
-/**
- * Routing definitions mapping driver endpoints to controller actions, with input validation.
- */
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import {

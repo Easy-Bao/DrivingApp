@@ -1,6 +1,3 @@
-/**
- * Controller layer processing HTTP request context and mapping routing parameters to PassengerService actions.
- */
 import { Context } from 'hono';
 import { verify } from 'hono/jwt';
 import { HTTPException } from 'hono/http-exception';
