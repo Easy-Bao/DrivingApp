@@ -6,11 +6,11 @@ import 'package:driver_app/src/core/services/passenger_api_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/services/telemetry_api_service.dart';
 import 'package:driver_app/src/core/services/trip_api_service.dart';
-import 'package:driver_app/src/features/driver_dispatch/data/repositories/dashboard_repository_impl.dart';
+import 'package:driver_app/src/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:driver_app/src/features/driver_dispatch/data/repositories/ride_repository_impl.dart';
-import 'package:driver_app/src/features/driver_dispatch/domain/repositories/driver_activity_repository.dart';
-import 'package:driver_app/src/features/driver_dispatch/data/repositories/driver_activity_repository_impl.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/dashboard/domain/repositories/driver_activity_repository.dart';
+import 'package:driver_app/src/features/dashboard/data/repositories/driver_activity_repository_impl.dart';
+import 'package:driver_app/src/features/dashboard/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:get_it/get_it.dart';
 

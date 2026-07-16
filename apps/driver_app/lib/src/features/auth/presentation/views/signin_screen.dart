@@ -1,7 +1,9 @@
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'dart:async';
+import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/core/services/auth_api_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/auth/auth_routes.dart';
+import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -96,7 +98,7 @@ class _SigninScreenState extends State<SigninScreen> {
       await prefs.setString('rating', (driver['rating'] ?? 5.0).toString());
 
       if (mounted) {
-        context.goNamed('DriverDashboard');
+        context.goNamed(DriverRoutes.driverDashboard);
       }
     } else {
       setState(() {
@@ -270,7 +272,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            context.pushNamed('ForgotPassword');
+                            context.pushNamed(AuthRoutes.forgotPassword);
                           },
                           child: const Text(
                             'Forgot Password?',

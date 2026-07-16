@@ -1,3 +1,4 @@
+import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -193,7 +194,7 @@ class FareSummaryScreen extends StatelessWidget {
 
   Widget _buildConfirmButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.goNamed('DriverDashboard'),
+      onTap: () => context.goNamed(DriverRoutes.driverDashboard),
       child: Container(
         width: double.infinity,
         height: 68,

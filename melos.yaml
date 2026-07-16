@@ -4,7 +4,7 @@ repository: https://github.com/Easy-Bao/DrivingApp
 packages:
   - apps/*
   - packages/*
-  - packages/shared_services/*
+
 
 scripts:
   postbootstrap:

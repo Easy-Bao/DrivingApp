@@ -1,3 +1,4 @@
+import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -137,7 +138,7 @@ class _RatePassengerScreenState extends State<RatePassengerScreen> {
     return GestureDetector(
       onTap: () {
         CustomToast.show(context, 'Rating submitted!');
-        context.goNamed('DriverDashboard');
+        context.goNamed(DriverRoutes.driverDashboard);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -175,7 +176,7 @@ class _RatePassengerScreenState extends State<RatePassengerScreen> {
 
   Widget _buildSkipButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.goNamed('DriverDashboard'),
+      onTap: () => context.goNamed(DriverRoutes.driverDashboard),
       child: Text(
         'Skip for now',
         style: TextStyle(

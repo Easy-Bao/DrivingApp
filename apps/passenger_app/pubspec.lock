@@ -132,7 +132,7 @@ packages:
   chat_service:
     dependency: "direct main"
     description:
-      path: "../../packages/shared_services/chat_service"
+      path: "../../packages/chat_service"
       relative: true
     source: path
     version: "0.0.1"
@@ -720,7 +720,7 @@ packages:
   location_service:
     dependency: "direct main"
     description:
-      path: "../../packages/shared_services/location_service"
+      path: "../../packages/location_service"
       relative: true
     source: path
     version: "0.0.1"

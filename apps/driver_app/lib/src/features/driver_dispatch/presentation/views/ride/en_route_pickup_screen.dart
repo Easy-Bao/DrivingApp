@@ -6,10 +6,11 @@ import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/core/services/passenger_api_service.dart';
 import 'package:driver_app/src/core/services/telemetry_api_service.dart';
 import 'package:driver_app/src/core/services/trip_api_service.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
+import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -17,8 +18,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_ui/shared_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// En Route Pickup Screen component defining application state or layout.
 class EnRoutePickupScreen extends StatefulWidget {
@@ -228,7 +229,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
         : 'Passenger';
     BlocProvider.of<RideFlowCubit>(context).arriveAtPickup(passengerName);
     context.pushReplacementNamed(
-      'WaitingPassenger',
+      DriverRoutes.waitingPassenger,
       extra: {
         'pickup': widget.pickup,
         'dropoff': widget.dropoff,
@@ -597,7 +598,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                   _unreadChatMessagesCount = 0;
                 });
                 await context.pushNamed(
-                  'DriverChat',
+                  DriverRoutes.driverChat,
                   extra: {
                     'roomId': rideId,
                     'userId': driverId,
