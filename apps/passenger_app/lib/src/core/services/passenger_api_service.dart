@@ -315,11 +315,40 @@ class PassengerApiService {
     return _parseMapResponse(driverStatsResponse, 200);
   }
 
-  Future<List<dynamic>> fetchDriverReviews(String driverId) async {
+  Future<List<dynamic>> fetchDriverReviews(
+    String driverId, {
+    int? page,
+    int? limit,
+  }) async {
+    final queryParams = <String, String>{};
+    if (page != null) queryParams['page'] = page.toString();
+    if (limit != null) queryParams['limit'] = limit.toString();
+
     final response = await http.get(
-      baseUrl.replace(path: '/drivers/$driverId/reviews'),
+      baseUrl.replace(
+        path: '/drivers/$driverId/reviews',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      ),
       headers: {'Content-Type': 'application/json'},
     );
     return _parseListResponse(response, 200);
+  }
+
+  Future<Map<String, dynamic>?> submitDriverReview({
+    required String driverId,
+    required String passengerName,
+    required double rating,
+    required String comment,
+  }) async {
+    final response = await http.post(
+      baseUrl.replace(path: '/drivers/$driverId/reviews'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'passengerName': passengerName,
+        'rating': rating,
+        'comment': comment,
+      }),
+    );
+    return _parseMapResponse(response, 201);
   }
 }

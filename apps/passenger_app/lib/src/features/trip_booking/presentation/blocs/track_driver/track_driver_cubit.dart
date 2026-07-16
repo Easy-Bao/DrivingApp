@@ -21,10 +21,12 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     required double endLat,
     required double endLng,
     String? rideId,
+    String? driverId,
     String? driverName,
     String? vehiclePlate,
     String? vehicleType,
   }) async {
+    final fallbackId = driverId ?? 'Driver-1';
     final fallbackName = driverName ?? 'Driver';
     final fallbackPlate = vehiclePlate ?? '—';
     final fallbackType = vehicleType ?? 'Vehicle';
@@ -61,7 +63,10 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
           (rideUpdate) async {
             if (rideUpdate.status == RideStatus.completed) {
               timer.cancel();
-              emit(TrackDriverCompleted());
+              emit(TrackDriverCompleted(
+                driverId: rideUpdate.driverId ?? '',
+                driverName: rideUpdate.driverName.isNotEmpty ? rideUpdate.driverName : 'Driver',
+              ));
               await prefs.remove('active_ride_id');
               _isSyncing = false;
               return;
@@ -126,7 +131,10 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         progress += 0.1;
         if (progress >= 1.0) {
           timer.cancel();
-          emit(TrackDriverCompleted());
+          emit(TrackDriverCompleted(
+            driverId: fallbackId,
+            driverName: fallbackName,
+          ));
         } else {
           final pos = _interpolate(
             progress: progress,

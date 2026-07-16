@@ -273,7 +273,15 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
             ),
           );
         } else if (state is TrackDriverCompleted) {
-          unawaited(context.pushNamed('PassengerRating'));
+          unawaited(
+            context.pushNamed(
+              'PassengerRating',
+              queryParameters: {
+                'driverId': state.driverId,
+                'driverName': state.driverName,
+              },
+            ),
+          );
         } else if (state is TrackDriverCanceled) {
           if (mounted) {
             Navigator.of(context).pop();

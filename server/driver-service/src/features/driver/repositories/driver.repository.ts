@@ -51,11 +51,14 @@ export class DrizzleDriverRepository implements DriverRepository {
     return updated;
   }
 
-  async fetchDriverReviews(driverId: string): Promise<Review[]> {
+  async fetchDriverReviews(driverId: string, page = 1, limit = 5): Promise<Review[]> {
+    const offset = (page - 1) * limit;
     return await db.select()
       .from(reviews)
       .where(eq(reviews.driverId, driverId))
-      .orderBy(desc(reviews.createdAt));
+      .orderBy(desc(reviews.createdAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async seedDriverReviews(driverId: string, defaultReviews: any[]): Promise<Review[]> {
@@ -68,5 +71,29 @@ export class DrizzleDriverRepository implements DriverRepository {
       createdAt: r.createdAt,
     }));
     return await db.insert(reviews).values(recordsToInsert).returning();
+  }
+
+  async addDriverReview(review: Omit<Review, 'id' | 'createdAt'>): Promise<Review> {
+    const [inserted] = await db.insert(reviews)
+      .values({
+        id: crypto.randomUUID(),
+        driverId: review.driverId,
+        passengerName: review.passengerName,
+        rating: review.rating,
+        comment: review.comment,
+      })
+      .returning();
+    return inserted;
+  }
+
+  async updateDriverRating(driverId: string, rating: number): Promise<Driver> {
+    const [updated] = await db.update(drivers)
+      .set({ rating })
+      .where(eq(drivers.id, driverId))
+      .returning();
+    if (!updated) {
+      throw new Error('Driver not found');
+    }
+    return updated;
   }
 }

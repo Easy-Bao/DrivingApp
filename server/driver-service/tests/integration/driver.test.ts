@@ -141,7 +141,42 @@ describe('Driver Service Integration Tests', () => {
     expect(data[0].passwordHash).toBeUndefined();
   });
 
-  test('GET /drivers/:id/reviews — retrieves driver reviews (seeds defaults if empty)', async () => {
+  test('GET /drivers/:id/reviews — retrieves driver reviews', async () => {
+    await db.insert(reviews).values([
+      {
+        id: crypto.randomUUID(),
+        driverId,
+        passengerName: 'Aria Cruz',
+        rating: 5.0,
+        comment: 'Highly recommend! Very pleasant conversation and smooth driving.',
+        createdAt: new Date('2026-07-07T12:00:00Z'),
+      },
+      {
+        id: crypto.randomUUID(),
+        driverId,
+        passengerName: 'Carlos Diaz',
+        rating: 4.9,
+        comment: 'Excellent service. Helped me with my heavy bags.',
+        createdAt: new Date('2026-07-05T12:00:00Z'),
+      },
+      {
+        id: crypto.randomUUID(),
+        driverId,
+        passengerName: 'Sophia Lim',
+        rating: 5.0,
+        comment: 'Punctual and very respectful driver. The Bao was in top condition.',
+        createdAt: new Date('2026-07-03T12:00:00Z'),
+      },
+      {
+        id: crypto.randomUUID(),
+        driverId,
+        passengerName: 'Maria Santos',
+        rating: 5.0,
+        comment: 'Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.',
+        createdAt: new Date('2026-07-01T12:00:00Z'),
+      },
+    ]);
+
     const res = await app.request(`/drivers/${driverId}/reviews`);
     expect(res.status).toBe(200);
     const data: any = await res.json();

@@ -44,6 +44,17 @@ class TrackDriverInProgress extends TrackDriverState {
   ];
 }
 
-class TrackDriverCompleted extends TrackDriverState {}
+class TrackDriverCompleted extends TrackDriverState {
+  final String driverId;
+  final String driverName;
+
+  const TrackDriverCompleted({
+    required this.driverId,
+    required this.driverName,
+  });
+
+  @override
+  List<Object?> get props => [driverId, driverName];
+}
 
 class TrackDriverCanceled extends TrackDriverState {}

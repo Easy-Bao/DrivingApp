@@ -139,78 +139,31 @@ export class DriverService {
     }
   }
 
-  async getDriverReviews(driverId: string) {
+  async getDriverReviews(driverId: string, page = 1, limit = 5) {
     const uuidFormatRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     if (!uuidFormatRegex.test(driverId)) {
-      return [
-        {
-          id: 'mock-review-1',
-          driverId,
-          passengerName: 'Aria Cruz',
-          rating: 5.0,
-          comment: 'Highly recommend! Very pleasant conversation and smooth driving.',
-          createdAt: new Date('2026-07-07T12:00:00Z').toISOString(),
-        },
-        {
-          id: 'mock-review-2',
-          driverId,
-          passengerName: 'Carlos Diaz',
-          rating: 4.9,
-          comment: 'Excellent service. Helped me with my heavy bags.',
-          createdAt: new Date('2026-07-05T12:00:00Z').toISOString(),
-        },
-        {
-          id: 'mock-review-3',
-          driverId,
-          passengerName: 'Sophia Lim',
-          rating: 5.0,
-          comment: 'Punctual and very respectful driver. The Bao was in top condition.',
-          createdAt: new Date('2026-07-03T12:00:00Z').toISOString(),
-        },
-        {
-          id: 'mock-review-4',
-          driverId,
-          passengerName: 'Maria Santos',
-          rating: 5.0,
-          comment: 'Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.',
-          createdAt: new Date('2026-07-01T12:00:00Z').toISOString(),
-        },
-      ];
+      return [];
     }
 
-    const reviews = await this.repository.fetchDriverReviews(driverId);
-    if (reviews.length === 0) {
-      const defaultReviews = [
-        {
-          passengerName: 'Aria Cruz',
-          rating: 5.0,
-          comment: 'Highly recommend! Very pleasant conversation and smooth driving.',
-          createdAt: new Date('2026-07-07T12:00:00Z'),
-        },
-        {
-          passengerName: 'Carlos Diaz',
-          rating: 4.9,
-          comment: 'Excellent service. Helped me with my heavy bags.',
-          createdAt: new Date('2026-07-05T12:00:00Z'),
-        },
-        {
-          passengerName: 'Sophia Lim',
-          rating: 5.0,
-          comment: 'Punctual and very respectful driver. The Bao was in top condition.',
-          createdAt: new Date('2026-07-03T12:00:00Z'),
-        },
-        {
-          passengerName: 'Maria Santos',
-          rating: 5.0,
-          comment: 'Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.',
-          createdAt: new Date('2026-07-01T12:00:00Z'),
-        },
-      ];
+    return await this.repository.fetchDriverReviews(driverId, page, limit);
+  }
 
-      return await this.repository.seedDriverReviews(driverId, defaultReviews);
+  async addDriverReview(driverId: string, payload: { passengerName: string; rating: number; comment: string }) {
+    const review = await this.repository.addDriverReview({
+      driverId,
+      passengerName: payload.passengerName,
+      rating: payload.rating,
+      comment: payload.comment,
+    });
+
+    const allReviews = await this.repository.fetchDriverReviews(driverId);
+    if (allReviews.length > 0) {
+      const sum = allReviews.reduce((acc, r) => acc + r.rating, 0);
+      const avgRating = parseFloat((sum / allReviews.length).toFixed(2));
+      await this.repository.updateDriverRating(driverId, avgRating);
     }
 
-    return reviews;
+    return review;
   }
 }

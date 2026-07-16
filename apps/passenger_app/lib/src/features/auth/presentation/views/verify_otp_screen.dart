@@ -6,8 +6,6 @@ import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 
-/// Screen for verifying the 6-digit one-time password (OTP) sent to the user's email.
-/// Automatically triggers verification when all 6 digits are entered.
 class VerifyOtpScreen extends StatefulWidget {
   final String email;
   const VerifyOtpScreen({super.key, required this.email});

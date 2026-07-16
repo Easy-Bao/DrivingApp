@@ -61,7 +61,11 @@ class ActivityModule {
     ChildRoute(
       name: 'PassengerRating',
       'activity/rating',
-      child: (context, GoRouterState state) => const PassengerRatingScreen(),
+      child: (context, GoRouterState state) {
+        final driverId = state.uri.queryParameters['driverId'] ?? '';
+        final driverName = state.uri.queryParameters['driverName'] ?? '';
+        return PassengerRatingScreen(driverId: driverId, driverName: driverName);
+      },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),

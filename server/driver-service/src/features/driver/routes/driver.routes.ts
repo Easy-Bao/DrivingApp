@@ -9,6 +9,7 @@ import {
   handleGetDriverStats,
   handleGetDriverTripHistory,
   handleGetDriverReviews,
+  handleAddDriverReview,
 } from '../controllers/driver.controller.ts';
 import {
   CreateDriverSchema,
@@ -26,3 +27,4 @@ driversRouter.get('/:id', handleGetDriverProfile);
 driversRouter.get('/:id/stats', handleGetDriverStats);
 driversRouter.get('/:id/trips', handleGetDriverTripHistory);
 driversRouter.get('/:id/reviews', handleGetDriverReviews);
+driversRouter.post('/:id/reviews', handleAddDriverReview);

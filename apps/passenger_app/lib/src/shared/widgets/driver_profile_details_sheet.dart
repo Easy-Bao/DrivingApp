@@ -28,14 +28,32 @@ class DriverProfileDetailsSheet extends StatefulWidget {
 }
 
 class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
+  late final ScrollController _scrollController;
   bool _isLoadingStats = true;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  int _currentPage = 1;
   int _totalTripsCount = 0;
   List<Map<String, dynamic>> _driverReviewsList = [];
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
     unawaited(_loadDriverProfileStats());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      unawaited(_loadMoreDriverReviews());
+    }
   }
 
   Future<void> _loadDriverProfileStats() async {
@@ -66,47 +84,26 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       }
     }
 
+    _currentPage = 1;
+    _hasMore = true;
     final List<Map<String, dynamic>> dynamicReviews = [];
     try {
       final rawReviews = await getIt<PassengerApiService>().fetchDriverReviews(
         widget.driverId,
+        page: _currentPage,
+        limit: 5,
       );
+      if (rawReviews.length < 5) {
+        _hasMore = false;
+      }
       for (final r in rawReviews) {
         if (r is Map<String, dynamic>) {
-          final createdAtStr = r['createdAt'] ?? r['created_at'];
-          String dateFormatted = 'Recent';
-          if (createdAtStr != null) {
-            try {
-              final parsedDate = DateTime.parse(createdAtStr as String);
-              final months = [
-                'Jan',
-                'Feb',
-                'Mar',
-                'Apr',
-                'May',
-                'Jun',
-                'Jul',
-                'Aug',
-                'Sep',
-                'Oct',
-                'Nov',
-                'Dec',
-              ];
-              dateFormatted =
-                  '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
-            } catch (_) {}
-          }
-
-          dynamicReviews.add({
-            'passengerName':
-                r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
-            'comment': r['comment'] ?? '',
-            'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
-            'date': dateFormatted,
-          });
+          dynamicReviews.add(_parseReview(r));
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      _hasMore = false;
+    }
 
     if (mounted) {
       setState(() {
@@ -116,9 +113,71 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     }
   }
 
+  Map<String, dynamic> _parseReview(Map<String, dynamic> r) {
+    final createdAtStr = r['createdAt'] ?? r['created_at'];
+    String dateFormatted = 'Recent';
+    if (createdAtStr != null) {
+      try {
+        final parsedDate = DateTime.parse(createdAtStr as String);
+        final months = [
+          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+        dateFormatted =
+            '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
+      } catch (_) {}
+    }
+
+    return {
+      'passengerName': r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
+      'comment': r['comment'] ?? '',
+      'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
+      'date': dateFormatted,
+    };
+  }
+
+  Future<void> _loadMoreDriverReviews() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    final nextPage = _currentPage + 1;
+    final List<Map<String, dynamic>> nextReviews = [];
+    try {
+      final rawReviews = await getIt<PassengerApiService>().fetchDriverReviews(
+        widget.driverId,
+        page: nextPage,
+        limit: 5,
+      );
+      if (rawReviews.length < 5) {
+        _hasMore = false;
+      }
+      for (final r in rawReviews) {
+        if (r is Map<String, dynamic>) {
+          nextReviews.add(_parseReview(r));
+        }
+      }
+    } catch (_) {
+      _hasMore = false;
+    }
+
+    if (mounted) {
+      setState(() {
+        _currentPage = nextPage;
+        _driverReviewsList.addAll(nextReviews);
+        _isLoadingMore = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -245,12 +304,22 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               ),
             )
           else
-            Flexible(
+            Expanded(
               child: ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _driverReviewsList.length,
+                controller: _scrollController,
+                itemCount: _driverReviewsList.length + (_hasMore || _isLoadingMore ? 1 : 0),
                 itemBuilder: (context, index) {
+                  if (index == _driverReviewsList.length) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryColor,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    );
+                  }
                   final reviewItem = _driverReviewsList[index];
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -288,20 +357,35 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 14,
-                              color: Colors.amber,
-                            ),
-                            const SizedBox(width: 4),
+                            ...List.generate(5, (starIndex) {
+                              final ratingValue = (reviewItem['rating'] as num?)?.toDouble() ?? 5.0;
+                              if (ratingValue >= starIndex + 1) {
+                                return const Icon(
+                                  Icons.star_rounded,
+                                  color: Colors.amber,
+                                  size: 13,
+                                );
+                              } else if (ratingValue >= starIndex + 0.5) {
+                                return const Icon(
+                                  Icons.star_half_rounded,
+                                  color: Colors.amber,
+                                  size: 13,
+                                );
+                              } else {
+                                return Icon(
+                                  Icons.star_rounded,
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                                  size: 13,
+                                );
+                              }
+                            }),
+                            const SizedBox(width: 6),
                             Text(
-                              (reviewItem['rating'] as double).toStringAsFixed(
-                                1,
-                              ),
-                              style: const TextStyle(
-                                fontSize: 12,
+                              ((reviewItem['rating'] as num?)?.toDouble() ?? 5.0).toStringAsFixed(1),
+                              style: TextStyle(
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
+                                color: AppTheme.primaryColor.withValues(alpha: 0.7),
                               ),
                             ),
                           ],

@@ -1,12 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
+import 'package:passenger_app/src/core/services/passenger_api_service.dart';
 import 'package:passenger_app/src/core/themes/app_themes.dart';
 import 'package:passenger_app/src/shared/widgets/custom_toast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Passenger Rating Screen component defining application state or layout.
 class PassengerRatingScreen extends StatefulWidget {
-  const PassengerRatingScreen({super.key});
+  final String driverId;
+  final String driverName;
+
+  const PassengerRatingScreen({
+    super.key,
+    required this.driverId,
+    required this.driverName,
+  });
 
   @override
   State<PassengerRatingScreen> createState() => _PassengerRatingScreenState();
@@ -15,10 +26,48 @@ class PassengerRatingScreen extends StatefulWidget {
 class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
   int _selectedStars = 0;
   final TextEditingController _feedbackController = TextEditingController();
+  bool _isSubmitting = false;
 
   void _finishRating() {
-    CustomToast.show(context, 'Thank you for using BaoRide!');
-    context.goNamed('PassengerHome');
+    unawaited(_submitRating());
+  }
+
+  Future<void> _submitRating() async {
+    if (_selectedStars == 0) {
+      CustomToast.show(context, 'Please select a rating.');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final passengerName = prefs.getString('passenger_name') ?? 'Passenger';
+
+      await getIt<PassengerApiService>().submitDriverReview(
+        driverId: widget.driverId,
+        passengerName: passengerName,
+        rating: _selectedStars.toDouble(),
+        comment: _feedbackController.text.trim(),
+      );
+
+      if (mounted) {
+        CustomToast.show(context, 'Thank you for your feedback!');
+        context.goNamed('PassengerHome');
+      }
+    } catch (error) {
+      if (mounted) {
+        CustomToast.show(context, 'Failed to submit review: $error');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   Future<void> _checkForgottenItemsAndFinish() async {
@@ -196,23 +245,32 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
               const Spacer(),
 
               GestureDetector(
-                onTap: _finishRating,
+                onTap: _isSubmitting ? null : _finishRating,
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
+                    color: _isSubmitting ? AppTheme.primaryColor.withValues(alpha: 0.5) : AppTheme.primaryColor,
                     borderRadius: BorderRadius.circular(32),
                   ),
                   alignment: Alignment.center,
-                  child: const Text(
-                    'Submit Rating',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Submit Rating',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),
