@@ -1,6 +1,3 @@
-/**
- * Global exception interceptor catching HTTPException and uncaught runtime errors.
- */
 import { ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { Logger } from '../logger/logger.ts';

@@ -1,6 +1,3 @@
-/**
- * Entry point for telemetry-service registering routes and mounting error handlers.
- */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { telemetryRouter } from './features/telemetry/routes/telemetry.routes.ts';
@@ -11,7 +8,6 @@ const app = new Hono();
 app.use('*', cors());
 app.onError(globalErrorHandler);
 
-// Mount modular telemetry routes
 app.route('/telemetry', telemetryRouter);
 
 app.get('/', (context) => context.json({ status: 'Telemetry Service OK' }));

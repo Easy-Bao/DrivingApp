@@ -1,6 +1,3 @@
-/**
- * Integration tests validating Hono telemetry endpoints (location updates, retrievals, spoofing checks).
- */
 import { expect, test, describe } from 'bun:test';
 import { app } from '../../src/index.ts';
 
