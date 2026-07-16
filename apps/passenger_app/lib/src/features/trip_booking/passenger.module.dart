@@ -3,6 +3,7 @@ import 'package:passenger_app/src/core/transitions/app_transitions.dart';
 import 'package:passenger_app/src/features/trip_booking/modules/account_module.dart';
 import 'package:passenger_app/src/features/trip_booking/modules/activity_module.dart';
 import 'package:passenger_app/src/features/trip_booking/modules/home_module.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/views/account/help_center_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/passenger_account.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
 
@@ -34,6 +35,14 @@ class PassengerModule extends Module {
           'account',
           child: (context, GoRouterState state) =>
               const PassengerAccountScreen(),
+          transition: AppTransitions.none,
+          transitionDuration: Duration.zero,
+        ),
+        ChildRoute(
+          name: 'PassengerHelp',
+          'help',
+          child: (context, GoRouterState state) =>
+              const HelpCenterScreen(),
           transition: AppTransitions.none,
           transitionDuration: Duration.zero,
         ),
