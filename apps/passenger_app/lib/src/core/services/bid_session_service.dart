@@ -179,7 +179,13 @@ class BidSessionService {
   Future<void> cancelSession({bool notify = true}) async {
     _pollTimer?.cancel();
     if (_sessionId != null) {
-      await _apiService.cancelBidSession(_sessionId!);
+      try {
+        await _apiService.cancelBidSession(_sessionId!);
+      } catch (error) {
+        // Absorb remote cancellation failure so that local state teardown 
+        // is never blocked by temporary network outages or server exceptions, 
+        // allowing the passenger to successfully cancel locally and exit the search view.
+      }
     }
     _clearSessionState(notify: notify);
   }
