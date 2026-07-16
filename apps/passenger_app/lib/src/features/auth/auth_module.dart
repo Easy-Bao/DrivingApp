@@ -4,6 +4,7 @@ import 'package:passenger_app/src/features/auth/presentation/views/forgot_passwo
 import 'package:passenger_app/src/features/auth/presentation/views/onboarding_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/signin_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/signup_screen.dart';
+import 'package:passenger_app/src/features/auth/presentation/views/verify_otp_screen.dart';
 
 class AuthModule extends Module {
   @override
@@ -33,6 +34,16 @@ class AuthModule extends Module {
       name: 'ForgotPassword',
       '/auth/forgotpassword',
       child: (context, GoRouterState state) => const ForgotPasswordScreen(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: 'VerifyOtp',
+      '/auth/verifyotp',
+      child: (context, GoRouterState state) {
+        final email = state.uri.queryParameters['email'] ?? '';
+        return VerifyOtpScreen(email: email);
+      },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
