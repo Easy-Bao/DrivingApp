@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// A custom page transitions builder that replicates native platform navigation.
-///
-/// It provides a smooth right-to-left slide animation on push, a left-to-right
-/// slide on pop, and a subtle parallax shift to the left for the underlying screen
-/// when another screen is pushed on top of it.
+/// Custom transition builder mimicking native iOS navigation. Handles right-to-left pushes 
+/// and left-to-right pops with screen parallax and depth shadow effects.
 class CustomPageTransition extends GoTransition {
   CustomPageTransition({
     super.settings,
     super.child,
   }) : super(
           builder: (route, context, animation, secondaryAnimation, child) {
+            // Animates primary route entry from right margin to center of the viewport.
             final primarySlide = Tween<Offset>(
               begin: const Offset(1.0, 0.0),
               end: Offset.zero,
@@ -23,6 +21,7 @@ class CustomPageTransition extends GoTransition {
               ),
             );
 
+            // Slides the underlying active screen to the left during route push to create parallax.
             final secondarySlide = Tween<Offset>(
               begin: Offset.zero,
               end: const Offset(-0.3, 0.0),
@@ -34,7 +33,7 @@ class CustomPageTransition extends GoTransition {
               ),
             );
 
-            // Add a subtle screen shadow under the entering route to enhance the depth
+            // Wraps child in a Container with elevation shadow to indicate spatial hierarchy.
             return SlideTransition(
               position: secondarySlide,
               child: SlideTransition(
