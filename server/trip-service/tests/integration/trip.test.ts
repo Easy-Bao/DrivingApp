@@ -1,6 +1,3 @@
-/**
- * Integration tests validating Hono trip endpoints (creation, active lists, driver assignments) using db backend.
- */
 import { expect, test, describe, spyOn, beforeAll, afterAll } from 'bun:test';
 import { app } from '../../src/index.ts';
 import { db } from '../../src/shared/drizzle.ts';

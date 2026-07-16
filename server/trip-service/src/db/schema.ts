@@ -1,6 +1,3 @@
-/**
- * Database schema defining the rides table for Drizzle ORM in trip-service.
- */
 import { pgTable, text, timestamp, uuid, doublePrecision } from 'drizzle-orm/pg-core';
 
 export const rides = pgTable('rides', {

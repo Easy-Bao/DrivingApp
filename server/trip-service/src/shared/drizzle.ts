@@ -1,6 +1,3 @@
-/**
- * Drizzle client instance initializing connection pool and injecting schema bindings.
- */
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../db/schema.ts';
