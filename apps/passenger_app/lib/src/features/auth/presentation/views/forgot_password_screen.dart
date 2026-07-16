@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -17,56 +19,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
   String? _emailError;
-
-  Future<void> _handleReset() async {
-    final email = _emailController.text.trim();
-
-    setState(() {
-      _emailError = null;
-    });
-
-    if (email.isEmpty) {
-      setState(() {
-        _emailError = 'Please enter your email';
-      });
-      return;
-    }
-
-    if (!email.contains('@')) {
-      setState(() {
-        _emailError = 'Please enter a valid email';
-      });
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final success = await getIt<PassengerApiService>().forgotPassword(
-        email: email,
-      );
-      if (!mounted) return;
-      if (success) {
-        CustomToast.show(context, 'Reset link sent successfully!');
-        context.pop();
-      } else {
-        setState(() {
-          _emailError = 'Email not found or invalid.';
-        });
-      }
-    } catch (error) {
-      if (!mounted) return;
-      CustomToast.show(context, 'Connection error: $error', isError: true);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -245,5 +197,87 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _handleReset() async {
+    final email = _emailController.text.trim();
+
+    setState(() {
+      _emailError = null;
+    });
+
+    if (email.isEmpty) {
+      setState(() {
+        _emailError = 'Please enter your email';
+      });
+      return;
+    }
+
+    if (!email.contains('@')) {
+      setState(() {
+        _emailError = 'Please enter a valid email';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final success = await getIt<PassengerApiService>().forgotPassword(
+        email: email,
+      );
+      if (!mounted) return;
+      if (success) {
+        CustomToast.show(context, 'Reset link sent successfully!');
+        context.pop();
+      } else {
+        setState(() {
+          _emailError = 'Email not found or invalid.';
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _emailError = _cleanErrorMessage(error);
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _cleanErrorMessage(dynamic error) {
+    final String errorStr = error.toString();
+    if (errorStr.contains('No passenger registered with this email') ||
+        errorStr.contains('No user registered') ||
+        errorStr.contains('passenger not found') ||
+        errorStr.contains('not found')) {
+      return 'No account found with this email address.';
+    }
+    if (errorStr.contains('"error":')) {
+      try {
+        final startIdx = errorStr.indexOf('{');
+        if (startIdx != -1) {
+          final jsonPart = errorStr.substring(startIdx);
+          final Map<String, dynamic> data = jsonDecode(jsonPart);
+          if (data.containsKey('error')) {
+            final String msg = data['error'] as String;
+            if (msg.contains('No passenger registered with this email') ||
+                msg.contains('No user registered') ||
+                msg.contains('passenger not found') ||
+                msg.contains('not found')) {
+              return 'No account found with this email address.';
+            }
+            return msg;
+          }
+        }
+      } catch (_) {}
+    }
+    return 'Connection failed. Please check your internet connection.';
   }
 }

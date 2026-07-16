@@ -125,20 +125,24 @@ class _SignupScreenState extends State<SignupScreen> {
         _showOtpDialog(email);
       } else {
         final errorMsg = _parseError(response.body);
+        final cleanMsg = _cleanErrorMessage(errorMsg);
         setState(() {
-          if (errorMsg.toLowerCase().contains('email')) {
-            _emailError = errorMsg;
-          } else if (errorMsg.toLowerCase().contains('phone')) {
-            _phoneError = errorMsg;
+          if (cleanMsg.toLowerCase().contains('email')) {
+            _emailError = cleanMsg;
+            _phoneError = null;
+          } else if (cleanMsg.toLowerCase().contains('phone')) {
+            _phoneError = cleanMsg;
+            _emailError = null;
           } else {
-            _emailError = errorMsg;
+            _emailError = cleanMsg;
+            _phoneError = null;
           }
         });
       }
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _emailError = 'Connection failed: $error';
+        _emailError = _cleanErrorMessage(error);
       });
     } finally {
       if (mounted) {
@@ -156,6 +160,42 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (_) {
       return 'Sign up failed';
     }
+  }
+
+  String _cleanErrorMessage(dynamic error) {
+    final String errorStr = error.toString();
+    if (errorStr.contains('Email already exists') || 
+        errorStr.contains('email already registered') || 
+        errorStr.contains('email exists')) {
+      return 'Email address is already registered.';
+    }
+    if (errorStr.contains('phone already registered') || 
+        errorStr.contains('phone number already exists')) {
+      return 'Phone number is already registered.';
+    }
+    if (errorStr.contains('"error":')) {
+      try {
+        final startIdx = errorStr.indexOf('{');
+        if (startIdx != -1) {
+          final jsonPart = errorStr.substring(startIdx);
+          final Map<String, dynamic> data = jsonDecode(jsonPart);
+          if (data.containsKey('error')) {
+            final String msg = data['error'] as String;
+            if (msg.contains('Email already exists') || 
+                msg.contains('email already registered') || 
+                msg.contains('email exists')) {
+              return 'Email address is already registered.';
+            }
+            if (msg.contains('phone already registered') || 
+                msg.contains('phone number already exists')) {
+              return 'Phone number is already registered.';
+            }
+            return msg;
+          }
+        }
+      } catch (_) {}
+    }
+    return 'Connection failed. Please check your internet connection.';
   }
 
   void _showOtpDialog(String email) {
@@ -679,7 +719,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            unawaited(context.pushNamed('Signin'));
+                            context.pop();
                           },
                           child: const Text(
                             'Sign In',

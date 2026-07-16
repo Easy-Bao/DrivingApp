@@ -596,17 +596,29 @@ class _SigninScreenState extends State<SigninScreen> {
           final verifyEmail = errorData['email'] ?? email;
           _showOtpDialog(verifyEmail);
         } else {
+          final cleanMsg = _cleanErrorMessage(errorMsg);
           setState(() {
-            _emailError = errorMsg;
-            _passwordError = errorMsg;
+            if (cleanMsg.toLowerCase().contains('password')) {
+              _passwordError = cleanMsg;
+              _emailError = null;
+            } else {
+              _emailError = cleanMsg;
+              _passwordError = null;
+            }
           });
         }
       }
     } catch (error) {
       if (!mounted) return;
+      final cleanMsg = _cleanErrorMessage(error);
       setState(() {
-        _emailError = 'Connection failed: $error';
-        _passwordError = 'Connection failed: $error';
+        if (cleanMsg.toLowerCase().contains('password')) {
+          _passwordError = cleanMsg;
+          _emailError = null;
+        } else {
+          _emailError = cleanMsg;
+          _passwordError = null;
+        }
       });
     } finally {
       if (mounted) {
@@ -615,5 +627,47 @@ class _SigninScreenState extends State<SigninScreen> {
         });
       }
     }
+  }
+
+  String _cleanErrorMessage(dynamic error) {
+    final String errorStr = error.toString();
+    if (errorStr.contains('No passenger registered with this email') || 
+        errorStr.contains('passenger not found') ||
+        errorStr.contains('user not found') ||
+        errorStr.contains('not found')) {
+      return 'No account found with this email address.';
+    }
+    if (errorStr.contains('invalid password') || 
+        errorStr.contains('incorrect password') || 
+        errorStr.contains('password incorrect') ||
+        errorStr.contains('invalid credentials')) {
+      return 'Incorrect password. Please try again.';
+    }
+    if (errorStr.contains('"error":')) {
+      try {
+        final startIdx = errorStr.indexOf('{');
+        if (startIdx != -1) {
+          final jsonPart = errorStr.substring(startIdx);
+          final Map<String, dynamic> data = jsonDecode(jsonPart);
+          if (data.containsKey('error')) {
+            final String msg = data['error'] as String;
+            if (msg.contains('No passenger registered with this email') ||
+                msg.contains('passenger not found') ||
+                msg.contains('user not found') ||
+                msg.contains('not found')) {
+              return 'No account found with this email address.';
+            }
+            if (msg.contains('invalid password') ||
+                msg.contains('incorrect password') ||
+                msg.contains('password incorrect') ||
+                msg.contains('invalid credentials')) {
+              return 'Incorrect password. Please try again.';
+            }
+            return msg;
+          }
+        }
+      } catch (_) {}
+    }
+    return 'Connection failed. Please check your internet connection.';
   }
 }
