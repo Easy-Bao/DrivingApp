@@ -23,6 +23,18 @@ class SecureSessionService {
     return await _storage.read(key: 'passenger_id');
   }
 
+  Future<void> writeActiveRideId(String activeRideId) async {
+    await _storage.write(key: 'active_ride_id', value: activeRideId);
+  }
+
+  Future<String?> readActiveRideId() async {
+    return await _storage.read(key: 'active_ride_id');
+  }
+
+  Future<void> deleteActiveRideId() async {
+    await _storage.delete(key: 'active_ride_id');
+  }
+
   Future<void> clearSession() async {
     await _storage.deleteAll();
   }

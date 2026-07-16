@@ -1,9 +1,11 @@
 import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/core/di/service_locator.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Cubit responsible for tracking driver location and status updates during active passenger ride bookings.
 class TrackDriverCubit extends Cubit<TrackDriverState> {
@@ -26,17 +28,17 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     String? vehiclePlate,
     String? vehicleType,
   }) async {
-    final fallbackId = driverId ?? 'Driver-1';
+    final fallbackId = driverId ?? 'mock-driver-1';
     final fallbackName = driverName ?? 'Driver';
     final fallbackPlate = vehiclePlate ?? '—';
     final fallbackType = vehicleType ?? 'Vehicle';
     _ticker?.cancel();
 
-    final prefs = await SharedPreferences.getInstance();
+    final session = getIt<SecureSessionService>();
     if (rideId != null && rideId.isNotEmpty) {
-      await prefs.setString('active_ride_id', rideId);
+      await session.writeActiveRideId(rideId);
     }
-    final activeRideId = prefs.getString('active_ride_id') ?? '';
+    final activeRideId = await session.readActiveRideId() ?? '';
 
     final routePoints = await _repository.getRoutePolyline(
       startLat: startLat,
@@ -67,7 +69,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 driverId: rideUpdate.driverId ?? '',
                 driverName: rideUpdate.driverName.isNotEmpty ? rideUpdate.driverName : 'Driver',
               ));
-              await prefs.remove('active_ride_id');
+              await session.deleteActiveRideId();
               _isSyncing = false;
               return;
             }
@@ -167,11 +169,11 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   Future<void> cancelTrip() async {
     _ticker?.cancel();
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final rideId = prefs.getString('active_ride_id') ?? '';
+      final session = getIt<SecureSessionService>();
+      final rideId = await session.readActiveRideId() ?? '';
       if (rideId.isNotEmpty) {
         await _repository.updateRideStatus(rideId, RideStatus.cancelled);
-        await prefs.remove('active_ride_id');
+        await session.deleteActiveRideId();
       }
     } catch (error) {
       debugPrint('Error canceling trip in track cubit: $error');
