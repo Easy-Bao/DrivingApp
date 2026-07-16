@@ -12,10 +12,8 @@ export class Logger {
     const currentTimestamp = new Date().toISOString();
     const formattedLogLine = `[${currentTimestamp}] [${logLevel.toUpperCase()}] ${logMessage}\n`;
 
-    // Print output to console stdout
     console.log(formattedLogLine.trim());
 
-    // Persist logs to dedicated service log file
     try {
       if (!existsSync(logsDirectoryPath)) {
         mkdirSync(logsDirectoryPath, { recursive: true });

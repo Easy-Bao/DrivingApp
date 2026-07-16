@@ -1,6 +1,3 @@
-/**
- * Database schema defining the bid_sessions and driver_offers tables for Drizzle ORM in bidding-service.
- */
 import { pgTable, text, timestamp, uuid, doublePrecision } from 'drizzle-orm/pg-core';
 
 export const bidSessions = pgTable('bid_sessions', {

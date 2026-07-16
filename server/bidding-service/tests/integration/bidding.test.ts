@@ -1,6 +1,3 @@
-/**
- * Integration tests validating Hono bidding endpoints (fares, sessions, driver offers, accepts, cancels) using db backend.
- */
 import { expect, test, describe, beforeAll } from 'bun:test';
 import { app } from '../../src/index.ts';
 import { db } from '../../src/shared/drizzle.ts';
@@ -102,7 +99,6 @@ describe('Bidding Service Integration Tests', () => {
   });
 
   test('POST /bids/:id/cancel-offer — driver withdraws offer', async () => {
-    // Submit a second offer
     const resOffer = await app.request(`/bids/${sessionId}/offer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -116,7 +112,6 @@ describe('Bidding Service Integration Tests', () => {
     });
     expect(resOffer.status).toBe(201);
 
-    // Cancel it
     const resCancel = await app.request(`/bids/${sessionId}/cancel-offer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -126,7 +121,6 @@ describe('Bidding Service Integration Tests', () => {
     });
     expect(resCancel.status).toBe(200);
 
-    // Verify it is not in the pending offers list
     const resOffers = await app.request(`/bids/${sessionId}/offers`);
     const data = await resOffers.json() as any[];
     expect(data.some((o: any) => o.driver_id === 'driver-test-2')).toBe(false);
