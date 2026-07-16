@@ -1,6 +1,3 @@
-/**
- * Repository layer executing Drizzle queries and transaction locks for bidding sessions.
- */
 import { db } from '../../../shared/drizzle.ts';
 import { bidSessions, driverOffers } from '../../../db/schema.ts';
 import { eq, desc, and, lt, gte, ne } from 'drizzle-orm';

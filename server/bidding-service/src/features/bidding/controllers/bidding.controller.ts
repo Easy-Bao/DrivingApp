@@ -1,6 +1,3 @@
-/**
- * Controller layer processing HTTP context for bidding, mapping outputs from BiddingService.
- */
 import { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { DrizzleBiddingRepository } from '../repositories/bidding.repository.ts';

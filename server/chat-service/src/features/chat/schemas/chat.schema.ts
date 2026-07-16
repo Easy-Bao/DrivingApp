@@ -1,6 +1,3 @@
-/**
- * Zod validation schemas governing request inputs for chat features.
- */
 import { z } from 'zod';
 
 export const createChatRoomSchema = z.object({

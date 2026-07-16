@@ -1,6 +1,3 @@
-/**
- * Zod validation schemas governing request inputs for bidding features.
- */
 import { z } from 'zod';
 
 export const CreateBidSessionSchema = z.object({

@@ -1,6 +1,3 @@
-/**
- * Repository layer executing Drizzle ORM queries against PostgreSQL tables for chat features.
- */
 import { db } from '../../../shared/drizzle.ts';
 import { rooms, messages } from '../../../db/schema.ts';
 import { eq } from 'drizzle-orm';

@@ -1,6 +1,3 @@
-/**
- * Service layer orchestrating domain business validations and mapping repository operations.
- */
 import {
   upsertChatRoom,
   fetchChatRoomMessages,

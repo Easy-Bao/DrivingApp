@@ -1,6 +1,3 @@
-/**
- * TypeScript interface declarations representing bidding database entities.
- */
 export interface BidSession {
   id: string;
   passengerId: string;

@@ -1,6 +1,3 @@
-/**
- * Routing definitions mapping endpoint URIs to respective feature controller actions.
- */
 import { Hono } from 'hono';
 import { upgradeWebSocket } from 'hono/bun';
 import { zValidator } from '@hono/zod-validator';

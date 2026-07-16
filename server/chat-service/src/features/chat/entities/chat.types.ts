@@ -1,7 +1,3 @@
-/**
- * TypeScript interface declarations representing chat entity records.
- */
-
 export interface ChatRoom {
   id: string;
   driverId: string;
