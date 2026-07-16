@@ -140,12 +140,30 @@ class _NotificationScreenState extends State<NotificationScreen> {
         backgroundColor: AppTheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
+        leadingWidth: 80,
+        leading: GestureDetector(
+          onTap: () => context.pop(),
+          behavior: HitTestBehavior.opaque,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(width: 12),
+              Icon(
+                LucideIcons.chevron_left,
+                color: AppTheme.primaryColor,
+                size: 20,
+              ),
+              SizedBox(width: 4),
+              Text(
+                'Back',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
-          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Notifications',

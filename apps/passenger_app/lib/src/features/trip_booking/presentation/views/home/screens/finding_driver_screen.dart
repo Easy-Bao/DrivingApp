@@ -323,10 +323,13 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                   child: GestureDetector(
                     onTap: _handleCancel,
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.08),
@@ -335,10 +338,24 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        LucideIcons.arrow_left,
-                        color: AppTheme.primaryColor,
-                        size: 20,
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LucideIcons.chevron_left,
+                            color: AppTheme.primaryColor,
+                            size: 16,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Back',
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
