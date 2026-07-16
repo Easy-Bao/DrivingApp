@@ -1,8 +1,3 @@
-/**
- * Downstream service URL registry resolved from environment at startup. Each entry maps
- * a gateway route prefix to its backing microservice base URL.
- */
-
 function requireEnvVar(variableName: string): string {
   const value = process.env[variableName];
   if (!value) {

@@ -28,7 +28,6 @@ export const wsTunnelHandler = upgradeWebSocket((context) => {
         ws.close();
       };
 
-      // Attach the backend socket to the client context for use in onMessage/onClose.
       (ws as any)._backendWs = backendWs;
     },
     onMessage(event, ws) {

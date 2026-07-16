@@ -1,7 +1,3 @@
-/**
- * Route definitions mapping gateway prefixes to upstream microservices via the proxy adapter
- * and the WebSocket tunnel handler.
- */
 import { Hono } from 'hono';
 import { handleProxy } from '../proxy/gateway.proxy.ts';
 import { wsTunnelHandler } from '../ws/gateway.ws.ts';

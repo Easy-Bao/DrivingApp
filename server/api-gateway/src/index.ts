@@ -1,7 +1,3 @@
-/**
- * Entry point for api-gateway — registers CORS, mounts the gateway router, and exports
- * the Bun server config with the WebSocket handler attached.
- */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { websocket } from 'hono/bun';
