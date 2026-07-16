@@ -14,7 +14,7 @@ dependencies:
   freezed_annotation: ^3.0.0
   json_annotation: ^4.9.0
   core_models:
-    path: ../core_models
+    path: ../../core_models
 
 dev_dependencies:
   build_runner: ^2.4.15

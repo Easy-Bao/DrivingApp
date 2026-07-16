@@ -16,7 +16,7 @@ dependencies:
   mapbox_maps_flutter: ^2.23.0
   http: ^1.2.0
   core_models:
-    path: ../core_models
+    path: ../../core_models
 
 dev_dependencies:
   flutter_test:
