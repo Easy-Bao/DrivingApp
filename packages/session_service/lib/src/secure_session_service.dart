@@ -15,6 +15,9 @@ class SecureSessionService {
     return _storage.read(key: 'jwt_token');
   }
 
+  Future<void> deleteAuthToken() async {
+    await _storage.delete(key: 'jwt_token');
+  }
 
   Future<void> writePassengerId(String passengerId) async {
     await _storage.write(key: 'passenger_id', value: passengerId);
@@ -24,6 +27,9 @@ class SecureSessionService {
     return _storage.read(key: 'passenger_id');
   }
 
+  Future<void> deletePassengerId() async {
+    await _storage.delete(key: 'passenger_id');
+  }
 
   Future<void> writeDriverId(String driverId) async {
     await _storage.write(key: 'driver_id', value: driverId);
@@ -33,6 +39,9 @@ class SecureSessionService {
     return _storage.read(key: 'driver_id');
   }
 
+  Future<void> deleteDriverId() async {
+    await _storage.delete(key: 'driver_id');
+  }
 
   Future<void> writeActiveRideId(String activeRideId) async {
     await _storage.write(key: 'active_ride_id', value: activeRideId);

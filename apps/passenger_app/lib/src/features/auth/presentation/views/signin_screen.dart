@@ -47,6 +47,7 @@ class _SigninScreenState extends State<SigninScreen> {
         centerTitle: true,
         title: Image.asset(
           'assets/logo/applogo.png',
+          package: 'shared_ui',
           height: 150,
           fit: BoxFit.cover,
         ),
@@ -277,7 +278,11 @@ class _SigninScreenState extends State<SigninScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('assets/icons/google.png', height: 20),
+                          Image.asset(
+                            'assets/icons/google.png',
+                            package: 'shared_ui',
+                            height: 20,
+                          ),
                           const SizedBox(width: 12),
                           const Text(
                             'Continue with Google',

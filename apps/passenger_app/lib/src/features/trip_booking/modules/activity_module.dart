@@ -8,7 +8,7 @@ import 'package:passenger_app/src/features/trip_booking/presentation/views/activ
 import 'package:passenger_app/src/features/trip_booking/presentation/views/activity/track_driver_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/activity/view_details_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/passenger_activity_screen.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class ActivityModule {
   ActivityModule._();

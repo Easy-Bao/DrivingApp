@@ -119,6 +119,7 @@ class _SigninScreenState extends State<SigninScreen> {
         centerTitle: true,
         title: Image.asset(
           'assets/logo/applogo.png',
+          package: 'shared_ui',
           height: 150,
           fit: BoxFit.cover,
         ),

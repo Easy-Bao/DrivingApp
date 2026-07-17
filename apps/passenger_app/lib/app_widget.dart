@@ -26,7 +26,7 @@ class AppWidget extends StatelessWidget {
           useMaterial3: true,
           textTheme: Theme.of(
             context,
-          ).textTheme.apply(fontFamily: 'ProductSans'),
+          ).textTheme.apply(fontFamily: 'packages/shared_ui/ProductSans'),
         ),
         debugShowCheckedModeBanner: false,
         title: 'BaoRide',

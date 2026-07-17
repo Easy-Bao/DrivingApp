@@ -4,7 +4,7 @@ import 'package:passenger_app/src/features/auth/presentation/views/onboarding_sc
 import 'package:passenger_app/src/features/auth/presentation/views/signin_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/signup_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/views/verify_otp_screen.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class AuthModule extends Module {
   @override

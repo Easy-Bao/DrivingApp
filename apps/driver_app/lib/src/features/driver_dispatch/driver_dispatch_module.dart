@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/transitions/app_transitions.dart';
+import 'package:shared_ui/transitions/driver_transitions.dart';
 import 'package:driver_app/src/features/dashboard/dashboard_module.dart';
 import 'package:driver_app/src/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:driver_app/src/features/dashboard/data/repositories/driver_activity_repository_impl.dart';
@@ -18,7 +18,6 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/views/ride/
 import 'package:driver_app/src/features/driver_dispatch/presentation/views/ride/en_route_pickup_screen.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/views/ride/in_transit_screen.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/views/ride/waiting_passenger_screen.dart';
-import 'package:driver_app/src/core/services/driver_session_service.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:session_service/session_service.dart';

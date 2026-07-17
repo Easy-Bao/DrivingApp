@@ -1,4 +1,4 @@
-import 'package:go_router_modular/go_router_modular.dart';
+import 'package:go_transitions/go_transitions.dart';
 
 class AppTransitions {
   AppTransitions._();

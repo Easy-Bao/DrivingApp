@@ -15,7 +15,7 @@ import 'package:passenger_app/src/features/trip_booking/presentation/views/home/
 import 'package:passenger_app/src/features/trip_booking/presentation/views/home/screens/search_destination_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/home/screens/view_all_activity_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/passenger_home_screen.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class HomeModule {
   HomeModule._();

@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
-import 'package:passenger_app/src/core/config/environment_config.dart';
+import 'package:session_service/session_service.dart';
 
 class ChatState extends Equatable {
   final List<ChatMessage> messages;

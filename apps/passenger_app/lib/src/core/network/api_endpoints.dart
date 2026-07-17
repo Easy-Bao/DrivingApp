@@ -1,4 +1,4 @@
-import 'package:passenger_app/src/core/config/environment_config.dart';
+import 'package:session_service/session_service.dart';
 
 class ApiEndpoints {
   ApiEndpoints._();

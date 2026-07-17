@@ -24,7 +24,7 @@ import 'package:passenger_app/src/features/trip_booking/presentation/views/passe
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class PassengerModule extends Module {
   @override

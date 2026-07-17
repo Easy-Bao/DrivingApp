@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/transitions/app_transitions.dart';
+import 'package:shared_ui/transitions/driver_transitions.dart';
 import 'package:driver_app/src/features/dashboard/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/dashboard/presentation/views/driver_account.dart';
 import 'package:driver_app/src/features/dashboard/presentation/views/driver_dashboard.dart';

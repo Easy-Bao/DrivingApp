@@ -13,3 +13,25 @@ dependencies:
   flutter_lucide: ^1.8.2
   go_router_modular: ^5.0.5
   go_transitions: ^0.8.3
+
+flutter:
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/logo/
+
+  fonts:
+    - family: ProductSans
+      fonts:
+        - asset: assets/fonts/Product_Sans_Bold_Italic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/Product_Sans_Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/Product_Sans_Bold.ttf
+          weight: 700
+          style: normal
+        - asset: assets/fonts/Product_Sans_Regular.ttf
+          weight: 400
+          style: normal

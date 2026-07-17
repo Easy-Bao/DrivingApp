@@ -35,6 +35,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         centerTitle: true,
         title: Image.asset(
           'assets/logo/applogo.png',
+          package: 'shared_ui',
           height: 150,
           fit: BoxFit.cover,
         ),

@@ -21,6 +21,7 @@ class OnBoardingScreen extends StatelessWidget {
             height: MediaQuery.of(context).size.height * 0.75,
             child: Image.asset(
               'assets/images/BaoBao.png',
+              package: 'shared_ui',
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
             ),
@@ -120,7 +121,11 @@ class OnBoardingScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('assets/icons/google.png', height: 20),
+                          Image.asset(
+                            'assets/icons/google.png',
+                            package: 'shared_ui',
+                            height: 20,
+                          ),
                           const SizedBox(width: 12),
                           const Text(
                             'Continue with Google',

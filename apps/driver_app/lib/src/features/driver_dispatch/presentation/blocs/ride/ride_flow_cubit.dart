@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/services/driver_session_service.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:session_service/session_service.dart';
 
 import 'ride_flow_state.dart';
 

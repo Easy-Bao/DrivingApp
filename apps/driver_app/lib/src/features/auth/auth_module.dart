@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/transitions/app_transitions.dart';
+import 'package:shared_ui/transitions/driver_transitions.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/presentation/views/forgot_password_screen.dart';
 import 'package:driver_app/src/features/auth/presentation/views/signin_screen.dart';

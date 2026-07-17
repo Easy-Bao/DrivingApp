@@ -4,11 +4,13 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/app_module.dart';
 import 'package:passenger_app/app_widget.dart';
-import 'package:passenger_app/src/core/config/environment_config.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:session_service/session_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
 
   await dotenv.load(fileName: '.env');
 
@@ -24,7 +26,7 @@ void main() async {
   AppTransitions.configure();
 
   await Modular.configure(
-    appModule: AppModule(),
+    appModule: AppModule(prefs: prefs),
     initialRoute: '/',
     debugLogDiagnostics: true,
     debugLogDiagnosticsGoRouter: true,
