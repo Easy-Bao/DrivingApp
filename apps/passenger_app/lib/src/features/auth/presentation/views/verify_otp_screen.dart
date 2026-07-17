@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -53,7 +52,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     });
 
     try {
-      final success = await getIt<PassengerApiService>().verifyOtp(
+      final success = await Modular.get<PassengerApiService>().verifyOtp(
         email: widget.email,
         code: code,
       );

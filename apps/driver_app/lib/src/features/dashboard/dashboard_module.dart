@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/core/transitions/app_transitions.dart';
 import 'package:driver_app/src/features/dashboard/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/dashboard/presentation/views/driver_account.dart';
@@ -60,7 +59,7 @@ class DashboardModule {
       name: DriverRoutes.driverDashboard,
       'dashboard',
       child: (context, GoRouterState state) => BlocProvider.value(
-        value: getIt<DashboardCubit>()..loadStats(),
+        value: Modular.get<DashboardCubit>()..loadStats(),
         child: const DriverDashboardScreen(),
       ),
       transition: AppTransitions.fade,

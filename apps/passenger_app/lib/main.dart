@@ -5,7 +5,6 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/app_module.dart';
 import 'package:passenger_app/app_widget.dart';
 import 'package:passenger_app/src/core/config/environment_config.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() async {
@@ -20,7 +19,7 @@ void main() async {
     nativeService: nativeService,
   );
 
-  setupServiceLocator();
+
 
   AppTransitions.configure();
 

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -224,7 +223,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      final success = await getIt<PassengerApiService>().forgotPassword(
+      final success = await Modular.get<PassengerApiService>().forgotPassword(
         email: email,
       );
       if (!mounted) return;

@@ -14,13 +14,8 @@ class SavedPlacesRepositoryImpl implements SavedPlacesRepository {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_storageKey);
 
-      if (raw == null) {
-        return SavedPlaceModel.defaults
-            .map((d) => Map<String, dynamic>.from(d))
-            .toList();
-      }
-
-      final decoded = jsonDecode(raw) as List<dynamic>;
+      final decoded = jsonDecode(raw ?? '') as List<dynamic>;
+      //Return empty if there's no saved place set
       return decoded.cast<Map<String, dynamic>>().toList();
     } catch (error) {
       throw const CacheFailure('Failed to load saved places from cache.');

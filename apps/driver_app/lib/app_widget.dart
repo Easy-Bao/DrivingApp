@@ -1,5 +1,4 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
@@ -16,8 +15,8 @@ class AppWidget extends StatelessWidget {
         BlocProvider<RideFlowCubit>(
           create: (_) {
             return RideFlowCubit(
-              repository: getIt<RideRepository>(),
-              apiService: getIt<TripApiService>(),
+              repository: Modular.get<RideRepository>(),
+              apiService: Modular.get<TripApiService>(),
             );
           },
         ),

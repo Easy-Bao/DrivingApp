@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -58,7 +58,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Future<void> _loadDriverProfileStats() async {
     try {
-      final statsData = await getIt<PassengerApiService>().fetchDriverStats(
+      final statsData = await Modular.get<PassengerApiService>().fetchDriverStats(
         widget.driverId,
       );
       if (statsData != null && statsData['totalTrips'] != null) {
@@ -88,7 +88,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     _hasMore = true;
     final List<Map<String, dynamic>> dynamicReviews = [];
     try {
-      final rawReviews = await getIt<PassengerApiService>().fetchDriverReviews(
+      final rawReviews = await Modular.get<PassengerApiService>().fetchDriverReviews(
         widget.driverId,
         page: _currentPage,
         limit: 5,
@@ -146,7 +146,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     final nextPage = _currentPage + 1;
     final List<Map<String, dynamic>> nextReviews = [];
     try {
-      final rawReviews = await getIt<PassengerApiService>().fetchDriverReviews(
+      final rawReviews = await Modular.get<PassengerApiService>().fetchDriverReviews(
         widget.driverId,
         page: nextPage,
         limit: 5,

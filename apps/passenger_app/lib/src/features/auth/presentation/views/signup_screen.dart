@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -123,7 +122,7 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      final networkResponse = await getIt<PassengerApiService>().registerPassenger(
+      final networkResponse = await Modular.get<PassengerApiService>().registerPassenger(
         name: 'Pending',
         email: emailAddress,
         phone: 'Pending',
@@ -169,7 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      final verificationSuccess = await getIt<PassengerApiService>().verifyOtp(
+      final verificationSuccess = await Modular.get<PassengerApiService>().verifyOtp(
         email: _registeredPassengerEmail,
         code: otpCode,
       );
@@ -177,7 +176,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (verificationSuccess) {
-        final loginResult = await getIt<PassengerApiService>().loginPassenger(
+        final loginResult = await Modular.get<PassengerApiService>().loginPassenger(
           email: _registeredPassengerEmail,
           password: _passengerPasswordController.text,
         );
@@ -189,7 +188,7 @@ class _SignupScreenState extends State<SignupScreen> {
           _registeredPassengerId =
               (loginResult['passenger'] as Map<String, dynamic>?)?['id'] as String? ??
                   '';
-          final secureSession = getIt<SecureSessionService>();
+          final secureSession = Modular.get<SecureSessionService>();
           await secureSession.writeAuthToken(_sessionJsonWebToken);
           if (_registeredPassengerId.isNotEmpty) {
             await secureSession.writePassengerId(_registeredPassengerId);
@@ -221,7 +220,7 @@ class _SignupScreenState extends State<SignupScreen> {
       _onboardingErrorMessage = null;
     });
     try {
-      await getIt<PassengerApiService>().registerPassenger(
+      await Modular.get<PassengerApiService>().registerPassenger(
         name: 'Pending',
         email: _registeredPassengerEmail,
         phone: 'Pending',
@@ -256,7 +255,7 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      final completionResult = await getIt<PassengerApiService>().updateProfile(
+      final completionResult = await Modular.get<PassengerApiService>().updateProfile(
         id: _registeredPassengerId,
         name: fullName,
         phone: phoneNumber,

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -72,7 +71,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
     final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    final success = await getIt<BiddingApiService>().placeBid(
+    final success = await Modular.get<BiddingApiService>().placeBid(
       sessionId: _rideId,
       driverId: driverId,
       driverName: driverName,

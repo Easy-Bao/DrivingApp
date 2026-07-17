@@ -2,11 +2,9 @@ import 'package:core_models/core_models.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// State snapshot representing the passenger profile information.
 class ProfileState extends Equatable {
   final String name;
   final String phone;
@@ -43,7 +41,11 @@ class ProfileState extends Equatable {
 }
 
 class ProfileCubit extends Cubit<ProfileState> {
-  ProfileCubit() : super(const ProfileState());
+  final PassengerApiService _apiService;
+
+  ProfileCubit({required PassengerApiService apiService})
+    : _apiService = apiService,
+      super(const ProfileState());
 
   Future<void> loadProfile() async {
     emit(state.copyWith(isLoading: true));
@@ -66,9 +68,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isEmpty) return;
 
-      final profile = await getIt<PassengerApiService>().getPassengerProfile(
-        passengerId,
-      );
+      final profile = await _apiService.getPassengerProfile(passengerId);
       if (profile != null) {
         final name = profile['name'] as String? ?? cachedName;
         final phone = profile['phone'] as String? ?? cachedPhone;

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -68,17 +67,17 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
     if (route != null) {
       final mins = route.estimatedTime.inMinutes.toDouble();
       final estimates = await Future.wait([
-        getIt<PassengerApiService>().fetchFareEstimate(
+        Modular.get<PassengerApiService>().fetchFareEstimate(
           rideType: 'Solo Ride',
           distanceKm: route.distanceKm,
           durationMinutes: mins,
         ),
-        getIt<PassengerApiService>().fetchFareEstimate(
+        Modular.get<PassengerApiService>().fetchFareEstimate(
           rideType: 'Share-Bao',
           distanceKm: route.distanceKm,
           durationMinutes: mins,
         ),
-        getIt<PassengerApiService>().fetchFareEstimate(
+        Modular.get<PassengerApiService>().fetchFareEstimate(
           rideType: 'Bao Premium',
           distanceKm: route.distanceKm,
           durationMinutes: mins,

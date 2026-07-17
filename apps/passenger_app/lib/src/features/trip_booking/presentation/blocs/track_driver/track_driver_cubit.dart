@@ -3,39 +3,40 @@ import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_state.dart';
 import 'package:session_service/session_service.dart';
 
 /// Cubit responsible for tracking driver location and status updates during active passenger ride bookings.
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final TrackRepository _repository;
+  final SecureSessionService _sessionService;
   Timer? _ticker;
   bool _isSyncing = false;
 
-  TrackDriverCubit({required TrackRepository repository})
-    : _repository = repository,
-      super(TrackDriverInitial());
+  TrackDriverCubit({
+    required TrackRepository repository,
+    required SecureSessionService sessionService,
+  }) : _repository = repository,
+       _sessionService = sessionService,
+       super(TrackDriverInitial());
 
+  //TODO: Make the driverId and vehicleType required
   Future<void> startTracking({
     required double startLat,
     required double startLng,
     required double endLat,
     required double endLng,
-    String? rideId,
-    String? driverId,
-    String? driverName,
-    String? vehiclePlate,
+    required String rideId,
+    double? driverId,
+    required String driverName,
+    required String vehiclePlate,
     String? vehicleType,
   }) async {
-    final fallbackId = driverId ?? 'mock-driver-1';
-    final fallbackName = driverName ?? 'Driver';
-    final fallbackPlate = vehiclePlate ?? '—';
-    final fallbackType = vehicleType ?? 'Vehicle';
-    _ticker?.cancel();
+    //TODO: Chore
+    // _ticker?.cancel();
 
-    final session = getIt<SecureSessionService>();
-    if (rideId != null && rideId.isNotEmpty) {
+    final session = _sessionService;
+    if (rideId.isNotEmpty) {
       await session.writeActiveRideId(rideId);
     }
     final activeRideId = await session.readActiveRideId() ?? '';
@@ -65,10 +66,15 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
           (rideUpdate) async {
             if (rideUpdate.status == RideStatus.completed) {
               timer.cancel();
-              emit(TrackDriverCompleted(
-                driverId: rideUpdate.driverId ?? '',
-                driverName: rideUpdate.driverName.isNotEmpty ? rideUpdate.driverName : 'Driver',
-              ));
+              handled = true;
+              emit(
+                TrackDriverCompleted(
+                  driverId: rideUpdate.driverId ?? '',
+                  driverName: rideUpdate.driverName.isNotEmpty
+                      ? rideUpdate.driverName
+                      : 'Driver',
+                ),
+              );
               await session.deleteActiveRideId();
               _isSyncing = false;
               return;
@@ -133,10 +139,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         progress += 0.1;
         if (progress >= 1.0) {
           timer.cancel();
-          emit(TrackDriverCompleted(
-            driverId: fallbackId,
-            driverName: fallbackName,
-          ));
+          emit(const TrackDriverCompleted(driverId: '', driverName: ''));
         } else {
           final pos = _interpolate(
             progress: progress,
@@ -154,9 +157,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               progress: progress,
               eta: etaMinutes == 1 ? '1 min' : '$etaMinutes mins',
               routePoints: routePoints,
-              driverName: fallbackName,
-              vehiclePlate: fallbackPlate,
-              vehicleType: fallbackType,
+              driverName: '',
+              vehiclePlate: '',
+              vehicleType: '',
             ),
           );
         }
@@ -169,11 +172,10 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   Future<void> cancelTrip() async {
     _ticker?.cancel();
     try {
-      final session = getIt<SecureSessionService>();
-      final rideId = await session.readActiveRideId() ?? '';
+      final rideId = await _sessionService.readActiveRideId() ?? '';
       if (rideId.isNotEmpty) {
         await _repository.updateRideStatus(rideId, RideStatus.cancelled);
-        await session.deleteActiveRideId();
+        await _sessionService.deleteActiveRideId();
       }
     } catch (error) {
       debugPrint('Error canceling trip in track cubit: $error');

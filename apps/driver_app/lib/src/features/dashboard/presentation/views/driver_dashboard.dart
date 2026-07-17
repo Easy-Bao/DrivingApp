@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/dashboard/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/dashboard/presentation/blocs/dashboard/dashboard_state.dart';
 import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
@@ -40,7 +39,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _liveMapBloc = getIt<LiveMapBloc>();
+    _liveMapBloc = Modular.get<LiveMapBloc>();
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -92,7 +91,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         if (driverId.isEmpty) return;
 
         final historyRes = await http.get(
-          getIt<TripApiService>().baseUrl.replace(
+          Modular.get<TripApiService>().baseUrl.replace(
             path: '/drivers/$driverId/trips',
           ),
         );
@@ -110,7 +109,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               .toList();
         }
 
-        final bidsList = await getIt<BiddingApiService>().fetchActiveBids(
+        final bidsList = await Modular.get<BiddingApiService>().fetchActiveBids(
           driverId,
         );
         final List<Map<String, dynamic>> bids = bidsList
@@ -196,7 +195,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
     final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    final success = await getIt<BiddingApiService>().placeBid(
+    final success = await Modular.get<BiddingApiService>().placeBid(
       sessionId: bid['id'],
       driverId: driverId,
       driverName: driverName,

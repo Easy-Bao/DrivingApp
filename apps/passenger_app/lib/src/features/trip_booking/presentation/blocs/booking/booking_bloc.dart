@@ -8,7 +8,7 @@ import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booki
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// BLoC responsible for orchestrating the trip booking and driver bidding lifecycle.
+/// Responsible for orchestrating the trip booking and driver bidding lifecycle.
 ///
 /// Coordinates searching, showing nearby drivers, streaming bids, accepting offers,
 /// and dispatch updates.

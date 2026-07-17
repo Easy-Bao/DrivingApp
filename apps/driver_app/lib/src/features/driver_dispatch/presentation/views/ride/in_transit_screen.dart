@@ -1,10 +1,9 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/di/service_locator.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -166,7 +165,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<LiveMapBloc>(
-      create: (_) => getIt<LiveMapBloc>(),
+      create: (_) => Modular.get<LiveMapBloc>(),
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;

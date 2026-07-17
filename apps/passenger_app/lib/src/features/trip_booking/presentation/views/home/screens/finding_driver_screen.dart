@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_state.dart';
@@ -37,8 +36,8 @@ class FindingDriverScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<BookingBloc>(create: (_) => getIt<BookingBloc>()),
-        BlocProvider<LiveMapBloc>(create: (_) => getIt<LiveMapBloc>()),
+        BlocProvider<BookingBloc>(create: (_) => Modular.get<BookingBloc>()),
+        BlocProvider<LiveMapBloc>(create: (_) => Modular.get<LiveMapBloc>()),
       ],
       child: FindingDriverScreenContent(
         rideType: rideType,

@@ -4,7 +4,6 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,7 +52,7 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
       final prefs = await SharedPreferences.getInstance();
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isNotEmpty) {
-        final repo = getIt<ActivityRepository>();
+        final repo = Modular.get<ActivityRepository>();
         final result = await repo.fetchRideHistory(passengerId);
         if (mounted) {
           result.fold(

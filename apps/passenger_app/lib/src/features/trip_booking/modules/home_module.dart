@@ -1,7 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_cubit.dart';
@@ -35,7 +34,8 @@ class HomeModule {
     ChildRoute(
       name: 'ViewAllSuggestions',
       'home/suggestions',
-      child: (context, GoRouterState state) => const PassengerViewAllActivityScreen(),
+      child: (context, GoRouterState state) =>
+          const PassengerViewAllActivityScreen(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -165,11 +165,11 @@ class HomeModule {
           BlocProvider(
             create: (_) {
               return PassengerHomeCubit(
-                repository: getIt<PassengerHomeRepository>(),
+                repository: Modular.get<PassengerHomeRepository>(),
               );
             },
           ),
-          BlocProvider(create: (_) => getIt<SavedPlacesCubit>()),
+          BlocProvider(create: (_) => Modular.get<SavedPlacesCubit>()),
         ],
         child: const PassengerHomeScreen(),
       ),

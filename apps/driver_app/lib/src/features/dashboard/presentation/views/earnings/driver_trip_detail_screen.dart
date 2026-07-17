@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:driver_app/src/core/config/environment_config.dart';
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
@@ -42,7 +41,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     }
 
     try {
-      final profile = await getIt<PassengerApiService>().fetchPassengerProfile(
+      final profile = await Modular.get<PassengerApiService>().fetchPassengerProfile(
         passengerId,
       );
       if (profile != null) {

@@ -12,13 +12,6 @@ class SavedPlaceModel extends SavedPlace {
     super.longitude,
   });
 
-  /// Mappings for default seed records on initial boot.
-  static List<Map<String, String>> get defaults => const [
-    {'label': 'Home', 'iconName': 'house'},
-    {'label': 'Campus', 'iconName': 'graduation_cap'},
-    {'label': 'Work', 'iconName': 'briefcase'},
-  ];
-
   /// Serialises this model to a JSON map.
   Map<String, dynamic> toJson() => {
     'label': label,

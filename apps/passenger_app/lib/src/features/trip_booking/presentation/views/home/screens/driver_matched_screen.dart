@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -96,7 +95,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       if (activeRideId.isEmpty) {
         final passengerId = prefs.getString('passenger_id') ?? '';
         if (passengerId.isNotEmpty) {
-          final res = await getIt<PassengerApiService>().createRideRequest(
+          final res = await Modular.get<PassengerApiService>().createRideRequest(
             passengerId: passengerId,
             rideType: widget.rideType,
             pickupLat: pickupLat,
@@ -119,7 +118,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           }
         }
       } else {
-        final res = await getIt<PassengerApiService>().getRideStatus(
+        final res = await Modular.get<PassengerApiService>().getRideStatus(
           activeRideId,
         );
         if (res != null) {

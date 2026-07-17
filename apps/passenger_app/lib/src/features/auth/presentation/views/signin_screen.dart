@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -373,7 +372,7 @@ class _SigninScreenState extends State<SigninScreen> {
     });
 
     try {
-      final url = getIt<PassengerApiService>().baseUrl.replace(
+      final url = Modular.get<PassengerApiService>().baseUrl.replace(
         path: '/passengers/login',
       );
       final response = await http.post(
@@ -389,7 +388,7 @@ class _SigninScreenState extends State<SigninScreen> {
         final token = data['token'] as String;
         final passenger = data['passenger'] as Map<String, dynamic>;
 
-        final sessionService = getIt<SecureSessionService>();
+        final sessionService = Modular.get<SecureSessionService>();
         await sessionService.writeAuthToken(token);
         await sessionService.writePassengerId(passenger['id'] as String);
 

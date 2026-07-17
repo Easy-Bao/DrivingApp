@@ -1,7 +1,6 @@
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
 import 'package:driver_app/src/core/config/environment_config.dart';
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,7 +19,7 @@ void main() async {
     nativeService: nativeService,
   );
 
-  setupServiceLocator();
+
 
   await BackgroundTelemetryService.initialize();
 

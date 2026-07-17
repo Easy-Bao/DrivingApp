@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:driver_services/driver_services.dart';
@@ -50,7 +49,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
     final driverId = prefs.getString('driver_id') ?? '';
     if (driverId.isEmpty) return;
 
-    final profile = await getIt<AuthApiService>().fetchProfile(driverId);
+    final profile = await Modular.get<AuthApiService>().fetchProfile(driverId);
     if (profile != null && mounted) {
       setState(() {
         _name = profile['name'] as String? ?? _name;
@@ -64,7 +63,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
       await prefs.setString('rating', _rating);
     }
 
-    final stats = await getIt<TripApiService>().fetchStats(driverId);
+    final stats = await Modular.get<TripApiService>().fetchStats(driverId);
     if (stats != null && mounted) {
       setState(() {
         _totalTrips = stats['totalTrips'] as int?;

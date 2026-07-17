@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,7 +45,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
       final prefs = await SharedPreferences.getInstance();
       final passengerName = prefs.getString('passenger_name') ?? 'Passenger';
 
-      await getIt<PassengerApiService>().submitDriverReview(
+      await Modular.get<PassengerApiService>().submitDriverReview(
         driverId: widget.driverId,
         passengerName: passengerName,
         rating: _selectedStars.toDouble(),

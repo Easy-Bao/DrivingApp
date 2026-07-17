@@ -1,13 +1,86 @@
+import 'dart:async';
+
+import 'package:core_models/core_models.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/trip_booking/data/repositories/activity_repository_impl.dart';
+import 'package:passenger_app/src/features/trip_booking/data/repositories/driver_repository_impl.dart';
+import 'package:passenger_app/src/features/trip_booking/data/repositories/passenger_home_repository_impl.dart';
+import 'package:passenger_app/src/features/trip_booking/data/repositories/saved_places_repository_impl.dart';
+import 'package:passenger_app/src/features/trip_booking/data/repositories/track_repository_impl.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
+import 'package:passenger_app/src/features/trip_booking/domain/repositories/saved_places_repository.dart';
 import 'package:passenger_app/src/features/trip_booking/modules/account_module.dart';
 import 'package:passenger_app/src/features/trip_booking/modules/activity_module.dart';
 import 'package:passenger_app/src/features/trip_booking/modules/home_module.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/activity/activity_bloc.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_cubit.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_bloc.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/profile/profile_cubit.dart';
+import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/account/help_center_screen.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/views/passenger_account_screen.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
+import 'package:passenger_services/passenger_services.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerModule extends Module {
+  @override
+  FutureOr<void> binds(Injector i) {
+    i
+      ..addLazySingleton<DriverRepository>(
+        (i) => DriverRepositoryImpl(apiService: i.get<PassengerApiService>()),
+      )
+      ..addLazySingleton<TrackRepository>(
+        (i) => TrackRepositoryImpl(apiService: i.get<PassengerApiService>()),
+      )
+      ..addLazySingleton<PassengerHomeRepository>(
+        (i) => PassengerHomeRepositoryImpl(
+          apiService: i.get<PassengerApiService>(),
+        ),
+      )
+      ..addLazySingleton<SavedPlacesRepository>(
+        (i) => SavedPlacesRepositoryImpl(),
+      )
+      ..addLazySingleton<ActivityRepository>(
+        (i) => ActivityRepositoryImpl(apiService: i.get<PassengerApiService>()),
+      )
+      ..addLazySingleton<BidSessionService>(
+        (i) => BidSessionService(apiService: i.get<PassengerApiService>()),
+      )
+      ..addFactory<SavedPlacesCubit>(
+        (i) => SavedPlacesCubit(repository: i.get<SavedPlacesRepository>()),
+      )
+      ..addFactory<ActivityBloc>(
+        (i) => ActivityBloc(repository: i.get<ActivityRepository>()),
+      )
+      ..addFactory<BookingBloc>(
+        (i) => BookingBloc(
+          driverRepository: i.get<DriverRepository>(),
+          bidSessionService: i.get<BidSessionService>(),
+          apiService: i.get<PassengerApiService>(),
+        ),
+      )
+      ..addFactory<LiveMapBloc>(
+        (i) => LiveMapBloc(apiService: i.get<PassengerApiService>()),
+      )
+      ..addFactory<ProfileCubit>(
+        (i) => ProfileCubit(apiService: i.get<PassengerApiService>()),
+      )
+      ..addFactory<PassengerHomeCubit>(
+        (i) => PassengerHomeCubit(
+          repository: i.get<PassengerHomeRepository>(),
+        ),
+      )
+      ..addFactory<TrackDriverCubit>(
+        (i) => TrackDriverCubit(
+          repository: i.get<TrackRepository>(),
+          sessionService: i.get<SecureSessionService>(),
+        ),
+      );
+  }
   final homeRoutes = [...HomeModule.shellRoutes];
   final homeRoutesScreen = [...HomeModule.routes];
 

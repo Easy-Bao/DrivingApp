@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/core/network/api_endpoints.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/chat/chat_cubit.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -45,7 +44,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
     try {
-      final res = await getIt<PassengerApiService>().getRideStatus(rId);
+      final res = await Modular.get<PassengerApiService>().getRideStatus(rId);
       if (res != null) {
         final status = res['status'] as String?;
         if (status == 'completed' ||

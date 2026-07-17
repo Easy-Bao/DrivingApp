@@ -1,5 +1,4 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/dashboard/domain/repositories/driver_activity_repository.dart';
 import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:flutter/material.dart';
@@ -62,7 +61,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
       return;
     }
 
-    final result = await getIt<DriverActivityRepository>().fetchTripHistory(
+    final result = await Modular.get<DriverActivityRepository>().fetchTripHistory(
       driverId,
     );
     final now = DateTime.now();

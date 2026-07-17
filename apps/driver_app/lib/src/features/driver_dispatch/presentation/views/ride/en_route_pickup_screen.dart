@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:driver_app/src/core/config/environment_config.dart';
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/live_map/live_map_event.dart';
@@ -74,7 +73,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       if (rideId == null || rideId.isEmpty) return;
 
       try {
-        final loc = await getIt<TelemetryApiService>().fetchPassengerLocation(
+        final loc = await Modular.get<TelemetryApiService>().fetchPassengerLocation(
           rideId,
         );
         if (loc != null && loc['lat'] != null && loc['lng'] != null) {
@@ -241,7 +240,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<LiveMapBloc>(
-      create: (_) => getIt<LiveMapBloc>(),
+      create: (_) => Modular.get<LiveMapBloc>(),
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
@@ -553,12 +552,12 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                   final rideCubit = BlocProvider.of<RideFlowCubit>(context);
                   final rideId = rideCubit.activeRideId ?? '';
                   if (rideId.isNotEmpty) {
-                    final ride = await getIt<TripApiService>().getRideStatus(
+                    final ride = await Modular.get<TripApiService>().getRideStatus(
                       rideId,
                     );
                     final passengerId = ride?['passenger_id'] as String?;
                     if (passengerId != null && passengerId.isNotEmpty) {
-                      final passenger = await getIt<PassengerApiService>()
+                      final passenger = await Modular.get<PassengerApiService>()
                           .fetchPassengerProfile(passengerId);
                       final phone = passenger?['phone'] as String?;
                       if (phone != null && phone.isNotEmpty) {

@@ -10,7 +10,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/config/environment_config.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/track_driver/track_driver_cubit.dart';
@@ -48,7 +47,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   @override
   void initState() {
     super.initState();
-    _liveMapBloc = getIt<LiveMapBloc>();
+    _liveMapBloc = Modular.get<LiveMapBloc>();
     _startChatMessagesPolling();
   }
 
@@ -141,6 +140,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         );
       }, onError: (_) {});
 
+      //TODO: Fix vehicleType and driverId as be required
       unawaited(
         BlocProvider.of<TrackDriverCubit>(context).startTracking(
           startLat: driverStartLat,
@@ -148,8 +148,16 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           endLat: passengerLat,
           endLng: passengerLng,
           rideId: widget.ride.id,
-          driverName: widget.ride.driverName.isNotEmpty ? widget.ride.driverName : null,
-          vehiclePlate: widget.ride.vehiclePlate.isNotEmpty ? widget.ride.vehiclePlate : null,
+          // driverId: widget.ride.driverId.isNotEmpty ? : widget.ride.driverId : null,
+          driverName: widget.ride.driverName.isNotEmpty
+              ? widget.ride.driverName
+              : '',
+          vehiclePlate: widget.ride.vehiclePlate.isNotEmpty
+              ? widget.ride.vehiclePlate
+              : '',
+          // vehicleType: widget.ride.vehicleType.isNotEmpty
+          // ? widget.ride.vehicleType
+          // : '',
         ),
       );
     }
@@ -566,14 +574,18 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                         widget.ride.id;
                                     if (activeRideId.isNotEmpty) {
                                       final statusData =
-                                          await getIt<PassengerApiService>()
+                                          await Modular.get<
+                                                PassengerApiService
+                                              >()
                                               .getRideStatus(activeRideId);
                                       final driverId =
                                           statusData?['driver_id'] as String?;
                                       if (driverId != null &&
                                           driverId.isNotEmpty) {
                                         final driverProfile =
-                                            await getIt<PassengerApiService>()
+                                            await Modular.get<
+                                                  PassengerApiService
+                                                >()
                                                 .getDriverProfile(driverId);
                                         final phone =
                                             driverProfile?['phone'] as String?;

@@ -4,7 +4,6 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -35,7 +34,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return;
       }
 
-      final rawNotifications = await getIt<PassengerApiService>()
+      final rawNotifications = await Modular.get<PassengerApiService>()
           .fetchNotifications(passengerId);
       final List<NotificationModel> list = [];
 

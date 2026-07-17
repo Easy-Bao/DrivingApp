@@ -1,9 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -170,7 +170,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
   Widget build(BuildContext context) {
     return BlocProvider<ProfileCubit>(
       create: (_) {
-        final cubit = getIt<ProfileCubit>();
+        final cubit = Modular.get<ProfileCubit>();
         unawaited(cubit.loadProfile());
         return cubit;
       },

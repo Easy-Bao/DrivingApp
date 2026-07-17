@@ -6,6 +6,7 @@ part 'generated/ride_history_model.g.dart';
 /// RideHistoryModel represents a past passenger trip or driving log.
 @freezed
 abstract class RideHistoryModel with _$RideHistoryModel {
+  //TODO: Chore should add or register DriverID, vehicleType
   const factory RideHistoryModel({
     required String id,
     required String pickup,
@@ -19,6 +20,7 @@ abstract class RideHistoryModel with _$RideHistoryModel {
     required String status,
     @Default('') String driverName,
     @Default('') String vehiclePlate,
+    @Default('') String vehicleType,
   }) = _RideHistoryModel;
 
   factory RideHistoryModel.fromJson(Map<String, dynamic> json) =>

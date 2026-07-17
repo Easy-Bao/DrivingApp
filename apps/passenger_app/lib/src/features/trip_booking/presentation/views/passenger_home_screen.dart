@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/di/service_locator.dart';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_state.dart';
@@ -127,7 +126,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
           ),
         );
 
-    _bidSessionService = getIt<BidSessionService>();
+    _bidSessionService = Modular.get<BidSessionService>();
     _bidSessionService.setForeground(false);
 
     _bidSessionStatusSubscription = _bidSessionService.statusStream.listen((_) {
@@ -242,7 +241,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       final prefs = await SharedPreferences.getInstance();
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isEmpty) return;
-      final raw = await getIt<PassengerApiService>().fetchNotifications(
+      final raw = await Modular.get<PassengerApiService>().fetchNotifications(
         passengerId,
       );
       final unread = raw.where((n) {

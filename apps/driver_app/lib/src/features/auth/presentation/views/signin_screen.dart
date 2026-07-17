@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/di/service_locator.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/driver_dispatch/driver_routes.dart';
 import 'package:driver_services/driver_services.dart';
@@ -72,7 +71,7 @@ class _SigninScreenState extends State<SigninScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await getIt<AuthApiService>().authenticateDriver(
+    final result = await Modular.get<AuthApiService>().authenticateDriver(
       email: email,
       password: password,
     );
@@ -81,7 +80,7 @@ class _SigninScreenState extends State<SigninScreen> {
 
     if (result != null && result['driver'] != null) {
       final driver = result['driver'] as Map<String, dynamic>;
-      await getIt<SecureSessionService>().writeDriverId(
+      await Modular.get<SecureSessionService>().writeDriverId(
         driver['id'] as String? ?? '',
       );
       final prefs = await SharedPreferences.getInstance();
