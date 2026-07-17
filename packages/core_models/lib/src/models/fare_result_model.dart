@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'generated/fare_result.freezed.dart';
-part 'generated/fare_result.g.dart';
+part 'generated/fare_result_model.freezed.dart';
+part 'generated/fare_result_model.g.dart';
 
 @freezed
 abstract class FareResult with _$FareResult {

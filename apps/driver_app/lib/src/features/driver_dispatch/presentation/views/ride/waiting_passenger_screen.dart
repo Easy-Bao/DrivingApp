@@ -16,7 +16,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Waiting Passenger Screen component defining application state or layout.
 class WaitingPassengerScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;

@@ -9,7 +9,6 @@ import 'package:passenger_app/src/features/trip_booking/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Passenger Activity component defining application state or layout.
 class PassengerActivityScreen extends StatefulWidget {
   const PassengerActivityScreen({super.key});
 

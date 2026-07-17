@@ -1,10 +1,5 @@
 part of 'activity_bloc.dart';
 
-/// Immutable state tree for [ActivityBloc].
-///
-/// Separates rides into [past] (completed or canceled) and [upcoming]
-/// (in_progress, requested, accepted) so the two Activity tabs can
-/// independently render without filtering in the UI layer.
 abstract class ActivityState {}
 
 class ActivityInitial extends ActivityState {}

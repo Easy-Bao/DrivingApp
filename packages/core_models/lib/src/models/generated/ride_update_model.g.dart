@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of '../ride_update.dart';
+part of '../ride_update_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

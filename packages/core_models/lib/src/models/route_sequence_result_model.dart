@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'waypoint.dart';
+import 'waypoint_model.dart';
 
-part 'generated/route_sequence_result.freezed.dart';
-part 'generated/route_sequence_result.g.dart';
+part 'generated/route_sequence_result_model.freezed.dart';
+part 'generated/route_sequence_result_model.g.dart';
 
 @freezed
 abstract class RouteSequenceResult with _$RouteSequenceResult {

@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'generated/waypoint.freezed.dart';
-part 'generated/waypoint.g.dart';
+part 'generated/waypoint_model.freezed.dart';
+part 'generated/waypoint_model.g.dart';
 
 @freezed
 abstract class Waypoint with _$Waypoint {

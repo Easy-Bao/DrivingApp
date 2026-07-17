@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'ride_flow_state.dart';
 
-/// Ride Flow Cubit component defining application state or layout.
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
   final TripApiService _apiService;

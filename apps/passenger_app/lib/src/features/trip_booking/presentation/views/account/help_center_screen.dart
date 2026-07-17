@@ -3,7 +3,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Help Center Screen component defining application state or layout.
 class HelpCenterScreen extends StatefulWidget {
   const HelpCenterScreen({super.key});
 

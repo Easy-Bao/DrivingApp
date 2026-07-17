@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter_background_service/flutter_background_service.dart';
 
-/// Service managing background execution isolates for telemetry tracking.
 class BackgroundTelemetryService {
   BackgroundTelemetryService._();
 

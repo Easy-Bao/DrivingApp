@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Ride Flow State component defining application state or layout.
 abstract class RideFlowState extends Equatable {
   const RideFlowState();
 

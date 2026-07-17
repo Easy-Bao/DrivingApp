@@ -1,6 +1,5 @@
 part of 'activity_bloc.dart';
 
-/// Events driving the [ActivityBloc] state machine.
 abstract class ActivityEvent {}
 
 class LoadActivityEvent extends ActivityEvent {

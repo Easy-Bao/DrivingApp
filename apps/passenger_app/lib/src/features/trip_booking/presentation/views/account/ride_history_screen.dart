@@ -8,7 +8,6 @@ import 'package:passenger_app/src/features/trip_booking/domain/repositories/acti
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Ride History Screen component defining application state or layout.
 class RideHistoryScreen extends StatefulWidget {
   const RideHistoryScreen({super.key});
 

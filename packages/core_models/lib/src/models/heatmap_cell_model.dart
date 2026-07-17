@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'generated/heatmap_cell.freezed.dart';
-part 'generated/heatmap_cell.g.dart';
+part 'generated/heatmap_cell_model.freezed.dart';
+part 'generated/heatmap_cell_model.g.dart';
 
 @freezed
 abstract class HeatmapCell with _$HeatmapCell {

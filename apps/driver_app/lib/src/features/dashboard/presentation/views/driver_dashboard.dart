@@ -19,7 +19,6 @@ import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Driver Dashboard component defining application state or layout.
 class DriverDashboardScreen extends StatefulWidget {
   const DriverDashboardScreen({super.key});
 

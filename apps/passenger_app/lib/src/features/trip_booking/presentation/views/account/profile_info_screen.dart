@@ -7,7 +7,6 @@ import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Profile Info Screen component defining application state or layout.
 class ProfileInfoScreen extends StatefulWidget {
   const ProfileInfoScreen({super.key});
 

@@ -1,9 +1,8 @@
 import 'package:fpdart/fpdart.dart';
 import '../errors/failures.dart';
-import '../models/ride_status.dart';
-import '../models/ride_update.dart';
+import '../models/ride_status_model.dart';
+import '../models/ride_update_model.dart';
 
-/// Contract defining tracking coordinates and active ride telemetry.
 abstract class TrackRepository {
   Future<List<List<double>>?> getRoutePolyline({
     required double startLat,

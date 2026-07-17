@@ -6,7 +6,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Driver Trip History Screen component defining application state or layout.
 class DriverTripHistoryScreen extends StatefulWidget {
   const DriverTripHistoryScreen({super.key});
 

@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'ride_status.dart';
+import 'ride_status_model.dart';
 
-part 'generated/ride_update.freezed.dart';
-part 'generated/ride_update.g.dart';
+part 'generated/ride_update_model.freezed.dart';
+part 'generated/ride_update_model.g.dart';
 
 @freezed
 abstract class RideUpdate with _$RideUpdate {

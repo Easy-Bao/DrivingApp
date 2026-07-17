@@ -10,7 +10,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Driver Trip Detail Screen component defining application state or layout.
 class DriverTripDetailScreen extends StatefulWidget {
   final Map<String, dynamic> trip;
   const DriverTripDetailScreen({super.key, required this.trip});

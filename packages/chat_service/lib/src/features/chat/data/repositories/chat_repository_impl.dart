@@ -8,12 +8,10 @@ import 'package:chat_service/src/features/chat/domain/repositories/chat_reposito
 import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// Implementation of [ChatRepository] which coordinates between WebSocket connections and domain event models.
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRemoteDataSource _remoteDataSource;
   final String _currentUserId;
 
-  /// Creates a [ChatRepositoryImpl] instance with dependencies.
   ChatRepositoryImpl({
     required ChatRemoteDataSource remoteDataSource,
     required String currentUserId,

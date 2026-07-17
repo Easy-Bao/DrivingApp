@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:passenger_app/src/features/trip_booking/domain/entities/saved_place.dart';
 
-/// Data layer model for a passenger-defined saved-place shortcut.
-/// Extends the domain entity [SavedPlace] to implement JSON serialization.
 class SavedPlaceModel extends SavedPlace {
   const SavedPlaceModel({
     required super.label,
@@ -12,7 +10,6 @@ class SavedPlaceModel extends SavedPlace {
     super.longitude,
   });
 
-  /// Serialises this model to a JSON map.
   Map<String, dynamic> toJson() => {
     'label': label,
     'iconName': iconName,
@@ -21,7 +18,6 @@ class SavedPlaceModel extends SavedPlace {
     if (longitude != null) 'longitude': longitude,
   };
 
-  /// Deserialises a JSON map into a [SavedPlaceModel].
   factory SavedPlaceModel.fromJson(Map<String, dynamic> json) {
     return SavedPlaceModel(
       label: json['label'] as String,

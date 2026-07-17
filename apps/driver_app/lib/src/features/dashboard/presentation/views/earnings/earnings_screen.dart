@@ -7,7 +7,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Earnings Screen component defining application state or layout.
 class DriverEarningsScreen extends StatefulWidget {
   const DriverEarningsScreen({super.key});
 

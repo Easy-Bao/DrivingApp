@@ -4,7 +4,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Rate Passenger Screen component defining application state or layout.
 class RatePassengerScreen extends StatefulWidget {
   const RatePassengerScreen({super.key});
 
