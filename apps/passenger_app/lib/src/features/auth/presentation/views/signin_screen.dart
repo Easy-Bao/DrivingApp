@@ -197,7 +197,9 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            unawaited(context.pushNamed(AuthRoutes.forgotPassword));
+                            unawaited(
+                              context.pushNamed(AuthRoutes.forgotPassword),
+                            );
                           },
                           child: const Text(
                             'Forgot Password?',
@@ -411,7 +413,12 @@ class _SigninScreenState extends State<SigninScreen> {
         final errorMsg = errorData['error'] ?? 'Login failed';
         if (errorData['needs_verification'] == true) {
           final verifyEmail = errorData['email'] ?? email;
-          unawaited(context.pushNamed(AuthRoutes.verifyOtp, queryParameters: {'email': verifyEmail}));
+          unawaited(
+            context.pushNamed(
+              AuthRoutes.verifyOtp,
+              queryParameters: {'email': verifyEmail},
+            ),
+          );
         } else {
           final cleanMsg = _cleanErrorMessage(errorMsg);
           setState(() {
@@ -448,16 +455,17 @@ class _SigninScreenState extends State<SigninScreen> {
 
   String _cleanErrorMessage(dynamic error) {
     final String errorStr = error.toString();
-    if (errorStr.contains('No passenger registered with this email') || 
+    if (errorStr.contains('No passenger registered with this email') ||
         errorStr.contains('passenger not found') ||
         errorStr.contains('user not found') ||
         errorStr.contains('not found')) {
       return 'No account found with this email address.';
     }
-    if (errorStr.contains('invalid password') || 
-        errorStr.contains('incorrect password') || 
+    if (errorStr.contains('invalid password') ||
+        errorStr.contains('incorrect password') ||
         errorStr.contains('password incorrect') ||
-        errorStr.contains('invalid credentials')) {
+        errorStr.contains('invalid credentials') ||
+        errorStr.contains('Invalid email or password')) {
       return 'Incorrect password. Please try again.';
     }
     if (errorStr.contains('"error":')) {
@@ -477,7 +485,8 @@ class _SigninScreenState extends State<SigninScreen> {
             if (msg.contains('invalid password') ||
                 msg.contains('incorrect password') ||
                 msg.contains('password incorrect') ||
-                msg.contains('invalid credentials')) {
+                msg.contains('invalid credentials') ||
+                msg.contains('Invalid email or password')) {
               return 'Incorrect password. Please try again.';
             }
             return msg;
