@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:driver_app/src/core/services/driver_session_service.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/blocs/ride/ride_flow_cubit.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ class AppWidget extends StatelessWidget {
             return RideFlowCubit(
               repository: Modular.get<RideRepository>(),
               apiService: Modular.get<TripApiService>(),
+              sessionService: Modular.get<DriverSessionService>(),
             );
           },
         ),

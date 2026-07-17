@@ -1,16 +1,17 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
+import 'package:driver_app/src/core/services/driver_session_service.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'ride_flow_state.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
   final TripApiService _apiService;
+  final DriverSessionService _sessionService;
   String? _activeRideId;
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
@@ -18,8 +19,10 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   RideFlowCubit({
     required RideRepository repository,
     required TripApiService apiService,
+    required DriverSessionService sessionService,
   }) : _repository = repository,
        _apiService = apiService,
+       _sessionService = sessionService,
        super(RideFlowInitial());
 
   String? get activeRideId => _activeRideId;
@@ -32,35 +35,40 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   }) async {
     _activeRideId = rideId;
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final driverId = prefs.getString('driver_id') ?? 'driver-123';
-      final driverName = prefs.getString('driver_name') ?? 'Driver';
-      final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
-      final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
-      final rating = prefs.getString('rating') ?? '4.9';
+    final driverProfile = await _sessionService.getProfile();
+    if (driverProfile == null) {
+      emit(const RideFlowError('No active driver profile session found.'));
+      return;
+    }
 
-      await _apiService.acceptRide(
+    try {
+      final success = await _apiService.acceptRide(
         rideId: rideId,
-        driverId: driverId,
-        driverName: driverName,
-        driverRating: rating,
-        vehicleType: vehicleType,
-        plateNumber: plateNumber,
+        driverId: driverProfile.id,
+        driverName: driverProfile.name,
+        driverRating: driverProfile.rating,
+        vehicleType: driverProfile.vehicleType,
+        plateNumber: driverProfile.plateNumber,
+      );
+
+      if (!success) {
+        emit(const RideFlowError('Failed to accept ride on backend.'));
+        return;
+      }
+
+      emit(
+        RideFlowEnRoutePickup(
+          passengerName: passengerName,
+          pickupLat: pickupLat,
+          pickupLng: pickupLng,
+        ),
       );
     } catch (error) {
       debugPrint(
         'Error accepting ride on backend: ${ErrorHandler.getErrorMessage(error)}',
       );
+      emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
     }
-
-    emit(
-      RideFlowEnRoutePickup(
-        passengerName: passengerName,
-        pickupLat: pickupLat,
-        pickupLng: pickupLng,
-      ),
-    );
   }
 
   Future<void> resumeRide({

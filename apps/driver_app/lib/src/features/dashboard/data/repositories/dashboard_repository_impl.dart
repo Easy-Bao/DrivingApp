@@ -1,13 +1,17 @@
 import 'package:core_models/core_models.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
   final TripApiService _apiService;
+  final SecureSessionService _sessionService;
 
-  DashboardRepositoryImpl({required TripApiService apiService})
-    : _apiService = apiService;
+  DashboardRepositoryImpl({
+    required TripApiService apiService,
+    required SecureSessionService sessionService,
+  }) : _apiService = apiService,
+       _sessionService = sessionService;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {
@@ -32,11 +36,10 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
   Future<String> _getDriverId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('driver_id') ?? '';
+      return await _sessionService.readDriverId() ?? '';
     } catch (error) {
       throw CacheException(
-        message: 'Failed to access local preferences: $error',
+        message: 'Failed to access secure storage session: $error',
       );
     }
   }

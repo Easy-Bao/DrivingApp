@@ -1,4 +1,5 @@
 import 'package:driver_app/src/core/config/environment_config.dart';
+import 'package:driver_app/src/core/services/driver_session_service.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
 import 'package:driver_app/src/features/driver_dispatch/driver_dispatch_module.dart';
 import 'package:driver_services/driver_services.dart';
@@ -10,6 +11,11 @@ class AppModule extends Module {
   void binds(Injector i) {
     i
       ..addLazySingleton<SecureSessionService>((i) => SecureSessionService())
+      ..addLazySingleton<DriverSessionService>(
+        (i) => DriverSessionService(
+          secureSessionService: i.get<SecureSessionService>(),
+        ),
+      )
       ..addLazySingleton<AuthApiService>(
         (i) => AuthApiService(baseUrl: EnvironmentConfig.driverServiceUri),
       )

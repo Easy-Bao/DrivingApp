@@ -62,3 +62,12 @@ class RideFlowComplete extends RideFlowState {
   @override
   List<Object?> get props => [fare];
 }
+
+class RideFlowError extends RideFlowState {
+  final String message;
+
+  const RideFlowError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

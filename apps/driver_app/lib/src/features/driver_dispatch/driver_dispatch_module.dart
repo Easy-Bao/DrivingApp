@@ -18,6 +18,7 @@ import 'package:driver_app/src/features/driver_dispatch/presentation/views/ride/
 import 'package:driver_app/src/features/driver_dispatch/presentation/views/ride/en_route_pickup_screen.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/views/ride/in_transit_screen.dart';
 import 'package:driver_app/src/features/driver_dispatch/presentation/views/ride/waiting_passenger_screen.dart';
+import 'package:driver_app/src/core/services/driver_session_service.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:session_service/session_service.dart';
@@ -27,7 +28,10 @@ class DriverDispatchModule extends Module {
   FutureOr<void> binds(Injector i) {
     i
       ..addLazySingleton<DashboardRepository>(
-        (i) => DashboardRepositoryImpl(apiService: i.get<TripApiService>()),
+        (i) => DashboardRepositoryImpl(
+          apiService: i.get<TripApiService>(),
+          sessionService: i.get<SecureSessionService>(),
+        ),
       )
       ..addLazySingleton<RideRepository>(
         (i) => RideRepositoryImpl(apiService: i.get<BiddingApiService>()),
@@ -50,6 +54,7 @@ class DriverDispatchModule extends Module {
         (i) => RideFlowCubit(
           repository: i.get<RideRepository>(),
           apiService: i.get<TripApiService>(),
+          sessionService: i.get<DriverSessionService>(),
         ),
       );
   }
