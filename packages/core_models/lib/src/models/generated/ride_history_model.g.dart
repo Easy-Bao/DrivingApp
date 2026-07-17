@@ -18,8 +18,10 @@ _RideHistoryModel _$RideHistoryModelFromJson(Map<String, dynamic> json) =>
       date: json['date'] as String,
       price: json['price'] as String,
       status: json['status'] as String,
-      driverName: json['driverName'] as String? ?? '',
-      vehiclePlate: json['vehiclePlate'] as String? ?? '',
+      driverId: json['driverId'] as String,
+      driverName: json['driverName'] as String,
+      vehiclePlate: json['vehiclePlate'] as String,
+      vehicleType: json['vehicleType'] as String,
     );
 
 Map<String, dynamic> _$RideHistoryModelToJson(_RideHistoryModel instance) =>
@@ -34,6 +36,8 @@ Map<String, dynamic> _$RideHistoryModelToJson(_RideHistoryModel instance) =>
       'date': instance.date,
       'price': instance.price,
       'status': instance.status,
+      'driverId': instance.driverId,
       'driverName': instance.driverName,
       'vehiclePlate': instance.vehiclePlate,
+      'vehicleType': instance.vehicleType,
     };

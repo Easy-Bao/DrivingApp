@@ -26,6 +26,7 @@ class BidSessionTrip {
 class DriverMatchResult {
   const DriverMatchResult({
     required this.trip,
+    required this.driverId,
     required this.driverName,
     required this.fare,
     required this.driverRating,
@@ -34,6 +35,7 @@ class DriverMatchResult {
   });
 
   final BidSessionTrip trip;
+  final String driverId;
   final String driverName;
   final double fare;
   final String driverRating;
@@ -47,6 +49,7 @@ class DriverMatchResult {
       'destination': trip.destination,
       'distance': trip.distance,
       'duration': trip.duration,
+      'driverId': driverId,
       'driverName': driverName,
       'driverRating': driverRating,
       'vehicleType': vehicleType,
@@ -141,6 +144,7 @@ class BidSessionService {
 
   Future<void> acceptOffer({
     required String offerId,
+    required String driverId,
     required String driverName,
     required String vehicleType,
     required String plateNumber,
@@ -166,6 +170,7 @@ class BidSessionService {
 
     final result = DriverMatchResult(
       trip: _trip!,
+      driverId: driverId,
       driverName: driverName,
       fare: proposedFare,
       driverRating: '5.0',
@@ -183,9 +188,6 @@ class BidSessionService {
       try {
         await _apiService.cancelBidSession(_sessionId!);
       } catch (error) {
-        // Absorb remote cancellation failure so that local state teardown 
-        // is never blocked by temporary network outages or server exceptions, 
-        // allowing the passenger to successfully cancel locally and exit the search view.
         debugPrint('BidSessionService.cancelSession failed remotely: $error');
       }
     }
@@ -237,6 +239,7 @@ class BidSessionService {
 
       final result = DriverMatchResult(
         trip: _trip!,
+        driverId: acceptedDriverId ?? '',
         driverName: acceptedOffer['driver_name'] as String? ?? 'Driver',
         fare:
             (acceptedOffer['proposed_fare'] as num?)?.toDouble() ?? _trip!.fare,

@@ -317,10 +317,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             date: DateTime.now().toLocal().toString(),
             price: '₱${(_fare ?? 0.0).toStringAsFixed(2)}',
             status: RideStatus.accepted.value,
+            driverId: res['driver_id'] as String? ?? event.matchResult.driverId,
             driverName:
                 res['driver_name'] as String? ?? event.matchResult.driverName,
             vehiclePlate:
                 res['plate_number'] as String? ?? event.matchResult.plateNumber,
+            vehicleType:
+                res['vehicle_type'] as String? ?? event.matchResult.vehicleType,
           );
         }
       } catch (error) {
@@ -344,6 +347,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     await _bidSessionService.acceptOffer(
       offerId: event.offerId,
+      driverId: event.driverId,
       driverName: event.driverName,
       vehicleType: event.vehicleType,
       plateNumber: event.plateNumber,

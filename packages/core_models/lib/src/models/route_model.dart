@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/route_model.freezed.dart';
 part 'generated/route_model.g.dart';
 
-/// RouteModel represents route coordinates, metrics, and description.
 @freezed
 abstract class RouteModel with _$RouteModel {
   const factory RouteModel({
@@ -17,12 +16,10 @@ abstract class RouteModel with _$RouteModel {
       _$RouteModelFromJson(json);
 }
 
-/// Extension on RouteModel to convert durationSeconds to a Duration object.
 extension RouteModelExtension on RouteModel {
   Duration get estimatedTime => Duration(seconds: durationSeconds);
 }
 
-/// Legacy Adapter for RouteModel to construct with Duration instead of int seconds.
 class RouteModelLegacyAdapter {
   RouteModelLegacyAdapter._();
 

@@ -48,6 +48,7 @@ class StartOpenBookingEvent extends BookingEvent {
 
 class AcceptBidOfferEvent extends BookingEvent {
   final String offerId;
+  final String driverId;
   final String driverName;
   final String vehicleType;
   final String plateNumber;
@@ -55,6 +56,7 @@ class AcceptBidOfferEvent extends BookingEvent {
 
   const AcceptBidOfferEvent({
     required this.offerId,
+    required this.driverId,
     required this.driverName,
     required this.vehicleType,
     required this.plateNumber,

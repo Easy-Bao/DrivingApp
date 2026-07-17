@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/waypoint.freezed.dart';
 part 'generated/waypoint.g.dart';
 
-/// Waypoint represents geographical coordinates in a travel path.
 @freezed
 abstract class Waypoint with _$Waypoint {
   const factory Waypoint({

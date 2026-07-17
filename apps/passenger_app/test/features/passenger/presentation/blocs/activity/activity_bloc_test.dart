@@ -36,8 +36,10 @@ void main() {
       date: '2025-01-01',
       price: '85.0',
       status: 'completed',
+      driverId: 'drv-1',
       driverName: 'Pedro Santos',
       vehiclePlate: 'ABC 1234',
+      vehicleType: 'Sedan',
     );
 
     const requestedRide = RideHistoryModel(
@@ -51,8 +53,10 @@ void main() {
       date: '2025-01-02',
       price: '60.0',
       status: 'requested',
+      driverId: 'drv-2',
       driverName: 'Jose Reyes',
       vehiclePlate: 'XYZ 9876',
+      vehicleType: 'Bao Bao',
     );
 
     blocTest<ActivityBloc, ActivityState>(

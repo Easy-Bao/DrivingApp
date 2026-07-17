@@ -140,7 +140,6 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         );
       }, onError: (_) {});
 
-      //TODO: Fix vehicleType and driverId as be required
       unawaited(
         BlocProvider.of<TrackDriverCubit>(context).startTracking(
           startLat: driverStartLat,
@@ -148,16 +147,10 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           endLat: passengerLat,
           endLng: passengerLng,
           rideId: widget.ride.id,
-          // driverId: widget.ride.driverId.isNotEmpty ? : widget.ride.driverId : null,
-          driverName: widget.ride.driverName.isNotEmpty
-              ? widget.ride.driverName
-              : '',
-          vehiclePlate: widget.ride.vehiclePlate.isNotEmpty
-              ? widget.ride.vehiclePlate
-              : '',
-          // vehicleType: widget.ride.vehicleType.isNotEmpty
-          // ? widget.ride.vehicleType
-          // : '',
+          driverId: widget.ride.driverId,
+          driverName: widget.ride.driverName,
+          vehiclePlate: widget.ride.vehiclePlate,
+          vehicleType: widget.ride.vehicleType,
         ),
       );
     }

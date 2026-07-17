@@ -3,8 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/driver_model.freezed.dart';
 part 'generated/driver_model.g.dart';
 
-/// DriverModel represents a driver's details and real-time positional updates.
-/// This is a pure Dart domain model used globally by features.
 @freezed
 abstract class DriverModel with _$DriverModel {
   const factory DriverModel({

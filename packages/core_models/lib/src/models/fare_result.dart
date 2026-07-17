@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/fare_result.freezed.dart';
 part 'generated/fare_result.g.dart';
 
-/// FareResult represents calculated cost breakups of a trip.
 @freezed
 abstract class FareResult with _$FareResult {
   const factory FareResult({

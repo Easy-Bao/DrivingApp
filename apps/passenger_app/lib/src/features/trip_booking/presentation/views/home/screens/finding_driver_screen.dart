@@ -1011,6 +1011,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                               BlocProvider.of<BookingBloc>(context).add(
                                 AcceptBidOfferEvent(
                                   offerId: offerId,
+                                  driverId: offer['driver_id'] as String? ?? '',
                                   driverName: driverName,
                                   vehicleType: vehicle,
                                   plateNumber: plate,

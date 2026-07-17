@@ -91,6 +91,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       var pickupName = widget.pickupAddress ?? 'Current Location';
       var driverName = widget.driverName ?? 'Driver';
       var vehiclePlate = widget.plateNumber ?? 'ABC 1234';
+      var driverId = widget.driverId ?? '';
+      var vehicleType = widget.vehicleType ?? '';
 
       if (activeRideId.isEmpty) {
         final passengerId = prefs.getString('passenger_id') ?? '';
@@ -115,6 +117,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
             pickupName = res['pickup_name'] as String? ?? pickupName;
             driverName = res['driver_name'] as String? ?? driverName;
             vehiclePlate = res['plate_number'] as String? ?? vehiclePlate;
+            driverId = res['driver_id'] as String? ?? driverId;
+            vehicleType = res['vehicle_type'] as String? ?? vehicleType;
           }
         }
       } else {
@@ -127,6 +131,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           pickupName = res['pickup_name'] as String? ?? pickupName;
           driverName = res['driver_name'] as String? ?? driverName;
           vehiclePlate = res['plate_number'] as String? ?? vehiclePlate;
+          driverId = res['driver_id'] as String? ?? driverId;
+          vehicleType = res['vehicle_type'] as String? ?? vehicleType;
         }
       }
 
@@ -143,8 +149,10 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
             date: DateTime.now().toLocal().toString(),
             price: '₱${widget.fare.toStringAsFixed(2)}',
             status: 'accepted',
+            driverId: driverId,
             driverName: driverName,
             vehiclePlate: vehiclePlate,
+            vehicleType: vehicleType,
           );
         });
       }
@@ -182,8 +190,10 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           date: DateTime.now().toLocal().toString(),
           price: '₱${widget.fare.toStringAsFixed(2)}',
           status: 'accepted',
-          driverName: widget.driverName ?? 'Driver',
-          vehiclePlate: widget.plateNumber ?? 'ABC 1234',
+          driverId: widget.driverId ?? '',
+          driverName: widget.driverName ?? '',
+          vehiclePlate: widget.plateNumber ?? '',
+          vehicleType: widget.vehicleType ?? '',
         );
     context.goNamed(TripRoutes.activityTrackDriver, extra: ride);
   }

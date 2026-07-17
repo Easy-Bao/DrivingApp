@@ -1,4 +1,3 @@
-/// State transitions defining the passenger trip request lifecycle.
 enum RideStatus {
   requested('requested'),
   accepted('accepted'),

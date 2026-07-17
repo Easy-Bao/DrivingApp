@@ -99,8 +99,10 @@ void main() {
           endLat: 7.830,
           endLng: 123.436,
           rideId: 'ride-1',
+          driverId: 'drv-1',
           driverName: 'Driver',
           vehiclePlate: 'ABC-123',
+          vehicleType: 'Sedan',
         );
         await Future.delayed(const Duration(milliseconds: 2200));
       },
@@ -131,8 +133,10 @@ void main() {
           endLat: 7.830,
           endLng: 123.436,
           rideId: 'ride-1',
+          driverId: 'drv-1',
           driverName: 'driverName',
           vehiclePlate: 'ABC-123',
+          vehicleType: 'Sedan',
         );
         await Future.delayed(const Duration(milliseconds: 2200));
       },
@@ -170,12 +174,14 @@ void main() {
       act: (cubit) async {
         await cubit.startTracking(
           startLat: 7.828,
+          driverId: 'drv-1',
           driverName: 'Driver',
           startLng: 123.434,
           endLat: 7.830,
           endLng: 123.436,
           rideId: 'ride-1',
           vehiclePlate: 'ABC-123',
+          vehicleType: 'Sedan',
         );
         await Future.delayed(const Duration(milliseconds: 2200));
       },

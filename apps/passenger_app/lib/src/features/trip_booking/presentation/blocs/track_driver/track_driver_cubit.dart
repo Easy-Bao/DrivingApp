@@ -20,20 +20,24 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
        _sessionService = sessionService,
        super(TrackDriverInitial());
 
-  //TODO: Make the driverId and vehicleType required
+  /// Starts periodic tracking of the driver's location and status for the active ride.
+  ///
+  /// Polls the repository every two seconds to fetch current status updates and maps
+  /// coordinates into live [TrackDriverState] transitions. If the API fails or is not
+  /// updated, simulates progress tracking cleanly along the route polyline using the
+  /// provided driver details [driverId], [driverName], [vehiclePlate], and [vehicleType].
   Future<void> startTracking({
     required double startLat,
     required double startLng,
     required double endLat,
     required double endLng,
     required String rideId,
-    double? driverId,
+    required String driverId,
     required String driverName,
     required String vehiclePlate,
-    String? vehicleType,
+    required String vehicleType,
   }) async {
-    //TODO: Chore
-    // _ticker?.cancel();
+    _ticker?.cancel();
 
     final session = _sessionService;
     if (rideId.isNotEmpty) {
@@ -139,7 +143,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         progress += 0.1;
         if (progress >= 1.0) {
           timer.cancel();
-          emit(const TrackDriverCompleted(driverId: '', driverName: ''));
+          emit(TrackDriverCompleted(driverId: driverId, driverName: driverName));
         } else {
           final pos = _interpolate(
             progress: progress,
@@ -157,9 +161,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               progress: progress,
               eta: etaMinutes == 1 ? '1 min' : '$etaMinutes mins',
               routePoints: routePoints,
-              driverName: '',
-              vehiclePlate: '',
-              vehicleType: '',
+              driverName: driverName,
+              vehiclePlate: vehiclePlate,
+              vehicleType: vehicleType,
             ),
           );
         }

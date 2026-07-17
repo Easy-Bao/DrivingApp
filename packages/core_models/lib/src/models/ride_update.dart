@@ -4,7 +4,6 @@ import 'ride_status.dart';
 part 'generated/ride_update.freezed.dart';
 part 'generated/ride_update.g.dart';
 
-/// RideUpdate represents the updated real-time status and driver info of an active ride.
 @freezed
 abstract class RideUpdate with _$RideUpdate {
   const factory RideUpdate({

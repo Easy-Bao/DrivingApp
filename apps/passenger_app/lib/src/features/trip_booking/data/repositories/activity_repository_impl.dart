@@ -79,8 +79,10 @@ class ActivityRepositoryImpl implements ActivityRepository {
       date: _formatCreatedAt(raw['created_at']),
       price: _formatPrice(raw['fare']),
       status: raw['status'] as String? ?? 'unknown',
+      driverId: raw['driver_id'] as String? ?? '',
       driverName: raw['driver_name'] as String? ?? '',
       vehiclePlate: raw['plate_number'] as String? ?? '',
+      vehicleType: raw['vehicle_type'] as String? ?? '',
     );
   }
 

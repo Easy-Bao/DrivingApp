@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RideHistoryModel {
 
- String get id; String get pickup; String get destination; double get pickupLat; double get pickupLng; double get destLat; double get destLng; String get date; String get price; String get status; String get driverName; String get vehiclePlate;
+ String get id; String get pickup; String get destination; double get pickupLat; double get pickupLng; double get destLat; double get destLng; String get date; String get price; String get status; String get driverId; String get driverName; String get vehiclePlate; String get vehicleType;
 /// Create a copy of RideHistoryModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $RideHistoryModelCopyWith<RideHistoryModel> get copyWith => _$RideHistoryModelCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RideHistoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.pickup, pickup) || other.pickup == pickup)&&(identical(other.destination, destination) || other.destination == destination)&&(identical(other.pickupLat, pickupLat) || other.pickupLat == pickupLat)&&(identical(other.pickupLng, pickupLng) || other.pickupLng == pickupLng)&&(identical(other.destLat, destLat) || other.destLat == destLat)&&(identical(other.destLng, destLng) || other.destLng == destLng)&&(identical(other.date, date) || other.date == date)&&(identical(other.price, price) || other.price == price)&&(identical(other.status, status) || other.status == status)&&(identical(other.driverName, driverName) || other.driverName == driverName)&&(identical(other.vehiclePlate, vehiclePlate) || other.vehiclePlate == vehiclePlate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RideHistoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.pickup, pickup) || other.pickup == pickup)&&(identical(other.destination, destination) || other.destination == destination)&&(identical(other.pickupLat, pickupLat) || other.pickupLat == pickupLat)&&(identical(other.pickupLng, pickupLng) || other.pickupLng == pickupLng)&&(identical(other.destLat, destLat) || other.destLat == destLat)&&(identical(other.destLng, destLng) || other.destLng == destLng)&&(identical(other.date, date) || other.date == date)&&(identical(other.price, price) || other.price == price)&&(identical(other.status, status) || other.status == status)&&(identical(other.driverId, driverId) || other.driverId == driverId)&&(identical(other.driverName, driverName) || other.driverName == driverName)&&(identical(other.vehiclePlate, vehiclePlate) || other.vehiclePlate == vehiclePlate)&&(identical(other.vehicleType, vehicleType) || other.vehicleType == vehicleType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,pickup,destination,pickupLat,pickupLng,destLat,destLng,date,price,status,driverName,vehiclePlate);
+int get hashCode => Object.hash(runtimeType,id,pickup,destination,pickupLat,pickupLng,destLat,destLng,date,price,status,driverId,driverName,vehiclePlate,vehicleType);
 
 @override
 String toString() {
-  return 'RideHistoryModel(id: $id, pickup: $pickup, destination: $destination, pickupLat: $pickupLat, pickupLng: $pickupLng, destLat: $destLat, destLng: $destLng, date: $date, price: $price, status: $status, driverName: $driverName, vehiclePlate: $vehiclePlate)';
+  return 'RideHistoryModel(id: $id, pickup: $pickup, destination: $destination, pickupLat: $pickupLat, pickupLng: $pickupLng, destLat: $destLat, destLng: $destLng, date: $date, price: $price, status: $status, driverId: $driverId, driverName: $driverName, vehiclePlate: $vehiclePlate, vehicleType: $vehicleType)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $RideHistoryModelCopyWith<$Res>  {
   factory $RideHistoryModelCopyWith(RideHistoryModel value, $Res Function(RideHistoryModel) _then) = _$RideHistoryModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String pickup, String destination, double pickupLat, double pickupLng, double destLat, double destLng, String date, String price, String status, String driverName, String vehiclePlate
+ String id, String pickup, String destination, double pickupLat, double pickupLng, double destLat, double destLng, String date, String price, String status, String driverId, String driverName, String vehiclePlate, String vehicleType
 });
 
 
@@ -65,7 +65,7 @@ class _$RideHistoryModelCopyWithImpl<$Res>
 
 /// Create a copy of RideHistoryModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? pickup = null,Object? destination = null,Object? pickupLat = null,Object? pickupLng = null,Object? destLat = null,Object? destLng = null,Object? date = null,Object? price = null,Object? status = null,Object? driverName = null,Object? vehiclePlate = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? pickup = null,Object? destination = null,Object? pickupLat = null,Object? pickupLng = null,Object? destLat = null,Object? destLng = null,Object? date = null,Object? price = null,Object? status = null,Object? driverId = null,Object? driverName = null,Object? vehiclePlate = null,Object? vehicleType = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,pickup: null == pickup ? _self.pickup : pickup // ignore: cast_nullable_to_non_nullable
@@ -77,8 +77,10 @@ as double,destLng: null == destLng ? _self.destLng : destLng // ignore: cast_nul
 as double,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as String,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,driverId: null == driverId ? _self.driverId : driverId // ignore: cast_nullable_to_non_nullable
 as String,driverName: null == driverName ? _self.driverName : driverName // ignore: cast_nullable_to_non_nullable
 as String,vehiclePlate: null == vehiclePlate ? _self.vehiclePlate : vehiclePlate // ignore: cast_nullable_to_non_nullable
+as String,vehicleType: null == vehicleType ? _self.vehicleType : vehicleType // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -164,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String pickup,  String destination,  double pickupLat,  double pickupLng,  double destLat,  double destLng,  String date,  String price,  String status,  String driverName,  String vehiclePlate)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String pickup,  String destination,  double pickupLat,  double pickupLng,  double destLat,  double destLng,  String date,  String price,  String status,  String driverId,  String driverName,  String vehiclePlate,  String vehicleType)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RideHistoryModel() when $default != null:
-return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pickupLng,_that.destLat,_that.destLng,_that.date,_that.price,_that.status,_that.driverName,_that.vehiclePlate);case _:
+return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pickupLng,_that.destLat,_that.destLng,_that.date,_that.price,_that.status,_that.driverId,_that.driverName,_that.vehiclePlate,_that.vehicleType);case _:
   return orElse();
 
 }
@@ -185,10 +187,10 @@ return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pi
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String pickup,  String destination,  double pickupLat,  double pickupLng,  double destLat,  double destLng,  String date,  String price,  String status,  String driverName,  String vehiclePlate)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String pickup,  String destination,  double pickupLat,  double pickupLng,  double destLat,  double destLng,  String date,  String price,  String status,  String driverId,  String driverName,  String vehiclePlate,  String vehicleType)  $default,) {final _that = this;
 switch (_that) {
 case _RideHistoryModel():
-return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pickupLng,_that.destLat,_that.destLng,_that.date,_that.price,_that.status,_that.driverName,_that.vehiclePlate);case _:
+return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pickupLng,_that.destLat,_that.destLng,_that.date,_that.price,_that.status,_that.driverId,_that.driverName,_that.vehiclePlate,_that.vehicleType);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -205,10 +207,10 @@ return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pi
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String pickup,  String destination,  double pickupLat,  double pickupLng,  double destLat,  double destLng,  String date,  String price,  String status,  String driverName,  String vehiclePlate)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String pickup,  String destination,  double pickupLat,  double pickupLng,  double destLat,  double destLng,  String date,  String price,  String status,  String driverId,  String driverName,  String vehiclePlate,  String vehicleType)?  $default,) {final _that = this;
 switch (_that) {
 case _RideHistoryModel() when $default != null:
-return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pickupLng,_that.destLat,_that.destLng,_that.date,_that.price,_that.status,_that.driverName,_that.vehiclePlate);case _:
+return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pickupLng,_that.destLat,_that.destLng,_that.date,_that.price,_that.status,_that.driverId,_that.driverName,_that.vehiclePlate,_that.vehicleType);case _:
   return null;
 
 }
@@ -220,7 +222,7 @@ return $default(_that.id,_that.pickup,_that.destination,_that.pickupLat,_that.pi
 @JsonSerializable()
 
 class _RideHistoryModel implements RideHistoryModel {
-  const _RideHistoryModel({required this.id, required this.pickup, required this.destination, required this.pickupLat, required this.pickupLng, required this.destLat, required this.destLng, required this.date, required this.price, required this.status, this.driverName = '', this.vehiclePlate = ''});
+  const _RideHistoryModel({required this.id, required this.pickup, required this.destination, required this.pickupLat, required this.pickupLng, required this.destLat, required this.destLng, required this.date, required this.price, required this.status, required this.driverId, required this.driverName, required this.vehiclePlate, required this.vehicleType});
   factory _RideHistoryModel.fromJson(Map<String, dynamic> json) => _$RideHistoryModelFromJson(json);
 
 @override final  String id;
@@ -233,8 +235,10 @@ class _RideHistoryModel implements RideHistoryModel {
 @override final  String date;
 @override final  String price;
 @override final  String status;
-@override@JsonKey() final  String driverName;
-@override@JsonKey() final  String vehiclePlate;
+@override final  String driverId;
+@override final  String driverName;
+@override final  String vehiclePlate;
+@override final  String vehicleType;
 
 /// Create a copy of RideHistoryModel
 /// with the given fields replaced by the non-null parameter values.
@@ -249,16 +253,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RideHistoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.pickup, pickup) || other.pickup == pickup)&&(identical(other.destination, destination) || other.destination == destination)&&(identical(other.pickupLat, pickupLat) || other.pickupLat == pickupLat)&&(identical(other.pickupLng, pickupLng) || other.pickupLng == pickupLng)&&(identical(other.destLat, destLat) || other.destLat == destLat)&&(identical(other.destLng, destLng) || other.destLng == destLng)&&(identical(other.date, date) || other.date == date)&&(identical(other.price, price) || other.price == price)&&(identical(other.status, status) || other.status == status)&&(identical(other.driverName, driverName) || other.driverName == driverName)&&(identical(other.vehiclePlate, vehiclePlate) || other.vehiclePlate == vehiclePlate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RideHistoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.pickup, pickup) || other.pickup == pickup)&&(identical(other.destination, destination) || other.destination == destination)&&(identical(other.pickupLat, pickupLat) || other.pickupLat == pickupLat)&&(identical(other.pickupLng, pickupLng) || other.pickupLng == pickupLng)&&(identical(other.destLat, destLat) || other.destLat == destLat)&&(identical(other.destLng, destLng) || other.destLng == destLng)&&(identical(other.date, date) || other.date == date)&&(identical(other.price, price) || other.price == price)&&(identical(other.status, status) || other.status == status)&&(identical(other.driverId, driverId) || other.driverId == driverId)&&(identical(other.driverName, driverName) || other.driverName == driverName)&&(identical(other.vehiclePlate, vehiclePlate) || other.vehiclePlate == vehiclePlate)&&(identical(other.vehicleType, vehicleType) || other.vehicleType == vehicleType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,pickup,destination,pickupLat,pickupLng,destLat,destLng,date,price,status,driverName,vehiclePlate);
+int get hashCode => Object.hash(runtimeType,id,pickup,destination,pickupLat,pickupLng,destLat,destLng,date,price,status,driverId,driverName,vehiclePlate,vehicleType);
 
 @override
 String toString() {
-  return 'RideHistoryModel(id: $id, pickup: $pickup, destination: $destination, pickupLat: $pickupLat, pickupLng: $pickupLng, destLat: $destLat, destLng: $destLng, date: $date, price: $price, status: $status, driverName: $driverName, vehiclePlate: $vehiclePlate)';
+  return 'RideHistoryModel(id: $id, pickup: $pickup, destination: $destination, pickupLat: $pickupLat, pickupLng: $pickupLng, destLat: $destLat, destLng: $destLng, date: $date, price: $price, status: $status, driverId: $driverId, driverName: $driverName, vehiclePlate: $vehiclePlate, vehicleType: $vehicleType)';
 }
 
 
@@ -269,7 +273,7 @@ abstract mixin class _$RideHistoryModelCopyWith<$Res> implements $RideHistoryMod
   factory _$RideHistoryModelCopyWith(_RideHistoryModel value, $Res Function(_RideHistoryModel) _then) = __$RideHistoryModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String pickup, String destination, double pickupLat, double pickupLng, double destLat, double destLng, String date, String price, String status, String driverName, String vehiclePlate
+ String id, String pickup, String destination, double pickupLat, double pickupLng, double destLat, double destLng, String date, String price, String status, String driverId, String driverName, String vehiclePlate, String vehicleType
 });
 
 
@@ -286,7 +290,7 @@ class __$RideHistoryModelCopyWithImpl<$Res>
 
 /// Create a copy of RideHistoryModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? pickup = null,Object? destination = null,Object? pickupLat = null,Object? pickupLng = null,Object? destLat = null,Object? destLng = null,Object? date = null,Object? price = null,Object? status = null,Object? driverName = null,Object? vehiclePlate = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? pickup = null,Object? destination = null,Object? pickupLat = null,Object? pickupLng = null,Object? destLat = null,Object? destLng = null,Object? date = null,Object? price = null,Object? status = null,Object? driverId = null,Object? driverName = null,Object? vehiclePlate = null,Object? vehicleType = null,}) {
   return _then(_RideHistoryModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,pickup: null == pickup ? _self.pickup : pickup // ignore: cast_nullable_to_non_nullable
@@ -298,8 +302,10 @@ as double,destLng: null == destLng ? _self.destLng : destLng // ignore: cast_nul
 as double,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as String,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,driverId: null == driverId ? _self.driverId : driverId // ignore: cast_nullable_to_non_nullable
 as String,driverName: null == driverName ? _self.driverName : driverName // ignore: cast_nullable_to_non_nullable
 as String,vehiclePlate: null == vehiclePlate ? _self.vehiclePlate : vehiclePlate // ignore: cast_nullable_to_non_nullable
+as String,vehicleType: null == vehicleType ? _self.vehicleType : vehicleType // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
