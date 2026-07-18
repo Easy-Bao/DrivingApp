@@ -22,8 +22,8 @@ import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cub
 import 'package:passenger_app/src/features/booking/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/favorites_management_screen.dart';
 import 'package:passenger_app/src/features/profile/presentation/screens/passenger_account_screen.dart';
-import 'package:passenger_app/src/features/inbox/presentation/screens/inbox_screen.dart';
-import 'package:passenger_app/src/features/settings/presentation/screens/settings_screen.dart';
+import 'package:passenger_app/src/features/inbox/inbox_module.dart';
+import 'package:passenger_app/src/features/settings/settings_module.dart';
 import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -92,6 +92,8 @@ class PassengerModule extends Module {
   final activityRoutesScreen = [...ActivityModule.routes];
 
   final accountRoutesScreen = [...AccountModule.routes];
+  final settingsRoutesScreen = [...SettingsModule.routes];
+  final inboxRoutes = [...InboxModule.shellRoutes];
 
   static List<ModularRoute> get route => <ModularRoute>[...HomeModule.routes];
 
@@ -101,13 +103,7 @@ class PassengerModule extends Module {
     ...activityRoutesScreen,
     ...homeRoutesScreen,
     ...accountRoutesScreen,
-    ChildRoute(
-      name: TripRoutes.settings,
-      'settings',
-      child: (context, GoRouterState state) => const SettingsScreen(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
+    ...settingsRoutesScreen,
     ChildRoute(
       name: TripRoutes.passengerHelp,
       'help',
@@ -132,15 +128,7 @@ class PassengerModule extends Module {
           transition: AppTransitions.none,
           transitionDuration: Duration.zero,
         ),
-
-        ChildRoute(
-          name: TripRoutes.inbox,
-          'inbox',
-          child: (context, GoRouterState state) =>
-              const InboxScreen(),
-          transition: AppTransitions.none,
-          transitionDuration: Duration.zero,
-        ),
+        ...inboxRoutes,
       ],
     ),
   ];
