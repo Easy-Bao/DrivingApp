@@ -313,25 +313,6 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       onPressed: _isLoading
                           ? null
                           : () {
-                              if (widget.preselectedRideType != null) {
-                                unawaited(
-                                  context.pushNamed(
-                                    TripRoutes.findingDriver,
-                                    extra: {
-                                      'rideType': widget.preselectedRideType!,
-                                      'fare':
-                                          _fares[widget.preselectedRideType!] ??
-                                          (20.0 + _distanceKm * 10),
-                                      'destination': widget.destination,
-                                      'distance': _distance,
-                                      'duration': _duration,
-                                      'pickupAddress':
-                                          widget.pickupAddress ??
-                                          'Current Location',
-                                    },
-                                  ),
-                                );
-                              } else {
                                 unawaited(
                                   context.pushNamed(
                                     TripRoutes.rideSelection,
@@ -347,7 +328,6 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                                     },
                                   ),
                                 );
-                              }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,

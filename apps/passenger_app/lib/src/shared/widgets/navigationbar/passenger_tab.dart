@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerShellLayout extends StatefulWidget {
@@ -82,8 +83,8 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                 ),
                 _buildTabItem(
                   context,
-                  icon: LucideIcons.map_pin,
-                  label: 'Saved Places',
+                  icon: LucideIcons.mail,
+                  label: 'Inbox',
                   index: 2,
                   isSelected: sel == 2,
                 ),
@@ -159,15 +160,15 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     final String? routeName = state.topRoute?.name;
 
     if (routeName != null) {
-      if (routeName.contains('Home')) return 0;
-      if (routeName.contains('Activity')) return 1;
-      if (routeName.contains('SavedPlaces')) return 2;
-      if (routeName.contains('Account')) return 3;
+      if (routeName == TripRoutes.passengerHome) return 0;
+      if (routeName == TripRoutes.passengerActivity) return 1;
+      if (routeName == TripRoutes.notifications) return 2;
+      if (routeName == TripRoutes.passengerAccount) return 3;
     }
 
     if (location.contains('/home')) return 0;
     if (location.contains('/activity')) return 1;
-    if (location.contains('/saved-places')) return 2;
+    if (location.contains('/notifications')) return 2;
     if (location.contains('/account')) return 3;
 
     return 0;
@@ -176,16 +177,16 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   void _navigateToIndex(int index) {
     switch (index) {
       case 0:
-        context.goNamed('PassengerHome');
+        context.goNamed(TripRoutes.passengerHome);
         break;
       case 1:
-        context.goNamed('PassengerActivity');
+        context.goNamed(TripRoutes.passengerActivity);
         break;
       case 2:
-        context.goNamed('PassengerSavedPlaces');
+        context.goNamed(TripRoutes.notifications);
         break;
       case 3:
-        context.goNamed('PassengerAccount');
+        context.goNamed(TripRoutes.passengerAccount);
         break;
     }
   }

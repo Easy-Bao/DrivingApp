@@ -6,10 +6,10 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cubit.dart';
 import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:session_service/session_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Screen displaying the passenger's account menu options and syncing profile details.
-/// Delegates data retrieval and persistence entirely to the [ProfileCubit] state machine.
 class PassengerAccountScreen extends StatefulWidget {
   const PassengerAccountScreen({super.key});
 
@@ -18,152 +18,25 @@ class PassengerAccountScreen extends StatefulWidget {
 }
 
 class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
-  List<_AccountMenuItem> _buildActivityItems(BuildContext context) {
-    return [
-      _AccountMenuItem(
-        icon: LucideIcons.history,
-        title: 'Ride History',
-        subtitle: 'View your past trips',
-        onTap: () => context.pushNamed(TripRoutes.rideHistory),
-      ),
-    ];
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'U';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
   }
 
-  List<_AccountMenuItem> _buildPersonalItems(BuildContext context) {
-    return [
-      _AccountMenuItem(
-        icon: LucideIcons.user,
-        title: 'Profile Info',
-        subtitle: 'Update name and details',
-        onTap: () async {
-          await context.pushNamed(TripRoutes.profileInfo);
-          if (context.mounted) {
-            unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
-          }
-        },
-      ),
-    ];
-  }
-
-  List<_AccountMenuItem> _buildSupportItems(BuildContext context) {
-    return [
-      _AccountMenuItem(
-        icon: LucideIcons.message_circle_question_mark,
-        title: 'Help Center',
-        subtitle: 'Get support and FAQs',
-        onTap: () => context.pushNamed(TripRoutes.helpCenter),
-      ),
-      _AccountMenuItem(
-        icon: LucideIcons.info,
-        title: 'About BaoRide',
-        subtitle: 'Version 1.0.0',
-        onTap: () {},
-      ),
-    ];
-  }
-
-  Widget _buildProfileHeader(ProfileState state) {
-    return Center(
-      child: Column(
-        children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppTheme.borderSide, width: 2),
-            ),
-            child: const Icon(
-              LucideIcons.user,
-              size: 50,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            state.name.isNotEmpty ? state.name : '—',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            state.phone.isNotEmpty ? state.phone : '—',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.primaryColor.withValues(alpha: 0.6),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          if (state.email.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              state.email,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppTheme.primaryColor.withValues(alpha: 0.45),
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: AppTheme.primaryColor.withValues(alpha: 0.4),
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAccountTile(BuildContext context, _AccountMenuItem item) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.borderSide),
-        ),
-        child: Icon(item.icon, size: 20, color: AppTheme.primaryColor),
-      ),
-      title: Text(
-        item.title,
-        style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w800,
-          color: AppTheme.primaryColor,
-        ),
-      ),
-      subtitle: Text(
-        item.subtitle,
-        style: TextStyle(
-          fontSize: 12,
-          color: AppTheme.primaryColor.withValues(alpha: 0.5),
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: const Icon(
-        LucideIcons.chevron_right,
-        size: 16,
-        color: AppTheme.primaryColor,
-      ),
-      onTap: item.onTap,
-    );
+  Future<void> _handleLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('passenger_name');
+    await prefs.remove('passenger_phone');
+    await prefs.remove('passenger_email');
+    await prefs.remove('passenger_id');
+    await Modular.get<SecureSessionService>().clearSession();
+    if (context.mounted) {
+      context.go('/');
+    }
   }
 
   @override
@@ -176,49 +49,188 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
       },
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
+          final initials = _getInitials(state.name);
+
           return Scaffold(
             backgroundColor: AppTheme.surface,
             body: SafeArea(
               child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Account',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryColor,
-                              letterSpacing: -1.5,
+                    const SizedBox(height: 24),
+                    // Profile Header card (Row with Avatar on left, name/phone on right)
+                    Row(
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.secondaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              color: Color(0xFF8A4F35),
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
                             ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                state.name.isNotEmpty ? state.name : 'User',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                state.phone.isNotEmpty ? state.phone : 'No Phone Number',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(LucideIcons.pencil, color: AppTheme.primaryColor, size: 20),
+                          onPressed: () async {
+                            await context.pushNamed(TripRoutes.profileInfo);
+                            if (context.mounted) {
+                              unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Payment shortcut card underneath
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neutralColor.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.borderSide.withValues(alpha: 0.3),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            LucideIcons.banknote,
+                            color: AppTheme.primaryColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Cash payment on every ride',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            LucideIcons.chevron_right,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                            size: 16,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    _buildProfileHeader(state),
-                    const SizedBox(height: 40),
-                    _buildSectionTitle('Activity'),
-                    ..._buildActivityItems(
-                      context,
-                    ).map((item) => _buildAccountTile(context, item)),
-                    const SizedBox(height: 32),
-                    _buildSectionTitle('Personal'),
-                    ..._buildPersonalItems(
-                      context,
-                    ).map((item) => _buildAccountTile(context, item)),
-                    const SizedBox(height: 32),
-                    _buildSectionTitle('Support'),
-                    ..._buildSupportItems(
-                      context,
-                    ).map((item) => _buildAccountTile(context, item)),
+
+                    const SizedBox(height: 36),
+
+                    // PLACES AND SAFETY section
+                    _buildSectionTitle('PLACES AND SAFETY'),
+                    const SizedBox(height: 12),
+                    _buildMenuTile(
+                      icon: LucideIcons.map_pin,
+                      title: 'Saved places',
+                      onTap: () => context.pushNamed(TripRoutes.passengerHelp),
+                    ),
+                    _buildMenuTile(
+                      icon: LucideIcons.shield,
+                      title: 'Safety center',
+                      onTap: () {
+                        CustomToast.show(context, 'Safety center is coming soon.');
+                      },
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // SUPPORT section
+                    _buildSectionTitle('SUPPORT'),
+                    const SizedBox(height: 12),
+                    _buildMenuTile(
+                      icon: LucideIcons.message_circle_question_mark,
+                      title: 'Help center',
+                      onTap: () => context.pushNamed(TripRoutes.helpCenter),
+                    ),
+                    _buildMenuTile(
+                      icon: LucideIcons.settings,
+                      title: 'Settings',
+                      onTap: () {
+                        CustomToast.show(context, 'Settings are coming soon.');
+                      },
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Log out list tile
+                    InkWell(
+                      onTap: () => _handleLogout(context),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              LucideIcons.log_out,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            SizedBox(width: 16),
+                            Text(
+                              'Log out',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 36),
                   ],
                 ),
@@ -229,18 +241,69 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
       ),
     );
   }
-}
 
-class _AccountMenuItem {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
+  }
 
-  _AccountMenuItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+  Widget _buildMenuTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+          decoration: BoxDecoration(
+            color: AppTheme.neutralColor.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTheme.borderSide.withValues(alpha: 0.2),
+              width: 1.0,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: AppTheme.primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+              Icon(
+                LucideIcons.chevron_right,
+                color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

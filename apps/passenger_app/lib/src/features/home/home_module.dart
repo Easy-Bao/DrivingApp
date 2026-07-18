@@ -10,7 +10,6 @@ import 'package:passenger_app/src/features/booking/presentation/screens/destinat
 import 'package:passenger_app/src/features/booking/presentation/screens/driver_matched_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/finding_driver_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/map_pin_screen.dart';
-import 'package:passenger_app/src/features/home/presentation/screens/notification_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/ride_selection_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/search_destination_screen.dart';
 import 'package:passenger_app/src/features/home/presentation/screens/view_all_activity_screen.dart';
@@ -54,13 +53,7 @@ class HomeModule {
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),
-    ChildRoute(
-      name: 'Notifications',
-      'home/notifications',
-      child: (context, GoRouterState state) => const NotificationScreen(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
+
     ChildRoute(
       name: 'ActivityDetailMap',
       'home/activity-detail',

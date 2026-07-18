@@ -56,7 +56,7 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
     if (selectedPlace == null || selectedPlace is! PlaceModel) return;
     if (!mounted) return;
     await context.pushNamed(
-      'PassengerAddCategory',
+      TripRoutes.passengerAddCategory,
       extra: {
         'onSave': (SavedPlace newPlace) => cubit.addPlace(newPlace),
         'place': selectedPlace,
