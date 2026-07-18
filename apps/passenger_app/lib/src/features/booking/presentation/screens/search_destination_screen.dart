@@ -139,6 +139,30 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
     }
   }
 
+  IconData _determinePlaceIcon(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('school') ||
+        lower.contains('university') ||
+        lower.contains('high')) {
+      return LucideIcons.graduation_cap;
+    }
+    if (lower.contains('hospital') ||
+        lower.contains('clinic') ||
+        lower.contains('doctor')) {
+      return LucideIcons.hospital;
+    }
+    if (lower.contains('resort') ||
+        lower.contains('hotel') ||
+        lower.contains('hostel')) {
+      return LucideIcons.building;
+    }
+    return LucideIcons.map_pin;
+  }
+
+  bool _isAccentIcon(IconData icon) {
+    return icon == LucideIcons.building;
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasQuery = _searchController.text.trim().isNotEmpty;
@@ -150,135 +174,114 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
         backgroundColor: AppTheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leadingWidth: 80,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          behavior: HitTestBehavior.opaque,
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(width: 12),
-              Icon(
-                LucideIcons.chevron_left,
-                color: AppTheme.primaryColor,
-                size: 20,
-              ),
-              SizedBox(width: 4),
-              Text(
-                'Back',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
+        automaticallyImplyLeading: false,
         titleSpacing: 0,
         title: Padding(
           padding: const EdgeInsets.only(right: 16.0),
-          child: Hero(
-            tag: 'search_bar_field',
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  LucideIcons.arrow_left,
+                  color: AppTheme.primaryColor,
+                  size: 24,
                 ),
-                decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      LucideIcons.search,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                      size: 18,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        autofocus: true,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: AppTheme.primaryColor,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Search destination',
-                          hintStyle: TextStyle(
-                            fontSize: 15,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                            fontWeight: FontWeight.w400,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                onPressed: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Hero(
+                  tag: 'search_bar_field',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neutralColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.borderSide),
                       ),
-                    ),
-                    if (_searchController.text.isNotEmpty)
-                      GestureDetector(
-                        onTap: () => _searchController.clear(),
-                        child: Icon(
-                          LucideIcons.x,
-                          size: 16,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    Container(
-                      height: 24,
-                      width: 1,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                    ),
-                    GestureDetector(
-                      onTap: _openMapPin,
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            LucideIcons.map_pin,
-                            color: AppTheme.primaryColor,
-                            size: 18,
+                          Icon(
+                            LucideIcons.search,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                            size: 20,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Pin',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.8,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              autofocus: true,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: AppTheme.primaryColor,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Search destination',
+                                hintStyle: TextStyle(
+                                  fontSize: 15,
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                border: InputBorder.none,
+                                isDense: true,
                               ),
                             ),
                           ),
+                          if (_searchController.text.isNotEmpty)
+                            GestureDetector(
+                              onTap: () => _searchController.clear(),
+                              child: Icon(
+                                LucideIcons.x,
+                                size: 16,
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _openMapPin,
+                child: Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: AppTheme.neutralColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.borderSide),
+                  ),
+                  child: const Icon(
+                    LucideIcons.map_pin,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Divider(height: 1, color: AppTheme.borderSide),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
             child: Text(
-              hasQuery ? 'Search Results' : 'Nearby Places',
+              hasQuery ? 'SEARCH RESULTS' : 'NEARBY PLACES',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                letterSpacing: 1.2,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -320,72 +323,72 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                     physics: const BouncingScrollPhysics(),
                     itemCount: displayList.length,
                     separatorBuilder: (_, _) =>
-                        Divider(height: 1, color: Colors.grey[100]),
+                        const Divider(height: 1, color: AppTheme.borderSide),
                     itemBuilder: (context, index) {
                       final place = displayList[index];
-                      return _buildPlaceTile(place);
+                      final calculatedIcon = _determinePlaceIcon(place.name);
+                      final treatAsAccent = _isAccentIcon(calculatedIcon);
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                        leading: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: treatAsAccent
+                                ? const Color(0xFFFDF0ED)
+                                : AppTheme.neutralColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            calculatedIcon,
+                            color: treatAsAccent
+                                ? const Color(0xFFE15A3E)
+                                : AppTheme.primaryColor,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          place.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 2.0),
+                          child: Text(
+                            place.category ?? 'Place',
+                            style: TextStyle(
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.4,
+                              ),
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        trailing: place.distanceKm != null
+                            ? Text(
+                                '${place.distanceKm!.toStringAsFixed(1)} km',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
+                              )
+                            : null,
+                        onTap: () => _onPlaceSelected(place),
+                      );
                     },
                   ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPlaceTile(PlaceModel place) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(
-          LucideIcons.map_pin,
-          color: AppTheme.primaryColor,
-          size: 18,
-        ),
-      ),
-      title: Text(
-        place.name,
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 15,
-          color: AppTheme.primaryColor,
-        ),
-      ),
-      subtitle: Text(
-        place.fullAddress,
-        style: TextStyle(
-          color: AppTheme.primaryColor.withValues(alpha: 0.5),
-          fontSize: 12,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: place.distanceKm != null
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppTheme.tertiaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '${place.distanceKm!.toStringAsFixed(1)} km',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.tertiaryColor,
-                ),
-              ),
-            )
-          : const Icon(
-              LucideIcons.chevron_right,
-              size: 16,
-              color: AppTheme.borderSide,
-            ),
-      onTap: () => _onPlaceSelected(place),
     );
   }
 }
