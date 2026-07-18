@@ -108,6 +108,16 @@ class PassengerModule extends Module {
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
+    ChildRoute(
+      name: TripRoutes.passengerHelp,
+      'help',
+      child: (context, GoRouterState state) => BlocProvider<SavedPlacesCubit>(
+        create: (_) => Modular.get<SavedPlacesCubit>(),
+        child: const FavoritesManagementScreen(),
+      ),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
     ShellModularRoute(
       builder: (context, GoRouterState state, child) =>
           PassengerShellLayout(child: child),
@@ -122,16 +132,7 @@ class PassengerModule extends Module {
           transition: AppTransitions.none,
           transitionDuration: Duration.zero,
         ),
-        ChildRoute(
-          name: TripRoutes.passengerHelp,
-          'help',
-          child: (context, GoRouterState state) => BlocProvider<SavedPlacesCubit>(
-            create: (_) => Modular.get<SavedPlacesCubit>(),
-            child: const FavoritesManagementScreen(),
-          ),
-          transition: AppTransitions.none,
-          transitionDuration: Duration.zero,
-        ),
+
         ChildRoute(
           name: TripRoutes.inbox,
           'inbox',

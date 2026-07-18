@@ -149,22 +149,35 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            LucideIcons.arrow_left,
+            color: AppTheme.primaryColor,
+          ),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Saved places',
+          style: TextStyle(
+            color: AppTheme.primaryColor,
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            letterSpacing: -1.0,
+          ),
+        ),
+        centerTitle: false,
+        titleSpacing: 0,
+      ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 0.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
-              const Text(
-                'Saved places',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
-                  letterSpacing: -1.0,
-                ),
-              ),
               const SizedBox(height: 6),
               Text(
                 'Book these in one tap from Home',
@@ -214,7 +227,7 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                         _buildPlaceTile(
                           icon: LucideIcons.house,
                           label: 'Home',
-                          address: homePlace?.savedAddress ?? 'Not set',
+                          address: homePlace?.savedAddress ?? 'Move the map to select a location',
                           onTap: () {
                             if (homePlace == null) {
                               unawaited(_addOrUpdatePlace('Home', 'house'));
