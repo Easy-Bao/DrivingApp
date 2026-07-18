@@ -166,7 +166,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
       if (routeName == TripRoutes.passengerActivity) {
         return 1;
       }
-      if (routeName == TripRoutes.notifications) {
+      if (routeName == TripRoutes.inbox) {
         return 2;
       }
       if (routeName == TripRoutes.passengerAccount ||
@@ -181,7 +181,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     if (location.contains('/activity')) {
       return 1;
     }
-    if (location.contains('/notifications')) {
+    if (location.contains('/inbox')) {
       return 2;
     }
     if (location.contains('/account') || location.contains('/help')) {
@@ -200,7 +200,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
         context.goNamed(TripRoutes.passengerActivity);
         break;
       case 2:
-        context.goNamed(TripRoutes.notifications);
+        context.goNamed(TripRoutes.inbox);
         break;
       case 3:
         context.goNamed(TripRoutes.passengerAccount);

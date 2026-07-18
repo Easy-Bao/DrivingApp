@@ -144,9 +144,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                     _buildMenuTile(
                       icon: LucideIcons.settings,
                       title: 'Settings',
-                      onTap: () {
-                        CustomToast.show(context, 'Settings are coming soon.');
-                      },
+                      onTap: () => context.pushNamed(TripRoutes.settings),
                     ),
 
                     const SizedBox(height: 48),

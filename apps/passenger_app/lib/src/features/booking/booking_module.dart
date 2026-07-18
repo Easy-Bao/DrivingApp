@@ -22,7 +22,8 @@ import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cub
 import 'package:passenger_app/src/features/booking/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/favorites_management_screen.dart';
 import 'package:passenger_app/src/features/profile/presentation/screens/passenger_account_screen.dart';
-import 'package:passenger_app/src/features/home/presentation/screens/inbox_screen.dart';
+import 'package:passenger_app/src/features/inbox/presentation/screens/inbox_screen.dart';
+import 'package:passenger_app/src/features/settings/presentation/screens/settings_screen.dart';
 import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -100,6 +101,13 @@ class PassengerModule extends Module {
     ...activityRoutesScreen,
     ...homeRoutesScreen,
     ...accountRoutesScreen,
+    ChildRoute(
+      name: TripRoutes.settings,
+      'settings',
+      child: (context, GoRouterState state) => const SettingsScreen(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
     ShellModularRoute(
       builder: (context, GoRouterState state, child) =>
           PassengerShellLayout(child: child),
@@ -125,8 +133,8 @@ class PassengerModule extends Module {
           transitionDuration: Duration.zero,
         ),
         ChildRoute(
-          name: TripRoutes.notifications,
-          'notifications',
+          name: TripRoutes.inbox,
+          'inbox',
           child: (context, GoRouterState state) =>
               const InboxScreen(),
           transition: AppTransitions.none,
