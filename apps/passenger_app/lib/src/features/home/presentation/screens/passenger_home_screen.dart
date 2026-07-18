@@ -13,12 +13,8 @@ import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
 import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Evaluates the selected saved place shortcut. If coordinates are present,
-/// it pushes the DestinationPreview screen directly. Otherwise, it launches
-/// the SearchDestination screen to allow the user to lookup the coordinates.
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
 
@@ -32,7 +28,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   late Animation<double> _fadeIn;
   late Animation<Offset> _slideIn;
 
-  int _notificationCount = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +146,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       unawaited(_entranceController.forward());
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
-      unawaited(_loadNotificationCount());
     });
   }
 
@@ -236,24 +230,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-  Future<void> _loadNotificationCount() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final passengerId = prefs.getString('passenger_id') ?? '';
-      if (passengerId.isEmpty) return;
-      final raw = await Modular.get<PassengerApiService>().fetchNotifications(
-        passengerId,
-      );
-      final unread = raw.where((n) {
-        final map = n as Map<String, dynamic>;
-        final type = map['type'] as String? ?? '';
-        final isRead = map['isRead'] as bool? ?? false;
-        return (type == 'ride' || type == 'driver' || type == 'chat') &&
-            !isRead;
-      }).length;
-      if (mounted) setState(() => _notificationCount = unread);
-    } catch (_) {}
-  }
 
 
   Widget _buildChipRow() {
@@ -321,49 +297,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ],
-        ),
-        Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  LucideIcons.bell,
-                  color: AppTheme.primaryColor,
-                ),
-                onPressed: () => context.pushNamed(TripRoutes.notifications),
-              ),
-            ),
-            if (_notificationCount > 0)
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    _notificationCount > 99 ? '99+' : '$_notificationCount',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ],

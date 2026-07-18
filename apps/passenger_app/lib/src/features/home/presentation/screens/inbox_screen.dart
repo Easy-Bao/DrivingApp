@@ -8,14 +8,14 @@ import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-class NotificationScreen extends StatefulWidget {
-  const NotificationScreen({super.key});
+class InboxScreen extends StatefulWidget {
+  const InboxScreen({super.key});
 
   @override
-  State<NotificationScreen> createState() => _NotificationScreenState();
+  State<InboxScreen> createState() => _InboxScreenState();
 }
 
-class _NotificationScreenState extends State<NotificationScreen> {
+class _InboxScreenState extends State<InboxScreen> {
   bool _isLoading = true;
   List<NotificationModel> _notifications = [];
 
@@ -67,12 +67,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-      setState(() {
-        _notifications = list;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _notifications = list;
+          _isLoading = false;
+        });
+      }
     } catch (error) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -92,17 +96,36 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    final dateToCheck = DateTime(timestamp.year, timestamp.month, timestamp.day);
+    final dateToCheck = DateTime(
+      timestamp.year,
+      timestamp.month,
+      timestamp.day,
+    );
 
     if (dateToCheck == today) {
-      final hourNum = timestamp.hour > 12 ? timestamp.hour - 12 : (timestamp.hour == 0 ? 12 : timestamp.hour);
+      final hourNum = timestamp.hour > 12
+          ? timestamp.hour - 12
+          : (timestamp.hour == 0 ? 12 : timestamp.hour);
       final periodStr = timestamp.hour >= 12 ? 'PM' : 'AM';
       final minuteStr = timestamp.minute.toString().padLeft(2, '0');
       return '$hourNum:$minuteStr $periodStr';
     } else if (dateToCheck == yesterday) {
       return 'Yesterday';
     } else {
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${months[timestamp.month - 1]} ${timestamp.day}';
     }
   }
@@ -119,18 +142,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
             : CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  // Custom screen header matching other premium dashboard screens (Inbox, Messages and receipts)
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
+                    padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 16.0),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         const Text(
                           'Inbox',
                           style: TextStyle(
                             fontSize: 32,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w900,
                             color: AppTheme.primaryColor,
-                            letterSpacing: -1.5,
+                            letterSpacing: -1.0,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -157,32 +179,29 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final notification = _notifications[index];
-                            return Dismissible(
-                              key: Key(notification.id),
-                              direction: DismissDirection.endToStart,
-                              onDismissed: (_) => _dismissNotification(index),
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 24),
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.cancel.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Icon(
-                                  LucideIcons.trash_2,
-                                  color: AppTheme.cancel,
-                                  size: 20,
-                                ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final notification = _notifications[index];
+                          return Dismissible(
+                            key: Key(notification.id),
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (_) => _dismissNotification(index),
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 24),
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.cancel.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              child: _buildNotificationCard(notification, index),
-                            );
-                          },
-                          childCount: _notifications.length,
-                        ),
+                              child: const Icon(
+                                LucideIcons.trash_2,
+                                color: AppTheme.cancel,
+                                size: 20,
+                              ),
+                            ),
+                            child: _buildNotificationCard(notification, index),
+                          );
+                        }, childCount: _notifications.length),
                       ),
                     ),
 
@@ -199,7 +218,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 Icon(
                                   LucideIcons.mail,
                                   size: 24,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.25,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -207,7 +228,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.35),
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.35,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -223,9 +246,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildNotificationCard(NotificationModel notification, int index) {
-    // Resolve icon and background styling based on type and title
-    final isReceipt = notification.type == 'ride' || notification.title.toLowerCase().contains('receipt');
-    final isDriverChat = notification.type == 'driver' || notification.type == 'chat';
+    final isReceipt =
+        notification.type == 'ride' ||
+        notification.title.toLowerCase().contains('receipt');
+    final isDriverChat =
+        notification.type == 'driver' || notification.type == 'chat';
 
     final Color bgCircleColor;
     final Color iconColor;
@@ -270,11 +295,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 20,
-                ),
+                child: Icon(icon, color: iconColor, size: 20),
               ),
               const SizedBox(width: 16),
               Expanded(

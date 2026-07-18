@@ -160,16 +160,33 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     final String? routeName = state.topRoute?.name;
 
     if (routeName != null) {
-      if (routeName == TripRoutes.passengerHome) return 0;
-      if (routeName == TripRoutes.passengerActivity) return 1;
-      if (routeName == TripRoutes.notifications) return 2;
-      if (routeName == TripRoutes.passengerAccount) return 3;
+      if (routeName == TripRoutes.passengerHome) {
+        return 0;
+      }
+      if (routeName == TripRoutes.passengerActivity) {
+        return 1;
+      }
+      if (routeName == TripRoutes.notifications) {
+        return 2;
+      }
+      if (routeName == TripRoutes.passengerAccount ||
+          routeName == TripRoutes.passengerHelp) {
+        return 3;
+      }
     }
 
-    if (location.contains('/home')) return 0;
-    if (location.contains('/activity')) return 1;
-    if (location.contains('/notifications')) return 2;
-    if (location.contains('/account')) return 3;
+    if (location.contains('/home')) {
+      return 0;
+    }
+    if (location.contains('/activity')) {
+      return 1;
+    }
+    if (location.contains('/notifications')) {
+      return 2;
+    }
+    if (location.contains('/account') || location.contains('/help')) {
+      return 3;
+    }
 
     return 0;
   }

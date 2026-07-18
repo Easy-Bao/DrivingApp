@@ -22,7 +22,7 @@ import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cub
 import 'package:passenger_app/src/features/booking/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/favorites_management_screen.dart';
 import 'package:passenger_app/src/features/profile/presentation/screens/passenger_account_screen.dart';
-import 'package:passenger_app/src/features/home/presentation/screens/notification_screen.dart';
+import 'package:passenger_app/src/features/home/presentation/screens/inbox_screen.dart';
 import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -128,7 +128,7 @@ class PassengerModule extends Module {
           name: TripRoutes.notifications,
           'notifications',
           child: (context, GoRouterState state) =>
-              const NotificationScreen(),
+              const InboxScreen(),
           transition: AppTransitions.none,
           transitionDuration: Duration.zero,
         ),

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
@@ -20,56 +20,6 @@ class PassengerActivityScreen extends StatefulWidget {
 
 class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
   late ActivityBloc _bloc;
-
-  @override
-  void initState() {
-    super.initState();
-    _bloc = Modular.get<ActivityBloc>();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    unawaited(_loadActivity());
-  }
-
-  Future<void> _loadActivity() async {
-    final prefs = await SharedPreferences.getInstance();
-    final passengerId = prefs.getString('passenger_id') ?? '';
-    if (passengerId.isNotEmpty) {
-      _bloc.add(LoadActivityEvent(passengerId: passengerId));
-    } else {
-      _bloc.add(LoadActivityEvent(passengerId: ''));
-    }
-  }
-
-  @override
-  void dispose() {
-    unawaited(_bloc.close());
-    super.dispose();
-  }
-
-  String _formatPastRideDate(String rawDate) {
-    try {
-      final dt = DateTime.parse(rawDate);
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return '${months[dt.month - 1]} ${dt.day}';
-    } catch (_) {
-      return rawDate;
-    }
-  }
-
-  String _formatTime(String rawDate) {
-    try {
-      final dt = DateTime.parse(rawDate).toLocal();
-      final hourNum = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
-      final periodStr = dt.hour >= 12 ? 'PM' : 'AM';
-      final minuteStr = dt.minute.toString().padLeft(2, '0');
-      return '$hourNum:$minuteStr $periodStr';
-    } catch (_) {
-      return '';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +48,12 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
+                          padding: const EdgeInsets.fromLTRB(
+                            24.0,
+                            0.0,
+                            24.0,
+                            16.0,
+                          ),
                           sliver: SliverList(
                             delegate: SliverChildListDelegate([
                               const Text(
@@ -116,7 +71,9 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.5,
+                                  ),
                                 ),
                               ),
                             ]),
@@ -135,7 +92,12 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                     slivers: [
                       // Screen Header
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
+                        padding: const EdgeInsets.fromLTRB(
+                          24.0,
+                          24.0,
+                          24.0,
+                          16.0,
+                        ),
                         sliver: SliverList(
                           delegate: SliverChildListDelegate([
                             const Text(
@@ -151,10 +113,12 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                             Text(
                               'Tap a ride to see details',
                               style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.5,
                                 ),
+                              ),
                             ),
                             const SizedBox(height: 16),
                           ]),
@@ -176,7 +140,12 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                       // PAST RIDES section header
                       if (pastRides.isNotEmpty)
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 12.0),
+                          padding: const EdgeInsets.fromLTRB(
+                            24.0,
+                            8.0,
+                            24.0,
+                            12.0,
+                          ),
                           sliver: SliverList(
                             delegate: SliverChildListDelegate([
                               Text(
@@ -184,7 +153,9 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   letterSpacing: 1.0,
                                 ),
                               ),
@@ -196,18 +167,16 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 24.0),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              return _buildPastRideCard(pastRides[index]);
-                            },
-                            childCount: pastRides.length,
-                          ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            return _buildPastRideCard(pastRides[index]);
+                          }, childCount: pastRides.length),
                         ),
                       ),
 
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 36),
-                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 36)),
                     ],
                   );
                 }
@@ -218,6 +187,24 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    unawaited(_loadActivity());
+  }
+
+  @override
+  void dispose() {
+    unawaited(_bloc.close());
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = Modular.get<ActivityBloc>();
   }
 
   Widget _buildActiveRideCard(RideHistoryModel ride) {
@@ -271,14 +258,18 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.5,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 4),
                               ],
                               Icon(
                                 LucideIcons.chevron_right,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.3,
+                                ),
                                 size: 16,
                               ),
                             ],
@@ -354,7 +345,9 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
                           Text(
@@ -373,6 +366,102 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.history,
+              size: 48,
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No rides yet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Your completed and canceled trips will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.wifi_off,
+              size: 48,
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Could not load activity',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton.icon(
+              onPressed: _loadActivity,
+              icon: const Icon(LucideIcons.refresh_cw, size: 16),
+              label: const Text('Retry'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      itemCount: 4,
+      itemBuilder: (_, _) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        height: 140,
+        decoration: BoxDecoration(
+          color: AppTheme.neutralColor.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
     );
@@ -466,115 +555,50 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
     );
   }
 
-  Widget _buildLoadingState() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      itemCount: 4,
-      itemBuilder: (_, _) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        height: 140,
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-    );
+  String _formatPastRideDate(String rawDate) {
+    try {
+      final dt = DateTime.parse(rawDate);
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return '${months[dt.month - 1]} ${dt.day}';
+    } catch (_) {
+      return rawDate;
+    }
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.history,
-              size: 48,
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'No rides yet',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Your completed and canceled trips will appear here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppTheme.primaryColor.withValues(alpha: 0.4),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _formatTime(String rawDate) {
+    try {
+      final dt = DateTime.parse(rawDate).toLocal();
+      final hourNum = dt.hour > 12
+          ? dt.hour - 12
+          : (dt.hour == 0 ? 12 : dt.hour);
+      final periodStr = dt.hour >= 12 ? 'PM' : 'AM';
+      final minuteStr = dt.minute.toString().padLeft(2, '0');
+      return '$hourNum:$minuteStr $periodStr';
+    } catch (_) {
+      return '';
+    }
   }
 
-  Widget _buildErrorState(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.wifi_off,
-              size: 48,
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Could not load activity',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.primaryColor.withValues(alpha: 0.4),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextButton.icon(
-              onPressed: _loadActivity,
-              icon: const Icon(LucideIcons.refresh_cw, size: 16),
-              label: const Text('Retry'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppTheme.primaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _resolveStatusType(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return 'completed';
-      case 'canceled':
-      case 'cancelled':
-        return 'canceled';
-      case 'in_progress':
-        return 'progress';
-      case 'accepted':
-        return 'accepted';
-      default:
-        return 'requested';
+  Future<void> _loadActivity() async {
+    final prefs = await SharedPreferences.getInstance();
+    final passengerId = prefs.getString('passenger_id') ?? '';
+    if (passengerId.isNotEmpty) {
+      _bloc.add(LoadActivityEvent(passengerId: passengerId));
+    } else {
+      _bloc.add(LoadActivityEvent(passengerId: ''));
     }
   }
 
@@ -591,6 +615,22 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
         );
       default:
         unawaited(context.pushNamed(TripRoutes.searchDestination));
+    }
+  }
+
+  String _resolveStatusType(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'completed';
+      case 'canceled':
+      case 'cancelled':
+        return 'canceled';
+      case 'in_progress':
+        return 'progress';
+      case 'accepted':
+        return 'accepted';
+      default:
+        return 'requested';
     }
   }
 }

@@ -22,7 +22,11 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
   @override
   void initState() {
     super.initState();
-    unawaited(BlocProvider.of<SavedPlacesCubit>(context).loadPlaces());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(BlocProvider.of<SavedPlacesCubit>(context).loadPlaces());
+      }
+    });
   }
 
   Future<void> _addOrUpdatePlace(String label, String iconName, {SavedPlace? existing}) async {
