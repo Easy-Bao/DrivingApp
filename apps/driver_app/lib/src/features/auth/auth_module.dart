@@ -1,7 +1,7 @@
 import 'package:shared_ui/transitions/driver_transitions.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
-import 'package:driver_app/src/features/auth/presentation/views/forgot_password_screen.dart';
-import 'package:driver_app/src/features/auth/presentation/views/signin_screen.dart';
+import 'package:driver_app/src/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:driver_app/src/features/auth/presentation/screens/signin_screen.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class AuthModule extends Module {

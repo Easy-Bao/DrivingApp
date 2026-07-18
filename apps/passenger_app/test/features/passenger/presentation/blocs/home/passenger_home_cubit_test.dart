@@ -3,8 +3,8 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_cubit.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/passenger_home_state.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_state.dart';
 
 // Mock Repositories
 

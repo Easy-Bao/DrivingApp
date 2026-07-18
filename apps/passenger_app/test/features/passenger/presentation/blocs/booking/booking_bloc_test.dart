@@ -3,9 +3,9 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_bloc.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_event.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/booking/booking_state.dart';
+import 'package:passenger_app/src/features/booking/presentation/bloc/booking_bloc.dart';
+import 'package:passenger_app/src/features/booking/presentation/bloc/booking_event.dart';
+import 'package:passenger_app/src/features/booking/presentation/bloc/booking_state.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

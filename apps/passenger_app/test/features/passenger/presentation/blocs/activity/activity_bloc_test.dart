@@ -3,8 +3,8 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip_booking/domain/repositories/activity_repository.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/activity/activity_bloc.dart';
+import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
+import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
 
 class MockActivityRepo extends Mock implements ActivityRepository {}
 

@@ -3,8 +3,8 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:driver_app/src/features/dashboard/presentation/blocs/dashboard/dashboard_cubit.dart';
-import 'package:driver_app/src/features/dashboard/presentation/blocs/dashboard/dashboard_state.dart';
+import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
+import 'package:driver_app/src/features/home/presentation/bloc/dashboard_state.dart';
 
 class MockDashboardRepo extends Mock implements DashboardRepository {}
 

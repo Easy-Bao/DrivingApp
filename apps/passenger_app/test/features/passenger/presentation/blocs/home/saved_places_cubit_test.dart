@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip_booking/domain/repositories/saved_places_repository.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_cubit.dart';
-import 'package:passenger_app/src/features/trip_booking/presentation/blocs/home/saved_places_state.dart';
+import 'package:passenger_app/src/features/saved_places/domain/repositories/saved_places_repository.dart';
+import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
+import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
 
 class MockSavedPlacesRepository extends Mock implements SavedPlacesRepository {}
 
