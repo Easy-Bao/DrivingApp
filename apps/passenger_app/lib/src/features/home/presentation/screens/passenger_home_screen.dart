@@ -6,12 +6,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
+import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_state.dart';
+import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -28,7 +28,11 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   late Animation<double> _fadeIn;
   late Animation<Offset> _slideIn;
 
+  StreamSubscription? _locationSubscription;
 
+  StreamSubscription? _bidSessionStatusSubscription;
+  StreamSubscription? _bidSessionMatchSubscription;
+  late BidSessionService _bidSessionService;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,7 +52,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 20),
                           _buildHeader(),
                           const SizedBox(height: 12),
                           _buildLocationRow(),
@@ -78,11 +81,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       ),
     );
   }
-
-  StreamSubscription? _locationSubscription;
-  StreamSubscription? _bidSessionStatusSubscription;
-  StreamSubscription? _bidSessionMatchSubscription;
-  late BidSessionService _bidSessionService;
 
   @override
   void dispose() {
@@ -230,8 +228,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
-
-
   Widget _buildChipRow() {
     return BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
       builder: (context, state) {
@@ -274,10 +270,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   }
 
   Widget _buildHeader() {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -552,7 +548,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Enter destination',
+                  'Search destination',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -621,6 +617,39 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
+  void _handleSavedPlaceTap(SavedPlace place) {
+    if (!mounted) return;
+    if (place.hasLocation) {
+      final syntheticPlace = PlaceModel(
+        id: 'saved_${place.label.toLowerCase().replaceAll(' ', '_')}',
+        name: place.label,
+        fullAddress: place.savedAddress ?? place.label,
+        latitude: place.latitude!,
+        longitude: place.longitude!,
+      );
+      final address = BlocProvider.of<PassengerHomeCubit>(
+        context,
+      ).state.currentAddress;
+      unawaited(
+        context.pushNamed(
+          TripRoutes.destinationPreview,
+          extra: syntheticPlace,
+          queryParameters: {'pickupAddress': address},
+        ),
+      );
+    } else {
+      final address = BlocProvider.of<PassengerHomeCubit>(
+        context,
+      ).state.currentAddress;
+      unawaited(
+        context.pushNamed(
+          TripRoutes.searchDestination,
+          queryParameters: {'pickupAddress': address},
+        ),
+      );
+    }
+  }
+
   IconData _iconFromName(String name) => SavedPlacesCubit.iconFromName(name);
 
   Future<void> _initLocationAndLoadData() async {
@@ -671,7 +700,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   Future _openActivityDetail(Map<String, dynamic> location) async {
     await context.pushNamed(TripRoutes.activityDetailMap, extra: location);
   }
-
 
   Future _showChipOptions(int index, String label) async {
     await showModalBottomSheet(
@@ -735,38 +763,5 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         ),
       ),
     );
-  }
-
-  void _handleSavedPlaceTap(SavedPlace place) {
-    if (!mounted) return;
-    if (place.hasLocation) {
-      final syntheticPlace = PlaceModel(
-        id: 'saved_${place.label.toLowerCase().replaceAll(' ', '_')}',
-        name: place.label,
-        fullAddress: place.savedAddress ?? place.label,
-        latitude: place.latitude!,
-        longitude: place.longitude!,
-      );
-      final address = BlocProvider.of<PassengerHomeCubit>(
-        context,
-      ).state.currentAddress;
-      unawaited(
-        context.pushNamed(
-          TripRoutes.destinationPreview,
-          extra: syntheticPlace,
-          queryParameters: {'pickupAddress': address},
-        ),
-      );
-    } else {
-      final address = BlocProvider.of<PassengerHomeCubit>(
-        context,
-      ).state.currentAddress;
-      unawaited(
-        context.pushNamed(
-          TripRoutes.searchDestination,
-          queryParameters: {'pickupAddress': address},
-        ),
-      );
-    }
   }
 }

@@ -10,15 +10,14 @@ import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-class FavoritesManagementScreen extends StatefulWidget {
-  const FavoritesManagementScreen({super.key});
+class SavedPlaceScreen extends StatefulWidget {
+  const SavedPlaceScreen({super.key});
 
   @override
-  State<FavoritesManagementScreen> createState() =>
-      _FavoritesManagementScreenState();
+  State<SavedPlaceScreen> createState() => _SavedPlaceScreenState();
 }
 
-class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
+class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
   @override
   void initState() {
     super.initState();
@@ -29,7 +28,11 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
     });
   }
 
-  Future<void> _addOrUpdatePlace(String label, String iconName, {SavedPlace? existing}) async {
+  Future<void> _addOrUpdatePlace(
+    String label,
+    String iconName, {
+    SavedPlace? existing,
+  }) async {
     final cubit = BlocProvider.of<SavedPlacesCubit>(context);
     final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
     if (selectedPlace == null || selectedPlace is! PlaceModel) return;
@@ -37,7 +40,9 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
 
     if (existing != null) {
       // Find existing index and update
-      final index = cubit.state.places.indexWhere((p) => p.label.toLowerCase() == label.toLowerCase());
+      final index = cubit.state.places.indexWhere(
+        (p) => p.label.toLowerCase() == label.toLowerCase(),
+      );
       if (index != -1) {
         await cubit.removePlace(index);
       }
@@ -69,16 +74,15 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
   }
 
   void _showPlaceOptions(SavedPlace place, int index) {
-    unawaited(showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: AppTheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        builder: (context) {
+          return SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -110,7 +114,10 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                 ),
                 const SizedBox(height: 24),
                 ListTile(
-                  leading: const Icon(LucideIcons.pencil, color: AppTheme.primaryColor),
+                  leading: const Icon(
+                    LucideIcons.pencil,
+                    color: AppTheme.primaryColor,
+                  ),
                   title: const Text(
                     'Change Location',
                     style: TextStyle(
@@ -120,7 +127,13 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                   ),
                   onTap: () {
                     Navigator.pop(context);
-                    unawaited(_addOrUpdatePlace(place.label, place.iconName, existing: place));
+                    unawaited(
+                      _addOrUpdatePlace(
+                        place.label,
+                        place.iconName,
+                        existing: place,
+                      ),
+                    );
                   },
                 ),
                 ListTile(
@@ -134,15 +147,17 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                   ),
                   onTap: () async {
                     Navigator.pop(context);
-                    await BlocProvider.of<SavedPlacesCubit>(context).removePlace(index);
+                    await BlocProvider.of<SavedPlacesCubit>(
+                      context,
+                    ).removePlace(index);
                   },
                 ),
               ],
             ),
-          ),
-        );
-      },
-    ));
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -194,7 +209,9 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                     if (state.isLoading) {
                       return const Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(AppTheme.primaryColor),
+                          valueColor: AlwaysStoppedAnimation(
+                            AppTheme.primaryColor,
+                          ),
                         ),
                       );
                     }
@@ -227,12 +244,17 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                         _buildPlaceTile(
                           icon: LucideIcons.house,
                           label: 'Home',
-                          address: homePlace?.savedAddress ?? 'Move the map to select a location',
+                          address:
+                              homePlace?.savedAddress ??
+                              'Move the map to select a location',
                           onTap: () {
                             if (homePlace == null) {
                               unawaited(_addOrUpdatePlace('Home', 'house'));
                             } else {
-                              _showPlaceOptions(homePlace, indexForPlace(homePlace));
+                              _showPlaceOptions(
+                                homePlace,
+                                indexForPlace(homePlace),
+                              );
                             }
                           },
                         ),
@@ -247,18 +269,23 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                             if (workPlace == null) {
                               unawaited(_addOrUpdatePlace('Work', 'briefcase'));
                             } else {
-                              _showPlaceOptions(workPlace, indexForPlace(workPlace));
+                              _showPlaceOptions(
+                                workPlace,
+                                indexForPlace(workPlace),
+                              );
                             }
                           },
                         ),
-                        
+
                         // Custom Places
                         ...customPlaces.map((place) {
                           final idx = indexForPlace(place);
                           return Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: _buildPlaceTile(
-                              icon: SavedPlacesCubit.iconFromName(place.iconName),
+                              icon: SavedPlacesCubit.iconFromName(
+                                place.iconName,
+                              ),
                               label: place.label,
                               address: place.savedAddress ?? 'Not set',
                               onTap: () => _showPlaceOptions(place, idx),
@@ -273,7 +300,9 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                           onTap: _openAddCategoryScreen,
                           child: CustomPaint(
                             painter: DashedBorderPainter(
-                              color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.15,
+                              ),
                               borderRadius: 16.0,
                               dashLength: 6.0,
                               gap: 6.0,
@@ -349,11 +378,7 @@ class _FavoritesManagementScreenState extends State<FavoritesManagementScreen> {
                 color: AppTheme.secondaryColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                color: const Color(0xFF8A4F35),
-                size: 22,
-              ),
+              child: Icon(icon, color: const Color(0xFF8A4F35), size: 22),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -419,10 +444,12 @@ class DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(borderRadius),
-      ));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(borderRadius),
+        ),
+      );
 
     final dashPath = Path();
     for (final pathMetric in path.computeMetrics()) {

@@ -143,14 +143,14 @@ class _InboxScreenState extends State<InboxScreen> {
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 16.0),
+                    padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         const Text(
                           'Inbox',
                           style: TextStyle(
                             fontSize: 32,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                             color: AppTheme.primaryColor,
                             letterSpacing: -1.0,
                           ),
@@ -364,10 +364,7 @@ class _InboxScreenState extends State<InboxScreen> {
           Container(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
-              borderRadius: BorderRadius.circular(24),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
             child: Icon(
               LucideIcons.bell_off,
               size: 36,
@@ -379,7 +376,7 @@ class _InboxScreenState extends State<InboxScreen> {
             'No notifications yet',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppTheme.primaryColor.withValues(alpha: 0.5),
             ),
           ),

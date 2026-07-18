@@ -141,21 +141,37 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
 
   IconData _determinePlaceIcon(String name) {
     final lower = name.toLowerCase();
+
     if (lower.contains('school') ||
         lower.contains('university') ||
+        lower.contains('college') ||
         lower.contains('high')) {
       return LucideIcons.graduation_cap;
     }
+
     if (lower.contains('hospital') ||
         lower.contains('clinic') ||
         lower.contains('doctor')) {
       return LucideIcons.hospital;
     }
+
     if (lower.contains('resort') ||
         lower.contains('hotel') ||
+        lower.contains('casa') ||
         lower.contains('hostel')) {
       return LucideIcons.building;
     }
+
+    if (lower.contains('clothes') || lower.contains('beauty')) {
+      return LucideIcons.shirt;
+    }
+
+    if (lower.contains('petron') ||
+        lower.contains('shell') ||
+        lower.contains('phoenix')) {
+      return LucideIcons.fuel;
+    }
+
     return LucideIcons.map_pin;
   }
 

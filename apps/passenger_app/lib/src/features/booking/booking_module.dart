@@ -23,7 +23,7 @@ import 'package:passenger_app/src/features/profile/profile_module.dart';
 import 'package:passenger_app/src/features/saved_places/data/repositories/saved_places_repository_impl.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/screens/favorites_management_screen.dart';
+import 'package:passenger_app/src/features/saved_places/presentation/screens/saved_place_screen.dart';
 import 'package:passenger_app/src/features/settings/settings_module.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -54,7 +54,7 @@ class PassengerModule extends Module {
       'help',
       child: (context, GoRouterState state) => BlocProvider<SavedPlacesCubit>(
         create: (_) => Modular.get<SavedPlacesCubit>(),
-        child: const FavoritesManagementScreen(),
+        child: const SavedPlaceScreen(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

@@ -37,12 +37,11 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24.0,
-                  vertical: 16.0,
+                  vertical: 0.0,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
                     Row(
                       children: [
                         Container(

@@ -185,7 +185,7 @@ class _PassengerAddCategoryScreenState
             Stack(
               children: [
                 Container(
-                  height: 180,
+                  height: 350,
                   width: double.infinity,
                   color: AppTheme.neutralColor,
                   child: _isLoadingLocation
@@ -206,28 +206,6 @@ class _PassengerAddCategoryScreenState
                           interactive: true,
                           onMapCreated: _onMapCreated,
                         ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      'Drag map to adjust',
-                      style: TextStyle(
-                        color: AppTheme.surface,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),

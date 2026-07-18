@@ -41,7 +41,7 @@ class SettingsScreen extends StatelessWidget {
               'App Preferences',
               style: TextStyle(
                 fontSize: 22,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
                 color: AppTheme.primaryColor,
                 letterSpacing: -0.5,
               ),
@@ -65,7 +65,10 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Account Information',
                 subtitle: 'Personal details and credentials',
                 onTap: () {
-                  CustomToast.show(context, 'Account info settings coming soon.');
+                  CustomToast.show(
+                    context,
+                    'Account info settings coming soon.',
+                  );
                 },
               ),
               _buildDivider(),
@@ -74,7 +77,10 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Push Notifications',
                 subtitle: 'Manage alert preferences',
                 onTap: () {
-                  CustomToast.show(context, 'Notification settings coming soon.');
+                  CustomToast.show(
+                    context,
+                    'Notification settings coming soon.',
+                  );
                 },
               ),
             ]),
@@ -158,9 +164,7 @@ class SettingsScreen extends StatelessWidget {
           width: 1.0,
         ),
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
@@ -185,11 +189,7 @@ class SettingsScreen extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Icon(
-                icon,
-                color: const Color(0xFF8A4F35),
-                size: 18,
-              ),
+              child: Icon(icon, color: const Color(0xFF8A4F35), size: 18),
             ),
             const SizedBox(width: 14),
             Expanded(
