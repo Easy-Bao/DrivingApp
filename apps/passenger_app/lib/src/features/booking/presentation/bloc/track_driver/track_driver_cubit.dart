@@ -143,7 +143,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         progress += 0.1;
         if (progress >= 1.0) {
           timer.cancel();
-          emit(TrackDriverCompleted(driverId: driverId, driverName: driverName));
+          emit(
+            TrackDriverCompleted(driverId: driverId, driverName: driverName),
+          );
         } else {
           final pos = _interpolate(
             progress: progress,

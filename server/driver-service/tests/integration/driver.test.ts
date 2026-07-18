@@ -1,4 +1,4 @@
-import { expect, test, describe, beforeAll } from 'bun:test';
+import { expect, test, describe, beforeAll, afterAll } from 'bun:test';
 import { app } from '../../src/index.ts';
 import { db } from '../../src/shared/drizzle.ts';
 import { drivers, reviews } from '../../src/db/schema.ts';
@@ -11,6 +11,15 @@ beforeAll(async () => {
     await db.delete(drivers);
   } catch (e) {
     console.error('Failed to clean driver database:', e);
+  }
+});
+
+afterAll(async () => {
+  try {
+    await db.delete(reviews);
+    await db.delete(drivers);
+  } catch (e) {
+    console.error('Failed to clean driver database after tests:', e);
   }
 });
 

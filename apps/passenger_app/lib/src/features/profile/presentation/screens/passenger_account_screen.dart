@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cubit.dart';
 import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cubit.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -18,27 +18,6 @@ class PassengerAccountScreen extends StatefulWidget {
 }
 
 class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
-  String _getInitials(String name) {
-    if (name.isEmpty) return 'U';
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
-  }
-
-  Future<void> _handleLogout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('passenger_name');
-    await prefs.remove('passenger_phone');
-    await prefs.remove('passenger_email');
-    await prefs.remove('passenger_id');
-    await Modular.get<SecureSessionService>().clearSession();
-    if (context.mounted) {
-      context.go('/');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ProfileCubit>(
@@ -56,12 +35,14 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
             body: SafeArea(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 16.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 24),
-                    // Profile Header card (Row with Avatar on left, name/phone on right)
                     Row(
                       children: [
                         Container(
@@ -96,10 +77,14 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                state.phone.isNotEmpty ? state.phone : 'No Phone Number',
+                                state.phone.isNotEmpty
+                                    ? state.phone
+                                    : 'No Phone Number',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -107,11 +92,19 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(LucideIcons.pencil, color: AppTheme.primaryColor, size: 20),
+                          icon: const Icon(
+                            LucideIcons.pencil,
+                            color: AppTheme.primaryColor,
+                            size: 20,
+                          ),
                           onPressed: () async {
                             await context.pushNamed(TripRoutes.profileInfo);
                             if (context.mounted) {
-                              unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
+                              unawaited(
+                                BlocProvider.of<ProfileCubit>(
+                                  context,
+                                ).loadProfile(),
+                              );
                             }
                           },
                         ),
@@ -120,49 +113,8 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Payment shortcut card underneath
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                      decoration: BoxDecoration(
-                        color: AppTheme.neutralColor.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppTheme.borderSide.withValues(alpha: 0.3),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            LucideIcons.banknote,
-                            color: AppTheme.primaryColor,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'Cash payment on every ride',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            LucideIcons.chevron_right,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 36),
-
-                    // PLACES AND SAFETY section
                     _buildSectionTitle('PLACES AND SAFETY'),
+
                     const SizedBox(height: 12),
                     _buildMenuTile(
                       icon: LucideIcons.map_pin,
@@ -173,13 +125,15 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                       icon: LucideIcons.shield,
                       title: 'Safety center',
                       onTap: () {
-                        CustomToast.show(context, 'Safety center is coming soon.');
+                        CustomToast.show(
+                          context,
+                          'Safety center is coming soon.',
+                        );
                       },
                     ),
 
                     const SizedBox(height: 28),
 
-                    // SUPPORT section
                     _buildSectionTitle('SUPPORT'),
                     const SizedBox(height: 12),
                     _buildMenuTile(
@@ -197,12 +151,14 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
 
                     const SizedBox(height: 48),
 
-                    // Log out list tile
                     InkWell(
                       onTap: () => _handleLogout(context),
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16.0,
+                          horizontal: 16.0,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16),
@@ -242,21 +198,6 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-          color: AppTheme.primaryColor.withValues(alpha: 0.4),
-          letterSpacing: 1.0,
-        ),
-      ),
-    );
-  }
-
   Widget _buildMenuTile({
     required IconData icon,
     required String title,
@@ -279,11 +220,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: AppTheme.primaryColor,
-                size: 20,
-              ),
+              Icon(icon, color: AppTheme.primaryColor, size: 20),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
@@ -305,5 +242,41 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'U';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('passenger_name');
+    await prefs.remove('passenger_phone');
+    await prefs.remove('passenger_email');
+    await prefs.remove('passenger_id');
+    await Modular.get<SecureSessionService>().clearSession();
+    if (context.mounted) {
+      context.go('/');
+    }
   }
 }
