@@ -323,7 +323,7 @@ class _PassengerAddCategoryScreenState
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _availableIcons.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      separatorBuilder: (_, _) => const SizedBox(width: 12),
                       itemBuilder: (context, index) {
                         final icon = _availableIcons[index];
                         final isSelected = selectedIcon == icon;
