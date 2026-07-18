@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
 import 'package:passenger_app/src/features/booking/trip_routes.dart';
@@ -17,17 +18,12 @@ class PassengerActivityScreen extends StatefulWidget {
       _PassengerActivityScreenState();
 }
 
-class _PassengerActivityScreenState extends State<PassengerActivityScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
   late ActivityBloc _bloc;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this)
-      ..addListener(() => setState(() {}));
-
     _bloc = Modular.get<ActivityBloc>();
   }
 
@@ -49,9 +45,30 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
 
   @override
   void dispose() {
-    _tabController.dispose();
     unawaited(_bloc.close());
     super.dispose();
+  }
+
+  String _formatPastRideDate(String rawDate) {
+    try {
+      final dt = DateTime.parse(rawDate);
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[dt.month - 1]} ${dt.day}';
+    } catch (_) {
+      return rawDate;
+    }
+  }
+
+  String _formatTime(String rawDate) {
+    try {
+      final dt = DateTime.parse(rawDate).toLocal();
+      final hourNum = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+      final periodStr = dt.hour >= 12 ? 'PM' : 'AM';
+      final minuteStr = dt.minute.toString().padLeft(2, '0');
+      return '$hourNum:$minuteStr $periodStr';
+    } catch (_) {
+      return '';
+    }
   }
 
   @override
@@ -59,262 +76,412 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
     return BlocProvider<ActivityBloc>.value(
       value: _bloc,
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: AppTheme.surface,
-          title: const Text(
-            'Activity',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
-              letterSpacing: -1.5,
+        backgroundColor: AppTheme.surface,
+        body: SafeArea(
+          child: RefreshIndicator(
+            color: AppTheme.primaryColor,
+            onRefresh: _loadActivity,
+            child: BlocBuilder<ActivityBloc, ActivityState>(
+              builder: (context, state) {
+                if (state is ActivityLoading) {
+                  return _buildLoadingState();
+                }
+                if (state is ActivityError) {
+                  return _buildErrorState(state.message);
+                }
+                if (state is ActivityLoaded) {
+                  final activeRides = state.upcoming;
+                  final pastRides = state.past;
+
+                  if (activeRides.isEmpty && pastRides.isEmpty) {
+                    return CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                              const Text(
+                                'Activity',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryColor,
+                                  letterSpacing: -1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Tap a ride to see details',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ]),
+                          ),
+                        ),
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: _buildEmptyState(),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      // Screen Header
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            const Text(
+                              'Activity',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.primaryColor,
+                                letterSpacing: -1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tap a ride to see details',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                ),
+                            ),
+                            const SizedBox(height: 16),
+                          ]),
+                        ),
+                      ),
+
+                      // ON THE WAY active ride card section
+                      if (activeRides.isNotEmpty)
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                              _buildActiveRideCard(activeRides.first),
+                              const SizedBox(height: 24),
+                            ]),
+                          ),
+                        ),
+
+                      // PAST RIDES section header
+                      if (pastRides.isNotEmpty)
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 12.0),
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                              Text(
+                                'PAST RIDES',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ]),
+                          ),
+                        ),
+
+                      // PAST RIDES list items
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              return _buildPastRideCard(pastRides[index]);
+                            },
+                            childCount: pastRides.length,
+                          ),
+                        ),
+                      ),
+
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 36),
+                      ),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
             ),
           ),
         ),
-        backgroundColor: AppTheme.surface,
-        body: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              _buildTabBar(),
-              const SizedBox(height: 16),
-              Expanded(
-                child: BlocBuilder<ActivityBloc, ActivityState>(
-                  builder: (context, state) {
-                    if (state is ActivityLoading) {
-                      return _buildLoadingList();
-                    }
-                    if (state is ActivityError) {
-                      return _buildErrorState(state.message);
-                    }
-                    if (state is ActivityLoaded) {
-                      return TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildRideList(state.past, isPast: true),
-                          _buildRideList(state.upcoming, isPast: false),
-                        ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 
-  Widget _buildTabBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        height: 54,
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: AppTheme.outlineBorderColor,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: TabBar(
-          controller: _tabController,
-          dividerColor: Colors.transparent,
-          indicatorSize: TabBarIndicatorSize.tab,
-          indicator: BoxDecoration(
-            color: AppTheme.neutralColor,
-            borderRadius: BorderRadius.circular(26),
-          ),
-          labelColor: AppTheme.selectedItemColor,
-          unselectedLabelColor: AppTheme.unselectedItemColor,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-          tabs: const [
-            Tab(text: 'Past'),
-            Tab(text: 'Upcoming'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRideList(List<RideHistoryModel> rides, {required bool isPast}) {
-    if (rides.isEmpty) {
-      return _buildEmptyState(
-        isPast ? 'No past rides yet' : 'No upcoming rides',
-        isPast
-            ? 'Your completed and canceled trips will appear here.'
-            : 'Active and scheduled trips will appear here.',
-      );
-    }
-    return RefreshIndicator(
-      color: AppTheme.primaryColor,
-      onRefresh: _loadActivity,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: rides.length,
-        itemBuilder: (context, index) => _buildActivityCard(rides[index]),
-      ),
-    );
-  }
-
-  Widget _buildActivityCard(RideHistoryModel ride) {
+  Widget _buildActiveRideCard(RideHistoryModel ride) {
     final statusType = _resolveStatusType(ride.status);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.outlineBorderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final timeStr = _formatTime(ride.date);
+
+    return InkWell(
+      onTap: () => _onCardAction(statusType, ride),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.neutralColor.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.borderSide.withValues(alpha: 0.2),
+            width: 1.0,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                ride.date,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.unselectedItemColor,
+              Container(
+                width: 4,
+                color: const Color(0xFFD25D38), // Orange/red stripe on left
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'ON THE WAY',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFD25D38),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              if (timeStr.isNotEmpty) ...[
+                                Text(
+                                  timeStr,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                              Icon(
+                                LucideIcons.chevron_right,
+                                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                size: 16,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Column(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.tertiaryColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 18,
+                                color: AppTheme.outlineBorderColor,
+                              ),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ride.pickup,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  ride.destination,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      const Divider(height: 1, color: AppTheme.borderSide),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            ride.vehicleType.toLowerCase().contains('share')
+                                ? 'Shared ride, cash'
+                                : 'Solo ride, cash',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          Text(
+                            ride.price,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              _buildStatusBadge(ride.status, statusType),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPastRideCard(RideHistoryModel ride) {
+    final statusType = _resolveStatusType(ride.status);
+    final dateStr = _formatPastRideDate(ride.date);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: InkWell(
+        onTap: () => _onCardAction(statusType, ride),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.neutralColor.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.borderSide.withValues(alpha: 0.2),
+              width: 1.0,
+            ),
+          ),
+          child: Row(
             children: [
-              Column(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 20,
-                    color: AppTheme.outlineBorderColor,
-                  ),
-                  const Icon(
-                    Icons.location_on,
-                    size: 14,
-                    color: AppTheme.tertiaryColor,
-                  ),
-                ],
+              Container(
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  LucideIcons.check,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      ride.pickup,
+                      ride.destination,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: AppTheme.primaryColor,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 3),
                     Text(
-                      ride.destination,
-                      style: const TextStyle(
-                        fontSize: 15,
+                      '$dateStr, cash',
+                      style: TextStyle(
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
                       ),
                     ),
                   ],
                 ),
               ),
-              Text(
-                ride.price,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
-                ),
+              const SizedBox(width: 12),
+              Row(
+                children: [
+                  Text(
+                    ride.price,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    LucideIcons.chevron_right,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                    size: 16,
+                  ),
+                ],
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1, color: AppTheme.borderSide),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(
-                Icons.directions_car,
-                size: 18,
-                color: AppTheme.primaryColor,
-              ),
-              TextButton(
-                onPressed: () => _onCardAction(statusType, ride),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 10,
-                  ),
-                  minimumSize: const Size(0, 0),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  _actionLabel(statusType),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(String status, String statusType) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: _statusBgColor(statusType),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        status.toUpperCase().replaceAll('_', ' '),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          color: _statusTextColor(statusType),
         ),
       ),
     );
   }
 
-  Widget _buildLoadingList() {
+  Widget _buildLoadingState() {
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       itemCount: 4,
       itemBuilder: (_, _) => Container(
         margin: const EdgeInsets.only(bottom: 12),
-        height: 160,
+        height: 140,
         decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(24),
+          color: AppTheme.neutralColor.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState(String title, String subtitle) {
+  Widget _buildEmptyState() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -322,26 +489,26 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.receipt_long_outlined,
+              LucideIcons.history,
               size: 48,
               color: AppTheme.primaryColor.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 16),
-            Text(
-              title,
+            const Text(
+              'No rides yet',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              subtitle,
+              'Your completed and canceled trips will appear here.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: AppTheme.primaryColor.withValues(alpha: 0.35),
+                color: AppTheme.primaryColor.withValues(alpha: 0.4),
               ),
             ),
           ],
@@ -358,17 +525,17 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.wifi_off_rounded,
+              LucideIcons.wifi_off,
               size: 48,
               color: AppTheme.primaryColor.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Could not load activity',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 6),
@@ -377,13 +544,13 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                color: AppTheme.primaryColor.withValues(alpha: 0.4),
               ),
             ),
             const SizedBox(height: 20),
             TextButton.icon(
               onPressed: _loadActivity,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(LucideIcons.refresh_cw, size: 16),
               label: const Text('Retry'),
               style: TextButton.styleFrom(
                 foregroundColor: AppTheme.primaryColor,
@@ -408,32 +575,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen>
         return 'accepted';
       default:
         return 'requested';
-    }
-  }
-
-  Color _statusBgColor(String statusType) {
-    switch (statusType) {
-      case 'completed':
-        return AppTheme.complete.withValues(alpha: 0.5);
-      case 'progress':
-      case 'accepted':
-        return AppTheme.inProgress;
-      default:
-        return AppTheme.cancel;
-    }
-  }
-
-  Color _statusTextColor(String statusType) => AppTheme.surface;
-
-  String _actionLabel(String statusType) {
-    switch (statusType) {
-      case 'progress':
-      case 'accepted':
-        return 'Track Driver';
-      case 'completed':
-        return 'View Details';
-      default:
-        return 'Rebook';
     }
   }
 

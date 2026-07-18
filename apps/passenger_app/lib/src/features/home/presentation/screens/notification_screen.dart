@@ -88,45 +88,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
   }
 
-  String _timeAgo(DateTime timestamp) {
-    final diff = DateTime.now().difference(timestamp);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${(diff.inDays / 7).floor()}w ago';
-  }
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dateToCheck = DateTime(timestamp.year, timestamp.month, timestamp.day);
 
-  IconData _iconForType(String type) {
-    switch (type) {
-      case 'ride':
-        return LucideIcons.bike;
-      case 'promo':
-        return LucideIcons.tag;
-      case 'system':
-        return LucideIcons.shield_check;
-      case 'driver':
-        return LucideIcons.user;
-      case 'chat':
-        return LucideIcons.message_square;
-      default:
-        return LucideIcons.bell;
-    }
-  }
-
-  Color _colorForType(String type) {
-    switch (type) {
-      case 'ride':
-        return AppTheme.primaryColor;
-      case 'promo':
-        return const Color(0xFF8B5E3C);
-      case 'system':
-        return AppTheme.tertiaryColor;
-      case 'driver':
-        return AppTheme.complete;
-      case 'chat':
-        return AppTheme.primaryColor;
-      default:
-        return AppTheme.primaryColor;
+    if (dateToCheck == today) {
+      final hourNum = timestamp.hour > 12 ? timestamp.hour - 12 : (timestamp.hour == 0 ? 12 : timestamp.hour);
+      final periodStr = timestamp.hour >= 12 ? 'PM' : 'AM';
+      final minuteStr = timestamp.minute.toString().padLeft(2, '0');
+      return '$hourNum:$minuteStr $periodStr';
+    } else if (dateToCheck == yesterday) {
+      return 'Yesterday';
+    } else {
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[timestamp.month - 1]} ${timestamp.day}';
     }
   }
 
@@ -134,193 +111,225 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(
-        backgroundColor: AppTheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leadingWidth: 80,
-        leading: GestureDetector(
-          onTap: () => context.pop(),
-          behavior: HitTestBehavior.opaque,
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(width: 12),
-              Icon(
-                LucideIcons.chevron_left,
-                color: AppTheme.primaryColor,
-                size: 20,
-              ),
-              SizedBox(width: 4),
-              Text(
-                'Back',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            color: AppTheme.primaryColor,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          if (_notifications.any((n) => !n.isRead))
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  for (int index = 0; index < _notifications.length; index++) {
-                    _notifications[index] = _notifications[index].copyWith(
-                      isRead: true,
-                    );
-                  }
-                });
-              },
-              child: Text(
-                'Read all',
-                style: TextStyle(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
-            )
-          : _notifications.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              physics: const BouncingScrollPhysics(),
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final notification = _notifications[index];
-                return Dismissible(
-                  key: Key(notification.id),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (_) => _dismissNotification(index),
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 24),
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cancel.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      LucideIcons.trash_2,
-                      color: AppTheme.cancel,
-                      size: 20,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              )
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Custom screen header matching other premium dashboard screens (Inbox, Messages and receipts)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        const Text(
+                          'Inbox',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primaryColor,
+                            letterSpacing: -1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Messages and receipts',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ]),
                     ),
                   ),
-                  child: _buildNotificationCard(notification, index),
-                );
-              },
-            ),
+
+                  // Notifications list items
+                  if (_notifications.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildEmptyState(),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final notification = _notifications[index];
+                            return Dismissible(
+                              key: Key(notification.id),
+                              direction: DismissDirection.endToStart,
+                              onDismissed: (_) => _dismissNotification(index),
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 24),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.cancel.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Icon(
+                                  LucideIcons.trash_2,
+                                  color: AppTheme.cancel,
+                                  size: 20,
+                                ),
+                              ),
+                              child: _buildNotificationCard(notification, index),
+                            );
+                          },
+                          childCount: _notifications.length,
+                        ),
+                      ),
+                    ),
+
+                  // "You are all caught up" footer
+                  if (_notifications.isNotEmpty)
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(vertical: 36.0),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  LucideIcons.mail,
+                                  size: 24,
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'You are all caught up',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
+                ],
+              ),
+      ),
     );
   }
 
   Widget _buildNotificationCard(NotificationModel notification, int index) {
-    return GestureDetector(
-      onTap: () => _markAsRead(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: notification.isRead
-              ? AppTheme.surface
-              : AppTheme.secondaryColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: notification.isRead
-                ? AppTheme.outlineBorderColor
-                : AppTheme.secondaryColor.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: _colorForType(notification.type).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                _iconForType(notification.type),
-                color: _colorForType(notification.type),
-                size: 20,
-              ),
+    // Resolve icon and background styling based on type and title
+    final isReceipt = notification.type == 'ride' || notification.title.toLowerCase().contains('receipt');
+    final isDriverChat = notification.type == 'driver' || notification.type == 'chat';
+
+    final Color bgCircleColor;
+    final Color iconColor;
+    final IconData icon;
+
+    if (isDriverChat) {
+      bgCircleColor = AppTheme.secondaryColor;
+      iconColor = const Color(0xFF8A4F35);
+      icon = LucideIcons.user;
+    } else if (isReceipt) {
+      bgCircleColor = AppTheme.primaryColor;
+      iconColor = Colors.white;
+      icon = LucideIcons.receipt;
+    } else {
+      bgCircleColor = AppTheme.neutralColor;
+      iconColor = AppTheme.primaryColor;
+      icon = LucideIcons.bell;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: GestureDetector(
+        onTap: () => _markAsRead(index),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.neutralColor.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.borderSide.withValues(alpha: 0.2),
+              width: 1.0,
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          notification.title,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: notification.isRead
-                                ? FontWeight.w600
-                                : FontWeight.w800,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: bgCircleColor,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      notification.title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primaryColor,
                       ),
-                      if (!notification.isRead)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.tertiaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    notification.message,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                      fontWeight: FontWeight.w400,
-                      height: 1.4,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
+                    const SizedBox(height: 4),
+                    Text(
+                      notification.message,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    _timeAgo(notification.timestamp),
+                    _formatTimestamp(notification.timestamp),
                     style: TextStyle(
                       fontSize: 11,
                       color: AppTheme.primaryColor.withValues(alpha: 0.4),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (!notification.isRead) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.cancel,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

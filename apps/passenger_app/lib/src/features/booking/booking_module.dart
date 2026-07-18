@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/data/repositories/activity_repository_impl.dart';
 import 'package:passenger_app/src/features/booking/data/repositories/driver_repository_impl.dart';
@@ -116,8 +117,10 @@ class PassengerModule extends Module {
         ChildRoute(
           name: TripRoutes.passengerHelp,
           'help',
-          child: (context, GoRouterState state) =>
-              const FavoritesManagementScreen(),
+          child: (context, GoRouterState state) => BlocProvider<SavedPlacesCubit>(
+            create: (_) => Modular.get<SavedPlacesCubit>(),
+            child: const FavoritesManagementScreen(),
+          ),
           transition: AppTransitions.none,
           transitionDuration: Duration.zero,
         ),

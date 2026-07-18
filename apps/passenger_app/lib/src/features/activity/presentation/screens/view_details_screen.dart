@@ -8,11 +8,11 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/booking/trip_routes.dart';
-import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ActivityViewDetailsScreen extends StatefulWidget {
   final RideHistoryModel? ride;
@@ -51,7 +51,6 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
       final elapsedTimeSinceCompletion = DateTime.now().difference(
         rideCompletedTime,
       );
-      // Passengers may report lost items within 48 hours of trip completion.
       if (elapsedTimeSinceCompletion.inHours < 48) {
         isWithinGracePeriodWindow = true;
       }
@@ -61,8 +60,6 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
       setState(() {
         _passengerId = passengerId;
         _detailedRideData = retrievedRideData;
-        // Lost & Found chat only surfaces when a driver is linked to the ride
-        // and the 48-hour reporting window has not elapsed.
         _showLostFoundChat =
             isWithinGracePeriodWindow &&
             retrievedRideData != null &&
@@ -71,9 +68,6 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
     }
   }
 
-  /// Creates or resumes a chat room keyed by [ride.id], then navigates to the
-  /// driver chat screen. The POST is idempotent — a 200 response means the room
-  /// already existed and is safe to join immediately.
   Future<void> _initiateLostFoundChat() async {
     final ride = widget.ride;
     final retrievedRideData = _detailedRideData;
@@ -111,6 +105,23 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
               },
             ),
           );
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _makeDriverCall() async {
+    final retrievedRideData = _detailedRideData;
+    if (retrievedRideData == null) return;
+    final driverId = retrievedRideData['driver_id'] as String?;
+    if (driverId == null || driverId.isEmpty) return;
+    try {
+      final driverProfile = await Modular.get<PassengerApiService>().getDriverProfile(driverId);
+      final phone = driverProfile?['phone'] as String?;
+      if (phone != null && phone.isNotEmpty) {
+        final uri = Uri.parse('tel:$phone');
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
         }
       }
     } catch (_) {}
@@ -169,11 +180,31 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
         ? (ride.pickupLng + ride.destLng) / 2
         : 123.4400;
 
+    final status = ride?.status.toLowerCase() ?? 'completed';
+    final Color statusColor;
+    final String statusLabel;
+    final String statusSubtitle;
+
+    if (status == 'completed') {
+      statusColor = AppTheme.complete;
+      statusLabel = 'COMPLETED';
+      statusSubtitle = 'Trip finished';
+    } else if (status == 'canceled' || status == 'cancelled') {
+      statusColor = AppTheme.cancel;
+      statusLabel = 'CANCELED';
+      statusSubtitle = 'Trip canceled';
+    } else {
+      statusColor = const Color(0xFFD25D38);
+      statusLabel = 'ON THE WAY';
+      statusSubtitle = 'Arriving in 6 min';
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(
             LucideIcons.arrow_left,
@@ -182,77 +213,99 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          'Trip Details',
+          'Ride details',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
+            fontSize: 18,
           ),
         ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Column(
           children: [
+            // Map Preview Widget with Map preview label overlay
             Container(
               height: 180,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: AppTheme.neutralColor,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.outlineBorderColor),
+                border: Border.all(
+                  color: AppTheme.borderSide.withValues(alpha: 0.2),
+                  width: 1.0,
+                ),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(23),
-                child: MapProvider.buildMapView(
-                  latitude: centerLat,
-                  longitude: centerLng,
-                  zoom: 13.0,
-                  interactive: false,
-                  onMapCreated: _onMapCreated,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: MapProvider.buildMapView(
+                        latitude: centerLat,
+                        longitude: centerLng,
+                        zoom: 13.0,
+                        interactive: false,
+                        onMapCreated: _onMapCreated,
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Map preview',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            GestureDetector(
-              onTap: () {
-                final retrievedRideData = _detailedRideData;
-                unawaited(
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (BuildContext sheetContext) =>
-                        DriverProfileDetailsSheet(
-                          driverId:
-                              retrievedRideData?['driver_id'] as String? ??
-                              'driver-id-xyz',
-                          driverName:
-                              retrievedRideData?['driver_name'] as String? ??
-                              ride?.driverName ??
-                              'Driver',
-                          vehicleType:
-                              retrievedRideData?['vehicle_type'] as String? ??
-                              'Bao Bao',
-                          plateNumber:
-                              retrievedRideData?['plate_number'] as String? ??
-                              ride?.vehiclePlate ??
-                              'ABC 1234',
-                          rating:
-                              retrievedRideData?['driver_rating'] as String? ??
-                              '5.0',
-                        ),
-                  ),
-                );
-              },
+
+            const SizedBox(height: 16),
+
+            // Driver details card with call and chat action icons
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.neutralColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.borderSide.withValues(alpha: 0.2),
+                  width: 1.0,
+                ),
+              ),
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 25,
-                    backgroundColor: AppTheme.secondaryColor,
-                    child: Icon(Icons.person, color: AppTheme.primaryColor),
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.secondaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      LucideIcons.user,
+                      color: Color(0xFF8A4F35),
+                      size: 22,
+                    ),
                   ),
-                  const SizedBox(width: 15),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,199 +315,238 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
                               ? ride!.driverName
                               : 'Driver',
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: AppTheme.primaryColor,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
-                          ride?.vehiclePlate.isNotEmpty == true
-                              ? ride!.vehiclePlate
-                              : '—',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.tertiaryColor,
+                          '${ride?.vehicleType ?? 'Bao Bao'}  •  ${ride?.vehiclePlate ?? '—'}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (_showLostFoundChat)
-                    IconButton(
-                      icon: const Icon(
-                        LucideIcons.message_square,
-                        color: AppTheme.primaryColor,
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _makeDriverCall,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppTheme.borderSide.withValues(alpha: 0.3),
+                          width: 1.0,
+                        ),
                       ),
-                      onPressed: _initiateLostFoundChat,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        LucideIcons.phone,
+                        color: AppTheme.primaryColor,
+                        size: 16,
+                      ),
                     ),
-                  const Icon(
-                    Icons.star,
-                    color: AppTheme.primaryColor,
-                    size: 16,
                   ),
-                  Text(
-                    ' ${_detailedRideData?['driver_rating'] ?? '—'}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  if (status != 'completed' || _showLostFoundChat) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _initiateLostFoundChat,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppTheme.borderSide.withValues(alpha: 0.3),
+                            width: 1.0,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          LucideIcons.message_square,
+                          color: AppTheme.primaryColor,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ON THE WAY / status route details card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.neutralColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.borderSide.withValues(alpha: 0.2),
+                  width: 1.0,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        statusLabel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: statusColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        statusSubtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                    child: Divider(height: 1, color: AppTheme.borderSide),
+                  ),
+                  Row(
+                    children: [
+                      Column(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: AppTheme.tertiaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 20,
+                            color: AppTheme.outlineBorderColor,
+                          ),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ride?.pickup ?? 'Pickup Location',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              ride?.destination ?? 'Destination Location',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Divider(color: AppTheme.outlineBorderColor),
-            ),
-            _buildFareSummaryCard(ride),
-            const SizedBox(height: 24),
-            _buildTimeline(ride),
-          ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                unawaited(
-                  context.pushNamed(
-                    'SearchDestination',
-                    queryParameters: ride != null
-                        ? {'destination': ride.destination}
-                        : {},
+
+            const SizedBox(height: 16),
+
+            // Cash fare block card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.neutralColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.borderSide.withValues(alpha: 0.2),
+                  width: 1.0,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ride?.vehicleType.toLowerCase().contains('share') == true
+                            ? 'Fare, shared ride'
+                            : 'Fare, solo ride',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(
+                            LucideIcons.banknote,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Pay with cash',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                );
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text(
-                'Book this route again',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(32),
-                ),
+                  Text(
+                    ride?.price ?? '—',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFareSummaryCard(RideHistoryModel? ride) {
-    double total = 0;
-    if (ride != null) {
-      final cleaned = ride.price.replaceAll(RegExp(r'[₱,]'), '').trim();
-      total = double.tryParse(cleaned) ?? 0;
-    }
-    final base = (total * 0.17).clamp(0.0, double.infinity);
-    final distance = (total * 0.76).clamp(0.0, double.infinity);
-    final fees = (total - base - distance).clamp(0.0, double.infinity);
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.outlineBorderColor),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Fare Summary',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-              Text(
-                ride?.price ?? '—',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          _fareRow('Base Fare', '₱${base.toStringAsFixed(2)}'),
-          _fareRow('Distance', '₱${distance.toStringAsFixed(2)}'),
-          _fareRow('Fees', '₱${fees.toStringAsFixed(2)}'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeline(RideHistoryModel? ride) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Timeline',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        const SizedBox(height: 16),
-        _timelineItem(ride?.pickup ?? 'Pickup', ride?.date ?? '', true),
-        _timelineItem(ride?.destination ?? 'Destination', '', false),
-      ],
-    );
-  }
-
-  Widget _fareRow(String label, String amount) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(color: AppTheme.unselectedItemColor, fontSize: 13),
-        ),
-        Text(
-          amount,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        ),
-      ],
-    );
-  }
-
-  Widget _timelineItem(String loc, String time, bool isTop) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            Icon(
-              isTop ? Icons.circle : Icons.location_on,
-              size: 16,
-              color: AppTheme.primaryColor,
-            ),
-            if (isTop)
-              Container(
-                width: 2,
-                height: 30,
-                color: AppTheme.outlineBorderColor,
-              ),
           ],
         ),
-        const SizedBox(width: 15),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(loc, style: const TextStyle(fontWeight: FontWeight.w700)),
-            if (time.isNotEmpty)
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.unselectedItemColor,
-                ),
-              ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 }
