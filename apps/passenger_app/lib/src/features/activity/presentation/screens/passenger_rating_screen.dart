@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -54,7 +54,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
 
       if (mounted) {
         CustomToast.show(context, 'Thank you for your feedback!');
-        context.goNamed(TripRoutes.passengerHome);
+        context.goNamed(HomeRoutes.home);
       }
     } catch (error) {
       if (mounted) {

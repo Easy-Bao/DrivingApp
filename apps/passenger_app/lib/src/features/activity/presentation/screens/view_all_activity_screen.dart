@@ -5,8 +5,8 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -19,10 +19,6 @@ class PassengerViewAllActivityScreen extends StatefulWidget {
 }
 
 class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivityScreen> {
-  List<RideHistoryModel> _retrievedRidesList = [];
-  bool _isActivityDataLoading = true;
-  String _networkErrorMessage = '';
-
   static const _monthAbbreviationsList = [
     'JAN',
     'FEB',
@@ -37,87 +33,10 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
     'NOV',
     'DEC',
   ];
+  List<RideHistoryModel> _retrievedRidesList = [];
+  bool _isActivityDataLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_fetchActivityHistoryData());
-  }
-
-  Future<void> _fetchActivityHistoryData() async {
-    setState(() {
-      _isActivityDataLoading = true;
-      _networkErrorMessage = '';
-    });
-    try {
-      final sharedPreferencesInstance = await SharedPreferences.getInstance();
-      final storedPassengerId = sharedPreferencesInstance.getString('passenger_id') ?? '';
-      if (storedPassengerId.isNotEmpty) {
-        final activityRepositoryInstance = Modular.get<ActivityRepository>();
-        final retrievedRidesHistoryResult = await activityRepositoryInstance.fetchRideHistory(storedPassengerId);
-        if (mounted) {
-          retrievedRidesHistoryResult.fold(
-            (failure) {
-              setState(() {
-                _retrievedRidesList = const [];
-                _networkErrorMessage = failure.message;
-                _isActivityDataLoading = false;
-              });
-            },
-            (ridesList) {
-              setState(() {
-                _retrievedRidesList = ridesList;
-                _isActivityDataLoading = false;
-              });
-            },
-          );
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _retrievedRidesList = const [];
-            _isActivityDataLoading = false;
-          });
-        }
-      }
-    } catch (exceptionError) {
-      if (mounted) {
-        setState(() {
-          _networkErrorMessage = exceptionError.toString();
-          _isActivityDataLoading = false;
-        });
-      }
-    }
-  }
-
-  String _getGroupingDateKey(RideHistoryModel ride) {
-    final dateStringParts = ride.date.split(',');
-    if (dateStringParts.isEmpty) return 'Unknown';
-    final extractedDatePart = dateStringParts[0].trim();
-
-    try {
-      final currentDateTime = DateTime.now();
-      final todayDateString = '${_monthAbbreviationsList[currentDateTime.month - 1]} ${currentDateTime.day}';
-      final yesterdayDateTime = currentDateTime.subtract(const Duration(days: 1));
-      final yesterdayDateString =
-          '${_monthAbbreviationsList[yesterdayDateTime.month - 1]} ${yesterdayDateTime.day}';
-
-      if (extractedDatePart.toUpperCase() == todayDateString.toUpperCase()) {
-        return 'Today';
-      } else if (extractedDatePart.toUpperCase() == yesterdayDateString.toUpperCase()) {
-        return 'Yesterday';
-      }
-    } catch (_) {}
-
-    if (extractedDatePart.length >= 3) {
-      final extractedMonthString = extractedDatePart.substring(0, 3).toLowerCase();
-      final capitalizedMonthString = extractedMonthString[0].toUpperCase() + extractedMonthString.substring(1);
-      final remainingDateString = extractedDatePart.substring(3);
-      return '$capitalizedMonthString$remainingDateString';
-    }
-
-    return extractedDatePart;
-  }
+  String _networkErrorMessage = '';
 
   Map<String, List<RideHistoryModel>> get _groupedActivityRides {
     final Map<String, List<RideHistoryModel>> groupedMap = {};
@@ -129,40 +48,6 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
       groupedMap[groupingDateKey]!.add(ride);
     }
     return groupedMap;
-  }
-
-  double _calculateCoordinatesDistanceInKm(double startLatitude, double startLongitude, double endLatitude, double endLongitude) {
-    const degreesToRadiansMultiplier = 0.017453292519943295;
-    final haversineInterimValue = 0.5 - cos((endLatitude - startLatitude) * degreesToRadiansMultiplier) / 2 +
-        cos(startLatitude * degreesToRadiansMultiplier) * cos(endLatitude * degreesToRadiansMultiplier) *
-        (1 - cos((endLongitude - startLongitude) * degreesToRadiansMultiplier)) / 2;
-    return 12742 * asin(sqrt(haversineInterimValue)); // 2 * R; R = 6371 km
-  }
-
-  double _calculateDailyCompletedTotalSum(List<RideHistoryModel> ridesForDate) {
-    double dailySum = 0.0;
-    for (final ride in ridesForDate) {
-      if (ride.status == 'completed') {
-        dailySum += double.tryParse(ride.price) ?? 0.0;
-      }
-    }
-    return dailySum;
-  }
-
-  String _formattedDriverInitials(String driverName) {
-    if (driverName.isEmpty) return 'D';
-    final nameParts = driverName.trim().split(' ');
-    if (nameParts.length > 1) {
-      return '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase();
-    }
-    return nameParts[0][0].toUpperCase();
-  }
-
-  String _formattedDriverRating(String driverId) {
-    if (driverId.isEmpty) return '4.9';
-    final hashCodeValue = driverId.hashCode.abs();
-    final calculatedRating = 4.5 + (hashCodeValue % 6) * 0.1;
-    return calculatedRating.toStringAsFixed(1);
   }
 
   @override
@@ -291,6 +176,12 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_fetchActivityHistoryData());
+  }
+
   Widget _buildActivityCard(RideHistoryModel ride) {
     final isTripCompleted = ride.status == 'completed';
     final dateStringParts = ride.date.split(',');
@@ -328,7 +219,7 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
           onTap: () {
             if (isTripCompleted) {
               unawaited(
-                context.pushNamed(TripRoutes.activityViewDetails, extra: ride),
+                context.pushNamed(ActivityRoutes.activityViewDetails, extra: ride),
               );
             }
           },
@@ -560,5 +451,114 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
         ),
       ),
     );
+  }
+
+  double _calculateCoordinatesDistanceInKm(double startLatitude, double startLongitude, double endLatitude, double endLongitude) {
+    const degreesToRadiansMultiplier = 0.017453292519943295;
+    final haversineInterimValue = 0.5 - cos((endLatitude - startLatitude) * degreesToRadiansMultiplier) / 2 +
+        cos(startLatitude * degreesToRadiansMultiplier) * cos(endLatitude * degreesToRadiansMultiplier) *
+        (1 - cos((endLongitude - startLongitude) * degreesToRadiansMultiplier)) / 2;
+    return 12742 * asin(sqrt(haversineInterimValue)); // 2 * R; R = 6371 km
+  }
+
+  double _calculateDailyCompletedTotalSum(List<RideHistoryModel> ridesForDate) {
+    double dailySum = 0.0;
+    for (final ride in ridesForDate) {
+      if (ride.status == 'completed') {
+        dailySum += double.tryParse(ride.price) ?? 0.0;
+      }
+    }
+    return dailySum;
+  }
+
+  Future<void> _fetchActivityHistoryData() async {
+    setState(() {
+      _isActivityDataLoading = true;
+      _networkErrorMessage = '';
+    });
+    try {
+      final sharedPreferencesInstance = await SharedPreferences.getInstance();
+      final storedPassengerId = sharedPreferencesInstance.getString('passenger_id') ?? '';
+      if (storedPassengerId.isNotEmpty) {
+        final activityRepositoryInstance = Modular.get<ActivityRepository>();
+        final retrievedRidesHistoryResult = await activityRepositoryInstance.fetchRideHistory(storedPassengerId);
+        if (mounted) {
+          retrievedRidesHistoryResult.fold(
+            (failure) {
+              setState(() {
+                _retrievedRidesList = const [];
+                _networkErrorMessage = failure.message;
+                _isActivityDataLoading = false;
+              });
+            },
+            (ridesList) {
+              setState(() {
+                _retrievedRidesList = ridesList;
+                _isActivityDataLoading = false;
+              });
+            },
+          );
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _retrievedRidesList = const [];
+            _isActivityDataLoading = false;
+          });
+        }
+      }
+    } catch (exceptionError) {
+      if (mounted) {
+        setState(() {
+          _networkErrorMessage = exceptionError.toString();
+          _isActivityDataLoading = false;
+        });
+      }
+    }
+  }
+
+  String _formattedDriverInitials(String driverName) {
+    if (driverName.isEmpty) return 'D';
+    final nameParts = driverName.trim().split(' ');
+    if (nameParts.length > 1) {
+      return '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase();
+    }
+    return nameParts[0][0].toUpperCase();
+  }
+
+  String _formattedDriverRating(String driverId) {
+    if (driverId.isEmpty) return '4.9';
+    final hashCodeValue = driverId.hashCode.abs();
+    final calculatedRating = 4.5 + (hashCodeValue % 6) * 0.1;
+    return calculatedRating.toStringAsFixed(1);
+  }
+
+  String _getGroupingDateKey(RideHistoryModel ride) {
+    final dateStringParts = ride.date.split(',');
+    if (dateStringParts.isEmpty) return 'Unknown';
+    final extractedDatePart = dateStringParts[0].trim();
+
+    try {
+      final currentDateTime = DateTime.now();
+      final todayDateString = '${_monthAbbreviationsList[currentDateTime.month - 1]} ${currentDateTime.day}';
+      final yesterdayDateTime = currentDateTime.subtract(const Duration(days: 1));
+      final yesterdayDateString =
+          '${_monthAbbreviationsList[yesterdayDateTime.month - 1]} ${yesterdayDateTime.day}';
+
+      if (extractedDatePart.toUpperCase() == todayDateString.toUpperCase()) {
+        return 'Today';
+      } else if (extractedDatePart.toUpperCase() == yesterdayDateString.toUpperCase()) {
+        return 'Yesterday';
+      }
+    } catch (_) {}
+
+    if (extractedDatePart.length >= 3) {
+      final extractedMonthString = extractedDatePart.substring(0, 3).toLowerCase();
+      final capitalizedMonthString = extractedMonthString[0].toUpperCase() + extractedMonthString.substring(1);
+      final remainingDateString = extractedDatePart.substring(3);
+      return '$capitalizedMonthString$remainingDateString';
+    }
+
+    return extractedDatePart;
   }
 }

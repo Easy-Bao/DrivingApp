@@ -1,15 +1,13 @@
-library;
-
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_rating_screen.dart';
+import 'package:passenger_app/src/features/activity/presentation/screens/ride_history_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_all_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_details_screen.dart';
-import 'package:passenger_app/src/features/booking/presentation/screens/track_driver_screen.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
-import 'package:passenger_app/src/features/chat/presentation/screens/driver_chat_screen.dart';
+import 'package:passenger_app/src/features/trip/presentation/screens/track_driver_screen.dart';
 import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class ActivityModule {
@@ -17,7 +15,7 @@ class ActivityModule {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: TripRoutes.viewAllRecentActivity,
+      name: ActivityRoutes.viewAllRecentActivity,
       'activity/recent-activity',
       child: (context, GoRouterState state) =>
           const PassengerViewAllActivityScreen(),
@@ -25,7 +23,7 @@ class ActivityModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: TripRoutes.activityViewDetails,
+      name: ActivityRoutes.activityViewDetails,
       'activity/viewDetails',
       child: (context, GoRouterState state) {
         final ride = state.extra is RideHistoryModel
@@ -37,7 +35,7 @@ class ActivityModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: TripRoutes.activityTrackDriver,
+      name: ActivityRoutes.activityTrackDriver,
       'activity/trackDriver',
       child: (context, GoRouterState state) {
         final ride = state.extra is RideHistoryModel
@@ -54,22 +52,7 @@ class ActivityModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: TripRoutes.driverChat,
-      'activity/driver-chat',
-      child: (context, GoRouterState state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        return DriverChatScreen(
-          roomId: extra?['roomId'] as String?,
-          userId: extra?['userId'] as String?,
-          token: extra?['token'] as String?,
-          peerName: extra?['peerName'] as String?,
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: TripRoutes.passengerRating,
+      name: ActivityRoutes.rating,
       'activity/rating',
       child: (context, GoRouterState state) {
         final driverId = state.uri.queryParameters['driverId'] ?? '';
@@ -82,11 +65,18 @@ class ActivityModule {
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),
+    ChildRoute(
+      name: ActivityRoutes.rideHistory,
+      'account/ride-history',
+      child: (context, GoRouterState state) => const RideHistoryScreen(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
   ];
 
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
-      name: TripRoutes.passengerActivity,
+      name: ActivityRoutes.activity,
       'activity',
       child: (context, GoRouterState state) => const PassengerActivityScreen(),
       transition: AppTransitions.none,

@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -265,7 +265,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (completionResult != null) {
-        context.goNamed(TripRoutes.passengerHome);
+        context.goNamed(HomeRoutes.home);
       } else {
         setState(() => _onboardingErrorMessage = 'Could not save profile. Please try again.');
       }

@@ -1,13 +1,15 @@
 import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
+import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class SavedPlaceScreen extends StatefulWidget {
@@ -65,7 +67,7 @@ class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
     if (selectedPlace == null || selectedPlace is! PlaceModel) return;
     if (!mounted) return;
     await context.pushNamed(
-      TripRoutes.passengerAddCategory,
+      HomeRoutes.addCategory,
       extra: {
         'onSave': (SavedPlace newPlace) => cubit.addPlace(newPlace),
         'place': selectedPlace,

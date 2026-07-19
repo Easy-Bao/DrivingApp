@@ -6,7 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:http/http.dart' as http;
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -407,7 +407,7 @@ class _SigninScreenState extends State<SigninScreen> {
         await prefs.setString('passenger_email', passenger['email'] as String);
 
         if (!mounted) return;
-        unawaited(context.pushNamed(TripRoutes.passengerHome));
+        unawaited(context.pushNamed(HomeRoutes.home));
       } else {
         final errorData = _parseErrorJson(response.body);
         final errorMsg = errorData['error'] ?? 'Login failed';

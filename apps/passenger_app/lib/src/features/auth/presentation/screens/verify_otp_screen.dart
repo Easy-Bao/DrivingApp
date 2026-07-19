@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -127,7 +127,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     Timer(const Duration(milliseconds: 1500), () {
       if (!mounted) return;
       Navigator.of(context).pop();
-      context.goNamed(TripRoutes.passengerHome);
+      context.goNamed(HomeRoutes.home);
     });
   }
 

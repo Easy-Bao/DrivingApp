@@ -1,6 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/driver_activity_repository.dart';
-import 'package:driver_app/src/features/booking/driver_routes.dart';
+import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -343,7 +343,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
 
   Widget _buildTripHistoryTile() {
     return GestureDetector(
-      onTap: () => context.pushNamed(DriverRoutes.driverTripHistory),
+      onTap: () => context.pushNamed(ActivityRoutes.tripHistory),
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(

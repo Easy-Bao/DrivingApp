@@ -1,5 +1,5 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/features/booking/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

@@ -1,5 +1,5 @@
 import 'package:driver_app/src/features/auth/auth_module.dart';
-import 'package:driver_app/src/features/booking/booking_module.dart';
+import 'package:driver_app/driver_dispatch_module.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:session_service/session_service.dart';

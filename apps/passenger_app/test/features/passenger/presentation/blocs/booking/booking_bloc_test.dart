@@ -3,9 +3,9 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/booking/presentation/bloc/booking_bloc.dart';
-import 'package:passenger_app/src/features/booking/presentation/bloc/booking_event.dart';
-import 'package:passenger_app/src/features/booking/presentation/bloc/booking_state.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,7 +37,6 @@ void main() {
     bidService = MockBidSessionService();
     apiService = MockPassengerApiService();
     SharedPreferences.setMockInitialValues({'passenger_id': 'pass-001'});
-    // Default stub: cancelSession is always callable in cleanup paths.
     when(() => bidService.cancelSession()).thenAnswer((_) async {});
     when(() => bidService.setForeground(any())).thenAnswer((_) {});
     when(() => bidService.offersStream).thenAnswer(

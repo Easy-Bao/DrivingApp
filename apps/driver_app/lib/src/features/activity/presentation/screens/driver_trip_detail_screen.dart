@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:session_service/session_service.dart';
-import 'package:driver_app/src/features/booking/driver_routes.dart';
+import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -89,7 +89,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
           initializeChatResponse.statusCode == 200) {
         if (mounted) {
           context.pushNamed(
-            DriverRoutes.driverChat,
+            ChatRoutes.chat,
             extra: {
               'roomId': tripId,
               'userId': driverId,

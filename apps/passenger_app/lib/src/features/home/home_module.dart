@@ -1,14 +1,9 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/booking/presentation/screens/activity_detail_map_screen.dart';
-import 'package:passenger_app/src/features/booking/presentation/screens/destination_preview_screen.dart';
-import 'package:passenger_app/src/features/booking/presentation/screens/driver_matched_screen.dart';
-import 'package:passenger_app/src/features/booking/presentation/screens/finding_driver_screen.dart';
-import 'package:passenger_app/src/features/booking/presentation/screens/map_pin_screen.dart';
-import 'package:passenger_app/src/features/booking/presentation/screens/ride_selection_screen.dart';
-import 'package:passenger_app/src/features/booking/presentation/screens/search_destination_screen.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/screens/passenger_home_screen.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -21,17 +16,7 @@ class HomeModule {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: TripRoutes.searchDestination,
-      'home/search',
-      child: (context, GoRouterState state) => SearchDestinationScreen(
-        preselectedRideType: state.uri.queryParameters['rideType'],
-        pickupAddress: state.uri.queryParameters['pickupAddress'],
-      ),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: TripRoutes.passengerAddCategory,
+      name: HomeRoutes.addCategory,
       'home/add-category',
       child: (context, GoRouterState state) {
         final extra = state.extra as Map<String, dynamic>?;
@@ -45,116 +30,24 @@ class HomeModule {
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),
-
-    ChildRoute(
-      name: TripRoutes.activityDetailMap,
-      'home/activity-detail',
-      child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
-        return ActivityDetailMapScreen(
-          placeName: data['title'] as String,
-          placeSubtitle: data['subtitle'] as String,
-          destinationLat: (data['lat'] as num).toDouble(),
-          destinationLng: (data['lng'] as num).toDouble(),
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: TripRoutes.mapPin,
-      'home/map-pin',
-      child: (context, GoRouterState state) => const MapPinScreen(),
-      transition: AppTransitions.modal.toTop,
-      transitionDuration: AppTransitions.modalDuration,
-    ),
-    ChildRoute(
-      name: TripRoutes.destinationPreview,
-      'home/destination-preview',
-      child: (context, GoRouterState state) {
-        final place = state.extra as PlaceModel;
-        return DestinationPreviewScreen(
-          destination: place,
-          preselectedRideType: state.uri.queryParameters['rideType'],
-          pickupAddress: state.uri.queryParameters['pickupAddress'],
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: TripRoutes.rideSelection,
-      'home/ride-selection',
-      child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
-        return RideSelectionScreen(
-          destination: data['destination'] as PlaceModel,
-          distance: data['distance'] as String,
-          duration: data['duration'] as String,
-          distanceKm: (data['distanceKm'] as num).toDouble(),
-          fares: data['fares'] as Map<String, double>?,
-          pickupAddress: data['pickupAddress'] as String?,
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: TripRoutes.findingDriver,
-      'home/finding-driver',
-      child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
-        return FindingDriverScreen(
-          rideType: data['rideType'] as String,
-          fare: (data['fare'] as num).toDouble(),
-          destination: data['destination'] as PlaceModel,
-          distance: data['distance'] as String,
-          duration: data['duration'] as String,
-          pickupAddress: data['pickupAddress'] as String?,
-        );
-      },
-      transition: AppTransitions.modal.toTop,
-      transitionDuration: AppTransitions.modalDuration,
-    ),
-    ChildRoute(
-      name: TripRoutes.driverMatched,
-      'home/driver-matched',
-      child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
-        return DriverMatchedScreen(
-          rideType: data['rideType'] as String,
-          fare: (data['fare'] as num).toDouble(),
-          destination: data['destination'] as PlaceModel,
-          distance: data['distance'] as String,
-          duration: data['duration'] as String,
-          driverId: data['driverId'] as String?,
-          driverName: data['driverName'] as String?,
-          driverRating: data['driverRating'] as String?,
-          vehicleType: data['vehicleType'] as String?,
-          plateNumber: data['plateNumber'] as String?,
-          pickupAddress: data['pickupAddress'] as String?,
-          createdRide: data['createdRide'] as RideHistoryModel?,
-        );
-      },
-      transition: AppTransitions.modal.toTop,
-      transitionDuration: AppTransitions.modalDuration,
-    ),
   ];
 
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
-      name: TripRoutes.passengerHome,
+      name: HomeRoutes.home,
       'home',
       child: (context, GoRouterState state) => MultiBlocProvider(
         providers: [
           BlocProvider(
+            create: (_) => Modular.get<PassengerHomeCubit>(),
+          ),
+          BlocProvider(
             create: (_) {
-              return PassengerHomeCubit(
-                repository: Modular.get<PassengerHomeRepository>(),
-              );
+              final cubit = Modular.get<SavedPlacesCubit>();
+              unawaited(cubit.loadPlaces());
+              return cubit;
             },
           ),
-          BlocProvider(create: (_) => Modular.get<SavedPlacesCubit>()),
         ],
         child: const PassengerHomeScreen(),
       ),

@@ -1,5 +1,5 @@
 import 'package:driver_app/src/features/activity/domain/repositories/driver_activity_repository.dart';
-import 'package:driver_app/src/features/booking/driver_routes.dart';
+import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -193,7 +193,7 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
 
     return GestureDetector(
       onTap: () => context.pushNamed(
-        DriverRoutes.driverTripDetail,
+        ActivityRoutes.tripDetail,
         extra: trip as Map<String, dynamic>,
       ),
       child: Container(

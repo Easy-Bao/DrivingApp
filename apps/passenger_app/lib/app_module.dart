@@ -1,6 +1,6 @@
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/passenger_module.dart';
 import 'package:passenger_app/src/features/auth/auth_module.dart';
-import 'package:passenger_app/src/features/booking/booking_module.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';

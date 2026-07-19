@@ -1,4 +1,5 @@
-import 'package:driver_app/src/features/booking/driver_routes.dart';
+import 'package:driver_app/src/features/home/home_routes.dart';
+import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -42,13 +43,13 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
   void _navigateToIndex(int index) {
     switch (index) {
       case 0:
-        context.goNamed(DriverRoutes.driverDashboard);
+        context.goNamed(HomeRoutes.dashboard);
         break;
       case 1:
-        context.goNamed(DriverRoutes.driverEarnings);
+        context.goNamed(ProfileRoutes.earnings);
         break;
       case 2:
-        context.goNamed(DriverRoutes.driverAccount);
+        context.goNamed(ProfileRoutes.account);
         break;
     }
   }

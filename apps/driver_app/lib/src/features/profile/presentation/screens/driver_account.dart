@@ -1,5 +1,6 @@
 import 'package:driver_app/src/features/auth/auth_routes.dart';
-import 'package:driver_app/src/features/booking/driver_routes.dart';
+import 'package:driver_app/src/features/activity/activity_routes.dart';
+import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -115,13 +116,13 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
         icon: LucideIcons.history,
         title: 'Trip History',
         subtitle: 'View past rides',
-        onTap: () => context.pushNamed(DriverRoutes.driverTripHistory),
+        onTap: () => context.pushNamed(ActivityRoutes.tripHistory),
       ),
       _DriverAccountMenuItem(
         icon: LucideIcons.wallet,
         title: 'Earnings',
         subtitle: 'View earnings breakdown',
-        onTap: () => context.goNamed(DriverRoutes.driverEarnings),
+        onTap: () => context.goNamed(ProfileRoutes.earnings),
       ),
     ];
   }

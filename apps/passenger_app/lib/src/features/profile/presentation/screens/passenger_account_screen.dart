@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cubit.dart';
+import 'package:passenger_app/src/features/profile/profile_routes.dart';
+import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -97,7 +98,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                             size: 20,
                           ),
                           onPressed: () async {
-                            await context.pushNamed(TripRoutes.profileInfo);
+                            await context.pushNamed(ProfileRoutes.profileInfo);
                             if (context.mounted) {
                               unawaited(
                                 BlocProvider.of<ProfileCubit>(
@@ -118,7 +119,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                     _buildMenuTile(
                       icon: LucideIcons.map_pin,
                       title: 'Saved places',
-                      onTap: () => context.pushNamed(TripRoutes.passengerHelp),
+                      onTap: () => context.pushNamed(ProfileRoutes.help),
                     ),
                     _buildMenuTile(
                       icon: LucideIcons.shield,
@@ -138,12 +139,12 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
                     _buildMenuTile(
                       icon: LucideIcons.message_circle_question_mark,
                       title: 'Help center',
-                      onTap: () => context.pushNamed(TripRoutes.helpCenter),
+                      onTap: () => context.pushNamed(ProfileRoutes.helpCenter),
                     ),
                     _buildMenuTile(
                       icon: LucideIcons.settings,
                       title: 'Settings',
-                      onTap: () => context.pushNamed(TripRoutes.settings),
+                      onTap: () => context.pushNamed(SettingsRoutes.settings),
                     ),
 
                     const SizedBox(height: 48),

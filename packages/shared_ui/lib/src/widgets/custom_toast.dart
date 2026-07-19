@@ -65,7 +65,6 @@ class _ToastWidgetState extends State<_ToastWidget>
 
     unawaited(_controller.forward());
 
-    // Start fade out slightly before dismissal
     Timer(const Duration(milliseconds: 2700), () {
       if (mounted) {
         unawaited(_controller.reverse());

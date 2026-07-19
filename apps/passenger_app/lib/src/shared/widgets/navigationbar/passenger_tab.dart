@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/booking/trip_routes.dart';
+import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
+import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerShellLayout extends StatefulWidget {
@@ -160,17 +163,17 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     final String? routeName = state.topRoute?.name;
 
     if (routeName != null) {
-      if (routeName == TripRoutes.passengerHome) {
+      if (routeName == HomeRoutes.home) {
         return 0;
       }
-      if (routeName == TripRoutes.passengerActivity) {
+      if (routeName == ActivityRoutes.activity) {
         return 1;
       }
-      if (routeName == TripRoutes.inbox) {
+      if (routeName == InboxRoutes.inbox) {
         return 2;
       }
-      if (routeName == TripRoutes.passengerAccount ||
-          routeName == TripRoutes.passengerHelp) {
+      if (routeName == ProfileRoutes.account ||
+          routeName == ProfileRoutes.help) {
         return 3;
       }
     }
@@ -194,16 +197,16 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   void _navigateToIndex(int index) {
     switch (index) {
       case 0:
-        context.goNamed(TripRoutes.passengerHome);
+        context.goNamed(HomeRoutes.home);
         break;
       case 1:
-        context.goNamed(TripRoutes.passengerActivity);
+        context.goNamed(ActivityRoutes.activity);
         break;
       case 2:
-        context.goNamed(TripRoutes.inbox);
+        context.goNamed(InboxRoutes.inbox);
         break;
       case 3:
-        context.goNamed(TripRoutes.passengerAccount);
+        context.goNamed(ProfileRoutes.account);
         break;
     }
   }

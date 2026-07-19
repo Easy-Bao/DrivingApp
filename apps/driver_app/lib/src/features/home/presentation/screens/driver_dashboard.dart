@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_state.dart';
-import 'package:driver_app/src/features/booking/driver_routes.dart';
-import 'package:driver_app/src/features/booking/presentation/bloc/live_map/live_map_bloc.dart';
-import 'package:driver_app/src/features/booking/presentation/bloc/live_map/live_map_event.dart';
-import 'package:driver_app/src/features/booking/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/trip/trip_routes.dart';
+import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
+import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
+import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -214,11 +214,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   void _resumeTrip(Map<String, dynamic> trip) {
     final status = trip['status'] as String?;
-    String routeName = DriverRoutes.enRoutePickup;
+    String routeName = TripRoutes.enRoutePickup;
     if (status == 'arrived') {
-      routeName = DriverRoutes.waitingPassenger;
+      routeName = TripRoutes.waitingPassenger;
     } else if (status == 'in_transit') {
-      routeName = DriverRoutes.inTransit;
+      routeName = TripRoutes.inTransit;
     }
 
     BlocProvider.of<RideFlowCubit>(context).resumeRide(
@@ -262,7 +262,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
     if (mounted) {
       context.pushNamed(
-        DriverRoutes.completeTripDriver,
+        TripRoutes.completeTrip,
         extra: {
           'pickup': trip['pickup_name'] ?? 'Pickup',
           'dropoff': trip['dropoff_name'] ?? 'Dropoff',

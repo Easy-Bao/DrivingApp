@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:driver_app/src/features/auth/auth_routes.dart';
-import 'package:driver_app/src/features/booking/driver_routes.dart';
+import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -98,7 +98,7 @@ class _SigninScreenState extends State<SigninScreen> {
       await prefs.setString('rating', (driver['rating'] ?? 5.0).toString());
 
       if (mounted) {
-        context.goNamed(DriverRoutes.driverDashboard);
+        context.goNamed(HomeRoutes.dashboard);
       }
     } else {
       setState(() {
