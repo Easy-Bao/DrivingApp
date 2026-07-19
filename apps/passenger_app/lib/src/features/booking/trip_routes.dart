@@ -1,7 +1,7 @@
 abstract final class TripRoutes {
   static const String passengerHome = 'PassengerHome';
   static const String searchDestination = 'SearchDestination';
-  static const String viewAllSuggestions = 'ViewAllSuggestions';
+  static const String viewAllRecentActivity = 'ViewAllRecentActivity';
   static const String passengerAddCategory = 'PassengerAddCategory';
   static const String inbox = 'Inbox';
   static const String settings = 'Settings';

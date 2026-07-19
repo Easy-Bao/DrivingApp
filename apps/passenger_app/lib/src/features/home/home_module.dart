@@ -8,6 +8,7 @@ import 'package:passenger_app/src/features/booking/presentation/screens/finding_
 import 'package:passenger_app/src/features/booking/presentation/screens/map_pin_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/ride_selection_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/search_destination_screen.dart';
+import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/screens/passenger_home_screen.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -20,7 +21,7 @@ class HomeModule {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: 'SearchDestination',
+      name: TripRoutes.searchDestination,
       'home/search',
       child: (context, GoRouterState state) => SearchDestinationScreen(
         preselectedRideType: state.uri.queryParameters['rideType'],
@@ -30,7 +31,7 @@ class HomeModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: 'PassengerAddCategory',
+      name: TripRoutes.passengerAddCategory,
       'home/add-category',
       child: (context, GoRouterState state) {
         final extra = state.extra as Map<String, dynamic>?;
@@ -46,7 +47,7 @@ class HomeModule {
     ),
 
     ChildRoute(
-      name: 'ActivityDetailMap',
+      name: TripRoutes.activityDetailMap,
       'home/activity-detail',
       child: (context, GoRouterState state) {
         final data = state.extra as Map<String, dynamic>;
@@ -61,14 +62,14 @@ class HomeModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: 'MapPin',
+      name: TripRoutes.mapPin,
       'home/map-pin',
       child: (context, GoRouterState state) => const MapPinScreen(),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
-      name: 'DestinationPreview',
+      name: TripRoutes.destinationPreview,
       'home/destination-preview',
       child: (context, GoRouterState state) {
         final place = state.extra as PlaceModel;
@@ -82,7 +83,7 @@ class HomeModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: 'RideSelection',
+      name: TripRoutes.rideSelection,
       'home/ride-selection',
       child: (context, GoRouterState state) {
         final data = state.extra as Map<String, dynamic>;
@@ -99,7 +100,7 @@ class HomeModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: 'FindingDriver',
+      name: TripRoutes.findingDriver,
       'home/finding-driver',
       child: (context, GoRouterState state) {
         final data = state.extra as Map<String, dynamic>;
@@ -116,7 +117,7 @@ class HomeModule {
       transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
-      name: 'DriverMatched',
+      name: TripRoutes.driverMatched,
       'home/driver-matched',
       child: (context, GoRouterState state) {
         final data = state.extra as Map<String, dynamic>;
@@ -142,7 +143,7 @@ class HomeModule {
 
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
-      name: 'PassengerHome',
+      name: TripRoutes.passengerHome,
       'home',
       child: (context, GoRouterState state) => MultiBlocProvider(
         providers: [

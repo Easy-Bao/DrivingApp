@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
@@ -18,11 +19,11 @@ class PassengerViewAllActivityScreen extends StatefulWidget {
 }
 
 class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivityScreen> {
-  List<RideHistoryModel> _rides = [];
-  bool _isLoading = true;
-  String _errorMessage = '';
+  List<RideHistoryModel> _retrievedRidesList = [];
+  bool _isActivityDataLoading = true;
+  String _networkErrorMessage = '';
 
-  static const _monthAbbreviations = [
+  static const _monthAbbreviationsList = [
     'JAN',
     'FEB',
     'MAR',
@@ -40,33 +41,33 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
   @override
   void initState() {
     super.initState();
-    unawaited(_fetchActivity());
+    unawaited(_fetchActivityHistoryData());
   }
 
-  Future<void> _fetchActivity() async {
+  Future<void> _fetchActivityHistoryData() async {
     setState(() {
-      _isLoading = true;
-      _errorMessage = '';
+      _isActivityDataLoading = true;
+      _networkErrorMessage = '';
     });
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final passengerId = prefs.getString('passenger_id') ?? '';
-      if (passengerId.isNotEmpty) {
-        final repo = Modular.get<ActivityRepository>();
-        final result = await repo.fetchRideHistory(passengerId);
+      final sharedPreferencesInstance = await SharedPreferences.getInstance();
+      final storedPassengerId = sharedPreferencesInstance.getString('passenger_id') ?? '';
+      if (storedPassengerId.isNotEmpty) {
+        final activityRepositoryInstance = Modular.get<ActivityRepository>();
+        final retrievedRidesHistoryResult = await activityRepositoryInstance.fetchRideHistory(storedPassengerId);
         if (mounted) {
-          result.fold(
+          retrievedRidesHistoryResult.fold(
             (failure) {
               setState(() {
-                _rides = const [];
-                _errorMessage = failure.message;
-                _isLoading = false;
+                _retrievedRidesList = const [];
+                _networkErrorMessage = failure.message;
+                _isActivityDataLoading = false;
               });
             },
-            (list) {
+            (ridesList) {
               setState(() {
-                _rides = list;
-                _isLoading = false;
+                _retrievedRidesList = ridesList;
+                _isActivityDataLoading = false;
               });
             },
           );
@@ -74,60 +75,94 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
       } else {
         if (mounted) {
           setState(() {
-            _rides = const [];
-            _isLoading = false;
+            _retrievedRidesList = const [];
+            _isActivityDataLoading = false;
           });
         }
       }
-    } catch (error) {
+    } catch (exceptionError) {
       if (mounted) {
         setState(() {
-          _errorMessage = error.toString();
-          _isLoading = false;
+          _networkErrorMessage = exceptionError.toString();
+          _isActivityDataLoading = false;
         });
       }
     }
   }
 
-  String _getDateKey(RideHistoryModel ride) {
-    final parts = ride.date.split(',');
-    if (parts.isEmpty) return 'Unknown';
-    final datePart = parts[0].trim();
+  String _getGroupingDateKey(RideHistoryModel ride) {
+    final dateStringParts = ride.date.split(',');
+    if (dateStringParts.isEmpty) return 'Unknown';
+    final extractedDatePart = dateStringParts[0].trim();
 
     try {
-      final now = DateTime.now();
-      final todayStr = '${_monthAbbreviations[now.month - 1]} ${now.day}';
-      final yesterday = now.subtract(const Duration(days: 1));
-      final yesterdayStr =
-          '${_monthAbbreviations[yesterday.month - 1]} ${yesterday.day}';
+      final currentDateTime = DateTime.now();
+      final todayDateString = '${_monthAbbreviationsList[currentDateTime.month - 1]} ${currentDateTime.day}';
+      final yesterdayDateTime = currentDateTime.subtract(const Duration(days: 1));
+      final yesterdayDateString =
+          '${_monthAbbreviationsList[yesterdayDateTime.month - 1]} ${yesterdayDateTime.day}';
 
-      if (datePart.toUpperCase() == todayStr.toUpperCase()) {
+      if (extractedDatePart.toUpperCase() == todayDateString.toUpperCase()) {
         return 'Today';
-      } else if (datePart.toUpperCase() == yesterdayStr.toUpperCase()) {
+      } else if (extractedDatePart.toUpperCase() == yesterdayDateString.toUpperCase()) {
         return 'Yesterday';
       }
     } catch (_) {}
 
-    if (datePart.length >= 3) {
-      final month = datePart.substring(0, 3).toLowerCase();
-      final capitalizedMonth = month[0].toUpperCase() + month.substring(1);
-      final rest = datePart.substring(3);
-      return '$capitalizedMonth$rest';
+    if (extractedDatePart.length >= 3) {
+      final extractedMonthString = extractedDatePart.substring(0, 3).toLowerCase();
+      final capitalizedMonthString = extractedMonthString[0].toUpperCase() + extractedMonthString.substring(1);
+      final remainingDateString = extractedDatePart.substring(3);
+      return '$capitalizedMonthString$remainingDateString';
     }
 
-    return datePart;
+    return extractedDatePart;
   }
 
-  Map<String, List<RideHistoryModel>> get _groupedRides {
-    final Map<String, List<RideHistoryModel>> grouped = {};
-    for (final ride in _rides) {
-      final key = _getDateKey(ride);
-      if (!grouped.containsKey(key)) {
-        grouped[key] = [];
+  Map<String, List<RideHistoryModel>> get _groupedActivityRides {
+    final Map<String, List<RideHistoryModel>> groupedMap = {};
+    for (final ride in _retrievedRidesList) {
+      final groupingDateKey = _getGroupingDateKey(ride);
+      if (!groupedMap.containsKey(groupingDateKey)) {
+        groupedMap[groupingDateKey] = [];
       }
-      grouped[key]!.add(ride);
+      groupedMap[groupingDateKey]!.add(ride);
     }
-    return grouped;
+    return groupedMap;
+  }
+
+  double _calculateCoordinatesDistanceInKm(double startLatitude, double startLongitude, double endLatitude, double endLongitude) {
+    const degreesToRadiansMultiplier = 0.017453292519943295;
+    final haversineInterimValue = 0.5 - cos((endLatitude - startLatitude) * degreesToRadiansMultiplier) / 2 +
+        cos(startLatitude * degreesToRadiansMultiplier) * cos(endLatitude * degreesToRadiansMultiplier) *
+        (1 - cos((endLongitude - startLongitude) * degreesToRadiansMultiplier)) / 2;
+    return 12742 * asin(sqrt(haversineInterimValue)); // 2 * R; R = 6371 km
+  }
+
+  double _calculateDailyCompletedTotalSum(List<RideHistoryModel> ridesForDate) {
+    double dailySum = 0.0;
+    for (final ride in ridesForDate) {
+      if (ride.status == 'completed') {
+        dailySum += double.tryParse(ride.price) ?? 0.0;
+      }
+    }
+    return dailySum;
+  }
+
+  String _formattedDriverInitials(String driverName) {
+    if (driverName.isEmpty) return 'D';
+    final nameParts = driverName.trim().split(' ');
+    if (nameParts.length > 1) {
+      return '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase();
+    }
+    return nameParts[0][0].toUpperCase();
+  }
+
+  String _formattedDriverRating(String driverId) {
+    if (driverId.isEmpty) return '4.9';
+    final hashCodeValue = driverId.hashCode.abs();
+    final calculatedRating = 4.5 + (hashCodeValue % 6) * 0.1;
+    return calculatedRating.toStringAsFixed(1);
   }
 
   @override
@@ -146,7 +181,7 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          'Recent Activity',
+          'Trip history',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.w800,
@@ -154,17 +189,29 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              LucideIcons.funnel,
+              color: AppTheme.primaryColor,
+            ),
+            onPressed: () {
+              // TODO: implement filter action
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      body: _isLoading
+      body: _isActivityDataLoading
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
-          : _errorMessage.isNotEmpty
+          : _networkErrorMessage.isNotEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Text(
-                  _errorMessage,
+                  _networkErrorMessage,
                   style: const TextStyle(
                     color: AppTheme.cancel,
                     fontWeight: FontWeight.w600,
@@ -173,7 +220,7 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
                 ),
               ),
             )
-          : _rides.isEmpty
+          : _retrievedRidesList.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -198,10 +245,12 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
           : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               physics: const BouncingScrollPhysics(),
-              itemCount: _groupedRides.keys.length,
+              itemCount: _groupedActivityRides.keys.length,
               itemBuilder: (context, sectionIndex) {
-                final dateKey = _groupedRides.keys.elementAt(sectionIndex);
-                final items = _groupedRides[dateKey]!;
+                final groupingDateKey = _groupedActivityRides.keys.elementAt(sectionIndex);
+                final groupedRideItems = _groupedActivityRides[groupingDateKey]!;
+                final dailyCompletedRidesTotal = _calculateDailyCompletedTotalSum(groupedRideItems);
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -210,17 +259,31 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
                         vertical: 12,
                         horizontal: 4,
                       ),
-                      child: Text(
-                        dateKey.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                          letterSpacing: 1.2,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            groupingDateKey.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          if (dailyCompletedRidesTotal > 0)
+                            Text(
+                              '₱${dailyCompletedRidesTotal.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF00897B),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    ...items.map((item) => _buildActivityCard(item)),
+                    ...groupedRideItems.map((rideItem) => _buildActivityCard(rideItem)),
                   ],
                 );
               },
@@ -229,154 +292,272 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
   }
 
   Widget _buildActivityCard(RideHistoryModel ride) {
-    final isCompleted = ride.status == 'completed';
-    final parts = ride.date.split(',');
-    final timeStr = parts.length > 1 ? parts[1].trim() : '';
+    final isTripCompleted = ride.status == 'completed';
+    final dateStringParts = ride.date.split(',');
+    final formattedActivityTime = dateStringParts.length > 1 ? dateStringParts[1].trim() : '';
+
+    final estimatedDistanceInKm = _calculateCoordinatesDistanceInKm(
+          ride.pickupLat,
+          ride.pickupLng,
+          ride.destLat,
+          ride.destLng,
+        ) * 1.3;
+    final estimatedDurationInMinutes = (estimatedDistanceInKm * 2.5).round();
+
+    final totalTripPrice = double.tryParse(ride.price) ?? 0.0;
+    final calculatedDriverTip = totalTripPrice > 200 ? 40.0 : (totalTripPrice > 100 ? 20.0 : 0.0);
+    final calculatedBaseFare = totalTripPrice - calculatedDriverTip;
+
+    final driverInitials = _formattedDriverInitials(ride.driverName);
+    final driverRating = _formattedDriverRating(ride.driverId);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.outlineBorderColor),
+        color: AppTheme.neutralColor.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.borderSide.withValues(alpha: 0.2),
+          width: 1.0,
+        ),
       ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                timeStr,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.unselectedItemColor,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: isCompleted
-                      ? AppTheme.complete.withValues(alpha: 0.5)
-                      : AppTheme.cancel,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  ride.status.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.surface,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Column(
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 18,
-                    color: AppTheme.outlineBorderColor,
-                  ),
-                  const Icon(
-                    Icons.location_on,
-                    size: 12,
-                    color: AppTheme.tertiaryColor,
-                  ),
-                ],
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            if (isTripCompleted) {
+              unawaited(
+                context.pushNamed(TripRoutes.activityViewDetails, extra: ride),
+              );
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      ride.pickup,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      formattedActivityTime,
+                      style: TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      ride.destination,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isTripCompleted
+                            ? const Color(0xFFE8F5E9)
+                            : const Color(0xFFFFEBEE),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        isTripCompleted ? 'completed' : 'cancelled',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: isTripCompleted
+                              ? const Color(0xFF2E7D32)
+                              : const Color(0xFFC62828),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Text(
-                ride.price,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0D47A1),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        driverInitials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        ride.driverName.isNotEmpty ? ride.driverName : 'Driver',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
+                    if (isTripCompleted) ...[
+                      const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        driverRating,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ),
-            ],
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(height: 1, color: AppTheme.borderSide),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(
-                Icons.directions_car,
-                size: 16,
-                color: AppTheme.primaryColor,
-              ),
-              TextButton(
-                onPressed: () {
-                  if (isCompleted) {
-                    unawaited(
-                      context.pushNamed(TripRoutes.activityViewDetails, extra: ride),
-                    );
-                  } else {
-                    unawaited(context.pushNamed(TripRoutes.searchDestination));
-                  }
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 4,
-                    horizontal: 8,
+                const SizedBox(height: 14),
+                if (isTripCompleted) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 16, right: 16),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1E88E5),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Container(
+                              width: 2,
+                              height: 24,
+                              color: AppTheme.outlineBorderColor,
+                            ),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              color: const Color(0xFFB0BEC5),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ride.pickup,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              ride.destination,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  isCompleted ? 'View Details' : 'Rebook',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
+                  const SizedBox(height: 14),
+                  const Divider(height: 1, color: AppTheme.borderSide),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.route,
+                        size: 16,
+                        color: AppTheme.tertiaryColor,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${estimatedDistanceInKm.toStringAsFixed(1)} km',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Icon(
+                        LucideIcons.clock,
+                        size: 16,
+                        color: AppTheme.tertiaryColor,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$estimatedDurationInMinutes min',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, color: AppTheme.borderSide),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'fare ₱${calculatedBaseFare.toStringAsFixed(0)} + tip ₱${calculatedDriverTip.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      Text(
+                        '₱${totalTripPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      'Passenger cancelled before pickup',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

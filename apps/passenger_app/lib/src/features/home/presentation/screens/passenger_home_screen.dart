@@ -382,7 +382,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
           ),
         ),
         TextButton(
-          onPressed: () => context.pushNamed(TripRoutes.viewAllSuggestions),
+          onPressed: () => context.pushNamed(TripRoutes.viewAllRecentActivity),
           child: const Text(
             'View all',
             style: TextStyle(
