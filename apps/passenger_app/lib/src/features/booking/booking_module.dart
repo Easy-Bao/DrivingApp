@@ -7,6 +7,7 @@ import 'package:passenger_app/src/features/activity/activity_module.dart';
 import 'package:passenger_app/src/features/activity/data/repositories/activity_repository_impl.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
+import 'package:passenger_app/src/features/activity/presentation/screens/ride_history_screen.dart';
 import 'package:passenger_app/src/features/booking/data/repositories/driver_repository_impl.dart';
 import 'package:passenger_app/src/features/booking/data/repositories/track_repository_impl.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking_bloc.dart';
@@ -16,15 +17,16 @@ import 'package:passenger_app/src/features/booking/trip_routes.dart';
 import 'package:passenger_app/src/features/home/data/repositories/passenger_home_repository_impl.dart';
 import 'package:passenger_app/src/features/home/home_module.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
-import 'package:passenger_app/src/features/inbox/inbox_module.dart';
+import 'package:passenger_app/src/features/inbox/presentation/screens/inbox_screen.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cubit.dart';
+import 'package:passenger_app/src/features/profile/presentation/screens/help_center_screen.dart';
 import 'package:passenger_app/src/features/profile/presentation/screens/passenger_account_screen.dart';
-import 'package:passenger_app/src/features/profile/profile_module.dart';
+import 'package:passenger_app/src/features/profile/presentation/screens/profile_info_screen.dart';
 import 'package:passenger_app/src/features/saved_places/data/repositories/saved_places_repository_impl.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/saved_place_screen.dart';
-import 'package:passenger_app/src/features/settings/settings_module.dart';
+import 'package:passenger_app/src/features/settings/presentation/screens/settings_screen.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
@@ -38,17 +40,39 @@ class PassengerModule extends Module {
   final activityRoutes = [...ActivityModule.shellRoutes];
   final activityRoutesScreen = [...ActivityModule.routes];
 
-  final accountRoutesScreen = [...AccountModule.routes];
-  final settingsRoutesScreen = [...SettingsModule.routes];
-  final inboxRoutes = [...InboxModule.shellRoutes];
-
   @override
   List<ModularRoute> get routes => <ModularRoute>[
     // Independent Screen
     ...activityRoutesScreen,
     ...homeRoutesScreen,
-    ...accountRoutesScreen,
-    ...settingsRoutesScreen,
+    ChildRoute(
+      name: 'RideHistory',
+      'account/ride-history',
+      child: (context, GoRouterState state) => const RideHistoryScreen(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: 'ProfileInfo',
+      'account/profile-info',
+      child: (context, GoRouterState state) => const ProfileInfoScreen(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: 'HelpCenter',
+      'account/help-center',
+      child: (context, GoRouterState state) => const HelpCenterScreen(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: TripRoutes.settings,
+      'settings',
+      child: (context, GoRouterState state) => const SettingsScreen(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
     ChildRoute(
       name: TripRoutes.passengerHelp,
       'help',
@@ -73,7 +97,13 @@ class PassengerModule extends Module {
           transition: AppTransitions.none,
           transitionDuration: Duration.zero,
         ),
-        ...inboxRoutes,
+        ChildRoute(
+          name: TripRoutes.inbox,
+          'inbox',
+          child: (context, GoRouterState state) => const InboxScreen(),
+          transition: AppTransitions.none,
+          transitionDuration: Duration.zero,
+        ),
       ],
     ),
   ];

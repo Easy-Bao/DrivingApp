@@ -1,19 +1,19 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/activity_detail_map_screen.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/screens/add_category_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/destination_preview_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/driver_matched_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/finding_driver_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/map_pin_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/ride_selection_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/search_destination_screen.dart';
-import 'package:passenger_app/src/features/home/presentation/screens/view_all_activity_screen.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/screens/passenger_home_screen.dart';
+import 'package:passenger_app/src/features/home/presentation/screens/view_all_activity_screen.dart';
+import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
+import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
+import 'package:passenger_app/src/features/saved_places/presentation/screens/add_category_screen.dart';
 import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class HomeModule {
