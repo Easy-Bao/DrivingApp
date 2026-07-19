@@ -10,7 +10,6 @@ import 'package:passenger_app/src/features/booking/presentation/screens/ride_sel
 import 'package:passenger_app/src/features/booking/presentation/screens/search_destination_screen.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/screens/passenger_home_screen.dart';
-import 'package:passenger_app/src/features/home/presentation/screens/view_all_activity_screen.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/add_category_screen.dart';
@@ -27,14 +26,6 @@ class HomeModule {
         preselectedRideType: state.uri.queryParameters['rideType'],
         pickupAddress: state.uri.queryParameters['pickupAddress'],
       ),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: 'ViewAllSuggestions',
-      'home/suggestions',
-      child: (context, GoRouterState state) =>
-          const PassengerViewAllActivityScreen(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

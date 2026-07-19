@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_rating_screen.dart';
+import 'package:passenger_app/src/features/activity/presentation/screens/view_all_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_details_screen.dart';
 import 'package:passenger_app/src/features/booking/presentation/screens/track_driver_screen.dart';
 import 'package:passenger_app/src/features/chat/presentation/screens/driver_chat_screen.dart';
@@ -14,6 +15,14 @@ class ActivityModule {
   ActivityModule._();
 
   static List<ModularRoute> routes = [
+    ChildRoute(
+      name: 'ViewAllSuggestions',
+      'activity/suggestions',
+      child: (context, GoRouterState state) =>
+          const PassengerViewAllActivityScreen(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
     ChildRoute(
       name: 'ActivityViewDetails',
       'activity/viewDetails',
