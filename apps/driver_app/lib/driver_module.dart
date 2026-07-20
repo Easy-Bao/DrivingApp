@@ -18,7 +18,7 @@ import 'package:driver_app/src/features/trip/trip_module.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:session_service/session_service.dart';
 
-class DriverDispatchModule extends Module {
+class DriverModule extends Module {
   @override
   FutureOr<void> binds(Injector i) {
     i
@@ -32,9 +32,8 @@ class DriverDispatchModule extends Module {
         (i) => RideRepositoryImpl(apiService: i.get<BiddingApiService>()),
       )
       ..addLazySingleton<DriverActivityRepository>(
-        (i) => DriverActivityRepositoryImpl(
-          apiService: i.get<TripApiService>(),
-        ),
+        (i) =>
+            DriverActivityRepositoryImpl(apiService: i.get<TripApiService>()),
       )
       ..addFactory<DashboardCubit>(
         (i) => DashboardCubit(repository: i.get<DashboardRepository>()),
@@ -56,19 +55,16 @@ class DriverDispatchModule extends Module {
 
   @override
   List<ModularRoute> get routes => <ModularRoute>[
-        ...HomeModule.routes,
-        ...TripModule.routes,
-        ...ChatModule.routes,
-        ...ActivityModule.routes,
-        ...ProfileModule.routes,
+    ...HomeModule.routes,
+    ...TripModule.routes,
+    ...ChatModule.routes,
+    ...ActivityModule.routes,
+    ...ProfileModule.routes,
 
-        ShellModularRoute(
-          builder: (context, GoRouterState state, child) =>
-              DriverShellLayout(child: child),
-          routes: [
-            ...HomeModule.shellRoutes,
-            ...ProfileModule.shellRoutes,
-          ],
-        ),
-      ];
+    ShellModularRoute(
+      builder: (context, GoRouterState state, child) =>
+          DriverShellLayout(child: child),
+      routes: [...HomeModule.shellRoutes, ...ProfileModule.shellRoutes],
+    ),
+  ];
 }

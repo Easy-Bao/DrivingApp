@@ -1,10 +1,7 @@
-import 'dart:convert';
-
 import 'package:driver_services/src/base_api_client.dart';
-import 'package:http/http.dart' as http;
 
 class BiddingApiService extends BaseApiClient {
-  BiddingApiService({required super.baseUrl});
+  BiddingApiService({required super.baseUrl, super.dio});
 
   Future<Map<String, dynamic>?> fetchFareEstimate({
     required double distanceKm,
@@ -12,14 +9,13 @@ class BiddingApiService extends BaseApiClient {
     String rideType = 'Solo Ride',
   }) async {
     try {
-      final response = await http.post(
-        baseUrl.replace(path: '/bids/fare'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      final response = await clientDio.post(
+        '/bids/fare',
+        data: {
           'ride_type': rideType,
           'distance_km': distanceKm,
           'duration_minutes': durationMinutes,
-        }),
+        },
       );
       return parseMapResponse(response, 200);
     } catch (_) {
@@ -29,12 +25,9 @@ class BiddingApiService extends BaseApiClient {
 
   Future<List<dynamic>> fetchActiveBids(String driverId) async {
     try {
-      final response = await http.get(
-        baseUrl.replace(
-          path: '/bids/active',
-          queryParameters: {'driver_id': driverId},
-        ),
-        headers: {'Content-Type': 'application/json'},
+      final response = await clientDio.get(
+        '/bids/active',
+        queryParameters: {'driver_id': driverId},
       );
       return parseListResponse(response, 200);
     } catch (_) {
@@ -60,10 +53,9 @@ class BiddingApiService extends BaseApiClient {
       if (proposedFare != null) {
         bodyData['proposed_fare'] = proposedFare;
       }
-      final response = await http.post(
-        baseUrl.replace(path: '/bids/$sessionId/offer'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(bodyData),
+      final response = await clientDio.post(
+        '/bids/$sessionId/offer',
+        data: bodyData,
       );
       return parseBoolResponse(response, 201);
     } catch (_) {
@@ -76,10 +68,9 @@ class BiddingApiService extends BaseApiClient {
     required String driverId,
   }) async {
     try {
-      final response = await http.post(
-        baseUrl.replace(path: '/bids/$sessionId/cancel-offer'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'driver_id': driverId}),
+      final response = await clientDio.post(
+        '/bids/$sessionId/cancel-offer',
+        data: {'driver_id': driverId},
       );
       return parseBoolResponse(response, 200);
     } catch (_) {

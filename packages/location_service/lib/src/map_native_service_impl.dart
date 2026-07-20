@@ -1,19 +1,18 @@
 import 'dart:convert';
 import 'dart:math' as math;
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:core_models/core_models.dart';
 import 'map_native_service.dart';
 
-/// Concrete implementation of [MapNativeService] invoking Mapbox APIs directly over HTTP.
-/// This class eliminates FFI dependencies by implementing the geocoding, reverse-geocoding,
-/// routing, and mathematical computations in pure Dart.
 class MapNativeServiceImpl implements MapNativeService {
-  /// Helper method to convert degrees to radians.
+  final Dio _clientDio;
+
+  MapNativeServiceImpl({Dio? dio}) : _clientDio = dio ?? Dio();
+
   static double _toRadians(double degree) {
     return degree * math.pi / 180.0;
   }
 
-  /// Calculates the great-circle distance between two points in kilometers.
   static double calculateHaversine(
     double lat1,
     double lng1,
@@ -58,10 +57,10 @@ class MapNativeServiceImpl implements MapNativeService {
       final double lngOffset =
           50.0 / (111.0 * math.cos(_toRadians(proximityLat)));
 
-      final double minLng = proximityLng - lngOffset;
       final double minLat = proximityLat - latOffset;
-      final double maxLng = proximityLng + lngOffset;
       final double maxLat = proximityLat + latOffset;
+      final double minLng = proximityLng - lngOffset;
+      final double maxLng = proximityLng + lngOffset;
 
       queryParameters['proximity'] = '$proximityLng,$proximityLat';
       queryParameters['bbox'] = '$minLng,$minLat,$maxLng,$maxLat';
@@ -73,12 +72,14 @@ class MapNativeServiceImpl implements MapNativeService {
         '/geocoding/v5/mapbox.places/$query.json',
         queryParameters,
       );
-      final response = await http.get(uri);
+      final response = await _clientDio.getUri(uri);
       if (response.statusCode != 200) {
         return [];
       }
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic> data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : jsonDecode(response.data.toString());
       final List<dynamic> features = data['features'] ?? [];
       final List<PlaceModel> results = [];
 
@@ -133,12 +134,14 @@ class MapNativeServiceImpl implements MapNativeService {
         '/geocoding/v5/mapbox.places/$lng,$lat.json',
         queryParameters,
       );
-      final response = await http.get(uri);
+      final response = await _clientDio.getUri(uri);
       if (response.statusCode != 200) {
         return null;
       }
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic> data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : jsonDecode(response.data.toString());
       final List<dynamic> features = data['features'] ?? [];
       if (features.isEmpty) return null;
 
@@ -181,12 +184,14 @@ class MapNativeServiceImpl implements MapNativeService {
         '/directions/v5/mapbox/driving/$originLng,$originLat;$destLng,$destLat',
         queryParameters,
       );
-      final response = await http.get(uri);
+      final response = await _clientDio.getUri(uri);
       if (response.statusCode != 200) {
         return null;
       }
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic> data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : jsonDecode(response.data.toString());
       final List<dynamic> routes = data['routes'] ?? [];
       if (routes.isEmpty) return null;
 
@@ -198,7 +203,7 @@ class MapNativeServiceImpl implements MapNativeService {
         return [
           (coord[0] as num).toDouble(),
           (coord[1] as num).toDouble(),
-        ]; // [lng, lat]
+        ];
       }).toList();
 
       final List<dynamic>? legs = route['legs'] as List<dynamic>?;
@@ -238,12 +243,14 @@ class MapNativeServiceImpl implements MapNativeService {
         '/v4/mapbox.mapbox-streets-v8/tilequery/$lng,$lat.json',
         queryParameters,
       );
-      final response = await http.get(uri);
+      final response = await _clientDio.getUri(uri);
       if (response.statusCode != 200) {
         return [];
       }
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic> data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : jsonDecode(response.data.toString());
       final List<dynamic> features = data['features'] ?? [];
       final List<PlaceModel> results = [];
 

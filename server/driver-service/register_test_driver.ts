@@ -1,29 +1,32 @@
-import { prisma } from './src/db.ts';
+import { db } from './src/shared/drizzle.ts';
+import { drivers } from './src/db/schema.ts';
+import { eq } from 'drizzle-orm';
 
-async function main() {
-  await prisma.driver.deleteMany();
-  console.log('Cleared all existing drivers from the database');
+async function registerTestDriverAccount() {
+  await db.delete(drivers).where(eq(drivers.email, 'driver@test.com'));
+  console.log('Cleared existing test driver account from database');
 
   const email = 'driver@test.com';
   const password = '@Democrito111';
   const passwordHash = await Bun.password.hash(password, { algorithm: 'bcrypt', cost: 10 });
 
-  const driver = await prisma.driver.create({
-    data: {
+  const [createdDriver] = await db.insert(drivers)
+    .values({
+      id: crypto.randomUUID(),
       name: 'Ramil Sombilon',
       email,
-      phone: '09171234567',
-      vehicleType: 'Standard Trike',
-      plateNumber: '555-ABC',
+      phone: '09111111111',
+      vehicleType: 'Bao Bao',
+      plateNumber: 'XYZ 9999',
       passwordHash,
       rating: 4.5,
       isOnline: true,
       lat: 7.828282,
       lng: 123.434343,
-    },
-  });
+    })
+    .returning();
 
-  console.log('Created test driver:', driver);
+  console.log('Successfully registered test driver account:', createdDriver);
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+registerTestDriverAccount().catch(console.error).finally(() => process.exit(0));

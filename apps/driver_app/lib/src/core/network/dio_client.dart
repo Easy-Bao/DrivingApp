@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:session_service/session_service.dart';
 
-/// Preconfigured HTTP client builder utilizing [Dio].
 class DioClient {
   DioClient._();
 

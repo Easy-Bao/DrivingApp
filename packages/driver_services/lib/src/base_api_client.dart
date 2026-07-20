@@ -1,19 +1,33 @@
 import 'dart:convert';
 import 'package:core_models/core_models.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 abstract class BaseApiClient {
   final Uri baseUrl;
+  final Dio clientDio;
 
-  BaseApiClient({required this.baseUrl});
+  BaseApiClient({required this.baseUrl, Dio? dio})
+      : clientDio = dio ??
+            Dio(
+              BaseOptions(
+                baseUrl: baseUrl.toString(),
+                connectTimeout: const Duration(seconds: 15),
+                receiveTimeout: const Duration(seconds: 15),
+                validateStatus: (status) => status != null,
+              ),
+            );
 
   Map<String, dynamic> parseMapResponse(
-    http.Response response,
+    Response<dynamic> response,
     int expectedStatus,
   ) {
     if (response.statusCode == expectedStatus) {
       try {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        if (response.data is Map<String, dynamic>) {
+          return response.data as Map<String, dynamic>;
+        } else if (response.data is String) {
+          return jsonDecode(response.data as String) as Map<String, dynamic>;
+        }
       } catch (error) {
         throw DataParsingException(
           message: 'Failed to parse response payload: $error',
@@ -21,15 +35,19 @@ abstract class BaseApiClient {
       }
     }
     throw ServerException(
-      statusCode: response.statusCode,
-      message: response.body,
+      statusCode: response.statusCode ?? 500,
+      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
     );
   }
 
-  List<dynamic> parseListResponse(http.Response response, int expectedStatus) {
+  List<dynamic> parseListResponse(Response<dynamic> response, int expectedStatus) {
     if (response.statusCode == expectedStatus) {
       try {
-        return jsonDecode(response.body) as List<dynamic>;
+        if (response.data is List<dynamic>) {
+          return response.data as List<dynamic>;
+        } else if (response.data is String) {
+          return jsonDecode(response.data as String) as List<dynamic>;
+        }
       } catch (error) {
         throw DataParsingException(
           message: 'Failed to parse response list: $error',
@@ -37,18 +55,18 @@ abstract class BaseApiClient {
       }
     }
     throw ServerException(
-      statusCode: response.statusCode,
-      message: response.body,
+      statusCode: response.statusCode ?? 500,
+      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
     );
   }
 
-  bool parseBoolResponse(http.Response response, int expectedStatus) {
+  bool parseBoolResponse(Response<dynamic> response, int expectedStatus) {
     if (response.statusCode == expectedStatus) {
       return true;
     }
     throw ServerException(
-      statusCode: response.statusCode,
-      message: response.body,
+      statusCode: response.statusCode ?? 500,
+      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
     );
   }
 }

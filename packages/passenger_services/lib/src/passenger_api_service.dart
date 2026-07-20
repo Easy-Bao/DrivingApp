@@ -1,136 +1,45 @@
 import 'dart:convert';
 
 import 'package:core_models/core_models.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:session_service/session_service.dart';
 
 class PassengerApiService {
   final Uri baseUrl;
   final SecureSessionService _sessionService;
+  final Dio _clientDio;
 
   PassengerApiService({
     required this.baseUrl,
     required SecureSessionService sessionService,
-  }) : _sessionService = sessionService;
+    Dio? dio,
+  })  : _sessionService = sessionService,
+        _clientDio = dio ??
+            Dio(
+              BaseOptions(
+                baseUrl: baseUrl.toString(),
+                connectTimeout: const Duration(seconds: 15),
+                receiveTimeout: const Duration(seconds: 15),
+                validateStatus: (status) => status != null,
+              ),
+            );
 
-  Map<String, dynamic> _parseMapResponse(
-    http.Response response,
-    int expectedStatus,
-  ) {
-    if (response.statusCode == expectedStatus) {
-      try {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      } catch (error) {
-        throw DataParsingException(
-          message: 'Failed to parse response payload: $error',
-        );
-      }
-    }
-    throw ServerException(
-      statusCode: response.statusCode,
-      message: response.body,
-    );
-  }
-
-  List<dynamic> _parseListResponse(http.Response response, int expectedStatus) {
-    if (response.statusCode == expectedStatus) {
-      try {
-        return jsonDecode(response.body) as List<dynamic>;
-      } catch (error) {
-        throw DataParsingException(
-          message: 'Failed to parse response list: $error',
-        );
-      }
-    }
-    throw ServerException(
-      statusCode: response.statusCode,
-      message: response.body,
-    );
-  }
-
-  bool _parseBoolResponse(http.Response response, int expectedStatus) {
-    if (response.statusCode == expectedStatus) {
-      return true;
-    }
-    throw ServerException(
-      statusCode: response.statusCode,
-      message: response.body,
-    );
-  }
-
-  Future<Map<String, String>> _getRequestHeaders() async {
-    final String jsonWebToken = await _sessionService.readAuthToken() ?? '';
-    final Map<String, String> requestHeaders = {
-      'Content-Type': 'application/json',
-    };
-    if (jsonWebToken.isNotEmpty) {
-      requestHeaders['Authorization'] = 'Bearer $jsonWebToken';
-    }
-    return requestHeaders;
-  }
-
-  Future<Map<String, dynamic>?> registerPassenger({
-    required String name,
-    required String email,
-    required String phone,
-    required String password,
+  Future<Map<String, dynamic>?> acceptBidOffer({
+    required String sessionId,
+    required String offerId,
   }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/passengers'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'password': password,
-      }),
-    );
-    return _parseMapResponse(response, 201);
-  }
-
-  Future<bool> verifyOtp({required String email, required String code}) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/passengers/verify-otp'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'code': code}),
-    );
-    return _parseBoolResponse(response, 200);
-  }
-
-  Future<bool> forgotPassword({required String email}) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/passengers/forgot-password'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
-    );
-    return _parseBoolResponse(response, 200);
-  }
-
-  Future<Map<String, dynamic>?> loginPassenger({
-    required String email,
-    required String password,
-  }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/passengers/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
+    final response = await _clientDio.post(
+      '/bids/$sessionId/accept',
+      data: {'offer_id': offerId},
     );
     return _parseMapResponse(response, 200);
   }
 
-  Future<Map<String, dynamic>?> updateProfile({
-    required String id,
-    required String name,
-    required String phone,
-    required String email,
-  }) async {
-    final Map<String, String> requestHeaders = await _getRequestHeaders();
-    final response = await http.put(
-      baseUrl.replace(path: '/passengers/$id'),
-      headers: requestHeaders,
-      body: jsonEncode({'name': name, 'phone': phone, 'email': email}),
+  Future<bool> cancelBidSession(String sessionId) async {
+    final response = await _clientDio.delete(
+      '/bids/$sessionId',
     );
-    return _parseMapResponse(response, 200);
+    return _parseBoolResponse(response, 200);
   }
 
   Future<Map<String, dynamic>?> createRideRequest({
@@ -144,14 +53,13 @@ class PassengerApiService {
     required String dropoffName,
     required double fare,
   }) async {
-    final typeParam = rideType.toLowerCase().contains('share')
-        ? 'share-bao'
-        : 'solo-ride';
-    final Map<String, String> requestHeaders = await _getRequestHeaders();
-    final response = await http.post(
-      baseUrl.replace(path: '/rides'),
-      headers: requestHeaders,
-      body: jsonEncode({
+    final typeParam =
+        rideType.toLowerCase().contains('share') ? 'share-bao' : 'solo-ride';
+    final requestHeaders = await _getRequestHeaders();
+    final response = await _clientDio.post(
+      '/rides',
+      options: Options(headers: requestHeaders),
+      data: {
         'passenger_id': passengerId,
         'ride_type': typeParam,
         'pickup_latitude': pickupLat,
@@ -161,70 +69,39 @@ class PassengerApiService {
         'dropoff_longitude': dropoffLng,
         'dropoff_name': dropoffName,
         'fare': fare,
-      }),
+      },
     );
     return _parseMapResponse(response, 201);
   }
 
-  Future<List<dynamic>> fetchRideHistory(String passengerId) async {
-    final Map<String, String> requestHeaders = await _getRequestHeaders();
-    final response = await http.get(
-      baseUrl.replace(path: '/passengers/$passengerId/rides'),
-      headers: requestHeaders,
-    );
-    return _parseListResponse(response, 200);
-  }
-
-  Future<List<dynamic>> fetchNotifications(String passengerId) async {
-    final Map<String, String> requestHeaders = await _getRequestHeaders();
-    final response = await http.get(
-      baseUrl.replace(path: '/passengers/$passengerId/notifications'),
-      headers: requestHeaders,
-    );
-    return _parseListResponse(response, 200);
-  }
-
-  Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
-    final response = await http.get(baseUrl.replace(path: '/rides/$rideId'));
-    return _parseMapResponse(response, 200);
-  }
-
-  Future<bool> updateRideStatus(String rideId, String status) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/rides/$rideId/status'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'status': status}),
-    );
-    return _parseBoolResponse(response, 200);
-  }
-
   Future<Map<String, dynamic>?> fetchDriverLocation(String driverId) async {
-    final response = await http.get(
-      baseUrl.replace(path: '/telemetry/location/$driverId'),
+    final response = await _clientDio.get(
+      '/telemetry/location/$driverId',
     );
     return _parseMapResponse(response, 200);
   }
 
-  Future<bool> updateLocation({
-    required String rideId,
-    required double lat,
-    required double lng,
+  Future<List<dynamic>> fetchDriverReviews(
+    String driverId, {
+    int? page,
+    int? limit,
   }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/telemetry/location'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'driverId': rideId, 'lat': lat, 'lng': lng}),
+    final queryParams = <String, dynamic>{};
+    if (page != null) queryParams['page'] = page;
+    if (limit != null) queryParams['limit'] = limit;
+
+    final response = await _clientDio.get(
+      '/drivers/$driverId/reviews',
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
-    return _parseBoolResponse(response, 200);
+    return _parseListResponse(response, 200);
   }
 
-  Future<Map<String, dynamic>?> getPassengerProfile(String passengerId) async {
-    final Map<String, String> requestHeaders = await _getRequestHeaders();
-    final response = await http.get(
-      baseUrl.replace(path: '/passengers/$passengerId'),
-      headers: requestHeaders,
+  Future<Map<String, dynamic>?> fetchDriverStats(String driverId) async {
+    final driverStatsResponse = await _clientDio.get(
+      '/drivers/$driverId/stats',
     );
-    return _parseMapResponse(response, 200);
+    return _parseMapResponse(driverStatsResponse, 200);
   }
 
   Future<Map<String, dynamic>?> fetchFareEstimate({
@@ -232,14 +109,81 @@ class PassengerApiService {
     required double distanceKm,
     required double durationMinutes,
   }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/bids/fare'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    final response = await _clientDio.post(
+      '/bids/fare',
+      data: {
         'ride_type': rideType,
         'distance_km': distanceKm,
         'duration_minutes': durationMinutes,
-      }),
+      },
+    );
+    return _parseMapResponse(response, 200);
+  }
+
+  Future<List<dynamic>> fetchNotifications(String passengerId) async {
+    final requestHeaders = await _getRequestHeaders();
+    final response = await _clientDio.get(
+      '/passengers/$passengerId/notifications',
+      options: Options(headers: requestHeaders),
+    );
+    return _parseListResponse(response, 200);
+  }
+
+  Future<List<dynamic>> fetchOnlineDrivers() async {
+    final response = await _clientDio.get('/drivers/online');
+    return _parseListResponse(response, 200);
+  }
+
+  Future<List<dynamic>> fetchRideHistory(String passengerId) async {
+    final requestHeaders = await _getRequestHeaders();
+    final response = await _clientDio.get(
+      '/passengers/$passengerId/rides',
+      options: Options(headers: requestHeaders),
+    );
+    return _parseListResponse(response, 200);
+  }
+
+  Future<bool> forgotPassword({required String email}) async {
+    final response = await _clientDio.post(
+      '/passengers/forgot-password',
+      data: {'email': email},
+    );
+    return _parseBoolResponse(response, 200);
+  }
+
+  Future<Map<String, dynamic>?> getBidSession(String sessionId) async {
+    final response = await _clientDio.get('/bids/$sessionId');
+    return _parseMapResponse(response, 200);
+  }
+
+  Future<Map<String, dynamic>?> getDriverProfile(String driverId) async {
+    final response = await _clientDio.get(
+      '/drivers/$driverId',
+    );
+    return _parseMapResponse(response, 200);
+  }
+
+  Future<Map<String, dynamic>?> getPassengerProfile(String passengerId) async {
+    final requestHeaders = await _getRequestHeaders();
+    final response = await _clientDio.get(
+      '/passengers/$passengerId',
+      options: Options(headers: requestHeaders),
+    );
+    return _parseMapResponse(response, 200);
+  }
+
+  Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
+    final response = await _clientDio.get('/rides/$rideId');
+    return _parseMapResponse(response, 200);
+  }
+
+  Future<Map<String, dynamic>?> loginPassenger({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _clientDio.post(
+      '/passengers/login',
+      data: {'email': email, 'password': password},
     );
     return _parseMapResponse(response, 200);
   }
@@ -257,10 +201,9 @@ class PassengerApiService {
     required double durationMinutes,
     String? targetDriverId,
   }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/bids'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    final response = await _clientDio.post(
+      '/bids',
+      data: {
         'passenger_id': passengerId,
         'ride_type': rideType,
         'pickup_latitude': pickupLat,
@@ -272,80 +215,34 @@ class PassengerApiService {
         'distance_km': distanceKm,
         'duration_minutes': durationMinutes,
         'target_driver_id': targetDriverId,
-      }),
+      },
     );
     return _parseMapResponse(response, 201);
   }
 
   Future<List<dynamic>> pollBidOffers(String sessionId) async {
-    final response = await http.get(
-      baseUrl.replace(path: '/bids/$sessionId/offers'),
+    final response = await _clientDio.get(
+      '/bids/$sessionId/offers',
     );
     return _parseListResponse(response, 200);
   }
 
-  Future<Map<String, dynamic>?> acceptBidOffer({
-    required String sessionId,
-    required String offerId,
+  Future<Map<String, dynamic>?> registerPassenger({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
   }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/bids/$sessionId/accept'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'offer_id': offerId}),
+    final response = await _clientDio.post(
+      '/passengers',
+      data: {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'password': password,
+      },
     );
-    return _parseMapResponse(response, 200);
-  }
-
-  Future<bool> cancelBidSession(String sessionId) async {
-    final response = await http.delete(
-      baseUrl.replace(path: '/bids/$sessionId'),
-    );
-    return _parseBoolResponse(response, 200);
-  }
-
-  Future<Map<String, dynamic>?> getBidSession(String sessionId) async {
-    final response = await http.get(baseUrl.replace(path: '/bids/$sessionId'));
-    return _parseMapResponse(response, 200);
-  }
-
-  Future<List<dynamic>> fetchOnlineDrivers() async {
-    final response = await http.get(baseUrl.replace(path: '/drivers/online'));
-    return _parseListResponse(response, 200);
-  }
-
-  Future<Map<String, dynamic>?> getDriverProfile(String driverId) async {
-    final response = await http.get(
-      baseUrl.replace(path: '/drivers/$driverId'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    return _parseMapResponse(response, 200);
-  }
-
-  Future<Map<String, dynamic>?> fetchDriverStats(String driverId) async {
-    final driverStatsResponse = await http.get(
-      baseUrl.replace(path: '/drivers/$driverId/stats'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    return _parseMapResponse(driverStatsResponse, 200);
-  }
-
-  Future<List<dynamic>> fetchDriverReviews(
-    String driverId, {
-    int? page,
-    int? limit,
-  }) async {
-    final queryParams = <String, String>{};
-    if (page != null) queryParams['page'] = page.toString();
-    if (limit != null) queryParams['limit'] = limit.toString();
-
-    final response = await http.get(
-      baseUrl.replace(
-        path: '/drivers/$driverId/reviews',
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
-      ),
-      headers: {'Content-Type': 'application/json'},
-    );
-    return _parseListResponse(response, 200);
+    return _parseMapResponse(response, 201);
   }
 
   Future<Map<String, dynamic>?> submitDriverReview({
@@ -354,15 +251,121 @@ class PassengerApiService {
     required double rating,
     required String comment,
   }) async {
-    final response = await http.post(
-      baseUrl.replace(path: '/drivers/$driverId/reviews'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    final response = await _clientDio.post(
+      '/drivers/$driverId/reviews',
+      data: {
         'passengerName': passengerName,
         'rating': rating,
         'comment': comment,
-      }),
+      },
     );
     return _parseMapResponse(response, 201);
+  }
+
+  Future<bool> updateLocation({
+    required String rideId,
+    required double lat,
+    required double lng,
+  }) async {
+    final response = await _clientDio.post(
+      '/telemetry/location',
+      data: {'driverId': rideId, 'lat': lat, 'lng': lng},
+    );
+    return _parseBoolResponse(response, 200);
+  }
+
+  Future<Map<String, dynamic>?> updateProfile({
+    required String id,
+    required String name,
+    required String phone,
+    required String email,
+  }) async {
+    final requestHeaders = await _getRequestHeaders();
+    final response = await _clientDio.put(
+      '/passengers/$id',
+      options: Options(headers: requestHeaders),
+      data: {'name': name, 'phone': phone, 'email': email},
+    );
+    return _parseMapResponse(response, 200);
+  }
+
+  Future<bool> updateRideStatus(String rideId, String status) async {
+    final response = await _clientDio.post(
+      '/rides/$rideId/status',
+      data: {'status': status},
+    );
+    return _parseBoolResponse(response, 200);
+  }
+
+  Future<bool> verifyOtp({required String email, required String code}) async {
+    final response = await _clientDio.post(
+      '/passengers/verify-otp',
+      data: {'email': email, 'code': code},
+    );
+    return _parseBoolResponse(response, 200);
+  }
+
+  Future<Map<String, String>> _getRequestHeaders() async {
+    final String jsonWebToken = await _sessionService.readAuthToken() ?? '';
+    final Map<String, String> requestHeaders = {
+      'Content-Type': 'application/json',
+    };
+    if (jsonWebToken.isNotEmpty) {
+      requestHeaders['Authorization'] = 'Bearer $jsonWebToken';
+    }
+    return requestHeaders;
+  }
+
+  bool _parseBoolResponse(Response<dynamic> response, int expectedStatus) {
+    if (response.statusCode == expectedStatus) {
+      return true;
+    }
+    throw ServerException(
+      statusCode: response.statusCode ?? 500,
+      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
+    );
+  }
+
+  List<dynamic> _parseListResponse(Response<dynamic> response, int expectedStatus) {
+    if (response.statusCode == expectedStatus) {
+      try {
+        if (response.data is List<dynamic>) {
+          return response.data as List<dynamic>;
+        } else if (response.data is String) {
+          return jsonDecode(response.data as String) as List<dynamic>;
+        }
+      } catch (error) {
+        throw DataParsingException(
+          message: 'Failed to parse response list: $error',
+        );
+      }
+    }
+    throw ServerException(
+      statusCode: response.statusCode ?? 500,
+      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
+    );
+  }
+
+  Map<String, dynamic> _parseMapResponse(
+    Response<dynamic> response,
+    int expectedStatus,
+  ) {
+    if (response.statusCode == expectedStatus) {
+      try {
+        if (response.data is Map<String, dynamic>) {
+          return response.data as Map<String, dynamic>;
+        } else if (response.data is String) {
+          return jsonDecode(response.data as String) as Map<String, dynamic>;
+        }
+      } catch (error) {
+        throw DataParsingException(
+          message: 'Failed to parse response payload: $error',
+        );
+      }
+    }
+    throw ServerException(
+      statusCode: response.statusCode ?? 500,
+      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
+    );
   }
 }

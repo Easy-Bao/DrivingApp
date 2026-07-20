@@ -4,7 +4,7 @@ import 'package:core_models/core_models.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:session_service/session_service.dart';
 
 class ChatState extends Equatable {
@@ -111,9 +111,8 @@ class ChatCubit extends Cubit<ChatState> {
       final resolveEndpointUri = gatewayUri.replace(
         path: '/chat/rooms/$roomId/resolve',
       );
-      final response = await http.post(
+      final response = await Dio().postUri(
         resolveEndpointUri,
-        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {

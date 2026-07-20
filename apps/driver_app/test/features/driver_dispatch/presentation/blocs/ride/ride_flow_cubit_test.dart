@@ -5,6 +5,7 @@ import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_fl
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:session_service/session_service.dart';
 
@@ -12,7 +13,7 @@ class MockRideRepo extends Mock implements RideRepository {}
 
 class MockTripApiService extends Mock implements TripApiService {
   @override
-  Uri get baseUrl => Uri.parse('http://localhost:8080');
+  Uri get baseUrl => EnvironmentConfig.tripServiceUri;
 }
 
 class MockDriverSessionService extends Mock implements DriverSessionService {}
@@ -29,6 +30,10 @@ RideFlowCubit _makeCubit(
     );
 
 void main() {
+  setUpAll(() {
+    dotenv.loadFromString(envString: 'TRIP_SERVICE_URL=http://localhost:8080');
+  });
+
   late MockRideRepo repo;
   late MockTripApiService mockApiService;
   late MockDriverSessionService mockSessionService;

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:http/http.dart' as http;
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -382,16 +382,17 @@ class _SigninScreenState extends State<SigninScreen> {
       final url = Modular.get<PassengerApiService>().baseUrl.replace(
         path: '/passengers/login',
       );
-      final response = await http.post(
+      final response = await Dio().postUri(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        data: {'email': email, 'password': password},
       );
 
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : jsonDecode(response.data.toString()) as Map<String, dynamic>;
         final token = data['token'] as String;
         final passenger = data['passenger'] as Map<String, dynamic>;
 
@@ -408,8 +409,9 @@ class _SigninScreenState extends State<SigninScreen> {
 
         if (!mounted) return;
         unawaited(context.pushNamed(HomeRoutes.home));
-      } else {
-        final errorData = _parseErrorJson(response.body);
+        final errorData = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : _parseErrorJson(response.data?.toString() ?? '');
         final errorMsg = errorData['error'] ?? 'Login failed';
         if (errorData['needs_verification'] == true) {
           final verifyEmail = errorData['email'] ?? email;

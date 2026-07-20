@@ -14,7 +14,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -89,14 +89,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         final driverId = prefs.getString('driver_id') ?? '';
         if (driverId.isEmpty) return;
 
-        final historyRes = await http.get(
+        final historyRes = await Dio().getUri(
           Modular.get<TripApiService>().baseUrl.replace(
             path: '/drivers/$driverId/trips',
           ),
         );
         List<Map<String, dynamic>> trips = [];
         if (historyRes.statusCode == 200) {
-          final List<dynamic> list = jsonDecode(historyRes.body);
+          final List<dynamic> list = historyRes.data is List<dynamic>
+              ? historyRes.data as List<dynamic>
+              : jsonDecode(historyRes.data.toString());
           trips = list
               .where((r) {
                 final status = r['status'] as String?;

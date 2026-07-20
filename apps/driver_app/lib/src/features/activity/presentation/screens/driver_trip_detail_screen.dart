@@ -1,12 +1,10 @@
-import 'dart:convert';
-
 import 'package:session_service/session_service.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -73,16 +71,13 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     if (driverId.isEmpty) return;
 
     try {
-      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
-      final chatRoomsEndpointUrl = '$gatewayUrl/chat/rooms';
-      final initializeChatResponse = await http.post(
-        Uri.parse(chatRoomsEndpointUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      final initializeChatResponse = await Dio().postUri(
+        EnvironmentConfig.httpBaseUri.replace(path: '/chat/rooms'),
+        data: {
           'roomId': tripId,
           'driverId': driverId,
           'passengerId': passengerId,
-        }),
+        },
       );
 
       if (initializeChatResponse.statusCode == 201 ||

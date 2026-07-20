@@ -5,6 +5,30 @@ import 'package:flutter/foundation.dart';
 import 'package:passenger_services/src/passenger_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// TODO:
+/// 1. [DECOUPLING] Break direct dependency on monolithic `PassengerApiService`.
+///    Once the API is split, inject the newly created `BiddingApiService` here
+///    instead of the all-in-one class.
+///
+/// 2. [LOCAL STORAGE SEPARATION] Remove direct dependency on `SharedPreferences`.
+///    The service should not manage low-level disk persistence (`active_ride_id`).
+///    Delegate this to a dedicated `LocalCacheRepository` or `SessionManager`.
+///
+/// 3. [DATA TYPE SAFETY] Replace `List<dynamic>` and raw `Map<String, dynamic>` maps
+///    with strongly-typed models (e.g., `BidOfferModel`). Relying on raw map keys
+///    like `acceptedOffer['driver_name']` inside the business logic is highly error-prone.
+///
+/// 4. [ARCHITECTURE / STATE] Separate UI lifecycle flags (`_isBackgrounded`, `_isForeground`)
+///    from the core domain polling logic. These presentation concerns belong in your BLoC/Notifier
+///    layer rather than mixing with background network orchestration.
+///
+/// 5. [NETWORK EFFICIENCY] Replace aggressive 2-second short-polling logic inside `_startPolling()`.
+///    Executing `pollBidOffers` and `getBidSession` simultaneously every 2 seconds will rapidly
+///    rate-limit the client and drain battery. Move this to WebSockets or a unified endpoint.
+///
+/// 6. [RESOURCE LIFECYCLE] Improve stream safety in `dispose()`. Ensure the periodic `_pollTimer`
+///    is canceled immediately *before* flushing and closing the broadcast stream controllers to
+///    prevent leaks or late events firing during teardown.
 class BidSessionTrip {
   const BidSessionTrip({
     required this.rideType,
@@ -63,7 +87,7 @@ class BidSessionService {
   final PassengerApiService _apiService;
 
   BidSessionService({required PassengerApiService apiService})
-    : _apiService = apiService;
+      : _apiService = apiService;
 
   String? _sessionId;
   BidSessionTrip? _trip;
@@ -225,9 +249,9 @@ class BidSessionService {
       final rideId = statusData['ride_id'] as String? ?? '';
       final offersList = statusData['offers'] as List<dynamic>? ?? [];
       final acceptedOffer = offersList.cast<Map<String, dynamic>?>().firstWhere(
-        (option) => option?['driver_id'] == acceptedDriverId,
-        orElse: () => null,
-      );
+            (option) => option?['driver_id'] == acceptedDriverId,
+            orElse: () => null,
+          );
 
       if (acceptedOffer == null || _trip == null) {
         _clearSessionState();

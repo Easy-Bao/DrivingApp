@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:core_models/core_models.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:http/http.dart' as http;
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
@@ -79,17 +78,13 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
     if (driverId == null || driverId.isEmpty) return;
 
     try {
-      final gatewayUrl = EnvironmentConfig.httpBaseUrl;
-      final chatRoomInitializationUrl = '$gatewayUrl/chat/rooms';
-
-      final initializeRoomResponse = await http.post(
-        Uri.parse(chatRoomInitializationUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      final initializeRoomResponse = await Dio().postUri(
+        EnvironmentConfig.httpBaseUri.replace(path: '/chat/rooms'),
+        data: {
           'roomId': ride.id,
           'driverId': driverId,
           'passengerId': _passengerId,
-        }),
+        },
       );
 
       if (initializeRoomResponse.statusCode == 201 ||

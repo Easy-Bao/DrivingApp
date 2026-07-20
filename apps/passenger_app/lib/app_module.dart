@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/passenger_module.dart';
+import 'package:passenger_app/src/core/network/dio_client.dart';
 import 'package:passenger_app/src/features/auth/auth_module.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
@@ -21,10 +23,17 @@ class AppModule extends Module {
           prefs: i.get<SharedPreferences>(),
         ),
       )
+      ..addLazySingleton<Dio>(
+        (i) => DioClient.create(
+          baseUrl: EnvironmentConfig.passengerServiceUri,
+          sessionService: i.get<SecureSessionService>(),
+        ),
+      )
       ..addLazySingleton<PassengerApiService>(
         (i) => PassengerApiService(
           baseUrl: EnvironmentConfig.passengerServiceUri,
           sessionService: i.get<SecureSessionService>(),
+          dio: i.get<Dio>(),
         ),
       );
   }

@@ -1,5 +1,5 @@
+import 'package:driver_app/driver_module.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
-import 'package:driver_app/driver_dispatch_module.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:session_service/session_service.dart';
@@ -41,7 +41,6 @@ class AppModule extends Module {
   @override
   List<ModularRoute> get routes => [
     ModuleRoute('/', module: AuthModule()),
-    ModuleRoute('/driver/', module: DriverDispatchModule()),
+    ModuleRoute('/driver/', module: DriverModule()),
   ];
 }
-

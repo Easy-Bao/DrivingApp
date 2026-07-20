@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.0
+  dio: ^5.10.0
   flutter_background_service: ^5.1.0
   core_models:
     path: ../core_models
