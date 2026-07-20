@@ -348,6 +348,8 @@ class _SigninScreenState extends State<SigninScreen> {
   }
 
   Future<void> _signIn() async {
+    if (_isLoading) return;
+
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 

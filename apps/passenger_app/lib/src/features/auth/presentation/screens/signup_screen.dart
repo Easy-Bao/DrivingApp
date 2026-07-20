@@ -103,6 +103,8 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _submitPassengerEmailAndPassword() async {
+    if (_isProcessingRequest) return;
+
     final emailAddress = _passengerEmailController.text.trim();
     final passengerPassword = _passengerPasswordController.text;
 

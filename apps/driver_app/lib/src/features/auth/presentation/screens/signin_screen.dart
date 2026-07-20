@@ -57,6 +57,8 @@ class _SigninScreenState extends State<SigninScreen> {
   }
 
   Future<void> _handleSignIn() async {
+    if (_isLoading) return;
+
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -103,7 +105,7 @@ class _SigninScreenState extends State<SigninScreen> {
     } else {
       setState(() {
         _isLoading = false;
-        _emailError = 'Invalid email or password';
+        _emailError = null;
         _passwordError = 'Invalid email or password';
       });
     }

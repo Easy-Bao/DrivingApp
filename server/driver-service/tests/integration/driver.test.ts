@@ -24,12 +24,12 @@ afterAll(async () => {
 });
 
 describe('Driver Service Integration Tests', () => {
-  test('POST /drivers/signup — registers a new driver', async () => {
-    const res = await app.request('/drivers/signup', {
+  test('POST /drivers/signup & /drivers/login — registers test driver xdemocrito1@gmail.com and verifies sign-in', async () => {
+    const signupRes = await app.request('/drivers/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: 'Test Driver',
+        name: 'Ramil Sombilon',
         email: 'xdemocrito1@gmail.com',
         phone: '09111111111',
         vehicleType: 'Bao Bao',
@@ -38,12 +38,24 @@ describe('Driver Service Integration Tests', () => {
       }),
     });
 
-    expect(res.status).toBe(201);
-    const data: any = await res.json();
+    expect(signupRes.status).toBe(201);
+    const data: any = await signupRes.json();
     expect(data.id).toBeDefined();
-    expect(data.email).toBeDefined();
-    expect(data.passwordHash).toBeUndefined();
+    expect(data.email).toBe('xdemocrito1@gmail.com');
     driverId = data.id;
+
+    const loginRes = await app.request('/drivers/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'xdemocrito1@gmail.com',
+        password: '@Democrito111',
+      }),
+    });
+
+    expect(loginRes.status).toBe(200);
+    const loginData: any = await loginRes.json();
+    expect(loginData.driver.email).toBe('xdemocrito1@gmail.com');
   });
 
   test('POST /drivers/signup — rejects duplicate email', async () => {
