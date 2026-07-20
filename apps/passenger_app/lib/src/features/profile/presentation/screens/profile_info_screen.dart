@@ -85,28 +85,19 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
       }
 
       try {
-        final updated = await Modular.get<PassengerApiService>().updateProfile(
+        final updated = await Modular.get<PassengerRemoteDataSource>().updateProfile(
           id: _passengerId,
           name: name,
           phone: phone,
           email: email,
         );
-        if (updated != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('passenger_name', updated['name'] as String);
-          await prefs.setString('passenger_phone', updated['phone'] as String);
-          await prefs.setString('passenger_email', updated['email'] as String);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('passenger_name', updated['name'] as String);
+        await prefs.setString('passenger_phone', updated['phone'] as String);
+        await prefs.setString('passenger_email', updated['email'] as String);
 
-          if (!mounted) return;
-          CustomToast.show(context, 'Profile updated successfully!');
-        } else {
-          if (!mounted) return;
-          CustomToast.show(
-            context,
-            'Failed to update profile details.',
-            isError: true,
-          );
-        }
+        if (!mounted) return;
+        CustomToast.show(context, 'Profile updated successfully!');
       } catch (error) {
         if (!mounted) return;
         CustomToast.show(context, 'Connection failed: $error', isError: true);

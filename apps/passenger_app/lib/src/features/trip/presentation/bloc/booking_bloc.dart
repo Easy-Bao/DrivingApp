@@ -15,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
   final BidSessionService _bidSessionService;
-  final PassengerApiService _apiService;
+  final BiddingRemoteDataSource _biddingDataSource;
 
   StreamSubscription<List<dynamic>>? _offersSubscription;
   StreamSubscription<DriverMatchResult>? _driverFoundSubscription;
@@ -37,10 +37,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   BookingBloc({
     required DriverRepository driverRepository,
     required BidSessionService bidSessionService,
-    required PassengerApiService apiService,
+    required BiddingRemoteDataSource biddingDataSource,
   }) : _driverRepository = driverRepository,
        _bidSessionService = bidSessionService,
-       _apiService = apiService,
+       _biddingDataSource = biddingDataSource,
        super(BookingInitial()) {
     on<LocateNearestDriverEvent>(_onLocateNearestDriver);
     on<StartDirectBookingEvent>(_onStartDirectBooking);
@@ -76,7 +76,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           _nearestDriver = closestDriver;
 
           try {
-            final stats = await _apiService.fetchDriverStats(closestDriver.id);
+            final stats = await _biddingDataSource.fetchDriverStats(closestDriver.id);
             if (stats != null && stats['totalTrips'] != null) {
               _totalTrips = stats['totalTrips'] as int;
             } else {
@@ -98,7 +98,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
               ),
             );
 
-            final rawReviews = await _apiService.fetchDriverReviews(
+            final rawReviews = await _biddingDataSource.fetchDriverReviews(
               closestDriver.id,
             );
             final List<Map<String, dynamic>> processedReviews = [];
@@ -291,7 +291,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     if (passengerId.isNotEmpty) {
       try {
-        final res = await _apiService.createRideRequest(
+        final res = await _biddingDataSource.createRideRequest(
           passengerId: passengerId,
           rideType: _rideType ?? 'Bao Bao Standard',
           pickupLat: _pickupLat ?? 0.0,

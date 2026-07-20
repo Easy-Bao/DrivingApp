@@ -41,7 +41,7 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
     final passengerId =
         sharedPreferencesInstance.getString('passenger_id') ?? '';
 
-    final retrievedRideData = await Modular.get<PassengerApiService>().getRideStatus(
+    final retrievedRideData = await Modular.get<BiddingRemoteDataSource>().getRideStatus(
       ride.id,
     );
     bool isWithinGracePeriodWindow = false;
@@ -111,7 +111,7 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
     final driverId = retrievedRideData['driver_id'] as String?;
     if (driverId == null || driverId.isEmpty) return;
     try {
-      final driverProfile = await Modular.get<PassengerApiService>().getDriverProfile(driverId);
+      final driverProfile = await Modular.get<BiddingRemoteDataSource>().getDriverProfile(driverId);
       final phone = driverProfile?['phone'] as String?;
       if (phone != null && phone.isNotEmpty) {
         final uri = Uri.parse('tel:$phone');

@@ -8,10 +8,9 @@ import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_
 import 'package:passenger_services/passenger_services.dart';
 import 'package:rxdart/rxdart.dart';
 
-/// State controller managing map overlay layouts, marker assets, routing
-/// sequence rendering, and real-time backend telemetry dispatching for passengers.
+
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
-  final PassengerApiService _apiService;
+  final BiddingRemoteDataSource _biddingDataSource;
 
   AppMapController? _mapController;
   final List<dynamic> _markerManagers = [];
@@ -21,8 +20,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  LiveMapBloc({required PassengerApiService apiService})
-    : _apiService = apiService,
+  LiveMapBloc({required BiddingRemoteDataSource biddingDataSource})
+    : _biddingDataSource = biddingDataSource,
       super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<DrawDriverToRiderRouteEvent>(_onDrawDriverToRiderRoute);
@@ -32,7 +31,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
         .listen((event) async {
-          await _apiService.updateLocation(
+          await _biddingDataSource.updateLocation(
             rideId: event.rideId,
             lat: event.lat,
             lng: event.lng,

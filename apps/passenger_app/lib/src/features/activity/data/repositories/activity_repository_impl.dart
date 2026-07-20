@@ -27,10 +27,11 @@ String _shortenAddress(String fullAddress) {
 }
 
 class ActivityRepositoryImpl implements ActivityRepository {
-  final PassengerApiService _apiService;
+  final PassengerRemoteDataSource _passengerRemoteDataSource;
 
-  ActivityRepositoryImpl({required PassengerApiService apiService})
-    : _apiService = apiService;
+  ActivityRepositoryImpl({
+    required PassengerRemoteDataSource passengerRemoteDataSource,
+  }) : _passengerRemoteDataSource = passengerRemoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {
@@ -58,7 +59,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
     String passengerId,
   ) async {
     try {
-      final rawList = await _apiService.fetchRideHistory(passengerId);
+      final rawList = await _passengerRemoteDataSource.fetchRideHistory(passengerId);
       return Right(
         rawList.map((raw) => _mapToModel(raw as Map<String, dynamic>)).toList(),
       );

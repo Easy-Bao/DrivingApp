@@ -24,7 +24,7 @@ afterAll(async () => {
 });
 
 describe('Driver Service Integration Tests', () => {
-  test('POST /drivers/signup & /drivers/login — registers test driver xdemocrito1@gmail.com and verifies sign-in', async () => {
+  test('POST /drivers/signup & /drivers/login', async () => {
     const signupRes = await app.request('/drivers/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

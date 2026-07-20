@@ -45,7 +45,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
       final prefs = await SharedPreferences.getInstance();
       final passengerName = prefs.getString('passenger_name') ?? 'Passenger';
 
-      await Modular.get<PassengerApiService>().submitDriverReview(
+      await Modular.get<BiddingRemoteDataSource>().submitDriverReview(
         driverId: widget.driverId,
         passengerName: passengerName,
         rating: _selectedStars.toDouble(),

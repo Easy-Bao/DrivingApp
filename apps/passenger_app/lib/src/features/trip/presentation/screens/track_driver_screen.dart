@@ -568,7 +568,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                     if (activeRideId.isNotEmpty) {
                                       final statusData =
                                           await Modular.get<
-                                                PassengerApiService
+                                                BiddingRemoteDataSource
                                               >()
                                               .getRideStatus(activeRideId);
                                       final driverId =
@@ -577,7 +577,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                           driverId.isNotEmpty) {
                                         final driverProfile =
                                             await Modular.get<
-                                                  PassengerApiService
+                                                  BiddingRemoteDataSource
                                                 >()
                                                 .getDriverProfile(driverId);
                                         final phone =

@@ -61,18 +61,6 @@ export class DrizzleDriverRepository implements DriverRepository {
       .offset(offset);
   }
 
-  async seedDriverReviews(driverId: string, defaultReviews: any[]): Promise<Review[]> {
-    const recordsToInsert = defaultReviews.map((r) => ({
-      id: crypto.randomUUID(),
-      driverId,
-      passengerName: r.passengerName,
-      rating: r.rating,
-      comment: r.comment,
-      createdAt: r.createdAt,
-    }));
-    return await db.insert(reviews).values(recordsToInsert).returning();
-  }
-
   async addDriverReview(review: Omit<Review, 'id' | 'createdAt'>): Promise<Review> {
     const [inserted] = await db.insert(reviews)
       .values({

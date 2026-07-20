@@ -5,10 +5,10 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_services/passenger_services.dart';
 
 class TrackRepositoryImpl implements TrackRepository {
-  final PassengerApiService _apiService;
+  final BiddingRemoteDataSource _biddingDataSource;
 
-  TrackRepositoryImpl({required PassengerApiService apiService})
-    : _apiService = apiService;
+  TrackRepositoryImpl({required BiddingRemoteDataSource biddingDataSource})
+    : _biddingDataSource = biddingDataSource;
 
   @override
   Future<List<List<double>>?> getRoutePolyline({
@@ -37,7 +37,7 @@ class TrackRepositoryImpl implements TrackRepository {
   @override
   Future<Either<Failure, RideUpdate>> getRideStatusUpdate(String rideId) async {
     try {
-      final data = await _apiService.getRideStatus(rideId);
+      final data = await _biddingDataSource.getRideStatus(rideId);
       if (data != null) {
         return Right(RideUpdate.fromJson(data));
       }
@@ -53,7 +53,7 @@ class TrackRepositoryImpl implements TrackRepository {
   Future<Either<Failure, (double latitude, double longitude)>>
   fetchDriverLocation(String driverId) async {
     try {
-      final locData = await _apiService.fetchDriverLocation(driverId);
+      final locData = await _biddingDataSource.fetchDriverLocation(driverId);
       if (locData != null && locData['lat'] != null && locData['lng'] != null) {
         final lat = (locData['lat'] as num).toDouble();
         final lng = (locData['lng'] as num).toDouble();
@@ -75,7 +75,7 @@ class TrackRepositoryImpl implements TrackRepository {
     RideStatus status,
   ) async {
     try {
-      final success = await _apiService.updateRideStatus(rideId, status.value);
+      final success = await _biddingDataSource.updateRideStatus(rideId, status.value);
       if (success) {
         return const Right(null);
       }

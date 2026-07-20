@@ -29,7 +29,6 @@ export interface DriverRepository {
   findOnlineDrivers(): Promise<Driver[]>;
   updateOnlineStatus(id: string, isOnline: boolean, lat?: number, lng?: number): Promise<Driver>;
   fetchDriverReviews(driverId: string, page?: number, limit?: number): Promise<Review[]>;
-  seedDriverReviews(driverId: string, defaultReviews: any[]): Promise<Review[]>;
   addDriverReview(review: Omit<Review, 'id' | 'createdAt'>): Promise<Review>;
   updateDriverRating(driverId: string, rating: number): Promise<Driver>;
 }

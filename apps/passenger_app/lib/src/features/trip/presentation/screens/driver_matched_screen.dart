@@ -92,7 +92,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       if (activeRideId.isEmpty) {
         final passengerId = prefs.getString('passenger_id') ?? '';
         if (passengerId.isNotEmpty) {
-          final res = await Modular.get<PassengerApiService>()
+          final res = await Modular.get<BiddingRemoteDataSource>()
               .createRideRequest(
                 passengerId: passengerId,
                 rideType: widget.rideType,
@@ -118,7 +118,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           }
         }
       } else {
-        final res = await Modular.get<PassengerApiService>().getRideStatus(
+        final res = await Modular.get<BiddingRemoteDataSource>().getRideStatus(
           activeRideId,
         );
         if (res != null) {

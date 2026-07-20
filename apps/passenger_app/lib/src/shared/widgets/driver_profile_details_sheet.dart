@@ -58,7 +58,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Future<void> _loadDriverProfileStats() async {
     try {
-      final statsData = await Modular.get<PassengerApiService>().fetchDriverStats(
+      final statsData = await Modular.get<BiddingRemoteDataSource>().fetchDriverStats(
         widget.driverId,
       );
       if (statsData != null && statsData['totalTrips'] != null) {
@@ -88,7 +88,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     _hasMore = true;
     final List<Map<String, dynamic>> dynamicReviews = [];
     try {
-      final rawReviews = await Modular.get<PassengerApiService>().fetchDriverReviews(
+      final rawReviews = await Modular.get<BiddingRemoteDataSource>().fetchDriverReviews(
         widget.driverId,
         page: _currentPage,
         limit: 5,
@@ -146,7 +146,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     final nextPage = _currentPage + 1;
     final List<Map<String, dynamic>> nextReviews = [];
     try {
-      final rawReviews = await Modular.get<PassengerApiService>().fetchDriverReviews(
+      final rawReviews = await Modular.get<BiddingRemoteDataSource>().fetchDriverReviews(
         widget.driverId,
         page: nextPage,
         limit: 5,

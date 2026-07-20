@@ -13,10 +13,11 @@ String _shortenAddress(String fullAddress) {
 }
 
 class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
-  final PassengerApiService _apiService;
+  final PassengerRemoteDataSource _passengerRemoteDataSource;
 
-  PassengerHomeRepositoryImpl({required PassengerApiService apiService})
-    : _apiService = apiService;
+  PassengerHomeRepositoryImpl({
+    required PassengerRemoteDataSource passengerRemoteDataSource,
+  }) : _passengerRemoteDataSource = passengerRemoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {
@@ -65,7 +66,7 @@ class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
           CacheFailure('No passenger ID found in local cache.'),
         );
       }
-      final rawRides = await _apiService.fetchRideHistory(passengerId);
+      final rawRides = await _passengerRemoteDataSource.fetchRideHistory(passengerId);
       return Right(_filterAndFormatRecentLocations(rawRides));
     } catch (error) {
       return Left(_mapExceptionToFailure(error));

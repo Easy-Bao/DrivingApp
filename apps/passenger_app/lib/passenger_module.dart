@@ -32,24 +32,32 @@ class PassengerModule extends Module {
   FutureOr<void> binds(Injector i) {
     i
       ..addLazySingleton<DriverRepository>(
-        (i) => DriverRepositoryImpl(apiService: i.get<PassengerApiService>()),
+        (i) => DriverRepositoryImpl(
+          biddingDataSource: i.get<BiddingRemoteDataSource>(),
+        ),
       )
       ..addLazySingleton<TrackRepository>(
-        (i) => TrackRepositoryImpl(apiService: i.get<PassengerApiService>()),
+        (i) => TrackRepositoryImpl(
+          biddingDataSource: i.get<BiddingRemoteDataSource>(),
+        ),
       )
       ..addLazySingleton<PassengerHomeRepository>(
         (i) => PassengerHomeRepositoryImpl(
-          apiService: i.get<PassengerApiService>(),
+          passengerRemoteDataSource: i.get<PassengerRemoteDataSource>(),
         ),
       )
       ..addLazySingleton<SavedPlacesRepository>(
         (i) => SavedPlacesRepositoryImpl(),
       )
       ..addLazySingleton<ActivityRepository>(
-        (i) => ActivityRepositoryImpl(apiService: i.get<PassengerApiService>()),
+        (i) => ActivityRepositoryImpl(
+          passengerRemoteDataSource: i.get<PassengerRemoteDataSource>(),
+        ),
       )
       ..addLazySingleton<BidSessionService>(
-        (i) => BidSessionService(apiService: i.get<PassengerApiService>()),
+        (i) => BidSessionService(
+          biddingRepository: i.get<BiddingRepository>(),
+        ),
       )
       ..addFactory<SavedPlacesCubit>(
         (i) => SavedPlacesCubit(repository: i.get<SavedPlacesRepository>()),
@@ -61,14 +69,18 @@ class PassengerModule extends Module {
         (i) => BookingBloc(
           driverRepository: i.get<DriverRepository>(),
           bidSessionService: i.get<BidSessionService>(),
-          apiService: i.get<PassengerApiService>(),
+          biddingDataSource: i.get<BiddingRemoteDataSource>(),
         ),
       )
       ..addFactory<LiveMapBloc>(
-        (i) => LiveMapBloc(apiService: i.get<PassengerApiService>()),
+        (i) => LiveMapBloc(
+          biddingDataSource: i.get<BiddingRemoteDataSource>(),
+        ),
       )
       ..addFactory<ProfileCubit>(
-        (i) => ProfileCubit(apiService: i.get<PassengerApiService>()),
+        (i) => ProfileCubit(
+          profileRepository: i.get<PassengerProfileRepository>(),
+        ),
       )
       ..addFactory<PassengerHomeCubit>(
         (i) => PassengerHomeCubit(repository: i.get<PassengerHomeRepository>()),

@@ -13,16 +13,17 @@ class MockDriverRepo extends Mock implements DriverRepository {}
 
 class MockBidSessionService extends Mock implements BidSessionService {}
 
-class MockPassengerApiService extends Mock implements PassengerApiService {}
+class MockBiddingRemoteDataSource extends Mock
+    implements BiddingRemoteDataSource {}
 
-BookingBloc _makeBloc({
+BookingBloc _makeBookingBloc({
   required DriverRepository driverRepo,
   required BidSessionService bidService,
-  required PassengerApiService apiService,
+  required BiddingRemoteDataSource biddingDataSource,
 }) => BookingBloc(
   driverRepository: driverRepo,
   bidSessionService: bidService,
-  apiService: apiService,
+  biddingDataSource: biddingDataSource,
 );
 
 void main() {
@@ -30,12 +31,12 @@ void main() {
 
   late MockDriverRepo driverRepo;
   late MockBidSessionService bidService;
-  late MockPassengerApiService apiService;
+  late MockBiddingRemoteDataSource biddingDataSource;
 
   setUp(() {
     driverRepo = MockDriverRepo();
     bidService = MockBidSessionService();
-    apiService = MockPassengerApiService();
+    biddingDataSource = MockBiddingRemoteDataSource();
     SharedPreferences.setMockInitialValues({'passenger_id': 'pass-001'});
     when(() => bidService.cancelSession()).thenAnswer((_) async {});
     when(() => bidService.setForeground(any())).thenAnswer((_) {});
@@ -62,10 +63,10 @@ void main() {
 
   group('BookingBloc — initial state', () {
     test('starts as BookingInitial', () async {
-      final bloc = _makeBloc(
+      final bloc = _makeBookingBloc(
         driverRepo: driverRepo,
         bidService: bidService,
-        apiService: apiService,
+        biddingDataSource: biddingDataSource,
       );
       expect(bloc.state, isA<BookingInitial>());
       await bloc.close();
@@ -83,15 +84,15 @@ void main() {
           ),
         ).thenAnswer((_) async => const Right([mockDriver]));
         when(
-          () => apiService.fetchDriverStats(any()),
+          () => biddingDataSource.fetchDriverStats(any()),
         ).thenAnswer((_) async => {'totalTrips': 42});
         when(
-          () => apiService.fetchDriverReviews(any()),
+          () => biddingDataSource.fetchDriverReviews(any()),
         ).thenAnswer((_) async => []);
-        return _makeBloc(
+        return _makeBookingBloc(
           driverRepo: driverRepo,
           bidService: bidService,
-          apiService: apiService,
+          biddingDataSource: biddingDataSource,
         );
       },
       act: (bloc) => bloc.add(
@@ -127,10 +128,10 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer((_) async => const Right([]));
-        return _makeBloc(
+        return _makeBookingBloc(
           driverRepo: driverRepo,
           bidService: bidService,
-          apiService: apiService,
+          biddingDataSource: biddingDataSource,
         );
       },
       act: (bloc) => bloc.add(
@@ -157,10 +158,10 @@ void main() {
         ).thenAnswer(
           (_) async => const Left(ServerFailure('connection refused')),
         );
-        return _makeBloc(
+        return _makeBookingBloc(
           driverRepo: driverRepo,
           bidService: bidService,
-          apiService: apiService,
+          biddingDataSource: biddingDataSource,
         );
       },
       act: (bloc) => bloc.add(
@@ -176,10 +177,10 @@ void main() {
   group('BookingBloc — CancelBookingEvent', () {
     blocTest<BookingBloc, BookingState>(
       'emits BookingCanceled and calls cancelSession on the bid service',
-      build: () => _makeBloc(
+      build: () => _makeBookingBloc(
         driverRepo: driverRepo,
         bidService: bidService,
-        apiService: apiService,
+        biddingDataSource: biddingDataSource,
       ),
       seed: () => FindingNearestDriver(),
       act: (bloc) => bloc.add(const CancelBookingEvent()),
@@ -191,10 +192,10 @@ void main() {
   group('BookingBloc — UpdateOffersEvent', () {
     blocTest<BookingBloc, BookingState>(
       'emits BookingOffersReceived when current state is BookingSearching',
-      build: () => _makeBloc(
+      build: () => _makeBookingBloc(
         driverRepo: driverRepo,
         bidService: bidService,
-        apiService: apiService,
+        biddingDataSource: biddingDataSource,
       ),
       // UpdateOffersEvent only emits when in BookingSearching or BookingOffersReceived.
       seed: () => const BookingSearching(isDirect: false),
@@ -215,10 +216,10 @@ void main() {
 
     blocTest<BookingBloc, BookingState>(
       'does not emit when current state is BookingInitial (event is silently dropped)',
-      build: () => _makeBloc(
+      build: () => _makeBookingBloc(
         driverRepo: driverRepo,
         bidService: bidService,
-        apiService: apiService,
+        biddingDataSource: biddingDataSource,
       ),
       act: (bloc) => bloc.add(
         const UpdateOffersEvent([

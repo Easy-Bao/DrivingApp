@@ -34,7 +34,7 @@ class _InboxScreenState extends State<InboxScreen> {
         return;
       }
 
-      final rawNotifications = await Modular.get<PassengerApiService>()
+      final rawNotifications = await Modular.get<PassengerRemoteDataSource>()
           .fetchNotifications(passengerId);
       final List<NotificationModel> list = [];
 

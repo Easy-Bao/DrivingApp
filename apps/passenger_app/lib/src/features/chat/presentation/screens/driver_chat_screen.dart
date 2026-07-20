@@ -44,7 +44,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
     try {
-      final res = await Modular.get<PassengerApiService>().getRideStatus(rId);
+      final res = await Modular.get<BiddingRemoteDataSource>().getRideStatus(rId);
       if (res != null) {
         final status = res['status'] as String?;
         if (status == 'completed' ||

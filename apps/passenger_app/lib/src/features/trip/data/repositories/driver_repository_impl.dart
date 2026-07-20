@@ -4,10 +4,10 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_services/passenger_services.dart';
 
 class DriverRepositoryImpl implements DriverRepository {
-  final PassengerApiService _apiService;
+  final BiddingRemoteDataSource _biddingDataSource;
 
-  DriverRepositoryImpl({required PassengerApiService apiService})
-    : _apiService = apiService;
+  DriverRepositoryImpl({required BiddingRemoteDataSource biddingDataSource})
+    : _biddingDataSource = biddingDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {
@@ -36,7 +36,7 @@ class DriverRepositoryImpl implements DriverRepository {
     required double lng,
   }) async {
     try {
-      final rawList = await _apiService.fetchOnlineDrivers();
+      final rawList = await _biddingDataSource.fetchOnlineDrivers();
       return Right(_processNearbyDrivers(rawList, lat, lng));
     } catch (error) {
       return Left(_mapExceptionToFailure(error));

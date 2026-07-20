@@ -16,7 +16,7 @@ import 'package:passenger_app/src/features/auth/presentation/screens/onboarding_
 import 'package:passenger_app/src/features/auth/presentation/screens/signin_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/screens/signup_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/screens/verify_otp_screen.dart';
-import 'package:passenger_services/passenger_services.dart';
+import 'package:passenger_services/passenger_services.dart' as ps;
 import 'package:session_service/session_service.dart';
 import 'package:shared_ui/transitions/passenger_transitions.dart';
 
@@ -24,7 +24,7 @@ class AuthModule extends Module {
   @override
   void binds(Injector i) {
     i.addLazySingleton<AuthRemoteDataSource>(
-      (i) => AuthRemoteDataSourceImpl(i.get<PassengerApiService>()),
+      (i) => AuthRemoteDataSourceImpl(i.get<ps.AuthRemoteDataSource>()),
     );
     i.addLazySingleton<AuthRepository>(
       (i) => AuthRepositoryImpl(

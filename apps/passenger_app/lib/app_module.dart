@@ -29,11 +29,37 @@ class AppModule extends Module {
           sessionService: i.get<SecureSessionService>(),
         ),
       )
-      ..addLazySingleton<PassengerApiService>(
-        (i) => PassengerApiService(
+      ..addLazySingleton<AuthRemoteDataSource>(
+        (i) => AuthRemoteDataSource(
+          baseUrl: EnvironmentConfig.passengerServiceUri,
+          dio: i.get<Dio>(),
+        ),
+      )
+      ..addLazySingleton<PassengerRemoteDataSource>(
+        (i) => PassengerRemoteDataSource(
           baseUrl: EnvironmentConfig.passengerServiceUri,
           sessionService: i.get<SecureSessionService>(),
           dio: i.get<Dio>(),
+        ),
+      )
+      ..addLazySingleton<BiddingRemoteDataSource>(
+        (i) => BiddingRemoteDataSource(
+          baseUrl: EnvironmentConfig.passengerServiceUri,
+          sessionService: i.get<SecureSessionService>(),
+          dio: i.get<Dio>(),
+        ),
+      )
+      ..addLazySingleton<AuthRepository>(
+        (i) => AuthRepositoryImpl(remoteDataSource: i.get<AuthRemoteDataSource>()),
+      )
+      ..addLazySingleton<PassengerProfileRepository>(
+        (i) => PassengerProfileRepositoryImpl(
+          remoteDataSource: i.get<PassengerRemoteDataSource>(),
+        ),
+      )
+      ..addLazySingleton<BiddingRepository>(
+        (i) => BiddingRepositoryImpl(
+          remoteDataSource: i.get<BiddingRemoteDataSource>(),
         ),
       );
   }

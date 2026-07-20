@@ -41,10 +41,10 @@ class ProfileState extends Equatable {
 }
 
 class ProfileCubit extends Cubit<ProfileState> {
-  final PassengerApiService _apiService;
+  final PassengerProfileRepository _profileRepository;
 
-  ProfileCubit({required PassengerApiService apiService})
-    : _apiService = apiService,
+  ProfileCubit({required PassengerProfileRepository profileRepository})
+    : _profileRepository = profileRepository,
       super(const ProfileState());
 
   Future<void> loadProfile() async {
@@ -68,25 +68,30 @@ class ProfileCubit extends Cubit<ProfileState> {
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isEmpty) return;
 
-      final profile = await _apiService.getPassengerProfile(passengerId);
-      if (profile != null) {
-        final name = profile['name'] as String? ?? cachedName;
-        final phone = profile['phone'] as String? ?? cachedPhone;
-        final email = profile['email'] as String? ?? cachedEmail;
+      final result = await _profileRepository.getPassengerProfile(passengerId);
+      await result.fold(
+        (failure) async {
+          emit(state.copyWith(isLoading: false, errorMessage: failure.message));
+        },
+        (profile) async {
+          final name = profile['name'] as String? ?? cachedName;
+          final phone = profile['phone'] as String? ?? cachedPhone;
+          final email = profile['email'] as String? ?? cachedEmail;
 
-        await prefs.setString('passenger_name', name);
-        await prefs.setString('passenger_phone', phone);
-        await prefs.setString('passenger_email', email);
+          await prefs.setString('passenger_name', name);
+          await prefs.setString('passenger_phone', phone);
+          await prefs.setString('passenger_email', email);
 
-        emit(
-          ProfileState(
-            name: name,
-            phone: phone,
-            email: email,
-            isLoading: false,
-          ),
-        );
-      }
+          emit(
+            ProfileState(
+              name: name,
+              phone: phone,
+              email: email,
+              isLoading: false,
+            ),
+          );
+        },
+      );
     } catch (error, stackTrace) {
       debugPrint('Error syncing profile values in cubit: $error\n$stackTrace');
       emit(

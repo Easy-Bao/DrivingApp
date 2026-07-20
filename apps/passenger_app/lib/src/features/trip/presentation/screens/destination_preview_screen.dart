@@ -67,17 +67,17 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
     if (route != null) {
       final mins = route.estimatedTime.inMinutes.toDouble();
       final estimates = await Future.wait([
-        Modular.get<PassengerApiService>().fetchFareEstimate(
+        Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
           rideType: 'Solo Ride',
           distanceKm: route.distanceKm,
           durationMinutes: mins,
         ),
-        Modular.get<PassengerApiService>().fetchFareEstimate(
+        Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
           rideType: 'Share-Bao',
           distanceKm: route.distanceKm,
           durationMinutes: mins,
         ),
-        Modular.get<PassengerApiService>().fetchFareEstimate(
+        Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
           rideType: 'Bao Premium',
           distanceKm: route.distanceKm,
           durationMinutes: mins,
