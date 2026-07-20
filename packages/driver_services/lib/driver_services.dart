@@ -1,4 +1,5 @@
-/// TODO: FEATURE-FIRST PACKAGE (FFP) MIGRATION
+/// FEATURE-FIRST PACKAGE (FFP) ARCHITECTURE & SERVICES
+library;
 ///
 /// 1. [CORE UTILS] Create a `src/core/network/` folder. Extract the shared HTTP client configurations
 ///    and interceptors into `base_api_client.dart` to decouple core engine config from features.

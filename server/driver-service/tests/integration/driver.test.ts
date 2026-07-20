@@ -30,7 +30,7 @@ describe('Driver Service Integration Tests', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'Test Driver',
-        email: 'driver@test.com',
+        email: 'xdemocrito1@gmail.com',
         phone: '09111111111',
         vehicleType: 'Bao Bao',
         plateNumber: 'XYZ 9999',

@@ -44,11 +44,17 @@ class BackgroundTelemetryService {
       unawaited(service.stopSelf());
     });
 
-    Timer.periodic(const Duration(seconds: 10), (timer) async {
+    const telemetrySyncIntervalSeconds = 10;
+    Timer.periodic(const Duration(seconds: telemetrySyncIntervalSeconds), (timer) async {
       if (service is AndroidServiceInstance) {
-        //TODO: Make configurable and no empty block
-        if (await service.isForegroundService() == true) {
-          // background geohash update loop goes here
+        final isForeground = await service.isForegroundService();
+        if (isForeground) {
+          unawaited(
+            service.setForegroundNotificationInfo(
+              title: 'Telemetry Active',
+              content: 'Driver background location telemetry active',
+            ),
+          );
         }
       }
     });

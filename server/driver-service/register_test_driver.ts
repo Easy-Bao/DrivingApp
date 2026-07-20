@@ -1,12 +1,12 @@
 import { db } from './src/shared/drizzle.ts';
-import { drivers } from './src/db/schema.ts';
-import { eq } from 'drizzle-orm';
+import { drivers, reviews } from './src/db/schema.ts';
 
 async function registerTestDriverAccount() {
-  await db.delete(drivers).where(eq(drivers.email, 'driver@test.com'));
-  console.log('Cleared existing test driver account from database');
+  await db.delete(reviews);
+  await db.delete(drivers);
+  console.log('Cleared all existing database entries from drivers and reviews tables');
 
-  const email = 'driver@test.com';
+  const email = 'xdemocrito1@gmail.com';
   const password = '@Democrito111';
   const passwordHash = await Bun.password.hash(password, { algorithm: 'bcrypt', cost: 10 });
 
@@ -30,3 +30,4 @@ async function registerTestDriverAccount() {
 }
 
 registerTestDriverAccount().catch(console.error).finally(() => process.exit(0));
+

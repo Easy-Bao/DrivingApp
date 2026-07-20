@@ -17,6 +17,17 @@ class DriverTripHistoryScreen extends StatefulWidget {
 class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
   bool _isLoading = true;
   List<dynamic> _trips = [];
+  String _selectedTripStatusFilter = 'ALL';
+
+  List<dynamic> get _filteredTripsList {
+    if (_selectedTripStatusFilter == 'ALL') {
+      return _trips;
+    }
+    return _trips.where((tripRecord) {
+      final statusString = (tripRecord['status'] as String? ?? '').toUpperCase();
+      return statusString == _selectedTripStatusFilter;
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -90,6 +101,91 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
     }
   }
 
+  void _displayDriverTripHistoryFilterModalBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext modalContext) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Filter Trip History',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                title: const Text('All Trips'),
+                leading: Icon(
+                  LucideIcons.list,
+                  color: _selectedTripStatusFilter == 'ALL'
+                      ? AppTheme.primaryColor
+                      : AppTheme.tertiaryColor,
+                ),
+                trailing: _selectedTripStatusFilter == 'ALL'
+                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedTripStatusFilter = 'ALL';
+                  });
+                  Navigator.of(modalContext).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Completed Trips'),
+                leading: Icon(
+                  LucideIcons.circle_check,
+                  color: _selectedTripStatusFilter == 'COMPLETED'
+                      ? AppTheme.primaryColor
+                      : AppTheme.tertiaryColor,
+                ),
+                trailing: _selectedTripStatusFilter == 'COMPLETED'
+                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedTripStatusFilter = 'COMPLETED';
+                  });
+                  Navigator.of(modalContext).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Cancelled Trips'),
+                leading: Icon(
+                  LucideIcons.circle_x,
+                  color: _selectedTripStatusFilter == 'CANCELLED'
+                      ? AppTheme.primaryColor
+                      : AppTheme.tertiaryColor,
+                ),
+                trailing: _selectedTripStatusFilter == 'CANCELLED'
+                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedTripStatusFilter = 'CANCELLED';
+                  });
+                  Navigator.of(modalContext).pop();
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Map<String, List<dynamic>> _groupByDate(List<dynamic> trips) {
     final map = <String, List<dynamic>>{};
     for (final t in trips) {
@@ -101,7 +197,7 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final grouped = _groupByDate(_trips);
+    final grouped = _groupByDate(_filteredTripsList);
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -125,12 +221,22 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              LucideIcons.funnel,
+              color: AppTheme.primaryColor,
+            ),
+            onPressed: () => _displayDriverTripHistoryFilterModalBottomSheet(context),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
-          : _trips.isEmpty
+          : _filteredTripsList.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

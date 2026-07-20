@@ -35,12 +35,22 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
   ];
   List<RideHistoryModel> _retrievedRidesList = [];
   bool _isActivityDataLoading = true;
+  String _selectedStatusFilter = 'ALL';
 
   String _networkErrorMessage = '';
 
+  List<RideHistoryModel> get _filteredRidesList {
+    if (_selectedStatusFilter == 'ALL') {
+      return _retrievedRidesList;
+    }
+    return _retrievedRidesList.where((rideRecord) {
+      return rideRecord.status.toUpperCase() == _selectedStatusFilter;
+    }).toList();
+  }
+
   Map<String, List<RideHistoryModel>> get _groupedActivityRides {
     final Map<String, List<RideHistoryModel>> groupedMap = {};
-    for (final ride in _retrievedRidesList) {
+    for (final ride in _filteredRidesList) {
       final groupingDateKey = _getGroupingDateKey(ride);
       if (!groupedMap.containsKey(groupingDateKey)) {
         groupedMap[groupingDateKey] = [];
@@ -48,6 +58,93 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
       groupedMap[groupingDateKey]!.add(ride);
     }
     return groupedMap;
+  }
+
+  void _displayTripHistoryFilterModalBottomSheet(BuildContext context) {
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext modalContext) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Filter Trip History',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                title: const Text('All Trips'),
+                leading: Icon(
+                  LucideIcons.list,
+                  color: _selectedStatusFilter == 'ALL'
+                      ? AppTheme.primaryColor
+                      : AppTheme.tertiaryColor,
+                ),
+                trailing: _selectedStatusFilter == 'ALL'
+                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedStatusFilter = 'ALL';
+                  });
+                  Navigator.of(modalContext).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Completed Trips'),
+                leading: Icon(
+                  LucideIcons.circle_check,
+                  color: _selectedStatusFilter == 'COMPLETED'
+                      ? AppTheme.primaryColor
+                      : AppTheme.tertiaryColor,
+                ),
+                trailing: _selectedStatusFilter == 'COMPLETED'
+                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedStatusFilter = 'COMPLETED';
+                  });
+                  Navigator.of(modalContext).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Cancelled Trips'),
+                leading: Icon(
+                  LucideIcons.circle_x,
+                  color: _selectedStatusFilter == 'CANCELLED'
+                      ? AppTheme.primaryColor
+                      : AppTheme.tertiaryColor,
+                ),
+                trailing: _selectedStatusFilter == 'CANCELLED'
+                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedStatusFilter = 'CANCELLED';
+                  });
+                  Navigator.of(modalContext).pop();
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    ),
+    );
   }
 
   @override
@@ -63,7 +160,9 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
             LucideIcons.arrow_left,
             color: AppTheme.primaryColor,
           ),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            context.pop();
+          },
         ),
         title: const Text(
           'Trip history',
@@ -81,7 +180,7 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
               color: AppTheme.primaryColor,
             ),
             onPressed: () {
-              // TODO: implement filter action
+              _displayTripHistoryFilterModalBottomSheet(context);
             },
           ),
           const SizedBox(width: 8),
@@ -105,7 +204,7 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
                 ),
               ),
             )
-          : _retrievedRidesList.isEmpty
+          : _filteredRidesList.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

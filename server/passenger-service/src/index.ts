@@ -1,11 +1,13 @@
 import { Hono } from 'hono';
-import { passengerRouter } from './features/passenger/routes/passenger.routes.ts';
+import { passengerRouter } from './features/routes/passenger.routes.ts';
 import { globalErrorHandler } from './shared/middleware/error.ts';
+import { createRateLimiter } from './shared/middleware/rate_limiter.ts';
 
 const port = parseInt(process.env.PORT || '8081', 10);
 
 const app = new Hono();
 
+app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 60 }));
 app.onError(globalErrorHandler);
 
 app.get('/', (c) => c.text('Passenger service active'));

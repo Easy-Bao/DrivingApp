@@ -9,17 +9,16 @@ import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
 
 class ChatRepositoryImpl implements ChatRepository {
-  final ChatRemoteDataSource _remoteDataSource;
-  final String _currentUserId;
+  final ChatRemoteDataSource remoteDataSource;
+  final String currentUserId;
 
   ChatRepositoryImpl({
-    required ChatRemoteDataSource remoteDataSource,
-    required String currentUserId,
-  })  : _remoteDataSource = remoteDataSource,
-        _currentUserId = currentUserId;
+    required this.remoteDataSource,
+    required this.currentUserId,
+  });
 
   @override
-  bool get isSessionConnected => _remoteDataSource.isWebSocketConnected;
+  bool get isSessionConnected => remoteDataSource.isWebSocketConnected;
 
   @override
   Future<Either<Failure, void>> establishChatConnection({
@@ -27,7 +26,7 @@ class ChatRepositoryImpl implements ChatRepository {
     required Uri chatUri,
   }) async {
     try {
-      await _remoteDataSource.establishWebSocketConnection(chatUri);
+      await remoteDataSource.establishWebSocketConnection(chatUri);
       return const Right(null);
     } catch (error) {
       return Left(NetworkFailure('Failed to connect to chat server: $error'));
@@ -37,7 +36,7 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<Either<Failure, void>> terminateChatConnection() async {
     try {
-      await _remoteDataSource.terminateWebSocketConnection();
+      await remoteDataSource.terminateWebSocketConnection();
       return const Right(null);
     } catch (error) {
       return Left(ServerFailure('Failed to disconnect from chat: $error'));
@@ -52,7 +51,7 @@ class ChatRepositoryImpl implements ChatRepository {
         return const Left(ValidationFailure('Message text cannot be empty.'));
       }
       final payload = jsonEncode({'text': normalizedText});
-      _remoteDataSource.sendWebSocketChatMessage(payload);
+      remoteDataSource.sendWebSocketChatMessage(payload);
       return const Right(null);
     } catch (error) {
       return Left(NetworkFailure('Failed to send message: $error'));
@@ -61,7 +60,7 @@ class ChatRepositoryImpl implements ChatRepository {
 
   @override
   Stream<Either<Failure, ChatEvent>> get chatEventsStream {
-    return _remoteDataSource.webSocketEventStream.transform(
+    return remoteDataSource.webSocketEventStream.transform(
       StreamTransformer<String, Either<Failure, ChatEvent>>.fromHandlers(
         handleData: (data, sink) {
           try {
@@ -76,7 +75,7 @@ class ChatRepositoryImpl implements ChatRepository {
                   if (item is Map<String, dynamic>) {
                     final model = ChatMessageModel.fromJson(item);
                     messageList.add(
-                      model.toEntity(currentUserId: _currentUserId),
+                      model.toEntity(currentUserId: currentUserId),
                     );
                   }
                 }
@@ -84,7 +83,7 @@ class ChatRepositoryImpl implements ChatRepository {
               sink.add(Right(ChatHistoryReceived(messageList)));
             } else if (eventType == 'message') {
               final model = ChatMessageModel.fromJson(jsonMap);
-              final entity = model.toEntity(currentUserId: _currentUserId);
+              final entity = model.toEntity(currentUserId: currentUserId);
               sink.add(Right(ChatMessageReceived(entity)));
             } else if (eventType == 'locked') {
               final reason = jsonMap['reason'] as String? ??

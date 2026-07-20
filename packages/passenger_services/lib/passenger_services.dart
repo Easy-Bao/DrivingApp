@@ -1,4 +1,5 @@
-/// TODO: PUBLIC EXPORT LAYER MIGRATION (passenger_services.dart)
+/// PUBLIC EXPORT LAYER & DOMAIN CONTRACTS (passenger_services.dart)
+library;
 ///
 /// 1. [ENCAPSULATION] Clean up the public exports. Remove references to the old
 ///    monolithic `PassengerApiService` and `BidSessionService` once they are broken down.

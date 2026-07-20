@@ -6,7 +6,11 @@ import { rooms } from '../../src/db/schema.ts';
 let server: any;
 
 beforeAll(async () => {
-  server = Bun.serve(chatApp);
+  server = Bun.serve({
+    fetch: chatApp.fetch,
+    websocket: chatApp.websocket,
+    port: 0,
+  });
   await db.delete(rooms);
 });
 
@@ -16,7 +20,7 @@ afterAll(async () => {
 
 describe('Chat Service', () => {
   test('POST /chat/rooms - registers a new room', async () => {
-    const res = await fetch('http://localhost:8086/chat/rooms', {
+    const res = await fetch(`http://localhost:${server.port}/chat/rooms`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -31,7 +35,7 @@ describe('Chat Service', () => {
   });
 
   test('WebSocket messaging and history', async () => {
-    const ws1 = new WebSocket('ws://localhost:8086/chat/ws?roomId=test-room-123&userId=driver-id-abc');
+    const ws1 = new WebSocket(`ws://localhost:${server.port}/chat/ws?roomId=test-room-123&userId=driver-id-abc`);
 
     const historyPromise = new Promise<any>((resolve) => {
       ws1.onmessage = (event) => {
@@ -51,7 +55,7 @@ describe('Chat Service', () => {
     expect(history.messages).toBeDefined();
     expect(Array.isArray(history.messages)).toBe(true);
 
-    const ws2 = new WebSocket('ws://localhost:8086/chat/ws?roomId=test-room-123&userId=passenger-id-xyz');
+    const ws2 = new WebSocket(`ws://localhost:${server.port}/chat/ws?roomId=test-room-123&userId=passenger-id-xyz`);
     const ws2Open = new Promise<void>((resolve) => {
       ws2.onopen = () => resolve();
     });

@@ -1,7 +1,7 @@
 export 'src/themes/app_themes.dart';
 export 'src/transitions/custom_page_transition.dart';
 export 'src/widgets/custom_toast.dart';
-/// TODO: SHARED_UI PACKAGE CLEANUP & REFACTOR
+/// SHARED UI SYSTEM & PUBLIC COMPONENTS
 ///
 /// 1. [ENCAPSULATION] Fix the misplaced `transitions/` directory. The folder containing 
 ///    `driver_transitions.dart` and `passenger_transitions.dart` is sitting directly under `lib/`. 

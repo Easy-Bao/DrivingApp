@@ -5,7 +5,6 @@ import 'package:chat_service/src/features/chat/domain/entities/chat_event.dart';
 import 'package:chat_service/src/features/chat/domain/entities/chat_message.dart';
 import 'package:chat_service/src/features/chat/domain/repositories/chat_repository.dart';
 
-/// Presentation-facing service facade coordinating remote connections, histories, and listeners.
 class ChatService {
   final ChatRepository _chatRepository;
   final List<ChatMessage> _chatHistoryMessages = [];
@@ -99,13 +98,11 @@ class ChatService {
     );
   }
 
-  /// Sends a message to the active chat room session.
   void sendMessageToRoom(String text) {
     if (_isRoomLocked) return;
     unawaited(_chatRepository.sendChatMessage(text));
   }
 
-  /// Closes the active chat room connection and stops updates.
   Future<void> disconnectChatRoom() async {
     await _chatEventsSubscription?.cancel();
     await _chatRepository.terminateChatConnection();

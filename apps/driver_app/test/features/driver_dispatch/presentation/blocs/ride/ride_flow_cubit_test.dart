@@ -48,7 +48,7 @@ void main() {
       (_) async => const DriverProfile(
         id: 'test-driver-id',
         name: 'Test Driver',
-        email: 'driver@test.com',
+        email: 'xdemocrito1@gmail.com',
         vehicleType: 'Bao Bao',
         plateNumber: 'ABC 1234',
         rating: '4.9',

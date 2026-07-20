@@ -5,14 +5,16 @@
  */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { biddingRouter } from './features/bidding/routes/bidding.routes.ts';
+import { biddingRouter } from './features/routes/bidding.routes.ts';
 import { globalErrorHandler } from './shared/middleware/error.ts';
-import { DrizzleBiddingRepository } from './features/bidding/repositories/bidding.repository.ts';
+import { DrizzleBiddingRepository } from './features/repositories/bidding.repository.ts';
 import { Logger } from './shared/logger/logger.ts';
+import { createRateLimiter } from './shared/middleware/rate_limiter.ts';
 
 const app = new Hono();
 
 app.use('*', cors());
+app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 60 }));
 app.onError(globalErrorHandler);
 
 app.route('/bids', biddingRouter);

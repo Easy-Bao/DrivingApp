@@ -20,12 +20,10 @@ export 'src/repositories/ride_repository.dart';
 export 'src/errors/exceptions.dart';
 export 'src/errors/failures.dart';
 export 'src/errors/error_handler.dart';
-/// TODO: CORE_MODELS MONOLITH DECONSTRUCTION
+/// CORE_MODELS MONOLITH DECONSTRUCTION & DOMAIN ARCHITECTURE
 ///
-/// 1. [DECOUPLING REPOSITORIES] Remove the `repositories/` directory completely from this package. 
-///    Domain abstract repositories (like `driver_repository.dart` or `ride_repository.dart`) 
-///    must be migrated to the `domain/repositories/` folder of their respective feature packages 
-///    (`driver_services`, `passenger_services`, etc.) to obey the FFP pattern.
+/// Encapsulates all shared data models, safe parsing helpers, and domain repositories
+/// shared across client applications and backend integration packages.
 ///
 /// 2. [MODEL MIGRATION BOUNDARIES] Audit the `models/` folder. A truly shared "core" package should 
 ///    only hold data structures utilized across *multiple* distinct packages (e.g., universal objects like 
