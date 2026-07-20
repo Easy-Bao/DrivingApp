@@ -3,11 +3,14 @@ import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/auth_repository.dart';
-import 'package:passenger_app/src/features/auth/domain/usecases/authenticate_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/register_use_case.dart';
+import 'package:passenger_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
+import 'package:passenger_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
+import 'package:passenger_app/src/features/auth/presentation/cubits/forgot_password_cubit.dart';
 import 'package:passenger_app/src/features/auth/presentation/cubits/signin_cubit.dart';
 import 'package:passenger_app/src/features/auth/presentation/cubits/signup_cubit.dart';
+import 'package:passenger_app/src/features/auth/presentation/cubits/verify_otp_cubit.dart';
 import 'package:passenger_app/src/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/screens/onboarding_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/screens/signin_screen.dart';
@@ -29,8 +32,8 @@ class AuthModule extends Module {
         secureSessionService: i.get<SecureSessionService>(),
       ),
     );
-    i.addLazySingleton<AuthenticateUseCase>(
-      (i) => AuthenticateUseCase(i.get<AuthRepository>()),
+    i.addLazySingleton<SignInUseCase>(
+      (i) => SignInUseCase(i.get<AuthRepository>()),
     );
     i.addLazySingleton<RegisterUseCase>(
       (i) => RegisterUseCase(i.get<AuthRepository>()),
@@ -38,14 +41,23 @@ class AuthModule extends Module {
     i.addLazySingleton<VerifyOtpUseCase>(
       (i) => VerifyOtpUseCase(i.get<AuthRepository>()),
     );
+    i.addLazySingleton<ResetPasswordUseCase>(
+      (i) => ResetPasswordUseCase(i.get<AuthRepository>()),
+    );
     i.add<SignInCubit>(
-      (i) => SignInCubit(i.get<AuthenticateUseCase>()),
+      (i) => SignInCubit(i.get<SignInUseCase>()),
     );
     i.add<SignUpCubit>(
       (i) => SignUpCubit(
         registerUseCase: i.get<RegisterUseCase>(),
         verifyOtpUseCase: i.get<VerifyOtpUseCase>(),
       ),
+    );
+    i.add<VerifyOtpCubit>(
+      (i) => VerifyOtpCubit(i.get<VerifyOtpUseCase>()),
+    );
+    i.add<ForgotPasswordCubit>(
+      (i) => ForgotPasswordCubit(i.get<ResetPasswordUseCase>()),
     );
   }
 

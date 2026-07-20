@@ -1,11 +1,11 @@
-import 'package:driver_app/src/features/auth/domain/usecases/authenticate_use_case.dart';
+import 'package:driver_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:driver_app/src/features/auth/presentation/cubits/signin_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SignInCubit extends Cubit<SignInState> {
-  final AuthenticateUseCase _authenticateUseCase;
+  final SignInUseCase _signInUseCase;
 
-  SignInCubit(this._authenticateUseCase) : super(const SignInInitial());
+  SignInCubit(this._signInUseCase) : super(const SignInInitial());
 
   Future<void> signIn(String email, String password) async {
     final normalizedEmail = email.trim();
@@ -18,7 +18,7 @@ class SignInCubit extends Cubit<SignInState> {
 
     emit(const SignInLoading());
 
-    final result = await _authenticateUseCase.execute(
+    final result = await _signInUseCase.execute(
       email: normalizedEmail,
       password: normalizedPassword,
     );

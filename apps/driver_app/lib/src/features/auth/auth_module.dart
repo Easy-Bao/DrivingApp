@@ -2,7 +2,9 @@ import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:driver_app/src/features/auth/domain/repositories/auth_repository.dart';
-import 'package:driver_app/src/features/auth/domain/usecases/authenticate_use_case.dart';
+import 'package:driver_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
+import 'package:driver_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
+import 'package:driver_app/src/features/auth/presentation/cubits/forgot_password_cubit.dart';
 import 'package:driver_app/src/features/auth/presentation/cubits/signin_cubit.dart';
 import 'package:driver_app/src/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:driver_app/src/features/auth/presentation/screens/signin_screen.dart';
@@ -23,11 +25,17 @@ class AuthModule extends Module {
         secureSessionService: i.get<SecureSessionService>(),
       ),
     );
-    i.addLazySingleton<AuthenticateUseCase>(
-      (i) => AuthenticateUseCase(i.get<AuthRepository>()),
+    i.addLazySingleton<SignInUseCase>(
+      (i) => SignInUseCase(i.get<AuthRepository>()),
+    );
+    i.addLazySingleton<ResetPasswordUseCase>(
+      (i) => ResetPasswordUseCase(i.get<AuthRepository>()),
     );
     i.add<SignInCubit>(
-      (i) => SignInCubit(i.get<AuthenticateUseCase>()),
+      (i) => SignInCubit(i.get<SignInUseCase>()),
+    );
+    i.add<ForgotPasswordCubit>(
+      (i) => ForgotPasswordCubit(i.get<ResetPasswordUseCase>()),
     );
   }
 

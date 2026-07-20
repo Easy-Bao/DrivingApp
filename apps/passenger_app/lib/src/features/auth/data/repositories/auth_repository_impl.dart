@@ -110,4 +110,19 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(ServerFailure('Verification failed. Please try again.'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> resetPassword({
+    required String email,
+  }) async {
+    try {
+      final success = await _remoteDataSource.resetPassword(email: email);
+      if (!success) {
+        return const Left(ServerFailure('Failed to send reset link. Please check email.'));
+      }
+      return const Right(null);
+    } catch (error) {
+      return const Left(ServerFailure('Failed to send reset link. Please try again.'));
+    }
+  }
 }

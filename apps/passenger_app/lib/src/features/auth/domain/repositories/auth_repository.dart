@@ -20,4 +20,8 @@ abstract class AuthRepository {
     required String code,
     required String password,
   });
+
+  Future<Either<Failure, void>> resetPassword({
+    required String email,
+  });
 }

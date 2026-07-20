@@ -6,6 +6,10 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
   });
+
+  Future<void> resetPassword({
+    required String email,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -30,5 +34,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
     }
     return result;
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 600));
   }
 }

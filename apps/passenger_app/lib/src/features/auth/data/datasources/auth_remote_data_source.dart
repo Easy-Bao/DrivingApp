@@ -18,6 +18,10 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String code,
   });
+
+  Future<bool> resetPassword({
+    required String email,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -71,5 +75,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String code,
   }) async {
     return _passengerApiService.verifyOtp(email: email, code: code);
+  }
+
+  @override
+  Future<bool> resetPassword({
+    required String email,
+  }) async {
+    return _passengerApiService.forgotPassword(email: email);
   }
 }
