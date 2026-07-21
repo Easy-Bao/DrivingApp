@@ -1,0 +1,11 @@
+targets:
+  $default:
+    builders:
+      source_gen|combining_builder:
+        options:
+          build_extensions:
+            '^lib/src/features/fare/domain/entities/{{}}.dart': 'lib/src/features/fare/domain/entities/generated/{{}}.g.dart'
+      freezed|freezed:
+        options:
+          build_extensions:
+            '^lib/src/features/fare/domain/entities/{{}}.dart': 'lib/src/features/fare/domain/entities/generated/{{}}.freezed.dart'
