@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'location_service.dart';
-import 'map_native_service.dart';
+import 'package:location_service/src/features/geolocation/data/datasources/location_datasource.dart';
+import 'package:location_service/src/features/map/domain/repositories/map_native_service.dart';
 
 /// Simple representation of geographical coordinates (latitude and longitude).
 class LatLng {

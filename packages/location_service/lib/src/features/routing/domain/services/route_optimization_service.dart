@@ -1,5 +1,5 @@
 import 'package:core_models/core_models.dart';
-import '../map_native_service_impl.dart';
+import 'package:location_service/src/features/map/data/repositories/map_native_service_impl.dart';
 
 /// Service to calculate the optimal route traversal order (TSP) under constraints.
 class RouteOptimizationService {

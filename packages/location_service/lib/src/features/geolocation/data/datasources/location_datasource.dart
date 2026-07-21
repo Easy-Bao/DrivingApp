@@ -1,5 +1,5 @@
 import 'package:geolocator/geolocator.dart';
-import 'map_native_service.dart';
+import 'package:location_service/src/features/map/domain/repositories/map_native_service.dart';
 
 class LocationService {
   LocationService._();

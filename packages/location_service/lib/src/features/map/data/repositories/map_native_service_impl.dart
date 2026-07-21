@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import 'package:core_models/core_models.dart';
-import 'map_native_service.dart';
+import 'package:location_service/src/features/map/domain/repositories/map_native_service.dart';
 
 class MapNativeServiceImpl implements MapNativeService {
   final Dio _clientDio;
