@@ -13,4 +13,5 @@ export const SERVICE_REGISTRY = {
   telemetry:  requireEnvVar('TELEMETRY_SERVICE_URL'),
   bidding:    requireEnvVar('BIDDING_SERVICE_URL'),
   chat:       requireEnvVar('CHAT_SERVICE_URL'),
+  fares:      requireEnvVar('FARE_SERVICE_URL'),
 } as const;

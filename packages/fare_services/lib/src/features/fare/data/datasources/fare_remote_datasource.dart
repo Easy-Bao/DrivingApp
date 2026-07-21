@@ -6,6 +6,19 @@ abstract class FareRemoteDataSource {
     required double durationMinutes,
     String rideType = 'Solo Ride',
   });
+
+  Future<Map<String, dynamic>> fetchFareEstimates({
+    required double distanceKm,
+    double durationMinutes = 0.0,
+  });
+
+  Future<Map<String, dynamic>> calculateFinalFare({
+    required String rideId,
+    required double distanceKm,
+    required double durationMinutes,
+    String rideType = 'Solo Ride',
+    double surgeMultiplier = 1.0,
+  });
 }
 
 class FareRemoteDataSourceImpl extends BaseApiClient
@@ -19,11 +32,47 @@ class FareRemoteDataSourceImpl extends BaseApiClient
     String rideType = 'Solo Ride',
   }) async {
     final response = await clientDio.post(
-      '/bids/fare',
+      '/fares/estimate',
       data: {
-        'ride_type': rideType,
-        'distance_km': distanceKm,
-        'duration_minutes': durationMinutes,
+        'distanceKm': distanceKm,
+        'durationMinutes': durationMinutes,
+        'rideType': rideType,
+      },
+    );
+    return parseMapResponse(response, 200);
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchFareEstimates({
+    required double distanceKm,
+    double durationMinutes = 0.0,
+  }) async {
+    final response = await clientDio.post(
+      '/fares/estimate',
+      data: {
+        'distanceKm': distanceKm,
+        'durationMinutes': durationMinutes,
+      },
+    );
+    return parseMapResponse(response, 200);
+  }
+
+  @override
+  Future<Map<String, dynamic>> calculateFinalFare({
+    required String rideId,
+    required double distanceKm,
+    required double durationMinutes,
+    String rideType = 'Solo Ride',
+    double surgeMultiplier = 1.0,
+  }) async {
+    final response = await clientDio.post(
+      '/fares/calculate-final',
+      data: {
+        'rideId': rideId,
+        'distanceKm': distanceKm,
+        'durationMinutes': durationMinutes,
+        'rideType': rideType,
+        'surgeMultiplier': surgeMultiplier,
       },
     );
     return parseMapResponse(response, 200);

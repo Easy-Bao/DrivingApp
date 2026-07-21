@@ -18,6 +18,31 @@ class MockFareRemoteDataSource implements FareRemoteDataSource {
     }
     return response ?? {};
   }
+
+  @override
+  Future<Map<String, dynamic>> fetchFareEstimates({
+    required double distanceKm,
+    double durationMinutes = 0.0,
+  }) async {
+    if (shouldThrow) {
+      throw Exception('Backend network failure');
+    }
+    return response ?? {};
+  }
+
+  @override
+  Future<Map<String, dynamic>> calculateFinalFare({
+    required String rideId,
+    required double distanceKm,
+    required double durationMinutes,
+    String rideType = 'Solo Ride',
+    double surgeMultiplier = 1.0,
+  }) async {
+    if (shouldThrow) {
+      throw Exception('Backend network failure');
+    }
+    return response ?? {};
+  }
 }
 
 void main() {
