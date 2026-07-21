@@ -1,6 +1,7 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_rating_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_all_activity_screen.dart';
@@ -69,7 +70,7 @@ class ActivityModule {
 
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
-      name: 'PassengerActivity',
+      name: ActivityRoutes.activity,
       'activity',
       child: (context, GoRouterState state) => const PassengerActivityScreen(),
       transition: AppTransitions.none,
