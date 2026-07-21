@@ -1,4 +1,4 @@
-import 'package:session_service/src/secure_session_service.dart';
+import 'package:session_service/src/features/session/data/datasources/secure_session_datasource.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverProfile {

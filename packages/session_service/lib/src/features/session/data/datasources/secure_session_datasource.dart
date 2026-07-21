@@ -6,7 +6,6 @@ class SecureSessionService {
   SecureSessionService({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage();
 
-
   Future<void> writeAuthToken(String token) async {
     await _storage.write(key: 'jwt_token', value: token);
   }

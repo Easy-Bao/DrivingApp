@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:session_service/src/app_environment.dart';
+import 'package:session_service/src/core/config/app_environment.dart';
 
 class EnvironmentConfig {
   EnvironmentConfig._();
