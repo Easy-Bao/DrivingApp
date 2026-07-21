@@ -4,7 +4,7 @@ import { eq, desc } from 'drizzle-orm';
 import { Driver, Review, DriverRepository } from '../entities/driver.types.ts';
 import { CreateDriverRequest } from '../schemas/driver.schema.ts';
 
-export class DrizzleDriverRepository implements DriverRepository {
+export class DriverRepositoryImpl implements DriverRepository {
   async registerDriver(details: CreateDriverRequest): Promise<Driver> {
     const passwordHash = await Bun.password.hash(details.password, { algorithm: 'bcrypt', cost: 10 });
     const [created] = await db.insert(drivers)

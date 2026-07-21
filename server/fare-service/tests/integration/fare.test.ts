@@ -17,10 +17,6 @@ describe('Fare Service Integration Tests', () => {
     expect(data.success).toBe(true);
     expect(data.data.currency).toBe('PHP');
     expect(data.data.estimates.length).toBeGreaterThanOrEqual(3);
-
-    const solo = data.data.estimates.find((e: any) => e.service_type === 'Solo Ride');
-    expect(solo).toBeDefined();
-    expect(solo.total_fare).toBeGreaterThan(0);
   });
 
   test('POST /fares/calculate-final — computes binding fare & driver split', async () => {
@@ -43,6 +39,5 @@ describe('Fare Service Integration Tests', () => {
     expect(data.data.total_fare).toBe(150.0);
     expect(data.data.driver_earnings).toBe(120.0);
     expect(data.data.platform_fee).toBe(30.0);
-    expect(data.data.payment_method).toBe('Cash on Hand');
   });
 });

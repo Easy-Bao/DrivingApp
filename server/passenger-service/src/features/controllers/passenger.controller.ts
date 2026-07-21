@@ -1,10 +1,10 @@
 import { Context } from 'hono';
 import { verify } from 'hono/jwt';
 import { HTTPException } from 'hono/http-exception';
-import { DrizzlePassengerRepository } from '../repositories/passenger.repository.ts';
+import { PassengerRepositoryImpl } from '../repositories/passenger.repository.ts';
 import { PassengerService } from '../services/passenger.service.ts';
 
-const passengerRepository = new DrizzlePassengerRepository();
+const passengerRepository = new PassengerRepositoryImpl();
 const passengerService = new PassengerService(passengerRepository);
 
 export async function handleRegisterPassenger(context: Context) {

@@ -3,7 +3,7 @@ import { bidSessions, driverOffers } from '../../db/schema.ts';
 import { eq, desc, and, lt, gte, ne } from 'drizzle-orm';
 import { BidSession, DriverOffer, BiddingRepository } from '../entities/bidding.types.ts';
 
-export class DrizzleBiddingRepository implements BiddingRepository {
+export class BiddingRepositoryImpl implements BiddingRepository {
   async createSession(details: any): Promise<BidSession> {
     const [created] = await db.insert(bidSessions)
       .values({

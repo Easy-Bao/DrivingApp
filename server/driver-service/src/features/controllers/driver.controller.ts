@@ -1,8 +1,8 @@
 import { Context } from 'hono';
-import { DrizzleDriverRepository } from '../repositories/driver.repository.ts';
+import { DriverRepositoryImpl } from '../repositories/driver.repository.ts';
 import { DriverService } from '../services/driver.service.ts';
 
-const driverRepository = new DrizzleDriverRepository();
+const driverRepository = new DriverRepositoryImpl();
 const driverService = new DriverService(driverRepository);
 
 export async function handleRegisterDriver(context: Context) {

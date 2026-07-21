@@ -41,7 +41,7 @@ function mapRideRequest(dbRide: any): RideRequest {
   };
 }
 
-export class DrizzlePassengerRepository implements PassengerRepository {
+export class PassengerRepositoryImpl implements PassengerRepository {
   async registerPassenger(passengerDetails: CreatePassengerRequest): Promise<Passenger> {
     const existing = await this.retrievePassengerByEmail(passengerDetails.email);
     if (existing) {

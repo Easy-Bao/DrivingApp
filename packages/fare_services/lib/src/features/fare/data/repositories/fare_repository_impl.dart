@@ -27,11 +27,14 @@ class FareRepositoryImpl implements FareRepository {
       );
 
       if (res.isNotEmpty) {
-        final double base = (res['base_fare'] as num?)?.toDouble() ?? 20.0;
-        final double dist = (res['distance_charge'] as num?)?.toDouble() ?? (distanceKm * 10.0);
-        final double time = (res['time_charge'] as num?)?.toDouble() ?? (durationMinutes * 1.5);
-        final double surge = (res['surge_charge'] as num?)?.toDouble() ?? 0.0;
-        final num? rawTotalNum = (res['estimated_fare'] ?? res['total_fare']) as num?;
+        final Map<String, dynamic> payload = res['data'] is Map<String, dynamic>
+            ? res['data'] as Map<String, dynamic>
+            : res;
+        final double base = (payload['base_fare'] as num?)?.toDouble() ?? 20.0;
+        final double dist = (payload['distance_charge'] as num?)?.toDouble() ?? (distanceKm * 10.0);
+        final double time = (payload['time_charge'] as num?)?.toDouble() ?? (durationMinutes * 1.5);
+        final double surge = (payload['surge_charge'] as num?)?.toDouble() ?? 0.0;
+        final num? rawTotalNum = (payload['estimated_fare'] ?? payload['total_fare']) as num?;
         final double total = rawTotalNum?.toDouble() ?? (base + dist + time + surge);
 
         final breakdown = FareBreakdown(

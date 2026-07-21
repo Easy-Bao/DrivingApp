@@ -3,7 +3,7 @@ import { rides } from '../../db/schema.ts';
 import { eq, desc, and, inArray } from 'drizzle-orm';
 import { Ride, RideRepository } from '../entities/ride.types.ts';
 
-export class DrizzleRideRepository implements RideRepository {
+export class RideRepositoryImpl implements RideRepository {
   async createRide(details: any): Promise<Ride> {
     const [created] = await db.insert(rides)
       .values({

@@ -15,31 +15,7 @@ fareRouter.post('/estimate', zValidator('json', EstimateFareSchema), async (c) =
   });
 });
 
-fareRouter.post('/v1/estimate', zValidator('json', EstimateFareSchema), async (c) => {
-  const body = c.req.valid('json');
-  const result = await fareService.estimateFares(body.distanceKm, body.durationMinutes);
-  return c.json({
-    success: true,
-    data: result,
-  });
-});
-
 fareRouter.post('/calculate-final', zValidator('json', CalculateFinalFareSchema), async (c) => {
-  const body = c.req.valid('json');
-  const result = await fareService.calculateFinalFare(
-    body.rideId,
-    body.distanceKm,
-    body.durationMinutes,
-    body.rideType,
-    body.surgeMultiplier,
-  );
-  return c.json({
-    success: true,
-    data: result,
-  });
-});
-
-fareRouter.post('/v1/calculate-final', zValidator('json', CalculateFinalFareSchema), async (c) => {
   const body = c.req.valid('json');
   const result = await fareService.calculateFinalFare(
     body.rideId,

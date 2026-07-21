@@ -7,7 +7,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { biddingRouter } from './features/routes/bidding.routes.ts';
 import { globalErrorHandler } from './shared/middleware/error.ts';
-import { DrizzleBiddingRepository } from './features/repositories/bidding.repository.ts';
+import { BiddingRepositoryImpl } from './features/repositories/bidding.repository.ts';
 import { Logger } from './shared/logger/logger.ts';
 import { createRateLimiter } from './shared/middleware/rate_limiter.ts';
 
@@ -24,7 +24,7 @@ app.get('/', (context) => context.json({ status: 'Bidding Service OK' }));
 const SESSION_EXPIRY_INTERVAL_MS = 60_000;
 
 function startSessionExpiryWorker(): void {
-  const repository = new DrizzleBiddingRepository();
+  const repository = new BiddingRepositoryImpl();
   setInterval(async () => {
     try {
       await repository.expireSessions(new Date());

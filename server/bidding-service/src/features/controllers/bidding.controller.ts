@@ -1,9 +1,9 @@
 import { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { DrizzleBiddingRepository } from '../repositories/bidding.repository.ts';
+import { BiddingRepositoryImpl } from '../repositories/bidding.repository.ts';
 import { BiddingService } from '../services/bidding.service.ts';
 
-const biddingRepository = new DrizzleBiddingRepository();
+const biddingRepository = new BiddingRepositoryImpl();
 const biddingService = new BiddingService(biddingRepository);
 
 export async function handleComputeFare(context: Context) {

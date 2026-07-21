@@ -1,8 +1,8 @@
 import { Context } from 'hono';
-import { DrizzleRideRepository } from '../repositories/ride.repository.ts';
+import { RideRepositoryImpl } from '../repositories/ride.repository.ts';
 import { RideService } from '../services/ride.service.ts';
 
-const rideRepository = new DrizzleRideRepository();
+const rideRepository = new RideRepositoryImpl();
 const rideService = new RideService(rideRepository);
 
 function mapRideToSnakeCase(ride: any) {
