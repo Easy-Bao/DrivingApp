@@ -4,5 +4,7 @@ export 'src/features/fare/data/repositories/fare_repository_impl.dart';
 export 'src/features/fare/domain/entities/fare_breakdown.dart';
 export 'src/features/fare/domain/entities/fare_estimate.dart';
 export 'src/features/fare/domain/entities/payment_method.dart';
+export 'src/features/fare/domain/entities/service_pricing_config.dart';
 export 'src/features/fare/domain/repositories/fare_repository.dart';
+export 'src/features/fare/presentation/fare_calculator_helper.dart';
 export 'src/features/fare/presentation/fare_formatter.dart';

@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_state.dart';
-import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -281,7 +281,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               state.isOnline &&
               (_activeBids.isNotEmpty || _activeTrips.isNotEmpty);
           return Scaffold(
-            backgroundColor: AppTheme.surface,
+            backgroundColor: AppTheme.primaryColor,
             body: SafeArea(
               child: Column(
                 children: [
@@ -292,7 +292,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   if (showFeed)
                     Expanded(
                       child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         physics: const BouncingScrollPhysics(),
                         children: [
                           if (_activeTrips.isNotEmpty) ...[
@@ -319,7 +319,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     const Spacer(),
                   ],
                   _buildToggleButton(context, state),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -331,18 +331,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   Widget _buildTopBar(DashboardState state) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Good ${_greeting()},',
+                'Good ${_greeting()}',
                 style: TextStyle(
                   fontSize: 13,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.45),
+                  color: Colors.white.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -350,9 +351,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const Text(
                 'Driver',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
                 ),
               ),
             ],
@@ -368,20 +369,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   Widget _buildStatsRow(DashboardState state) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 4),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.borderSide),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.12),
+          ),
         ),
         child: state.isLoadingStats
             ? const Center(
@@ -390,7 +386,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   child: SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
                   ),
                 ),
               )
@@ -399,7 +398,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   _StatCell(
                     value: '₱${state.todayEarnings.toStringAsFixed(0)}',
                     label: 'Earnings',
-                    icon: LucideIcons.banknote,
+                    iconText: '₱',
                   ),
                   _Divider(),
                   _StatCell(
@@ -427,13 +426,27 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           opacity: 0.4 + _pulseCtrl.value * 0.6,
           child: Column(
             children: [
-              Icon(LucideIcons.radar, size: 34, color: AppTheme.complete),
-              const SizedBox(height: 10),
-              Text(
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppTheme.complete.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    LucideIcons.radar,
+                    size: 32,
+                    color: AppTheme.complete,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
                 'Looking for rides...',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                   color: AppTheme.complete,
                 ),
               ),
@@ -445,26 +458,36 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
     return Column(
       children: [
-        Icon(
-          LucideIcons.moon,
-          size: 34,
-          color: AppTheme.primaryColor.withValues(alpha: 0.25),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          "You're offline",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Icon(
+              LucideIcons.moon,
+              size: 32,
+              color: Colors.white.withValues(alpha: 0.7),
+            ),
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Go online to start receiving rides',
+        const SizedBox(height: 16),
+        const Text(
+          "You're offline",
           style: TextStyle(
-            fontSize: 13,
-            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Go online to start receiving rides.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.white.withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -474,36 +497,44 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   Widget _buildToggleButton(BuildContext context, DashboardState state) {
     final isOnline = state.isOnline;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: GestureDetector(
         onTap: () => _toggleOnline(context, isOnline),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
           width: double.infinity,
-          height: 60,
+          height: 56,
           decoration: BoxDecoration(
-            color: isOnline ? AppTheme.cancel : AppTheme.primaryColor,
-            borderRadius: BorderRadius.circular(36),
+            color: isOnline ? AppTheme.cancel : Colors.white,
+            borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: (isOnline ? AppTheme.cancel : AppTheme.primaryColor)
-                    .withValues(alpha: 0.28),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: (isOnline ? AppTheme.cancel : Colors.black)
+                    .withValues(alpha: 0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Center(
-            child: Text(
-              isOnline ? 'Go Offline' : 'Go Online',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: 1.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                LucideIcons.power,
+                size: 18,
+                color: isOnline ? Colors.white : AppTheme.primaryColor,
               ),
-            ),
+              const SizedBox(width: 8),
+              Text(
+                isOnline ? 'Go offline' : 'Go online',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: isOnline ? Colors.white : AppTheme.primaryColor,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -526,9 +557,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.12),
+        ),
       ),
       child: Column(
         children: [
@@ -540,16 +573,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
+                  color: statusColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   statusLabel,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: statusColor == AppTheme.secondaryColor
-                        ? AppTheme.primaryColor
+                        ? Colors.white
                         : statusColor,
                   ),
                 ),
@@ -558,9 +591,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               Text(
                 '₱${SafeParse.toDouble(trip['fare']).toStringAsFixed(2)}',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 17,
                   fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  color: Colors.white,
                 ),
               ),
             ],
@@ -571,7 +604,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const Icon(
                 LucideIcons.user,
                 size: 14,
-                color: AppTheme.tertiaryColor,
+                color: Colors.white70,
               ),
               const SizedBox(width: 8),
               Text(
@@ -579,7 +612,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
+                  color: Colors.white,
                 ),
               ),
             ],
@@ -590,15 +623,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const Icon(
                 LucideIcons.map_pin,
                 size: 14,
-                color: AppTheme.tertiaryColor,
+                color: Colors.white60,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'To: ${trip['dropoff_name']}',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -616,8 +649,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     child: ElevatedButton(
                       onPressed: () => _resumeTrip(trip),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.primaryColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -666,8 +699,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               child: ElevatedButton(
                 onPressed: () => _resumeTrip(trip),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppTheme.primaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -712,10 +745,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isPriority ? AppTheme.secondaryColor : AppTheme.borderSide,
+          color: isPriority ? AppTheme.secondaryColor : Colors.white.withValues(alpha: 0.12),
           width: isPriority ? 1.5 : 1.0,
         ),
       ),
@@ -729,23 +762,31 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppTheme.complete.withValues(alpha: 0.1),
+                  color: AppTheme.complete.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(
-                  '★ $rating',
+                child: const Text(
+                  '★ ',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.complete,
                   ),
+                ),
+              ),
+              Text(
+                '$rating',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
               if (isPriority) ...[
@@ -756,15 +797,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.cancel.withValues(alpha: 0.1),
+                    color: AppTheme.cancel.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(
+                  child: const Text(
                     'PRIORITY',
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.cancel,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -775,7 +816,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  color: Colors.white,
                 ),
               ),
             ],
@@ -786,14 +827,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const Icon(
                 LucideIcons.navigation,
                 size: 14,
-                color: AppTheme.tertiaryColor,
+                color: Colors.white70,
               ),
               const SizedBox(width: 8),
               Text(
                 '${distanceToPassenger.toStringAsFixed(1)} km away',
                 style: TextStyle(
                   fontSize: 13,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -805,7 +846,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const Icon(
                 LucideIcons.map_pin,
                 size: 14,
-                color: AppTheme.primaryColor,
+                color: Colors.white70,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -813,7 +854,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   'From: ${bid['pickup_name'] ?? 'Current Location'}',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.65),
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -827,7 +868,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const Icon(
                 LucideIcons.map_pin,
                 size: 14,
-                color: AppTheme.tertiaryColor,
+                color: Colors.white54,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -835,7 +876,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   'To: ${bid['dropoff_name']}',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.65),
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -852,10 +893,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   child: ElevatedButton(
                     onPressed: () => _acceptBid(bid),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isPriority
-                          ? AppTheme.cancel
-                          : AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppTheme.primaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -886,7 +925,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: AppTheme.primaryColor.withValues(alpha: 0.38),
+          color: Colors.white.withValues(alpha: 0.5),
           letterSpacing: 1.2,
         ),
       ),
@@ -895,9 +934,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Morning';
-    if (h < 17) return 'Afternoon';
-    return 'Evening';
+    if (h < 12) return 'morning';
+    if (h < 17) return 'afternoon';
+    return 'evening';
   }
 }
 
@@ -910,12 +949,13 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isOnline
-            ? AppTheme.complete.withValues(alpha: 0.1)
-            : AppTheme.primaryColor.withValues(alpha: 0.06),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.12),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -941,10 +981,10 @@ class _StatusPill extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             isOnline ? 'Online' : 'Offline',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: isOnline ? AppTheme.complete : AppTheme.primaryColor,
+              color: Colors.white,
             ),
           ),
         ],
@@ -957,33 +997,50 @@ class _StatCell extends StatelessWidget {
   const _StatCell({
     required this.value,
     required this.label,
-    required this.icon,
+    this.icon,
+    this.iconText,
   });
 
   final String value;
   final String label;
-  final IconData icon;
+  final IconData? icon;
+  final String? iconText;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 18, color: AppTheme.tertiaryColor),
+          if (iconText != null)
+            Text(
+              iconText!,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            )
+          else
+            Icon(
+              icon,
+              size: 16,
+              color: Colors.white.withValues(alpha: 0.5),
+            ),
           const SizedBox(height: 6),
           Text(
             value,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
-              color: AppTheme.primaryColor,
+              color: Colors.white,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
-              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.5),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -996,6 +1053,10 @@ class _StatCell extends StatelessWidget {
 class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 40, color: AppTheme.borderSide);
+    return Container(
+      width: 1,
+      height: 38,
+      color: Colors.white.withValues(alpha: 0.12),
+    );
   }
 }

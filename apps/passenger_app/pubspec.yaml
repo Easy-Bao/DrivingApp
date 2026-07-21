@@ -61,6 +61,9 @@ dependencies:
   location_service:
     path: ../../packages/location_service
 
+  fare_services:
+    path: ../../packages/fare_services
+
   core_models:
     path: ../../packages/core_models
 

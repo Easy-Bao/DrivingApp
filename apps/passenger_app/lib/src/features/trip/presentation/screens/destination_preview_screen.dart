@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
+import 'package:fare_services/fare_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -47,11 +48,10 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
       _distanceKm = defaultDist;
       _distance = '$defaultDist km';
       _duration = '${defaultMins.toInt()} min';
-      _fares = {
-        'Solo Ride': 20.0 + (defaultDist * 10),
-        'Share-Bao': 15.0 + (defaultDist * 7),
-        'Bao Premium': 35.0 + (defaultDist * 15),
-      };
+      _fares = FareCalculatorHelper.estimateAllFares(
+        distanceKm: defaultDist,
+        durationMinutes: defaultMins,
+      );
     });
   }
 
@@ -74,11 +74,10 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
           _distanceKm = approxKm;
           _distance = '${approxKm.toStringAsFixed(1)} km';
           _duration = '${approxMins.round()} min';
-          _fares = {
-            'Solo Ride': 20.0 + (approxKm * 10),
-            'Share-Bao': 15.0 + (approxKm * 7),
-            'Bao Premium': 35.0 + (approxKm * 15),
-          };
+          _fares = FareCalculatorHelper.estimateAllFares(
+            distanceKm: approxKm,
+            durationMinutes: approxMins,
+          );
         });
       }
     }
@@ -119,9 +118,21 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
           ),
         ]);
 
-        double solo = 20.0 + route.distanceKm * 10;
-        double share = 15.0 + route.distanceKm * 7;
-        double premium = 35.0 + route.distanceKm * 15;
+        double solo = FareCalculatorHelper.estimateFare(
+          serviceType: 'Solo Ride',
+          distanceKm: route.distanceKm,
+          durationMinutes: minsDouble,
+        );
+        double share = FareCalculatorHelper.estimateFare(
+          serviceType: 'Share-Bao',
+          distanceKm: route.distanceKm,
+          durationMinutes: minsDouble,
+        );
+        double premium = FareCalculatorHelper.estimateFare(
+          serviceType: 'Bao Premium',
+          distanceKm: route.distanceKm,
+          durationMinutes: minsDouble,
+        );
 
         if (estimates[0] != null && estimates[0]!['total_fare'] != null) {
           solo = (estimates[0]!['total_fare'] as num).toDouble();

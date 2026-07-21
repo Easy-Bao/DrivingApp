@@ -4,6 +4,7 @@ import 'package:fare_services/src/features/fare/domain/entities/fare_breakdown.d
 import 'package:fare_services/src/features/fare/domain/entities/fare_estimate.dart';
 import 'package:fare_services/src/features/fare/domain/entities/payment_method.dart';
 import 'package:fare_services/src/features/fare/domain/repositories/fare_repository.dart';
+import 'package:fare_services/src/features/fare/presentation/fare_calculator_helper.dart';
 import 'package:fpdart/fpdart.dart';
 
 class FareRepositoryImpl implements FareRepository {
@@ -61,15 +62,14 @@ class FareRepositoryImpl implements FareRepository {
     required double distanceKm,
     required double durationMinutes,
   }) {
-    const double baseFare = 20.0;
-    final double distCharge = distanceKm * 10.0;
-    final double timeCharge = durationMinutes * 1.5;
-    final double subtotal = baseFare + distCharge + timeCharge;
-    final double total = subtotal < 25.0 ? 25.0 : ((subtotal * 2.0).round() / 2.0);
+    final config = FareCalculatorHelper.defaultConfigs['Solo Ride']!;
+    final double distCharge = distanceKm * config.perKmRate;
+    final double timeCharge = durationMinutes * config.perMinuteRate;
+    final double total = config.calculateFare(distanceKm, durationMinutes: durationMinutes);
 
     return FareEstimate(
       breakdown: FareBreakdown(
-        baseFare: baseFare,
+        baseFare: config.baseFare,
         distanceCharge: distCharge,
         timeCharge: timeCharge,
         surgeCharge: 0.0,
