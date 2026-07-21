@@ -31,19 +31,57 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   String _distance = '—';
   String _duration = '—';
   double _distanceKm = 0.0;
-  bool _isLoading = true;
   Map<String, double> _fares = {};
 
   @override
   void initState() {
     super.initState();
+    _computeInitialEstimates();
     unawaited(_loadRoute());
+  }
+
+  void _computeInitialEstimates() {
+    const defaultDist = 2.5;
+    const defaultMins = 8.0;
+    setState(() {
+      _distanceKm = defaultDist;
+      _distance = '$defaultDist km';
+      _duration = '${defaultMins.toInt()} min';
+      _fares = {
+        'Solo Ride': 20.0 + (defaultDist * 10),
+        'Share-Bao': 15.0 + (defaultDist * 7),
+        'Bao Premium': 35.0 + (defaultDist * 15),
+      };
+    });
   }
 
   Future<void> _loadRoute() async {
     final pos = await LocationService.getCurrentPosition();
     final oLat = pos?.latitude ?? widget.destination.latitude;
     final oLng = pos?.longitude ?? widget.destination.longitude;
+
+    if (pos != null) {
+      final meters = await LocationService.distanceBetween(
+        oLat,
+        oLng,
+        widget.destination.latitude,
+        widget.destination.longitude,
+      );
+      final approxKm = meters / 1000.0;
+      if (approxKm > 0 && mounted) {
+        final approxMins = (approxKm * 3).clamp(3.0, 120.0);
+        setState(() {
+          _distanceKm = approxKm;
+          _distance = '${approxKm.toStringAsFixed(1)} km';
+          _duration = '${approxMins.round()} min';
+          _fares = {
+            'Solo Ride': 20.0 + (approxKm * 10),
+            'Share-Bao': 15.0 + (approxKm * 7),
+            'Bao Premium': 35.0 + (approxKm * 15),
+          };
+        });
+      }
+    }
 
     final route = await MapProvider.getRoute(
       oLat,
@@ -53,67 +91,58 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
     );
 
     if (!mounted) return;
-    setState(() {
-      if (route != null) {
+    if (route != null) {
+      setState(() {
         _distanceKm = route.distanceKm;
         _distance = '${route.distanceKm.toStringAsFixed(1)} km';
-        final mapMarker = route.estimatedTime.inMinutes;
-        _duration = mapMarker < 60
-            ? '$mapMarker min'
-            : '${mapMarker ~/ 60}h ${mapMarker % 60}m';
-      }
-    });
+        final mins = route.estimatedTime.inMinutes;
+        _duration = mins < 60 ? '$mins min' : '${mins ~/ 60}h ${mins % 60}m';
+      });
 
-    if (route != null) {
-      final mins = route.estimatedTime.inMinutes.toDouble();
-      final estimates = await Future.wait([
-        Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
-          rideType: 'Solo Ride',
-          distanceKm: route.distanceKm,
-          durationMinutes: mins,
-        ),
-        Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
-          rideType: 'Share-Bao',
-          distanceKm: route.distanceKm,
-          durationMinutes: mins,
-        ),
-        Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
-          rideType: 'Bao Premium',
-          distanceKm: route.distanceKm,
-          durationMinutes: mins,
-        ),
-      ]);
+      final minsDouble = route.estimatedTime.inMinutes.toDouble();
+      try {
+        final estimates = await Future.wait([
+          Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
+            rideType: 'Solo Ride',
+            distanceKm: route.distanceKm,
+            durationMinutes: minsDouble,
+          ),
+          Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
+            rideType: 'Share-Bao',
+            distanceKm: route.distanceKm,
+            durationMinutes: minsDouble,
+          ),
+          Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
+            rideType: 'Bao Premium',
+            distanceKm: route.distanceKm,
+            durationMinutes: minsDouble,
+          ),
+        ]);
 
-      double solo = 20.0 + route.distanceKm * 10;
-      double share = 15.0 + route.distanceKm * 7;
-      double premium = 35.0 + route.distanceKm * 15;
+        double solo = 20.0 + route.distanceKm * 10;
+        double share = 15.0 + route.distanceKm * 7;
+        double premium = 35.0 + route.distanceKm * 15;
 
-      if (estimates[0] != null) {
-        solo = (estimates[0]!['total_fare'] as num).toDouble();
-      }
-      if (estimates[1] != null) {
-        share = (estimates[1]!['total_fare'] as num).toDouble();
-      }
-      if (estimates[2] != null) {
-        premium = (estimates[2]!['total_fare'] as num).toDouble();
-      }
+        if (estimates[0] != null && estimates[0]!['total_fare'] != null) {
+          solo = (estimates[0]!['total_fare'] as num).toDouble();
+        }
+        if (estimates[1] != null && estimates[1]!['total_fare'] != null) {
+          share = (estimates[1]!['total_fare'] as num).toDouble();
+        }
+        if (estimates[2] != null && estimates[2]!['total_fare'] != null) {
+          premium = (estimates[2]!['total_fare'] as num).toDouble();
+        }
 
-      if (mounted) {
-        setState(() {
-          _fares = {
-            'Solo Ride': solo,
-            'Share-Bao': share,
-            'Bao Premium': premium,
-          };
-          _isLoading = false;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+        if (mounted) {
+          setState(() {
+            _fares = {
+              'Solo Ride': solo,
+              'Share-Bao': share,
+              'Bao Premium': premium,
+            };
+          });
+        }
+      } catch (_) {}
     }
 
     if (_mapController != null) {
@@ -132,7 +161,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         dynamic currentManager;
 
         final chunkSize = (points.length / 20).ceil().clamp(2, 50).toInt();
-        const int delayMs = 100;
+        const int delayMs = 50;
 
         for (int index = 0; index < points.length; index += chunkSize) {
           if (!mounted) break;
@@ -162,7 +191,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.primaryColor,
       body: Stack(
         children: [
           Positioned.fill(
@@ -172,48 +201,35 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               zoom: 13.0,
               onMapCreated: (c) async {
                 _mapController = c;
-                if (!_isLoading) await _loadRoute();
+                await _loadRoute();
               },
             ),
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(16),
               child: GestureDetector(
                 onTap: () => context.pop(),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(20),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                    shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 15,
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        LucideIcons.chevron_left,
-                        color: AppTheme.primaryColor,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Back',
-                        style: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                  child: const Center(
+                    child: Icon(
+                      LucideIcons.arrow_left,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
@@ -222,30 +238,31 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: AppTheme.primaryColor,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(32),
+                  top: Radius.circular(28),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 30,
-                    offset: const Offset(0, -10),
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 25,
+                    offset: const Offset(0, -8),
                   ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
                     child: Container(
-                      width: 40,
+                      width: 38,
                       height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
+                      margin: const EdgeInsets.only(bottom: 18),
                       decoration: BoxDecoration(
-                        color: AppTheme.borderSide,
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -255,13 +272,13 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppTheme.neutralColor,
+                          color: const Color(0xFF0F294A),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
                           LucideIcons.map_pin,
-                          color: AppTheme.primaryColor,
-                          size: 20,
+                          color: Color(0xFF2F80ED),
+                          size: 22,
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -272,19 +289,19 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                             Text(
                               widget.destination.name,
                               style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: AppTheme.primaryColor,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 3),
                             Text(
                               widget.destination.fullAddress,
                               style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.5,
-                                ),
+                                fontSize: 13,
+                                color: Colors.white.withValues(alpha: 0.6),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -294,51 +311,55 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   Row(
                     children: [
-                      _chip(
-                        LucideIcons.navigation,
-                        _isLoading ? '...' : _distance,
+                      Expanded(
+                        child: _actionPill(
+                          LucideIcons.navigation,
+                          'Ride now',
+                        ),
                       ),
-                      const SizedBox(width: 10),
-                      _chip(LucideIcons.clock, _isLoading ? '...' : _duration),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _actionPill(
+                          LucideIcons.clock,
+                          'Schedule',
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: 54,
                     child: ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                                unawaited(
-                                  context.pushNamed(
-                                    TripRoutes.rideSelection,
-                                    extra: {
-                                      'destination': widget.destination,
-                                      'distance': _distance,
-                                      'duration': _duration,
-                                      'distanceKm': _distanceKm,
-                                      'fares': _fares,
-                                      'pickupAddress':
-                                          widget.pickupAddress ??
-                                          'Current Location',
-                                    },
-                                  ),
-                                );
+                      onPressed: () {
+                        unawaited(
+                          context.pushNamed(
+                            TripRoutes.rideSelection,
+                            extra: {
+                              'destination': widget.destination,
+                              'distance': _distance,
+                              'duration': _duration,
+                              'distanceKm': _distanceKm,
+                              'fares': _fares,
+                              'pickupAddress':
+                                  widget.pickupAddress ?? 'Current Location',
                             },
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.primaryColor,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 0,
                       ),
                       child: const Text(
-                        'Book Ride',
+                        'Book ride',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -355,25 +376,27 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
     );
   }
 
-  Widget _chip(IconData icon, String text) {
+  Widget _actionPill(IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.15),
+        ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 14, color: AppTheme.tertiaryColor),
-          const SizedBox(width: 6),
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 8),
           Text(
-            text,
+            label,
             style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
         ],
