@@ -363,14 +363,14 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                 final rideId =
                     BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
                 if (rideId.isNotEmpty) {
-                  final ride = await Modular.get<TripApiService>().getRideStatus(
+                  final ride = await Modular.get<TripRemoteDataSource>().getRideStatus(
                     rideId,
                   );
-                  final passengerId = ride?['passenger_id'] as String?;
+                  final passengerId = ride['passenger_id'] as String?;
                   if (passengerId != null && passengerId.isNotEmpty) {
-                    final passenger = await Modular.get<PassengerApiService>()
+                    final passenger = await Modular.get<PassengerRemoteDataSource>()
                         .fetchPassengerProfile(passengerId);
-                    final phone = passenger?['phone'] as String?;
+                    final phone = passenger['phone'] as String?;
                     if (phone != null && phone.isNotEmpty) {
                       final uri = Uri.parse('tel:$phone');
                       if (await canLaunchUrl(uri)) {

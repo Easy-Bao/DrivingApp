@@ -24,30 +24,30 @@ class DriverModule extends Module {
     i
       ..addLazySingleton<DashboardRepository>(
         (i) => DashboardRepositoryImpl(
-          apiService: i.get<TripApiService>(),
+          remoteDataSource: i.get<TripRemoteDataSource>(),
           sessionService: i.get<SecureSessionService>(),
         ),
       )
       ..addLazySingleton<RideRepository>(
-        (i) => RideRepositoryImpl(apiService: i.get<BiddingApiService>()),
+        (i) => RideRepositoryImpl(remoteDataSource: i.get<BiddingRemoteDataSource>()),
       )
       ..addLazySingleton<DriverActivityRepository>(
         (i) =>
-            DriverActivityRepositoryImpl(apiService: i.get<TripApiService>()),
+            DriverActivityRepositoryImpl(remoteDataSource: i.get<TripRemoteDataSource>()),
       )
       ..addFactory<DashboardCubit>(
         (i) => DashboardCubit(repository: i.get<DashboardRepository>()),
       )
       ..addFactory<LiveMapBloc>(
         (i) => LiveMapBloc(
-          telemetryService: i.get<TelemetryApiService>(),
+          telemetryDataSource: i.get<TelemetryRemoteDataSource>(),
           sessionService: i.get<SecureSessionService>(),
         ),
       )
       ..addFactory<RideFlowCubit>(
         (i) => RideFlowCubit(
           repository: i.get<RideRepository>(),
-          apiService: i.get<TripApiService>(),
+          tripRemoteDataSource: i.get<TripRemoteDataSource>(),
           sessionService: i.get<DriverSessionService>(),
         ),
       );

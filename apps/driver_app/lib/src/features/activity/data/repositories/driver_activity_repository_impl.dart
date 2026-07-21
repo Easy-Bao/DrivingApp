@@ -4,10 +4,10 @@ import 'package:driver_services/driver_services.dart';
 import 'package:fpdart/fpdart.dart';
 
 class DriverActivityRepositoryImpl implements DriverActivityRepository {
-  final TripApiService _apiService;
+  final TripRemoteDataSource _remoteDataSource;
 
-  DriverActivityRepositoryImpl({required TripApiService apiService})
-    : _apiService = apiService;
+  DriverActivityRepositoryImpl({required TripRemoteDataSource remoteDataSource})
+    : _remoteDataSource = remoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {
@@ -19,7 +19,7 @@ class DriverActivityRepositoryImpl implements DriverActivityRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return ServerFailure('Server returned status code ${error.statusCode}.');
+      return ServerFailure(error.message);
     }
     if (error is DataParsingException) {
       return ValidationFailure(error.message);
@@ -35,7 +35,7 @@ class DriverActivityRepositoryImpl implements DriverActivityRepository {
     String driverId,
   ) async {
     try {
-      return Right(await _apiService.fetchTripHistory(driverId));
+      return Right(await _remoteDataSource.fetchTripHistory(driverId));
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }

@@ -1,0 +1,11 @@
+targets:
+  $default:
+    builders:
+      freezed:freezed:
+        enabled: true
+        options:
+          build_to: source
+      json_serializable:
+        enabled: true
+        options:
+          build_to: source

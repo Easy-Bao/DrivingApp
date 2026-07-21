@@ -10,7 +10,7 @@ import 'ride_flow_state.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
-  final TripApiService _apiService;
+  final TripRemoteDataSource _tripRemoteDataSource;
   final DriverSessionService _sessionService;
   String? _activeRideId;
   Timer? _waitTimer;
@@ -18,10 +18,10 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
   RideFlowCubit({
     required RideRepository repository,
-    required TripApiService apiService,
+    required TripRemoteDataSource tripRemoteDataSource,
     required DriverSessionService sessionService,
   }) : _repository = repository,
-       _apiService = apiService,
+       _tripRemoteDataSource = tripRemoteDataSource,
        _sessionService = sessionService,
        super(RideFlowInitial());
 
@@ -42,7 +42,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
 
     try {
-      final success = await _apiService.acceptRide(
+      final success = await _tripRemoteDataSource.acceptRide(
         rideId: rideId,
         driverId: driverProfile.id,
         driverName: driverProfile.name,
@@ -110,7 +110,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        await _apiService.updateRideStatus(_activeRideId!, 'arrived');
+        await _tripRemoteDataSource.updateRideStatus(_activeRideId!, 'arrived');
       } catch (error) {
         debugPrint(
           'Error updating status to arrived: ${ErrorHandler.getErrorMessage(error)}',
@@ -146,7 +146,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        await _apiService.updateRideStatus(_activeRideId!, 'in_transit');
+        await _tripRemoteDataSource.updateRideStatus(_activeRideId!, 'in_transit');
       } catch (error) {
         debugPrint(
           'Error updating status to in_transit: ${ErrorHandler.getErrorMessage(error)}',
@@ -172,7 +172,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        await _apiService.updateRideStatus(_activeRideId!, 'completed');
+        await _tripRemoteDataSource.updateRideStatus(_activeRideId!, 'completed');
       } catch (error) {
         debugPrint(
           'Error updating status to completed: ${ErrorHandler.getErrorMessage(error)}',

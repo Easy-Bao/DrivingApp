@@ -10,8 +10,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Screen enabling live chat communications between the driver and their passenger.
-/// Uses [ChatCubit] to connect to WebSockets and sync messages.
 class DriverChatScreen extends StatefulWidget {
   final String? roomId;
   final String? userId;
@@ -37,8 +35,8 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
     try {
-      final res = await Modular.get<TripApiService>().getRideStatus(rId);
-      if (res != null) {
+      final res = await Modular.get<TripRemoteDataSource>().getRideStatus(rId);
+      if (res.isNotEmpty) {
         final status = res['status'] as String?;
         if (status == 'completed' ||
             status == 'canceled' ||

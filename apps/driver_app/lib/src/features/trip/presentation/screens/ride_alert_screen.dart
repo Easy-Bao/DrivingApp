@@ -70,7 +70,7 @@ class _RideAlertScreenState extends State<RideAlertScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
     final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    final success = await Modular.get<BiddingApiService>().placeBid(
+    final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: _rideId,
       driverId: driverId,
       driverName: driverName,

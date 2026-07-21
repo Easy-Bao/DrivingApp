@@ -4,13 +4,13 @@ import 'package:fpdart/fpdart.dart';
 import 'package:session_service/session_service.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
-  final TripApiService _apiService;
+  final TripRemoteDataSource _remoteDataSource;
   final SecureSessionService _sessionService;
 
   DashboardRepositoryImpl({
-    required TripApiService apiService,
+    required TripRemoteDataSource remoteDataSource,
     required SecureSessionService sessionService,
-  }) : _apiService = apiService,
+  }) : _remoteDataSource = remoteDataSource,
        _sessionService = sessionService;
 
   Failure _mapExceptionToFailure(Object error) {
@@ -23,7 +23,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return ServerFailure('Server returned status code ${error.statusCode}.');
+      return ServerFailure(error.message);
     }
     if (error is DataParsingException) {
       return ValidationFailure(error.message);
@@ -51,8 +51,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
       if (driverId.isEmpty) {
         return const Left(CacheFailure('Driver ID is not registered.'));
       }
-      final data = await _apiService.fetchStats(driverId);
-      return Right((data?['todayEarnings'] as num?)?.toDouble() ?? 0.0);
+      final data = await _remoteDataSource.fetchStats(driverId);
+      return Right((data['todayEarnings'] as num?)?.toDouble() ?? 0.0);
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }
@@ -65,8 +65,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
       if (driverId.isEmpty) {
         return const Left(CacheFailure('Driver ID is not registered.'));
       }
-      final data = await _apiService.fetchStats(driverId);
-      return Right((data?['todayTrips'] as int?) ?? 0);
+      final data = await _remoteDataSource.fetchStats(driverId);
+      return Right((data['todayTrips'] as int?) ?? 0);
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }
@@ -79,8 +79,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
       if (driverId.isEmpty) {
         return const Left(CacheFailure('Driver ID is not registered.'));
       }
-      final data = await _apiService.fetchStats(driverId);
-      return Right((data?['hoursOnline'] as num?)?.toDouble() ?? 0.0);
+      final data = await _remoteDataSource.fetchStats(driverId);
+      return Right((data['hoursOnline'] as num?)?.toDouble() ?? 0.0);
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }

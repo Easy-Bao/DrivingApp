@@ -4,10 +4,10 @@ import 'package:fpdart/fpdart.dart';
 import 'package:location_service/location_service.dart';
 
 class RideRepositoryImpl implements RideRepository {
-  final BiddingApiService _apiService;
+  final BiddingRemoteDataSource _remoteDataSource;
 
-  RideRepositoryImpl({required BiddingApiService apiService})
-    : _apiService = apiService;
+  RideRepositoryImpl({required BiddingRemoteDataSource remoteDataSource})
+    : _remoteDataSource = remoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {
@@ -19,7 +19,7 @@ class RideRepositoryImpl implements RideRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return ServerFailure('Server returned status code ${error.statusCode}.');
+      return ServerFailure(error.message);
     }
     if (error is DataParsingException) {
       return ValidationFailure(error.message);
@@ -36,22 +36,19 @@ class RideRepositoryImpl implements RideRepository {
     required double durationMinutes,
   }) async {
     try {
-      final fare = await _apiService.fetchFareEstimate(
+      final fare = await _remoteDataSource.fetchFareEstimate(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,
       );
-      if (fare != null) {
-        return Right(
-          FareResult(
-            baseFare: (fare['base_fare'] as num).toDouble(),
-            distanceCharge: (fare['distance_charge'] as num).toDouble(),
-            timeCharge: (fare['time_charge'] as num).toDouble(),
-            surgeCharge: (fare['surge_charge'] as num).toDouble(),
-            totalFare: (fare['total_fare'] as num).toDouble(),
-          ),
-        );
-      }
-      return const Left(ServerFailure('Failed to fetch fare estimate.'));
+      return Right(
+        FareResult(
+          baseFare: (fare['base_fare'] as num).toDouble(),
+          distanceCharge: (fare['distance_charge'] as num).toDouble(),
+          timeCharge: (fare['time_charge'] as num).toDouble(),
+          surgeCharge: (fare['surge_charge'] as num).toDouble(),
+          totalFare: (fare['total_fare'] as num).toDouble(),
+        ),
+      );
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }

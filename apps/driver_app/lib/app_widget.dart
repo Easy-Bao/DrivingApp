@@ -17,7 +17,7 @@ class AppWidget extends StatelessWidget {
           create: (_) {
             return RideFlowCubit(
               repository: Modular.get<RideRepository>(),
-              apiService: Modular.get<TripApiService>(),
+              tripRemoteDataSource: Modular.get<TripRemoteDataSource>(),
               sessionService: Modular.get<DriverSessionService>(),
             );
           },

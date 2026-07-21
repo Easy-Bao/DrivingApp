@@ -12,7 +12,7 @@ import 'package:session_service/session_service.dart';
 /// State controller managing map overlay layouts, marker assets, routing
 /// sequence rendering, and real-time backend telemetry dispatching.
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
-  final TelemetryApiService _telemetryService;
+  final TelemetryRemoteDataSource _telemetryDataSource;
   final SecureSessionService _sessionService;
 
   AppMapController? _mapController;
@@ -24,9 +24,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   _locationSubscription;
 
   LiveMapBloc({
-    required TelemetryApiService telemetryService,
+    required TelemetryRemoteDataSource telemetryDataSource,
     required SecureSessionService sessionService,
-  }) : _telemetryService = telemetryService,
+  }) : _telemetryDataSource = telemetryDataSource,
        _sessionService = sessionService,
        super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
@@ -38,7 +38,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         .listen((event) async {
           final driverId = await _sessionService.readDriverId();
           if (driverId != null && driverId.isNotEmpty) {
-            await _telemetryService.updateLocation(
+            await _telemetryDataSource.updateLocation(
               driverId: driverId,
               lat: event.lat,
               lng: event.lng,

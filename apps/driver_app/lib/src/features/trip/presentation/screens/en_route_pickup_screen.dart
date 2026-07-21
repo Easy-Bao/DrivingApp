@@ -73,10 +73,10 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       if (rideId == null || rideId.isEmpty) return;
 
       try {
-        final loc = await Modular.get<TelemetryApiService>().fetchPassengerLocation(
+        final loc = await Modular.get<TelemetryRemoteDataSource>().fetchPassengerLocation(
           rideId,
         );
-        if (loc != null && loc['lat'] != null && loc['lng'] != null) {
+        if (loc.isNotEmpty && loc['lat'] != null && loc['lng'] != null) {
           final pLat = (loc['lat'] as num).toDouble();
           final pLng = (loc['lng'] as num).toDouble();
           if (mounted) {
@@ -551,14 +551,14 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                   final rideCubit = BlocProvider.of<RideFlowCubit>(context);
                   final rideId = rideCubit.activeRideId ?? '';
                   if (rideId.isNotEmpty) {
-                    final ride = await Modular.get<TripApiService>().getRideStatus(
+                    final ride = await Modular.get<TripRemoteDataSource>().getRideStatus(
                       rideId,
                     );
-                    final passengerId = ride?['passenger_id'] as String?;
+                    final passengerId = ride['passenger_id'] as String?;
                     if (passengerId != null && passengerId.isNotEmpty) {
-                      final passenger = await Modular.get<PassengerApiService>()
+                      final passenger = await Modular.get<PassengerRemoteDataSource>()
                           .fetchPassengerProfile(passengerId);
-                      final phone = passenger?['phone'] as String?;
+                      final phone = passenger['phone'] as String?;
                       if (phone != null && phone.isNotEmpty) {
                         final uri = Uri.parse('tel:$phone');
                         if (await canLaunchUrl(uri)) {

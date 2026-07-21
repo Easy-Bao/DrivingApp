@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
 
@@ -6,8 +7,10 @@ abstract class BaseApiClient {
   final Uri baseUrl;
   final Dio clientDio;
 
-  BaseApiClient({required this.baseUrl, Dio? dio})
-      : clientDio = dio ??
+  BaseApiClient({
+    required this.baseUrl,
+    Dio? dio,
+  }) : clientDio = dio ??
             Dio(
               BaseOptions(
                 baseUrl: baseUrl.toString(),
@@ -40,7 +43,10 @@ abstract class BaseApiClient {
     );
   }
 
-  List<dynamic> parseListResponse(Response<dynamic> response, int expectedStatus) {
+  List<dynamic> parseListResponse(
+    Response<dynamic> response,
+    int expectedStatus,
+  ) {
     if (response.statusCode == expectedStatus) {
       try {
         if (response.data is List<dynamic>) {
@@ -60,7 +66,10 @@ abstract class BaseApiClient {
     );
   }
 
-  bool parseBoolResponse(Response<dynamic> response, int expectedStatus) {
+  bool parseBoolResponse(
+    Response<dynamic> response,
+    int expectedStatus,
+  ) {
     if (response.statusCode == expectedStatus) {
       return true;
     }

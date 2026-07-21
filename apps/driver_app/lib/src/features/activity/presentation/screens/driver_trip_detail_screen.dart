@@ -38,10 +38,10 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     }
 
     try {
-      final profile = await Modular.get<PassengerApiService>().fetchPassengerProfile(
+      final profile = await Modular.get<PassengerRemoteDataSource>().fetchPassengerProfile(
         passengerId,
       );
-      if (profile != null) {
+      if (profile.isNotEmpty) {
         setState(() {
           _passenger = profile;
           _isLoading = false;

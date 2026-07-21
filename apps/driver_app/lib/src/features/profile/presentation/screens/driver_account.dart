@@ -49,8 +49,8 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
     final driverId = prefs.getString('driver_id') ?? '';
     if (driverId.isEmpty) return;
 
-    final profile = await Modular.get<AuthApiService>().fetchProfile(driverId);
-    if (profile != null && mounted) {
+    final profile = await Modular.get<AuthRemoteDataSource>().fetchProfile(driverId);
+    if (profile.isNotEmpty && mounted) {
       setState(() {
         _name = profile['name'] as String? ?? _name;
         _vehicleType = profile['vehicleType'] as String? ?? _vehicleType;
@@ -63,8 +63,8 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
       await prefs.setString('rating', _rating);
     }
 
-    final stats = await Modular.get<TripApiService>().fetchStats(driverId);
-    if (stats != null && mounted) {
+    final stats = await Modular.get<TripRemoteDataSource>().fetchStats(driverId);
+    if (stats.isNotEmpty && mounted) {
       setState(() {
         _totalTrips = stats['totalTrips'] as int?;
         _lifetimeEarnings = (stats['lifetimeEarnings'] as num?)?.toDouble();

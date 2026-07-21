@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
@@ -14,7 +13,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:dio/dio.dart';
 import 'package:location_service/location_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -89,28 +87,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         final driverId = prefs.getString('driver_id') ?? '';
         if (driverId.isEmpty) return;
 
-        final historyRes = await Dio().getUri(
-          Modular.get<TripApiService>().baseUrl.replace(
-            path: '/drivers/$driverId/trips',
-          ),
-        );
-        List<Map<String, dynamic>> trips = [];
-        if (historyRes.statusCode == 200) {
-          final List<dynamic> list = historyRes.data is List<dynamic>
-              ? historyRes.data as List<dynamic>
-              : jsonDecode(historyRes.data.toString());
-          trips = list
-              .where((r) {
-                final status = r['status'] as String?;
-                return status == 'accepted' ||
-                    status == 'arrived' ||
-                    status == 'in_transit';
-              })
-              .map((r) => r as Map<String, dynamic>)
-              .toList();
-        }
+        final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(driverId);
+        List<Map<String, dynamic>> trips = list
+            .where((r) {
+              final status = r['status'] as String?;
+              return status == 'accepted' ||
+                  status == 'arrived' ||
+                  status == 'in_transit';
+            })
+            .map((r) => r as Map<String, dynamic>)
+            .toList();
 
-        final bidsList = await Modular.get<BiddingApiService>().fetchActiveBids(
+        final bidsList = await Modular.get<BiddingRemoteDataSource>().fetchActiveBids(
           driverId,
         );
         final List<Map<String, dynamic>> bids = bidsList
@@ -196,7 +184,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
     final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
-    final success = await Modular.get<BiddingApiService>().placeBid(
+    final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: bid['id'],
       driverId: driverId,
       driverName: driverName,
