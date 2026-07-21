@@ -5,7 +5,7 @@ import 'package:passenger_app/src/features/activity/presentation/screens/passeng
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_rating_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_all_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_details_screen.dart';
-import 'package:passenger_app/src/features/chat/presentation/screens/driver_chat_screen.dart';
+
 import 'package:passenger_app/src/features/trip/presentation/screens/track_driver_screen.dart';
 import 'package:shared_ui/transitions/passenger_transitions.dart';
 
@@ -50,21 +50,7 @@ class ActivityModule {
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
-    ChildRoute(
-      name: 'DriverChat',
-      'activity/driver-chat',
-      child: (context, GoRouterState state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        return DriverChatScreen(
-          roomId: extra?['roomId'] as String?,
-          userId: extra?['userId'] as String?,
-          token: extra?['token'] as String?,
-          peerName: extra?['peerName'] as String?,
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
+
     ChildRoute(
       name: 'PassengerRating',
       'activity/rating',
