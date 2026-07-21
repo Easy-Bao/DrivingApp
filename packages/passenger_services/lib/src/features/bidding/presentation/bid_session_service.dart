@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:passenger_services/src/features/bidding/domain/entities/bid_session_trip.dart';
 import 'package:passenger_services/src/features/bidding/domain/entities/driver_match_result.dart';

@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:passenger_services/src/core/network/base_api_client.dart';
 
 class AuthRemoteDataSource extends BaseApiClient {
