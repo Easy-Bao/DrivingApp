@@ -32,6 +32,14 @@ class SettingsCubit extends Cubit<SettingsState> {
       final current = (state as SettingsLoadedState).settings;
       final updated = current.copyWith(locationSharingEnabled: enabled);
       emit(SettingsLoadedState(updated));
+    }
+  }
+
+  Future<void> updateThemeMode(String themeMode) async {
+    if (state is SettingsLoadedState) {
+      final current = (state as SettingsLoadedState).settings;
+      final updated = current.copyWith(preferredThemeMode: themeMode);
+      emit(SettingsLoadedState(updated));
       await settingsRepository.updateUserSettings(updated);
     }
   }
