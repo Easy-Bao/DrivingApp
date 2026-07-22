@@ -10,6 +10,13 @@ describe('Fare Service Integration Tests', () => {
       { id: '2', serviceType: 'Share-Bao', baseFare: 15.0, perKmRate: 7.0, perMinuteRate: 1.0, minimumFare: 20.0, surgeMultiplier: 1.0, isActive: true },
       { id: '3', serviceType: 'Bao Premium', baseFare: 35.0, perKmRate: 15.0, perMinuteRate: 2.0, minimumFare: 40.0, surgeMultiplier: 1.0, isActive: true },
     ]);
+
+    spyOn(PricingConfigService.prototype, 'getRatingConfig').mockImplementation(async () => ({
+      minimumRatingThreshold: 4.5,
+      highRatingBonusMultiplier: 1.05,
+      lowRatingSurgePenaltyMultiplier: 1.0,
+      baseSurgeCap: 2.5,
+    }));
   });
 
   test('GET /fares/configs — returns active pricing configurations from backend authority', async () => {
@@ -18,6 +25,14 @@ describe('Fare Service Integration Tests', () => {
     const data = await res.json();
     expect(data.success).toBe(true);
     expect(data.data.length).toBeGreaterThanOrEqual(3);
+  });
+
+  test('GET /fares/rating-config — returns rating pricing configuration from database authority', async () => {
+    const res = await app.request('/fares/rating-config');
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.data.minimumRatingThreshold).toBe(4.5);
   });
 
   test('POST /fares/estimate — returns estimates for all service types', async () => {

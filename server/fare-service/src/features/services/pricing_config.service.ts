@@ -1,5 +1,5 @@
 import { db } from '../../shared/drizzle.ts';
-import { servicePricingRules } from '../../db/schema.ts';
+import { servicePricingRules, ratingPricingConfigs } from '../../db/schema.ts';
 
 export interface RatingPricingConfig {
   minimumRatingThreshold: number;
@@ -9,18 +9,23 @@ export interface RatingPricingConfig {
 }
 
 export class PricingConfigService {
-  private static readonly RATING_CONFIG: RatingPricingConfig = {
-    minimumRatingThreshold: 4.5,
-    highRatingBonusMultiplier: 1.05,
-    lowRatingSurgePenaltyMultiplier: 1.0,
-    baseSurgeCap: 2.5,
-  };
-
   async getPricingConfigs() {
     return await db.select().from(servicePricingRules);
   }
 
   async getRatingConfig(): Promise<RatingPricingConfig> {
-    return PricingConfigService.RATING_CONFIG;
+    const configs = await db.select().from(ratingPricingConfigs).limit(1);
+    const config = configs[0];
+
+    if (!config) {
+      throw new Error('No rating pricing configuration found in database authority.');
+    }
+
+    return {
+      minimumRatingThreshold: config.minimumRatingThreshold,
+      highRatingBonusMultiplier: config.highRatingBonusMultiplier,
+      lowRatingSurgePenaltyMultiplier: config.lowRatingSurgePenaltyMultiplier,
+      baseSurgeCap: config.baseSurgeCap,
+    };
   }
 }

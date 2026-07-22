@@ -3,7 +3,6 @@ import { cors } from 'hono/cors';
 import { fareRouter } from './features/routes/fare.routes.ts';
 import { globalErrorHandler } from './shared/middleware/error.ts';
 import { createRateLimiter } from './shared/middleware/rate_limiter.ts';
-import { seedPricingRules } from './db/seed.ts';
 
 const app = new Hono();
 
@@ -16,10 +15,6 @@ app.route('/fares', fareRouter);
 app.get('/', (c) => c.json({ status: 'Fare Service OK' }));
 
 const port = parseInt(process.env.PORT || '8087');
-
-seedPricingRules().catch((err) => {
-  console.error('[FareService Startup] Seed failed:', err);
-});
 
 export { app };
 

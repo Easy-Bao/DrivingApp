@@ -12,3 +12,14 @@ export const servicePricingRules = pgTable('service_pricing_rules', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const ratingPricingConfigs = pgTable('rating_pricing_configs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  configKey: text('config_key').notNull().unique().default('default'),
+  minimumRatingThreshold: doublePrecision('minimum_rating_threshold').notNull().default(4.5),
+  highRatingBonusMultiplier: doublePrecision('high_rating_bonus_multiplier').notNull().default(1.05),
+  lowRatingSurgePenaltyMultiplier: doublePrecision('low_rating_surge_penalty_multiplier').notNull().default(1.0),
+  baseSurgeCap: doublePrecision('base_surge_cap').notNull().default(2.5),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
