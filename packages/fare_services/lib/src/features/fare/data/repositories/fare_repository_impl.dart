@@ -66,7 +66,22 @@ class FareRepositoryImpl implements FareRepository {
     required double durationMinutes,
   }) {
     final config = FareCalculatorHelper.activeConfigs['Solo Ride'] ??
-        FareCalculatorHelper.activeConfigs.values.first;
+        FareCalculatorHelper.activeConfigs.values.firstOrNull;
+
+    if (config == null) {
+      return const FareEstimate(
+        breakdown: FareBreakdown(
+          baseFare: 0.0,
+          distanceCharge: 0.0,
+          timeCharge: 0.0,
+          surgeCharge: 0.0,
+          totalFare: 0.0,
+        ),
+        paymentMethod: PaymentMethod.cashOnHand,
+        isEstimateFallback: true,
+      );
+    }
+
     final double distCharge = distanceKm * config.perKmRate;
     final double timeCharge = durationMinutes * config.perMinuteRate;
     final double total = config.calculateFare(distanceKm, durationMinutes: durationMinutes);

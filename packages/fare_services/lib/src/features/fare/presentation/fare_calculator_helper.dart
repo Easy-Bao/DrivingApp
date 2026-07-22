@@ -3,29 +3,7 @@ import 'package:fare_services/src/features/fare/domain/entities/service_pricing_
 class FareCalculatorHelper {
   FareCalculatorHelper._();
 
-  static final Map<String, ServicePricingConfig> _activePricingRules = {
-    'Solo Ride': const ServicePricingConfig(
-      serviceName: 'Solo Ride',
-      baseFare: 20.0,
-      perKmRate: 10.0,
-      perMinuteRate: 1.5,
-      minimumFare: 25.0,
-    ),
-    'Share-Bao': const ServicePricingConfig(
-      serviceName: 'Share-Bao',
-      baseFare: 15.0,
-      perKmRate: 7.0,
-      perMinuteRate: 1.0,
-      minimumFare: 20.0,
-    ),
-    'Bao Premium': const ServicePricingConfig(
-      serviceName: 'Bao Premium',
-      baseFare: 35.0,
-      perKmRate: 15.0,
-      perMinuteRate: 2.0,
-      minimumFare: 40.0,
-    ),
-  };
+  static final Map<String, ServicePricingConfig> _activePricingRules = {};
 
   static Map<String, ServicePricingConfig> get activeConfigs => _activePricingRules;
 
@@ -44,12 +22,10 @@ class FareCalculatorHelper {
     required double distanceKm,
     double durationMinutes = 0.0,
   }) {
-    final pricingConfig = _activePricingRules[serviceType] ??
-        ServicePricingConfig(
-          serviceName: serviceType,
-          baseFare: 20.0,
-          perKmRate: 10.0,
-        );
+    final pricingConfig = _activePricingRules[serviceType];
+    if (pricingConfig == null) {
+      return 0.0;
+    }
     return pricingConfig.calculateFare(
       distanceKm,
       durationMinutes: durationMinutes,
