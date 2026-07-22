@@ -14,7 +14,15 @@ class MockFareRemoteDataSource implements FareRemoteDataSource {
     String rideType = 'Solo Ride',
   }) async {
     if (shouldThrow) {
-      throw Exception('Backend network failure');
+      throw Exception('Server network failure');
+    }
+    return response ?? {};
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchPricingConfigs() async {
+    if (shouldThrow) {
+      throw Exception('Server network failure');
     }
     return response ?? {};
   }
@@ -25,7 +33,7 @@ class MockFareRemoteDataSource implements FareRemoteDataSource {
     double durationMinutes = 0.0,
   }) async {
     if (shouldThrow) {
-      throw Exception('Backend network failure');
+      throw Exception('Server network failure');
     }
     return response ?? {};
   }
@@ -39,7 +47,7 @@ class MockFareRemoteDataSource implements FareRemoteDataSource {
     double surgeMultiplier = 1.0,
   }) async {
     if (shouldThrow) {
-      throw Exception('Backend network failure');
+      throw Exception('Server network failure');
     }
     return response ?? {};
   }
@@ -82,7 +90,7 @@ void main() {
   });
 
   group('FareRepositoryImpl', () {
-    test('parses backend quote when available', () async {
+    test('parses Server quote when available', () async {
       final mock = MockFareRemoteDataSource(
         response: {
           'success': true,

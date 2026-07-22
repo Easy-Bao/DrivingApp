@@ -29,7 +29,8 @@ class FareCalculatorHelper {
     ),
   };
 
-  static Map<String, ServicePricingConfig> _activeConfigs = Map.from(defaultConfigs);
+  static final Map<String, ServicePricingConfig> _activeConfigs =
+      Map.from(defaultConfigs);
 
   static Map<String, ServicePricingConfig> get activeConfigs => _activeConfigs;
 
