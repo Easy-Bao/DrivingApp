@@ -66,6 +66,10 @@ export class FareCalculationService {
   ): Promise<{ currency: string; estimates: ServiceEstimate[] }> {
     const rules = await this.pricingConfigService.getPricingConfigs();
 
+    if (!rules || rules.length === 0) {
+      throw new Error('No active service pricing rules found in database authority.');
+    }
+
     const estimates: ServiceEstimate[] = rules.map((rule) => {
       const base = rule.baseFare ?? 20.0;
       const perKm = rule.perKmRate ?? 10.0;
@@ -110,19 +114,15 @@ export class FareCalculationService {
     rideType: string = 'Solo Ride',
     surgeMultiplier: number = 1.0,
   ): Promise<FinalFareResult> {
-    let rule: any = null;
-    try {
-      const rules = await db
-        .select()
-        .from(servicePricingRules)
-        .where(eq(servicePricingRules.serviceType, rideType))
-        .limit(1);
-      rule = rules[0];
-    } catch (_) {}
+    const rules = await db
+      .select()
+      .from(servicePricingRules)
+      .where(eq(servicePricingRules.serviceType, rideType))
+      .limit(1);
 
+    const rule = rules[0];
     if (!rule) {
-      const fallbackRules = await this.pricingConfigService.getPricingConfigs();
-      rule = fallbackRules.find((r) => r.serviceType === rideType) || fallbackRules[0];
+      throw new Error(`Pricing rule for service type '${rideType}' not found in database.`);
     }
 
     const baseFare = rule.baseFare ?? 20.0;
@@ -153,6 +153,7 @@ export class FareCalculationService {
       });
     } catch (error) {
       console.error(`[FareCalculationService] Database write error for ride ${rideId}:`, error);
+      throw new Error('Failed to record fare transaction into database.');
     }
 
     return {
