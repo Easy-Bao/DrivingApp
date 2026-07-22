@@ -45,9 +45,10 @@ app.*.map.json
 /android/app/release
 
 
-# Environment variable files
+# Environment variable files — never commit real keys
 *.env
 *.env.*
+!*.env.example
 
 #Metadata
 .metadata
