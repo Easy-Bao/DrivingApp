@@ -5,6 +5,11 @@ import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_complete_button_widget.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_destination_card_widget.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_meta_row_widget.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_status_badge_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -101,18 +106,16 @@ class _InTransitScreenState extends State<InTransitScreen> {
       if (places.isNotEmpty) {
         _destLat = places.first.latitude;
         _destLng = places.first.longitude;
-      } else {
-        _destLat = dLat;
-        _destLng = dLng;
       }
     }
 
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
-
-    _startTracking(context);
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      _triggerDrawRoute(context, dLat, dLng);
+      _startTracking(context);
+    }
   }
 
   void _triggerDrawRoute(BuildContext context, double dLat, double dLng) {
@@ -216,7 +219,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
                           ),
                         ),
                         const SizedBox(width: 14),
-                        _buildStatusBadge(),
+                        const InTransitStatusBadgeWidget(),
                       ],
                     ),
                   ),
@@ -242,13 +245,21 @@ class _InTransitScreenState extends State<InTransitScreen> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildDestinationCard(),
+                        InTransitDestinationCardWidget(
+                          dropoffAddress: widget.dropoff,
+                        ),
                         const SizedBox(height: 16),
-                        _buildMetaRow(),
+                        InTransitMetaRowWidget(
+                          distanceKm: widget.distance,
+                          durationText: widget.duration,
+                          fareAmount: widget.fare,
+                        ),
                         const SizedBox(height: 16),
-                        _buildPassengerRow(context),
+                        const InTransitPassengerCardWidget(),
                         const SizedBox(height: 24),
-                        _buildCompleteButton(context),
+                        InTransitCompleteButtonWidget(
+                          onCompleteTripPressed: () => _completeTrip(context),
+                        ),
                       ],
                     ),
                   ),
@@ -257,203 +268,6 @@ class _InTransitScreenState extends State<InTransitScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(LucideIcons.route, size: 13, color: Colors.white),
-          SizedBox(width: 6),
-          Text(
-            'IN TRANSIT',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDestinationCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'HEADING TO',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor.withValues(alpha: 0.4),
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(
-                Icons.location_on,
-                size: 18,
-                color: AppTheme.tertiaryColor,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  widget.dropoff,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetaRow() {
-    return Row(
-      children: [
-        _chip(LucideIcons.map_pin, '${widget.distance.toStringAsFixed(1)} km'),
-        const SizedBox(width: 10),
-        _chip(LucideIcons.clock, widget.duration),
-        const SizedBox(width: 10),
-        _chip(LucideIcons.banknote, '₱${widget.fare.toStringAsFixed(0)}'),
-      ],
-    );
-  }
-
-  Widget _chip(IconData icon, String text) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.borderSide),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 14, color: AppTheme.tertiaryColor),
-            const SizedBox(height: 4),
-            Text(
-              text,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPassengerRow(BuildContext context) {
-    final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowInTransit
-        ? state.passengerName
-        : 'Passenger';
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSide),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.secondaryColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              LucideIcons.user,
-              color: AppTheme.primaryColor,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  passengerName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const Text(
-                  'Aboard',
-                  style: TextStyle(fontSize: 12, color: AppTheme.tertiaryColor),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompleteButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _completeTrip(context),
-      child: Container(
-        width: double.infinity,
-        height: 68,
-        decoration: BoxDecoration(
-          color: AppTheme.complete,
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.complete.withValues(alpha: 0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 7),
-            ),
-          ],
-        ),
-        child: const Center(
-          child: Text(
-            'COMPLETE TRIP',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
       ),
     );
   }
