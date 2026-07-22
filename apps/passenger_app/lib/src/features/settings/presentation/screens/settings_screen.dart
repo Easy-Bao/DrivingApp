@@ -47,6 +47,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           selectedThemeMode: currentTheme,
           onThemeSelected: (newMode) {
             unawaited(_settingsCubit.updateThemeMode(newMode));
+            unawaited(
+              BlocProvider.of<ThemeCubit>(context).changeThemeMode(newMode),
+            );
           },
         ),
       ),

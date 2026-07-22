@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:session_service/session_service.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class AppWidget extends StatelessWidget {
   const AppWidget({super.key});
@@ -13,6 +14,9 @@ class AppWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<ThemeCubit>(
+          create: (_) => ThemeCubit(),
+        ),
         BlocProvider<RideFlowCubit>(
           create: (_) {
             return RideFlowCubit(
@@ -23,15 +27,16 @@ class AppWidget extends StatelessWidget {
           },
         ),
       ],
-      child: ModularApp.router(
-        theme: ThemeData(
-          useMaterial3: true,
-          textTheme: Theme.of(
-            context,
-          ).textTheme.apply(fontFamily: 'packages/shared_ui/ProductSans'),
-        ),
-        debugShowCheckedModeBanner: false,
-        title: 'BaoRide Driver',
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return ModularApp.router(
+            theme: AppTheme.lightThemeData,
+            darkTheme: AppTheme.darkThemeData,
+            themeMode: themeMode,
+            debugShowCheckedModeBanner: false,
+            title: 'BaoRide Driver',
+          );
+        },
       ),
     );
   }
