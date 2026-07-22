@@ -121,10 +121,14 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       ),
     );
 
-    Timer(const Duration(milliseconds: 1500), () {
+    Timer(const Duration(milliseconds: 1200), () {
       if (!mounted) return;
       Navigator.of(context).pop();
-      context.goNamed(HomeRoutes.home);
+      if (Navigator.of(context).canPop()) {
+        context.pop(true);
+      } else {
+        context.goNamed(HomeRoutes.home);
+      }
     });
   }
 

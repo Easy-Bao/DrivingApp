@@ -49,24 +49,37 @@ class DriverRepositoryImpl implements DriverRepository {
     double userLng,
   ) {
     final List<DriverModel> drivers = [];
-    for (final d in rawDrivers) {
-      if (d is! Map<String, dynamic>) continue;
-      final driverLat = (d['lat'] as num?)?.toDouble() ?? 0.0;
-      final driverLng = (d['lng'] as num?)?.toDouble() ?? 0.0;
+    double currentMaxRadius = 5.0;
 
-      final distanceKm = _calculateDistance(
-        userLat,
-        userLng,
-        driverLat,
-        driverLng,
-      );
-      if (distanceKm > 5.0) continue;
+    for (int pass = 0; pass < 2; pass++) {
+      drivers.clear();
+      for (final d in rawDrivers) {
+        if (d is! Map<String, dynamic>) continue;
+        final driverLat = (d['lat'] as num?)?.toDouble() ?? 0.0;
+        final driverLng = (d['lng'] as num?)?.toDouble() ?? 0.0;
 
-      final etaMinutes = _calculateEta(distanceKm);
-      final rating = (d['rating'] as num?)?.toDouble() ?? 5.0;
-      final score = _calculateMatchingScore(distanceKm, rating, etaMinutes);
+        final double distanceKm;
+        if (driverLat == 0.0 && driverLng == 0.0) {
+          distanceKm = 1.5;
+        } else {
+          distanceKm = _calculateDistance(
+            userLat,
+            userLng,
+            driverLat,
+            driverLng,
+          );
+        }
 
-      drivers.add(_mapToDriverModel(d, distanceKm, etaMinutes, score));
+        if (distanceKm > currentMaxRadius) continue;
+
+        final etaMinutes = _calculateEta(distanceKm);
+        final rating = (d['rating'] as num?)?.toDouble() ?? 5.0;
+        final score = _calculateMatchingScore(distanceKm, rating, etaMinutes);
+
+        drivers.add(_mapToDriverModel(d, distanceKm, etaMinutes, score));
+      }
+      if (drivers.isNotEmpty) break;
+      currentMaxRadius = 25.0;
     }
 
     drivers.sort((a, b) => a.score.compareTo(b.score));

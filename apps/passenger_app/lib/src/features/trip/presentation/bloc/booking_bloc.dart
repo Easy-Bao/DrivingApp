@@ -56,18 +56,35 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     emit(FindingNearestDriver());
-    final result = await _driverRepository.getNearbyDrivers(
-      lat: event.pickupLat,
-      lng: event.pickupLng,
-    );
 
-    await result.fold(
-      (failure) async {
-        emit(BookingFailure(failure.message));
-      },
-      (nearbyDrivers) async {
-        if (nearbyDrivers.isNotEmpty) {
-          DriverModel closestDriver = nearbyDrivers.first;
+    List<DriverModel> nearbyDrivers = [];
+    Failure? lastFailure;
+
+    for (int attempt = 0; attempt < 5; attempt++) {
+      final result = await _driverRepository.getNearbyDrivers(
+        lat: event.pickupLat,
+        lng: event.pickupLng,
+      );
+
+      result.fold(
+        (failure) {
+          lastFailure = failure;
+        },
+        (drivers) {
+          nearbyDrivers = drivers;
+        },
+      );
+
+      if (nearbyDrivers.isNotEmpty) break;
+      await Future.delayed(const Duration(seconds: 2));
+    }
+
+    if (nearbyDrivers.isEmpty) {
+      emit(BookingFailure(lastFailure?.message ?? 'No drivers nearby. Please try again.'));
+      return;
+    }
+
+    DriverModel closestDriver = nearbyDrivers.first;
           for (final d in nearbyDrivers) {
             if (d.distanceKm < closestDriver.distanceKm) {
               closestDriver = d;
@@ -146,18 +163,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             _isLoadingReviews = false;
           }
 
-          emit(
-            NearestDriverFound(
-              driver: closestDriver,
-              totalTrips: _totalTrips,
-              reviews: _reviews,
-              isLoadingReviews: _isLoadingReviews,
-            ),
-          );
-        } else {
-          emit(const BookingFailure('No drivers nearby.'));
-        }
-      },
+    emit(
+      NearestDriverFound(
+        driver: closestDriver,
+        totalTrips: _totalTrips,
+        reviews: _reviews,
+        isLoadingReviews: _isLoadingReviews,
+      ),
     );
   }
 

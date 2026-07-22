@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/cubits/signup_cubit.dart';
 import 'package:passenger_app/src/features/auth/presentation/cubits/signup_state.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -101,19 +102,26 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
     });
   }
 
-  void _submitEmailAndPassword(BuildContext context) {
+  Future<void> _submitEmailAndPassword(BuildContext context) async {
     FocusScope.of(context).unfocus();
-    final email = _passengerEmailController.text;
+    final email = _passengerEmailController.text.trim();
     final password = _passengerPasswordController.text;
-    _registeredPassengerEmail = email.trim();
-    unawaited(
-      BlocProvider.of<SignUpCubit>(context).registerPassenger(
-        name: 'Pending',
-        email: email,
-        phone: 'Pending',
-        password: password,
-      ),
+    if (email.isEmpty || password.isEmpty) return;
+
+    _registeredPassengerEmail = email;
+    final result = await context.pushNamed(
+      AuthRoutes.verifyOtp,
+      extra: {'email': email},
     );
+
+    if (result == true && mounted) {
+      unawaited(_onboardingPageController.animateToPage(
+        1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      ));
+      setState(() => _currentStepIndex = 1);
+    }
   }
 
   void _submitOtp(BuildContext context, String code) {

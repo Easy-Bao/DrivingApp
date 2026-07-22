@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
+import 'package:fare_services/fare_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -44,7 +45,11 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         'Solo Ride',
         'Direct booking, just you',
         LucideIcons.bike,
-        formattedFare['Solo Ride'] ?? (20.0 + km * 10),
+        formattedFare['Solo Ride'] ??
+            FareCalculatorHelper.estimateFare(
+              serviceType: 'Solo Ride',
+              distanceKm: km,
+            ),
         '3 min',
         null,
       ),
@@ -52,7 +57,11 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         'Share-Bao',
         'Pasabay, split the fare',
         LucideIcons.users,
-        formattedFare['Share-Bao'] ?? (15.0 + km * 7),
+        formattedFare['Share-Bao'] ??
+            FareCalculatorHelper.estimateFare(
+              serviceType: 'Share-Bao',
+              distanceKm: km,
+            ),
         '5 min',
         'Cheapest',
       ),
@@ -60,7 +69,11 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         'Bao Premium',
         'Priority pickup, top rated',
         LucideIcons.crown,
-        formattedFare['Bao Premium'] ?? (35.0 + km * 15),
+        formattedFare['Bao Premium'] ??
+            FareCalculatorHelper.estimateFare(
+              serviceType: 'Bao Premium',
+              distanceKm: km,
+            ),
         '2 min',
         'Fastest',
       ),

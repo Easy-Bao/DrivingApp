@@ -1,23 +1,30 @@
+import 'package:flutter/material.dart';
 import 'package:go_transitions/go_transitions.dart';
+import 'package:shared_ui/src/transitions/custom_page_transition.dart';
 
 class AppTransitions {
   AppTransitions._();
 
-  static const push = _NoTransition();
-  static const fade = GoTransitions.none;
-  static const modal = _NoTransition();
+  static const push = _CustomPushTransitions();
+  static const fade = GoTransitions.fade;
+  static const modal = GoTransitions.slide;
   static const none = GoTransitions.none;
 
-  static const Duration pushDuration = Duration.zero;
-  static const Duration fadeDuration = Duration.zero;
-  static const Duration modalDuration = Duration.zero;
+  static const Duration pushDuration = Duration(milliseconds: 160);
+  static const Duration fadeDuration = Duration(milliseconds: 120);
+  static const Duration modalDuration = Duration(milliseconds: 220);
+
+  static void configure() {
+    GoTransition.defaultDuration = pushDuration;
+    GoTransition.defaultCurve = Curves.easeOutCubic;
+  }
 }
 
-class _NoTransition {
-  const _NoTransition();
+class _CustomPushTransitions {
+  const _CustomPushTransitions();
 
-  dynamic get toLeft => GoTransitions.none;
-  dynamic get toRight => GoTransitions.none;
-  dynamic get toTop => GoTransitions.none;
-  dynamic get toBottom => GoTransitions.none;
+  GoTransition get toLeft => CustomPageTransition();
+  GoTransition get toRight => CustomPageTransition();
+  GoTransition get toTop => GoTransitions.slide;
+  GoTransition get toBottom => GoTransitions.slide;
 }

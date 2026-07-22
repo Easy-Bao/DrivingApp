@@ -322,18 +322,6 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _actionPill(LucideIcons.navigation, 'Ride now'),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _actionPill(LucideIcons.clock, 'Schedule'),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -374,32 +362,6 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionPill(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 16, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
             ),
           ),
         ],

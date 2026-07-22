@@ -283,7 +283,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               state.isOnline &&
               (_activeBids.isNotEmpty || _activeTrips.isNotEmpty);
           return Scaffold(
-            backgroundColor: AppTheme.primaryColor,
+            backgroundColor: AppTheme.surface,
             body: SafeArea(
               child: Column(
                 children: [
@@ -345,7 +345,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 'Good ${_greeting()}',
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -355,7 +355,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: AppTheme.primaryColor,
                 ),
               ),
             ],
