@@ -1,47 +1,16 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { EstimateFareSchema, CalculateFinalFareSchema } from '../schemas/fare.schema.ts';
-import { FareService } from '../services/fare.service.ts';
+import {
+  handleGetPricingConfigs,
+  handleGetRatingConfig,
+  handleEstimateFares,
+  handleCalculateFinalFare,
+} from '../controllers/fare.controller.ts';
 
 export const fareRouter = new Hono();
-const fareService = new FareService();
 
-fareRouter.get('/configs', async (c) => {
-  const configs = await fareService.getPricingConfigs();
-  return c.json({
-    success: true,
-    data: configs,
-  });
-});
-
-fareRouter.get('/rating-config', async (c) => {
-  const ratingConfig = await fareService.getRatingConfig();
-  return c.json({
-    success: true,
-    data: ratingConfig,
-  });
-});
-
-fareRouter.post('/estimate', zValidator('json', EstimateFareSchema), async (c) => {
-  const body = c.req.valid('json');
-  const result = await fareService.estimateFares(body.distanceKm, body.durationMinutes);
-  return c.json({
-    success: true,
-    data: result,
-  });
-});
-
-fareRouter.post('/calculate-final', zValidator('json', CalculateFinalFareSchema), async (c) => {
-  const body = c.req.valid('json');
-  const result = await fareService.calculateFinalFare(
-    body.rideId,
-    body.distanceKm,
-    body.durationMinutes,
-    body.rideType,
-    body.surgeMultiplier,
-  );
-  return c.json({
-    success: true,
-    data: result,
-  });
-});
+fareRouter.get('/configs', handleGetPricingConfigs);
+fareRouter.get('/rating-config', handleGetRatingConfig);
+fareRouter.post('/estimate', zValidator('json', EstimateFareSchema), handleEstimateFares);
+fareRouter.post('/calculate-final', zValidator('json', CalculateFinalFareSchema), handleCalculateFinalFare);
