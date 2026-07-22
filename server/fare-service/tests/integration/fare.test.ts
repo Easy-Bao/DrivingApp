@@ -2,6 +2,14 @@ import { expect, test, describe } from 'bun:test';
 import { app } from '../../src/index.ts';
 
 describe('Fare Service Integration Tests', () => {
+  test('GET /fares/configs — returns active pricing configurations from backend authority', async () => {
+    const res = await app.request('/fares/configs');
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.data.length).toBeGreaterThanOrEqual(3);
+  });
+
   test('POST /fares/estimate — returns estimates for all service types', async () => {
     const res = await app.request('/fares/estimate', {
       method: 'POST',

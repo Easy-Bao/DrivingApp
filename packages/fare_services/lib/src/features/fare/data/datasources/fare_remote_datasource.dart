@@ -12,6 +12,8 @@ abstract class FareRemoteDataSource {
     double durationMinutes = 0.0,
   });
 
+  Future<Map<String, dynamic>> fetchPricingConfigs();
+
   Future<Map<String, dynamic>> calculateFinalFare({
     required String rideId,
     required double distanceKm,
@@ -54,6 +56,12 @@ class FareRemoteDataSourceImpl extends BaseApiClient
         'durationMinutes': durationMinutes,
       },
     );
+    return parseMapResponse(response, 200);
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchPricingConfigs() async {
+    final response = await clientDio.get('/fares/configs');
     return parseMapResponse(response, 200);
   }
 

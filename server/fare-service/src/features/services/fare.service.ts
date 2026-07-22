@@ -53,6 +53,10 @@ export class FareService {
     }
   }
 
+  async getPricingConfigs(): Promise<any[]> {
+    return await this.ensureRulesSeeded();
+  }
+
   async estimateFares(distanceKm: number, durationMinutes: number = 0.0): Promise<{ currency: string; estimates: ServiceEstimate[] }> {
     const rules = await this.ensureRulesSeeded();
     const estimates: ServiceEstimate[] = [];

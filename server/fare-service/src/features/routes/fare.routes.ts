@@ -6,6 +6,14 @@ import { FareService } from '../services/fare.service.ts';
 export const fareRouter = new Hono();
 const fareService = new FareService();
 
+fareRouter.get('/configs', async (c) => {
+  const configs = await fareService.getPricingConfigs();
+  return c.json({
+    success: true,
+    data: configs,
+  });
+});
+
 fareRouter.post('/estimate', zValidator('json', EstimateFareSchema), async (c) => {
   const body = c.req.valid('json');
   const result = await fareService.estimateFares(body.distanceKm, body.durationMinutes);

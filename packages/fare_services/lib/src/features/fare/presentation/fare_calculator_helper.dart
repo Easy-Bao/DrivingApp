@@ -29,13 +29,25 @@ class FareCalculatorHelper {
     ),
   };
 
+  static Map<String, ServicePricingConfig> _activeConfigs = Map.from(defaultConfigs);
+
+  static Map<String, ServicePricingConfig> get activeConfigs => _activeConfigs;
+
+  /// Updates active pricing rules dynamically fetched from backend API.
+  static void updateConfigsFromBackend(List<ServicePricingConfig> configs) {
+    for (final config in configs) {
+      _activeConfigs[config.serviceName] = config;
+    }
+  }
+
   /// Computes estimated fare for a given service type using centralized rules.
   static double estimateFare({
     required String serviceType,
     required double distanceKm,
     double durationMinutes = 0.0,
   }) {
-    final config = defaultConfigs[serviceType] ??
+    final config = _activeConfigs[serviceType] ??
+        defaultConfigs[serviceType] ??
         ServicePricingConfig(
           serviceName: serviceType,
           baseFare: 20.0,
