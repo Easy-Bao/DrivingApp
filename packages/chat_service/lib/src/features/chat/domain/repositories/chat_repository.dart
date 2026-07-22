@@ -12,6 +12,8 @@ abstract class ChatRepository {
 
   Future<Either<Failure, void>> sendChatMessage(String text);
 
+  Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(String roomId);
+
   Stream<Either<Failure, ChatEvent>> get chatEventsStream;
 
   bool get isSessionConnected;

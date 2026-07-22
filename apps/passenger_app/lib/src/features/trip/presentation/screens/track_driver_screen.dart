@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 
+import 'package:chat_service/chat_service.dart';
 import 'package:core_models/core_models.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -77,37 +76,31 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           await Modular.get<SecureSessionService>().readPassengerId() ?? '';
       if (passengerIdentifier.isEmpty) return;
 
-      final chatMessagesEndpointUri = EnvironmentConfig.httpBaseUri.replace(
-        path: '/chat/rooms/${widget.ride.id}/messages',
+      final chatRepository = Modular.get<ChatRepository>();
+      final result = await chatRepository.fetchRoomMessages(widget.ride.id);
+
+      result.fold(
+        (_) => null,
+        (List<ChatMessage> messages) {
+          final driverChatMessagesList = messages
+              .where((m) => m.senderId != passengerIdentifier)
+              .toList();
+          final currentDriverMessagesCount = driverChatMessagesList.length;
+
+          if (mounted) {
+            setState(() {
+              if (!_isInitialChatMessagesCountFetched) {
+                _viewedDriverMessagesCount = currentDriverMessagesCount;
+                _isInitialChatMessagesCountFetched = true;
+              } else if (currentDriverMessagesCount >
+                  _viewedDriverMessagesCount) {
+                _unreadChatMessagesCount =
+                    currentDriverMessagesCount - _viewedDriverMessagesCount;
+              }
+            });
+          }
+        },
       );
-
-      final chatMessagesHttpResponse = await Dio().getUri(chatMessagesEndpointUri);
-      if (chatMessagesHttpResponse.statusCode == 200) {
-        final List<dynamic> chatMessagesList = chatMessagesHttpResponse.data is List<dynamic>
-            ? chatMessagesHttpResponse.data as List<dynamic>
-            : jsonDecode(chatMessagesHttpResponse.data.toString());
-        final driverChatMessagesList = chatMessagesList
-            .where(
-              (m) =>
-                  m is Map<String, dynamic> &&
-                  m['senderId'] != passengerIdentifier,
-            )
-            .toList();
-        final currentDriverMessagesCount = driverChatMessagesList.length;
-
-        if (mounted) {
-          setState(() {
-            if (!_isInitialChatMessagesCountFetched) {
-              _viewedDriverMessagesCount = currentDriverMessagesCount;
-              _isInitialChatMessagesCountFetched = true;
-            } else if (currentDriverMessagesCount >
-                _viewedDriverMessagesCount) {
-              _unreadChatMessagesCount =
-                  currentDriverMessagesCount - _viewedDriverMessagesCount;
-            }
-          });
-        }
-      }
     } catch (_) {}
   }
 

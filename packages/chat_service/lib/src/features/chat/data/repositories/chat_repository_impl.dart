@@ -7,6 +7,7 @@ import 'package:chat_service/src/features/chat/domain/entities/chat_message.dart
 import 'package:chat_service/src/features/chat/domain/repositories/chat_repository.dart';
 import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:session_service/session_service.dart';
 
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRemoteDataSource remoteDataSource;
@@ -55,6 +56,29 @@ class ChatRepositoryImpl implements ChatRepository {
       return const Right(null);
     } catch (error) {
       return Left(NetworkFailure('Failed to send message: $error'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(String roomId) async {
+    try {
+      final endpointUri = EnvironmentConfig.httpBaseUri.replace(
+        path: '/chat/rooms/$roomId/messages',
+      );
+      final response = await DioClient.instance.getUri(endpointUri);
+      if (response.statusCode == 200) {
+        final List<dynamic> rawList = response.data is List<dynamic>
+            ? response.data as List<dynamic>
+            : jsonDecode(response.data.toString());
+        final messages = rawList
+            .whereType<Map<String, dynamic>>()
+            .map((json) => ChatMessageModel.fromJson(json).toEntity(currentUserId: currentUserId))
+            .toList();
+        return Right(messages);
+      }
+      return const Left(ServerFailure('Failed to fetch room messages'));
+    } catch (error) {
+      return Left(NetworkFailure('Network error fetching messages: $error'));
     }
   }
 
