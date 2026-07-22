@@ -14,6 +14,14 @@ fareRouter.get('/configs', async (c) => {
   });
 });
 
+fareRouter.get('/rating-config', async (c) => {
+  const ratingConfig = await fareService.getRatingConfig();
+  return c.json({
+    success: true,
+    data: ratingConfig,
+  });
+});
+
 fareRouter.post('/estimate', zValidator('json', EstimateFareSchema), async (c) => {
   const body = c.req.valid('json');
   const result = await fareService.estimateFares(body.distanceKm, body.durationMinutes);

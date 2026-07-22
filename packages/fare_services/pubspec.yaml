@@ -10,12 +10,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  equatable: ^2.0.7
   fpdart: ^1.2.0
   dio: ^5.10.0
   freezed_annotation: ^3.0.0
   json_annotation: ^4.9.0
   core_models:
     path: ../core_models
+  session_service:
+    path: ../session_service
 
 dev_dependencies:
   flutter_test:

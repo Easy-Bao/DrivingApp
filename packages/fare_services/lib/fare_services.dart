@@ -1,3 +1,5 @@
+export 'src/config/fare_service_endpoints.dart';
+export 'src/config/rating_pricing_config.dart';
 export 'src/core/network/base_api_client.dart';
 export 'src/features/fare/data/datasources/fare_remote_datasource.dart';
 export 'src/features/fare/data/repositories/fare_repository_impl.dart';

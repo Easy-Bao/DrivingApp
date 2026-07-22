@@ -28,7 +28,21 @@ export interface FinalFareResult {
   payment_method: string;
 }
 
+export interface RatingPricingConfig {
+  minimumRatingThreshold: number;
+  highRatingBonusMultiplier: number;
+  lowRatingSurgePenaltyMultiplier: number;
+  baseSurgeCap: number;
+}
+
 export class FareService {
+  private static readonly DEFAULT_RATING_CONFIG: RatingPricingConfig = {
+    minimumRatingThreshold: 4.5,
+    highRatingBonusMultiplier: 1.05,
+    lowRatingSurgePenaltyMultiplier: 1.0,
+    baseSurgeCap: 2.5,
+  };
+
   private static readonly DEFAULT_RULES = [
     { serviceType: 'Solo Ride', baseFare: 20.0, perKmRate: 10.0, perMinuteRate: 1.5, minimumFare: 25.0 },
     { serviceType: 'Share-Bao', baseFare: 15.0, perKmRate: 7.0, perMinuteRate: 1.0, minimumFare: 20.0 },
@@ -57,6 +71,10 @@ export class FareService {
     return await this.ensureRulesSeeded();
   }
 
+  async getRatingConfig(): Promise<RatingPricingConfig> {
+    return FareService.DEFAULT_RATING_CONFIG;
+  }
+
   async estimateFares(distanceKm: number, durationMinutes: number = 0.0): Promise<{ currency: string; estimates: ServiceEstimate[] }> {
     const rules = await this.ensureRulesSeeded();
     const estimates: ServiceEstimate[] = [];
@@ -70,7 +88,7 @@ export class FareService {
 
       const rawSubtotal = (base + (distanceKm * perKm) + (durationMinutes * perMin)) * surge;
       const clampedTotal = rawSubtotal < minFare ? minFare : rawSubtotal;
-      const totalFare = Math.round(clampedTotal * 2) / 2; // Round to nearest 0.50
+      const totalFare = Math.round(clampedTotal * 2) / 2;
 
       estimates.push({
         service_type: rule.serviceType,
@@ -126,7 +144,7 @@ export class FareService {
         driverEarnings,
         platformFee,
       });
-    } catch (_) {}
+    } catch (_) { }
 
     return {
       ride_id: rideId,
