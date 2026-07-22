@@ -41,7 +41,6 @@ class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
     if (!mounted) return;
 
     if (existing != null) {
-      // Find existing index and update
       final index = cubit.state.places.indexWhere(
         (p) => p.label.toLowerCase() == label.toLowerCase(),
       );
@@ -239,107 +238,98 @@ class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
                       return state.places.indexOf(p);
                     }
 
-                    return ListView(
-                      physics: const BouncingScrollPhysics(),
-                      children: [
-                        // Home Tile
-                        _buildPlaceTile(
-                          icon: LucideIcons.house,
-                          label: 'Home',
-                          address:
-                              homePlace?.savedAddress ??
-                              'Move the map to select a location',
-                          onTap: () {
-                            if (homePlace == null) {
-                              unawaited(_addOrUpdatePlace('Home', 'house'));
-                            } else {
-                              _showPlaceOptions(
-                                homePlace,
-                                indexForPlace(homePlace),
-                              );
-                            }
-                          },
-                        ),
+                    final listItems = <Widget>[
+                      _buildPlaceTile(
+                        icon: LucideIcons.house,
+                        label: 'Home',
+                        address:
+                            homePlace?.savedAddress ??
+                            'Move the map to select a location',
+                        onTap: () {
+                          if (homePlace == null) {
+                            unawaited(_addOrUpdatePlace('Home', 'house'));
+                          } else {
+                            _showPlaceOptions(
+                              homePlace,
+                              indexForPlace(homePlace),
+                            );
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildPlaceTile(
+                        icon: LucideIcons.briefcase,
+                        label: 'Work',
+                        address: workPlace?.savedAddress ?? 'Not set',
+                        onTap: () {
+                          if (workPlace == null) {
+                            unawaited(_addOrUpdatePlace('Work', 'briefcase'));
+                          } else {
+                            _showPlaceOptions(
+                              workPlace,
+                              indexForPlace(workPlace),
+                            );
+                          }
+                        },
+                      ),
+                      for (final place in customPlaces) ...[
                         const SizedBox(height: 16),
-
-                        // Work Tile
                         _buildPlaceTile(
-                          icon: LucideIcons.briefcase,
-                          label: 'Work',
-                          address: workPlace?.savedAddress ?? 'Not set',
-                          onTap: () {
-                            if (workPlace == null) {
-                              unawaited(_addOrUpdatePlace('Work', 'briefcase'));
-                            } else {
-                              _showPlaceOptions(
-                                workPlace,
-                                indexForPlace(workPlace),
-                              );
-                            }
-                          },
+                          icon: SavedPlacesCubit.iconFromName(place.iconName),
+                          label: place.label,
+                          address: place.savedAddress ?? 'Not set',
+                          onTap: () => _showPlaceOptions(
+                            place,
+                            indexForPlace(place),
+                          ),
                         ),
-
-                        // Custom Places
-                        ...customPlaces.map((place) {
-                          final idx = indexForPlace(place);
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: _buildPlaceTile(
-                              icon: SavedPlacesCubit.iconFromName(
-                                place.iconName,
-                              ),
-                              label: place.label,
-                              address: place.savedAddress ?? 'Not set',
-                              onTap: () => _showPlaceOptions(place, idx),
+                      ],
+                      const SizedBox(height: 32),
+                      GestureDetector(
+                        onTap: _openAddCategoryScreen,
+                        child: CustomPaint(
+                          painter: DashedBorderPainter(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                            borderRadius: 16.0,
+                            dashLength: 6.0,
+                            gap: 6.0,
+                            strokeWidth: 1.5,
+                          ),
+                          child: Container(
+                            height: 64,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16.0),
                             ),
-                          );
-                        }),
-
-                        const SizedBox(height: 32),
-
-                        // Add new place button
-                        GestureDetector(
-                          onTap: _openAddCategoryScreen,
-                          child: CustomPaint(
-                            painter: DashedBorderPainter(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: 16.0,
-                              dashLength: 6.0,
-                              gap: 6.0,
-                              strokeWidth: 1.5,
-                            ),
-                            child: Container(
-                              height: 64,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16.0),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    LucideIcons.plus,
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  LucideIcons.plus,
+                                  color: Color(0xFF8A4F35),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Add a new place',
+                                  style: TextStyle(
                                     color: Color(0xFF8A4F35),
-                                    size: 20,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
                                   ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Add a new place',
-                                    style: TextStyle(
-                                      color: Color(0xFF8A4F35),
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
+                      const SizedBox(height: 100),
+                    ];
+
+                    return ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: listItems.length,
+                      itemBuilder: (context, index) => listItems[index],
                     );
                   },
                 ),

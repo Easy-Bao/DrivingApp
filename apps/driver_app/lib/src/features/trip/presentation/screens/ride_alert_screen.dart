@@ -4,7 +4,7 @@ import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class RideAlertScreen extends StatefulWidget {
@@ -64,18 +64,26 @@ class _RideAlertScreenState extends State<RideAlertScreen>
   Future<void> _accept() async {
     _autoDecline?.cancel();
 
-    final prefs = await SharedPreferences.getInstance();
-    final driverId = prefs.getString('driver_id') ?? '';
-    final driverName = prefs.getString('driver_name') ?? 'Driver';
-    final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
-    final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
+    final driverProfile =
+        await Modular.get<DriverSessionService>().getProfile();
+    if (driverProfile == null) {
+      if (mounted) {
+        CustomToast.show(
+          context,
+          'Session expired. Please sign in again.',
+          isError: true,
+        );
+        context.pop();
+      }
+      return;
+    }
 
     final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: _rideId,
-      driverId: driverId,
-      driverName: driverName,
-      plateNumber: plateNumber,
-      vehicleType: vehicleType,
+      driverId: driverProfile.id,
+      driverName: driverProfile.name,
+      plateNumber: driverProfile.plateNumber,
+      vehicleType: driverProfile.vehicleType,
       proposedFare: _fare,
     );
 

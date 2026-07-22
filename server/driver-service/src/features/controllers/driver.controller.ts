@@ -49,8 +49,14 @@ export async function handleGetDriverTripHistory(context: Context) {
 
 export async function handleGetDriverReviews(context: Context) {
   const id = context.req.param('id');
+
+  if (!id) {
+    return context.json({ message: 'Driver ID is required' }, 400);
+  }
+
   const page = parseInt(context.req.query('page') || '1', 10);
   const limit = parseInt(context.req.query('limit') || '5', 10);
+
   const reviews = await driverService.getDriverReviews(id, page, limit);
   return context.json(reviews, 200);
 }

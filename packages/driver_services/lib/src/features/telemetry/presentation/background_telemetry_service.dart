@@ -45,7 +45,8 @@ class BackgroundTelemetryService {
     });
 
     const telemetrySyncIntervalSeconds = 10;
-    Timer.periodic(const Duration(seconds: telemetrySyncIntervalSeconds), (timer) async {
+    Timer.periodic(const Duration(seconds: telemetrySyncIntervalSeconds),
+        (timer) async {
       if (service is AndroidServiceInstance) {
         final isForeground = await service.isForegroundService();
         if (isForeground) {

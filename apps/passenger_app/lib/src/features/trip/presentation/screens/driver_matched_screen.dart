@@ -8,7 +8,7 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:passenger_services/passenger_services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverMatchedScreen extends StatefulWidget {
@@ -76,8 +76,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      var activeRideId = prefs.getString('active_ride_id') ?? '';
+      final secureSession = Modular.get<SecureSessionService>();
+      var activeRideId = await secureSession.readActiveRideId() ?? '';
       var pickupLat =
           LocationService.lastPosition?.latitude ?? widget.destination.latitude;
       var pickupLng =
@@ -90,7 +90,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       var vehicleType = widget.vehicleType ?? '';
 
       if (activeRideId.isEmpty) {
-        final passengerId = prefs.getString('passenger_id') ?? '';
+        final passengerId = await secureSession.readPassengerId() ?? '';
         if (passengerId.isNotEmpty) {
           final res = await Modular.get<BiddingRemoteDataSource>()
               .createRideRequest(
@@ -106,7 +106,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
               );
           if (res != null && res['id'] != null) {
             activeRideId = res['id'] as String;
-            await prefs.setString('active_ride_id', activeRideId);
+            await secureSession.writeActiveRideId(activeRideId);
 
             pickupLat = SafeParse.toDouble(res['pickup_latitude']);
             pickupLng = SafeParse.toDouble(res['pickup_longitude']);

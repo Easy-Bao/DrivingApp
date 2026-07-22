@@ -17,7 +17,6 @@ import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/t
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -74,8 +73,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
 
   Future<void> _updateUnreadMessagesCount() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final passengerIdentifier = prefs.getString('passenger_id') ?? '';
+      final passengerIdentifier =
+          await Modular.get<SecureSessionService>().readPassengerId() ?? '';
       if (passengerIdentifier.isEmpty) return;
 
       final chatMessagesEndpointUri = EnvironmentConfig.httpBaseUri.replace(
@@ -529,10 +528,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                 notificationBadgeCount:
                                     _unreadChatMessagesCount,
                                 onTap: () async {
-                                  final prefs =
-                                      await SharedPreferences.getInstance();
                                   final passengerId =
-                                      prefs.getString('passenger_id') ?? '';
+                                      await Modular.get<SecureSessionService>()
+                                          .readPassengerId() ?? '';
                                   if (context.mounted) {
                                     setState(() {
                                       _unreadChatMessagesCount = 0;
@@ -560,10 +558,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                 foregroundColor: Colors.white,
                                 onTap: () async {
                                   try {
-                                    final prefs =
-                                        await SharedPreferences.getInstance();
                                     final activeRideId =
-                                        prefs.getString('active_ride_id') ??
+                                        await Modular.get<SecureSessionService>()
+                                            .readActiveRideId() ??
                                         widget.ride.id;
                                     if (activeRideId.isNotEmpty) {
                                       final statusData =

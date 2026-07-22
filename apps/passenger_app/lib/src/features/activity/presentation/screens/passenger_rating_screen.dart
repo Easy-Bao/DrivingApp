@@ -5,7 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerRatingScreen extends StatefulWidget {
@@ -42,8 +42,9 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final passengerName = prefs.getString('passenger_name') ?? 'Passenger';
+      final passengerProfile =
+          await Modular.get<PassengerSessionService>().getProfile();
+      final passengerName = passengerProfile?.name ?? 'Passenger';
 
       await Modular.get<BiddingRemoteDataSource>().submitDriverReview(
         driverId: widget.driverId,
@@ -146,9 +147,12 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
@@ -294,6 +298,8 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 }

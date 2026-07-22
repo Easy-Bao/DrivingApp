@@ -74,6 +74,9 @@ dependencies:
   driver_services:
     path: ../../packages/driver_services
 
+  fare_services:
+    path: ../../packages/fare_services
+
   fpdart: ^1.2.0
   dio: ^5.10.0
   rxdart: ^0.28.0

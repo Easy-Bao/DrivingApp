@@ -8,6 +8,7 @@ import 'package:passenger_app/src/features/trip/presentation/screens/map_pin_scr
 import 'package:passenger_app/src/features/trip/presentation/screens/ride_selection_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/search_destination_screen.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class TripModule {
@@ -28,7 +29,7 @@ class TripModule {
       name: TripRoutes.activityDetailMap,
       'home/activity-detail',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return ActivityDetailMapScreen(
           placeName: data['title'] as String,
           placeSubtitle: data['subtitle'] as String,
@@ -64,7 +65,7 @@ class TripModule {
       name: TripRoutes.rideSelection,
       'home/ride-selection',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return RideSelectionScreen(
           destination: data['destination'] as PlaceModel,
           distance: data['distance'] as String,
@@ -81,7 +82,7 @@ class TripModule {
       name: TripRoutes.findingDriver,
       'home/finding-driver',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return FindingDriverScreen(
           rideType: data['rideType'] as String,
           fare: (data['fare'] as num).toDouble(),
@@ -98,7 +99,7 @@ class TripModule {
       name: TripRoutes.driverMatched,
       'home/driver-matched',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return DriverMatchedScreen(
           rideType: data['rideType'] as String,
           fare: (data['fare'] as num).toDouble(),

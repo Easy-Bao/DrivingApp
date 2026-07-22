@@ -80,14 +80,17 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
               slivers: [
                 SliverFillRemaining(
                   hasScrollBody: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 20.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 480),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 20.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                         const SizedBox(height: 20),
                         const Text(
                           'Welcome Back',
@@ -255,11 +258,13 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                     ),
                   ),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+              ),
+            ],
+          );
+        },
       ),
-    );
+    ),
+  );
   }
 }

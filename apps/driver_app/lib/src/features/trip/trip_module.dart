@@ -7,6 +7,7 @@ import 'package:driver_app/src/features/trip/presentation/screens/in_transit_scr
 import 'package:driver_app/src/features/trip/presentation/screens/rate_passenger_screen.dart';
 import 'package:driver_app/src/features/trip/presentation/screens/ride_alert_screen.dart';
 import 'package:driver_app/src/features/trip/presentation/screens/waiting_passenger_screen.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:shared_ui/transitions/driver_transitions.dart';
 
 class TripModule {
@@ -17,7 +18,7 @@ class TripModule {
       name: TripRoutes.rideAlert,
       'dashboard/ride-alert',
       child: (context, GoRouterState state) =>
-          RideAlertScreen(rideData: state.extra as Map<String, dynamic>?),
+          RideAlertScreen(rideData: SafeRouteExtra.asMap(state.extra)),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),
@@ -25,7 +26,7 @@ class TripModule {
       name: TripRoutes.enRoutePickup,
       'ride/en-route',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return EnRoutePickupScreen(
           pickup: data['pickup'] as String,
           dropoff: data['dropoff'] as String,
@@ -41,7 +42,7 @@ class TripModule {
       name: TripRoutes.waitingPassenger,
       'ride/waiting',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return WaitingPassengerScreen(
           pickup: data['pickup'] as String,
           dropoff: data['dropoff'] as String,
@@ -57,7 +58,7 @@ class TripModule {
       name: TripRoutes.inTransit,
       'ride/in-transit',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return InTransitScreen(
           pickup: data['pickup'] as String,
           dropoff: data['dropoff'] as String,
@@ -73,7 +74,7 @@ class TripModule {
       name: TripRoutes.completeTrip,
       'ride/complete',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return CompleteTripScreen(
           pickup: data['pickup'] as String,
           dropoff: data['dropoff'] as String,
@@ -89,7 +90,7 @@ class TripModule {
       name: TripRoutes.fareSummary,
       'ride/fare-summary',
       child: (context, GoRouterState state) {
-        final data = state.extra as Map<String, dynamic>;
+        final data = SafeRouteExtra.asMap(state.extra);
         return FareSummaryScreen(
           pickup: data['pickup'] as String,
           dropoff: data['dropoff'] as String,

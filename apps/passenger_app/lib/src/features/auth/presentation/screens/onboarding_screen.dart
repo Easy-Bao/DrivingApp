@@ -18,7 +18,7 @@ class OnBoardingScreen extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            height: MediaQuery.of(context).size.height * 0.75,
+            height: MediaQuery.sizeOf(context).height * 0.75,
             child: Image.asset(
               'assets/images/BaoBao.png',
               package: 'shared_ui',

@@ -4,7 +4,7 @@ import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverEarningsScreen extends StatefulWidget {
@@ -42,12 +42,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
   }
 
   Future<void> _loadData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final driverId = prefs.getString('driver_id') ?? '';
-    final cachedRating = prefs.getString('rating') ?? '4.9';
+    final secureSession = Modular.get<SecureSessionService>();
+    final driverId = await secureSession.readDriverId() ?? '';
+    final driverProfile = await Modular.get<DriverSessionService>().getProfile();
     if (mounted) {
       setState(() {
-        _rating = cachedRating;
+        _rating = driverProfile?.rating ?? '4.9';
       });
     }
 
@@ -138,36 +138,42 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
             ? const Center(
                 child: CircularProgressIndicator(color: AppTheme.primaryColor),
               )
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  const Text(
-                    'Earnings',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
+            : Builder(
+                builder: (context) {
+                  final children = <Widget>[
+                    const Text(
+                      'Earnings',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildWeekCard(_weekTotal),
-                  const SizedBox(height: 20),
-                  _buildPeriodTabs(),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Daily Breakdown',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+                    const SizedBox(height: 20),
+                    _buildWeekCard(_weekTotal),
+                    const SizedBox(height: 20),
+                    _buildPeriodTabs(),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Daily Breakdown',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBarChart(),
-                  const SizedBox(height: 28),
-                  _buildTripHistoryTile(),
-                ],
+                    const SizedBox(height: 16),
+                    _buildBarChart(),
+                    const SizedBox(height: 28),
+                    _buildTripHistoryTile(),
+                  ];
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: children.length,
+                    itemBuilder: (context, index) => children[index],
+                  );
+                },
               ),
       ),
     );

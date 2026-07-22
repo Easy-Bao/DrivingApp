@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverTripDetailScreen extends StatefulWidget {
@@ -66,8 +65,8 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
 
     if (passengerId == null || tripId == null) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final driverId = prefs.getString('driver_id') ?? '';
+    final driverId =
+        await Modular.get<SecureSessionService>().readDriverId() ?? '';
     if (driverId.isEmpty) return;
 
     try {

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_services/passenger_services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ProfileInfoScreen extends StatefulWidget {
@@ -42,12 +42,13 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
+    final profile = await Modular.get<PassengerSessionService>().getProfile();
+    if (profile == null) return;
     setState(() {
-      _passengerId = prefs.getString('passenger_id') ?? '';
-      _nameController.text = prefs.getString('passenger_name') ?? '';
-      _phoneController.text = prefs.getString('passenger_phone') ?? '';
-      _emailController.text = prefs.getString('passenger_email') ?? '';
+      _passengerId = profile.id;
+      _nameController.text = profile.name;
+      _phoneController.text = profile.phone;
+      _emailController.text = profile.email;
     });
   }
 
@@ -91,10 +92,14 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           phone: phone,
           email: email,
         );
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('passenger_name', updated['name'] as String);
-        await prefs.setString('passenger_phone', updated['phone'] as String);
-        await prefs.setString('passenger_email', updated['email'] as String);
+        await Modular.get<PassengerSessionService>().saveProfile(
+          PassengerProfile(
+            id: _passengerId,
+            name: updated['name'] as String,
+            email: updated['email'] as String,
+            phone: updated['phone'] as String,
+          ),
+        );
 
         if (!mounted) return;
         CustomToast.show(context, 'Profile updated successfully!');
@@ -164,7 +169,10 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         physics: const BouncingScrollPhysics(),
-        child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
           children: [
             Center(
               child: Stack(
@@ -250,8 +258,10 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildField(
     String label,

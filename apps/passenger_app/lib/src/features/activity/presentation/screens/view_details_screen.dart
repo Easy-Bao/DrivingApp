@@ -9,7 +9,6 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -37,9 +36,8 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
     final ride = widget.ride;
     if (ride == null) return;
 
-    final sharedPreferencesInstance = await SharedPreferences.getInstance();
     final passengerId =
-        sharedPreferencesInstance.getString('passenger_id') ?? '';
+        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
 
     final retrievedRideData = await Modular.get<BiddingRemoteDataSource>().getRideStatus(
       ride.id,

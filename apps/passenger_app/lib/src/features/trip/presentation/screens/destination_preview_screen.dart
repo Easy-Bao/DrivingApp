@@ -326,17 +326,11 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _actionPill(
-                          LucideIcons.navigation,
-                          'Ride now',
-                        ),
+                        child: _actionPill(LucideIcons.navigation, 'Ride now'),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _actionPill(
-                          LucideIcons.clock,
-                          'Schedule',
-                        ),
+                        child: _actionPill(LucideIcons.clock, 'Schedule'),
                       ),
                     ],
                   ),
@@ -393,9 +387,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.15),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

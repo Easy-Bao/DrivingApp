@@ -15,7 +15,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:dio/dio.dart';
 import 'package:location_service/location_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -121,8 +120,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       final rideId = cubit.activeRideId;
       if (rideId == null || rideId.isEmpty) return;
 
-      final prefs = await SharedPreferences.getInstance();
-      final driverIdentifier = prefs.getString('driver_id') ?? '';
+      final driverIdentifier =
+          await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverIdentifier.isEmpty) return;
 
       final chatMessagesEndpointUri = EnvironmentConfig.httpBaseUri.replace(
@@ -587,8 +586,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                 final passengerName = state is RideFlowEnRoutePickup
                     ? state.passengerName
                     : 'Passenger';
-                final prefs = await SharedPreferences.getInstance();
-                final driverId = prefs.getString('driver_id') ?? '';
+                final driverId =
+                    await Modular.get<SecureSessionService>().readDriverId() ?? '';
                 if (!context.mounted) return;
                 setState(() {
                   _unreadChatMessagesCount = 0;

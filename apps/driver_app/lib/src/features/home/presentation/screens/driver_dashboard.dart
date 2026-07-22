@@ -14,7 +14,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
@@ -83,8 +83,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       }
 
       try {
-        final prefs = await SharedPreferences.getInstance();
-        final driverId = prefs.getString('driver_id') ?? '';
+        final driverProfile =
+            await Modular.get<DriverSessionService>().getProfile();
+        final driverId = driverProfile?.id ?? '';
         if (driverId.isEmpty) return;
 
         final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(driverId);
@@ -178,11 +179,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final driverId = prefs.getString('driver_id') ?? '';
-    final driverName = prefs.getString('driver_name') ?? 'Driver';
-    final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
-    final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
+    final driverProfile =
+        await Modular.get<DriverSessionService>().getProfile();
+    final driverId = driverProfile?.id ?? '';
+    final driverName = driverProfile?.name ?? 'Driver';
+    final vehicleType = driverProfile?.vehicleType ?? 'Bao Bao';
+    final plateNumber = driverProfile?.plateNumber ?? 'ABC 1234';
 
     final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: bid['id'],

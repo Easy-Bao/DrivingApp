@@ -1,4 +1,5 @@
 import 'package:driver_app/src/features/home/home_routes.dart';
+import 'package:fare_services/fare_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -22,8 +23,11 @@ class FareSummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseFare = 20.0;
-    final distCharge = distance * 10.0;
+    const serviceKey = 'Solo Ride';
+    final pricingConfig = FareCalculatorHelper.defaultConfigs[serviceKey] ??
+        FareCalculatorHelper.defaultConfigs.values.first;
+    final baseFare = pricingConfig.baseFare;
+    final distCharge = distance * pricingConfig.perKmRate;
     final surgePlus = (fare - baseFare - distCharge).clamp(
       0.0,
       double.infinity,

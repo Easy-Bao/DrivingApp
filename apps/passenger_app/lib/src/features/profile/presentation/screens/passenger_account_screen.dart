@@ -8,7 +8,6 @@ import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cub
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:session_service/session_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerAccountScreen extends StatefulWidget {
@@ -267,12 +266,7 @@ class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('passenger_name');
-    await prefs.remove('passenger_phone');
-    await prefs.remove('passenger_email');
-    await prefs.remove('passenger_id');
-    await Modular.get<SecureSessionService>().clearSession();
+    await Modular.get<PassengerSessionService>().clearSession();
     if (context.mounted) {
       context.go('/');
     }

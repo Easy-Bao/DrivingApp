@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class RideHistoryScreen extends StatefulWidget {
@@ -36,8 +36,8 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
   }
 
   Future<void> _loadRides() async {
-    final prefs = await SharedPreferences.getInstance();
-    final passengerId = prefs.getString('passenger_id') ?? '';
+    final passengerId =
+        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
     if (passengerId.isEmpty) {
       setState(() => _isLoading = false);
       return;

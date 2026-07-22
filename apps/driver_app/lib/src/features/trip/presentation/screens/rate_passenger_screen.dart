@@ -25,9 +25,12 @@ class _RatePassengerScreenState extends State<RatePassengerScreen> {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
             children: [
               const Spacer(),
               _buildAvatar(),
@@ -73,8 +76,10 @@ class _RatePassengerScreenState extends State<RatePassengerScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildAvatar() {
     return Container(

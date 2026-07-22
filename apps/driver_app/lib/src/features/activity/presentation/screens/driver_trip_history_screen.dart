@@ -3,7 +3,7 @@ import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverTripHistoryScreen extends StatefulWidget {
@@ -36,8 +36,8 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
   }
 
   Future<void> _loadTrips() async {
-    final prefs = await SharedPreferences.getInstance();
-    final driverId = prefs.getString('driver_id') ?? '';
+    final driverId =
+        await Modular.get<SecureSessionService>().readDriverId() ?? '';
     if (driverId.isEmpty) {
       if (mounted) {
         setState(() {

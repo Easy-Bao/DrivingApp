@@ -10,8 +10,6 @@ import 'package:passenger_app/src/features/chat/presentation/bloc/chat_cubit.dar
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-/// Screen enabling live chat communications between the passenger and their driver.
-/// Uses [ChatCubit] to connect to WebSockets and sync messages.
 class DriverChatScreen extends StatefulWidget {
   final String? roomId;
   final String? userId;
@@ -385,7 +383,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
             margin: const EdgeInsets.symmetric(vertical: 4),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
+              maxWidth: MediaQuery.sizeOf(context).width * 0.75,
             ),
             decoration: BoxDecoration(
               color: isMe ? AppTheme.primaryColor : AppTheme.neutralColor,

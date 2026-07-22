@@ -9,6 +9,7 @@ import 'package:passenger_app/src/features/home/presentation/screens/passenger_h
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/add_category_screen.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class HomeModule {
@@ -19,9 +20,9 @@ class HomeModule {
       name: HomeRoutes.addCategory,
       'home/add-category',
       child: (context, GoRouterState state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        final onSave = extra?['onSave'] as Function(SavedPlace)?;
-        final place = extra?['place'] as PlaceModel?;
+        final extra = SafeRouteExtra.asMap(state.extra);
+        final onSave = extra['onSave'] as Function(SavedPlace)?;
+        final place = extra['place'] as PlaceModel?;
         return PassengerAddCategoryScreen(
           onSave: onSave ?? (_) {},
           initialPlace: place,

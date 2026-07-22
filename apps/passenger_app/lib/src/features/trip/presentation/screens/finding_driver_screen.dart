@@ -854,7 +854,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   Widget _buildBidsPanel(List<dynamic> offers) {
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.5,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.5,
       ),
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       decoration: BoxDecoration(

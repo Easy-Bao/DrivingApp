@@ -7,7 +7,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerViewAllActivityScreen extends StatefulWidget {
@@ -576,8 +576,8 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
       _networkErrorMessage = '';
     });
     try {
-      final sharedPreferencesInstance = await SharedPreferences.getInstance();
-      final storedPassengerId = sharedPreferencesInstance.getString('passenger_id') ?? '';
+      final storedPassengerId =
+          await Modular.get<SecureSessionService>().readPassengerId() ?? '';
       if (storedPassengerId.isNotEmpty) {
         final activityRepositoryInstance = Modular.get<ActivityRepository>();
         final retrievedRidesHistoryResult = await activityRepositoryInstance.fetchRideHistory(storedPassengerId);
