@@ -11,8 +11,8 @@ abstract class FareRepository {
     String rideType = 'Solo Ride',
   });
 
-  /// Computes a client-side display estimate without network request.
-  FareEstimate computeClientEstimate({
+  /// Computes a fallback fare estimate using active pricing rules.
+  FareEstimate calculateFallbackFareEstimate({
     required double distanceKm,
     required double durationMinutes,
   });

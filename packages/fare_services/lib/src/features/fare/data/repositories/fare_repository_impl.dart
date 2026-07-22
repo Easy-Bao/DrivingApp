@@ -53,19 +53,20 @@ class FareRepositoryImpl implements FareRepository {
           ),
         );
       }
-      return Right(computeClientEstimate(distanceKm: distanceKm, durationMinutes: durationMinutes));
+      return Right(calculateFallbackFareEstimate(distanceKm: distanceKm, durationMinutes: durationMinutes));
     } catch (_) {
-      // Graceful fallback to client display estimate
-      return Right(computeClientEstimate(distanceKm: distanceKm, durationMinutes: durationMinutes));
+      // Graceful fallback to active rules estimate
+      return Right(calculateFallbackFareEstimate(distanceKm: distanceKm, durationMinutes: durationMinutes));
     }
   }
 
   @override
-  FareEstimate computeClientEstimate({
+  FareEstimate calculateFallbackFareEstimate({
     required double distanceKm,
     required double durationMinutes,
   }) {
-    final config = FareCalculatorHelper.defaultConfigs['Solo Ride']!;
+    final config = FareCalculatorHelper.activeConfigs['Solo Ride'] ??
+        FareCalculatorHelper.activeConfigs.values.first;
     final double distCharge = distanceKm * config.perKmRate;
     final double timeCharge = durationMinutes * config.perMinuteRate;
     final double total = config.calculateFare(distanceKm, durationMinutes: durationMinutes);

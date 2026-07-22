@@ -89,6 +89,23 @@ void main() {
     });
   });
 
+  group('FareCalculatorHelper', () {
+    test('synchronizes active service pricing rules from backend authority', () {
+      FareCalculatorHelper.synchronizeServicePricingRules([
+        const ServicePricingConfig(
+          serviceName: 'Solo Ride',
+          baseFare: 25.0,
+          perKmRate: 12.0,
+          perMinuteRate: 2.0,
+        ),
+      ]);
+
+      final updatedConfig = FareCalculatorHelper.activeConfigs['Solo Ride'];
+      expect(updatedConfig?.baseFare, 25.0);
+      expect(updatedConfig?.perKmRate, 12.0);
+    });
+  });
+
   group('FareRepositoryImpl', () {
     test('parses Server quote when available', () async {
       final mock = MockFareRemoteDataSource(

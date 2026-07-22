@@ -24,8 +24,8 @@ class FareSummaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const serviceKey = 'Solo Ride';
-    final pricingConfig = FareCalculatorHelper.defaultConfigs[serviceKey] ??
-        FareCalculatorHelper.defaultConfigs.values.first;
+    final pricingConfig = FareCalculatorHelper.activeConfigs[serviceKey] ??
+        FareCalculatorHelper.activeConfigs.values.first;
     final baseFare = pricingConfig.baseFare;
     final distCharge = distance * pricingConfig.perKmRate;
     final surgePlus = (fare - baseFare - distCharge).clamp(
