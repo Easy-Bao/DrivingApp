@@ -1,11 +1,10 @@
 /**
- * Service layer orchestrating domain logic for driver accounts, online status, trip history aggregation, and reviews.
+ * Service layer orchestrating domain logic for driver operational status, profile stats, trip history aggregation, and reviews.
  * All cross-service HTTP calls are delegated to TripClient to keep this class free of network concerns.
  */
 import { DriverRepository } from '../entities/driver.types.ts';
-import { CreateDriverRequest, LoginDriverRequest, UpdateOnlineStatusRequest } from '../schemas/driver.schema.ts';
+import { UpdateOnlineStatusRequest } from '../schemas/driver.schema.ts';
 import { HTTPException } from 'hono/http-exception';
-import { Logger } from '../../shared/logger/logger.ts';
 import { TripClient } from '../clients/driver.clients.ts';
 
 export class DriverService {
@@ -19,29 +18,6 @@ export class DriverService {
     }
     this.repository = repository;
     this.tripClient = new TripClient(tripServiceUrl);
-  }
-
-  async registerDriver(payload: CreateDriverRequest) {
-    const existing = await this.repository.findDriverByEmail(payload.email);
-    if (existing) {
-      throw new HTTPException(409, { message: 'A driver with this email already exists' });
-    }
-    const created = await this.repository.registerDriver(payload);
-    const { passwordHash: _, ...safeDriverData } = created as any;
-    return safeDriverData;
-  }
-
-  async authenticateDriver(payload: LoginDriverRequest) {
-    const foundDriver = await this.repository.findDriverByEmail(payload.email);
-    if (!foundDriver) {
-      throw new HTTPException(401, { message: 'Invalid email or password' });
-    }
-    const isPasswordValid = await Bun.password.verify(payload.password, foundDriver.passwordHash);
-    if (!isPasswordValid) {
-      throw new HTTPException(401, { message: 'Invalid email or password' });
-    }
-    const { passwordHash: _, ...safeDriverData } = foundDriver as any;
-    return safeDriverData;
   }
 
   async getOnlineDrivers() {

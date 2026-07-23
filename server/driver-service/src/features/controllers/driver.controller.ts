@@ -5,18 +5,6 @@ import { DriverService } from '../services/driver.service.ts';
 const driverRepository = new DriverRepositoryImpl();
 const driverService = new DriverService(driverRepository);
 
-export async function handleRegisterDriver(context: Context) {
-  const body = await context.req.json();
-  const driver = await driverService.registerDriver(body);
-  return context.json(driver, 201);
-}
-
-export async function handleLoginDriver(context: Context) {
-  const body = await context.req.json();
-  const driver = await driverService.authenticateDriver(body);
-  return context.json({ driver }, 200);
-}
-
 export async function handleGetOnlineDrivers(context: Context) {
   const list = await driverService.getOnlineDrivers();
   return context.json(list, 200);

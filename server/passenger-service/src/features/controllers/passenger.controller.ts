@@ -7,35 +7,12 @@ import { PassengerService } from '../services/passenger.service.ts';
 const passengerRepository = new PassengerRepositoryImpl();
 const passengerService = new PassengerService(passengerRepository);
 
-export async function handleRegisterPassenger(context: Context) {
-  const body = await context.req.json();
-  const result = await passengerService.registerPassenger(body);
-  return context.json(result, 201);
-}
-
-export async function handleVerifyOtp(context: Context) {
-  const { email, code } = await context.req.json();
-  const result = await passengerService.verifyPassengerOtp(email, code);
-  return context.json(result, 200);
-}
-
-export async function handleForgotPassword(context: Context) {
-  const { email } = await context.req.json();
-  const result = await passengerService.sendForgotPasswordEmail(email);
-  return context.json(result, 200);
-}
-
-export async function handleLoginPassenger(context: Context) {
-  const body = await context.req.json();
-  const result = await passengerService.loginPassenger(body);
-  return context.json(result, 200);
-}
-
 export async function handleGetPassengerProfile(context: Context) {
   const passengerIdFromRoute = context.req.param('id');
   const authorizationHeader = context.req.header('Authorization');
 
   if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
+    const token = authorizationHeader.substring(7);
     const secret = process.env.JWT_SECRET;
     if (!secret || secret.trim().length === 0) {
       throw new Error('Security Configuration Error: JWT_SECRET environment variable is missing.');
