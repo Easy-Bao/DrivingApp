@@ -10,15 +10,23 @@ abstract class BaseApiClient {
   BaseApiClient({
     required this.baseUrl,
     Dio? dio,
-  }) : clientDio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: baseUrl.toString(),
-                connectTimeout: const Duration(seconds: 15),
-                receiveTimeout: const Duration(seconds: 15),
-                validateStatus: (status) => status != null,
-              ),
-            );
+  }) : clientDio = _createDioClient(baseUrl, dio);
+
+  static Dio _createDioClient(Uri baseUrl, Dio? parentDio) {
+    final newDio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl.toString(),
+        connectTimeout: parentDio?.options.connectTimeout ?? const Duration(seconds: 15),
+        receiveTimeout: parentDio?.options.receiveTimeout ?? const Duration(seconds: 15),
+        sendTimeout: parentDio?.options.sendTimeout ?? const Duration(seconds: 15),
+        validateStatus: (status) => status != null,
+      ),
+    );
+    if (parentDio != null) {
+      newDio.interceptors.addAll(parentDio.interceptors);
+    }
+    return newDio;
+  }
 
   Map<String, dynamic> parseMapResponse(
     Response<dynamic> response,
