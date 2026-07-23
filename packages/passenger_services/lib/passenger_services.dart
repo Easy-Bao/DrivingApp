@@ -1,7 +1,7 @@
 // Core Network
 export 'src/core/network/base_api_client.dart';
 // Auth Feature
-export 'src/features/auth/data/datasources/auth_remote_datasource.dart';
+export 'src/features/auth/data/datasources/auth_remote_data_source.dart';
 export 'src/features/auth/data/repositories/auth_repository_impl.dart';
 export 'src/features/auth/domain/repositories/auth_repository.dart';
 // Bidding Feature

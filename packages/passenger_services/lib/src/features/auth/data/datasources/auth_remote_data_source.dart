@@ -11,10 +11,18 @@ class AuthRemoteDataSource extends BaseApiClient {
     required String password,
   }) async {
     final response = await clientDio.post(
-      '/passengers/login',
+      '/auth/passenger/login',
       data: {'email': email, 'password': password},
     );
-    return parseMapResponse(response, 200);
+    final parsed = parseMapResponse(response, 200);
+    if (parsed.containsKey('data') && parsed['data'] is Map<String, dynamic>) {
+      final dataMap = Map<String, dynamic>.from(parsed['data'] as Map<String, dynamic>);
+      if (dataMap.containsKey('user') && !dataMap.containsKey('passenger')) {
+        dataMap['passenger'] = dataMap['user'];
+      }
+      return dataMap;
+    }
+    return parsed;
   }
 
   Future<Map<String, dynamic>> registerPassenger({
@@ -22,17 +30,27 @@ class AuthRemoteDataSource extends BaseApiClient {
     required String email,
     required String phone,
     required String password,
+    String preferredRideType = 'solo-ride',
   }) async {
     final response = await clientDio.post(
-      '/passengers',
+      '/auth/passenger/register',
       data: {
         'name': name,
         'email': email,
         'phone': phone,
         'password': password,
+        'preferred_ride_type': preferredRideType,
       },
     );
-    return parseMapResponse(response, 201);
+    final parsed = parseMapResponse(response, 200);
+    if (parsed.containsKey('data') && parsed['data'] is Map<String, dynamic>) {
+      final dataMap = Map<String, dynamic>.from(parsed['data'] as Map<String, dynamic>);
+      if (dataMap.containsKey('user') && !dataMap.containsKey('passenger')) {
+        dataMap['passenger'] = dataMap['user'];
+      }
+      return dataMap;
+    }
+    return parsed;
   }
 
   Future<bool> verifyOtp({
@@ -40,19 +58,19 @@ class AuthRemoteDataSource extends BaseApiClient {
     required String code,
   }) async {
     final response = await clientDio.post(
-      '/passengers/verify-otp',
+      '/auth/verify-otp',
       data: {'email': email, 'code': code},
     );
-    return parseBoolResponse(response, 200);
+    return response.statusCode == 200;
   }
 
   Future<bool> forgotPassword({
     required String email,
   }) async {
     final response = await clientDio.post(
-      '/passengers/forgot-password',
+      '/auth/forgot-password',
       data: {'email': email},
     );
-    return parseBoolResponse(response, 200);
+    return response.statusCode == 200;
   }
 }

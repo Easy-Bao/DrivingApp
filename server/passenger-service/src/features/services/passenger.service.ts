@@ -9,7 +9,6 @@ import nodemailer from 'nodemailer';
 import { Logger } from '../../shared/logger/logger.ts';
 
 const OTP_EXPIRY_MS = 10 * 60 * 1000;
-const TEST_OTP_CODE = '123456';
 const SECONDS_PER_DAY = 24 * 60 * 60;
 const DEFAULT_OTP_MIN = 100000;
 const DEFAULT_OTP_RANGE = 900000;
@@ -43,7 +42,7 @@ export class PassengerService {
       throw new HTTPException(400, { message: 'Email and code are required' });
     }
     const record = otpsMap.get(email);
-    const isCodeValid = code === TEST_OTP_CODE || (record && record.code === code && record.expires >= Date.now());
+    const isCodeValid = Boolean(record && record.code === code && record.expires >= Date.now());
     if (!isCodeValid) {
       throw new HTTPException(400, { message: 'Invalid or expired OTP code' });
     }

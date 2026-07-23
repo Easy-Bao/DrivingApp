@@ -5,7 +5,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:location_service/src/features/geolocation/data/datasources/location_datasource.dart';
 import 'package:location_service/src/features/map/domain/repositories/map_native_service.dart';
 
-/// Simple representation of geographical coordinates (latitude and longitude).
+/// Representation of geographical coordinates (latitude and longitude).
 class LatLng {
   final double latitude;
   final double longitude;
@@ -29,7 +29,7 @@ class MapProvider {
   static String? _token;
   static MapNativeService? _nativeService;
 
-  /// Initialize the map SDK. Call once in main.dart.
+  /// Initialize the map SDK.
   static Future<void> initialize({
     required String token,
     required MapNativeService nativeService,

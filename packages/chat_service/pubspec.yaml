@@ -15,6 +15,9 @@ dependencies:
   json_annotation: ^4.9.0
   core_models:
     path: ../core_models
+  dio: ^5.10.0
+  session_service:
+    path: ../session_service
 
 
 dev_dependencies:

@@ -7,5 +7,23 @@ abstract class AuthRepository {
     required String password,
   });
 
+  Future<Either<Failure, Map<String, dynamic>>> registerDriver({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+    required String vehicleType,
+    required String plateNumber,
+  });
+
+  Future<Either<Failure, bool>> verifyOtp({
+    required String email,
+    required String code,
+  });
+
+  Future<Either<Failure, bool>> forgotPassword({
+    required String email,
+  });
+
   Future<Either<Failure, Map<String, dynamic>>> fetchProfile(String driverId);
 }

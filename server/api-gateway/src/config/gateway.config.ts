@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const ServiceRegistrySchema = z.object({
+  AUTH_SERVICE_URL: z.string().url('AUTH_SERVICE_URL must be a valid absolute URI').optional(),
   PASSENGER_SERVICE_URL: z.string().url('PASSENGER_SERVICE_URL must be a valid absolute URI'),
   TRIP_SERVICE_URL: z.string().url('TRIP_SERVICE_URL must be a valid absolute URI'),
   DRIVER_SERVICE_URL: z.string().url('DRIVER_SERVICE_URL must be a valid absolute URI'),
@@ -21,6 +22,7 @@ function validateServiceRegistry() {
     );
   }
   return {
+    auth: result.data.AUTH_SERVICE_URL || 'http://localhost:8088',
     passengers: result.data.PASSENGER_SERVICE_URL,
     rides: result.data.TRIP_SERVICE_URL,
     drivers: result.data.DRIVER_SERVICE_URL,

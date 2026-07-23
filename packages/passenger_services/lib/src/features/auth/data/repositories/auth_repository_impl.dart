@@ -1,6 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_services/src/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:passenger_services/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:passenger_services/src/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {

@@ -4,6 +4,7 @@ import 'package:chat_service/src/features/chat/data/repositories/chat_repository
 import 'package:chat_service/src/features/chat/domain/entities/chat_event.dart';
 import 'package:chat_service/src/features/chat/domain/entities/chat_message.dart';
 import 'package:chat_service/src/features/chat/domain/repositories/chat_repository.dart';
+import 'package:dio/dio.dart';
 
 class ChatService {
   final ChatRepository _chatRepository;
@@ -16,10 +17,11 @@ class ChatService {
   StreamSubscription? _chatEventsSubscription;
 
   /// Creates a [ChatService] facade with feature-specific implementations.
-  ChatService({required String currentUserId})
+  ChatService({required String currentUserId, Dio? dio})
       : _chatRepository = ChatRepositoryImpl(
           remoteDataSource: WebSocketChatRemoteDataSource(),
           currentUserId: currentUserId,
+          dio: dio,
         );
 
   /// The active historical log of messages retrieved for the connected room.

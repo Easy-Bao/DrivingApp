@@ -1,4 +1,5 @@
 import 'package:chat_service/src/features/chat/domain/entities/chat_event.dart';
+import 'package:chat_service/src/features/chat/domain/entities/chat_message.dart';
 import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
 

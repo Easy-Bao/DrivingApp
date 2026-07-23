@@ -2,6 +2,7 @@ import { expect, test, describe, beforeAll } from 'bun:test';
 import { app } from '../../src/index.ts';
 import { db } from '../../src/shared/drizzle.ts';
 import { passengers, rideRequests } from '../../src/db/schema.ts';
+import { otpsMap } from '../../src/features/services/passenger.service.ts';
 
 describe('Passenger Service Integration Tests', () => {
   beforeAll(async () => {
@@ -37,12 +38,13 @@ describe('Passenger Service Integration Tests', () => {
   });
 
   test('POST /passengers/verify-otp - verifies OTP successfully', async () => {
+    const generatedCode = otpsMap.get('passenger@example.com')?.code || '';
     const response = await app.request('/passengers/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'passenger@example.com',
-        code: '123456',
+        code: generatedCode,
       }),
     });
 

@@ -7,6 +7,7 @@ export const gatewayRouter = new Hono();
 
 gatewayRouter.get('/chat/ws', wsTunnelHandler);
 
+gatewayRouter.all('/auth/*',       (context) => handleProxy(context, SERVICE_REGISTRY.auth));
 gatewayRouter.all('/passengers/*', (context) => handleProxy(context, SERVICE_REGISTRY.passengers));
 gatewayRouter.all('/rides/*',      (context) => handleProxy(context, SERVICE_REGISTRY.rides));
 gatewayRouter.all('/drivers/*',    (context) => handleProxy(context, SERVICE_REGISTRY.drivers));

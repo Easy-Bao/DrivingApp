@@ -1,5 +1,5 @@
 import 'package:core_models/core_models.dart';
-import 'package:driver_services/src/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:driver_services/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:driver_services/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -19,6 +19,64 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
       );
+      return Right(result);
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
+    } catch (error) {
+      return Left(ServerFailure(error.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> registerDriver({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+    required String vehicleType,
+    required String plateNumber,
+  }) async {
+    try {
+      final result = await _remoteDataSource.registerDriver(
+        name: name,
+        email: email,
+        phone: phone,
+        password: password,
+        vehicleType: vehicleType,
+        plateNumber: plateNumber,
+      );
+      return Right(result);
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
+    } catch (error) {
+      return Left(ServerFailure(error.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> verifyOtp({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final result = await _remoteDataSource.verifyOtp(
+        email: email,
+        code: code,
+      );
+      return Right(result);
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
+    } catch (error) {
+      return Left(ServerFailure(error.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final result = await _remoteDataSource.forgotPassword(email: email);
       return Right(result);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));

@@ -6,17 +6,20 @@ import 'package:chat_service/src/features/chat/domain/entities/chat_event.dart';
 import 'package:chat_service/src/features/chat/domain/entities/chat_message.dart';
 import 'package:chat_service/src/features/chat/domain/repositories/chat_repository.dart';
 import 'package:core_models/core_models.dart';
+import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:session_service/session_service.dart';
 
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRemoteDataSource remoteDataSource;
   final String currentUserId;
+  final Dio clientDio;
 
   ChatRepositoryImpl({
     required this.remoteDataSource,
     required this.currentUserId,
-  });
+    Dio? dio,
+  }) : clientDio = dio ?? Dio();
 
   @override
   bool get isSessionConnected => remoteDataSource.isWebSocketConnected;
@@ -65,7 +68,7 @@ class ChatRepositoryImpl implements ChatRepository {
       final endpointUri = EnvironmentConfig.httpBaseUri.replace(
         path: '/chat/rooms/$roomId/messages',
       );
-      final response = await DioClient.instance.getUri(endpointUri);
+      final response = await clientDio.getUri(endpointUri);
       if (response.statusCode == 200) {
         final List<dynamic> rawList = response.data is List<dynamic>
             ? response.data as List<dynamic>

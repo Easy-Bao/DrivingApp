@@ -32,6 +32,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> resetPassword({
     required String email,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    await _authRemoteDataSource.forgotPassword(email: email);
   }
 }

@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter_background_service/flutter_background_service.dart';
 
+@pragma('vm:entry-point')
 class BackgroundTelemetryService {
   BackgroundTelemetryService._();
 

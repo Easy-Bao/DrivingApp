@@ -27,7 +27,10 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
 
-      final driver = responseData['driver'] as Map<String, dynamic>;
+      final token = responseData['token'] as String? ?? '';
+      final driver = (responseData['driver'] as Map<String, dynamic>?) ??
+          (responseData['user'] as Map<String, dynamic>?) ??
+          responseData;
       final driverId = driver['id'] as String? ?? '';
       final driverName = driver['name'] as String? ?? '';
       final driverEmail = driver['email'] as String? ?? '';
@@ -35,6 +38,9 @@ class AuthRepositoryImpl implements AuthRepository {
       final plateNumber = driver['plateNumber'] as String? ?? 'ABC 1234';
       final rating = (driver['rating'] as num?)?.toDouble() ?? 5.0;
 
+      if (token.isNotEmpty) {
+        await _secureSessionService.writeAuthToken(token);
+      }
       await _secureSessionService.writeDriverId(driverId);
 
       final prefs = await SharedPreferences.getInstance();

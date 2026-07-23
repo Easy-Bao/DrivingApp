@@ -21,8 +21,6 @@ void main() async {
     nativeService: nativeService,
   );
 
-
-
   AppTransitions.configure();
 
   await Modular.configure(
