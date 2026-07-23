@@ -21,6 +21,12 @@ abstract class AuthRemoteDataSource {
   Future<bool> resetPassword({
     required String email,
   });
+
+  Future<bool> confirmResetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -69,5 +75,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String email,
   }) async {
     return _authRemoteDataSource.forgotPassword(email: email);
+  }
+
+  @override
+  Future<bool> confirmResetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    return _authRemoteDataSource.confirmResetPassword(
+      email: email,
+      code: code,
+      newPassword: newPassword,
+    );
   }
 }

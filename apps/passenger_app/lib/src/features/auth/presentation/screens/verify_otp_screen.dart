@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/cubits/verify_otp_cubit.dart';
 import 'package:passenger_app/src/features/auth/presentation/cubits/verify_otp_state.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -12,21 +13,34 @@ import 'package:shared_ui/shared_ui.dart';
 class VerifyOtpScreen extends StatelessWidget {
   final String email;
 
-  const VerifyOtpScreen({super.key, required this.email});
+  final bool isForgotPassword;
+
+  const VerifyOtpScreen({
+    super.key,
+    required this.email,
+    this.isForgotPassword = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<VerifyOtpCubit>(
       create: (context) => Modular.get<VerifyOtpCubit>()..startResendTimer(),
-      child: _VerifyOtpScreenContent(email: email),
+      child: _VerifyOtpScreenContent(
+        email: email,
+        isForgotPassword: isForgotPassword,
+      ),
     );
   }
 }
 
 class _VerifyOtpScreenContent extends StatefulWidget {
   final String email;
+  final bool isForgotPassword;
 
-  const _VerifyOtpScreenContent({required this.email});
+  const _VerifyOtpScreenContent({
+    required this.email,
+    required this.isForgotPassword,
+  });
 
   @override
   State<_VerifyOtpScreenContent> createState() =>
@@ -57,8 +71,25 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
   void _onOtpChanged() {
     final text = _otpController.text;
     if (text.length == 6) {
-      _triggerVerify(text);
+      if (widget.isForgotPassword) {
+        _navigateToResetPasswordConfirm(text);
+      } else {
+        _triggerVerify(text);
+      }
     }
+  }
+
+  void _navigateToResetPasswordConfirm(String code) {
+    FocusScope.of(context).unfocus();
+    unawaited(
+      context.push(
+        AuthRoutes.resetPasswordConfirm,
+        extra: {
+          'email': widget.email,
+          'code': code,
+        },
+      ),
+    );
   }
 
   void _triggerVerify(String code) {
@@ -71,7 +102,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
     );
   }
 
-  void _showSuccessModal() {
+  void _showSignupSuccessModal() {
     unawaited(
       showDialog(
         context: context,
@@ -162,7 +193,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       body: BlocConsumer<VerifyOtpCubit, VerifyOtpState>(
         listener: (context, state) {
           if (state is VerifyOtpSuccess) {
-            _showSuccessModal();
+            _showSignupSuccessModal();
           }
         },
         builder: (context, state) {
@@ -186,9 +217,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 20),
-                const Text(
-                  'Verify Email',
-                  style: TextStyle(
+                Text(
+                  widget.isForgotPassword ? 'Verify Identity' : 'Verify Email',
+                  style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1F2937),
@@ -196,7 +227,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'We sent a 6-digit OTP to ${widget.email}. Please enter it below to verify your account.',
+                  widget.isForgotPassword
+                      ? 'We sent a 6-digit code to ${widget.email}. Enter it to continue resetting your password.'
+                      : 'We sent a 6-digit OTP to ${widget.email}. Please enter it below to verify your account.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 15,
@@ -304,8 +337,11 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                     width: double.infinity,
                     height: 60,
                     child: ElevatedButton(
-                      onPressed:
-                          text.length == 6 ? () => _triggerVerify(text) : null,
+                      onPressed: text.length == 6
+                          ? () => widget.isForgotPassword
+                              ? _navigateToResetPasswordConfirm(text)
+                              : _triggerVerify(text)
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: AppTheme.neutralColor,

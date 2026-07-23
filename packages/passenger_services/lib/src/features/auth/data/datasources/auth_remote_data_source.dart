@@ -73,4 +73,16 @@ class AuthRemoteDataSource extends BaseApiClient {
     );
     return response.statusCode == 200;
   }
+
+  Future<bool> confirmResetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    final response = await clientDio.post(
+      '/auth/reset-password',
+      data: {'email': email, 'code': code, 'newPassword': newPassword},
+    );
+    return response.statusCode == 200;
+  }
 }
