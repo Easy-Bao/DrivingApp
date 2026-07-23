@@ -118,7 +118,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
           listener: (context, state) {
             if (state is SignUpNeedsVerification) {
               unawaited(
-                context.push(
+                context.pushNamed(
                   AuthRoutes.verifyOtp,
                   extra: {'email': state.email},
                 ).then((verified) {

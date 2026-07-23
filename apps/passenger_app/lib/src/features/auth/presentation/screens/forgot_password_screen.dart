@@ -77,7 +77,7 @@ class __ForgotPasswordScreenContentState
               'Password reset OTP code sent to your email.',
             );
             unawaited(
-              context.push(
+              context.pushNamed(
                 AuthRoutes.verifyOtp,
                 extra: {
                   'email': _emailController.text,

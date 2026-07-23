@@ -82,7 +82,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
   void _navigateToResetPasswordConfirm(String code) {
     FocusScope.of(context).unfocus();
     unawaited(
-      context.push(
+      context.pushNamed(
         AuthRoutes.resetPasswordConfirm,
         extra: {
           'email': widget.email,
