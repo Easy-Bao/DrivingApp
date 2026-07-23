@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 export const RegisterPassengerSchema = z.object({
-  name: z.string().min(2, 'Name is required'),
+  name: z.string().optional().default('Passenger'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(8, 'Valid phone number is required'),
+  phone: z.string().optional().default(''),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  preferred_ride_type: z.string().min(1, 'Preferred ride type is required'),
+  preferred_ride_type: z.string().optional().default('standard'),
 });
 
 export const LoginPassengerSchema = z.object({

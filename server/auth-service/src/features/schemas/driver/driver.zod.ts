@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 export const RegisterDriverSchema = z.object({
-  name: z.string().min(2, 'Name is required'),
+  name: z.string().optional().default('Driver'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(8, 'Valid phone number is required'),
+  phone: z.string().optional().default(''),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  vehicleType: z.string().min(1, 'Vehicle type is required'),
-  plateNumber: z.string().min(1, 'Plate number is required'),
+  vehicleType: z.string().optional().default('sedan'),
+  plateNumber: z.string().optional().default('N/A'),
 });
 
 export const LoginDriverSchema = z.object({

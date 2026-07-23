@@ -28,6 +28,27 @@ abstract class BaseApiClient {
     return newDio;
   }
 
+  static String _extractErrorMessage(dynamic responseData, String? statusMessage) {
+    if (responseData is Map) {
+      if (responseData.containsKey('issues') &&
+          responseData['issues'] is List &&
+          (responseData['issues'] as List).isNotEmpty) {
+        final firstIssue = (responseData['issues'] as List).first;
+        if (firstIssue is Map && firstIssue.containsKey('message')) {
+          return firstIssue['message'].toString();
+        }
+      }
+      return responseData['message']?.toString() ??
+          responseData['error']?.toString() ??
+          responseData.toString();
+    } else if (responseData != null) {
+      return responseData.toString();
+    } else if (statusMessage != null) {
+      return statusMessage;
+    }
+    return 'Server error';
+  }
+
   Map<String, dynamic> parseMapResponse(
     Response<dynamic> response,
     int expectedStatus,
@@ -46,17 +67,7 @@ abstract class BaseApiClient {
       }
     }
 
-    String extractedMessage = 'Server error';
-    if (response.data is Map) {
-      final map = response.data as Map;
-      extractedMessage = map['message']?.toString() ??
-          map['error']?.toString() ??
-          response.data.toString();
-    } else if (response.data != null) {
-      extractedMessage = response.data.toString();
-    } else if (response.statusMessage != null) {
-      extractedMessage = response.statusMessage!;
-    }
+    final extractedMessage = _extractErrorMessage(response.data, response.statusMessage);
 
     throw ServerException(
       statusCode: response.statusCode ?? 500,
@@ -82,17 +93,7 @@ abstract class BaseApiClient {
       }
     }
 
-    String extractedMessage = 'Server error';
-    if (response.data is Map) {
-      final map = response.data as Map;
-      extractedMessage = map['message']?.toString() ??
-          map['error']?.toString() ??
-          response.data.toString();
-    } else if (response.data != null) {
-      extractedMessage = response.data.toString();
-    } else if (response.statusMessage != null) {
-      extractedMessage = response.statusMessage!;
-    }
+    final extractedMessage = _extractErrorMessage(response.data, response.statusMessage);
 
     throw ServerException(
       statusCode: response.statusCode ?? 500,
@@ -108,17 +109,7 @@ abstract class BaseApiClient {
       return true;
     }
 
-    String extractedMessage = 'Server error';
-    if (response.data is Map) {
-      final map = response.data as Map;
-      extractedMessage = map['message']?.toString() ??
-          map['error']?.toString() ??
-          response.data.toString();
-    } else if (response.data != null) {
-      extractedMessage = response.data.toString();
-    } else if (response.statusMessage != null) {
-      extractedMessage = response.statusMessage!;
-    }
+    final extractedMessage = _extractErrorMessage(response.data, response.statusMessage);
 
     throw ServerException(
       statusCode: response.statusCode ?? 500,
