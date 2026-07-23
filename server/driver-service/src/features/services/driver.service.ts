@@ -2,7 +2,7 @@
  * Service layer orchestrating domain logic for driver operational status, profile stats, trip history aggregation, and reviews.
  * All cross-service HTTP calls are delegated to TripClient to keep this class free of network concerns.
  */
-import { DriverRepository } from '../entities/driver.types.ts';
+import { Driver, DriverRepository, SafeDriver } from '../entities/driver.types.ts';
 import { UpdateOnlineStatusRequest } from '../schemas/driver.schema.ts';
 import { HTTPException } from 'hono/http-exception';
 import { TripClient } from '../clients/driver.clients.ts';
@@ -20,12 +20,17 @@ export class DriverService {
     this.tripClient = new TripClient(tripServiceUrl);
   }
 
-  async getOnlineDrivers() {
-    const onlineDrivers = await this.repository.findOnlineDrivers();
-    return onlineDrivers.map(({ passwordHash: _, ...safeDriverData }) => safeDriverData);
+  private sanitizeDriver(driver: Driver): SafeDriver {
+    const { passwordHash: _, ...safeDriverData } = driver;
+    return safeDriverData;
   }
 
-  async updateOnlineStatus(driverId: string, payload: UpdateOnlineStatusRequest) {
+  async getOnlineDrivers(): Promise<SafeDriver[]> {
+    const onlineDrivers = await this.repository.findOnlineDrivers();
+    return onlineDrivers.map((driver) => this.sanitizeDriver(driver));
+  }
+
+  async updateOnlineStatus(driverId: string, payload: UpdateOnlineStatusRequest): Promise<SafeDriver> {
     try {
       const updated = await this.repository.updateOnlineStatus(
         driverId,
@@ -33,20 +38,18 @@ export class DriverService {
         payload.lat ?? undefined,
         payload.lng ?? undefined
       );
-      const { passwordHash: _, ...safeDriverData } = updated as any;
-      return safeDriverData;
+      return this.sanitizeDriver(updated);
     } catch (err) {
       throw new HTTPException(404, { message: 'Driver not found' });
     }
   }
 
-  async getDriverProfile(driverId: string) {
+  async getDriverProfile(driverId: string): Promise<SafeDriver> {
     const foundDriver = await this.repository.findDriverById(driverId);
     if (!foundDriver) {
       throw new HTTPException(404, { message: 'Driver not found' });
     }
-    const { passwordHash: _, ...safeDriverData } = foundDriver as any;
-    return safeDriverData;
+    return this.sanitizeDriver(foundDriver);
   }
 
   async getDriverStats(driverId: string) {
@@ -110,8 +113,9 @@ export class DriverService {
   async getActiveRideRequests() {
     try {
       return await this.tripClient.fetchActiveRides();
-    } catch (err: any) {
-      throw new HTTPException(500, { message: err.message || 'Trip service unavailable' });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Trip service unavailable';
+      throw new HTTPException(500, { message: errorMessage });
     }
   }
 

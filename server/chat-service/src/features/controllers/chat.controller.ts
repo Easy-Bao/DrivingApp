@@ -18,11 +18,24 @@ if (!process.env.TRIP_SERVICE_URL) {
 const TRIP_SERVICE_URL = process.env.TRIP_SERVICE_URL;
 const jwtSecret = process.env.JWT_SECRET;
 
+interface WebSocketConnection {
+  send(data: string): void;
+  close(code?: number, reason?: string): void;
+}
+
+interface WebSocketMessageEvent {
+  data: { toString(): string };
+}
+
 /**
  * Creates a new chat room or returns the existing matching conversation.
  */
 export async function handleCreateChatRoom(context: Context) {
-  const { roomId, driverId, passengerId } = await context.req.json();
+  const { roomId, driverId, passengerId } = (await context.req.json()) as {
+    roomId?: string;
+    driverId?: string;
+    passengerId?: string;
+  };
   if (!roomId || !driverId || !passengerId) {
     throw new HTTPException(400, { message: 'roomId, driverId, and passengerId are required' });
   }
@@ -70,7 +83,7 @@ export async function handleWebSocketUpgrade(context: Context) {
 
   if (!roomId) {
     return {
-      onOpen(_event: any, ws: any) {
+      onOpen(_event: unknown, ws: WebSocketConnection) {
         ws.close(4000, 'Room ID is required');
       },
     };
@@ -88,7 +101,7 @@ export async function handleWebSocketUpgrade(context: Context) {
 
   if (!finalUserId) {
     return {
-      onOpen(_event: any, ws: any) {
+      onOpen(_event: unknown, ws: WebSocketConnection) {
         ws.close(4001, 'Unauthorized');
       },
     };
@@ -102,7 +115,7 @@ export async function handleWebSocketUpgrade(context: Context) {
   try {
     const response = await fetch(`${TRIP_SERVICE_URL}/rides/${roomId}`);
     if (response.ok) {
-      const ride = await response.json() as any;
+      const ride = (await response.json()) as { driver_id?: string; passenger_id?: string; completed_at?: string };
       if (!room && ride && ride.driver_id && ride.passenger_id) {
         room = await createOrGetChatRoom(roomId, ride.driver_id, ride.passenger_id);
       }
@@ -116,7 +129,7 @@ export async function handleWebSocketUpgrade(context: Context) {
 
   if (!room) {
     return {
-      onOpen(_event: any, ws: any) {
+      onOpen(_event: unknown, ws: WebSocketConnection) {
         ws.close(4004, 'Room not found');
       },
     };
@@ -139,14 +152,14 @@ export async function handleWebSocketUpgrade(context: Context) {
 
   if (room.driverId !== finalUserId && room.passengerId !== finalUserId) {
     return {
-      onOpen(_event: any, ws: any) {
+      onOpen(_event: unknown, ws: WebSocketConnection) {
         ws.close(4003, 'Forbidden');
       },
     };
   }
 
   return {
-    async onOpen(_event: any, ws: any) {
+    async onOpen(_event: unknown, ws: WebSocketConnection) {
       if (!activeChatConnectionsMap.has(roomId)) {
         activeChatConnectionsMap.set(roomId, new Set());
       }
@@ -165,12 +178,12 @@ export async function handleWebSocketUpgrade(context: Context) {
         ws.send(JSON.stringify({ type: 'locked', reason: lockReason }));
       }
     },
-    async onMessage(websocketMessageEvent: any, _ws: any) {
+    async onMessage(websocketMessageEvent: WebSocketMessageEvent, _ws: WebSocketConnection) {
       if (isRoomLocked) {
         return;
       }
       try {
-        const payload = JSON.parse(websocketMessageEvent.data.toString());
+        const payload = JSON.parse(websocketMessageEvent.data.toString()) as { text?: string };
         const text = payload.text;
         if (!text) return;
 
@@ -192,7 +205,7 @@ export async function handleWebSocketUpgrade(context: Context) {
         }
       } catch (_) {}
     },
-    onClose(_event: any, ws: any) {
+    onClose(_event: unknown, ws: WebSocketConnection) {
       const activePeers = activeChatConnectionsMap.get(roomId);
       if (activePeers) {
         activePeers.delete(ws);

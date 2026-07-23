@@ -11,6 +11,8 @@ export interface Passenger {
   is_verified: boolean;
 }
 
+export type SafePassenger = Omit<Passenger, 'password_hash'>;
+
 export interface RideRequest {
   id: string;
   passenger_id: string;
@@ -26,7 +28,6 @@ export interface RideRequest {
   created_at: Date;
   driver_name?: string;
   plate_number?: string;
-  password_hash?: string;
 }
 
 export interface UpdatePassengerOptions {
@@ -36,14 +37,20 @@ export interface UpdatePassengerOptions {
   email: string;
 }
 
+export interface PassengerNotification {
+  id: string;
+  passengerId: string;
+  title: string;
+  message: string;
+  createdAt: Date;
+}
+
 export interface PassengerRepository {
-  registerPassenger(passengerDetails: any): Promise<Passenger>;
   retrievePassengerProfile(passengerId: string): Promise<Passenger | null>;
   retrievePassengerByEmail(passengerEmail: string): Promise<Passenger | null>;
   retrievePassengersByIds(passengerIds: string[]): Promise<Record<string, Passenger>>;
   registerRideRequest(rideDetails: any): Promise<RideRequest>;
   retrievePassengerRideHistory(passengerId: string): Promise<RideRequest[]>;
   updatePassengerProfile(options: UpdatePassengerOptions): Promise<Passenger>;
-  retrievePassengerNotifications(passengerId: string): Promise<any[]>;
-  verifyPassengerOtp(passengerEmail: string): Promise<void>;
+  retrievePassengerNotifications(passengerId: string): Promise<PassengerNotification[]>;
 }

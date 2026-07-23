@@ -7,11 +7,15 @@ import {
   RideType,
   UpdatePassengerOptions,
   PassengerRepository,
+  PassengerNotification,
 } from '../entities/passenger.types.ts';
 import { CreatePassengerRequest, CreateRideRequest } from '../schemas/passenger.schema.ts';
 import { Logger } from '../../shared/logger/logger.ts';
 
-function mapPassenger(dbPassenger: any): Passenger {
+type DbPassenger = typeof passengers.$inferSelect;
+type DbRideRequest = typeof rideRequests.$inferSelect;
+
+function mapPassenger(dbPassenger: DbPassenger): Passenger {
   return {
     id: dbPassenger.id,
     name: dbPassenger.name,
@@ -24,7 +28,7 @@ function mapPassenger(dbPassenger: any): Passenger {
   };
 }
 
-function mapRideRequest(dbRide: any): RideRequest {
+function mapRideRequest(dbRide: DbRideRequest): RideRequest {
   return {
     id: dbRide.id,
     passenger_id: dbRide.passengerId,
@@ -153,7 +157,6 @@ export class PassengerRepositoryImpl implements PassengerRepository {
           created_at: rec.createdAt,
           driver_name: '',
           plate_number: '',
-          password_hash: '',
         });
       }
     } catch (err) {
@@ -163,24 +166,24 @@ export class PassengerRepositoryImpl implements PassengerRepository {
     try {
       const tripResponse = await fetch(`${tripServiceUrl}/rides/passenger/${passengerId}`);
       if (tripResponse.ok) {
-        const trips = await tripResponse.json() as any[];
+        const trips = (await tripResponse.json()) as Array<Record<string, unknown>>;
         for (const trip of trips) {
-          ridesMap.set(trip.id, {
-            id: trip.id,
-            passenger_id: trip.passenger_id,
-            ride_type: trip.ride_type as RideType,
-            pickup_latitude: trip.pickup_latitude,
-            pickup_longitude: trip.pickup_longitude,
-            pickup_name: trip.pickup_name,
-            dropoff_latitude: trip.dropoff_latitude,
-            dropoff_longitude: trip.dropoff_longitude,
-            dropoff_name: trip.dropoff_name,
-            fare: trip.fare,
-            status: trip.status,
-            created_at: new Date(trip.created_at),
-            driver_name: trip.driver_name || '',
-            plate_number: trip.plate_number || '',
-            password_hash: '',
+          const tripId = String(trip.id || '');
+          ridesMap.set(tripId, {
+            id: tripId,
+            passenger_id: String(trip.passenger_id || ''),
+            ride_type: (trip.ride_type as RideType) || 'solo-ride',
+            pickup_latitude: Number(trip.pickup_latitude || 0),
+            pickup_longitude: Number(trip.pickup_longitude || 0),
+            pickup_name: String(trip.pickup_name || ''),
+            dropoff_latitude: Number(trip.dropoff_latitude || 0),
+            dropoff_longitude: Number(trip.dropoff_longitude || 0),
+            dropoff_name: String(trip.dropoff_name || ''),
+            fare: Number(trip.fare || 0),
+            status: String(trip.status || 'requested'),
+            created_at: new Date(String(trip.created_at || Date.now())),
+            driver_name: String(trip.driver_name || ''),
+            plate_number: String(trip.plate_number || ''),
           });
         }
       }
@@ -212,7 +215,7 @@ export class PassengerRepositoryImpl implements PassengerRepository {
       .where(eq(passengers.email, passengerEmail));
   }
 
-  async retrievePassengerNotifications(passengerId: string): Promise<any[]> {
+  async retrievePassengerNotifications(passengerId: string): Promise<PassengerNotification[]> {
     const passenger = await this.retrievePassengerProfile(passengerId);
     if (!passenger) {
       throw new Error(`Passenger ID ${passengerId} not found`);
@@ -222,7 +225,7 @@ export class PassengerRepositoryImpl implements PassengerRepository {
       .where(eq(rideRequests.passengerId, passengerId))
       .orderBy(desc(rideRequests.createdAt));
 
-    const notificationsList: any[] = [];
+    const notificationsList: PassengerNotification[] = [];
     const tripServiceUrl = process.env.TRIP_SERVICE_URL;
     if (!tripServiceUrl) {
       throw new Error("Configuration Error: TRIP_SERVICE_URL is required but not set.");
@@ -251,12 +254,12 @@ async function fetchTripStatus(
   try {
     const response = await fetch(`${tripServiceUrl}/rides/${rideId}`);
     if (response.ok) {
-      const tripDetails = await response.json() as any;
+      const tripDetails = (await response.json()) as Record<string, unknown>;
       if (tripDetails) {
         return {
-          status: tripDetails.status || defaultStatus,
-          driverName: tripDetails.driver_name || '',
-          plateNumber: tripDetails.plate_number || '',
+          status: String(tripDetails.status || defaultStatus),
+          driverName: String(tripDetails.driver_name || ''),
+          plateNumber: String(tripDetails.plate_number || ''),
         };
       }
     }
@@ -271,85 +274,78 @@ async function fetchTripStatus(
 }
 
 function buildNotificationsForRide(
-  rideRequest: { id: string; dropoffName: string; fare: number; createdAt: Date },
+  rideRequest: { id: string; passengerId: string; dropoffName: string; fare: number; createdAt: Date },
   tripDetails: TripInfo
-): any[] {
-  const notificationsList: any[] = [];
-  const baseTime = rideRequest.createdAt.toISOString();
+): PassengerNotification[] {
+  const notificationsList: PassengerNotification[] = [];
+  const baseTime = rideRequest.createdAt;
   const { status, driverName, plateNumber } = tripDetails;
 
   switch (status) {
     case 'requested':
       notificationsList.push({
         id: `req_${rideRequest.id}`,
+        passengerId: rideRequest.passengerId,
         title: 'Finding Driver',
         message: `Your ride request to ${rideRequest.dropoffName} is active. Finding a driver...`,
-        timestamp: baseTime,
-        type: 'ride',
-        isRead: false,
+        createdAt: baseTime,
       });
       break;
 
     case 'accepted':
       notificationsList.push({
         id: `acc_${rideRequest.id}`,
+        passengerId: rideRequest.passengerId,
         title: 'Driver Found!',
         message: `Driver ${driverName || 'Matched Driver'} (${plateNumber || 'Bao Bao'}) has accepted your ride request.`,
-        timestamp: baseTime,
-        type: 'driver',
-        isRead: false,
+        createdAt: baseTime,
       });
       notificationsList.push({
         id: `chat_${rideRequest.id}`,
+        passengerId: rideRequest.passengerId,
         title: 'Chat Available',
         message: `You can now chat with your driver, ${driverName || 'your driver'}.`,
-        timestamp: baseTime,
-        type: 'chat',
-        isRead: false,
+        createdAt: baseTime,
       });
       break;
 
     case 'arrived':
       notificationsList.push({
         id: `arr_${rideRequest.id}`,
+        passengerId: rideRequest.passengerId,
         title: 'Driver Arrived',
         message: `Your driver, ${driverName || 'your driver'}, has arrived at your pickup location.`,
-        timestamp: baseTime,
-        type: 'driver',
-        isRead: false,
+        createdAt: baseTime,
       });
       break;
 
     case 'in_transit':
       notificationsList.push({
         id: `trans_${rideRequest.id}`,
+        passengerId: rideRequest.passengerId,
         title: 'Trip Started',
         message: `You are in transit to ${rideRequest.dropoffName}.`,
-        timestamp: baseTime,
-        type: 'ride',
-        isRead: false,
+        createdAt: baseTime,
       });
       break;
 
     case 'completed':
       notificationsList.push({
         id: `comp_${rideRequest.id}`,
+        passengerId: rideRequest.passengerId,
         title: 'Ride Completed',
         message: `Your trip to ${rideRequest.dropoffName} is completed. Total fare: ₱${rideRequest.fare.toFixed(2)}`,
-        timestamp: baseTime,
-        type: 'ride',
-        isRead: true,
+        createdAt: baseTime,
       });
       break;
 
     case 'canceled':
       notificationsList.push({
         id: `canc_${rideRequest.id}`,
+        passengerId: rideRequest.passengerId,
         title: 'Ride Canceled ❌',
         message: `Your ride to ${rideRequest.dropoffName} was canceled.`,
-        timestamp: baseTime,
-        type: 'ride',
-        isRead: true,
+        createdAt: baseTime,
       });
       break;
   }

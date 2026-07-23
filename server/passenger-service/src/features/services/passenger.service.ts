@@ -2,7 +2,7 @@
  * Service layer orchestrating domain logic for passenger profiles, ride requests, ride history, and notifications.
  */
 import { HTTPException } from 'hono/http-exception';
-import { PassengerRepository } from '../entities/passenger.types.ts';
+import { Passenger, PassengerRepository, SafePassenger } from '../entities/passenger.types.ts';
 import { CreateRideRequest } from '../schemas/passenger.schema.ts';
 
 export class PassengerService {
@@ -12,29 +12,29 @@ export class PassengerService {
     this.repository = repository;
   }
 
-  async getPassengerProfile(passengerId: string) {
+  private sanitizePassenger(passenger: Passenger): SafePassenger {
+    const { password_hash: _, ...safePassenger } = passenger;
+    return safePassenger;
+  }
+
+  async getPassengerProfile(passengerId: string): Promise<SafePassenger> {
     const passengerProfile = await this.repository.retrievePassengerProfile(passengerId);
     if (!passengerProfile) {
       throw new HTTPException(404, { message: `Passenger not found: ${passengerId}` });
     }
-    const { password_hash, ...passengerProfileWithoutPassword } = passengerProfile as any;
-    return passengerProfileWithoutPassword;
+    return this.sanitizePassenger(passengerProfile);
   }
 
-  async getPassengersBatch(passengerIds: string[]): Promise<Record<string, any>> {
+  async getPassengersBatch(passengerIds: string[]): Promise<Record<string, SafePassenger>> {
     const passengerMap = await this.repository.retrievePassengersByIds(passengerIds);
     return Object.fromEntries(
-      Object.entries(passengerMap).map(([id, passenger]) => {
-        const { password_hash, ...safePassenger } = passenger as any;
-        return [id, safePassenger];
-      })
+      Object.entries(passengerMap).map(([id, passenger]) => [id, this.sanitizePassenger(passenger)])
     );
   }
 
-  async updatePassengerProfile(id: string, payload: { name: string; phone: string; email: string }) {
+  async updatePassengerProfile(id: string, payload: { name: string; phone: string; email: string }): Promise<SafePassenger> {
     const updated = await this.repository.updatePassengerProfile({ id, ...payload });
-    const { password_hash, ...passengerWithoutPassword } = updated as any;
-    return passengerWithoutPassword;
+    return this.sanitizePassenger(updated);
   }
 
   async createRideRequest(payload: CreateRideRequest) {

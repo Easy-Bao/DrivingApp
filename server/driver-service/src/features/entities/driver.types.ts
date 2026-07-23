@@ -13,6 +13,8 @@ export interface Driver {
   createdAt: Date;
 }
 
+export type SafeDriver = Omit<Driver, 'passwordHash'>;
+
 export interface Review {
   id: string;
   driverId: string;
