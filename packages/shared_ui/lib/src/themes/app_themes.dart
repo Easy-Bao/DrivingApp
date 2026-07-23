@@ -79,7 +79,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         hintStyle: TextStyle(
-          color: AppLightTheme.primaryColor.withValues(alpha: 0.38),
+          color: AppLightTheme.primaryColor.withValues(alpha: 0.4),
           fontSize: 15,
           fontWeight: FontWeight.normal,
         ),
@@ -88,8 +88,8 @@ class AppTheme {
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),
-        prefixIconColor: AppLightTheme.primaryColor.withValues(alpha: 0.6),
-        suffixIconColor: AppLightTheme.primaryColor.withValues(alpha: 0.6),
+        prefixIconColor: AppLightTheme.primaryColor,
+        suffixIconColor: AppLightTheme.primaryColor,
       ),
       iconTheme: const IconThemeData(
         color: AppLightTheme.primaryColor,
@@ -102,44 +102,6 @@ class AppTheme {
   }
 
   static ThemeData get darkThemeData {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppDarkTheme.surface,
-      colorScheme: const ColorScheme.dark(
-        primary: AppDarkTheme.primaryColor,
-        secondary: AppDarkTheme.secondaryColor,
-        tertiary: AppDarkTheme.tertiaryColor,
-        surface: AppDarkTheme.surface,
-        onSurface: AppDarkTheme.primaryColor,
-      ),
-      textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: AppDarkTheme.primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
-        bodyMedium: TextStyle(color: AppDarkTheme.primaryColor, fontSize: 14),
-        titleLarge: TextStyle(color: AppDarkTheme.primaryColor, fontSize: 22, fontWeight: FontWeight.bold),
-        titleMedium: TextStyle(color: AppDarkTheme.primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(
-          color: AppDarkTheme.primaryColor.withValues(alpha: 0.38),
-          fontSize: 15,
-          fontWeight: FontWeight.normal,
-        ),
-        labelStyle: const TextStyle(
-          color: AppDarkTheme.primaryColor,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-        ),
-        prefixIconColor: AppDarkTheme.primaryColor.withValues(alpha: 0.6),
-        suffixIconColor: AppDarkTheme.primaryColor.withValues(alpha: 0.6),
-      ),
-      iconTheme: const IconThemeData(
-        color: AppDarkTheme.primaryColor,
-      ),
-      textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: AppDarkTheme.primaryColor,
-      ),
-      fontFamily: 'packages/shared_ui/ProductSans',
-    );
+    return lightThemeData;
   }
 }

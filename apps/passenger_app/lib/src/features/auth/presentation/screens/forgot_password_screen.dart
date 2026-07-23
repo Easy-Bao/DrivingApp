@@ -160,8 +160,8 @@ class __ForgotPasswordScreenContentState
                               ),
                               const SizedBox(height: 8),
                               TextField(
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                style: const TextStyle(
+                                  color: AppTheme.primaryColor,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),

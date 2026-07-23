@@ -129,8 +129,8 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                         ),
                         const SizedBox(height: 40),
                         TextField(
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
+                          style: const TextStyle(
+                            color: AppTheme.primaryColor,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -149,13 +149,13 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
                               borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
+                              borderSide: const BorderSide(
+                                color: AppTheme.primaryColor,
                                 width: 1.5,
                               ),
                             ),
@@ -177,8 +177,8 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                         ),
                         const SizedBox(height: 16),
                         TextField(
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
+                          style: const TextStyle(
+                            color: AppTheme.primaryColor,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -208,13 +208,13 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
                               borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
+                              borderSide: const BorderSide(
+                                color: AppTheme.primaryColor,
                                 width: 1.5,
                               ),
                             ),
