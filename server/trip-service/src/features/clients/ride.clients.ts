@@ -19,7 +19,7 @@ export class PassengerClient {
         new URL(`/passengers/${passengerId}`, this.baseUrl).toString()
       );
       if (response.ok) {
-        const passenger = await response.json() as any;
+        const passenger = (await response.json()) as { name?: string };
         return passenger?.name || 'Passenger';
       }
     } catch (err) {

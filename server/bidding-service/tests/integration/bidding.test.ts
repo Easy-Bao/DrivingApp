@@ -7,6 +7,23 @@ const TEST_PASSENGER_ID = '00000000-0000-0000-0000-000000000001';
 let sessionId = '';
 let offerId = '';
 
+interface FareResponse {
+  base_fare: number;
+  total_fare: number;
+}
+
+interface BidSessionResponse {
+  id: string;
+  status: string;
+  offered_fare: number;
+}
+
+interface DriverOfferResponse {
+  id: string;
+  driver_id: string;
+  proposed_fare: number;
+}
+
 describe('Bidding Service Integration Tests', () => {
   beforeAll(async () => {
     try {
@@ -29,7 +46,7 @@ describe('Bidding Service Integration Tests', () => {
     });
 
     expect(res.status).toBe(200);
-    const data: any = await res.json();
+    const data = (await res.json()) as FareResponse;
     expect(data.base_fare).toBe(20.0);
     expect(data.total_fare).toBe(85.0);
   });
@@ -53,7 +70,7 @@ describe('Bidding Service Integration Tests', () => {
     });
 
     expect(res.status).toBe(201);
-    const data: any = await res.json();
+    const data = (await res.json()) as BidSessionResponse;
     expect(data.id).toBeDefined();
     expect(data.status).toBe('open');
     expect(data.offered_fare).toBe(85.0);
@@ -63,9 +80,9 @@ describe('Bidding Service Integration Tests', () => {
   test('GET /bids/active — lists active sessions', async () => {
     const res = await app.request('/bids/active');
     expect(res.status).toBe(200);
-    const data: any = await res.json();
+    const data = (await res.json()) as BidSessionResponse[];
     expect(Array.isArray(data)).toBe(true);
-    expect(data.some((s: any) => s.id === sessionId)).toBe(true);
+    expect(data.some((s) => s.id === sessionId)).toBe(true);
   });
 
   test('POST /bids/:id/offer — places a driver bid', async () => {
@@ -82,7 +99,7 @@ describe('Bidding Service Integration Tests', () => {
     });
 
     expect(res.status).toBe(201);
-    const data: any = await res.json();
+    const data = (await res.json()) as DriverOfferResponse;
     expect(data.id).toBeDefined();
     expect(data.driver_id).toBe('driver-test-1');
     expect(data.proposed_fare).toBe(90.0);
@@ -92,7 +109,7 @@ describe('Bidding Service Integration Tests', () => {
   test('GET /bids/:id/offers — lists pending offers for session', async () => {
     const res = await app.request(`/bids/${sessionId}/offers`);
     expect(res.status).toBe(200);
-    const data: any = await res.json();
+    const data = (await res.json()) as DriverOfferResponse[];
     expect(Array.isArray(data)).toBe(true);
     expect(data.length).toBe(1);
     expect(data[0].id).toBe(offerId);
@@ -122,7 +139,7 @@ describe('Bidding Service Integration Tests', () => {
     expect(resCancel.status).toBe(200);
 
     const resOffers = await app.request(`/bids/${sessionId}/offers`);
-    const data = await resOffers.json() as any[];
-    expect(data.some((o: any) => o.driver_id === 'driver-test-2')).toBe(false);
+    const data = (await resOffers.json()) as DriverOfferResponse[];
+    expect(data.some((o) => o.driver_id === 'driver-test-2')).toBe(false);
   });
 });

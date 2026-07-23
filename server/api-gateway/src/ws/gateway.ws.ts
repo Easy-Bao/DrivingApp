@@ -6,6 +6,8 @@
 import { upgradeWebSocket } from 'hono/bun';
 import { SERVICE_REGISTRY } from '../config/gateway.config.ts';
 
+const backendSocketMap = new Map<unknown, WebSocket>();
+
 export const wsTunnelHandler = upgradeWebSocket((context) => {
   const chatBaseUrl = new URL(SERVICE_REGISTRY.chat);
 
@@ -28,18 +30,19 @@ export const wsTunnelHandler = upgradeWebSocket((context) => {
         ws.close();
       };
 
-      (ws as any)._backendWs = backendWs;
+      backendSocketMap.set(ws, backendWs);
     },
     onMessage(event, ws) {
-      const backendWs: WebSocket | undefined = (ws as any)._backendWs;
+      const backendWs = backendSocketMap.get(ws);
       if (backendWs && backendWs.readyState === WebSocket.OPEN) {
         backendWs.send(event.data);
       }
     },
     onClose(_event, ws) {
-      const backendWs: WebSocket | undefined = (ws as any)._backendWs;
+      const backendWs = backendSocketMap.get(ws);
       if (backendWs) {
         backendWs.close();
+        backendSocketMap.delete(ws);
       }
     },
   };
