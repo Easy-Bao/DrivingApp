@@ -14,6 +14,7 @@ class ResetPasswordConfirmCubit extends Cubit<ResetPasswordConfirmState> {
     required String newPassword,
   }) async {
     final trimmedPassword = newPassword.trim();
+    final normalizedEmail = email.trim().toLowerCase();
     if (trimmedPassword.length < 8) {
       emit(const ResetPasswordConfirmFailure(
         'Password must be at least 8 characters.',
@@ -24,7 +25,7 @@ class ResetPasswordConfirmCubit extends Cubit<ResetPasswordConfirmState> {
     emit(const ResetPasswordConfirmLoading());
 
     final result = await _confirmResetPasswordUseCase.execute(
-      email: email,
+      email: normalizedEmail,
       code: code,
       newPassword: trimmedPassword,
     );

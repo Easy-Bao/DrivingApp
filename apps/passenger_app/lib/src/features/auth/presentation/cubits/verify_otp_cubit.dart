@@ -32,6 +32,7 @@ class VerifyOtpCubit extends Cubit<VerifyOtpState> {
     String password = '',
   }) async {
     final normalizedCode = code.trim();
+    final normalizedEmail = email.trim().toLowerCase();
     if (normalizedCode.length < 6) {
       emit(const VerifyOtpFailure('Please enter a 6-digit verification code.'));
       return;
@@ -40,7 +41,7 @@ class VerifyOtpCubit extends Cubit<VerifyOtpState> {
     emit(const VerifyOtpLoading());
 
     final result = await _verifyOtpUseCase.execute(
-      email: email,
+      email: normalizedEmail,
       code: normalizedCode,
       password: password,
     );

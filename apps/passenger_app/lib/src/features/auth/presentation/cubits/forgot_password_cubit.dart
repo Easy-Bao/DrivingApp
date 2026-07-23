@@ -8,7 +8,7 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
   ForgotPasswordCubit(this._resetPasswordUseCase) : super(const ForgotPasswordInitial());
 
   Future<void> sendResetLink(String email) async {
-    final normalizedEmail = email.trim();
+    final normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
       emit(const ForgotPasswordFailure('Please enter a valid email address.'));
       return;

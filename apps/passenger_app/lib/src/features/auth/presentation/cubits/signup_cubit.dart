@@ -20,7 +20,7 @@ class SignUpCubit extends Cubit<SignUpState> {
     required String phone,
     required String password,
   }) async {
-    final normalizedEmail = email.trim();
+    final normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
       emit(const SignUpFailure('Please enter a valid email address.'));
       return;
