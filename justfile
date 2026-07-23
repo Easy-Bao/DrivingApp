@@ -31,6 +31,8 @@ db-migrate:
     docker exec driveapp-passenger-db-1 psql -U driveapp -d passenger_db -f /dev/stdin < server/passenger-service/prisma/migrations/20260627000000_add_password_hash/migration.sql
 
 test-services:
+    @echo "=== Auth Service ==="
+    cd server/auth-service && bun test
     @echo "=== Passenger Service ==="
     cd server/passenger-service && bun test
     @echo "=== Driver Service ==="
@@ -46,6 +48,7 @@ test-services:
 
 start-all:
     (cd server/api-gateway && bun run dev) & \
+    (cd server/auth-service && bun run dev) & \
     (cd server/passenger-service && bun run dev) & \
     (cd server/driver-service && bun run dev) & \
     (cd server/trip-service && bun run dev) & \
