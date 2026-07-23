@@ -84,6 +84,9 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right(responseData);
     } catch (error) {
+      if (error is ServerException) {
+        return Left(ValidationFailure(error.message));
+      }
       final msg = error.toString().contains('already exists')
           ? 'This email is already registered.'
           : 'Registration failed. Please try again.';

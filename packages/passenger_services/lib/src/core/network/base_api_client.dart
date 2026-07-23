@@ -37,9 +37,22 @@ abstract class BaseApiClient {
         );
       }
     }
+
+    String extractedMessage = 'Server error';
+    if (response.data is Map) {
+      final map = response.data as Map;
+      extractedMessage = map['message']?.toString() ??
+          map['error']?.toString() ??
+          response.data.toString();
+    } else if (response.data != null) {
+      extractedMessage = response.data.toString();
+    } else if (response.statusMessage != null) {
+      extractedMessage = response.statusMessage!;
+    }
+
     throw ServerException(
       statusCode: response.statusCode ?? 500,
-      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
+      message: extractedMessage,
     );
   }
 
@@ -60,9 +73,22 @@ abstract class BaseApiClient {
         );
       }
     }
+
+    String extractedMessage = 'Server error';
+    if (response.data is Map) {
+      final map = response.data as Map;
+      extractedMessage = map['message']?.toString() ??
+          map['error']?.toString() ??
+          response.data.toString();
+    } else if (response.data != null) {
+      extractedMessage = response.data.toString();
+    } else if (response.statusMessage != null) {
+      extractedMessage = response.statusMessage!;
+    }
+
     throw ServerException(
       statusCode: response.statusCode ?? 500,
-      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
+      message: extractedMessage,
     );
   }
 
@@ -73,9 +99,22 @@ abstract class BaseApiClient {
     if (response.statusCode == expectedStatus) {
       return true;
     }
+
+    String extractedMessage = 'Server error';
+    if (response.data is Map) {
+      final map = response.data as Map;
+      extractedMessage = map['message']?.toString() ??
+          map['error']?.toString() ??
+          response.data.toString();
+    } else if (response.data != null) {
+      extractedMessage = response.data.toString();
+    } else if (response.statusMessage != null) {
+      extractedMessage = response.statusMessage!;
+    }
+
     throw ServerException(
       statusCode: response.statusCode ?? 500,
-      message: response.data?.toString() ?? response.statusMessage ?? 'Server error',
+      message: extractedMessage,
     );
   }
 }
