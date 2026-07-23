@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/presentation/cubits/forgot_password_cubit.dart';
 import 'package:driver_app/src/features/auth/presentation/cubits/forgot_password_state.dart';
 import 'package:flutter/material.dart';
@@ -71,10 +72,17 @@ class __ForgotPasswordScreenContentState
       body: BlocConsumer<ForgotPasswordCubit, ForgotPasswordState>(
         listener: (context, state) {
           if (state is ForgotPasswordSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Password reset link has been sent to your email.'),
-                backgroundColor: AppTheme.complete,
+            CustomToast.show(
+              context,
+              'Password reset OTP code sent to your email.',
+            );
+            unawaited(
+              context.push(
+                AuthRoutes.verifyOtp,
+                extra: {
+                  'email': _emailController.text,
+                  'isForgotPassword': true,
+                },
               ),
             );
           }

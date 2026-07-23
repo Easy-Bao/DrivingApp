@@ -36,6 +36,17 @@ export class PassengerAuthenticationService {
     }
   }
 
+  static updatePassengerPassword(passengerEmailAddress: string, newPasswordHash: string): boolean {
+    const normalizedEmailAddress = passengerEmailAddress.toLowerCase().trim();
+    const existingAccount = PassengerAuthenticationService.passengerAccountsStore.get(normalizedEmailAddress);
+    if (existingAccount) {
+      existingAccount.passwordHash = newPasswordHash;
+      PassengerAuthenticationService.passengerAccountsStore.set(normalizedEmailAddress, existingAccount);
+      return true;
+    }
+    return false;
+  }
+
   async registerPassengerAccount(passengerInput: RegisterPassengerInput): Promise<PassengerSessionResult> {
     const normalizedEmailAddress = passengerInput.email.toLowerCase().trim();
     if (PassengerAuthenticationService.passengerAccountsStore.has(normalizedEmailAddress)) {

@@ -4,7 +4,7 @@ import { OneTimePasswordStoreService } from '../../services/common/otp_store.ts'
 import { JsonWebTokenService } from '../../services/common/jwt.service.ts';
 import { PassengerAuthenticationService } from '../../services/passenger/passenger.service.ts';
 import { DriverAuthenticationService } from '../../services/driver/driver.service.ts';
-import { VerifyOtpInput, ForgotPasswordInput, VerifyTokenInput } from '../../schemas/common/common.zod.ts';
+import { VerifyOtpInput, ForgotPasswordInput, ResetPasswordInput, VerifyTokenInput } from '../../schemas/common/common.zod.ts';
 
 export async function handleVerifyOneTimePassword(c: Context) {
   try {
@@ -28,6 +28,28 @@ export async function handleSendForgotPasswordOneTimePassword(c: Context) {
     return c.json({ success: true, data: { success: true } });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Forgot password failed';
+    throw new HTTPException(400, { message });
+  }
+}
+
+export async function handleResetPassword(c: Context) {
+  try {
+    const { email, code, newPassword } = c.req.valid('json' as never) as ResetPasswordInput;
+    const isOtpValid = OneTimePasswordStoreService.verifyOneTimePasswordCode(email, code);
+    if (!isOtpValid) {
+      throw new Error('Invalid or expired verification code');
+    }
+    const newPasswordHash = await Bun.password.hash(newPassword);
+    const updatedPassenger = PassengerAuthenticationService.updatePassengerPassword(email, newPasswordHash);
+    const updatedDriver = DriverAuthenticationService.updateDriverPassword(email, newPasswordHash);
+
+    if (!updatedPassenger && !updatedDriver) {
+      throw new Error('No account found with this email address');
+    }
+
+    return c.json({ success: true, message: 'Password reset successful' });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Reset password failed';
     throw new HTTPException(400, { message });
   }
 }

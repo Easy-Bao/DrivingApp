@@ -38,6 +38,17 @@ export class DriverAuthenticationService {
     }
   }
 
+  static updateDriverPassword(driverEmailAddress: string, newPasswordHash: string): boolean {
+    const normalizedEmailAddress = driverEmailAddress.toLowerCase().trim();
+    const existingAccount = DriverAuthenticationService.driverAccountsStore.get(normalizedEmailAddress);
+    if (existingAccount) {
+      existingAccount.passwordHash = newPasswordHash;
+      DriverAuthenticationService.driverAccountsStore.set(normalizedEmailAddress, existingAccount);
+      return true;
+    }
+    return false;
+  }
+
   async registerDriverAccount(driverInput: RegisterDriverInput): Promise<DriverSessionResult> {
     const normalizedEmailAddress = driverInput.email.toLowerCase().trim();
     if (DriverAuthenticationService.driverAccountsStore.has(normalizedEmailAddress)) {
