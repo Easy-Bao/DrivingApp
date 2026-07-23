@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/cubits/signup_cubit.dart';
 import 'package:passenger_app/src/features/auth/presentation/cubits/signup_state.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -36,27 +36,18 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
 
   final TextEditingController _passengerEmailController = TextEditingController();
   final TextEditingController _passengerPasswordController = TextEditingController();
-  final TextEditingController _passengerOtpController = TextEditingController();
   final TextEditingController _passengerNameController = TextEditingController();
   final TextEditingController _passengerPhoneController = TextEditingController();
-  final FocusNode _passengerOtpFocusNode = FocusNode();
 
   bool _isPasswordInputVisible = false;
-  String _registeredPassengerEmail = '';
-
-  Timer? _otpCountdownTimer;
-  int _secondsRemainingBeforeOtpResend = 60;
 
   @override
   void dispose() {
     _onboardingPageController.dispose();
     _passengerEmailController.dispose();
     _passengerPasswordController.dispose();
-    _passengerOtpController.dispose();
     _passengerNameController.dispose();
     _passengerPhoneController.dispose();
-    _passengerOtpFocusNode.dispose();
-    _otpCountdownTimer?.cancel();
     super.dispose();
   }
 
@@ -84,47 +75,18 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
     });
   }
 
-  void _startOtpResendCountdownTimer() {
-    _otpCountdownTimer?.cancel();
-    setState(() => _secondsRemainingBeforeOtpResend = 60);
-    _otpCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        _secondsRemainingBeforeOtpResend--;
-        if (_secondsRemainingBeforeOtpResend <= 0) {
-          timer.cancel();
-        }
-      });
-    });
-  }
-
   Future<void> _submitEmailAndPassword(BuildContext context) async {
     FocusScope.of(context).unfocus();
     final email = _passengerEmailController.text.trim();
     final password = _passengerPasswordController.text;
     if (email.isEmpty || password.isEmpty) return;
 
-    _registeredPassengerEmail = email;
     unawaited(
       BlocProvider.of<SignUpCubit>(context).registerPassenger(
         name: 'Passenger',
         email: email,
         phone: '',
         password: password,
-      ),
-    );
-  }
-
-  void _submitOtp(BuildContext context, String code) {
-    FocusScope.of(context).unfocus();
-    unawaited(
-      BlocProvider.of<SignUpCubit>(context).verifyOtpCode(
-        email: _registeredPassengerEmail,
-        code: code,
-        password: _passengerPasswordController.text,
       ),
     );
   }
@@ -155,13 +117,16 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
         child: BlocConsumer<SignUpCubit, SignUpState>(
           listener: (context, state) {
             if (state is SignUpNeedsVerification) {
-              _registeredPassengerEmail = state.email;
-              _passengerOtpController.clear();
-              _startOtpResendCountdownTimer();
-              _advanceToNextOnboardingPage();
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _passengerOtpFocusNode.requestFocus();
-              });
+              unawaited(
+                context.push(
+                  AuthRoutes.verifyOtp,
+                  extra: {'email': state.email},
+                ).then((verified) {
+                  if (verified == true && mounted) {
+                    _advanceToNextOnboardingPage();
+                  }
+                }),
+              );
             } else if (state is SignUpSuccess) {
               _advanceToNextOnboardingPage();
             }
@@ -176,7 +141,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                   padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
                   child: Row(
                     children: List.generate(
-                      3,
+                      2,
                       (index) => Expanded(
                         child: Container(
                           height: 4,
@@ -198,7 +163,6 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
                       _buildEmailAndPasswordPage(context, isLoading, errorMessage),
-                      _buildOtpVerificationPage(context, isLoading, errorMessage),
                       _buildProfileSetupPage(context, isLoading, errorMessage),
                     ],
                   ),
@@ -335,126 +299,6 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                           'Continue',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                         ),
-                ),
-                const Spacer(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOtpVerificationPage(
-    BuildContext context,
-    bool isLoading,
-    String? errorMessage,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: CustomScrollView(
-        slivers: [
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                const Text(
-                  'Verify Email',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
-                    letterSpacing: -1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Enter the 6-digit code sent to $_registeredPassengerEmail',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                if (errorMessage != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cancel.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      errorMessage,
-                      style: const TextStyle(color: AppTheme.cancel, fontSize: 13),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                TextField(
-                  controller: _passengerOtpController,
-                  focusNode: _passengerOtpFocusNode,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  textAlign: TextAlign.center,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: const TextStyle(fontSize: 24, letterSpacing: 8, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    hintText: '000000',
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: (isLoading || _passengerOtpController.text.length < 6)
-                      ? null
-                      : () => _submitOtp(context, _passengerOtpController.text),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: AppTheme.neutralColor,
-                    minimumSize: const Size.fromHeight(60),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-                    elevation: 0,
-                  ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text(
-                          'Verify Code',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: _secondsRemainingBeforeOtpResend > 0
-                        ? null
-                        : () => _submitEmailAndPassword(context),
-                    child: Text(
-                      _secondsRemainingBeforeOtpResend > 0
-                          ? 'Resend code in ${_secondsRemainingBeforeOtpResend}s'
-                          : 'Resend code',
-                      style: TextStyle(
-                        color: _secondsRemainingBeforeOtpResend > 0
-                            ? AppTheme.primaryColor.withValues(alpha: 0.4)
-                            : AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
                 ),
                 const Spacer(),
               ],
