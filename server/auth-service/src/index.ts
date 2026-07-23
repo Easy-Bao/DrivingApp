@@ -7,7 +7,7 @@ const app = new Hono();
 app.use('*', cors());
 app.route('/auth', authRouter);
 
-app.get('/', (c) => c.json({ status: 'Auth Service OK', hasher: 'Argon2id' }));
+app.get('/', (c) => c.json({ status: 'Auth Service OK', hasher: 'Bun.password (Native)' }));
 
 const port = parseInt(process.env.PORT || '8088');
 

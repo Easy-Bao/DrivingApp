@@ -7,6 +7,6 @@ describe('Auth Service — Health Integration Test', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.status).toBe('Auth Service OK');
-    expect(body.hasher).toBe('Argon2id');
+    expect(body.hasher).toBe('Bun.password (Native)');
   });
 });

@@ -1,4 +1,3 @@
-import argon2 from 'argon2';
 import {
   RegisterDriverInput,
   LoginDriverInput,
@@ -45,7 +44,7 @@ export class DriverAuthenticationService {
       throw new Error('Driver account with this email address already exists');
     }
 
-    const passwordHash = await argon2.hash(driverInput.password);
+    const passwordHash = await Bun.password.hash(driverInput.password);
     const driverId = `drv_${Math.random().toString(36).substring(2, 11)}`;
     const creationTimestamp = new Date();
 
@@ -98,7 +97,7 @@ export class DriverAuthenticationService {
       throw new Error('Invalid email or password');
     }
 
-    const isPasswordValid = await argon2.verify(existingAccount.passwordHash, loginInput.password);
+    const isPasswordValid = await Bun.password.verify(loginInput.password, existingAccount.passwordHash);
     if (!isPasswordValid) {
       throw new Error('Invalid email or password');
     }
