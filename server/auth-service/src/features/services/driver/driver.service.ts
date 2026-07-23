@@ -64,7 +64,7 @@ export class DriverAuthenticationService {
     };
 
     DriverAuthenticationService.driverAccountsStore.set(normalizedEmailAddress, driverAccount);
-    OneTimePasswordStoreService.generateOneTimePasswordCode(driverAccount.email);
+    await OneTimePasswordStoreService.generateOneTimePasswordCode(driverAccount.email, 'verification');
 
     const authenticationToken = JsonWebTokenService.generateJsonWebToken(
       driverId,

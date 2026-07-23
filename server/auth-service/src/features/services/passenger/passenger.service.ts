@@ -60,7 +60,7 @@ export class PassengerAuthenticationService {
     };
 
     PassengerAuthenticationService.passengerAccountsStore.set(normalizedEmailAddress, passengerAccount);
-    OneTimePasswordStoreService.generateOneTimePasswordCode(passengerAccount.email);
+    await OneTimePasswordStoreService.generateOneTimePasswordCode(passengerAccount.email, 'verification');
 
     const authenticationToken = JsonWebTokenService.generateJsonWebToken(
       passengerId,

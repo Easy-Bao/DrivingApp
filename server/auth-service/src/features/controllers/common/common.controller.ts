@@ -24,7 +24,7 @@ export async function handleVerifyOneTimePassword(c: Context) {
 export async function handleSendForgotPasswordOneTimePassword(c: Context) {
   try {
     const { email } = c.req.valid('json' as never) as ForgotPasswordInput;
-    OneTimePasswordStoreService.generateOneTimePasswordCode(email);
+    await OneTimePasswordStoreService.generateOneTimePasswordCode(email, 'reset');
     return c.json({ success: true, data: { success: true } });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Forgot password failed';
