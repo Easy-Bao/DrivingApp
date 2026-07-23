@@ -16,6 +16,7 @@ import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
+///TODO: Convert into homescreen rather than passenger extension
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
 
@@ -383,7 +384,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
           ),
         ),
         TextButton(
-          onPressed: () => context.pushNamed(ActivityRoutes.viewAllRecentActivity),
+          onPressed: () =>
+              context.pushNamed(ActivityRoutes.viewAllRecentActivity),
           child: const Text(
             'View all',
             style: TextStyle(

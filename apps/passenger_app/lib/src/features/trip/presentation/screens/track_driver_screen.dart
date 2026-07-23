@@ -79,28 +79,25 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       final chatRepository = Modular.get<ChatRepository>();
       final result = await chatRepository.fetchRoomMessages(widget.ride.id);
 
-      result.fold(
-        (_) => null,
-        (List<ChatMessage> messages) {
-          final driverChatMessagesList = messages
-              .where((m) => m.senderId != passengerIdentifier)
-              .toList();
-          final currentDriverMessagesCount = driverChatMessagesList.length;
+      result.fold((_) => null, (List<ChatMessage> messages) {
+        final driverChatMessagesList = messages
+            .where((m) => m.senderId != passengerIdentifier)
+            .toList();
+        final currentDriverMessagesCount = driverChatMessagesList.length;
 
-          if (mounted) {
-            setState(() {
-              if (!_isInitialChatMessagesCountFetched) {
-                _viewedDriverMessagesCount = currentDriverMessagesCount;
-                _isInitialChatMessagesCountFetched = true;
-              } else if (currentDriverMessagesCount >
-                  _viewedDriverMessagesCount) {
-                _unreadChatMessagesCount =
-                    currentDriverMessagesCount - _viewedDriverMessagesCount;
-              }
-            });
-          }
-        },
-      );
+        if (mounted) {
+          setState(() {
+            if (!_isInitialChatMessagesCountFetched) {
+              _viewedDriverMessagesCount = currentDriverMessagesCount;
+              _isInitialChatMessagesCountFetched = true;
+            } else if (currentDriverMessagesCount >
+                _viewedDriverMessagesCount) {
+              _unreadChatMessagesCount =
+                  currentDriverMessagesCount - _viewedDriverMessagesCount;
+            }
+          });
+        }
+      });
     } catch (_) {}
   }
 
@@ -523,7 +520,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                 onTap: () async {
                                   final passengerId =
                                       await Modular.get<SecureSessionService>()
-                                          .readPassengerId() ?? '';
+                                          .readPassengerId() ??
+                                      '';
                                   if (context.mounted) {
                                     setState(() {
                                       _unreadChatMessagesCount = 0;
@@ -552,7 +550,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                 onTap: () async {
                                   try {
                                     final activeRideId =
-                                        await Modular.get<SecureSessionService>()
+                                        await Modular.get<
+                                              SecureSessionService
+                                            >()
                                             .readActiveRideId() ??
                                         widget.ride.id;
                                     if (activeRideId.isNotEmpty) {

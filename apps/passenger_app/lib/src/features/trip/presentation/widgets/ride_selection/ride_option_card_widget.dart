@@ -85,7 +85,9 @@ class RideOptionCardWidget extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: badge == 'Cheapest'
                                 ? AppTheme.complete.withValues(alpha: 0.15)
-                                : AppTheme.tertiaryColor.withValues(alpha: 0.15),
+                                : AppTheme.tertiaryColor.withValues(
+                                    alpha: 0.15,
+                                  ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

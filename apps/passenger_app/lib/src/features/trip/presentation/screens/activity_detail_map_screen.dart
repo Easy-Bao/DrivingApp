@@ -261,7 +261,10 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
                           longitude: widget.destinationLng,
                         );
                         unawaited(
-                          context.pushNamed(TripRoutes.destinationPreview, extra: place),
+                          context.pushNamed(
+                            TripRoutes.destinationPreview,
+                            extra: place,
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(

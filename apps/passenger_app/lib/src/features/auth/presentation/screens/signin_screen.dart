@@ -88,12 +88,18 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
           },
           builder: (context, state) {
             final isLoading = state is SignInLoading;
-            final errorMessage = state is SignInFailure ? state.errorMessage : null;
+            final errorMessage = state is SignInFailure
+                ? state.errorMessage
+                : null;
 
-            final emailError = (errorMessage != null && errorMessage.toLowerCase().contains('email'))
+            final emailError =
+                (errorMessage != null &&
+                    errorMessage.toLowerCase().contains('email'))
                 ? errorMessage
                 : null;
-            final passwordError = (errorMessage != null && !errorMessage.toLowerCase().contains('email'))
+            final passwordError =
+                (errorMessage != null &&
+                    !errorMessage.toLowerCase().contains('email'))
                 ? errorMessage
                 : null;
 
@@ -149,7 +155,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
                               borderSide: BorderSide(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.2,
+                                ),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -208,7 +216,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
                               borderSide: BorderSide(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.2,
+                                ),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -220,7 +230,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
-                              borderSide: const BorderSide(color: AppTheme.cancel),
+                              borderSide: const BorderSide(
+                                color: AppTheme.cancel,
+                              ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
@@ -254,7 +266,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             ),
                             TextButton(
                               onPressed: () {
-                                unawaited(context.pushNamed(AuthRoutes.forgotPassword));
+                                unawaited(
+                                  context.pushNamed(AuthRoutes.forgotPassword),
+                                );
                               },
                               child: const Text(
                                 'Forgot Password?',
@@ -268,7 +282,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton(
-                          onPressed: isLoading ? null : () => _submitSignIn(context),
+                          onPressed: isLoading
+                              ? null
+                              : () => _submitSignIn(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
                             foregroundColor: AppTheme.neutralColor,
@@ -303,12 +319,16 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                               Text(
                                 "Don't have an account?",
                                 style: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                               ),
                               TextButton(
                                 onPressed: () {
-                                  unawaited(context.pushNamed(AuthRoutes.signup));
+                                  unawaited(
+                                    context.pushNamed(AuthRoutes.signup),
+                                  );
                                 },
                                 child: const Text(
                                   'Sign up',

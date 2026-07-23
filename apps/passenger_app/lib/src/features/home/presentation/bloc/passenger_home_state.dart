@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+///TODO: Convert PassengerHomeState into HomeState
 class PassengerHomeState extends Equatable {
   final bool isLoading;
   final String currentAddress;

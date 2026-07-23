@@ -97,7 +97,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         body: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {
-            if (state is SettingsLoadingState || state is SettingsInitialState) {
+            if (state is SettingsLoadingState ||
+                state is SettingsInitialState) {
               return const Center(
                 child: CircularProgressIndicator(color: AppTheme.primaryColor),
               );
@@ -113,7 +114,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

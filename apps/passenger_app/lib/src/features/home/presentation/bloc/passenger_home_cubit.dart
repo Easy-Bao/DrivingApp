@@ -4,8 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_state.dart';
 
-/// Responsible for managing the home screen data model, specifically the active reverse-geocoded
-/// address of the passenger's current position and their historical/frequent destination pins.
+///TODO: Should change to HomeCubit rather than PassengerHomeCubit
 class PassengerHomeCubit extends Cubit<PassengerHomeState> {
   final PassengerHomeRepository _repository;
 

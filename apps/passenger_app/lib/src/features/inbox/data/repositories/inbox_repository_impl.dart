@@ -14,8 +14,9 @@ class InboxRepositoryImpl implements InboxRepository {
     String passengerId,
   ) async {
     try {
-      final rawNotifications =
-          await remoteDataSource.fetchNotifications(passengerId);
+      final rawNotifications = await remoteDataSource.fetchNotifications(
+        passengerId,
+      );
       final List<InboxNotification> list = [];
 
       for (final n in rawNotifications) {
@@ -29,7 +30,8 @@ class InboxRepositoryImpl implements InboxRepository {
           final title = n['title'] as String? ?? '';
           final message = n['message'] as String? ?? '';
           final isRead = n['isRead'] as bool? ?? false;
-          final dt = DateTime.tryParse(n['timestamp'] as String? ?? '') ??
+          final dt =
+              DateTime.tryParse(n['timestamp'] as String? ?? '') ??
               DateTime.now();
 
           list.add(

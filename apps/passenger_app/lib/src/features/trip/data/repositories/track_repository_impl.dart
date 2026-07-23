@@ -75,7 +75,10 @@ class TrackRepositoryImpl implements TrackRepository {
     RideStatus status,
   ) async {
     try {
-      final success = await _biddingDataSource.updateRideStatus(rideId, status.value);
+      final success = await _biddingDataSource.updateRideStatus(
+        rideId,
+        status.value,
+      );
       if (success) {
         return const Right(null);
       }

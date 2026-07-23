@@ -154,7 +154,7 @@ class _ResetPasswordConfirmScreenContentState
                               Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'NEW PASSWORD',
+                                  'New Password',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -185,8 +185,9 @@ class _ResetPasswordConfirmScreenContentState
                                           ? LucideIcons.eye_off
                                           : LucideIcons.eye,
                                       size: 20,
-                                      color: AppTheme.primaryColor
-                                          .withValues(alpha: 0.5),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                     onPressed: () => setState(
                                       () => _obscureNewPassword =
@@ -197,8 +198,9 @@ class _ResetPasswordConfirmScreenContentState
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(32),
                                     borderSide: BorderSide(
-                                      color: AppTheme.primaryColor
-                                          .withValues(alpha: 0.2),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.2,
+                                      ),
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
@@ -214,7 +216,7 @@ class _ResetPasswordConfirmScreenContentState
                               Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'CONFIRM PASSWORD',
+                                  'Confirm Password',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -228,8 +230,7 @@ class _ResetPasswordConfirmScreenContentState
                                 controller: _confirmPasswordController,
                                 obscureText: _obscureConfirmPassword,
                                 textInputAction: TextInputAction.done,
-                                onSubmitted: (_) =>
-                                    _submitNewPassword(context),
+                                onSubmitted: (_) => _submitNewPassword(context),
                                 style: const TextStyle(
                                   color: AppTheme.primaryColor,
                                   fontSize: 16,
@@ -247,8 +248,9 @@ class _ResetPasswordConfirmScreenContentState
                                           ? LucideIcons.eye_off
                                           : LucideIcons.eye,
                                       size: 20,
-                                      color: AppTheme.primaryColor
-                                          .withValues(alpha: 0.5),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                     onPressed: () => setState(
                                       () => _obscureConfirmPassword =
@@ -259,8 +261,9 @@ class _ResetPasswordConfirmScreenContentState
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(32),
                                     borderSide: BorderSide(
-                                      color: AppTheme.primaryColor
-                                          .withValues(alpha: 0.2),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.2,
+                                      ),
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(

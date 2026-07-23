@@ -89,14 +89,17 @@ class __ForgotPasswordScreenContentState
         },
         builder: (context, state) {
           final isLoading = state is ForgotPasswordLoading;
-          final errorMessage =
-              state is ForgotPasswordFailure ? state.errorMessage : null;
+          final errorMessage = state is ForgotPasswordFailure
+              ? state.errorMessage
+              : null;
 
           return LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 20,
+                ),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     minHeight: constraints.maxHeight - 40,
@@ -133,7 +136,9 @@ class __ForgotPasswordScreenContentState
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.cancel.withValues(alpha: 0.1),
+                                    color: AppTheme.cancel.withValues(
+                                      alpha: 0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
@@ -149,7 +154,7 @@ class __ForgotPasswordScreenContentState
                               Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'EMAIL ADDRESS',
+                                  'Email Address',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -199,8 +204,9 @@ class __ForgotPasswordScreenContentState
                         Column(
                           children: [
                             ElevatedButton(
-                              onPressed:
-                                  isLoading ? null : () => _submitResetLink(context),
+                              onPressed: isLoading
+                                  ? null
+                                  : () => _submitResetLink(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryColor,
                                 foregroundColor: AppTheme.neutralColor,
@@ -220,7 +226,8 @@ class __ForgotPasswordScreenContentState
                                       ),
                                     )
                                   : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           'Send Reset Link',
@@ -230,7 +237,6 @@ class __ForgotPasswordScreenContentState
                                           ),
                                         ),
                                         SizedBox(width: 10),
-                                        Icon(LucideIcons.send_horizontal),
                                       ],
                                     ),
                             ),

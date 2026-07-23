@@ -59,7 +59,9 @@ class _InboxScreenState extends State<InboxScreen> {
             builder: (context, state) {
               if (state is InboxLoadingState || state is InboxInitialState) {
                 return const Center(
-                  child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryColor,
+                  ),
                 );
               }
 

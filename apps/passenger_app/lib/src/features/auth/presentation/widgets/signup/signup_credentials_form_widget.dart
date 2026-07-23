@@ -67,7 +67,10 @@ class _SignupCredentialsFormWidgetState
                     ),
                     child: Text(
                       widget.errorMessage!,
-                      style: const TextStyle(color: AppTheme.cancel, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppTheme.cancel,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -90,7 +93,10 @@ class _SignupCredentialsFormWidgetState
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -100,14 +106,16 @@ class _SignupCredentialsFormWidgetState
                   controller: widget.passwordController,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
-                    hintText: 'Password (min. 8 characters)',
+                    hintText: 'Password',
                     prefixIcon: const Padding(
                       padding: EdgeInsetsGeometry.only(left: 10),
                       child: Icon(LucideIcons.lock, size: 20),
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordVisible ? LucideIcons.eye : LucideIcons.eye_off,
+                        _isPasswordVisible
+                            ? LucideIcons.eye
+                            : LucideIcons.eye_off,
                         size: 20,
                       ),
                       onPressed: () => setState(
@@ -122,7 +130,10 @@ class _SignupCredentialsFormWidgetState
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -142,11 +153,17 @@ class _SignupCredentialsFormWidgetState
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : const Text(
                           'Continue',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                 ),
                 const Spacer(),

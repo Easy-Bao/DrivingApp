@@ -8,7 +8,6 @@ import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_
 import 'package:passenger_services/passenger_services.dart';
 import 'package:rxdart/rxdart.dart';
 
-
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final BiddingRemoteDataSource _biddingDataSource;
 

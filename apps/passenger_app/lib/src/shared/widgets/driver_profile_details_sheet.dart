@@ -58,9 +58,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Future<void> _loadDriverProfileStats() async {
     try {
-      final statsData = await Modular.get<BiddingRemoteDataSource>().fetchDriverStats(
-        widget.driverId,
-      );
+      final statsData = await Modular.get<BiddingRemoteDataSource>()
+          .fetchDriverStats(widget.driverId);
       if (statsData != null && statsData['totalTrips'] != null) {
         if (mounted) {
           setState(() {
@@ -88,11 +87,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     _hasMore = true;
     final List<Map<String, dynamic>> dynamicReviews = [];
     try {
-      final rawReviews = await Modular.get<BiddingRemoteDataSource>().fetchDriverReviews(
-        widget.driverId,
-        page: _currentPage,
-        limit: 5,
-      );
+      final rawReviews = await Modular.get<BiddingRemoteDataSource>()
+          .fetchDriverReviews(widget.driverId, page: _currentPage, limit: 5);
       if (rawReviews.length < 5) {
         _hasMore = false;
       }
@@ -120,8 +116,18 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       try {
         final parsedDate = DateTime.parse(createdAtStr as String);
         final months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
         ];
         dateFormatted =
             '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
@@ -146,11 +152,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     final nextPage = _currentPage + 1;
     final List<Map<String, dynamic>> nextReviews = [];
     try {
-      final rawReviews = await Modular.get<BiddingRemoteDataSource>().fetchDriverReviews(
-        widget.driverId,
-        page: nextPage,
-        limit: 5,
-      );
+      final rawReviews = await Modular.get<BiddingRemoteDataSource>()
+          .fetchDriverReviews(widget.driverId, page: nextPage, limit: 5);
       if (rawReviews.length < 5) {
         _hasMore = false;
       }
@@ -307,7 +310,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
-                itemCount: _driverReviewsList.length + (_hasMore || _isLoadingMore ? 1 : 0),
+                itemCount:
+                    _driverReviewsList.length +
+                    (_hasMore || _isLoadingMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == _driverReviewsList.length) {
                     return const Center(
@@ -358,7 +363,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                         Row(
                           children: [
                             ...List.generate(5, (starIndex) {
-                              final ratingValue = (reviewItem['rating'] as num?)?.toDouble() ?? 5.0;
+                              final ratingValue =
+                                  (reviewItem['rating'] as num?)?.toDouble() ??
+                                  5.0;
                               if (ratingValue >= starIndex + 1) {
                                 return const Icon(
                                   Icons.star_rounded,
@@ -374,18 +381,24 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                               } else {
                                 return Icon(
                                   Icons.star_rounded,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.12,
+                                  ),
                                   size: 13,
                                 );
                               }
                             }),
                             const SizedBox(width: 6),
                             Text(
-                              ((reviewItem['rating'] as num?)?.toDouble() ?? 5.0).toStringAsFixed(1),
+                              ((reviewItem['rating'] as num?)?.toDouble() ??
+                                      5.0)
+                                  .toStringAsFixed(1),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.7,
+                                ),
                               ),
                             ),
                           ],

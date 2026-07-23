@@ -278,10 +278,8 @@ class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
                           icon: SavedPlacesCubit.iconFromName(place.iconName),
                           label: place.label,
                           address: place.savedAddress ?? 'Not set',
-                          onTap: () => _showPlaceOptions(
-                            place,
-                            indexForPlace(place),
-                          ),
+                          onTap: () =>
+                              _showPlaceOptions(place, indexForPlace(place)),
                         ),
                       ],
                       const SizedBox(height: 32),
@@ -289,7 +287,9 @@ class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
                         onTap: _openAddCategoryScreen,
                         child: CustomPaint(
                           painter: DashedBorderPainter(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                            color: AppTheme.primaryColor.withValues(
+                              alpha: 0.15,
+                            ),
                             borderRadius: 16.0,
                             dashLength: 6.0,
                             gap: 6.0,

@@ -39,9 +39,7 @@ class HomeModule {
       'home',
       child: (context, GoRouterState state) => MultiBlocProvider(
         providers: [
-          BlocProvider(
-            create: (_) => Modular.get<PassengerHomeCubit>(),
-          ),
+          BlocProvider(create: (_) => Modular.get<PassengerHomeCubit>()),
           BlocProvider(
             create: (_) {
               final cubit = Modular.get<SavedPlacesCubit>();

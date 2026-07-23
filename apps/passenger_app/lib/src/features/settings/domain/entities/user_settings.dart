@@ -27,8 +27,8 @@ class UserSettings extends Equatable {
 
   @override
   List<Object?> get props => [
-        pushNotificationsEnabled,
-        locationSharingEnabled,
-        preferredThemeMode,
-      ];
+    pushNotificationsEnabled,
+    locationSharingEnabled,
+    preferredThemeMode,
+  ];
 }

@@ -58,17 +58,24 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       _focusNode.requestFocus();
     });
     _otpController.addListener(_onOtpChanged);
+    _focusNode.addListener(_onFocusChanged);
   }
 
   @override
   void dispose() {
     _otpController.removeListener(_onOtpChanged);
+    _focusNode.removeListener(_onFocusChanged);
     _otpController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
+  void _onFocusChanged() {
+    setState(() {});
+  }
+
   void _onOtpChanged() {
+    setState(() {});
     final text = _otpController.text;
     if (text.length == 6) {
       if (widget.isForgotPassword) {
@@ -84,10 +91,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
     unawaited(
       context.pushNamed(
         AuthRoutes.resetPasswordConfirm,
-        extra: {
-          'email': widget.email,
-          'code': code,
-        },
+        extra: {'email': widget.email, 'code': code},
       ),
     );
   }
@@ -95,10 +99,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
   void _triggerVerify(String code) {
     FocusScope.of(context).unfocus();
     unawaited(
-      BlocProvider.of<VerifyOtpCubit>(context).verifyOtp(
-        email: widget.email,
-        code: code,
-      ),
+      BlocProvider.of<VerifyOtpCubit>(
+        context,
+      ).verifyOtp(email: widget.email, code: code),
     );
   }
 
@@ -198,8 +201,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
         },
         builder: (context, state) {
           final isLoading = state is VerifyOtpLoading;
-          final errorMessage =
-              state is VerifyOtpFailure ? state.errorMessage : null;
+          final errorMessage = state is VerifyOtpFailure
+              ? state.errorMessage
+              : null;
 
           int secondsRemaining = 60;
           bool canResend = false;
@@ -211,8 +215,10 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
           }
 
           return SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 40.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -242,6 +248,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                   onTap: () {
                     _focusNode.requestFocus();
                   },
+
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: List.generate(6, (index) {
@@ -262,9 +269,10 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                             color: isFocused
                                 ? AppTheme.primaryColor
                                 : (errorMessage != null
-                                    ? AppTheme.cancel
-                                    : AppTheme.primaryColor
-                                        .withValues(alpha: 0.16)),
+                                      ? AppTheme.cancel
+                                      : AppTheme.primaryColor.withValues(
+                                          alpha: 0.16,
+                                        )),
                             width: isFocused ? 2 : 1,
                           ),
                         ),
@@ -281,20 +289,19 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                     }),
                   ),
                 ),
-                Opacity(
-                  opacity: 0,
+                Transform.translate(
+                  offset: const Offset(-9999, 0),
                   child: SizedBox(
-                    height: 0,
-                    width: 0,
+                    height: 1,
+                    width: 1,
                     child: TextField(
                       controller: _otpController,
                       focusNode: _focusNode,
                       keyboardType: TextInputType.number,
                       maxLength: 6,
                       autofocus: true,
-                      decoration: const InputDecoration(
-                        counterText: '',
-                      ),
+                      enableInteractiveSelection: false,
+                      decoration: const InputDecoration(counterText: ''),
                     ),
                   ),
                 ),
@@ -312,8 +319,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                 const SizedBox(height: 24),
                 TextButton(
                   onPressed: canResend
-                      ? () =>
-                          BlocProvider.of<VerifyOtpCubit>(context).startResendTimer()
+                      ? () => BlocProvider.of<VerifyOtpCubit>(
+                          context,
+                        ).startResendTimer()
                       : null,
                   child: Text(
                     canResend
@@ -329,9 +337,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                 ),
                 const SizedBox(height: 24),
                 if (isLoading)
-                  const CircularProgressIndicator(
-                    color: AppTheme.primaryColor,
-                  )
+                  const CircularProgressIndicator(color: AppTheme.primaryColor)
                 else
                   SizedBox(
                     width: double.infinity,
@@ -339,16 +345,16 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                     child: ElevatedButton(
                       onPressed: text.length == 6
                           ? () => widget.isForgotPassword
-                              ? _navigateToResetPasswordConfirm(text)
-                              : _triggerVerify(text)
+                                ? _navigateToResetPasswordConfirm(text)
+                                : _triggerVerify(text)
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: AppTheme.neutralColor,
-                        disabledBackgroundColor:
-                            AppTheme.primaryColor.withValues(alpha: 0.5),
-                        disabledForegroundColor:
-                            AppTheme.neutralColor.withValues(alpha: 0.5),
+                        disabledBackgroundColor: AppTheme.primaryColor
+                            .withValues(alpha: 0.5),
+                        disabledForegroundColor: AppTheme.neutralColor
+                            .withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),

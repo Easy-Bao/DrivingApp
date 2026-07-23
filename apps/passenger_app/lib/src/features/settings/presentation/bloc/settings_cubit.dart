@@ -6,7 +6,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   final SettingsRepository settingsRepository;
 
   SettingsCubit({required this.settingsRepository})
-      : super(const SettingsInitialState());
+    : super(const SettingsInitialState());
 
   Future<void> loadSettings() async {
     emit(const SettingsLoadingState());

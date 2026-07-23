@@ -711,7 +711,8 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                         Row(
                           children: [
                             ...List.generate(5, (starIndex) {
-                              final ratingValue = (review['rating'] as num?)?.toDouble() ?? 5.0;
+                              final ratingValue =
+                                  (review['rating'] as num?)?.toDouble() ?? 5.0;
                               if (ratingValue >= starIndex + 1) {
                                 return const Icon(
                                   Icons.star_rounded,
@@ -727,18 +728,23 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                               } else {
                                 return Icon(
                                   Icons.star_rounded,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.12,
+                                  ),
                                   size: 13,
                                 );
                               }
                             }),
                             const SizedBox(width: 6),
                             Text(
-                              ((review['rating'] as num?)?.toDouble() ?? 5.0).toStringAsFixed(1),
+                              ((review['rating'] as num?)?.toDouble() ?? 5.0)
+                                  .toStringAsFixed(1),
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.7,
+                                ),
                               ),
                             ),
                           ],
@@ -750,7 +756,9 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                             style: TextStyle(
                               fontSize: 11,
                               height: 1.3,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.7,
+                              ),
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,

@@ -55,9 +55,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(29),
               border: Border.all(
-                color: AppTheme.outlineBorderColor.withValues(
-                  alpha: 0.1,
-                ),
+                color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
                 width: 1,
               ),
               boxShadow: [
@@ -136,11 +134,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: color,
-              ),
+              Icon(icon, size: 18, color: color),
               const SizedBox(height: 3),
               Text(
                 label,

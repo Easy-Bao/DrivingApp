@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:session_service/session_service.dart';
 
-/// Cubit responsible for tracking driver location and status updates during active passenger ride bookings.
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final TrackRepository _repository;
   final SecureSessionService _sessionService;

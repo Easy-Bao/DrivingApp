@@ -1,5 +1,3 @@
-/// Domain entity representing a passenger's pinned location shortcut (e.g., "Home", "Campus").
-/// Entirely decoupled from JSON parsing schemas and UI tap callbacks.
 class SavedPlace {
   final String label;
   final String iconName;

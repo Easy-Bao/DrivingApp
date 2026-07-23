@@ -25,9 +25,7 @@ class SettingsItemTileWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.neutralColor.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.borderSide.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: AppTheme.borderSide.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [

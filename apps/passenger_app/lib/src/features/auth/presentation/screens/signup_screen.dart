@@ -34,10 +34,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
 
   int _currentStepIndex = 0;
 
-  final TextEditingController _passengerEmailController = TextEditingController();
-  final TextEditingController _passengerPasswordController = TextEditingController();
-  final TextEditingController _passengerNameController = TextEditingController();
-  final TextEditingController _passengerPhoneController = TextEditingController();
+  final TextEditingController _passengerEmailController =
+      TextEditingController();
+  final TextEditingController _passengerPasswordController =
+      TextEditingController();
+  final TextEditingController _passengerNameController =
+      TextEditingController();
+  final TextEditingController _passengerPhoneController =
+      TextEditingController();
 
   bool _isPasswordInputVisible = false;
 
@@ -52,10 +56,12 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
   }
 
   void _advanceToNextOnboardingPage() {
-    unawaited(_onboardingPageController.nextPage(
-      duration: const Duration(milliseconds: 380),
-      curve: Curves.easeInOut,
-    ));
+    unawaited(
+      _onboardingPageController.nextPage(
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeInOut,
+      ),
+    );
     setState(() {
       _currentStepIndex++;
     });
@@ -66,10 +72,12 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       context.pop();
       return;
     }
-    unawaited(_onboardingPageController.previousPage(
-      duration: const Duration(milliseconds: 380),
-      curve: Curves.easeInOut,
-    ));
+    unawaited(
+      _onboardingPageController.previousPage(
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeInOut,
+      ),
+    );
     setState(() {
       _currentStepIndex--;
     });
@@ -118,14 +126,16 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
           listener: (context, state) {
             if (state is SignUpNeedsVerification) {
               unawaited(
-                context.pushNamed(
-                  AuthRoutes.verifyOtp,
-                  extra: {'email': state.email},
-                ).then((verified) {
-                  if (verified == true && mounted) {
-                    _advanceToNextOnboardingPage();
-                  }
-                }),
+                context
+                    .pushNamed(
+                      AuthRoutes.verifyOtp,
+                      extra: {'email': state.email},
+                    )
+                    .then((verified) {
+                      if (verified == true && mounted) {
+                        _advanceToNextOnboardingPage();
+                      }
+                    }),
               );
             } else if (state is SignUpSuccess) {
               _advanceToNextOnboardingPage();
@@ -133,12 +143,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
           },
           builder: (context, state) {
             final isLoading = state is SignUpLoading;
-            final errorMessage = state is SignUpFailure ? state.errorMessage : null;
+            final errorMessage = state is SignUpFailure
+                ? state.errorMessage
+                : null;
 
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 8.0,
+                  ),
                   child: Row(
                     children: List.generate(
                       2,
@@ -162,7 +177,11 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     controller: _onboardingPageController,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
-                      _buildEmailAndPasswordPage(context, isLoading, errorMessage),
+                      _buildEmailAndPasswordPage(
+                        context,
+                        isLoading,
+                        errorMessage,
+                      ),
                       _buildProfileSetupPage(context, isLoading, errorMessage),
                     ],
                   ),
@@ -218,7 +237,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     ),
                     child: Text(
                       errorMessage,
-                      style: const TextStyle(color: AppTheme.cancel, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppTheme.cancel,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -249,7 +271,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -264,7 +289,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                   controller: _passengerPasswordController,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
-                    hintText: 'Password (min. 8 characters)',
+                    hintText: 'Password',
                     hintStyle: TextStyle(
                       color: AppTheme.primaryColor.withValues(alpha: 0.4),
                     ),
@@ -274,11 +299,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordInputVisible ? LucideIcons.eye : LucideIcons.eye_off,
+                        _isPasswordInputVisible
+                            ? LucideIcons.eye
+                            : LucideIcons.eye_off,
                         size: 20,
                       ),
                       onPressed: () => setState(
-                        () => _isPasswordInputVisible = !_isPasswordInputVisible,
+                        () =>
+                            _isPasswordInputVisible = !_isPasswordInputVisible,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
@@ -289,13 +317,18 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: isLoading ? null : () => _submitEmailAndPassword(context),
+                  onPressed: isLoading
+                      ? null
+                      : () => _submitEmailAndPassword(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: AppTheme.neutralColor,
@@ -309,11 +342,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : const Text(
                           'Continue',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                 ),
                 const Spacer(),
@@ -369,11 +408,16 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                      borderSide: BorderSide(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -390,11 +434,16 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                      borderSide: BorderSide(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -407,7 +456,9 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: AppTheme.neutralColor,
                     minimumSize: const Size.fromHeight(60),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32),
+                    ),
                     elevation: 0,
                   ),
                   child: const Text(

@@ -6,11 +6,14 @@ import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.d
 class InboxCubit extends Cubit<InboxState> {
   final InboxRepository inboxRepository;
 
-  InboxCubit({required this.inboxRepository}) : super(const InboxInitialState());
+  InboxCubit({required this.inboxRepository})
+    : super(const InboxInitialState());
 
   Future<void> loadNotifications(String passengerId) async {
     emit(const InboxLoadingState());
-    final result = await inboxRepository.fetchPassengerNotifications(passengerId);
+    final result = await inboxRepository.fetchPassengerNotifications(
+      passengerId,
+    );
 
     result.fold(
       (failure) => emit(InboxErrorState(failure.message)),
@@ -20,7 +23,9 @@ class InboxCubit extends Cubit<InboxState> {
 
   void markNotificationAsRead(int index) {
     if (state is InboxLoadedState) {
-      final currentList = List<InboxNotification>.from((state as InboxLoadedState).notifications);
+      final currentList = List<InboxNotification>.from(
+        (state as InboxLoadedState).notifications,
+      );
       if (index >= 0 && index < currentList.length) {
         currentList[index] = currentList[index].copyWith(isRead: true);
         emit(InboxLoadedState(currentList));
@@ -30,7 +35,9 @@ class InboxCubit extends Cubit<InboxState> {
 
   void dismissNotification(int index) {
     if (state is InboxLoadedState) {
-      final currentList = List<InboxNotification>.from((state as InboxLoadedState).notifications);
+      final currentList = List<InboxNotification>.from(
+        (state as InboxLoadedState).notifications,
+      );
       if (index >= 0 && index < currentList.length) {
         currentList.removeAt(index);
         emit(InboxLoadedState(currentList));

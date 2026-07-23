@@ -112,9 +112,7 @@ class ChatCubit extends Cubit<ChatState> {
       final resolveEndpointUri = gatewayUri.replace(
         path: '/chat/rooms/$roomId/resolve',
       );
-      final response = await Dio().postUri(
-        resolveEndpointUri,
-      );
+      final response = await Dio().postUri(resolveEndpointUri);
 
       if (response.statusCode == 200) {
         await _chatService.connectToChatRoom(roomId: roomId, chatUri: wsUri);
