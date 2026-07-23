@@ -95,7 +95,10 @@ class AuthModule extends Module {
           name: AuthRoutes.verifyOtp,
           '/auth/verifyotp',
           child: (context, GoRouterState state) {
-            final email = state.uri.queryParameters['email'] ?? '';
+            String email = state.uri.queryParameters['email'] ?? '';
+            if (email.isEmpty && state.extra is Map) {
+              email = (state.extra as Map)['email']?.toString() ?? '';
+            }
             return VerifyOtpScreen(email: email);
           },
           transition: AppTransitions.push.toLeft,
