@@ -31,7 +31,7 @@ class AppModule extends Module {
       )
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => AuthRemoteDataSourceImpl(
-          baseUrl: EnvironmentConfig.driverServiceUri,
+          baseUrl: EnvironmentConfig.authServiceUri,
           dio: i.get<Dio>(),
         ),
       )

@@ -31,7 +31,7 @@ class AppModule extends Module {
       )
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => AuthRemoteDataSource(
-          baseUrl: EnvironmentConfig.passengerServiceUri,
+          baseUrl: EnvironmentConfig.authServiceUri,
           dio: i.get<Dio>(),
         ),
       )

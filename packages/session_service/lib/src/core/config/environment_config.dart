@@ -33,6 +33,17 @@ class EnvironmentConfig {
     return _resolveUri(rawUrl);
   }
 
+  static Uri get authServiceUri {
+    final rawUrl = dotenv.env['AUTH_SERVICE_URL'] ??
+        dotenv.env['API_GATEWAY_URL'] ??
+        dotenv.env['PASSENGER_SERVICE_URL'] ??
+        dotenv.env['DRIVER_SERVICE_URL'];
+    if (rawUrl == null || rawUrl.isEmpty) {
+      throw StateError('AUTH_SERVICE_URL environment variable is missing.');
+    }
+    return _resolveUri(rawUrl);
+  }
+
   static Uri get tripServiceUri {
     final rawUrl =
         dotenv.env['TRIP_SERVICE_URL'] ?? dotenv.env['PASSENGER_SERVICE_URL'];
