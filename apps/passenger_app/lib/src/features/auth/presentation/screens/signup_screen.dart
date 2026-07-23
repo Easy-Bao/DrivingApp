@@ -224,11 +224,19 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                   const SizedBox(height: 16),
                 ],
                 TextField(
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                   keyboardType: TextInputType.emailAddress,
                   controller: _passengerEmailController,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     hintText: 'Email address',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
                     prefixIcon: const Padding(
                       padding: EdgeInsetsGeometry.only(left: 10),
                       child: Icon(LucideIcons.mail, size: 20),
@@ -236,22 +244,30 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
                       borderSide: BorderSide(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                   obscureText: !_isPasswordInputVisible,
                   controller: _passengerPasswordController,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
                     hintText: 'Password (min. 8 characters)',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
                     prefixIcon: const Padding(
                       padding: EdgeInsetsGeometry.only(left: 10),
                       child: Icon(LucideIcons.lock, size: 20),
@@ -268,12 +284,12 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
                       borderSide: BorderSide(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
                     ),
                   ),
                 ),

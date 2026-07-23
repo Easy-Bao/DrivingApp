@@ -160,6 +160,11 @@ class __ForgotPasswordScreenContentState
                               ),
                               const SizedBox(height: 8),
                               TextField(
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                                 keyboardType: TextInputType.emailAddress,
                                 controller: _emailController,
                                 textInputAction: TextInputAction.done,

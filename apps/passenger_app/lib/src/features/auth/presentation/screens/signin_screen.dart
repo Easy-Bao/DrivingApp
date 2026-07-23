@@ -129,6 +129,11 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                         ),
                         const SizedBox(height: 40),
                         TextField(
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                           keyboardType: TextInputType.emailAddress,
                           controller: _emailController,
                           textInputAction: TextInputAction.next,
@@ -144,13 +149,13 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
                               borderSide: BorderSide(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
-                              borderSide: const BorderSide(
-                                color: AppTheme.primaryColor,
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.primary,
                                 width: 1.5,
                               ),
                             ),
@@ -172,6 +177,11 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                         ),
                         const SizedBox(height: 16),
                         TextField(
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                           obscureText: !_isPasswordVisible,
                           controller: _passwordController,
                           textInputAction: TextInputAction.done,
@@ -198,13 +208,13 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
                               borderSide: BorderSide(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32),
-                              borderSide: const BorderSide(
-                                color: AppTheme.primaryColor,
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.primary,
                                 width: 1.5,
                               ),
                             ),
