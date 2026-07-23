@@ -81,7 +81,7 @@ export class PassengerService {
     if (!isValid) {
       throw new HTTPException(401, { message: 'Invalid email or password' });
     }
-    if (payload.email !== 'test@example.com' && !passenger.is_verified) {
+    if (!passenger.is_verified) {
       const otpCode = Math.floor(DEFAULT_OTP_MIN + Math.random() * DEFAULT_OTP_RANGE).toString();
       otpsMap.set(payload.email, { code: otpCode, expires: Date.now() + OTP_EXPIRY_MS });
       await this.sendVerificationEmail(payload.email, otpCode);
@@ -90,7 +90,10 @@ export class PassengerService {
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'secret';
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.trim().length === 0) {
+      throw new Error('Security Configuration Error: JWT_SECRET environment variable is missing.');
+    }
     const expiration = Math.floor(Date.now() / 1000) + SECONDS_PER_DAY;
     const token = await sign(
       {

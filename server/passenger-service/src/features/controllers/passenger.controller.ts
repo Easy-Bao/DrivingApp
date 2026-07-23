@@ -36,8 +36,10 @@ export async function handleGetPassengerProfile(context: Context) {
   const authorizationHeader = context.req.header('Authorization');
 
   if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
-    const token = authorizationHeader.substring(7);
-    const secret = process.env.JWT_SECRET || 'secret';
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.trim().length === 0) {
+      throw new Error('Security Configuration Error: JWT_SECRET environment variable is missing.');
+    }
     try {
       const payload = await verify(token, secret, "HS256");
       if (payload && typeof payload.sub === 'string') {
