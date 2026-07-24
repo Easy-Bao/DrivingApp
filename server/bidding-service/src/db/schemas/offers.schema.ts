@@ -2,8 +2,8 @@ import { pgTable, text, timestamp, uuid, doublePrecision } from 'drizzle-orm/pg-
 import { bidSessions } from './bids.schema.ts';
 
 export const driverOffers = pgTable('driver_offers', {
-  id: uuid('id').primaryKey(),
-  sessionId: uuid('session_id').references(() => bidSessions.id, { onDelete: 'cascade' }).notNull(),
+  id: text('id').primaryKey(),
+  sessionId: text('session_id').references(() => bidSessions.id, { onDelete: 'cascade' }).notNull(),
   driverId: text('driver_id').notNull(),
   driverName: text('driver_name').notNull(),
   plateNumber: text('plate_number').notNull(),

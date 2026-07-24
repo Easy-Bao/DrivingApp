@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const CreateBidSessionSchema = z.object({
-  passenger_id: z.string().uuid('Invalid passenger ID'),
+  passenger_id: z.string().min(1, 'Invalid passenger ID'),
   ride_type: z.string().min(1, 'Ride type is required'),
   pickup_latitude: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
   pickup_longitude: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),

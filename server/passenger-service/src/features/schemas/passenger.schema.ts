@@ -16,7 +16,7 @@ export const LoginSchema = z.object({
 export type LoginRequest = z.infer<typeof LoginSchema>;
 
 export const CreateRideSchema = z.object({
-  passenger_id: z.string().uuid('Invalid passenger ID'),
+  passenger_id: z.string().min(1, 'Invalid passenger ID'),
   ride_type: z.enum(['solo-ride', 'share-bao']),
   pickup_latitude: z.number(),
   pickup_longitude: z.number(),

@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, boolean, uuid } from 'drizzle-orm/pg-core';
 
 export const passengers = pgTable('passengers', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').unique().notNull(),
   phone: text('phone').notNull(),

@@ -1,8 +1,8 @@
 import { pgTable, text, timestamp, uuid, doublePrecision } from 'drizzle-orm/pg-core';
 
 export const rides = pgTable('rides', {
-  id: uuid('id').primaryKey(),
-  passengerId: uuid('passenger_id').notNull(),
+  id: text('id').primaryKey(),
+  passengerId: text('passenger_id').notNull(),
   passengerName: text('passenger_name'),
   rideType: text('ride_type').notNull(),
   pickupLatitude: doublePrecision('pickup_latitude').notNull(),

@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, boolean, uuid, doublePrecision } from 'drizzle-orm/pg-core';
 
 export const drivers = pgTable('drivers', {
-  id: uuid('id').primaryKey(),
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').unique().notNull(),
   phone: text('phone').notNull(),

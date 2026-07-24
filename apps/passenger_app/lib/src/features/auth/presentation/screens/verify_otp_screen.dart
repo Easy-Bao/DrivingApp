@@ -204,6 +204,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       body: BlocConsumer<VerifyOtpCubit, VerifyOtpState>(
         listener: (context, state) {
           if (state is VerifyOtpSuccess) {
+            CustomToast.show(context, 'Email verified successfully!');
             _showSignupSuccessModal();
           }
         },

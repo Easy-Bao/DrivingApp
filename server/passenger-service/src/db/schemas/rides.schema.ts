@@ -2,8 +2,8 @@ import { pgTable, text, timestamp, uuid, doublePrecision } from 'drizzle-orm/pg-
 import { passengers } from './passengers.schema.ts';
 
 export const rideRequests = pgTable('ride_requests', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  passengerId: uuid('passenger_id').references(() => passengers.id).notNull(),
+  id: text('id').primaryKey(),
+  passengerId: text('passenger_id').references(() => passengers.id).notNull(),
   rideType: text('ride_type').notNull(),
   pickupLatitude: doublePrecision('pickup_latitude').notNull(),
   pickupLongitude: doublePrecision('pickup_longitude').notNull(),
