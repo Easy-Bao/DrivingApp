@@ -12,12 +12,13 @@ import 'package:shared_ui/shared_ui.dart';
 
 class VerifyOtpScreen extends StatelessWidget {
   final String email;
-
+  final String password;
   final bool isForgotPassword;
 
   const VerifyOtpScreen({
     super.key,
     required this.email,
+    this.password = '',
     this.isForgotPassword = false,
   });
 
@@ -27,6 +28,7 @@ class VerifyOtpScreen extends StatelessWidget {
       create: (context) => Modular.get<VerifyOtpCubit>()..startResendTimer(),
       child: _VerifyOtpScreenContent(
         email: email,
+        password: password,
         isForgotPassword: isForgotPassword,
       ),
     );
@@ -35,10 +37,12 @@ class VerifyOtpScreen extends StatelessWidget {
 
 class _VerifyOtpScreenContent extends StatefulWidget {
   final String email;
+  final String password;
   final bool isForgotPassword;
 
   const _VerifyOtpScreenContent({
     required this.email,
+    required this.password,
     required this.isForgotPassword,
   });
 
@@ -101,7 +105,11 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
     unawaited(
       BlocProvider.of<VerifyOtpCubit>(
         context,
-      ).verifyOtp(email: widget.email, code: code),
+      ).verifyOtp(
+        email: widget.email,
+        code: code,
+        password: widget.password,
+      ),
     );
   }
 

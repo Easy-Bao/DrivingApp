@@ -61,7 +61,7 @@ class AuthRemoteDataSource extends BaseApiClient {
       '/auth/verify-otp',
       data: {'email': email, 'code': code},
     );
-    return response.statusCode == 200;
+    return parseBoolResponse(response, 200);
   }
 
   Future<bool> forgotPassword({

@@ -107,9 +107,11 @@ class AuthModule extends Module {
             final extra = state.extra is Map ? state.extra as Map : {};
             final email =
                 (state.uri.queryParameters['email'] ?? extra['email']?.toString()) ?? '';
+            final password = extra['password']?.toString() ?? '';
             final isForgotPassword = extra['isForgotPassword'] == true;
             return VerifyOtpScreen(
               email: email,
+              password: password,
               isForgotPassword: isForgotPassword,
             );
           },

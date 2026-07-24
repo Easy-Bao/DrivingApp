@@ -70,7 +70,8 @@ export class FareCalculationService {
       throw new Error('No active service pricing rules found in database authority.');
     }
 
-    const estimates: ServiceEstimate[] = rules.map((rule) => {
+    ///TODO: @param rule should  not any and ensure it's type safety
+    const estimates: ServiceEstimate[] = rules.map((rule: any) => {
       const base = rule.baseFare ?? 20.0;
       const perKm = rule.perKmRate ?? 10.0;
       const perMin = rule.perMinuteRate ?? 1.5;

@@ -108,8 +108,23 @@ class AuthRepositoryImpl implements AuthRepository {
       if (!success) {
         return const Left(ValidationFailure('Invalid or expired verification code.'));
       }
-      return authenticatePassenger(email: email, password: password);
+      if (password.isNotEmpty) {
+        return authenticatePassenger(email: email, password: password);
+      }
+      return Right(
+        AuthCredentials(
+          passengerId: '',
+          passengerName: '',
+          passengerEmail: email,
+          passengerPhone: '',
+          token: '',
+          needsVerification: false,
+        ),
+      );
     } catch (error) {
+      if (error is ServerException) {
+        return Left(ValidationFailure(error.message));
+      }
       return const Left(ServerFailure('Verification failed. Please try again.'));
     }
   }

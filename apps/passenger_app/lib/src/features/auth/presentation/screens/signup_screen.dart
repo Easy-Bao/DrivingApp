@@ -129,7 +129,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                 context
                     .pushNamed(
                       AuthRoutes.verifyOtp,
-                      extra: {'email': state.email},
+                      extra: {
+                        'email': state.email,
+                        'password': _passengerPasswordController.text,
+                      },
                     )
                     .then((verified) {
                       if (verified == true && mounted) {
