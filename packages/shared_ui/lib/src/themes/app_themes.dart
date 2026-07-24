@@ -3,74 +3,109 @@ import 'package:flutter/material.dart';
 class PassengerTheme {
   PassengerTheme._();
 
-  static const Color accent = Color(0xFFE3E2C3);
-  static const Color mutedSand = Color(0xFFC1C1A9);
-  static const Color slate = Color(0xFF8B8A87);
-  static const Color darkSlate = Color(0xFF6A6A67);
-  static const Color surface = Color(0xFF272727);
-  static const Color background = Color(0xFF141413);
-  static const Color borderSide = Color(0xFF383838);
+  static const Color primaryColor = Color(0xFF1A1D20);       // Dark Obsidian Charcoal
+  static const Color secondaryColor = Color(0xFFE3E2C3);     // Healing Springs Sand Accent
+  static const Color tertiaryColor = Color(0xFF6C757D);      // Slate Grey Subtitle
+  static const Color neutralColor = Color(0xFFF1F3F5);       // Soft Tint Neutral
+  static const Color surface = Color(0xFFFFFFFF);            // Pure White Card/Input Surface
+  static const Color background = Color(0xFFF8F9FA);         // Soft Off-White Scaffold Background
+  static const Color borderSide = Color(0xFFDEE2E6);         // Clean Subtle Border
 
-  static const Color primaryColor = accent;
-  static const Color secondaryColor = mutedSand;
-  static const Color tertiaryColor = slate;
-  static const Color neutralColor = surface;
+  static const Color accent = primaryColor;
+  static const Color mutedSand = secondaryColor;
+  static const Color slate = tertiaryColor;
+  static const Color darkSlate = tertiaryColor;
 
-  static const Color complete = Color(0xFF4CAF50);
-  static const Color cancel = Color(0xFFFF5252);
-  static const Color inProgress = Color(0xFFE3E2C3);
+  static const Color complete = Color(0xFF198754);
+  static const Color cancel = Color(0xFFDC3545);
+  static const Color inProgress = Color(0xFF1A1D20);
+
+  static const Color selectedItemColor = Color(0xFF1A1D20);
+  static const Color unselectedItemColor = Color(0xFF6C757D);
+  static const Color outlineBorderColor = Color(0xFFE9ECEF);
 
   static ThemeData get themeData {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: background,
-      colorScheme: const ColorScheme.dark(
-        primary: accent,
-        secondary: mutedSand,
-        tertiary: slate,
+      colorScheme: const ColorScheme.light(
+        primary: primaryColor,
+        secondary: secondaryColor,
+        tertiary: tertiaryColor,
         surface: surface,
-        onSurface: accent,
+        onSurface: primaryColor,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: primaryColor),
+        titleTextStyle: TextStyle(
+          color: primaryColor,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.4,
+        ),
       ),
       textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: accent, fontSize: 16, fontWeight: FontWeight.w600),
-        bodyMedium: TextStyle(color: mutedSand, fontSize: 14),
-        titleLarge: TextStyle(color: accent, fontSize: 22, fontWeight: FontWeight.bold),
-        titleMedium: TextStyle(color: accent, fontSize: 16, fontWeight: FontWeight.w600),
+        displayLarge: TextStyle(color: primaryColor, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1.0),
+        titleLarge: TextStyle(color: primaryColor, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+        titleMedium: TextStyle(color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
+        bodyLarge: TextStyle(color: primaryColor, fontSize: 15, fontWeight: FontWeight.w500),
+        bodyMedium: TextStyle(color: tertiaryColor, fontSize: 14, fontWeight: FontWeight.w400),
+        labelLarge: TextStyle(color: primaryColor, fontSize: 15, fontWeight: FontWeight.w700),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         hintStyle: const TextStyle(
-          color: slate,
+          color: Color(0xFFA0AEC0),
           fontSize: 15,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w400,
         ),
         labelStyle: const TextStyle(
-          color: accent,
+          color: primaryColor,
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),
-        prefixIconColor: accent,
-        suffixIconColor: accent,
+        prefixIconColor: const Color(0xFF495057),
+        suffixIconColor: const Color(0xFF495057),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: borderSide),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: borderSide, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: borderSide),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: borderSide, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: accent, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: primaryColor, width: 1.5),
         ),
       ),
       iconTheme: const IconThemeData(
-        color: accent,
+        color: primaryColor,
+        size: 20,
       ),
       textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: accent,
+        cursorColor: primaryColor,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(56),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
       fontFamily: 'packages/shared_ui/ProductSans',
     );
@@ -80,27 +115,27 @@ class PassengerTheme {
 class DriverTheme {
   DriverTheme._();
 
-  static const Color primaryColor = Color(0xFF222222);
-  static const Color secondaryColor = Color(0xFFF2E0D0);
-  static const Color tertiaryColor = Color(0xFF607B8B);
-  static const Color neutralColor = Color(0xFFF8F5F2);
-  static const Color surface = Color(0xFFF8F8F8);
-  static const Color borderSide = Color(0xFFE0E0E0);
+  static const Color primaryColor = Color(0xFF1A1D20);
+  static const Color secondaryColor = Color(0xFFE3E2C3);
+  static const Color tertiaryColor = Color(0xFF6C757D);
+  static const Color neutralColor = Color(0xFFF1F3F5);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color borderSide = Color(0xFFDEE2E6);
 
-  static const Color selectedItemColor = Color(0xFF222222);
-  static const Color indicatorColor = Color(0xFF222222);
-  static Color unselectedItemColor = const Color(0xFF222222).withValues(alpha: 0.3);
-  static Color outlineBorderColor = const Color(0xFF222222).withValues(alpha: 0.1);
+  static const Color selectedItemColor = Color(0xFF1A1D20);
+  static const Color indicatorColor = Color(0xFF1A1D20);
+  static Color unselectedItemColor = const Color(0xFF6C757D);
+  static Color outlineBorderColor = const Color(0xFFDEE2E6);
 
-  static const Color complete = Color(0xFF285A48);
-  static const Color cancel = Color(0xFFFF3737);
-  static const Color inProgress = Color(0xFF607B8B);
+  static const Color complete = Color(0xFF198754);
+  static const Color cancel = Color(0xFFDC3545);
+  static const Color inProgress = Color(0xFF1A1D20);
 
   static ThemeData get themeData {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: surface,
+      scaffoldBackgroundColor: const Color(0xFFF8F9FA),
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: secondaryColor,
@@ -122,23 +157,24 @@ class DriverTheme {
 class AppTheme {
   AppTheme._();
 
-  static const Color primaryColor = DriverTheme.primaryColor;
-  static const Color secondaryColor = DriverTheme.secondaryColor;
-  static const Color tertiaryColor = DriverTheme.tertiaryColor;
-  static const Color neutralColor = DriverTheme.neutralColor;
-  static const Color surface = DriverTheme.surface;
-  static const Color borderSide = DriverTheme.borderSide;
+  static const Color primaryColor = PassengerTheme.primaryColor;
+  static const Color secondaryColor = PassengerTheme.secondaryColor;
+  static const Color tertiaryColor = PassengerTheme.tertiaryColor;
+  static const Color neutralColor = PassengerTheme.neutralColor;
+  static const Color surface = PassengerTheme.surface;
+  static const Color background = PassengerTheme.background;
+  static const Color borderSide = PassengerTheme.borderSide;
 
-  static const Color selectedItemColor = DriverTheme.selectedItemColor;
-  static const Color indicatorColor = DriverTheme.indicatorColor;
-  static Color unselectedItemColor = DriverTheme.unselectedItemColor;
-  static Color outlineBorderColor = DriverTheme.outlineBorderColor;
+  static const Color selectedItemColor = PassengerTheme.selectedItemColor;
+  static const Color indicatorColor = PassengerTheme.primaryColor;
+  static Color unselectedItemColor = PassengerTheme.unselectedItemColor;
+  static Color outlineBorderColor = PassengerTheme.outlineBorderColor;
 
-  static const Color complete = DriverTheme.complete;
-  static const Color cancel = DriverTheme.cancel;
-  static const Color inProgress = DriverTheme.inProgress;
+  static const Color complete = PassengerTheme.complete;
+  static const Color cancel = PassengerTheme.cancel;
+  static const Color inProgress = PassengerTheme.inProgress;
 
-  static ThemeData get lightThemeData => DriverTheme.themeData;
+  static ThemeData get lightThemeData => PassengerTheme.themeData;
   static ThemeData get passengerThemeData => PassengerTheme.themeData;
   static ThemeData get driverThemeData => DriverTheme.themeData;
 }

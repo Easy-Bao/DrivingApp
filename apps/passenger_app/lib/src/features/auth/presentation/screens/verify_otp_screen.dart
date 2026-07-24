@@ -176,9 +176,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                 Text(
                   widget.isForgotPassword ? 'Verify Identity' : 'Verify Email',
                   style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -189,7 +189,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 15,
-                    color: Color(0xFF6B7280),
+                    color: AppTheme.tertiaryColor,
                     height: 1.5,
                   ),
                 ),
@@ -198,7 +198,6 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                   onTap: () {
                     _focusNode.requestFocus();
                   },
-
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: List.generate(6, (index) {
@@ -210,21 +209,26 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                           text.length == index && _focusNode.hasFocus;
 
                       return Container(
-                        width: 44,
-                        height: 52,
+                        width: 46,
+                        height: 54,
                         decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isFocused
                                 ? AppTheme.primaryColor
                                 : (errorMessage != null
                                       ? AppTheme.cancel
-                                      : AppTheme.primaryColor.withValues(
-                                          alpha: 0.16,
-                                        )),
+                                      : AppTheme.borderSide),
                             width: isFocused ? 2 : 1,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -280,7 +284,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                     style: TextStyle(
                       color: canResend
                           ? AppTheme.primaryColor
-                          : AppTheme.primaryColor.withValues(alpha: 0.4),
+                          : AppTheme.tertiaryColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -291,7 +295,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                 else
                   SizedBox(
                     width: double.infinity,
-                    height: 60,
+                    height: 56,
                     child: ElevatedButton(
                       onPressed: text.length == 6
                           ? () => widget.isForgotPassword
@@ -300,13 +304,13 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: AppTheme.neutralColor,
+                        foregroundColor: Colors.white,
                         disabledBackgroundColor: AppTheme.primaryColor
-                            .withValues(alpha: 0.5),
-                        disabledForegroundColor: AppTheme.neutralColor
+                            .withValues(alpha: 0.3),
+                        disabledForegroundColor: Colors.white
                             .withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 0,
                       ),
@@ -314,7 +318,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                         'Verify',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),

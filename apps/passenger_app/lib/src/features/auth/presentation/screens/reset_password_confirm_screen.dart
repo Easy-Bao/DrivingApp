@@ -11,30 +11,30 @@ import 'package:shared_ui/shared_ui.dart';
 
 class ResetPasswordConfirmScreen extends StatelessWidget {
   final String email;
-  final String otpCode;
+  final String code;
 
   const ResetPasswordConfirmScreen({
     super.key,
     required this.email,
-    required this.otpCode,
+    required this.code,
   });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ResetPasswordConfirmCubit>(
       create: (context) => Modular.get<ResetPasswordConfirmCubit>(),
-      child: _ResetPasswordConfirmScreenContent(email: email, otpCode: otpCode),
+      child: _ResetPasswordConfirmScreenContent(email: email, code: code),
     );
   }
 }
 
 class _ResetPasswordConfirmScreenContent extends StatefulWidget {
   final String email;
-  final String otpCode;
+  final String code;
 
   const _ResetPasswordConfirmScreenContent({
     required this.email,
-    required this.otpCode,
+    required this.code,
   });
 
   @override
@@ -47,6 +47,7 @@ class _ResetPasswordConfirmScreenContentState
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -59,9 +60,16 @@ class _ResetPasswordConfirmScreenContentState
 
   void _submitNewPassword(BuildContext context) {
     FocusScope.of(context).unfocus();
-    final newPassword = _newPasswordController.text.trim();
-    final confirmPassword = _confirmPasswordController.text.trim();
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmPasswordController.text;
 
+    if (newPassword.length < 8) {
+      CustomToast.show(
+        context,
+        'New password must be at least 8 characters long.',
+      );
+      return;
+    }
     if (newPassword != confirmPassword) {
       CustomToast.show(context, 'Passwords do not match.');
       return;
@@ -70,7 +78,7 @@ class _ResetPasswordConfirmScreenContentState
     unawaited(
       BlocProvider.of<ResetPasswordConfirmCubit>(context).confirmPasswordReset(
         email: widget.email,
-        code: widget.otpCode,
+        code: widget.code,
         newPassword: newPassword,
       ),
     );
@@ -79,7 +87,7 @@ class _ResetPasswordConfirmScreenContentState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -135,9 +143,9 @@ class _ResetPasswordConfirmScreenContentState
                               const Text(
                                 'Set New Password',
                                 style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1F2937),
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryColor,
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -146,19 +154,19 @@ class _ResetPasswordConfirmScreenContentState
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 15,
-                                  color: Color(0xFF6B7280),
+                                  color: AppTheme.tertiaryColor,
                                   height: 1.5,
                                 ),
                               ),
                               const SizedBox(height: 40),
-                              Align(
+                              const Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'New Password',
+                                  'NEW PASSWORD',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.tertiaryColor,
                                     letterSpacing: 1.1,
                                   ),
                                 ),
@@ -170,14 +178,14 @@ class _ResetPasswordConfirmScreenContentState
                                 textInputAction: TextInputAction.next,
                                 style: const TextStyle(
                                   color: AppTheme.primaryColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
                                 ),
                                 decoration: InputDecoration(
                                   hintText: 'At least 8 characters',
                                   prefixIcon: const Padding(
                                     padding: EdgeInsets.only(left: 10),
-                                    child: Icon(LucideIcons.lock, size: 20),
+                                    child: Icon(LucideIcons.lock, size: 20, color: Color(0xFF495057)),
                                   ),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -185,26 +193,21 @@ class _ResetPasswordConfirmScreenContentState
                                           ? LucideIcons.eye_off
                                           : LucideIcons.eye,
                                       size: 20,
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.5,
-                                      ),
+                                      color: const Color(0xFF6C757D),
                                     ),
                                     onPressed: () => setState(
                                       () => _obscureNewPassword =
                                           !_obscureNewPassword,
                                     ),
                                   ),
-                                  filled: false,
+                                  filled: true,
+                                  fillColor: Colors.white,
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(32),
-                                    borderSide: BorderSide(
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(color: AppTheme.borderSide),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(32),
+                                    borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
                                       color: AppTheme.primaryColor,
                                       width: 1.5,
@@ -213,14 +216,14 @@ class _ResetPasswordConfirmScreenContentState
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              Align(
+                              const Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'Confirm Password',
+                                  'CONFIRM PASSWORD',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.tertiaryColor,
                                     letterSpacing: 1.1,
                                   ),
                                 ),
@@ -233,14 +236,14 @@ class _ResetPasswordConfirmScreenContentState
                                 onSubmitted: (_) => _submitNewPassword(context),
                                 style: const TextStyle(
                                   color: AppTheme.primaryColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
                                 ),
                                 decoration: InputDecoration(
                                   hintText: 'Re-enter your password',
                                   prefixIcon: const Padding(
                                     padding: EdgeInsets.only(left: 10),
-                                    child: Icon(LucideIcons.lock, size: 20),
+                                    child: Icon(LucideIcons.lock, size: 20, color: Color(0xFF495057)),
                                   ),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -248,26 +251,21 @@ class _ResetPasswordConfirmScreenContentState
                                           ? LucideIcons.eye_off
                                           : LucideIcons.eye,
                                       size: 20,
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.5,
-                                      ),
+                                      color: const Color(0xFF6C757D),
                                     ),
                                     onPressed: () => setState(
                                       () => _obscureConfirmPassword =
                                           !_obscureConfirmPassword,
                                     ),
                                   ),
-                                  filled: false,
+                                  filled: true,
+                                  fillColor: Colors.white,
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(32),
-                                    borderSide: BorderSide(
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(color: AppTheme.borderSide),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(32),
+                                    borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
                                       color: AppTheme.primaryColor,
                                       width: 1.5,
@@ -285,10 +283,10 @@ class _ResetPasswordConfirmScreenContentState
                               : () => _submitNewPassword(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: AppTheme.neutralColor,
-                            minimumSize: const Size.fromHeight(60),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(56),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             elevation: 0,
                           ),
@@ -301,19 +299,12 @@ class _ResetPasswordConfirmScreenContentState
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Reset Password',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(width: 10),
-                                    Icon(LucideIcons.shield_check),
-                                  ],
+                              : const Text(
+                                  'Save New Password',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                         ),
                       ],

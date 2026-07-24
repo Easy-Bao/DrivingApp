@@ -20,8 +20,8 @@ class AppWidget extends StatelessWidget {
       },
       child: ModularApp.router(
         theme: PassengerTheme.themeData,
-        darkTheme: PassengerTheme.themeData,
-        themeMode: ThemeMode.dark,
+        // darkTheme: PassengerTheme.themeData,
+        // themeMode: ThemeMode.dark,
         debugShowCheckedModeBanner: false,
         title: 'BaoRide Passenger',
       ),

@@ -125,7 +125,7 @@ class AuthModule extends Module {
             final extra = state.extra is Map ? state.extra as Map : {};
             final email = extra['email']?.toString() ?? '';
             final code = extra['code']?.toString() ?? '';
-            return ResetPasswordConfirmScreen(email: email, otpCode: code);
+            return ResetPasswordConfirmScreen(email: email, code: code);
           },
           transition: AppTransitions.push.toLeft,
           transitionDuration: AppTransitions.pushDuration,

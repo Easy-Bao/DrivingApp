@@ -71,7 +71,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -143,11 +143,12 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
+                            const Text(
                               'Enter your details to create your account and get started.',
                               style: TextStyle(
-                                fontSize: 16,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                                fontSize: 15,
+                                color: AppTheme.tertiaryColor,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                             const SizedBox(height: 28),
@@ -158,6 +159,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 decoration: BoxDecoration(
                                   color: AppTheme.cancel.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.3)),
                                 ),
                                 child: Text(
                                   errorMessage,
@@ -172,28 +174,25 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                             TextField(
                               style: const TextStyle(
                                 color: AppTheme.primaryColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                               ),
                               controller: _passengerNameController,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
                                 hintText: 'Full Name',
-                                hintStyle: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                                ),
                                 prefixIcon: const Padding(
-                                  padding: EdgeInsetsGeometry.only(left: 10),
-                                  child: Icon(LucideIcons.user, size: 20),
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Icon(LucideIcons.user, size: 20, color: Color(0xFF495057)),
                                 ),
+                                filled: true,
+                                fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                  borderSide: BorderSide(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(color: AppTheme.borderSide),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(32),
+                                  borderRadius: BorderRadius.circular(16),
                                   borderSide: const BorderSide(
                                     color: AppTheme.primaryColor,
                                     width: 1.5,
@@ -205,29 +204,26 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                             TextField(
                               style: const TextStyle(
                                 color: AppTheme.primaryColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                               ),
                               controller: _passengerPhoneController,
                               keyboardType: TextInputType.phone,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
                                 hintText: 'Phone Number',
-                                hintStyle: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                                ),
                                 prefixIcon: const Padding(
-                                  padding: EdgeInsetsGeometry.only(left: 10),
-                                  child: Icon(LucideIcons.phone, size: 20),
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Icon(LucideIcons.phone, size: 20, color: Color(0xFF495057)),
                                 ),
+                                filled: true,
+                                fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                  borderSide: BorderSide(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(color: AppTheme.borderSide),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(32),
+                                  borderRadius: BorderRadius.circular(16),
                                   borderSide: const BorderSide(
                                     color: AppTheme.primaryColor,
                                     width: 1.5,
@@ -239,29 +235,26 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                             TextField(
                               style: const TextStyle(
                                 color: AppTheme.primaryColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                               ),
                               keyboardType: TextInputType.emailAddress,
                               controller: _passengerEmailController,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
                                 hintText: 'Email address',
-                                hintStyle: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                                ),
                                 prefixIcon: const Padding(
-                                  padding: EdgeInsetsGeometry.only(left: 10),
-                                  child: Icon(LucideIcons.mail, size: 20),
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Icon(LucideIcons.mail, size: 20, color: Color(0xFF495057)),
                                 ),
+                                filled: true,
+                                fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                  borderSide: BorderSide(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(color: AppTheme.borderSide),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(32),
+                                  borderRadius: BorderRadius.circular(16),
                                   borderSide: const BorderSide(
                                     color: AppTheme.primaryColor,
                                     width: 1.5,
@@ -273,20 +266,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                             TextField(
                               style: const TextStyle(
                                 color: AppTheme.primaryColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                               ),
                               obscureText: !_isPasswordInputVisible,
                               controller: _passengerPasswordController,
                               textInputAction: TextInputAction.done,
                               decoration: InputDecoration(
                                 hintText: 'Password',
-                                hintStyle: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                                ),
                                 prefixIcon: const Padding(
-                                  padding: EdgeInsetsGeometry.only(left: 10),
-                                  child: Icon(LucideIcons.lock, size: 20),
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Icon(LucideIcons.lock, size: 20, color: Color(0xFF495057)),
                                 ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
@@ -294,6 +284,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                         ? LucideIcons.eye
                                         : LucideIcons.eye_off,
                                     size: 20,
+                                    color: const Color(0xFF6C757D),
                                   ),
                                   onPressed: () => setState(
                                     () =>
@@ -301,14 +292,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                             !_isPasswordInputVisible,
                                   ),
                                 ),
+                                filled: true,
+                                fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                  borderSide: BorderSide(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(color: AppTheme.borderSide),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(32),
+                                  borderRadius: BorderRadius.circular(16),
                                   borderSide: const BorderSide(
                                     color: AppTheme.primaryColor,
                                     width: 1.5,
@@ -323,10 +314,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                   : () => _submitRegistration(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryColor,
-                                foregroundColor: AppTheme.neutralColor,
-                                minimumSize: const Size.fromHeight(60),
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size.fromHeight(56),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                                 elevation: 0,
                               ),
@@ -343,7 +334,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                       'Continue',
                                       style: TextStyle(
                                         fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                             ),

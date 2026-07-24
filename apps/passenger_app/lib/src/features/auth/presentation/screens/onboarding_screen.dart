@@ -11,7 +11,7 @@ class OnBoardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       body: Stack(
         children: [
           Positioned(
@@ -34,8 +34,8 @@ class OnBoardingScreen extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   stops: const [0.2, 0.6],
                   colors: [
-                    AppTheme.secondaryColor.withValues(alpha: 0.0),
-                    AppTheme.neutralColor,
+                    AppTheme.background.withValues(alpha: 0.0),
+                    AppTheme.background,
                   ],
                 ),
               ),
@@ -64,9 +64,10 @@ class OnBoardingScreen extends StatelessWidget {
                   const Text(
                     'Experience the silent transition\nthrough urban landscapes.',
                     style: TextStyle(
-                      color: AppTheme.primaryColor,
+                      color: AppTheme.tertiaryColor,
                       fontSize: 16,
                       height: 1.4,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -75,25 +76,24 @@ class OnBoardingScreen extends StatelessWidget {
                       children: [
                         SizedBox(
                           width: double.infinity,
-                          height: 60,
+                          height: 56,
                           child: ElevatedButton(
                             onPressed: () {
                               unawaited(context.pushNamed(AuthRoutes.signin));
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: AppTheme.neutralColor,
+                              foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
                             child: const Text(
                               'Continue with Email',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.1,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
@@ -101,21 +101,22 @@ class OnBoardingScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
-                    height: 60,
+                    height: 56,
                     child: OutlinedButton(
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                        side: const BorderSide(
+                          color: AppTheme.borderSide,
                           width: 1,
                         ),
+                        backgroundColor: Colors.white,
                         foregroundColor: AppTheme.primaryColor,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: Row(
@@ -130,8 +131,9 @@ class OnBoardingScreen extends StatelessWidget {
                           const Text(
                             'Continue with Google',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
                         ],

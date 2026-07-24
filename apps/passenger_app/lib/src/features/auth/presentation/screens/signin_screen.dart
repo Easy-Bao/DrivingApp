@@ -53,7 +53,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -126,19 +126,20 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
+                        const Text(
                           'Log in to continue your journey.',
                           style: TextStyle(
-                            fontSize: 16,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                            fontSize: 15,
+                            color: AppTheme.tertiaryColor,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                         const SizedBox(height: 40),
                         TextField(
                           style: const TextStyle(
                             color: AppTheme.primaryColor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
                           ),
                           keyboardType: TextInputType.emailAddress,
                           controller: _emailController,
@@ -148,34 +149,31 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             errorText: emailError,
                             errorStyle: const TextStyle(color: AppTheme.cancel),
                             prefixIcon: const Padding(
-                              padding: EdgeInsetsGeometry.only(left: 10),
-                              child: Icon(LucideIcons.mail, size: 20),
+                              padding: EdgeInsets.only(left: 10),
+                              child: Icon(LucideIcons.mail, size: 20, color: Color(0xFF495057)),
                             ),
-                            filled: false,
+                            filled: true,
+                            fillColor: Colors.white,
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
-                              borderSide: BorderSide(
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.2,
-                                ),
-                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: AppTheme.borderSide),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
                                 color: AppTheme.primaryColor,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
                                 color: AppTheme.cancel,
                                 width: 1.0,
                               ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
                                 color: AppTheme.cancel,
                                 width: 1.5,
@@ -187,8 +185,8 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                         TextField(
                           style: const TextStyle(
                             color: AppTheme.primaryColor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
                           ),
                           obscureText: !_isPasswordVisible,
                           controller: _passwordController,
@@ -198,8 +196,8 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             errorText: passwordError,
                             errorStyle: const TextStyle(color: AppTheme.cancel),
                             prefixIcon: const Padding(
-                              padding: EdgeInsetsGeometry.only(left: 10),
-                              child: Icon(LucideIcons.lock, size: 20),
+                              padding: EdgeInsets.only(left: 10),
+                              child: Icon(LucideIcons.lock, size: 20, color: Color(0xFF495057)),
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -207,35 +205,33 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                     ? LucideIcons.eye
                                     : LucideIcons.eye_off,
                                 size: 20,
+                                color: const Color(0xFF6C757D),
                               ),
                               onPressed: () => setState(
                                 () => _isPasswordVisible = !_isPasswordVisible,
                               ),
                             ),
-                            filled: false,
+                            filled: true,
+                            fillColor: Colors.white,
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
-                              borderSide: BorderSide(
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.2,
-                                ),
-                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: AppTheme.borderSide),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
                                 color: AppTheme.primaryColor,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
                                 color: AppTheme.cancel,
                               ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
                                 color: AppTheme.cancel,
                                 width: 1.5,
@@ -260,7 +256,10 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                 ),
                                 const Text(
                                   'Remember me',
-                                  style: TextStyle(fontSize: 14),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.tertiaryColor,
+                                  ),
                                 ),
                               ],
                             ),
@@ -287,10 +286,10 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                               : () => _submitSignIn(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: AppTheme.neutralColor,
-                            minimumSize: const Size.fromHeight(60),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(56),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             elevation: 0,
                           ),
@@ -307,7 +306,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                   'Sign In',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                         ),
@@ -316,12 +315,10 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
+                              const Text(
                                 "Don't have an account?",
                                 style: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.6,
-                                  ),
+                                  color: AppTheme.tertiaryColor,
                                 ),
                               ),
                               TextButton(
