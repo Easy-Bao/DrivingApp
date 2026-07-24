@@ -7,7 +7,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DestinationPreviewScreen extends StatefulWidget {
@@ -28,7 +27,6 @@ class DestinationPreviewScreen extends StatefulWidget {
 }
 
 class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
-  AppMapController? _mapController;
   String _distance = '—';
   String _duration = '—';
   double _distanceKm = 0.0;
@@ -96,113 +94,18 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         _distance = '${route.distanceKm.toStringAsFixed(1)} km';
         final mins = route.estimatedTime.inMinutes;
         _duration = mins < 60 ? '$mins min' : '${mins ~/ 60}h ${mins % 60}m';
+        _fares = FareCalculatorHelper.estimateAllFares(
+          distanceKm: route.distanceKm,
+          durationMinutes: route.estimatedTime.inMinutes.toDouble(),
+        );
       });
-
-      final minsDouble = route.estimatedTime.inMinutes.toDouble();
-      try {
-        final estimates = await Future.wait([
-          Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
-            rideType: 'Solo Ride',
-            distanceKm: route.distanceKm,
-            durationMinutes: minsDouble,
-          ),
-          Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
-            rideType: 'Share-Bao',
-            distanceKm: route.distanceKm,
-            durationMinutes: minsDouble,
-          ),
-          Modular.get<BiddingRemoteDataSource>().fetchFareEstimate(
-            rideType: 'Bao Premium',
-            distanceKm: route.distanceKm,
-            durationMinutes: minsDouble,
-          ),
-        ]);
-
-        double solo = FareCalculatorHelper.estimateFare(
-          serviceType: 'Solo Ride',
-          distanceKm: route.distanceKm,
-          durationMinutes: minsDouble,
-        );
-        double share = FareCalculatorHelper.estimateFare(
-          serviceType: 'Share-Bao',
-          distanceKm: route.distanceKm,
-          durationMinutes: minsDouble,
-        );
-        double premium = FareCalculatorHelper.estimateFare(
-          serviceType: 'Bao Premium',
-          distanceKm: route.distanceKm,
-          durationMinutes: minsDouble,
-        );
-
-        if (estimates[0] != null && estimates[0]!['total_fare'] != null) {
-          solo = (estimates[0]!['total_fare'] as num).toDouble();
-        }
-        if (estimates[1] != null && estimates[1]!['total_fare'] != null) {
-          share = (estimates[1]!['total_fare'] as num).toDouble();
-        }
-        if (estimates[2] != null && estimates[2]!['total_fare'] != null) {
-          premium = (estimates[2]!['total_fare'] as num).toDouble();
-        }
-
-        if (mounted) {
-          setState(() {
-            _fares = {
-              'Solo Ride': solo,
-              'Share-Bao': share,
-              'Bao Premium': premium,
-            };
-          });
-        }
-      } catch (_) {}
-    }
-
-    if (_mapController != null) {
-      await MapProvider.addMarker(_mapController!, oLat, oLng, isOrigin: true);
-      await MapProvider.addMarker(
-        _mapController!,
-        widget.destination.latitude,
-        widget.destination.longitude,
-      );
-      await MapProvider.fitBounds(_mapController!, [
-        LatLng(oLat, oLng),
-        LatLng(widget.destination.latitude, widget.destination.longitude),
-      ]);
-      if (route != null && route.polylinePoints.isNotEmpty) {
-        final points = route.polylinePoints;
-        dynamic currentManager;
-
-        final chunkSize = (points.length / 20).ceil().clamp(2, 50).toInt();
-        const int delayMs = 50;
-
-        for (int index = 0; index < points.length; index += chunkSize) {
-          if (!mounted) break;
-          final endIdx = (index + chunkSize < points.length)
-              ? index + chunkSize
-              : points.length;
-          final segment = points.sublist(0, endIdx);
-
-          final newManager = await MapProvider.addAnimatedPolylineSegment(
-            _mapController!,
-            segment,
-            color: AppTheme.primaryColor,
-            width: 5.0,
-          );
-
-          if (currentManager != null) {
-            await MapProvider.clearAnnotations(currentManager);
-          }
-          currentManager = newManager;
-
-          await Future.delayed(const Duration(milliseconds: delayMs));
-        }
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
           Positioned.fill(
@@ -210,8 +113,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               latitude: widget.destination.latitude,
               longitude: widget.destination.longitude,
               zoom: 13.0,
-              onMapCreated: (c) async {
-                _mapController = c;
+              onMapCreated: (_) async {
                 await _loadRoute();
               },
             ),
@@ -225,11 +127,11 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                    color: AppTheme.surface,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -237,9 +139,9 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                   ),
                   child: const Center(
                     child: Icon(
-                      LucideIcons.arrow_left,
-                      color: Colors.white,
-                      size: 20,
+                      LucideIcons.chevron_left,
+                      color: AppTheme.primaryColor,
+                      size: 22,
                     ),
                   ),
                 ),
@@ -251,13 +153,13 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
             child: Container(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor,
+                color: AppTheme.surface,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(28),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 25,
                     offset: const Offset(0, -8),
                   ),
@@ -273,7 +175,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 18),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -283,12 +185,12 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F294A),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
                           LucideIcons.map_pin,
-                          color: Color(0xFF2F80ED),
+                          color: AppTheme.primaryColor,
                           size: 22,
                         ),
                       ),
@@ -302,7 +204,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                               style: const TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                                color: AppTheme.primaryColor,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -312,7 +214,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                               widget.destination.fullAddress,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.white.withValues(alpha: 0.6),
+                                color: AppTheme.primaryColor.withValues(alpha: 0.6),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -344,8 +246,8 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppTheme.primaryColor,
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: AppTheme.neutralColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),

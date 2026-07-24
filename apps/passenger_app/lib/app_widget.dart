@@ -29,8 +29,8 @@ class AppWidget extends StatelessWidget {
         builder: (context, themeMode) {
           return ModularApp.router(
             theme: AppTheme.lightThemeData,
-            darkTheme: AppTheme.darkThemeData,
-            themeMode: themeMode,
+            darkTheme: AppTheme.lightThemeData,
+            themeMode: ThemeMode.light,
             debugShowCheckedModeBanner: false,
             title: 'BaoRide',
           );
