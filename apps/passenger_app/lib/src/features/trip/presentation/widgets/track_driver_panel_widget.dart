@@ -112,18 +112,11 @@ class TrackDriverPanelWidget extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Container(
+                const AppNetworkImageWidget(
+                  imageUrl: null,
                   width: 50,
                   height: 50,
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    LucideIcons.user,
-                    color: AppTheme.primaryColor,
-                    size: 24,
-                  ),
+                  fallbackIcon: LucideIcons.user,
                 ),
                 const SizedBox(width: 14),
                 Expanded(
