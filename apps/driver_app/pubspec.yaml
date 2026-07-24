@@ -42,20 +42,22 @@ dependencies:
   freezed_annotation: ^3.0.0
   json_annotation: ^4.9.0
 
-  # UI
-  flutter_lucide: ^1.8.2
-
-  # Dependency Injection
+  # Dependency Injection & Utils
   get_it: ^8.0.3
-
-  # Environment
   flutter_dotenv: ^6.0.1
   url_launcher: ^6.3.1
   shared_preferences: ^2.3.2
 
-  # Maps & Location
+  # UI & Images
+  flutter_lucide: ^1.8.2
+  cached_network_image: ^3.4.1
+
+  # Maps & Navigation
   mapbox_maps_flutter: ^2.23.0
   geolocator: ^13.0.2
+  map_launcher: ^3.4.0
+  flutter_polyline_points: ^2.1.0
+  permission_handler: ^11.4.0
   location_service:
     path: ../../packages/location_service
 
