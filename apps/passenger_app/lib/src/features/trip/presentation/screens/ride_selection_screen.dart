@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/src/features/trip/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class RideSelectionScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class RideSelectionScreen extends StatefulWidget {
 
 class _RideSelectionScreenState extends State<RideSelectionScreen> {
   int _selectedIdx = 0;
-  late final List<_RideOption> _options;
+  late final List<RideOptionData> _options;
   AppMapController? _mapController;
 
   @override
@@ -41,41 +42,41 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
     final km = widget.distanceKm;
     final formattedFare = widget.fares ?? {};
     _options = [
-      _RideOption(
-        'Solo Ride',
-        'Direct booking, just you',
-        LucideIcons.bike,
-        formattedFare['Solo Ride'] ??
+      RideOptionData(
+        name: 'Solo Ride',
+        subtitle: 'Direct booking, just you',
+        icon: LucideIcons.bike,
+        fare: formattedFare['Solo Ride'] ??
             FareCalculatorHelper.estimateFare(
               serviceType: 'Solo Ride',
               distanceKm: km,
             ),
-        '3 min',
-        null,
+        eta: '3 min',
+        badge: null,
       ),
-      _RideOption(
-        'Share-Bao',
-        'Pasabay, split the fare',
-        LucideIcons.users,
-        formattedFare['Share-Bao'] ??
+      RideOptionData(
+        name: 'Share-Bao',
+        subtitle: 'Pasabay, split the fare',
+        icon: LucideIcons.users,
+        fare: formattedFare['Share-Bao'] ??
             FareCalculatorHelper.estimateFare(
               serviceType: 'Share-Bao',
               distanceKm: km,
             ),
-        '5 min',
-        'Cheapest',
+        eta: '5 min',
+        badge: 'Cheapest',
       ),
-      _RideOption(
-        'Bao Premium',
-        'Priority pickup, top rated',
-        LucideIcons.crown,
-        formattedFare['Bao Premium'] ??
+      RideOptionData(
+        name: 'Bao Premium',
+        subtitle: 'Priority pickup, top rated',
+        icon: LucideIcons.crown,
+        fare: formattedFare['Bao Premium'] ??
             FareCalculatorHelper.estimateFare(
               serviceType: 'Bao Premium',
               distanceKm: km,
             ),
-        '2 min',
-        'Fastest',
+        eta: '2 min',
+        badge: 'Fastest',
       ),
     ];
   }
@@ -128,7 +129,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sel = _options[_selectedIdx];
     final defaultLat =
         LocationService.lastPosition?.latitude ?? widget.destination.latitude;
     final defaultLng =
@@ -203,328 +203,46 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
 
           Align(
             alignment: Alignment.bottomCenter,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(32),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 30,
-                    offset: const Offset(0, -10),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.borderSide,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
+            child: LayoutBuilder(
+              builder: (ctx, constraints) {
+                final isWide = constraints.maxWidth > 600.0;
+                final sel = _options[_selectedIdx];
 
-                  Row(
-                    children: [
-                      Column(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          Container(
-                            width: 1,
-                            height: 20,
-                            color: AppTheme.outlineBorderColor,
-                          ),
-                          const Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color: AppTheme.tertiaryColor,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.pickupAddress ?? 'Current Location',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              widget.destination.name,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            widget.distance,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.tertiaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.duration,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isWide ? 600.0 : double.infinity,
                   ),
-
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text(
-                      'CHOOSE YOUR RIDE',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                        letterSpacing: 1.2,
-                      ),
-                    ),
+                  child: RideOptionsPanelWidget(
+                    options: _options,
+                    selectedIndex: _selectedIdx,
+                    onOptionSelected: (idx) {
+                      setState(() {
+                        _selectedIdx = idx;
+                      });
+                    },
+                    onBookPressed: () {
+                      unawaited(
+                        context.pushNamed(
+                          'FindingDriver',
+                          extra: {
+                            'rideType': sel.name,
+                            'fare': sel.fare,
+                            'destination': widget.destination,
+                            'distance': widget.distance,
+                            'duration': widget.duration,
+                            'pickupAddress':
+                                widget.pickupAddress ?? 'Current Location',
+                          },
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 8),
-
-                  ...List.generate(_options.length, (i) {
-                    final mapOffset = _options[i];
-                    final isSel = i == _selectedIdx;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedIdx = i),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isSel
-                              ? AppTheme.primaryColor.withValues(alpha: 0.05)
-                              : AppTheme.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSel
-                                ? AppTheme.primaryColor
-                                : AppTheme.borderSide,
-                            width: isSel ? 1.5 : 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: isSel
-                                    ? AppTheme.primaryColor
-                                    : AppTheme.neutralColor,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(
-                                mapOffset.icon,
-                                size: 20,
-                                color: isSel
-                                    ? Colors.white
-                                    : AppTheme.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        mapOffset.name,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                      ),
-                                      if (mapOffset.badge != null) ...[
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: mapOffset.badge == 'Cheapest'
-                                                ? AppTheme.complete.withValues(
-                                                    alpha: 0.15,
-                                                  )
-                                                : AppTheme.tertiaryColor
-                                                      .withValues(alpha: 0.15),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            mapOffset.badge!,
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w700,
-                                              color:
-                                                  mapOffset.badge == 'Cheapest'
-                                                  ? AppTheme.complete
-                                                  : AppTheme.tertiaryColor,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    mapOffset.subtitle,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '₱${mapOffset.fare.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                                Text(
-                                  '~${mapOffset.eta}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (isSel) ...[
-                              const SizedBox(width: 10),
-                              Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.primaryColor,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  LucideIcons.check,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-
-                  SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16, top: 4),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: () => context.pushNamed(
-                            'FindingDriver',
-                            extra: {
-                              'rideType': sel.name,
-                              'fare': sel.fare,
-                              'destination': widget.destination,
-                              'distance': widget.distance,
-                              'duration': widget.duration,
-                              'pickupAddress':
-                                  widget.pickupAddress ?? 'Current Location',
-                            },
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Book ${sel.name}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
-}
-
-class _RideOption {
-  final String name, subtitle, eta;
-  final IconData icon;
-  final double fare;
-  final String? badge;
-  _RideOption(
-    this.name,
-    this.subtitle,
-    this.icon,
-    this.fare,
-    this.eta,
-    this.badge,
-  );
 }
