@@ -9,7 +9,6 @@ import 'package:passenger_app/src/features/trip/presentation/screens/ride_select
 import 'package:passenger_app/src/features/trip/presentation/screens/search_destination_screen.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
-import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class TripModule {
   TripModule._();

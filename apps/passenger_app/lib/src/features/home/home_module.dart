@@ -10,7 +10,6 @@ import 'package:passenger_app/src/features/saved_places/domain/entities/saved_pl
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/add_category_screen.dart';
 import 'package:shared_ui/shared_ui.dart';
-import 'package:shared_ui/transitions/passenger_transitions.dart';
 
 class HomeModule {
   HomeModule._();

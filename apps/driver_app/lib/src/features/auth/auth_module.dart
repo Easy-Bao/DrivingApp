@@ -11,7 +11,7 @@ import 'package:driver_app/src/features/auth/presentation/screens/signin_screen.
 import 'package:driver_services/driver_services.dart' as ps;
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:session_service/session_service.dart';
-import 'package:shared_ui/transitions/driver_transitions.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class AuthModule extends Module {
   @override

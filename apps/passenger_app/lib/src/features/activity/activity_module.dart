@@ -7,7 +7,7 @@ import 'package:passenger_app/src/features/activity/presentation/screens/passeng
 import 'package:passenger_app/src/features/activity/presentation/screens/view_all_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_details_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/track_driver_screen.dart';
-import 'package:shared_ui/transitions/passenger_transitions.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class ActivityModule {
   ActivityModule._();

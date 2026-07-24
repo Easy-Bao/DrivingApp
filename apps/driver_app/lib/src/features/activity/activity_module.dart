@@ -3,7 +3,6 @@ import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:driver_app/src/features/activity/presentation/screens/driver_trip_history_screen.dart';
 import 'package:driver_app/src/features/activity/presentation/screens/driver_trip_detail_screen.dart';
 import 'package:shared_ui/shared_ui.dart';
-import 'package:shared_ui/transitions/driver_transitions.dart';
 
 class ActivityModule {
   ActivityModule._();

@@ -6,7 +6,7 @@ import 'package:passenger_app/app_module.dart';
 import 'package:passenger_app/app_widget.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/transitions/passenger_transitions.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

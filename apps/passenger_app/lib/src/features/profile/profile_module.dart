@@ -6,7 +6,7 @@ import 'package:passenger_app/src/features/profile/presentation/screens/profile_
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/saved_place_screen.dart';
-import 'package:shared_ui/transitions/passenger_transitions.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class ProfileModule {
   ProfileModule._();

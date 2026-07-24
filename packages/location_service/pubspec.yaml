@@ -14,6 +14,9 @@ dependencies:
     sdk: flutter
   geolocator: ^13.0.2
   mapbox_maps_flutter: ^2.23.0
+  map_launcher: ^3.4.0
+  flutter_polyline_points: ^2.1.0
+  permission_handler: ^11.4.0
   dio: ^5.10.0
   core_models:
     path: ../core_models
