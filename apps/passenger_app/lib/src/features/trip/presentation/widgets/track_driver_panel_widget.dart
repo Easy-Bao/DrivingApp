@@ -29,11 +29,12 @@ class TrackDriverPanelWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: PassengerTheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border.all(color: PassengerTheme.borderSide),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),
@@ -50,7 +51,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppTheme.borderSide,
+                color: PassengerTheme.darkSlate,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -67,15 +68,15 @@ class TrackDriverPanelWidget extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryColor,
+                        color: PassengerTheme.accent,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       statusSubtitle,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                        color: PassengerTheme.slate,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -88,15 +89,16 @@ class TrackDriverPanelWidget extends StatelessWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.tertiaryColor.withValues(alpha: 0.15),
+                  color: PassengerTheme.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: PassengerTheme.accent.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   etaText,
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
-                    color: AppTheme.primaryColor,
+                    color: PassengerTheme.accent,
                   ),
                 ),
               ),
@@ -106,9 +108,9 @@ class TrackDriverPanelWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
+              color: PassengerTheme.background,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.borderSide),
+              border: Border.all(color: PassengerTheme.borderSide),
             ),
             child: Row(
               children: [
@@ -130,15 +132,15 @@ class TrackDriverPanelWidget extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
+                          color: PassengerTheme.accent,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${ride.vehicleType} • ${ride.vehiclePlate}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          color: PassengerTheme.mutedSand,
                         ),
                       ),
                     ],
@@ -154,8 +156,8 @@ class TrackDriverPanelWidget extends StatelessWidget {
                 child: _buildActionButton(
                   icon: LucideIcons.phone,
                   label: 'Call',
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: PassengerTheme.accent,
+                  foregroundColor: PassengerTheme.background,
                   onTap: onCallDriverPressed,
                 ),
               ),
@@ -164,8 +166,8 @@ class TrackDriverPanelWidget extends StatelessWidget {
                 child: _buildActionButton(
                   icon: LucideIcons.message_circle,
                   label: 'Chat',
-                  backgroundColor: AppTheme.neutralColor,
-                  foregroundColor: AppTheme.primaryColor,
+                  backgroundColor: PassengerTheme.background,
+                  foregroundColor: PassengerTheme.accent,
                   badgeCount: unreadChatMessagesCount,
                   onTap: onChatDriverPressed,
                 ),
@@ -180,13 +182,14 @@ class TrackDriverPanelWidget extends StatelessWidget {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                color: AppTheme.cancel.withValues(alpha: 0.08),
+                color: PassengerTheme.cancel.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(32),
+                border: Border.all(color: PassengerTheme.cancel.withValues(alpha: 0.3)),
               ),
               child: const Text(
                 'Cancel Trip',
                 style: TextStyle(
-                  color: AppTheme.cancel,
+                  color: PassengerTheme.cancel,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
@@ -213,8 +216,8 @@ class TrackDriverPanelWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(23),
-          border: backgroundColor == AppTheme.neutralColor
-              ? Border.all(color: AppTheme.borderSide)
+          border: backgroundColor == PassengerTheme.background
+              ? Border.all(color: PassengerTheme.borderSide)
               : null,
         ),
         child: Row(
@@ -223,7 +226,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
             Badge(
               label: Text('$badgeCount'),
               isLabelVisible: badgeCount > 0,
-              backgroundColor: const Color(0xFFE53935),
+              backgroundColor: PassengerTheme.cancel,
               child: Icon(icon, color: foregroundColor, size: 16),
             ),
             const SizedBox(width: 6),
@@ -231,7 +234,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
               label,
               style: TextStyle(
                 color: foregroundColor,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 fontSize: 13,
               ),
             ),

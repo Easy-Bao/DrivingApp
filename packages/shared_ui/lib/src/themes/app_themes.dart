@@ -1,7 +1,84 @@
 import 'package:flutter/material.dart';
 
-class AppLightTheme {
-  AppLightTheme._();
+class PassengerTheme {
+  PassengerTheme._();
+
+  static const Color accent = Color(0xFFE3E2C3);
+  static const Color mutedSand = Color(0xFFC1C1A9);
+  static const Color slate = Color(0xFF8B8A87);
+  static const Color darkSlate = Color(0xFF6A6A67);
+  static const Color surface = Color(0xFF272727);
+  static const Color background = Color(0xFF141413);
+  static const Color borderSide = Color(0xFF383838);
+
+  static const Color primaryColor = accent;
+  static const Color secondaryColor = mutedSand;
+  static const Color tertiaryColor = slate;
+  static const Color neutralColor = surface;
+
+  static const Color complete = Color(0xFF4CAF50);
+  static const Color cancel = Color(0xFFFF5252);
+  static const Color inProgress = Color(0xFFE3E2C3);
+
+  static ThemeData get themeData {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: background,
+      colorScheme: const ColorScheme.dark(
+        primary: accent,
+        secondary: mutedSand,
+        tertiary: slate,
+        surface: surface,
+        onSurface: accent,
+      ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: accent, fontSize: 16, fontWeight: FontWeight.w600),
+        bodyMedium: TextStyle(color: mutedSand, fontSize: 14),
+        titleLarge: TextStyle(color: accent, fontSize: 22, fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(color: accent, fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface,
+        hintStyle: const TextStyle(
+          color: slate,
+          fontSize: 15,
+          fontWeight: FontWeight.normal,
+        ),
+        labelStyle: const TextStyle(
+          color: accent,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+        prefixIconColor: accent,
+        suffixIconColor: accent,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: borderSide),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: borderSide),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: accent, width: 1.5),
+        ),
+      ),
+      iconTheme: const IconThemeData(
+        color: accent,
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: accent,
+      ),
+      fontFamily: 'packages/shared_ui/ProductSans',
+    );
+  }
+}
+
+class DriverTheme {
+  DriverTheme._();
 
   static const Color primaryColor = Color(0xFF222222);
   static const Color secondaryColor = Color(0xFFF2E0D0);
@@ -18,90 +95,50 @@ class AppLightTheme {
   static const Color complete = Color(0xFF285A48);
   static const Color cancel = Color(0xFFFF3737);
   static const Color inProgress = Color(0xFF607B8B);
-}
 
-class AppDarkTheme {
-  AppDarkTheme._();
-
-  static const Color primaryColor = Color(0xFFF8F8F8);
-  static const Color secondaryColor = Color(0xFF382C24);
-  static const Color tertiaryColor = Color(0xFF8CA5B5);
-  static const Color neutralColor = Color(0xFF1E1E1E);
-  static const Color surface = Color(0xFF141414);
-  static const Color borderSide = Color(0xFF2C2C2C);
-
-  static const Color selectedItemColor = Color(0xFFF8F8F8);
-  static const Color indicatorColor = Color(0xFFF8F8F8);
-  static Color unselectedItemColor = const Color(0xFFF8F8F8).withValues(alpha: 0.3);
-  static Color outlineBorderColor = const Color(0xFFF8F8F8).withValues(alpha: 0.1);
-
-  static const Color complete = Color(0xFF387A63);
-  static const Color cancel = Color(0xFFFF5252);
-  static const Color inProgress = Color(0xFF8CA5B5);
+  static ThemeData get themeData {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: surface,
+      colorScheme: const ColorScheme.light(
+        primary: primaryColor,
+        secondary: secondaryColor,
+        tertiary: tertiaryColor,
+        surface: surface,
+        onSurface: primaryColor,
+      ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
+        bodyMedium: TextStyle(color: primaryColor, fontSize: 14),
+        titleLarge: TextStyle(color: primaryColor, fontSize: 22, fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      fontFamily: 'packages/shared_ui/ProductSans',
+    );
+  }
 }
 
 class AppTheme {
   AppTheme._();
 
-  static const Color primaryColor = AppLightTheme.primaryColor;
-  static const Color secondaryColor = AppLightTheme.secondaryColor;
-  static const Color tertiaryColor = AppLightTheme.tertiaryColor;
-  static const Color neutralColor = AppLightTheme.neutralColor;
-  static const Color surface = AppLightTheme.surface;
-  static const Color borderSide = AppLightTheme.borderSide;
+  static const Color primaryColor = DriverTheme.primaryColor;
+  static const Color secondaryColor = DriverTheme.secondaryColor;
+  static const Color tertiaryColor = DriverTheme.tertiaryColor;
+  static const Color neutralColor = DriverTheme.neutralColor;
+  static const Color surface = DriverTheme.surface;
+  static const Color borderSide = DriverTheme.borderSide;
 
-  static const Color selectedItemColor = AppLightTheme.selectedItemColor;
-  static const Color indicatorColor = AppLightTheme.indicatorColor;
-  static Color unselectedItemColor = AppLightTheme.unselectedItemColor;
-  static Color outlineBorderColor = AppLightTheme.outlineBorderColor;
+  static const Color selectedItemColor = DriverTheme.selectedItemColor;
+  static const Color indicatorColor = DriverTheme.indicatorColor;
+  static Color unselectedItemColor = DriverTheme.unselectedItemColor;
+  static Color outlineBorderColor = DriverTheme.outlineBorderColor;
 
-  static const Color complete = AppLightTheme.complete;
-  static const Color cancel = AppLightTheme.cancel;
-  static const Color inProgress = AppLightTheme.inProgress;
+  static const Color complete = DriverTheme.complete;
+  static const Color cancel = DriverTheme.cancel;
+  static const Color inProgress = DriverTheme.inProgress;
 
-  static ThemeData get lightThemeData {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: AppLightTheme.surface,
-      colorScheme: const ColorScheme.light(
-        primary: AppLightTheme.primaryColor,
-        secondary: AppLightTheme.secondaryColor,
-        tertiary: AppLightTheme.tertiaryColor,
-        surface: AppLightTheme.surface,
-        onSurface: AppLightTheme.primaryColor,
-      ),
-      textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: AppLightTheme.primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
-        bodyMedium: TextStyle(color: AppLightTheme.primaryColor, fontSize: 14),
-        titleLarge: TextStyle(color: AppLightTheme.primaryColor, fontSize: 22, fontWeight: FontWeight.bold),
-        titleMedium: TextStyle(color: AppLightTheme.primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(
-          color: AppLightTheme.primaryColor.withValues(alpha: 0.4),
-          fontSize: 15,
-          fontWeight: FontWeight.normal,
-        ),
-        labelStyle: const TextStyle(
-          color: AppLightTheme.primaryColor,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-        ),
-        prefixIconColor: AppLightTheme.primaryColor,
-        suffixIconColor: AppLightTheme.primaryColor,
-      ),
-      iconTheme: const IconThemeData(
-        color: AppLightTheme.primaryColor,
-      ),
-      textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: AppLightTheme.primaryColor,
-      ),
-      fontFamily: 'packages/shared_ui/ProductSans',
-    );
-  }
-
-  static ThemeData get darkThemeData {
-    return lightThemeData;
-  }
+  static ThemeData get lightThemeData => DriverTheme.themeData;
+  static ThemeData get passengerThemeData => PassengerTheme.themeData;
+  static ThemeData get driverThemeData => DriverTheme.themeData;
 }

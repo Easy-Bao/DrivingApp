@@ -12,31 +12,20 @@ class AppWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<ThemeCubit>(
-          create: (_) => ThemeCubit(),
-        ),
-        BlocProvider<RideFlowCubit>(
-          create: (_) {
-            return RideFlowCubit(
-              repository: Modular.get<RideRepository>(),
-              tripRemoteDataSource: Modular.get<TripRemoteDataSource>(),
-              sessionService: Modular.get<DriverSessionService>(),
-            );
-          },
-        ),
-      ],
-      child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (context, themeMode) {
-          return ModularApp.router(
-            theme: AppTheme.lightThemeData,
-            darkTheme: AppTheme.lightThemeData,
-            themeMode: ThemeMode.light,
-            debugShowCheckedModeBanner: false,
-            title: 'BaoRide Driver',
-          );
-        },
+    return BlocProvider<RideFlowCubit>(
+      create: (_) {
+        return RideFlowCubit(
+          repository: Modular.get<RideRepository>(),
+          tripRemoteDataSource: Modular.get<TripRemoteDataSource>(),
+          sessionService: Modular.get<DriverSessionService>(),
+        );
+      },
+      child: ModularApp.router(
+        theme: DriverTheme.themeData,
+        darkTheme: DriverTheme.themeData,
+        themeMode: ThemeMode.light,
+        debugShowCheckedModeBanner: false,
+        title: 'BaoRide Driver',
       ),
     );
   }

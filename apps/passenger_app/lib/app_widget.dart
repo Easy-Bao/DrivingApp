@@ -11,30 +11,19 @@ class AppWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<ThemeCubit>(
-          create: (_) => ThemeCubit(),
-        ),
-        BlocProvider<TrackDriverCubit>(
-          create: (_) {
-            return TrackDriverCubit(
-              repository: Modular.get<TrackRepository>(),
-              sessionService: Modular.get<SecureSessionService>(),
-            );
-          },
-        ),
-      ],
-      child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (context, themeMode) {
-          return ModularApp.router(
-            theme: AppTheme.lightThemeData,
-            darkTheme: AppTheme.lightThemeData,
-            themeMode: ThemeMode.light,
-            debugShowCheckedModeBanner: false,
-            title: 'BaoRide',
-          );
-        },
+    return BlocProvider<TrackDriverCubit>(
+      create: (_) {
+        return TrackDriverCubit(
+          repository: Modular.get<TrackRepository>(),
+          sessionService: Modular.get<SecureSessionService>(),
+        );
+      },
+      child: ModularApp.router(
+        theme: PassengerTheme.themeData,
+        darkTheme: PassengerTheme.themeData,
+        themeMode: ThemeMode.dark,
+        debugShowCheckedModeBanner: false,
+        title: 'BaoRide Passenger',
       ),
     );
   }
