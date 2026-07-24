@@ -76,32 +76,8 @@ export class PassengerRepositoryImpl implements PassengerRepository {
       .from(passengers)
       .where(eq(passengers.id, passengerId));
 
-    if (fetchedPassenger) return mapPassenger(fetchedPassenger);
-
-    // Auto-create initial passenger profile row if account was created via auth-service
-    try {
-      const [createdPassenger] = await db.insert(passengers)
-        .values({
-          id: passengerId,
-          name: 'Passenger',
-          email: `${passengerId}@passenger.app`,
-          phone: '',
-          isVerified: true,
-        })
-        .onConflictDoNothing()
-        .returning();
-
-      if (createdPassenger) return mapPassenger(createdPassenger);
-
-      const [retryPassenger] = await db.select()
-        .from(passengers)
-        .where(eq(passengers.id, passengerId));
-      if (retryPassenger) return mapPassenger(retryPassenger);
-    } catch (err) {
-      Logger.error(`Failed to auto-create profile row for ${passengerId}:`, err);
-    }
-
-    return null;
+    if (!fetchedPassenger) return null;
+    return mapPassenger(fetchedPassenger);
   }
 
   async retrievePassengersByIds(passengerIds: string[]): Promise<Record<string, Passenger>> {
@@ -221,18 +197,9 @@ export class PassengerRepositoryImpl implements PassengerRepository {
   }
 
   async updatePassengerProfile({ id, name, phone, email }: UpdatePassengerOptions): Promise<Passenger> {
-    const [updatedPassenger] = await db.insert(passengers)
-      .values({
-        id,
-        name,
-        phone,
-        email,
-        isVerified: true,
-      })
-      .onConflictDoUpdate({
-        target: passengers.id,
-        set: { name, phone, email },
-      })
+    const [updatedPassenger] = await db.update(passengers)
+      .set({ name, phone, email })
+      .where(eq(passengers.id, id))
       .returning();
 
     if (!updatedPassenger) {
