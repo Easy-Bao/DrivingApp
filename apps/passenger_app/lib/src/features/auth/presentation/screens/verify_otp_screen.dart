@@ -134,25 +134,13 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leadingWidth: 100,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: TextButton.icon(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(
-              LucideIcons.chevron_left,
-              color: AppTheme.primaryColor,
-              size: 20,
-            ),
-            label: const Text(
-              'Back',
-              style: TextStyle(
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
+        leading: IconButton(
+          icon: const Icon(
+            LucideIcons.chevron_left,
+            color: AppTheme.primaryColor,
+            size: 24,
           ),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
       body: BlocConsumer<VerifyOtpCubit, VerifyOtpState>(

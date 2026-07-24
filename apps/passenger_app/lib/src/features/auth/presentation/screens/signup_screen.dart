@@ -30,70 +30,39 @@ class _SignupScreenContent extends StatefulWidget {
 }
 
 class _SignupScreenContentState extends State<_SignupScreenContent> {
-  final PageController _onboardingPageController = PageController();
-
-  int _currentStepIndex = 0;
-
-  final TextEditingController _passengerEmailController =
-      TextEditingController();
-  final TextEditingController _passengerPasswordController =
-      TextEditingController();
-  final TextEditingController _passengerNameController =
-      TextEditingController();
-  final TextEditingController _passengerPhoneController =
-      TextEditingController();
+  final TextEditingController _passengerNameController = TextEditingController();
+  final TextEditingController _passengerPhoneController = TextEditingController();
+  final TextEditingController _passengerEmailController = TextEditingController();
+  final TextEditingController _passengerPasswordController = TextEditingController();
 
   bool _isPasswordInputVisible = false;
 
   @override
   void dispose() {
-    _onboardingPageController.dispose();
-    _passengerEmailController.dispose();
-    _passengerPasswordController.dispose();
     _passengerNameController.dispose();
     _passengerPhoneController.dispose();
+    _passengerEmailController.dispose();
+    _passengerPasswordController.dispose();
     super.dispose();
   }
 
-  void _advanceToNextOnboardingPage() {
-    unawaited(
-      _onboardingPageController.nextPage(
-        duration: const Duration(milliseconds: 380),
-        curve: Curves.easeInOut,
-      ),
-    );
-    setState(() {
-      _currentStepIndex++;
-    });
-  }
-
-  void _retreatToPreviousOnboardingPage() {
-    if (_currentStepIndex == 0) {
-      context.pop();
-      return;
-    }
-    unawaited(
-      _onboardingPageController.previousPage(
-        duration: const Duration(milliseconds: 380),
-        curve: Curves.easeInOut,
-      ),
-    );
-    setState(() {
-      _currentStepIndex--;
-    });
-  }
-
-  Future<void> _submitEmailAndPassword(BuildContext context) async {
+  void _submitRegistration(BuildContext context) {
     FocusScope.of(context).unfocus();
+    final name = _passengerNameController.text.trim();
+    final phone = _passengerPhoneController.text.trim();
     final email = _passengerEmailController.text.trim();
     final password = _passengerPasswordController.text;
-    if (email.isEmpty || password.isEmpty) return;
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      CustomToast.show(context, 'Please enter your name, email, and password.');
+      return;
+    }
 
     unawaited(
       BlocProvider.of<SignUpCubit>(context).registerPassenger(
-        name: 'Passenger',
+        name: name,
         email: email,
-        phone: '',
+        phone: phone,
         password: password,
       ),
     );
@@ -108,16 +77,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
-            LucideIcons.arrow_left,
+            LucideIcons.chevron_left,
             color: AppTheme.primaryColor,
+            size: 24,
           ),
-          onPressed: _retreatToPreviousOnboardingPage,
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
         centerTitle: true,
         title: Image.asset(
           'assets/logo/applogo.png',
           package: 'shared_ui',
-          height: 150,
+          height: 140,
           fit: BoxFit.cover,
         ),
       ),
@@ -125,23 +95,20 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
         child: BlocConsumer<SignUpCubit, SignUpState>(
           listener: (context, state) {
             if (state is SignUpNeedsVerification) {
-              unawaited(
-                context
-                    .pushNamed(
-                      AuthRoutes.verifyOtp,
-                      extra: {
-                        'email': state.email,
-                        'password': _passengerPasswordController.text,
-                      },
-                    )
-                    .then((verified) {
-                      if (verified == true && mounted) {
-                        _advanceToNextOnboardingPage();
-                      }
-                    }),
-              );
+              unawaited(() async {
+                final verified = await context.pushNamed<bool>(
+                  AuthRoutes.verifyOtp,
+                  extra: {
+                    'email': state.email,
+                    'password': _passengerPasswordController.text,
+                  },
+                );
+                if (verified == true && context.mounted) {
+                  context.goNamed(HomeRoutes.home);
+                }
+              }());
             } else if (state is SignUpSuccess) {
-              _advanceToNextOnboardingPage();
+              context.goNamed(HomeRoutes.home);
             }
           },
           builder: (context, state) {
@@ -150,330 +117,247 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                 ? state.errorMessage
                 : null;
 
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 8.0,
-                  ),
-                  child: Row(
-                    children: List.generate(
-                      2,
-                      (index) => Expanded(
-                        child: Container(
-                          height: 4,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          decoration: BoxDecoration(
-                            color: index <= _currentStepIndex
-                                ? AppTheme.primaryColor
-                                : AppTheme.primaryColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 550),
+                child: CustomScrollView(
+                  slivers: [
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 16.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Create Account',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.primaryColor,
+                                letterSpacing: -1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Enter your details to create your account and get started.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            if (errorMessage != null) ...[
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.cancel.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  errorMessage,
+                                  style: const TextStyle(
+                                    color: AppTheme.cancel,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            TextField(
+                              style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              controller: _passengerNameController,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                hintText: 'Full Name',
+                                hintStyle: TextStyle(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                ),
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsetsGeometry.only(left: 10),
+                                  child: Icon(LucideIcons.user, size: 20),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              controller: _passengerPhoneController,
+                              keyboardType: TextInputType.phone,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                hintText: 'Phone Number',
+                                hintStyle: TextStyle(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                ),
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsetsGeometry.only(left: 10),
+                                  child: Icon(LucideIcons.phone, size: 20),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              controller: _passengerEmailController,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                hintText: 'Email address',
+                                hintStyle: TextStyle(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                ),
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsetsGeometry.only(left: 10),
+                                  child: Icon(LucideIcons.mail, size: 20),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              obscureText: !_isPasswordInputVisible,
+                              controller: _passengerPasswordController,
+                              textInputAction: TextInputAction.done,
+                              decoration: InputDecoration(
+                                hintText: 'Password',
+                                hintStyle: TextStyle(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                ),
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsetsGeometry.only(left: 10),
+                                  child: Icon(LucideIcons.lock, size: 20),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isPasswordInputVisible
+                                        ? LucideIcons.eye
+                                        : LucideIcons.eye_off,
+                                    size: 20,
+                                  ),
+                                  onPressed: () => setState(
+                                    () =>
+                                        _isPasswordInputVisible =
+                                            !_isPasswordInputVisible,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            ElevatedButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () => _submitRegistration(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                foregroundColor: AppTheme.neutralColor,
+                                minimumSize: const Size.fromHeight(60),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Continue',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ),
+                            const Spacer(),
+                          ],
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                Expanded(
-                  child: PageView(
-                    controller: _onboardingPageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildEmailAndPasswordPage(
-                        context,
-                        isLoading,
-                        errorMessage,
-                      ),
-                      _buildProfileSetupPage(context, isLoading, errorMessage),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             );
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmailAndPasswordPage(
-    BuildContext context,
-    bool isLoading,
-    String? errorMessage,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: CustomScrollView(
-        slivers: [
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                const Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
-                    letterSpacing: -1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Enter your email and a strong password to get started.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                if (errorMessage != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cancel.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      errorMessage,
-                      style: const TextStyle(
-                        color: AppTheme.cancel,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                TextField(
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  controller: _passengerEmailController,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    hintText: 'Email address',
-                    hintStyle: TextStyle(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                    ),
-                    prefixIcon: const Padding(
-                      padding: EdgeInsetsGeometry.only(left: 10),
-                      child: Icon(LucideIcons.mail, size: 20),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: BorderSide(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(
-                        color: AppTheme.primaryColor,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  obscureText: !_isPasswordInputVisible,
-                  controller: _passengerPasswordController,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    hintStyle: TextStyle(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                    ),
-                    prefixIcon: const Padding(
-                      padding: EdgeInsetsGeometry.only(left: 10),
-                      child: Icon(LucideIcons.lock, size: 20),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordInputVisible
-                            ? LucideIcons.eye
-                            : LucideIcons.eye_off,
-                        size: 20,
-                      ),
-                      onPressed: () => setState(
-                        () =>
-                            _isPasswordInputVisible = !_isPasswordInputVisible,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: BorderSide(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(
-                        color: AppTheme.primaryColor,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: isLoading
-                      ? null
-                      : () => _submitEmailAndPassword(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: AppTheme.neutralColor,
-                    minimumSize: const Size.fromHeight(60),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-                const Spacer(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileSetupPage(
-    BuildContext context,
-    bool isLoading,
-    String? errorMessage,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: CustomScrollView(
-        slivers: [
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                const Text(
-                  'Profile Details',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
-                    letterSpacing: -1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Complete your profile to start booking rides.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                TextField(
-                  controller: _passengerNameController,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    hintText: 'Full Name',
-                    prefixIcon: const Padding(
-                      padding: EdgeInsetsGeometry.only(left: 10),
-                      child: Icon(LucideIcons.user, size: 20),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: BorderSide(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(
-                        color: AppTheme.primaryColor,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passengerPhoneController,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    hintText: 'Phone Number',
-                    prefixIcon: const Padding(
-                      padding: EdgeInsetsGeometry.only(left: 10),
-                      child: Icon(LucideIcons.phone, size: 20),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: BorderSide(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: const BorderSide(
-                        color: AppTheme.primaryColor,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    unawaited(context.pushNamed(HomeRoutes.home));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: AppTheme.neutralColor,
-                    minimumSize: const Size.fromHeight(60),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Complete Setup',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const Spacer(),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class HelpCenterScreen extends StatefulWidget {
@@ -115,30 +114,13 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         backgroundColor: AppTheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leadingWidth: 80,
-        leading: GestureDetector(
-          onTap: () => context.pop(),
-          behavior: HitTestBehavior.opaque,
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(width: 12),
-              Icon(
-                LucideIcons.chevron_left,
-                color: AppTheme.primaryColor,
-                size: 20,
-              ),
-              SizedBox(width: 4),
-              Text(
-                'Back',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+        leading: IconButton(
+          icon: const Icon(
+            LucideIcons.chevron_left,
+            color: AppTheme.primaryColor,
+            size: 24,
           ),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
           'Help Center',
