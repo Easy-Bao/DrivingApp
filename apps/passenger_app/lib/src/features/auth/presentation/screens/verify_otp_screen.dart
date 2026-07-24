@@ -113,59 +113,10 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
     );
   }
 
-  void _showSignupSuccessModal() {
-    unawaited(
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogCtx) {
-          return AlertDialog(
-            backgroundColor: AppTheme.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 16),
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.complete,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    LucideIcons.check,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Verification Successful!',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Logging in shortly...',
-                  style: TextStyle(fontSize: 13, color: AppTheme.primaryColor),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-
-    Timer(const Duration(milliseconds: 1200), () {
+  void _onVerifySuccess() {
+    CustomToast.show(context, 'Email verified successfully!');
+    Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
-      Navigator.of(context).pop();
       if (Navigator.of(context).canPop()) {
         context.pop(true);
       } else {
@@ -184,19 +135,22 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leadingWidth: 100,
-        leading: TextButton.icon(
-          onPressed: () => context.pop(),
-          icon: const Icon(
-            LucideIcons.chevron_left,
-            color: AppTheme.primaryColor,
-            size: 20,
-          ),
-          label: const Text(
-            'Back',
-            style: TextStyle(
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: TextButton.icon(
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(
+              LucideIcons.chevron_left,
               color: AppTheme.primaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+              size: 20,
+            ),
+            label: const Text(
+              'Back',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
         ),
@@ -204,8 +158,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       body: BlocConsumer<VerifyOtpCubit, VerifyOtpState>(
         listener: (context, state) {
           if (state is VerifyOtpSuccess) {
-            CustomToast.show(context, 'Email verified successfully!');
-            _showSignupSuccessModal();
+            _onVerifySuccess();
           }
         },
         builder: (context, state) {
