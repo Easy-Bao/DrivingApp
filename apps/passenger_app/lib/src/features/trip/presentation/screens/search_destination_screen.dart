@@ -213,8 +213,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                       height: 48,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: AppTheme.neutralColor,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppTheme.borderSide),
                       ),
                       child: Row(
@@ -242,8 +241,15 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                                   ),
                                   fontWeight: FontWeight.w400,
                                 ),
+                                // Disable all default borders on the TextField
                                 border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                focusedErrorBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
                                 isDense: true,
+                                contentPadding: EdgeInsets.zero,
                               ),
                             ),
                           ),
@@ -271,8 +277,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
                   height: 48,
                   width: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.neutralColor,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppTheme.borderSide),
                   ),
                   child: const Icon(
