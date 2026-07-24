@@ -22,8 +22,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(response);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -44,8 +44,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(response);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -62,8 +62,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(result);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -78,8 +78,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(result);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 }

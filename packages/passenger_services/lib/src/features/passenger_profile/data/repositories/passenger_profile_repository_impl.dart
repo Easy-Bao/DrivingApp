@@ -16,8 +16,8 @@ class PassengerProfileRepositoryImpl implements PassengerProfileRepository {
       return Right(profile);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -38,8 +38,8 @@ class PassengerProfileRepositoryImpl implements PassengerProfileRepository {
       return Right(updated);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -50,8 +50,8 @@ class PassengerProfileRepositoryImpl implements PassengerProfileRepository {
       return Right(history);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -62,8 +62,8 @@ class PassengerProfileRepositoryImpl implements PassengerProfileRepository {
       return Right(notifications);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 }

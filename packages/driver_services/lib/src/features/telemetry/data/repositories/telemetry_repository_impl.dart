@@ -24,8 +24,8 @@ class TelemetryRepositoryImpl implements TelemetryRepository {
       return Right(result);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -36,8 +36,8 @@ class TelemetryRepositoryImpl implements TelemetryRepository {
       return Right(result);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 }

@@ -40,8 +40,8 @@ class BiddingRepositoryImpl implements BiddingRepository {
       return Right(session);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -52,8 +52,8 @@ class BiddingRepositoryImpl implements BiddingRepository {
       return Right(session);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -64,8 +64,8 @@ class BiddingRepositoryImpl implements BiddingRepository {
       return Right(offers);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -82,8 +82,8 @@ class BiddingRepositoryImpl implements BiddingRepository {
       return Right(acceptResult);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -94,8 +94,8 @@ class BiddingRepositoryImpl implements BiddingRepository {
       return Right(result);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 
@@ -114,8 +114,8 @@ class BiddingRepositoryImpl implements BiddingRepository {
       return Right(estimate);
     } on ServerException catch (error) {
       return Left(ServerFailure(error.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 }
