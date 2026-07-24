@@ -1,20 +1,20 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:session_service/session_service.dart';
+import 'package:chat_service/chat_service.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
-import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/en_route_pickup_panel_widget.dart';
+import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:dio/dio.dart';
 import 'package:location_service/location_service.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -124,22 +124,11 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverIdentifier.isEmpty) return;
 
-      final chatMessagesEndpointUri = EnvironmentConfig.httpBaseUri.replace(
-        path: '/chat/rooms/$rideId/messages',
-      );
-
-      final chatMessagesHttpResponse = await Dio().getUri(chatMessagesEndpointUri);
-      if (chatMessagesHttpResponse.statusCode == 200) {
-        final List<dynamic> chatMessagesList = chatMessagesHttpResponse.data is List<dynamic>
-            ? chatMessagesHttpResponse.data as List<dynamic>
-            : jsonDecode(chatMessagesHttpResponse.data.toString());
-        final passengerChatMessagesList = chatMessagesList
-            .where(
-              (m) =>
-                  m is Map<String, dynamic> &&
-                  m['senderId'] != driverIdentifier,
-            )
-            .toList();
+      final chatRepo = Modular.get<ChatRepository>();
+      final result = await chatRepo.fetchRoomMessages(rideId);
+      result.fold((_) => null, (List<ChatMessage> messages) {
+        final passengerChatMessagesList =
+            messages.where((m) => m.senderId != driverIdentifier).toList();
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (mounted) {
@@ -154,7 +143,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
             }
           });
         }
-      }
+      });
     } catch (_) {}
   }
 
@@ -270,35 +259,97 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                 SafeArea(child: _buildHeader(context)),
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, -4),
+                  child: LayoutBuilder(
+                    builder: (ctx, constraints) {
+                      final isWide = constraints.maxWidth > 600.0;
+                      final rideState =
+                          BlocProvider.of<RideFlowCubit>(context).state;
+                      final passengerName = rideState is RideFlowEnRoutePickup
+                          ? rideState.passengerName
+                          : 'Passenger';
+
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isWide ? 600.0 : double.infinity,
                         ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.only(top: 20, bottom: 32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildRouteCard(),
-                        const SizedBox(height: 16),
-                        _buildInfoRow(),
-                        const SizedBox(height: 16),
-                        _buildPassengerCard(context),
-                        const SizedBox(height: 16),
-                        _buildActionRow(context),
-                        const SizedBox(height: 20),
-                        _buildSlider(context),
-                      ],
-                    ),
+                        child: EnRoutePickupPanelWidget(
+                          pickup: widget.pickup,
+                          dropoff: widget.dropoff,
+                          passengerName: passengerName,
+                          distance: widget.distance,
+                          fare: widget.fare,
+                          sliderValue: _sliderVal,
+                          unreadChatMessagesCount: _unreadChatMessagesCount,
+                          onSliderChanged: (val) {
+                            setState(() {
+                              _sliderVal = val;
+                            });
+                          },
+                          onSliderCompleted: () => _confirmArrival(context),
+                          onCallPressed: () async {
+                            try {
+                              final rideCubit =
+                                  BlocProvider.of<RideFlowCubit>(context);
+                              final rideId = rideCubit.activeRideId ?? '';
+                              if (rideId.isNotEmpty) {
+                                final ride =
+                                    await Modular.get<TripRemoteDataSource>()
+                                        .getRideStatus(rideId);
+                                final passengerId =
+                                    ride['passenger_id'] as String?;
+                                if (passengerId != null &&
+                                    passengerId.isNotEmpty) {
+                                  final passenger =
+                                      await Modular.get<
+                                        PassengerRemoteDataSource
+                                      >().fetchPassengerProfile(passengerId);
+                                  final phone = passenger['phone'] as String?;
+                                  if (phone != null && phone.isNotEmpty) {
+                                    final uri = Uri.parse('tel:$phone');
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(uri);
+                                    }
+                                  }
+                                }
+                              }
+                            } catch (_) {}
+                          },
+                          onChatPressed: () async {
+                            final rideId =
+                                BlocProvider.of<RideFlowCubit>(
+                                  context,
+                                ).activeRideId ??
+                                '';
+                            final state =
+                                BlocProvider.of<RideFlowCubit>(context).state;
+                            final pName = state is RideFlowEnRoutePickup
+                                ? state.passengerName
+                                : 'Passenger';
+                            final driverId =
+                                await Modular.get<SecureSessionService>()
+                                    .readDriverId() ??
+                                '';
+                            if (!context.mounted) return;
+                            setState(() {
+                              _unreadChatMessagesCount = 0;
+                            });
+                            await context.pushNamed(
+                              ChatRoutes.chat,
+                              extra: {
+                                'roomId': rideId,
+                                'userId': driverId,
+                                'peerName': pName,
+                              },
+                            );
+                            if (!context.mounted) return;
+                            _isInitialChatMessagesCountFetched = false;
+                            await _updateUnreadMessagesCount(
+                              BlocProvider.of<RideFlowCubit>(context),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -348,7 +399,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                 Text(
                   'EN ROUTE TO PICKUP',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.complete,
                     letterSpacing: 0.5,
@@ -358,371 +409,6 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRouteCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.borderSide),
-        ),
-        child: Column(
-          children: [
-            _routeRow(
-              LucideIcons.circle_dot,
-              'Pickup',
-              widget.pickup,
-              AppTheme.primaryColor,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 6, top: 6, bottom: 6),
-              child: Row(
-                children: [
-                  Container(width: 1, height: 16, color: AppTheme.borderSide),
-                ],
-              ),
-            ),
-            _routeRow(
-              LucideIcons.map_pin,
-              'Drop-off',
-              widget.dropoff,
-              AppTheme.tertiaryColor,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _routeRow(IconData icon, String label, String value, Color iconColor) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: iconColor),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          _infoChip(LucideIcons.map_pin, '${widget.distance} km'),
-          const SizedBox(width: 8),
-          _infoChip(LucideIcons.clock, widget.duration),
-          const SizedBox(width: 8),
-          _infoChip(LucideIcons.banknote, '₱${widget.fare.toStringAsFixed(0)}'),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoChip(IconData icon, String text) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.borderSide),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 14, color: AppTheme.tertiaryColor),
-            const SizedBox(height: 4),
-            Text(
-              text,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPassengerCard(BuildContext context) {
-    final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowEnRoutePickup
-        ? state.passengerName
-        : 'Passenger';
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.borderSide),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: AppTheme.secondaryColor,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(
-                LucideIcons.user,
-                color: AppTheme.primaryColor,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    passengerName,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const Text(
-                    'Passenger  •  ★ 4.7',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.tertiaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionRow(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _actionBtn(
-              LucideIcons.phone,
-              'Call',
-              AppTheme.primaryColor,
-              Colors.white,
-              onTap: () async {
-                try {
-                  final rideCubit = BlocProvider.of<RideFlowCubit>(context);
-                  final rideId = rideCubit.activeRideId ?? '';
-                  if (rideId.isNotEmpty) {
-                    final ride = await Modular.get<TripRemoteDataSource>().getRideStatus(
-                      rideId,
-                    );
-                    final passengerId = ride['passenger_id'] as String?;
-                    if (passengerId != null && passengerId.isNotEmpty) {
-                      final passenger = await Modular.get<PassengerRemoteDataSource>()
-                          .fetchPassengerProfile(passengerId);
-                      final phone = passenger['phone'] as String?;
-                      if (phone != null && phone.isNotEmpty) {
-                        final uri = Uri.parse('tel:$phone');
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri);
-                        }
-                      }
-                    }
-                  }
-                } catch (_) {}
-              },
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _actionBtn(
-              LucideIcons.message_circle,
-              'Chat',
-              AppTheme.neutralColor,
-              AppTheme.primaryColor,
-              displayNotificationBadge: _unreadChatMessagesCount > 0,
-              notificationBadgeCount: _unreadChatMessagesCount,
-              onTap: () async {
-                final rideId =
-                    BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
-                final state = BlocProvider.of<RideFlowCubit>(context).state;
-                final passengerName = state is RideFlowEnRoutePickup
-                    ? state.passengerName
-                    : 'Passenger';
-                final driverId =
-                    await Modular.get<SecureSessionService>().readDriverId() ?? '';
-                if (!context.mounted) return;
-                setState(() {
-                  _unreadChatMessagesCount = 0;
-                });
-                await context.pushNamed(
-                  ChatRoutes.chat,
-                  extra: {
-                    'roomId': rideId,
-                    'userId': driverId,
-                    'peerName': passengerName,
-                  },
-                );
-                if (!context.mounted) return;
-                _isInitialChatMessagesCountFetched = false;
-                await _updateUnreadMessagesCount(
-                  BlocProvider.of<RideFlowCubit>(context),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionBtn(
-    IconData icon,
-    String label,
-    Color bg,
-    Color fg, {
-    required VoidCallback onTap,
-    bool displayNotificationBadge = false,
-    int notificationBadgeCount = 0,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 46,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(23),
-          border: bg == AppTheme.neutralColor
-              ? Border.all(color: AppTheme.borderSide)
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Badge(
-              label: Text('$notificationBadgeCount'),
-              isLabelVisible:
-                  displayNotificationBadge && notificationBadgeCount > 0,
-              backgroundColor: const Color(0xFFE53935),
-              child: Icon(icon, color: fg, size: 16),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: fg,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSlider(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: LayoutBuilder(
-        builder: (ctx, constraints) {
-          final maxW = constraints.maxWidth;
-          return Container(
-            height: 64,
-            decoration: BoxDecoration(
-              color: AppTheme.complete.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(32),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Text(
-                    _sliderVal > 0.8
-                        ? 'Release to confirm'
-                        : 'Slide to confirm arrival',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.complete.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: _sliderVal * (maxW - 64),
-                  child: GestureDetector(
-                    onHorizontalDragUpdate: (d) => setState(
-                      () => _sliderVal = (_sliderVal + d.delta.dx / (maxW - 64))
-                          .clamp(0.0, 1.0),
-                    ),
-                    onHorizontalDragEnd: (_) {
-                      if (_sliderVal > 0.85) {
-                        _confirmArrival(context);
-                      } else {
-                        setState(() => _sliderVal = 0);
-                      }
-                    },
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: AppTheme.complete,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.complete.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        LucideIcons.chevron_right,
-                        color: Colors.white,
-                        size: 26,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }

@@ -14,6 +14,7 @@ import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:passenger_app/src/features/trip/presentation/widgets/track_driver_panel_widget.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -396,266 +397,91 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
               alignment: Alignment.bottomCenter,
               child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
                 builder: (context, state) {
-                  final driverName = state is TrackDriverInProgress
-                      ? state.driverName
-                      : (widget.ride.driverName.isNotEmpty == true
-                            ? widget.ride.driverName
-                            : 'Driver');
-                  final vehiclePlate = state is TrackDriverInProgress
-                      ? state.vehiclePlate
-                      : (widget.ride.vehiclePlate.isNotEmpty == true
-                            ? widget.ride.vehiclePlate
-                            : '—');
-                  final vehicleType = state is TrackDriverInProgress
-                      ? state.vehicleType
-                      : 'Bao Bao';
+                  final statusTitle = state is TrackDriverInProgress
+                      ? 'Driver En Route'
+                      : 'Driver Assigned';
+                  final statusSubtitle = state is TrackDriverInProgress
+                      ? 'Heading towards pickup location'
+                      : 'Preparing to head to pickup';
+                  final etaText = state is TrackDriverInProgress
+                      ? state.eta
+                      : 'En Route';
 
-                  return Container(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(32),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 30,
-                          offset: const Offset(0, -10),
+                  return LayoutBuilder(
+                    builder: (ctx, constraints) {
+                      final isWide = constraints.maxWidth > 600.0;
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isWide ? 600.0 : double.infinity,
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            margin: const EdgeInsets.only(bottom: 20),
-                            decoration: BoxDecoration(
-                              color: AppTheme.borderSide,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-
-                        Row(
-                          children: [
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: AppTheme.secondaryColor,
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: const Icon(
-                                LucideIcons.user,
-                                color: AppTheme.primaryColor,
-                                size: 26,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    driverName,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '$vehicleType  •  ★ —',
-                                    style: const TextStyle(
-                                      color: AppTheme.tertiaryColor,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.neutralColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.borderSide),
-                              ),
-                              child: Text(
-                                vehiclePlate,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryColor,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildActionButton(
-                                icon: LucideIcons.message_circle,
-                                label: 'Message',
-                                backgroundColor: AppTheme.neutralColor,
-                                foregroundColor: AppTheme.primaryColor,
-                                borderColor: AppTheme.borderSide,
-                                displayNotificationBadge:
-                                    _unreadChatMessagesCount > 0,
-                                notificationBadgeCount:
-                                    _unreadChatMessagesCount,
-                                onTap: () async {
-                                  final passengerId =
-                                      await Modular.get<SecureSessionService>()
-                                          .readPassengerId() ??
-                                      '';
-                                  if (context.mounted) {
-                                    setState(() {
-                                      _unreadChatMessagesCount = 0;
-                                    });
-                                    await context.pushNamed(
-                                      ChatRoutes.driverChat,
-                                      extra: {
-                                        'roomId': widget.ride.id,
-                                        'userId': passengerId,
-                                        'peerName': driverName,
-                                      },
-                                    );
-                                    _isInitialChatMessagesCountFetched = false;
-                                    await _updateUnreadMessagesCount();
-                                  }
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildActionButton(
-                                icon: LucideIcons.phone,
-                                label: 'Call',
-                                backgroundColor: AppTheme.primaryColor,
-                                foregroundColor: Colors.white,
-                                onTap: () async {
-                                  try {
-                                    final activeRideId =
-                                        await Modular.get<
-                                              SecureSessionService
-                                            >()
-                                            .readActiveRideId() ??
-                                        widget.ride.id;
-                                    if (activeRideId.isNotEmpty) {
-                                      final statusData =
-                                          await Modular.get<
-                                                BiddingRemoteDataSource
-                                              >()
-                                              .getRideStatus(activeRideId);
-                                      final driverId =
-                                          statusData?['driver_id'] as String?;
-                                      if (driverId != null &&
-                                          driverId.isNotEmpty) {
-                                        final driverProfile =
-                                            await Modular.get<
-                                                  BiddingRemoteDataSource
-                                                >()
-                                                .getDriverProfile(driverId);
-                                        final phone =
-                                            driverProfile?['phone'] as String?;
-                                        if (phone != null && phone.isNotEmpty) {
-                                          final uri = Uri.parse('tel:$phone');
-                                          if (await canLaunchUrl(uri)) {
-                                            await launchUrl(uri);
-                                          }
-                                        }
-                                      }
+                        child: TrackDriverPanelWidget(
+                          ride: widget.ride,
+                          statusTitle: statusTitle,
+                          statusSubtitle: statusSubtitle,
+                          etaText: etaText,
+                          unreadChatMessagesCount: _unreadChatMessagesCount,
+                          onCallDriverPressed: () async {
+                            try {
+                              final activeRideId =
+                                  await Modular.get<SecureSessionService>()
+                                      .readActiveRideId() ??
+                                  widget.ride.id;
+                              if (activeRideId.isNotEmpty) {
+                                final statusData =
+                                    await Modular.get<
+                                      BiddingRemoteDataSource
+                                    >().getRideStatus(activeRideId);
+                                final driverId =
+                                    statusData?['driver_id'] as String?;
+                                if (driverId != null && driverId.isNotEmpty) {
+                                  final driverProfile =
+                                      await Modular.get<
+                                        BiddingRemoteDataSource
+                                      >().getDriverProfile(driverId);
+                                  final phone =
+                                      driverProfile?['phone'] as String?;
+                                  if (phone != null && phone.isNotEmpty) {
+                                    final uri = Uri.parse('tel:$phone');
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(uri);
                                     }
-                                  } catch (_) {}
+                                  }
+                                }
+                              }
+                            } catch (_) {}
+                          },
+                          onChatDriverPressed: () async {
+                            final passengerId =
+                                await Modular.get<SecureSessionService>()
+                                    .readPassengerId() ??
+                                '';
+                            final dName = state is TrackDriverInProgress
+                                ? state.driverName
+                                : (widget.ride.driverName.isNotEmpty
+                                      ? widget.ride.driverName
+                                      : 'Driver');
+                            if (context.mounted) {
+                              setState(() {
+                                _unreadChatMessagesCount = 0;
+                              });
+                              await context.pushNamed(
+                                ChatRoutes.driverChat,
+                                extra: {
+                                  'roomId': widget.ride.id,
+                                  'userId': passengerId,
+                                  'peerName': dName,
                                 },
-                              ),
-                            ),
-                          ],
+                              );
+                              _isInitialChatMessagesCountFetched = false;
+                              await _updateUnreadMessagesCount();
+                            }
+                          },
+                          onCancelTripPressed: _handleCancelTrip,
                         ),
-                        const SizedBox(height: 16),
-
-                        GestureDetector(
-                          onTap: _handleCancelTrip,
-                          child: Container(
-                            width: double.infinity,
-                            alignment: Alignment.center,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.cancel.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                            child: const Text(
-                              'Cancel Trip',
-                              style: TextStyle(
-                                color: AppTheme.cancel,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color backgroundColor,
-    required Color foregroundColor,
-    Color? borderColor,
-    required VoidCallback onTap,
-    bool displayNotificationBadge = false,
-    int notificationBadgeCount = 0,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(32),
-          border: borderColor != null ? Border.all(color: borderColor) : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Badge(
-              label: Text('$notificationBadgeCount'),
-              isLabelVisible:
-                  displayNotificationBadge && notificationBadgeCount > 0,
-              backgroundColor: const Color(0xFFE53935),
-              child: Icon(icon, color: foregroundColor, size: 18),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: foregroundColor,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
               ),
             ),
           ],

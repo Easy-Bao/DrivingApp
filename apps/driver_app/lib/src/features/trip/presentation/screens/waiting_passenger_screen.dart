@@ -1,18 +1,18 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:session_service/session_service.dart';
+import 'package:chat_service/chat_service.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
-import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/waiting_passenger_panel_widget.dart';
+import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:driver_services/driver_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:dio/dio.dart';
 import 'package:location_service/location_service.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -73,22 +73,11 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverIdentifier.isEmpty) return;
 
-      final chatMessagesEndpointUri = EnvironmentConfig.httpBaseUri.replace(
-        path: '/chat/rooms/$rideId/messages',
-      );
-
-      final chatMessagesHttpResponse = await Dio().getUri(chatMessagesEndpointUri);
-      if (chatMessagesHttpResponse.statusCode == 200) {
-        final List<dynamic> chatMessagesList = chatMessagesHttpResponse.data is List<dynamic>
-            ? chatMessagesHttpResponse.data as List<dynamic>
-            : jsonDecode(chatMessagesHttpResponse.data.toString());
-        final passengerChatMessagesList = chatMessagesList
-            .where(
-              (m) =>
-                  m is Map<String, dynamic> &&
-                  m['senderId'] != driverIdentifier,
-            )
-            .toList();
+      final chatRepo = Modular.get<ChatRepository>();
+      final result = await chatRepo.fetchRoomMessages(rideId);
+      result.fold((_) => null, (List<ChatMessage> messages) {
+        final passengerChatMessagesList =
+            messages.where((m) => m.senderId != driverIdentifier).toList();
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (mounted) {
@@ -103,7 +92,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             }
           });
         }
-      }
+      });
     } catch (_) {}
   }
 
@@ -161,50 +150,136 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = BlocProvider.of<RideFlowCubit>(context).state;
+    final passengerName = state is RideFlowWaitingPassenger
+        ? state.passengerName
+        : 'Passenger';
+
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      padding: const EdgeInsets.all(11),
-                      decoration: BoxDecoration(
-                        color: AppTheme.neutralColor,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.borderSide),
+        child: LayoutBuilder(
+          builder: (ctx, constraints) {
+            final isWide = constraints.maxWidth > 600.0;
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 600.0 : double.infinity,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => context.pop(),
+                            child: Container(
+                              padding: const EdgeInsets.all(11),
+                              decoration: BoxDecoration(
+                                color: AppTheme.neutralColor,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppTheme.borderSide),
+                              ),
+                              child: const Icon(
+                                LucideIcons.arrow_left,
+                                size: 18,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          _buildStatusBadge(),
+                          const Spacer(),
+                          const SizedBox(width: 40),
+                        ],
                       ),
-                      child: const Icon(
-                        LucideIcons.arrow_left,
-                        size: 18,
-                        color: AppTheme.primaryColor,
+                      const SizedBox(height: 24),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: WaitingPassengerPanelWidget(
+                            pickup: widget.pickup,
+                            dropoff: widget.dropoff,
+                            passengerName: passengerName,
+                            waitFormatted: _waitFormatted,
+                            fare: widget.fare,
+                            unreadChatMessagesCount: _unreadChatMessagesCount,
+                            onStartTripPressed: _startTrip,
+                            onCallPressed: () async {
+                              try {
+                                final rideId =
+                                    BlocProvider.of<RideFlowCubit>(
+                                      context,
+                                    ).activeRideId ??
+                                    '';
+                                if (rideId.isNotEmpty) {
+                                  final ride =
+                                      await Modular.get<TripRemoteDataSource>()
+                                          .getRideStatus(rideId);
+                                  final passengerId =
+                                      ride['passenger_id'] as String?;
+                                  if (passengerId != null &&
+                                      passengerId.isNotEmpty) {
+                                    final passenger =
+                                        await Modular.get<
+                                          PassengerRemoteDataSource
+                                        >().fetchPassengerProfile(passengerId);
+                                    final phone =
+                                        passenger['phone'] as String?;
+                                    if (phone != null && phone.isNotEmpty) {
+                                      final uri = Uri.parse('tel:$phone');
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(uri);
+                                      }
+                                    }
+                                  }
+                                }
+                              } catch (_) {}
+                            },
+                            onChatPressed: () async {
+                              final rideId =
+                                  BlocProvider.of<RideFlowCubit>(
+                                    context,
+                                  ).activeRideId ??
+                                  '';
+                              final rState =
+                                  BlocProvider.of<RideFlowCubit>(context).state;
+                              final pName = rState is RideFlowWaitingPassenger
+                                  ? rState.passengerName
+                                  : 'Passenger';
+                              final cubit = BlocProvider.of<RideFlowCubit>(
+                                context,
+                              );
+                              final driverId =
+                                  await Modular.get<SecureSessionService>()
+                                      .readDriverId() ??
+                                  '';
+                              if (!context.mounted) return;
+                              setState(() {
+                                _unreadChatMessagesCount = 0;
+                              });
+                              await context.pushNamed(
+                                ChatRoutes.chat,
+                                extra: {
+                                  'roomId': rideId,
+                                  'userId': driverId,
+                                  'peerName': pName,
+                                },
+                              );
+                              if (!mounted) return;
+                              _isInitialChatMessagesCountFetched = false;
+                              await _updateUnreadMessagesCount(cubit);
+                            },
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const Spacer(),
-                  _buildStatusBadge(),
-                  const Spacer(),
-                  const SizedBox(width: 40),
-                ],
+                ),
               ),
-              const SizedBox(height: 32),
-              _buildTimer(),
-              const SizedBox(height: 32),
-              _buildPassengerCard(),
-              const SizedBox(height: 16),
-              _buildActionRow(),
-              const Spacer(),
-              if (_waitSeconds >= 300) _buildNoShowButton(),
-              _buildStartTripButton(),
-              const SizedBox(height: 32),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -235,294 +310,6 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTimer() {
-    return Column(
-      children: [
-        Text(
-          _waitFormatted,
-          style: const TextStyle(
-            fontSize: 58,
-            fontWeight: FontWeight.w900,
-            color: AppTheme.primaryColor,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Waiting for passenger',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.primaryColor.withValues(alpha: 0.45),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPassengerCard() {
-    final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowWaitingPassenger
-        ? state.passengerName
-        : 'Passenger';
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Icon(
-                  LucideIcons.user,
-                  color: AppTheme.primaryColor,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      passengerName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    const Text(
-                      'Passenger  •  ★ 4.7',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.tertiaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Divider(height: 1, color: AppTheme.borderSide),
-          ),
-          Row(
-            children: [
-              const Icon(
-                Icons.location_on,
-                size: 15,
-                color: AppTheme.tertiaryColor,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  widget.pickup,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: _btn(
-            LucideIcons.phone,
-            'Call',
-            AppTheme.primaryColor,
-            Colors.white,
-            onTap: () async {
-              try {
-                final rideId =
-                    BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
-                if (rideId.isNotEmpty) {
-                  final ride = await Modular.get<TripRemoteDataSource>().getRideStatus(
-                    rideId,
-                  );
-                  final passengerId = ride['passenger_id'] as String?;
-                  if (passengerId != null && passengerId.isNotEmpty) {
-                    final passenger = await Modular.get<PassengerRemoteDataSource>()
-                        .fetchPassengerProfile(passengerId);
-                    final phone = passenger['phone'] as String?;
-                    if (phone != null && phone.isNotEmpty) {
-                      final uri = Uri.parse('tel:$phone');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      }
-                    }
-                  }
-                }
-              } catch (_) {}
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _btn(
-            LucideIcons.message_circle,
-            'Chat',
-            AppTheme.neutralColor,
-            AppTheme.primaryColor,
-            displayNotificationBadge: _unreadChatMessagesCount > 0,
-            notificationBadgeCount: _unreadChatMessagesCount,
-            onTap: () async {
-              final rideId =
-                  BlocProvider.of<RideFlowCubit>(context).activeRideId ?? '';
-              final state = BlocProvider.of<RideFlowCubit>(context).state;
-              final passengerName = state is RideFlowWaitingPassenger
-                  ? state.passengerName
-                  : 'Passenger';
-              final cubit = BlocProvider.of<RideFlowCubit>(context);
-              final driverId =
-                  await Modular.get<SecureSessionService>().readDriverId() ?? '';
-              if (mounted) {
-                setState(() {
-                  _unreadChatMessagesCount = 0;
-                });
-                await context.pushNamed(
-                  ChatRoutes.chat,
-                  extra: {
-                    'roomId': rideId,
-                    'userId': driverId,
-                    'peerName': passengerName,
-                  },
-                );
-                _isInitialChatMessagesCountFetched = false;
-                await _updateUnreadMessagesCount(cubit);
-              }
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNoShowButton() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: GestureDetector(
-        onTap: () {
-          CustomToast.show(context, 'Ride canceled — no show', isError: true);
-          context.pop();
-        },
-        child: Text(
-          'Cancel (Passenger no-show)',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.cancel,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStartTripButton() {
-    return GestureDetector(
-      onTap: _startTrip,
-      child: Container(
-        width: double.infinity,
-        height: 68,
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor,
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 7),
-            ),
-          ],
-        ),
-        child: const Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(LucideIcons.play, color: Colors.white, size: 20),
-              SizedBox(width: 10),
-              Text(
-                'START TRIP',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 1,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _btn(
-    IconData icon,
-    String label,
-    Color bg,
-    Color fg, {
-    required VoidCallback onTap,
-    bool displayNotificationBadge = false,
-    int notificationBadgeCount = 0,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 46,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(23),
-          border: bg == AppTheme.neutralColor
-              ? Border.all(color: AppTheme.borderSide)
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Badge(
-              label: Text('$notificationBadgeCount'),
-              isLabelVisible:
-                  displayNotificationBadge && notificationBadgeCount > 0,
-              backgroundColor: const Color(0xFFE53935),
-              child: Icon(icon, color: fg, size: 16),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: fg,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
