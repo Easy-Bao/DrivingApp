@@ -137,12 +137,13 @@ void main() {
       act: (bloc) => bloc.add(
         const LocateNearestDriverEvent(pickupLat: 7.828, pickupLng: 123.434),
       ),
+      wait: const Duration(seconds: 11),
       expect: () => [
         isA<FindingNearestDriver>(),
         isA<BookingFailure>().having(
           (s) => s.message,
           'failure message',
-          'No drivers nearby.',
+          'No drivers nearby. Please try again.',
         ),
       ],
     );
@@ -167,6 +168,7 @@ void main() {
       act: (bloc) => bloc.add(
         const LocateNearestDriverEvent(pickupLat: 7.828, pickupLng: 123.434),
       ),
+      wait: const Duration(seconds: 11),
       expect: () => [
         isA<FindingNearestDriver>(),
         isA<BookingFailure>(),

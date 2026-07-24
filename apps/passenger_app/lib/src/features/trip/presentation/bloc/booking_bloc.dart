@@ -109,6 +109,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(
         NearestDriverFound(
           driver: closestDriver,
+          nearbyDrivers: nearbyDrivers,
           totalTrips: _totalTrips,
           reviews: const [],
           isLoadingReviews: true,
@@ -166,6 +167,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(
       NearestDriverFound(
         driver: closestDriver,
+        nearbyDrivers: nearbyDrivers,
         totalTrips: _totalTrips,
         reviews: _reviews,
         isLoadingReviews: _isLoadingReviews,

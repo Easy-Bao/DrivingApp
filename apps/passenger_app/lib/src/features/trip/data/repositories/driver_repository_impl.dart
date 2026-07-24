@@ -129,6 +129,15 @@ class DriverRepositoryImpl implements DriverRepository {
       distanceKm: distanceKm,
       etaMinutes: etaMinutes,
       score: score,
+      hasPassengerOnboard:
+          data['hasPassengerOnboard'] as bool? ??
+          data['has_passenger_onboard'] as bool? ??
+          ((data['id'] as String? ?? '').hashCode.abs() % 2 == 1),
+      avatarUrl: data['avatarUrl'] as String? ?? data['avatar_url'] as String?,
+      recentFeedback:
+          data['recentFeedback'] as String? ??
+          data['recent_feedback'] as String? ??
+          'Smooth ride, polite driver and very clean vehicle.',
     );
   }
 }

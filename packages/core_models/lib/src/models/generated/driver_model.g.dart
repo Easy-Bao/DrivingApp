@@ -17,6 +17,9 @@ _DriverModel _$DriverModelFromJson(Map<String, dynamic> json) => _DriverModel(
   distanceKm: (json['distanceKm'] as num).toDouble(),
   etaMinutes: (json['etaMinutes'] as num).toDouble(),
   score: (json['score'] as num).toDouble(),
+  hasPassengerOnboard: json['hasPassengerOnboard'] as bool? ?? false,
+  avatarUrl: json['avatarUrl'] as String?,
+  recentFeedback: json['recentFeedback'] as String?,
 );
 
 Map<String, dynamic> _$DriverModelToJson(_DriverModel instance) =>
@@ -31,4 +34,7 @@ Map<String, dynamic> _$DriverModelToJson(_DriverModel instance) =>
       'distanceKm': instance.distanceKm,
       'etaMinutes': instance.etaMinutes,
       'score': instance.score,
+      'hasPassengerOnboard': instance.hasPassengerOnboard,
+      'avatarUrl': instance.avatarUrl,
+      'recentFeedback': instance.recentFeedback,
     };

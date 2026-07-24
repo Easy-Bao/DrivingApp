@@ -177,23 +177,26 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 30,
-            offset: const Offset(0, -10),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 550.0,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 30,
+                offset: const Offset(0, -10),
+              ),
+            ],
           ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      child: Column(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -420,8 +423,10 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
             ),
         ],
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildMetricCard({
     required IconData icon,

@@ -11,12 +11,14 @@ class FindingNearestDriver extends BookingState {}
 
 class NearestDriverFound extends BookingState {
   final DriverModel driver;
+  final List<DriverModel> nearbyDrivers;
   final int totalTrips;
   final List<Map<String, dynamic>> reviews;
   final bool isLoadingReviews;
 
   const NearestDriverFound({
     required this.driver,
+    this.nearbyDrivers = const [],
     required this.totalTrips,
     required this.reviews,
     required this.isLoadingReviews,

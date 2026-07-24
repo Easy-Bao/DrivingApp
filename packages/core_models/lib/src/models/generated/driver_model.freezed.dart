@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DriverModel {
 
- String get id; String get name; String get vehicleType; String get plateNumber; double get rating; double get lat; double get lng; double get distanceKm; double get etaMinutes; double get score;
+ String get id; String get name; String get vehicleType; String get plateNumber; double get rating; double get lat; double get lng; double get distanceKm; double get etaMinutes; double get score; bool get hasPassengerOnboard; String? get avatarUrl; String? get recentFeedback;
 /// Create a copy of DriverModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $DriverModelCopyWith<DriverModel> get copyWith => _$DriverModelCopyWithImpl<Driv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DriverModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.vehicleType, vehicleType) || other.vehicleType == vehicleType)&&(identical(other.plateNumber, plateNumber) || other.plateNumber == plateNumber)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm)&&(identical(other.etaMinutes, etaMinutes) || other.etaMinutes == etaMinutes)&&(identical(other.score, score) || other.score == score));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DriverModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.vehicleType, vehicleType) || other.vehicleType == vehicleType)&&(identical(other.plateNumber, plateNumber) || other.plateNumber == plateNumber)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm)&&(identical(other.etaMinutes, etaMinutes) || other.etaMinutes == etaMinutes)&&(identical(other.score, score) || other.score == score)&&(identical(other.hasPassengerOnboard, hasPassengerOnboard) || other.hasPassengerOnboard == hasPassengerOnboard)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.recentFeedback, recentFeedback) || other.recentFeedback == recentFeedback));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,vehicleType,plateNumber,rating,lat,lng,distanceKm,etaMinutes,score);
+int get hashCode => Object.hash(runtimeType,id,name,vehicleType,plateNumber,rating,lat,lng,distanceKm,etaMinutes,score,hasPassengerOnboard,avatarUrl,recentFeedback);
 
 @override
 String toString() {
-  return 'DriverModel(id: $id, name: $name, vehicleType: $vehicleType, plateNumber: $plateNumber, rating: $rating, lat: $lat, lng: $lng, distanceKm: $distanceKm, etaMinutes: $etaMinutes, score: $score)';
+  return 'DriverModel(id: $id, name: $name, vehicleType: $vehicleType, plateNumber: $plateNumber, rating: $rating, lat: $lat, lng: $lng, distanceKm: $distanceKm, etaMinutes: $etaMinutes, score: $score, hasPassengerOnboard: $hasPassengerOnboard, avatarUrl: $avatarUrl, recentFeedback: $recentFeedback)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $DriverModelCopyWith<$Res>  {
   factory $DriverModelCopyWith(DriverModel value, $Res Function(DriverModel) _then) = _$DriverModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String vehicleType, String plateNumber, double rating, double lat, double lng, double distanceKm, double etaMinutes, double score
+ String id, String name, String vehicleType, String plateNumber, double rating, double lat, double lng, double distanceKm, double etaMinutes, double score, bool hasPassengerOnboard, String? avatarUrl, String? recentFeedback
 });
 
 
@@ -65,7 +65,7 @@ class _$DriverModelCopyWithImpl<$Res>
 
 /// Create a copy of DriverModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? vehicleType = null,Object? plateNumber = null,Object? rating = null,Object? lat = null,Object? lng = null,Object? distanceKm = null,Object? etaMinutes = null,Object? score = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? vehicleType = null,Object? plateNumber = null,Object? rating = null,Object? lat = null,Object? lng = null,Object? distanceKm = null,Object? etaMinutes = null,Object? score = null,Object? hasPassengerOnboard = null,Object? avatarUrl = freezed,Object? recentFeedback = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -77,7 +77,10 @@ as double,lng: null == lng ? _self.lng : lng // ignore: cast_nullable_to_non_nul
 as double,distanceKm: null == distanceKm ? _self.distanceKm : distanceKm // ignore: cast_nullable_to_non_nullable
 as double,etaMinutes: null == etaMinutes ? _self.etaMinutes : etaMinutes // ignore: cast_nullable_to_non_nullable
 as double,score: null == score ? _self.score : score // ignore: cast_nullable_to_non_nullable
-as double,
+as double,hasPassengerOnboard: null == hasPassengerOnboard ? _self.hasPassengerOnboard : hasPassengerOnboard // ignore: cast_nullable_to_non_nullable
+as bool,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
+as String?,recentFeedback: freezed == recentFeedback ? _self.recentFeedback : recentFeedback // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -162,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String vehicleType,  String plateNumber,  double rating,  double lat,  double lng,  double distanceKm,  double etaMinutes,  double score)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String vehicleType,  String plateNumber,  double rating,  double lat,  double lng,  double distanceKm,  double etaMinutes,  double score,  bool hasPassengerOnboard,  String? avatarUrl,  String? recentFeedback)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DriverModel() when $default != null:
-return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.rating,_that.lat,_that.lng,_that.distanceKm,_that.etaMinutes,_that.score);case _:
+return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.rating,_that.lat,_that.lng,_that.distanceKm,_that.etaMinutes,_that.score,_that.hasPassengerOnboard,_that.avatarUrl,_that.recentFeedback);case _:
   return orElse();
 
 }
@@ -183,10 +186,10 @@ return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.ra
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String vehicleType,  String plateNumber,  double rating,  double lat,  double lng,  double distanceKm,  double etaMinutes,  double score)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String vehicleType,  String plateNumber,  double rating,  double lat,  double lng,  double distanceKm,  double etaMinutes,  double score,  bool hasPassengerOnboard,  String? avatarUrl,  String? recentFeedback)  $default,) {final _that = this;
 switch (_that) {
 case _DriverModel():
-return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.rating,_that.lat,_that.lng,_that.distanceKm,_that.etaMinutes,_that.score);case _:
+return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.rating,_that.lat,_that.lng,_that.distanceKm,_that.etaMinutes,_that.score,_that.hasPassengerOnboard,_that.avatarUrl,_that.recentFeedback);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +206,10 @@ return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.ra
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String vehicleType,  String plateNumber,  double rating,  double lat,  double lng,  double distanceKm,  double etaMinutes,  double score)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String vehicleType,  String plateNumber,  double rating,  double lat,  double lng,  double distanceKm,  double etaMinutes,  double score,  bool hasPassengerOnboard,  String? avatarUrl,  String? recentFeedback)?  $default,) {final _that = this;
 switch (_that) {
 case _DriverModel() when $default != null:
-return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.rating,_that.lat,_that.lng,_that.distanceKm,_that.etaMinutes,_that.score);case _:
+return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.rating,_that.lat,_that.lng,_that.distanceKm,_that.etaMinutes,_that.score,_that.hasPassengerOnboard,_that.avatarUrl,_that.recentFeedback);case _:
   return null;
 
 }
@@ -218,7 +221,7 @@ return $default(_that.id,_that.name,_that.vehicleType,_that.plateNumber,_that.ra
 @JsonSerializable()
 
 class _DriverModel implements DriverModel {
-  const _DriverModel({required this.id, required this.name, required this.vehicleType, required this.plateNumber, required this.rating, required this.lat, required this.lng, required this.distanceKm, required this.etaMinutes, required this.score});
+  const _DriverModel({required this.id, required this.name, required this.vehicleType, required this.plateNumber, required this.rating, required this.lat, required this.lng, required this.distanceKm, required this.etaMinutes, required this.score, this.hasPassengerOnboard = false, this.avatarUrl, this.recentFeedback});
   factory _DriverModel.fromJson(Map<String, dynamic> json) => _$DriverModelFromJson(json);
 
 @override final  String id;
@@ -231,6 +234,9 @@ class _DriverModel implements DriverModel {
 @override final  double distanceKm;
 @override final  double etaMinutes;
 @override final  double score;
+@override@JsonKey() final  bool hasPassengerOnboard;
+@override final  String? avatarUrl;
+@override final  String? recentFeedback;
 
 /// Create a copy of DriverModel
 /// with the given fields replaced by the non-null parameter values.
@@ -245,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DriverModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.vehicleType, vehicleType) || other.vehicleType == vehicleType)&&(identical(other.plateNumber, plateNumber) || other.plateNumber == plateNumber)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm)&&(identical(other.etaMinutes, etaMinutes) || other.etaMinutes == etaMinutes)&&(identical(other.score, score) || other.score == score));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DriverModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.vehicleType, vehicleType) || other.vehicleType == vehicleType)&&(identical(other.plateNumber, plateNumber) || other.plateNumber == plateNumber)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm)&&(identical(other.etaMinutes, etaMinutes) || other.etaMinutes == etaMinutes)&&(identical(other.score, score) || other.score == score)&&(identical(other.hasPassengerOnboard, hasPassengerOnboard) || other.hasPassengerOnboard == hasPassengerOnboard)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.recentFeedback, recentFeedback) || other.recentFeedback == recentFeedback));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,vehicleType,plateNumber,rating,lat,lng,distanceKm,etaMinutes,score);
+int get hashCode => Object.hash(runtimeType,id,name,vehicleType,plateNumber,rating,lat,lng,distanceKm,etaMinutes,score,hasPassengerOnboard,avatarUrl,recentFeedback);
 
 @override
 String toString() {
-  return 'DriverModel(id: $id, name: $name, vehicleType: $vehicleType, plateNumber: $plateNumber, rating: $rating, lat: $lat, lng: $lng, distanceKm: $distanceKm, etaMinutes: $etaMinutes, score: $score)';
+  return 'DriverModel(id: $id, name: $name, vehicleType: $vehicleType, plateNumber: $plateNumber, rating: $rating, lat: $lat, lng: $lng, distanceKm: $distanceKm, etaMinutes: $etaMinutes, score: $score, hasPassengerOnboard: $hasPassengerOnboard, avatarUrl: $avatarUrl, recentFeedback: $recentFeedback)';
 }
 
 
@@ -265,7 +271,7 @@ abstract mixin class _$DriverModelCopyWith<$Res> implements $DriverModelCopyWith
   factory _$DriverModelCopyWith(_DriverModel value, $Res Function(_DriverModel) _then) = __$DriverModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String vehicleType, String plateNumber, double rating, double lat, double lng, double distanceKm, double etaMinutes, double score
+ String id, String name, String vehicleType, String plateNumber, double rating, double lat, double lng, double distanceKm, double etaMinutes, double score, bool hasPassengerOnboard, String? avatarUrl, String? recentFeedback
 });
 
 
@@ -282,7 +288,7 @@ class __$DriverModelCopyWithImpl<$Res>
 
 /// Create a copy of DriverModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? vehicleType = null,Object? plateNumber = null,Object? rating = null,Object? lat = null,Object? lng = null,Object? distanceKm = null,Object? etaMinutes = null,Object? score = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? vehicleType = null,Object? plateNumber = null,Object? rating = null,Object? lat = null,Object? lng = null,Object? distanceKm = null,Object? etaMinutes = null,Object? score = null,Object? hasPassengerOnboard = null,Object? avatarUrl = freezed,Object? recentFeedback = freezed,}) {
   return _then(_DriverModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -294,7 +300,10 @@ as double,lng: null == lng ? _self.lng : lng // ignore: cast_nullable_to_non_nul
 as double,distanceKm: null == distanceKm ? _self.distanceKm : distanceKm // ignore: cast_nullable_to_non_nullable
 as double,etaMinutes: null == etaMinutes ? _self.etaMinutes : etaMinutes // ignore: cast_nullable_to_non_nullable
 as double,score: null == score ? _self.score : score // ignore: cast_nullable_to_non_nullable
-as double,
+as double,hasPassengerOnboard: null == hasPassengerOnboard ? _self.hasPassengerOnboard : hasPassengerOnboard // ignore: cast_nullable_to_non_nullable
+as bool,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
+as String?,recentFeedback: freezed == recentFeedback ? _self.recentFeedback : recentFeedback // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

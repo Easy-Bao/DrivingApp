@@ -16,6 +16,9 @@ abstract class DriverModel with _$DriverModel {
     required double distanceKm,
     required double etaMinutes,
     required double score,
+    @Default(false) bool hasPassengerOnboard,
+    String? avatarUrl,
+    String? recentFeedback,
   }) = _DriverModel;
 
   factory DriverModel.fromJson(Map<String, dynamic> json) =>
