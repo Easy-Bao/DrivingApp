@@ -36,6 +36,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
   bool _isPasswordVisible = false;
   bool isChecked = false;
 
+  String? _emailError;
+  String? _passwordError;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -45,8 +48,25 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
 
   void _submitSignIn(BuildContext context) {
     FocusScope.of(context).unfocus();
-    final email = _emailController.text;
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
+
+    setState(() {
+      if (email.isEmpty) {
+        _emailError = 'Please enter your email';
+      } else if (!email.contains('@')) {
+        _emailError = 'Please enter a valid email address';
+      } else {
+        _emailError = null;
+      }
+
+      _passwordError = password.isEmpty ? 'Please enter your password' : null;
+    });
+
+    if (_emailError != null || _passwordError != null) {
+      return;
+    }
+
     unawaited(BlocProvider.of<SignInCubit>(context).signIn(email, password));
   }
 
@@ -92,16 +112,17 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                 ? state.errorMessage
                 : null;
 
-            final emailError =
-                (errorMessage != null &&
+            final effectiveEmailError = _emailError ??
+                ((errorMessage != null &&
                     errorMessage.toLowerCase().contains('email'))
                 ? errorMessage
-                : null;
-            final passwordError =
-                (errorMessage != null &&
+                : null);
+
+            final effectivePasswordError = _passwordError ??
+                ((errorMessage != null &&
                     !errorMessage.toLowerCase().contains('email'))
                 ? errorMessage
-                : null;
+                : null);
 
             return CustomScrollView(
               slivers: [
@@ -144,10 +165,19 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           keyboardType: TextInputType.emailAddress,
                           controller: _emailController,
                           textInputAction: TextInputAction.next,
+                          onChanged: (_) {
+                            if (_emailError != null) {
+                              setState(() => _emailError = null);
+                            }
+                          },
                           decoration: InputDecoration(
                             hintText: 'Email',
-                            errorText: emailError,
-                            errorStyle: const TextStyle(color: AppTheme.cancel),
+                            errorText: effectiveEmailError,
+                            errorStyle: const TextStyle(
+                              color: AppTheme.cancel,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
                             prefixIcon: const Padding(
                               padding: EdgeInsets.only(left: 10),
                               child: Icon(LucideIcons.mail, size: 20, color: Color(0xFF495057)),
@@ -191,10 +221,19 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           obscureText: !_isPasswordVisible,
                           controller: _passwordController,
                           textInputAction: TextInputAction.done,
+                          onChanged: (_) {
+                            if (_passwordError != null) {
+                              setState(() => _passwordError = null);
+                            }
+                          },
                           decoration: InputDecoration(
                             hintText: 'Password',
-                            errorText: passwordError,
-                            errorStyle: const TextStyle(color: AppTheme.cancel),
+                            errorText: effectivePasswordError,
+                            errorStyle: const TextStyle(
+                              color: AppTheme.cancel,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
                             prefixIcon: const Padding(
                               padding: EdgeInsets.only(left: 10),
                               child: Icon(LucideIcons.lock, size: 20, color: Color(0xFF495057)),

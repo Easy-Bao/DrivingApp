@@ -37,6 +37,11 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
 
   bool _isPasswordInputVisible = false;
 
+  String? _nameError;
+  String? _phoneError;
+  String? _emailError;
+  String? _passwordError;
+
   @override
   void dispose() {
     _passengerNameController.dispose();
@@ -53,8 +58,20 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
     final email = _passengerEmailController.text.trim();
     final password = _passengerPasswordController.text;
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      CustomToast.show(context, 'Please enter your name, email, and password.');
+    setState(() {
+      _nameError = name.isEmpty ? 'Please enter your name' : null;
+      _phoneError = phone.isEmpty ? 'Please enter your phone number' : null;
+      if (email.isEmpty) {
+        _emailError = 'Please enter your email';
+      } else if (!email.contains('@')) {
+        _emailError = 'Please enter a valid email address';
+      } else {
+        _emailError = null;
+      }
+      _passwordError = password.isEmpty ? 'Please enter your password' : null;
+    });
+
+    if (_nameError != null || _phoneError != null || _emailError != null || _passwordError != null) {
       return;
     }
 
@@ -158,7 +175,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: AppTheme.cancel.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.3)),
                                 ),
                                 child: Text(
@@ -179,8 +196,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               ),
                               controller: _passengerNameController,
                               textInputAction: TextInputAction.next,
+                              onChanged: (_) {
+                                if (_nameError != null) {
+                                  setState(() => _nameError = null);
+                                }
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Full Name',
+                                errorText: _nameError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
                                   child: Icon(LucideIcons.user, size: 20, color: Color(0xFF495057)),
@@ -198,6 +221,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                     width: 1.5,
                                   ),
                                 ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -210,8 +241,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               controller: _passengerPhoneController,
                               keyboardType: TextInputType.phone,
                               textInputAction: TextInputAction.next,
+                              onChanged: (_) {
+                                if (_phoneError != null) {
+                                  setState(() => _phoneError = null);
+                                }
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Phone Number',
+                                errorText: _phoneError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
                                   child: Icon(LucideIcons.phone, size: 20, color: Color(0xFF495057)),
@@ -229,6 +266,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                     width: 1.5,
                                   ),
                                 ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -241,8 +286,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               keyboardType: TextInputType.emailAddress,
                               controller: _passengerEmailController,
                               textInputAction: TextInputAction.next,
+                              onChanged: (_) {
+                                if (_emailError != null) {
+                                  setState(() => _emailError = null);
+                                }
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Email address',
+                                errorText: _emailError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
                                   child: Icon(LucideIcons.mail, size: 20, color: Color(0xFF495057)),
@@ -260,6 +311,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                     width: 1.5,
                                   ),
                                 ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -272,8 +331,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               obscureText: !_isPasswordInputVisible,
                               controller: _passengerPasswordController,
                               textInputAction: TextInputAction.done,
+                              onChanged: (_) {
+                                if (_passwordError != null) {
+                                  setState(() => _passwordError = null);
+                                }
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Password',
+                                errorText: _passwordError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
                                   child: Icon(LucideIcons.lock, size: 20, color: Color(0xFF495057)),
@@ -304,6 +369,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                     color: AppTheme.primaryColor,
                                     width: 1.5,
                                   ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
                                 ),
                               ),
                             ),

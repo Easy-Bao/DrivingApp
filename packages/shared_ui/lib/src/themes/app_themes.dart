@@ -84,6 +84,19 @@ class PassengerTheme {
           borderRadius: BorderRadius.circular(36),
           borderSide: const BorderSide(color: primaryColor, width: 1.5),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(36),
+          borderSide: const BorderSide(color: cancel, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(36),
+          borderSide: const BorderSide(color: cancel, width: 1.5),
+        ),
+        errorStyle: const TextStyle(
+          color: cancel,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       iconTheme: const IconThemeData(
         color: primaryColor,

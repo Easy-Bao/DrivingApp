@@ -32,6 +32,7 @@ class _ForgotPasswordScreenContent extends StatefulWidget {
 class _ForgotPasswordScreenContentState
     extends State<_ForgotPasswordScreenContent> {
   final TextEditingController _emailController = TextEditingController();
+  String? _emailError;
 
   @override
   void dispose() {
@@ -42,10 +43,21 @@ class _ForgotPasswordScreenContentState
   void _submitResetLink(BuildContext context) {
     FocusScope.of(context).unfocus();
     final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      CustomToast.show(context, 'Please enter your email address.');
+
+    setState(() {
+      if (email.isEmpty) {
+        _emailError = 'Please enter your email';
+      } else if (!email.contains('@')) {
+        _emailError = 'Please enter a valid email address';
+      } else {
+        _emailError = null;
+      }
+    });
+
+    if (_emailError != null) {
       return;
     }
+
     unawaited(
       BlocProvider.of<ForgotPasswordCubit>(context).sendResetLink(email),
     );
@@ -97,6 +109,8 @@ class _ForgotPasswordScreenContentState
               ? state.errorMessage
               : null;
 
+          final effectiveEmailError = _emailError ?? errorMessage;
+
           return LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
@@ -135,27 +149,6 @@ class _ForgotPasswordScreenContentState
                                 ),
                               ),
                               const SizedBox(height: 40),
-                              if (errorMessage != null) ...[
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.cancel.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.3)),
-                                  ),
-                                  child: Text(
-                                    errorMessage,
-                                    style: const TextStyle(
-                                      color: AppTheme.cancel,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                              ],
                               const Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text(
@@ -178,8 +171,19 @@ class _ForgotPasswordScreenContentState
                                 keyboardType: TextInputType.emailAddress,
                                 controller: _emailController,
                                 textInputAction: TextInputAction.done,
+                                onChanged: (_) {
+                                  if (_emailError != null) {
+                                    setState(() => _emailError = null);
+                                  }
+                                },
                                 decoration: InputDecoration(
                                   hintText: 'Email',
+                                  errorText: effectiveEmailError,
+                                  errorStyle: const TextStyle(
+                                    color: AppTheme.cancel,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                   prefixIcon: const Padding(
                                     padding: EdgeInsets.only(left: 10),
                                     child: Icon(LucideIcons.mail, size: 20, color: Color(0xFF495057)),
@@ -196,6 +200,14 @@ class _ForgotPasswordScreenContentState
                                       color: AppTheme.primaryColor,
                                       width: 1.5,
                                     ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(36),
+                                    borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(36),
+                                    borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
                                   ),
                                 ),
                               ),
