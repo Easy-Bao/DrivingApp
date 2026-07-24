@@ -155,25 +155,25 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             filled: true,
                             fillColor: Colors.white,
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                               borderSide: const BorderSide(color: AppTheme.borderSide),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                               borderSide: const BorderSide(
                                 color: AppTheme.primaryColor,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                               borderSide: const BorderSide(
                                 color: AppTheme.cancel,
                                 width: 1.0,
                               ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                               borderSide: const BorderSide(
                                 color: AppTheme.cancel,
                                 width: 1.5,
@@ -214,24 +214,24 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             filled: true,
                             fillColor: Colors.white,
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                               borderSide: const BorderSide(color: AppTheme.borderSide),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                               borderSide: const BorderSide(
                                 color: AppTheme.primaryColor,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                               borderSide: const BorderSide(
                                 color: AppTheme.cancel,
                               ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                               borderSide: const BorderSide(
                                 color: AppTheme.cancel,
                                 width: 1.5,
@@ -289,7 +289,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             foregroundColor: Colors.white,
                             minimumSize: const Size.fromHeight(56),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                             ),
                             elevation: 0,
                           ),

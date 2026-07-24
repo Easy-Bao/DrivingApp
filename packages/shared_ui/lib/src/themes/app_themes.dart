@@ -73,15 +73,15 @@ class PassengerTheme {
         prefixIconColor: const Color(0xFF495057),
         suffixIconColor: const Color(0xFF495057),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(36),
           borderSide: const BorderSide(color: borderSide, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(36),
           borderSide: const BorderSide(color: borderSide, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(36),
           borderSide: const BorderSide(color: primaryColor, width: 1.5),
         ),
       ),
@@ -98,7 +98,7 @@ class PassengerTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(56),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(36),
           ),
           elevation: 0,
           textStyle: const TextStyle(

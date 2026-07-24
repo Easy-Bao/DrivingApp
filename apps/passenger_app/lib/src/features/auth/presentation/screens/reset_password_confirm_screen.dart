@@ -203,11 +203,11 @@ class _ResetPasswordConfirmScreenContentState
                                   filled: true,
                                   fillColor: Colors.white,
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(36),
                                     borderSide: const BorderSide(color: AppTheme.borderSide),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(36),
                                     borderSide: const BorderSide(
                                       color: AppTheme.primaryColor,
                                       width: 1.5,
@@ -261,11 +261,11 @@ class _ResetPasswordConfirmScreenContentState
                                   filled: true,
                                   fillColor: Colors.white,
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(36),
                                     borderSide: const BorderSide(color: AppTheme.borderSide),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(36),
                                     borderSide: const BorderSide(
                                       color: AppTheme.primaryColor,
                                       width: 1.5,
@@ -286,7 +286,7 @@ class _ResetPasswordConfirmScreenContentState
                             foregroundColor: Colors.white,
                             minimumSize: const Size.fromHeight(56),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(36),
                             ),
                             elevation: 0,
                           ),

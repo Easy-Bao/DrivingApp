@@ -86,7 +86,7 @@ class OnBoardingScreen extends StatelessWidget {
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(36),
                               ),
                             ),
                             child: const Text(
@@ -116,7 +116,7 @@ class OnBoardingScreen extends StatelessWidget {
                         foregroundColor: AppTheme.primaryColor,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(36),
                         ),
                       ),
                       child: Row(
