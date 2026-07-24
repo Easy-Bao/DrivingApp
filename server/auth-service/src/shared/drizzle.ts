@@ -2,14 +2,14 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { pgTable, text, timestamp, boolean, doublePrecision } from 'drizzle-orm/pg-core';
 
-const passengerDbUrl = process.env.PASSENGER_DB_URL;
-if (!passengerDbUrl || passengerDbUrl.trim().length === 0) {
-  throw new Error('Security Configuration Error: PASSENGER_DB_URL environment variable is missing.');
+const passengerDbUrl = process.env.PASSENGER_DB_URL || process.env.DATABASE_URL;
+if (!passengerDbUrl) {
+  throw new Error('Configuration Error: PASSENGER_DB_URL or DATABASE_URL environment variable is required.');
 }
 
-const driverDbUrl = process.env.DRIVER_DB_URL;
-if (!driverDbUrl || driverDbUrl.trim().length === 0) {
-  throw new Error('Security Configuration Error: DRIVER_DB_URL environment variable is missing.');
+const driverDbUrl = process.env.DRIVER_DB_URL || process.env.DATABASE_URL;
+if (!driverDbUrl) {
+  throw new Error('Configuration Error: DRIVER_DB_URL or DATABASE_URL environment variable is required.');
 }
 
 const passengerPgClient = postgres(passengerDbUrl);

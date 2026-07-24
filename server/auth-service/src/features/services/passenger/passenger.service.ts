@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import {
   RegisterPassengerInput,
   LoginPassengerInput,
@@ -5,6 +6,7 @@ import {
 import { AuthUserResponse } from '../../schemas/common/common.zod.ts';
 import { OneTimePasswordStoreService } from '../common/otp_store.ts';
 import { JsonWebTokenService } from '../common/jwt.service.ts';
+import { passengerDb, passengersTable } from '../../../shared/drizzle.ts';
 
 export interface PassengerSessionResult {
   token: string;
@@ -12,83 +14,68 @@ export interface PassengerSessionResult {
   needsVerification: boolean;
 }
 
-export interface PassengerAccountRecord {
-  id: string;
-  email: string;
-  phone: string;
-  passwordHash: string;
-  role: 'passenger';
-  name: string;
-  preferred_ride_type: string;
-  isVerified: boolean;
-  createdAt: Date;
-}
-
 export class PassengerAuthenticationService {
-  private static readonly passengerAccountsStore = new Map<string, PassengerAccountRecord>();
-
-  static verifyPassengerAccountState(passengerEmailAddress: string): void {
+  static async verifyPassengerAccountState(passengerEmailAddress: string): Promise<void> {
     const normalizedEmailAddress = passengerEmailAddress.toLowerCase().trim();
-    const existingAccount = PassengerAuthenticationService.passengerAccountsStore.get(normalizedEmailAddress);
-    if (existingAccount) {
-      existingAccount.isVerified = true;
-      PassengerAuthenticationService.passengerAccountsStore.set(normalizedEmailAddress, existingAccount);
-    }
+    await passengerDb.update(passengersTable)
+      .set({ isVerified: true })
+      .where(eq(passengersTable.email, normalizedEmailAddress));
   }
 
-  static updatePassengerPassword(passengerEmailAddress: string, newPasswordHash: string): boolean {
+  static async updatePassengerPassword(passengerEmailAddress: string, newPasswordHash: string): Promise<boolean> {
     const normalizedEmailAddress = passengerEmailAddress.toLowerCase().trim();
-    const existingAccount = PassengerAuthenticationService.passengerAccountsStore.get(normalizedEmailAddress);
-    if (existingAccount) {
-      existingAccount.passwordHash = newPasswordHash;
-      PassengerAuthenticationService.passengerAccountsStore.set(normalizedEmailAddress, existingAccount);
-      return true;
-    }
-    return false;
+    const [updated] = await passengerDb.update(passengersTable)
+      .set({ passwordHash: newPasswordHash })
+      .where(eq(passengersTable.email, normalizedEmailAddress))
+      .returning();
+    return !!updated;
   }
 
   async registerPassengerAccount(passengerInput: RegisterPassengerInput): Promise<PassengerSessionResult> {
     const normalizedEmailAddress = passengerInput.email.toLowerCase().trim();
-    if (PassengerAuthenticationService.passengerAccountsStore.has(normalizedEmailAddress)) {
+
+    const [existingAccount] = await passengerDb.select()
+      .from(passengersTable)
+      .where(eq(passengersTable.email, normalizedEmailAddress));
+
+    if (existingAccount) {
       throw new Error('Passenger account with this email address already exists');
     }
 
     const passwordHash = await Bun.password.hash(passengerInput.password);
     const passengerId = `usr_${Math.random().toString(36).substring(2, 11)}`;
-    const creationTimestamp = new Date();
 
-    const passengerAccount: PassengerAccountRecord = {
-      id: passengerId,
-      email: normalizedEmailAddress,
-      phone: passengerInput.phone,
-      passwordHash,
-      role: 'passenger',
-      name: passengerInput.name,
-      preferred_ride_type: passengerInput.preferred_ride_type,
-      isVerified: false,
-      createdAt: creationTimestamp,
-    };
+    const [createdAccount] = await passengerDb.insert(passengersTable)
+      .values({
+        id: passengerId,
+        name: passengerInput.name,
+        email: normalizedEmailAddress,
+        phone: passengerInput.phone,
+        preferredRideType: passengerInput.preferred_ride_type || 'solo-ride',
+        passwordHash,
+        isVerified: false,
+      })
+      .returning();
 
-    PassengerAuthenticationService.passengerAccountsStore.set(normalizedEmailAddress, passengerAccount);
-    await OneTimePasswordStoreService.generateOneTimePasswordCode(passengerAccount.email, 'verification');
+    await OneTimePasswordStoreService.generateOneTimePasswordCode(normalizedEmailAddress, 'verification');
 
     const authenticationToken = JsonWebTokenService.generateJsonWebToken(
-      passengerId,
-      passengerAccount.email,
-      passengerAccount.role,
+      createdAccount.id,
+      createdAccount.email,
+      'passenger',
     );
 
     return {
       token: authenticationToken,
       user: {
-        id: passengerAccount.id,
-        email: passengerAccount.email,
-        name: passengerAccount.name,
-        phone: passengerAccount.phone,
-        role: passengerAccount.role,
-        isVerified: passengerAccount.isVerified,
-        createdAt: passengerAccount.createdAt,
-        preferred_ride_type: passengerAccount.preferred_ride_type,
+        id: createdAccount.id,
+        email: createdAccount.email,
+        name: createdAccount.name,
+        phone: createdAccount.phone,
+        role: 'passenger',
+        isVerified: createdAccount.isVerified,
+        createdAt: createdAccount.createdAt,
+        preferred_ride_type: createdAccount.preferredRideType || 'solo-ride',
       },
       needsVerification: true,
     };
@@ -96,7 +83,10 @@ export class PassengerAuthenticationService {
 
   async authenticatePassengerCredential(loginInput: LoginPassengerInput): Promise<PassengerSessionResult> {
     const normalizedEmailAddress = loginInput.email.toLowerCase().trim();
-    const existingAccount = PassengerAuthenticationService.passengerAccountsStore.get(normalizedEmailAddress);
+
+    const [existingAccount] = await passengerDb.select()
+      .from(passengersTable)
+      .where(eq(passengersTable.email, normalizedEmailAddress));
 
     if (!existingAccount) {
       throw new Error('Invalid email or password');
@@ -110,7 +100,7 @@ export class PassengerAuthenticationService {
     const authenticationToken = JsonWebTokenService.generateJsonWebToken(
       existingAccount.id,
       existingAccount.email,
-      existingAccount.role,
+      'passenger',
     );
 
     return {
@@ -120,10 +110,10 @@ export class PassengerAuthenticationService {
         email: existingAccount.email,
         name: existingAccount.name,
         phone: existingAccount.phone,
-        role: existingAccount.role,
+        role: 'passenger',
         isVerified: existingAccount.isVerified,
         createdAt: existingAccount.createdAt,
-        preferred_ride_type: existingAccount.preferred_ride_type,
+        preferred_ride_type: existingAccount.preferredRideType || 'solo-ride',
       },
       needsVerification: !existingAccount.isVerified,
     };

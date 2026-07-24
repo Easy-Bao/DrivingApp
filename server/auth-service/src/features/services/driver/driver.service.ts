@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import {
   RegisterDriverInput,
   LoginDriverInput,
@@ -5,6 +6,7 @@ import {
 import { AuthUserResponse } from '../../schemas/common/common.zod.ts';
 import { OneTimePasswordStoreService } from '../common/otp_store.ts';
 import { JsonWebTokenService } from '../common/jwt.service.ts';
+import { driverDb, driversTable } from '../../../shared/drizzle.ts';
 
 export interface DriverSessionResult {
   token: string;
@@ -12,89 +14,71 @@ export interface DriverSessionResult {
   needsVerification: boolean;
 }
 
-export interface DriverAccountRecord {
-  id: string;
-  email: string;
-  phone: string;
-  passwordHash: string;
-  role: 'driver';
-  name: string;
-  vehicleType: string;
-  plateNumber: string;
-  rating: number;
-  isVerified: boolean;
-  createdAt: Date;
-}
-
 export class DriverAuthenticationService {
-  private static readonly driverAccountsStore = new Map<string, DriverAccountRecord>();
-
-  static verifyDriverAccountState(driverEmailAddress: string): void {
+  static async verifyDriverAccountState(driverEmailAddress: string): Promise<void> {
     const normalizedEmailAddress = driverEmailAddress.toLowerCase().trim();
-    const existingAccount = DriverAuthenticationService.driverAccountsStore.get(normalizedEmailAddress);
-    if (existingAccount) {
-      existingAccount.isVerified = true;
-      DriverAuthenticationService.driverAccountsStore.set(normalizedEmailAddress, existingAccount);
-    }
+    await driverDb.update(driversTable)
+      .set({ isVerified: true })
+      .where(eq(driversTable.email, normalizedEmailAddress));
   }
 
-  static updateDriverPassword(driverEmailAddress: string, newPasswordHash: string): boolean {
+  static async updateDriverPassword(driverEmailAddress: string, newPasswordHash: string): Promise<boolean> {
     const normalizedEmailAddress = driverEmailAddress.toLowerCase().trim();
-    const existingAccount = DriverAuthenticationService.driverAccountsStore.get(normalizedEmailAddress);
-    if (existingAccount) {
-      existingAccount.passwordHash = newPasswordHash;
-      DriverAuthenticationService.driverAccountsStore.set(normalizedEmailAddress, existingAccount);
-      return true;
-    }
-    return false;
+    const [updated] = await driverDb.update(driversTable)
+      .set({ passwordHash: newPasswordHash })
+      .where(eq(driversTable.email, normalizedEmailAddress))
+      .returning();
+    return !!updated;
   }
 
   async registerDriverAccount(driverInput: RegisterDriverInput): Promise<DriverSessionResult> {
     const normalizedEmailAddress = driverInput.email.toLowerCase().trim();
-    if (DriverAuthenticationService.driverAccountsStore.has(normalizedEmailAddress)) {
+
+    const [existingAccount] = await driverDb.select()
+      .from(driversTable)
+      .where(eq(driversTable.email, normalizedEmailAddress));
+
+    if (existingAccount) {
       throw new Error('Driver account with this email address already exists');
     }
 
     const passwordHash = await Bun.password.hash(driverInput.password);
     const driverId = `drv_${Math.random().toString(36).substring(2, 11)}`;
-    const creationTimestamp = new Date();
 
-    const driverAccount: DriverAccountRecord = {
-      id: driverId,
-      email: normalizedEmailAddress,
-      phone: driverInput.phone,
-      passwordHash,
-      role: 'driver',
-      name: driverInput.name,
-      vehicleType: driverInput.vehicleType,
-      plateNumber: driverInput.plateNumber,
-      rating: 5.0,
-      isVerified: false,
-      createdAt: creationTimestamp,
-    };
+    const [createdAccount] = await driverDb.insert(driversTable)
+      .values({
+        id: driverId,
+        name: driverInput.name,
+        email: normalizedEmailAddress,
+        phone: driverInput.phone,
+        vehicleType: driverInput.vehicleType,
+        plateNumber: driverInput.plateNumber,
+        passwordHash,
+        isVerified: false,
+      })
+      .returning();
 
-    DriverAuthenticationService.driverAccountsStore.set(normalizedEmailAddress, driverAccount);
-    await OneTimePasswordStoreService.generateOneTimePasswordCode(driverAccount.email, 'verification');
+    await OneTimePasswordStoreService.generateOneTimePasswordCode(normalizedEmailAddress, 'verification');
 
     const authenticationToken = JsonWebTokenService.generateJsonWebToken(
-      driverId,
-      driverAccount.email,
-      driverAccount.role,
+      createdAccount.id,
+      createdAccount.email,
+      'driver',
     );
 
     return {
       token: authenticationToken,
       user: {
-        id: driverAccount.id,
-        email: driverAccount.email,
-        name: driverAccount.name,
-        phone: driverAccount.phone,
-        role: driverAccount.role,
-        isVerified: driverAccount.isVerified,
-        createdAt: driverAccount.createdAt,
-        vehicleType: driverAccount.vehicleType,
-        plateNumber: driverAccount.plateNumber,
-        rating: driverAccount.rating,
+        id: createdAccount.id,
+        email: createdAccount.email,
+        name: createdAccount.name,
+        phone: createdAccount.phone,
+        role: 'driver',
+        isVerified: createdAccount.isVerified,
+        createdAt: createdAccount.createdAt,
+        vehicleType: createdAccount.vehicleType,
+        plateNumber: createdAccount.plateNumber,
+        rating: createdAccount.rating,
       },
       needsVerification: true,
     };
@@ -102,7 +86,10 @@ export class DriverAuthenticationService {
 
   async authenticateDriverCredential(loginInput: LoginDriverInput): Promise<DriverSessionResult> {
     const normalizedEmailAddress = loginInput.email.toLowerCase().trim();
-    const existingAccount = DriverAuthenticationService.driverAccountsStore.get(normalizedEmailAddress);
+
+    const [existingAccount] = await driverDb.select()
+      .from(driversTable)
+      .where(eq(driversTable.email, normalizedEmailAddress));
 
     if (!existingAccount) {
       throw new Error('Invalid email or password');
@@ -116,7 +103,7 @@ export class DriverAuthenticationService {
     const authenticationToken = JsonWebTokenService.generateJsonWebToken(
       existingAccount.id,
       existingAccount.email,
-      existingAccount.role,
+      'driver',
     );
 
     return {
@@ -126,7 +113,7 @@ export class DriverAuthenticationService {
         email: existingAccount.email,
         name: existingAccount.name,
         phone: existingAccount.phone,
-        role: existingAccount.role,
+        role: 'driver',
         isVerified: existingAccount.isVerified,
         createdAt: existingAccount.createdAt,
         vehicleType: existingAccount.vehicleType,

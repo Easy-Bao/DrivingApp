@@ -126,7 +126,7 @@ export class PassengerRepositoryImpl implements PassengerRepository {
   async retrievePassengerRideHistory(passengerId: string): Promise<RideRequest[]> {
     const passenger = await this.retrievePassengerProfile(passengerId);
     if (!passenger) {
-      throw new Error(`Passenger ID ${passengerId} not found`);
+      return [];
     }
 
     const tripServiceUrl = process.env.TRIP_SERVICE_URL;
@@ -218,7 +218,7 @@ export class PassengerRepositoryImpl implements PassengerRepository {
   async retrievePassengerNotifications(passengerId: string): Promise<PassengerNotification[]> {
     const passenger = await this.retrievePassengerProfile(passengerId);
     if (!passenger) {
-      throw new Error(`Passenger ID ${passengerId} not found`);
+      return [];
     }
     const localRides = await db.select()
       .from(rideRequests)
