@@ -73,9 +73,7 @@ class LocationService {
   ) async {
     final nativeService = _nativeService;
     if (nativeService == null) {
-      throw StateError(
-        'LocationService not initialized. Call initialize() first.',
-      );
+      throw StateError('LocationService not initialized.');
     }
     return await nativeService.haversineDistance(
       lat1: startLat,

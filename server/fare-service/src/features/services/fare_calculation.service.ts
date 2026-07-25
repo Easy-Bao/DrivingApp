@@ -1,7 +1,9 @@
 import { db } from '../../shared/drizzle.ts';
 import { servicePricingRules, fareTransactions } from '../../db/schema.ts';
-import { eq } from 'drizzle-orm';
+import { eq, type InferSelectModel } from 'drizzle-orm';
 import { PricingConfigService } from './pricing_config.service.ts';
+
+type ServicePricingRule = InferSelectModel<typeof servicePricingRules>;
 
 export interface ServiceEstimate {
   serviceType: string;
@@ -70,8 +72,7 @@ export class FareCalculationService {
       throw new Error('No active service pricing rules found in database authority.');
     }
 
-    ///TODO: @param rule should  not any and ensure it's type safety
-    const estimates: ServiceEstimate[] = rules.map((rule: any) => {
+    const estimates: ServiceEstimate[] = rules.map((rule: ServicePricingRule) => {
       const base = rule.baseFare ?? 20.0;
       const perKm = rule.perKmRate ?? 10.0;
       const perMin = rule.perMinuteRate ?? 1.5;

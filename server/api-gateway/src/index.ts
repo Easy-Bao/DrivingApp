@@ -7,7 +7,7 @@ import { createRateLimiter } from './middleware/rate_limiter.ts';
 export const app = new Hono();
 
 app.use('*', cors());
-app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 100 }));
+app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 600 }));
 app.route('/', gatewayRouter);
 app.get('/', (context) => context.json({ status: 'Gateway OK' }));
 

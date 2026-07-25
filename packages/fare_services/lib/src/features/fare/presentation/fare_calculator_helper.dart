@@ -7,16 +7,15 @@ class FareCalculatorHelper {
 
   static Map<String, ServicePricingConfig> get activeConfigs => _activePricingRules;
 
-  /// Synchronizes active service pricing rules received from the backend authority service.
   static void synchronizeServicePricingRules(
     List<ServicePricingConfig> pricingConfigurations,
   ) {
+    _activePricingRules.clear();
     for (final pricingConfig in pricingConfigurations) {
       _activePricingRules[pricingConfig.serviceName] = pricingConfig;
     }
   }
 
-  /// Calculates estimated fare for a designated service type using active pricing rules.
   static double estimateFare({
     required String serviceType,
     required double distanceKm,
@@ -32,11 +31,13 @@ class FareCalculatorHelper {
     );
   }
 
-  /// Calculates estimated fares across all synchronized service types.
   static Map<String, double> estimateAllFares({
     required double distanceKm,
     double durationMinutes = 0.0,
   }) {
+    if (_activePricingRules.isEmpty) {
+      return {};
+    }
     return {
       for (final entry in _activePricingRules.entries)
         entry.key: entry.value.calculateFare(

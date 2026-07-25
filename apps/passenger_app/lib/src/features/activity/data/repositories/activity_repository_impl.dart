@@ -3,7 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
 import 'package:passenger_services/passenger_services.dart';
 
-const _monthAbbreviations = [
+const List<String> _monthAbbreviations = <String>[
   'JAN',
   'FEB',
   'MAR',
@@ -59,7 +59,9 @@ class ActivityRepositoryImpl implements ActivityRepository {
     String passengerId,
   ) async {
     try {
-      final rawList = await _passengerRemoteDataSource.fetchRideHistory(passengerId);
+      final rawList = await _passengerRemoteDataSource.fetchRideHistory(
+        passengerId,
+      );
       return Right(
         rawList.map((raw) => _mapToModel(raw as Map<String, dynamic>)).toList(),
       );

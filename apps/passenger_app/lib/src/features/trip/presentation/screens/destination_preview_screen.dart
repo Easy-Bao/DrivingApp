@@ -51,6 +51,41 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         durationMinutes: defaultMins,
       );
     });
+    unawaited(_fetchServerFares(defaultDist, defaultMins));
+  }
+
+  Future<void> _fetchServerFares(double distanceKm, double durationMinutes) async {
+    try {
+      final fareRemoteDataSource = Modular.get<FareRemoteDataSource>();
+      final res = await fareRemoteDataSource.fetchFareEstimates(
+        distanceKm: distanceKm,
+        durationMinutes: durationMinutes,
+      );
+
+      final rawData = res['data'] is Map<String, dynamic> ? res['data'] as Map<String, dynamic> : res;
+      final estimatesList = rawData['estimates'] as List?;
+      final Map<String, double> fetchedFares = {};
+
+      if (estimatesList != null) {
+        for (final item in estimatesList) {
+          if (item is Map<String, dynamic>) {
+            final type = item['serviceType'] as String? ?? item['service_type'] as String?;
+            final fare = (item['totalFare'] ?? item['total_fare']) as num?;
+            if (type != null && fare != null) {
+              fetchedFares[type] = fare.toDouble();
+            }
+          }
+        }
+      }
+
+      if (fetchedFares.isNotEmpty && mounted) {
+        setState(() {
+          _fares = fetchedFares;
+        });
+      }
+    } catch (error) {
+      debugPrint('Error fetching server fare quotes: $error');
+    }
   }
 
   Future<void> _loadRoute() async {
@@ -77,6 +112,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
             durationMinutes: approxMins,
           );
         });
+        unawaited(_fetchServerFares(approxKm, approxMins));
       }
     }
 
@@ -89,16 +125,17 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
 
     if (!mounted) return;
     if (route != null) {
+      final mins = route.estimatedTime.inMinutes.toDouble();
       setState(() {
         _distanceKm = route.distanceKm;
         _distance = '${route.distanceKm.toStringAsFixed(1)} km';
-        final mins = route.estimatedTime.inMinutes;
-        _duration = mins < 60 ? '$mins min' : '${mins ~/ 60}h ${mins % 60}m';
+        _duration = mins < 60 ? '${mins.toInt()} min' : '${mins ~/ 60}h ${(mins % 60).toInt()}m';
         _fares = FareCalculatorHelper.estimateAllFares(
           distanceKm: route.distanceKm,
-          durationMinutes: route.estimatedTime.inMinutes.toDouble(),
+          durationMinutes: mins,
         );
       });
+      unawaited(_fetchServerFares(route.distanceKm, mins));
     }
   }
 

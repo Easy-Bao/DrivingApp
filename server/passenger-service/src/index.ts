@@ -7,7 +7,7 @@ const port = parseInt(process.env.PORT || '8081', 10);
 
 const app = new Hono();
 
-app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 60 }));
+app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 600 }));
 app.onError(globalErrorHandler);
 
 app.get('/', (c) => c.text('Passenger service active'));

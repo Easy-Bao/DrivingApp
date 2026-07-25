@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:fare_services/fare_services.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/passenger_module.dart';
 import 'package:passenger_app/src/core/network/dio_client.dart';
@@ -60,6 +61,17 @@ class AppModule extends Module {
       ..addLazySingleton<BiddingRepository>(
         (i) => BiddingRepositoryImpl(
           remoteDataSource: i.get<BiddingRemoteDataSource>(),
+        ),
+      )
+      ..addLazySingleton<FareRemoteDataSource>(
+        (i) => FareRemoteDataSourceImpl(
+          baseUrl: EnvironmentConfig.fareServiceUri,
+          dio: i.get<Dio>(),
+        ),
+      )
+      ..addLazySingleton<FareRepository>(
+        (i) => FareRepositoryImpl(
+          remoteDataSource: i.get<FareRemoteDataSource>(),
         ),
       );
   }

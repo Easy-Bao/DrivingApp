@@ -7,7 +7,7 @@ import { createRateLimiter } from './shared/middleware/rate_limiter.ts';
 const app = new Hono();
 
 app.use('*', cors());
-app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 60 }));
+app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 600 }));
 app.onError(globalErrorHandler);
 
 app.route('/rides', ridesRouter);

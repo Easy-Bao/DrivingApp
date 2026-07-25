@@ -23,27 +23,10 @@ class _MapPinScreenState extends State<MapPinScreen>
   double _centerLat = LocationService.lastPosition?.latitude ?? 0.0;
   double _centerLng = LocationService.lastPosition?.longitude ?? 0.0;
 
-  late final AnimationController _pulseController;
-  late final Animation<double> _pulseAnim;
-
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    );
-    unawaited(_pulseController.repeat(reverse: true));
-    _pulseAnim = Tween<double>(begin: 0.88, end: 1.12).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
     unawaited(_initLocation());
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
   }
 
   Future<void> _initLocation() async {
@@ -121,200 +104,96 @@ class _MapPinScreenState extends State<MapPinScreen>
       backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
+          // 1. Interactive Map View
           MapProvider.buildMapView(
             latitude: _centerLat,
             longitude: _centerLng,
             zoom: 15.0,
             onMapCreated: (coordinate) => _mapController = coordinate,
           ),
+
+          // 2. Center Pin Marker with Hero shared transition
           Center(
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                AnimatedBuilder(
-                  animation: _pulseAnim,
-                  builder: (_, _) => Transform.scale(
-                    scale: _pulseAnim.value,
-                    child: Container(
-                      width: 64,
-                      height: 64,
+            child: Hero(
+              tag: 'map_pin_button',
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.18),
-                          width: 1.5,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          LucideIcons.map_pin,
+                          color: Colors.white,
+                          size: 24,
                         ),
-                        color: AppTheme.primaryColor.withValues(alpha: 0.05),
                       ),
                     ),
-                  ),
-                ),
-                Container(
-                  width: 10,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                ),
-                Transform.translate(
-                  offset: const Offset(0, -34),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Transform.rotate(
-                        angle: 0.785398,
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(24),
-                              topRight: Radius.circular(24),
-                              bottomLeft: Radius.circular(24),
-                              bottomRight: Radius.circular(4),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.28,
-                                ),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Transform.rotate(
-                            angle: -0.785398,
-                            child: const Icon(
-                              LucideIcons.map_pin,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
+                    Container(
+                      width: 3,
+                      height: 12,
+                      color: AppTheme.primaryColor,
+                    ),
+                    Container(
+                      width: 8,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      Container(
-                        width: 3,
-                        height: 16,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.vertical(
-                            bottom: Radius.circular(2),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
+
+          // 3. Top Row Buttons: Back button left, Locate button right (2nd Picture Layout)
           Positioned(
             top: top + 10,
             left: 16,
             right: 16,
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _TopButton(
                   icon: LucideIcons.arrow_left,
                   onTap: () => context.pop(),
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        LucideIcons.map_pin,
-                        color: AppTheme.primaryColor,
-                        size: 13,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Pin a location',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                _TopButton(icon: LucideIcons.locate_fixed, onTap: _relocate),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 232,
-            right: 16,
-            child: Column(
-              children: [
-                _MapButton(
-                  icon: LucideIcons.plus,
-                  onTap: () async {
-                    if (_mapController != null) {
-                      final coordinate = await MapProvider.getCameraCenter(
-                        _mapController!,
-                      );
-                      await MapProvider.moveCamera(
-                        _mapController!,
-                        coordinate.latitude,
-                        coordinate.longitude,
-                        zoom: 17.0,
-                      );
-                    }
-                  },
-                ),
-                const SizedBox(height: 6),
-                _MapButton(
-                  icon: LucideIcons.minus,
-                  onTap: () async {
-                    if (_mapController != null) {
-                      final coordinate = await MapProvider.getCameraCenter(
-                        _mapController!,
-                      );
-                      await MapProvider.moveCamera(
-                        _mapController!,
-                        coordinate.latitude,
-                        coordinate.longitude,
-                        zoom: 13.0,
-                      );
-                    }
-                  },
+                _TopButton(
+                  icon: LucideIcons.locate_fixed,
+                  onTap: _relocate,
                 ),
               ],
             ),
           ),
+
+          // 4. Bottom Location Card Container with AppTheme (2nd Picture Layout)
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              padding: const EdgeInsets.all(18),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 24,
                     offset: const Offset(0, -4),
                   ),
@@ -322,21 +201,35 @@ class _MapPinScreenState extends State<MapPinScreen>
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.borderSide,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
                           color: AppTheme.neutralColor,
-                          borderRadius: BorderRadius.circular(12),
+                          shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          LucideIcons.map_pin,
-                          color: AppTheme.primaryColor,
-                          size: 18,
+                        child: const Center(
+                          child: Icon(
+                            LucideIcons.map_pin,
+                            color: AppTheme.primaryColor,
+                            size: 20,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -347,46 +240,40 @@ class _MapPinScreenState extends State<MapPinScreen>
                             const Text(
                               'Selected location',
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.07,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                                 color: AppTheme.tertiaryColor,
                               ),
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 2),
                             if (_isGeocoding)
                               Text(
                                 'Locating…',
                                 style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.45,
-                                  ),
+                                  fontSize: 15,
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
                                 ),
                               )
                             else ...[
                               Text(
                                 _address,
                                 style: const TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.primaryColor,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (_subAddress.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  _subAddress,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppTheme.tertiaryColor,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              Text(
+                                '${_subAddress.isNotEmpty ? "$_subAddress • " : ""}${_centerLat.toStringAsFixed(4)}° N, ${_centerLng.toStringAsFixed(4)}° E',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.tertiaryColor,
                                 ),
-                              ],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ],
                           ],
                         ),
@@ -395,57 +282,24 @@ class _MapPinScreenState extends State<MapPinScreen>
                       GestureDetector(
                         onTap: _updatePin,
                         child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
                             color: AppTheme.neutralColor,
-                            borderRadius: BorderRadius.circular(10),
+                            shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            LucideIcons.refresh_cw,
-                            color: AppTheme.tertiaryColor,
-                            size: 14,
+                          child: const Center(
+                            child: Icon(
+                              LucideIcons.refresh_cw,
+                              color: AppTheme.tertiaryColor,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: AppTheme.tertiaryColor.withValues(
-                              alpha: 0.2,
-                            ),
-                            thickness: 1,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(
-                            '${_centerLat.toStringAsFixed(4)}° N, '
-                            '${_centerLng.toStringAsFixed(4)}° E',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.tertiaryColor.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            color: AppTheme.tertiaryColor.withValues(
-                              alpha: 0.2,
-                            ),
-                            thickness: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -453,11 +307,10 @@ class _MapPinScreenState extends State<MapPinScreen>
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
-                        disabledBackgroundColor: AppTheme.primaryColor
-                            .withValues(alpha: 0.35),
+                        disabledBackgroundColor: AppTheme.primaryColor.withValues(alpha: 0.35),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(36),
                         ),
                         elevation: 0,
                       ),
@@ -469,8 +322,8 @@ class _MapPinScreenState extends State<MapPinScreen>
                           Text(
                             'Confirm location',
                             style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -497,47 +350,21 @@ class _TopButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(13),
+          shape: BoxShape.circle,
+          border: Border.all(color: AppTheme.borderSide),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Icon(icon, color: AppTheme.primaryColor, size: 18),
-      ),
-    );
-  }
-}
-
-class _MapButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _MapButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        child: Icon(icon, color: AppTheme.primaryColor, size: 17),
       ),
     );
   }

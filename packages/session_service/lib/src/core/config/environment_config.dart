@@ -53,6 +53,16 @@ class EnvironmentConfig {
     return _resolveUri(rawUrl);
   }
 
+  static Uri get fareServiceUri {
+    final rawUrl = dotenv.env['FARE_SERVICE_URL'] ??
+        dotenv.env['API_GATEWAY_URL'] ??
+        dotenv.env['PASSENGER_SERVICE_URL'];
+    if (rawUrl == null || rawUrl.isEmpty) {
+      throw StateError('FARE_SERVICE_URL environment variable is missing.');
+    }
+    return _resolveUri(rawUrl);
+  }
+
   static Uri get httpBaseUri {
     final uri = dotenv.env['DRIVER_SERVICE_URL'] != null
         ? driverServiceUri

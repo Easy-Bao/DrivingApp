@@ -4,6 +4,46 @@ import 'dart:ui';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 @pragma('vm:entry-point')
+void onTelemetryServiceStart(ServiceInstance service) {
+  DartPluginRegistrant.ensureInitialized();
+
+  if (service is AndroidServiceInstance) {
+    service.on('setAsForeground').listen((event) {
+      unawaited(service.setAsForegroundService());
+    });
+
+    service.on('setAsBackground').listen((event) {
+      unawaited(service.setAsBackgroundService());
+    });
+  }
+
+  service.on('stopService').listen((event) {
+    unawaited(service.stopSelf());
+  });
+
+  const telemetrySyncIntervalSeconds = 10;
+  Timer.periodic(const Duration(seconds: telemetrySyncIntervalSeconds),
+      (timer) async {
+    if (service is AndroidServiceInstance) {
+      final isForeground = await service.isForegroundService();
+      if (isForeground) {
+        unawaited(
+          service.setForegroundNotificationInfo(
+            title: 'Telemetry Active',
+            content: 'Driver background location telemetry active',
+          ),
+        );
+      }
+    }
+  });
+}
+
+@pragma('vm:entry-point')
+bool onTelemetryServiceIosBackground(ServiceInstance service) {
+  return true;
+}
+
+@pragma('vm:entry-point')
 class BackgroundTelemetryService {
   BackgroundTelemetryService._();
 
@@ -12,7 +52,7 @@ class BackgroundTelemetryService {
 
     await service.configure(
       androidConfiguration: AndroidConfiguration(
-        onStart: onStart,
+        onStart: onTelemetryServiceStart,
         autoStart: false,
         isForegroundMode: true,
         notificationChannelId: 'telemetry_channel',
@@ -21,49 +61,10 @@ class BackgroundTelemetryService {
       ),
       iosConfiguration: IosConfiguration(
         autoStart: false,
-        onForeground: onStart,
-        onBackground: onIosBackground,
+        onForeground: onTelemetryServiceStart,
+        onBackground: onTelemetryServiceIosBackground,
       ),
     );
   }
-
-  @pragma('vm:entry-point')
-  static void onStart(ServiceInstance service) {
-    DartPluginRegistrant.ensureInitialized();
-
-    if (service is AndroidServiceInstance) {
-      service.on('setAsForeground').listen((event) {
-        unawaited(service.setAsForegroundService());
-      });
-
-      service.on('setAsBackground').listen((event) {
-        unawaited(service.setAsBackgroundService());
-      });
-    }
-
-    service.on('stopService').listen((event) {
-      unawaited(service.stopSelf());
-    });
-
-    const telemetrySyncIntervalSeconds = 10;
-    Timer.periodic(const Duration(seconds: telemetrySyncIntervalSeconds),
-        (timer) async {
-      if (service is AndroidServiceInstance) {
-        final isForeground = await service.isForegroundService();
-        if (isForeground) {
-          unawaited(
-            service.setForegroundNotificationInfo(
-              title: 'Telemetry Active',
-              content: 'Driver background location telemetry active',
-            ),
-          );
-        }
-      }
-    });
-  }
-
-  @pragma('vm:entry-point')
-  static bool onIosBackground(ServiceInstance service) {
-    return true;
-  }
 }
+

@@ -9,7 +9,13 @@ export function createRateLimiter(options: RateLimiterOptions): MiddlewareHandle
   const requestsMap = new Map<string, { count: number; resetTime: number }>();
 
   return async (c, next) => {
-    const ip = c.req.header('x-forwarded-for') || '127.0.0.1';
+    const authHeader = c.req.header('authorization');
+    const ip =
+      authHeader ||
+      c.req.header('x-forwarded-for') ||
+      c.req.header('x-real-ip') ||
+      c.req.header('user-agent') ||
+      '127.0.0.1';
     const now = Date.now();
 
     let record = requestsMap.get(ip);

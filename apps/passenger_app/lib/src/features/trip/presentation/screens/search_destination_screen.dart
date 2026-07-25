@@ -23,8 +23,13 @@ class SearchDestinationScreen extends StatefulWidget {
       _SearchDestinationScreenState();
 }
 
-class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
+class _SearchDestinationScreenState extends State<SearchDestinationScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  late final AnimationController _slideCtrl;
+  late final Animation<Offset> _slideAnimation;
+
   Timer? _debounce;
   List<PlaceModel> _results = [];
   List<PlaceModel> _nearbyPlaces = [];
@@ -36,23 +41,47 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
   @override
   void initState() {
     super.initState();
-    unawaited(_initLocation());
+    _slideCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOutCubic));
+
+    _focusNode.addListener(_onFocusChanged);
     _searchController.addListener(_onSearchChanged);
+    unawaited(_initLocation());
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _slideCtrl.dispose();
     super.dispose();
+  }
+
+  void _onFocusChanged() {
+    if (_focusNode.hasFocus || _searchController.text.isNotEmpty) {
+      unawaited(_slideCtrl.forward());
+    } else {
+      unawaited(_slideCtrl.reverse());
+    }
+    setState(() {});
   }
 
   Future<void> _initLocation() async {
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && mounted) {
-      _userLat = pos.latitude;
-      _userLng = pos.longitude;
+      setState(() {
+        _userLat = pos.latitude;
+        _userLng = pos.longitude;
+      });
       unawaited(_loadNearbyPlaces());
     }
   }
@@ -88,9 +117,13 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
         _results = [];
         _isSearching = false;
       });
+      if (!_focusNode.hasFocus) {
+        unawaited(_slideCtrl.reverse());
+      }
       return;
     }
 
+    unawaited(_slideCtrl.forward());
     setState(() => _isSearching = true);
     _debounce = Timer(
       const Duration(milliseconds: 400),
@@ -162,251 +195,326 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
       return LucideIcons.building;
     }
 
-    if (lower.contains('clothes') || lower.contains('beauty')) {
-      return LucideIcons.shirt;
+    if (lower.contains('bank') || lower.contains('bpi') || lower.contains('bdo')) {
+      return LucideIcons.landmark;
     }
 
-    if (lower.contains('petron') ||
-        lower.contains('shell') ||
-        lower.contains('phoenix')) {
-      return LucideIcons.fuel;
+    if (lower.contains('cafe') || lower.contains('coffee') || lower.contains('tea')) {
+      return LucideIcons.coffee;
+    }
+
+    if (lower.contains('store') || lower.contains('robinsons') || lower.contains('mall')) {
+      return LucideIcons.store;
     }
 
     return LucideIcons.map_pin;
   }
 
-  bool _isAccentIcon(IconData icon) {
-    return icon == LucideIcons.building;
-  }
-
   @override
   Widget build(BuildContext context) {
+    final defaultLat = _userLat ?? 14.5995;
+    final defaultLng = _userLng ?? 120.9842;
     final hasQuery = _searchController.text.trim().isNotEmpty;
     final displayList = hasQuery ? _results : _nearbyPlaces;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(
-        backgroundColor: AppTheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        titleSpacing: 0,
-        title: Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(
-                  LucideIcons.arrow_left,
-                  color: AppTheme.primaryColor,
-                  size: 24,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-              Expanded(
-                child: Hero(
-                  tag: 'search_bar_field',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Container(
-                      height: 48,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.borderSide),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            LucideIcons.search,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              autofocus: true,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                color: AppTheme.primaryColor,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Search destination',
-                                hintStyle: TextStyle(
-                                  fontSize: 15,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                // Disable all default borders on the TextField
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                focusedErrorBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ),
-                          if (_searchController.text.isNotEmpty)
-                            GestureDetector(
-                              onTap: () => _searchController.clear(),
-                              child: Icon(
-                                LucideIcons.x,
-                                size: 16,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: _openMapPin,
-                child: Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.borderSide),
-                  ),
-                  child: const Icon(
-                    LucideIcons.map_pin,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Text(
-              hasQuery ? 'SEARCH RESULTS' : 'NEARBY PLACES',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                letterSpacing: 0.5,
+          // 1. Background Map View (Tapping map unfocuses search & closes bottom sheet)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                if (_focusNode.hasFocus) {
+                  _focusNode.unfocus();
+                }
+                unawaited(_slideCtrl.reverse());
+              },
+              child: MapProvider.buildMapView(
+                latitude: defaultLat,
+                longitude: defaultLng,
+                zoom: 14.5,
+                interactive: true,
               ),
             ),
           ),
-          Expanded(
-            child: _isSearching || _isLoadingNearby
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primaryColor,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : displayList.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          hasQuery
-                              ? LucideIcons.search_x
-                              : LucideIcons.map_pin_off,
-                          size: 40,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          hasQuery
-                              ? 'No places found'
-                              : 'No nearby places found',
-                          style: TextStyle(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: displayList.length,
-                    separatorBuilder: (_, _) =>
-                        const Divider(height: 1, color: AppTheme.borderSide),
-                    itemBuilder: (context, index) {
-                      final place = displayList[index];
-                      final calculatedIcon = _determinePlaceIcon(place.name);
-                      final treatAsAccent = _isAccentIcon(calculatedIcon);
 
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 6),
-                        leading: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: treatAsAccent
-                                ? const Color(0xFFFDF0ED)
-                                : AppTheme.neutralColor,
-                            borderRadius: BorderRadius.circular(12),
+          // 2. Floating Top Header (Search Bar, Back Button, Map Pin with Hero)
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (_focusNode.hasFocus) {
+                        _focusNode.unfocus();
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.borderSide),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 15,
+                            offset: const Offset(0, 4),
                           ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          LucideIcons.arrow_left,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Hero(
+                      tag: 'search_bar_field',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: AppTheme.borderSide),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 15,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.search,
+                                color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                                size: 18,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  focusNode: _focusNode,
+                                  autofocus: false,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: AppTheme.primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search destination',
+                                    hintStyle: TextStyle(
+                                      fontSize: 15,
+                                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                              if (_searchController.text.isNotEmpty)
+                                GestureDetector(
+                                  onTap: () => _searchController.clear(),
+                                  child: Icon(
+                                    LucideIcons.x,
+                                    size: 18,
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: _openMapPin,
+                    child: Hero(
+                      tag: 'map_pin_button',
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.borderSide),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 15,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
                           child: Icon(
-                            calculatedIcon,
-                            color: treatAsAccent
-                                ? const Color(0xFFE15A3E)
-                                : AppTheme.primaryColor,
+                            LucideIcons.map_pin,
+                            color: AppTheme.primaryColor,
                             size: 20,
                           ),
                         ),
-                        title: Text(
-                          place.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 2.0),
-                          child: Text(
-                            place.category ?? 'Place',
-                            style: TextStyle(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.4,
-                              ),
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        trailing: place.distanceKm != null
-                            ? Text(
-                                '${place.distanceKm!.toStringAsFixed(1)} km',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                ),
-                              )
-                            : null,
-                        onTap: () => _onPlaceSelected(place),
-                      );
-                    },
+                      ),
+                    ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          // 3. Sliding Bottom Sheet Container for Nearby Places styled with AppTheme
+          SlideTransition(
+            position: _slideAnimation,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.65,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 20,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 38,
+                        height: 4,
+                        margin: const EdgeInsets.only(top: 14, bottom: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.borderSide,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        hasQuery ? 'SEARCH RESULTS' : 'NEARBY PLACES',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: _isSearching || _isLoadingNearby
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: AppTheme.primaryColor,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : displayList.isEmpty
+                          ? Center(
+                              child: Text(
+                                hasQuery
+                                    ? 'No places found'
+                                    : 'No nearby places found',
+                                style: TextStyle(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: displayList.length,
+                              separatorBuilder: (_, _) => const Divider(
+                                height: 1,
+                                color: AppTheme.borderSide,
+                              ),
+                              itemBuilder: (context, index) {
+                                final place = displayList[index];
+                                final icon = _determinePlaceIcon(place.name);
+                                return ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  leading: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: const BoxDecoration(
+                                      color: AppTheme.neutralColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        icon,
+                                        color: AppTheme.primaryColor,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    place.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    place.distanceKm != null
+                                        ? '${place.distanceKm!.toStringAsFixed(1)} km away'
+                                        : place.category ?? 'Nearby POI',
+                                    style: TextStyle(
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  trailing: const Icon(
+                                    LucideIcons.map_pin,
+                                    size: 18,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                  onTap: () => _onPlaceSelected(place),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

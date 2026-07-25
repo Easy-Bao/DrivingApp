@@ -30,11 +30,28 @@ class FareRepositoryImpl implements FareRepository {
         final Map<String, dynamic> payload = res['data'] is Map<String, dynamic>
             ? res['data'] as Map<String, dynamic>
             : res;
-        final double base = (payload['base_fare'] as num?)?.toDouble() ?? 20.0;
-        final double dist = (payload['distance_charge'] as num?)?.toDouble() ?? (distanceKm * 10.0);
-        final double time = (payload['time_charge'] as num?)?.toDouble() ?? (durationMinutes * 1.5);
-        final double surge = (payload['surge_charge'] as num?)?.toDouble() ?? 0.0;
-        final num? rawTotalNum = (payload['estimated_fare'] ?? payload['total_fare']) as num?;
+        Map<String, dynamic> targetMap = payload;
+        if (payload['estimates'] is List && (payload['estimates'] as List).isNotEmpty) {
+          final list = payload['estimates'] as List;
+          final match = list.firstWhere(
+            (item) => item is Map<String, dynamic> && (item['serviceType'] == rideType || item['service_type'] == rideType),
+            orElse: () => list.first,
+          );
+          if (match is Map<String, dynamic>) {
+            targetMap = match;
+          }
+        }
+
+        final num? baseNum = (targetMap['baseFare'] ?? targetMap['base_fare']) as num?;
+        final num? distNum = (targetMap['distanceCharge'] ?? targetMap['distance_charge']) as num?;
+        final num? timeNum = (targetMap['timeCharge'] ?? targetMap['time_charge']) as num?;
+        final num? surgeNum = (targetMap['surgeCharge'] ?? targetMap['surge_charge']) as num?;
+        final num? rawTotalNum = (targetMap['totalFare'] ?? targetMap['total_fare'] ?? targetMap['estimated_fare']) as num?;
+
+        final double base = baseNum?.toDouble() ?? 20.0;
+        final double dist = distNum?.toDouble() ?? (distanceKm * 10.0);
+        final double time = timeNum?.toDouble() ?? (durationMinutes * 1.5);
+        final double surge = surgeNum?.toDouble() ?? 0.0;
         final double total = rawTotalNum?.toDouble() ?? (base + dist + time + surge);
 
         final breakdown = FareBreakdown(

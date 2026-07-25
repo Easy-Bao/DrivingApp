@@ -362,7 +362,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                   ),
                   SafeArea(
                     child: Align(
-                      alignment: Alignment.topCenter,
+                      alignment: Alignment.topLeft,
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           maxWidth: isWideScreen ? 600.0 : double.infinity,

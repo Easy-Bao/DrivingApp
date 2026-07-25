@@ -11,9 +11,12 @@ export function createRateLimiter(options: RateLimiterOptions) {
   const clientRequestTimestampsMap = new Map<string, number[]>();
 
   return async (context: Context, next: Next) => {
+    const authHeader = context.req.header('authorization');
     const clientIdentifierKey =
+      authHeader ||
       context.req.header('x-forwarded-for') ||
       context.req.header('x-real-ip') ||
+      context.req.header('user-agent') ||
       'anonymous-client';
     const currentTimestampMs = Date.now();
     const windowStartTimestampMs = currentTimestampMs - windowMs;

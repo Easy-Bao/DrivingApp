@@ -7,7 +7,7 @@ import { createRateLimiter } from './shared/middleware/rate_limiter.ts';
 const app = new Hono();
 
 app.use('*', cors());
-app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 120 }));
+app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 1200 }));
 app.onError(globalErrorHandler);
 
 app.route('/telemetry', telemetryRouter);
