@@ -44,11 +44,11 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     super.initState();
     _expandController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 320),
+      duration: const Duration(milliseconds: 300),
     );
     _expandAnimation = CurvedAnimation(
       parent: _expandController,
-      curve: Curves.fastOutSlowIn,
+      curve: Curves.easeOutCubic,
     );
 
     _focusNode.addListener(_onFocusChanged);
@@ -219,7 +219,6 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final defaultLng = _userLng ?? 120.9842;
     final hasQuery = _searchController.text.trim().isNotEmpty;
     final displayList = hasQuery ? _results : _nearbyPlaces;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -228,12 +227,6 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
         animation: _expandAnimation,
         builder: (context, child) {
           final t = _expandAnimation.value; // 0.0 = resting, 1.0 = expanded
-
-          // Growing Container bounds (Originates from search bar pill and grows full screen)
-          final containerLeft = (1.0 - t) * 72.0;
-          final containerTop = (1.0 - t) * (topPadding + 10.0);
-          final containerRight = (1.0 - t) * 72.0;
-          final containerRadius = (1.0 - t) * 36.0;
 
           return Stack(
             children: [
@@ -261,354 +254,359 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                 ),
               ),
 
-              // 2. M3 Growing Surface Container (Originates from Search Bar Pill and expands to full screen)
+              // 2. Pure White Surface Background (Fades in over map when expanding)
               if (t > 0)
-                Positioned(
-                  left: containerLeft,
-                  top: containerTop,
-                  right: containerRight,
-                  bottom: 0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(containerRadius),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: topPadding + 62),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          child: Text(
-                            hasQuery ? 'SEARCH RESULTS' : 'NEARBY PLACES',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.4,
-                              ),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Expanded(
-                          child: Opacity(
-                            opacity: t.clamp(0.0, 1.0),
-                            child: _isSearching || _isLoadingNearby
-                                ? const Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppTheme.primaryColor,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : displayList.isEmpty
-                                ? Center(
-                                    child: Text(
-                                      hasQuery
-                                          ? 'No places found'
-                                          : 'No nearby places found',
-                                      style: TextStyle(
-                                        color: AppTheme.primaryColor
-                                            .withValues(alpha: 0.4),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  )
-                                : ListView.separated(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 6,
-                                    ),
-                                    physics: const BouncingScrollPhysics(),
-                                    itemCount: displayList.length,
-                                    separatorBuilder: (_, _) => const Divider(
-                                      height: 1,
-                                      color: AppTheme.borderSide,
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      final place = displayList[index];
-                                      final icon = _determinePlaceIcon(
-                                        place.name,
-                                      );
-                                      return ListTile(
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                        leading: Container(
-                                          width: 44,
-                                          height: 44,
-                                          decoration: const BoxDecoration(
-                                            color: AppTheme.neutralColor,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Center(
-                                            child: Icon(
-                                              icon,
-                                              color: AppTheme.primaryColor,
-                                              size: 20,
-                                            ),
-                                          ),
-                                        ),
-                                        title: Text(
-                                          place.name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 15,
-                                            color: AppTheme.primaryColor,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          place.distanceKm != null
-                                              ? '${place.distanceKm!.toStringAsFixed(1)} km away'
-                                              : place.category ?? 'Nearby POI',
-                                          style: TextStyle(
-                                            color: AppTheme.primaryColor
-                                                .withValues(alpha: 0.4),
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        trailing: const Icon(
-                                          LucideIcons.map_pin,
-                                          size: 18,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                        onTap: () => _onPlaceSelected(place),
-                                      );
-                                    },
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: t.clamp(0.0, 1.0),
+                    child: Container(color: AppTheme.surface),
                   ),
                 ),
 
-              // 3. Top Floating Search Control Row
+              // 3. Foreground Safe Column Layout (Zero Overflow & Zero Overlap)
               SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      // Separate Left Back Button (Fades out as search bar expands)
-                      if (t < 0.8)
-                        Opacity(
-                          opacity: (1.0 - (t / 0.8)).clamp(0.0, 1.0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 10),
-                            child: GestureDetector(
-                              onTap: () {
-                                if (_focusNode.hasFocus) {
-                                  _focusNode.unfocus();
-                                } else {
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: Container(
-                                width: 46,
-                                height: 46,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.surface,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppTheme.borderSide,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.08,
+                child: Column(
+                  children: [
+                    // Top Search Header Control Row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          // Separate Left Back Button (Visible when resting t < 0.8)
+                          if (t < 0.8)
+                            Opacity(
+                              opacity: (1.0 - (t / 0.8)).clamp(0.0, 1.0),
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (_focusNode.hasFocus) {
+                                      _focusNode.unfocus();
+                                    } else {
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 46,
+                                    height: 46,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surface,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: AppTheme.borderSide,
                                       ),
-                                      blurRadius: 15,
-                                      offset: const Offset(0, 4),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          blurRadius: 15,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    LucideIcons.arrow_left,
-                                    color: AppTheme.primaryColor,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      // Search Bar Container Pill (Expands to full width when focused)
-                      Expanded(
-                        child: Hero(
-                          tag: 'search_bar_field',
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Container(
-                              height: 52,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(36),
-                                border: Border.all(
-                                  color: AppTheme.borderSide,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(
-                                      alpha: 0.08 * (1 - t),
-                                    ),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  // Internal Left Icon: Back arrow when focused/expanded, Search icon when resting
-                                  GestureDetector(
-                                    onTap: () {
-                                      if (_focusNode.hasFocus) {
-                                        _focusNode.unfocus();
-                                      } else if (t > 0.5) {
-                                        unawaited(
-                                          _expandController.reverse(),
-                                        );
-                                      } else {
-                                        Navigator.pop(context);
-                                      }
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(6),
+                                    child: const Center(
                                       child: Icon(
-                                        t > 0.5
-                                            ? LucideIcons.arrow_left
-                                            : LucideIcons.search,
+                                        LucideIcons.arrow_left,
                                         color: AppTheme.primaryColor,
                                         size: 20,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _searchController,
-                                      focusNode: _focusNode,
-                                      autofocus: false,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        color: AppTheme.primaryColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: 'Search destination',
-                                        hintStyle: TextStyle(
-                                          fontSize: 15,
-                                          color: AppTheme.primaryColor
-                                              .withValues(alpha: 0.4),
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                        border: InputBorder.none,
-                                        enabledBorder: InputBorder.none,
-                                        focusedBorder: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.zero,
-                                      ),
-                                    ),
-                                  ),
-                                  if (_searchController.text.isNotEmpty)
-                                    GestureDetector(
-                                      onTap: () => _searchController.clear(),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(6),
-                                        child: Icon(
-                                          LucideIcons.x,
-                                          size: 18,
-                                          color: AppTheme.primaryColor
-                                              .withValues(alpha: 0.5),
-                                        ),
-                                      ),
-                                    ),
-
-                                  // Internal Right Icon: Map pin icon when expanded
-                                  if (t > 0.5)
-                                    GestureDetector(
-                                      onTap: _openMapPin,
-                                      child: Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: const BoxDecoration(
-                                          color: AppTheme.neutralColor,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Center(
-                                          child: Icon(
-                                            LucideIcons.map_pin,
-                                            color: AppTheme.primaryColor,
-                                            size: 18,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
 
-                      // Separate Right Map Pin Button (Fades out as search bar expands)
-                      if (t < 0.8)
-                        Opacity(
-                          opacity: (1.0 - (t / 0.8)).clamp(0.0, 1.0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: GestureDetector(
-                              onTap: _openMapPin,
-                              child: Hero(
-                                tag: 'map_pin_button',
+                          // Search Bar Container Pill (Expands to full width when focused)
+                          Expanded(
+                            child: Hero(
+                              tag: 'search_bar_field',
+                              child: Material(
+                                color: Colors.transparent,
                                 child: Container(
-                                  width: 46,
-                                  height: 46,
+                                  height: 52,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppTheme.surface,
-                                    shape: BoxShape.circle,
+                                    borderRadius: BorderRadius.circular(36),
                                     border: Border.all(
                                       color: AppTheme.borderSide,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withValues(
-                                          alpha: 0.08,
+                                          alpha: 0.08 * (1 - t),
                                         ),
                                         blurRadius: 15,
                                         offset: const Offset(0, 4),
                                       ),
                                     ],
                                   ),
-                                  child: const Center(
-                                    child: Icon(
-                                      LucideIcons.map_pin,
-                                      color: AppTheme.primaryColor,
-                                      size: 20,
-                                    ),
+                                  child: Row(
+                                    children: [
+                                      // Internal Left Icon: Back arrow when focused (t > 0.5), Search lens when resting
+                                      GestureDetector(
+                                        onTap: () {
+                                          if (_focusNode.hasFocus) {
+                                            _focusNode.unfocus();
+                                          } else if (t > 0.5) {
+                                            unawaited(
+                                              _expandController.reverse(),
+                                            );
+                                          } else {
+                                            Navigator.pop(context);
+                                          }
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(6),
+                                          child: Icon(
+                                            t > 0.5
+                                                ? LucideIcons.arrow_left
+                                                : LucideIcons.search,
+                                            color: AppTheme.primaryColor,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _searchController,
+                                          focusNode: _focusNode,
+                                          autofocus: false,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: AppTheme.primaryColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: 'Search destination',
+                                            hintStyle: TextStyle(
+                                              fontSize: 15,
+                                              color: AppTheme.primaryColor
+                                                  .withValues(alpha: 0.4),
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                            border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                        ),
+                                      ),
+                                      if (_searchController.text.isNotEmpty)
+                                        GestureDetector(
+                                          onTap: () =>
+                                              _searchController.clear(),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(6),
+                                            child: Icon(
+                                              LucideIcons.x,
+                                              size: 18,
+                                              color: AppTheme.primaryColor
+                                                  .withValues(alpha: 0.5),
+                                            ),
+                                          ),
+                                        ),
+
+                                      // Internal Right Icon: Map pin icon when expanded (t > 0.5)
+                                      if (t > 0.5)
+                                        GestureDetector(
+                                          onTap: _openMapPin,
+                                          child: Container(
+                                            width: 36,
+                                            height: 36,
+                                            decoration: const BoxDecoration(
+                                              color: AppTheme.neutralColor,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                LucideIcons.map_pin,
+                                                color: AppTheme.primaryColor,
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
                           ),
+
+                          // Separate Right Map Pin Button (Visible when resting t < 0.8)
+                          if (t < 0.8)
+                            Opacity(
+                              opacity: (1.0 - (t / 0.8)).clamp(0.0, 1.0),
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 10),
+                                child: GestureDetector(
+                                  onTap: _openMapPin,
+                                  child: Hero(
+                                    tag: 'map_pin_button',
+                                    child: Container(
+                                      width: 46,
+                                      height: 46,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.surface,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: AppTheme.borderSide,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            blurRadius: 15,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Center(
+                                        child: Icon(
+                                          LucideIcons.map_pin,
+                                          color: AppTheme.primaryColor,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Search Results / Nearby Places List (Only rendered when focused t > 0)
+                    if (t > 0)
+                      Expanded(
+                        child: Opacity(
+                          opacity: t.clamp(0.0, 1.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  10,
+                                  20,
+                                  6,
+                                ),
+                                child: Text(
+                                  hasQuery ? 'SEARCH RESULTS' : 'NEARBY PLACES',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: _isSearching || _isLoadingNearby
+                                    ? const Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppTheme.primaryColor,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : displayList.isEmpty
+                                    ? Center(
+                                        child: Text(
+                                          hasQuery
+                                              ? 'No places found'
+                                              : 'No nearby places found',
+                                          style: TextStyle(
+                                            color: AppTheme.primaryColor
+                                                .withValues(alpha: 0.4),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      )
+                                    : ListView.separated(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 6,
+                                        ),
+                                        physics: const BouncingScrollPhysics(),
+                                        itemCount: displayList.length,
+                                        separatorBuilder: (_, _) =>
+                                            const Divider(
+                                          height: 1,
+                                          color: AppTheme.borderSide,
+                                        ),
+                                        itemBuilder: (context, index) {
+                                          final place = displayList[index];
+                                          final icon = _determinePlaceIcon(
+                                            place.name,
+                                          );
+                                          return ListTile(
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
+                                            leading: Container(
+                                              width: 44,
+                                              height: 44,
+                                              decoration: const BoxDecoration(
+                                                color: AppTheme.neutralColor,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Center(
+                                                child: Icon(
+                                                  icon,
+                                                  color: AppTheme.primaryColor,
+                                                  size: 20,
+                                                ),
+                                              ),
+                                            ),
+                                            title: Text(
+                                              place.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 15,
+                                                color: AppTheme.primaryColor,
+                                              ),
+                                            ),
+                                            subtitle: Text(
+                                              place.distanceKm != null
+                                                  ? '${place.distanceKm!.toStringAsFixed(1)} km away'
+                                                  : place.category ??
+                                                      'Nearby POI',
+                                              style: TextStyle(
+                                                color: AppTheme.primaryColor
+                                                    .withValues(alpha: 0.4),
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            trailing: const Icon(
+                                              LucideIcons.map_pin,
+                                              size: 18,
+                                              color: AppTheme.primaryColor,
+                                            ),
+                                            onTap: () => _onPlaceSelected(place),
+                                          );
+                                        },
+                                      ),
+                              ),
+                            ],
+                          ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
             ],
