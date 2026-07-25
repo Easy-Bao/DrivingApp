@@ -27,115 +27,85 @@ class DestinationPreviewScreen extends StatefulWidget {
 }
 
 class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
-  String _distance = '—';
-  String _duration = '—';
+  double? _userLat = LocationService.lastPosition?.latitude;
+  double? _userLng = LocationService.lastPosition?.longitude;
+  String _distance = '';
+  String _duration = '';
   double _distanceKm = 0.0;
   Map<String, double> _fares = {};
 
   @override
   void initState() {
     super.initState();
-    _computeInitialEstimates();
-    unawaited(_loadRoute());
+    unawaited(_initLocation());
   }
 
-  void _computeInitialEstimates() {
-    const defaultDist = 2.5;
-    const defaultMins = 8.0;
-    setState(() {
-      _distanceKm = defaultDist;
-      _distance = '$defaultDist km';
-      _duration = '${defaultMins.toInt()} min';
-      _fares = FareCalculatorHelper.estimateAllFares(
-        distanceKm: defaultDist,
-        durationMinutes: defaultMins,
-      );
-    });
-    unawaited(_fetchServerFares(defaultDist, defaultMins));
-  }
-
-  Future<void> _fetchServerFares(double distanceKm, double durationMinutes) async {
-    try {
-      final fareRemoteDataSource = Modular.get<FareRemoteDataSource>();
-      final res = await fareRemoteDataSource.fetchFareEstimates(
-        distanceKm: distanceKm,
-        durationMinutes: durationMinutes,
-      );
-
-      final rawData = res['data'] is Map<String, dynamic> ? res['data'] as Map<String, dynamic> : res;
-      final estimatesList = rawData['estimates'] as List?;
-      final Map<String, double> fetchedFares = {};
-
-      if (estimatesList != null) {
-        for (final item in estimatesList) {
-          if (item is Map<String, dynamic>) {
-            final type = item['serviceType'] as String? ?? item['service_type'] as String?;
-            final fare = (item['totalFare'] ?? item['total_fare']) as num?;
-            if (type != null && fare != null) {
-              fetchedFares[type] = fare.toDouble();
-            }
-          }
-        }
-      }
-
-      if (fetchedFares.isNotEmpty && mounted) {
-        setState(() {
-          _fares = fetchedFares;
-        });
-      }
-    } catch (error) {
-      debugPrint('Error fetching server fare quotes: $error');
+  Future<void> _initLocation() async {
+    final pos = await LocationService.getCurrentPosition();
+    if (pos != null && mounted) {
+      setState(() {
+        _userLat = pos.latitude;
+        _userLng = pos.longitude;
+      });
+      await _loadRoute();
+    } else if (_userLat != null && _userLng != null) {
+      await _loadRoute();
     }
   }
 
   Future<void> _loadRoute() async {
-    final pos = await LocationService.getCurrentPosition();
-    final oLat = pos?.latitude ?? widget.destination.latitude;
-    final oLng = pos?.longitude ?? widget.destination.longitude;
-
-    if (pos != null) {
-      final meters = await LocationService.distanceBetween(
-        oLat,
-        oLng,
-        widget.destination.latitude,
-        widget.destination.longitude,
-      );
-      final approxKm = meters / 1000.0;
-      if (approxKm > 0 && mounted) {
-        final approxMins = (approxKm * 3).clamp(3.0, 120.0);
-        setState(() {
-          _distanceKm = approxKm;
-          _distance = '${approxKm.toStringAsFixed(1)} km';
-          _duration = '${approxMins.round()} min';
-          _fares = FareCalculatorHelper.estimateAllFares(
-            distanceKm: approxKm,
-            durationMinutes: approxMins,
-          );
-        });
-        unawaited(_fetchServerFares(approxKm, approxMins));
-      }
-    }
+    if (_userLat == null || _userLng == null) return;
 
     final route = await MapProvider.getRoute(
-      oLat,
-      oLng,
+      _userLat!,
+      _userLng!,
       widget.destination.latitude,
       widget.destination.longitude,
     );
 
-    if (!mounted) return;
-    if (route != null) {
-      final mins = route.estimatedTime.inMinutes.toDouble();
+    if (mounted && route != null) {
+      final km = route.distanceKm;
+      final mins = (route.durationSeconds / 60.0).ceil();
+      final distanceStr = '${km.toStringAsFixed(1)} km';
+      final durationStr = '$mins min';
+
+      final fareRepo = Modular.get<FareRepository>();
+      final soloResult = await fareRepo.getFareQuote(
+        distanceKm: km,
+        durationMinutes: mins.toDouble(),
+        rideType: 'Solo Ride',
+      );
+      final shareResult = await fareRepo.getFareQuote(
+        distanceKm: km,
+        durationMinutes: mins.toDouble(),
+        rideType: 'Share-Bao',
+      );
+      final premResult = await fareRepo.getFareQuote(
+        distanceKm: km,
+        durationMinutes: mins.toDouble(),
+        rideType: 'Bao Premium',
+      );
+
+      final Map<String, double> calculatedFares = {};
+      soloResult.fold(
+        (_) {},
+        (quote) => calculatedFares['Solo Ride'] = quote.breakdown.totalFare,
+      );
+      shareResult.fold(
+        (_) {},
+        (quote) => calculatedFares['Share-Bao'] = quote.breakdown.totalFare,
+      );
+      premResult.fold(
+        (_) {},
+        (quote) => calculatedFares['Bao Premium'] = quote.breakdown.totalFare,
+      );
+
       setState(() {
-        _distanceKm = route.distanceKm;
-        _distance = '${route.distanceKm.toStringAsFixed(1)} km';
-        _duration = mins < 60 ? '${mins.toInt()} min' : '${mins ~/ 60}h ${(mins % 60).toInt()}m';
-        _fares = FareCalculatorHelper.estimateAllFares(
-          distanceKm: route.distanceKm,
-          durationMinutes: mins,
-        );
+        _distance = distanceStr;
+        _duration = durationStr;
+        _distanceKm = km;
+        _fares = calculatedFares;
       });
-      unawaited(_fetchServerFares(route.distanceKm, mins));
     }
   }
 
@@ -149,23 +119,25 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
             child: MapProvider.buildMapView(
               latitude: widget.destination.latitude,
               longitude: widget.destination.longitude,
-              zoom: 13.0,
+              zoom: 14.5,
               onMapCreated: (_) async {
                 await _loadRoute();
               },
             ),
           ),
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: GestureDetector(
                 onTap: () => context.pop(),
                 child: Container(
-                  width: 42,
-                  height: 42,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     shape: BoxShape.circle,
+                    border: Border.all(color: AppTheme.borderSide),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.1),
@@ -185,14 +157,15 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               ),
             ),
           ),
+
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
+                  top: Radius.circular(32),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -212,7 +185,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 18),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                        color: AppTheme.borderSide,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -220,15 +193,18 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(14),
+                          color: AppTheme.neutralColor,
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
-                          LucideIcons.map_pin,
-                          color: AppTheme.primaryColor,
-                          size: 22,
+                        child: const Center(
+                          child: Icon(
+                            LucideIcons.map_pin,
+                            color: AppTheme.primaryColor,
+                            size: 22,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -239,7 +215,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                             Text(
                               widget.destination.name,
                               style: const TextStyle(
-                                fontSize: 17,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: AppTheme.primaryColor,
                               ),
@@ -249,9 +225,9 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                             const SizedBox(height: 3),
                             Text(
                               widget.destination.fullAddress,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 13,
-                                color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                                color: AppTheme.tertiaryColor,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -261,7 +237,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     height: 54,
@@ -284,9 +260,9 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: AppTheme.neutralColor,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(36),
                         ),
                         elevation: 0,
                       ),

@@ -539,7 +539,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppTheme.neutralColor,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(36),
               border: Border.all(color: AppTheme.borderSide),
             ),
             child: Row(
