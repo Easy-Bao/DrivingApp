@@ -126,7 +126,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           String dateFormatted = 'Recent';
           if (createdAtStr != null) {
             try {
-              final parsedDate = DateTime.parse(createdAtStr as String);
+              final parsedDate = DateTime.parse(createdAtStr.toString());
               final months = [
                 'Jan',
                 'Feb',

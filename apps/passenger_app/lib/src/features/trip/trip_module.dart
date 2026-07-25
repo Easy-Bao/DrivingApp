@@ -107,23 +107,29 @@ class TripModule {
                     ) ??
                     120.9842,
               );
-        return RideSelectionScreen(
-          destination: destination,
-          distance: data['distance'] as String? ??
-              state.uri.queryParameters['distance'] ??
-              '0.0 km',
-          duration: data['duration'] as String? ??
-              state.uri.queryParameters['duration'] ??
-              '0 min',
-          distanceKm: (data['distanceKm'] as num?)?.toDouble() ??
-              double.tryParse(
-                state.uri.queryParameters['distanceKm'] ?? '',
-              ) ??
-              0.0,
-          fares: data['fares'] as Map<String, double>?,
-          pickupAddress: data['pickupAddress'] as String? ??
-              state.uri.queryParameters['pickupAddress'],
-        );
+          Map<String, double>? fares;
+          if (data['fares'] is Map) {
+            fares = (data['fares'] as Map).map(
+              (k, v) => MapEntry(k.toString(), (v as num).toDouble()),
+            );
+          }
+          return RideSelectionScreen(
+            destination: destination,
+            distance: data['distance'] as String? ??
+                state.uri.queryParameters['distance'] ??
+                '0.0 km',
+            duration: data['duration'] as String? ??
+                state.uri.queryParameters['duration'] ??
+                '0 min',
+            distanceKm: (data['distanceKm'] as num?)?.toDouble() ??
+                double.tryParse(
+                  state.uri.queryParameters['distanceKm'] ?? '',
+                ) ??
+                0.0,
+            fares: fares,
+            pickupAddress: data['pickupAddress'] as String? ??
+                state.uri.queryParameters['pickupAddress'],
+          );
       },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

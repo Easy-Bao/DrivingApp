@@ -114,7 +114,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     String dateFormatted = 'Recent';
     if (createdAtStr != null) {
       try {
-        final parsedDate = DateTime.parse(createdAtStr as String);
+        final parsedDate = DateTime.parse(createdAtStr.toString());
         final months = [
           'Jan',
           'Feb',
@@ -344,7 +344,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              reviewItem['passengerName'] as String,
+                              reviewItem['passengerName']?.toString() ?? 'Passenger',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -352,7 +352,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                               ),
                             ),
                             Text(
-                              reviewItem['date'] as String,
+                              reviewItem['date']?.toString() ?? 'Recent',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: AppTheme.primaryColor.withValues(
@@ -408,7 +408,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          reviewItem['comment'] as String,
+                          reviewItem['comment']?.toString() ?? '',
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.4,

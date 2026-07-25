@@ -105,7 +105,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                 fare: widget.fare,
               );
           if (res != null && res['id'] != null) {
-            activeRideId = res['id'] as String;
+            activeRideId = res['id']?.toString() ?? '';
             await secureSession.writeActiveRideId(activeRideId);
 
             pickupLat = SafeParse.toDouble(res['pickup_latitude']);
