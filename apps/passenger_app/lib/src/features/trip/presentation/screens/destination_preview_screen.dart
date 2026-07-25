@@ -111,6 +111,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final fullAddress = widget.destination.fullAddress;
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
@@ -125,53 +126,60 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               },
             ),
           ),
-
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.borderSide),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+              child: SizedBox(
+                height: 52,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.borderSide),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 15,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            LucideIcons.arrow_left,
+                            color: AppTheme.primaryColor,
+                            size: 20,
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      LucideIcons.chevron_left,
-                      color: AppTheme.primaryColor,
-                      size: 22,
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
           ),
-
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
-              decoration: BoxDecoration(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              decoration: const BoxDecoration(
                 color: AppTheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(32),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 25,
-                    offset: const Offset(0, -8),
+                    color: Colors.black12,
+                    blurRadius: 20,
+                    offset: Offset(0, -4),
                   ),
                 ],
               ),
@@ -179,25 +187,14 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 38,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 18),
-                      decoration: BoxDecoration(
-                        color: AppTheme.borderSide,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
                   Row(
                     children: [
                       Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
                           color: AppTheme.neutralColor,
-                          borderRadius: BorderRadius.circular(16),
+                          shape: BoxShape.circle,
                         ),
                         child: const Center(
                           child: Icon(
@@ -216,45 +213,115 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                               widget.destination.name,
                               style: const TextStyle(
                                 fontSize: 18,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.bold,
                                 color: AppTheme.primaryColor,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 3),
-                            Text(
-                              widget.destination.fullAddress,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.tertiaryColor,
+                            if (fullAddress.isNotEmpty)
+                              Text(
+                                fullAddress,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  if (_distance.isNotEmpty && _duration.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neutralColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                LucideIcons.route,
+                                size: 18,
+                                color: AppTheme.primaryColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _distance,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            width: 1,
+                            height: 18,
+                            color: AppTheme.borderSide,
+                          ),
+                          Row(
+                            children: [
+                              const Icon(
+                                LucideIcons.clock,
+                                size: 18,
+                                color: AppTheme.primaryColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _duration,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    height: 54,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: () {
+                        final params = <String, String>{
+                          'destinationName': widget.destination.name,
+                          'destinationLat':
+                              widget.destination.latitude.toString(),
+                          'destinationLng':
+                              widget.destination.longitude.toString(),
+                          'distance': _distance,
+                          'duration': _duration,
+                          'distanceKm': _distanceKm.toString(),
+                        };
+                        if (fullAddress.isNotEmpty) {
+                          params['destinationAddress'] = fullAddress;
+                        }
+                        if (widget.pickupAddress != null) {
+                          params['pickupAddress'] = widget.pickupAddress!;
+                        }
+                        if (widget.preselectedRideType != null) {
+                          params['rideType'] = widget.preselectedRideType!;
+                        }
                         unawaited(
                           context.pushNamed(
                             TripRoutes.rideSelection,
-                            extra: {
-                              'destination': widget.destination,
-                              'distance': _distance,
-                              'duration': _duration,
-                              'distanceKm': _distanceKm,
-                              'fares': _fares,
-                              'pickupAddress':
-                                  widget.pickupAddress ?? 'Current Location',
-                            },
+                            queryParameters: params,
+                            extra: _fares,
                           ),
                         );
                       },
@@ -262,15 +329,15 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(36),
+                          borderRadius: BorderRadius.circular(26),
                         ),
                         elevation: 0,
                       ),
                       child: const Text(
-                        'Book ride',
+                        'Confirm Destination',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),

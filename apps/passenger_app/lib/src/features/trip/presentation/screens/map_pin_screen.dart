@@ -77,12 +77,6 @@ class _MapPinScreenState extends State<MapPinScreen>
     }
   }
 
-  Future<void> _updatePin() async {
-    if (_mapController == null) return;
-    final center = await MapProvider.getCameraCenter(_mapController!);
-    unawaited(_reverseGeocode(center.latitude, center.longitude));
-  }
-
   void _confirmLocation() {
     final result = PlaceModel(
       id: 'pin_${DateTime.now().millisecondsSinceEpoch}',
@@ -99,20 +93,16 @@ class _MapPinScreenState extends State<MapPinScreen>
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
-          // 1. Interactive Map View
           MapProvider.buildMapView(
             latitude: _centerLat,
             longitude: _centerLng,
             zoom: 15.0,
             onMapCreated: (coordinate) => _mapController = coordinate,
           ),
-
-          // 2. Center Pin Marker with Hero shared transition
           Center(
             child: Hero(
               tag: 'map_pin_button',
@@ -161,28 +151,30 @@ class _MapPinScreenState extends State<MapPinScreen>
               ),
             ),
           ),
-
-          // 3. Top Row Buttons: Back button left, Locate button right (2nd Picture Layout)
-          Positioned(
-            top: top + 10,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _TopButton(
-                  icon: LucideIcons.arrow_left,
-                  onTap: () => context.pop(),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+              child: SizedBox(
+                height: 52,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _TopButton(
+                      icon: LucideIcons.arrow_left,
+                      onTap: () => context.pop(),
+                    ),
+                    _TopButton(
+                      icon: LucideIcons.locate_fixed,
+                      onTap: _relocate,
+                    ),
+                  ],
                 ),
-                _TopButton(
-                  icon: LucideIcons.locate_fixed,
-                  onTap: _relocate,
-                ),
-              ],
+              ),
             ),
           ),
-
-          // 4. Bottom Location Card Container with AppTheme (2nd Picture Layout)
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -190,7 +182,9 @@ class _MapPinScreenState extends State<MapPinScreen>
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.12),
@@ -218,83 +212,47 @@ class _MapPinScreenState extends State<MapPinScreen>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
+                        padding: const EdgeInsets.all(12),
                         decoration: const BoxDecoration(
                           color: AppTheme.neutralColor,
                           shape: BoxShape.circle,
                         ),
-                        child: const Center(
-                          child: Icon(
-                            LucideIcons.map_pin,
-                            color: AppTheme.primaryColor,
-                            size: 20,
-                          ),
+                        child: const Icon(
+                          LucideIcons.map_pin,
+                          color: AppTheme.primaryColor,
+                          size: 22,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Selected location',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.tertiaryColor,
+                            Text(
+                              _address,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2),
-                            if (_isGeocoding)
+                            if (_subAddress.isNotEmpty) ...[
+                              const SizedBox(height: 2),
                               Text(
-                                'Locating…',
+                                _subAddress,
                                 style: TextStyle(
-                                  fontSize: 15,
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                                ),
-                              )
-                            else ...[
-                              Text(
-                                _address,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryColor,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                '${_subAddress.isNotEmpty ? "$_subAddress • " : ""}${_centerLat.toStringAsFixed(4)}° N, ${_centerLng.toStringAsFixed(4)}° E',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppTheme.tertiaryColor,
+                                  fontSize: 13,
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _updatePin,
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.neutralColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              LucideIcons.refresh_cw,
-                              color: AppTheme.tertiaryColor,
-                              size: 16,
-                            ),
-                          ),
                         ),
                       ),
                     ],
@@ -307,26 +265,18 @@ class _MapPinScreenState extends State<MapPinScreen>
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
-                        disabledBackgroundColor: AppTheme.primaryColor.withValues(alpha: 0.35),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(36),
+                          borderRadius: BorderRadius.circular(26),
                         ),
                         elevation: 0,
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(LucideIcons.check, size: 18),
-                          SizedBox(width: 8),
-                          Text(
-                            'Confirm location',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        _isGeocoding ? 'Locating...' : 'Set Pin Location',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -350,8 +300,8 @@ class _TopButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 44,
-        height: 44,
+        width: 46,
+        height: 46,
         decoration: BoxDecoration(
           color: AppTheme.surface,
           shape: BoxShape.circle,
@@ -359,12 +309,18 @@ class _TopButton extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
+              blurRadius: 15,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Icon(icon, color: AppTheme.primaryColor, size: 18),
+        child: Center(
+          child: Icon(
+            icon,
+            color: AppTheme.primaryColor,
+            size: 20,
+          ),
+        ),
       ),
     );
   }
