@@ -100,9 +100,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
-            )
+          ? const SkeletonListWidget()
           : Column(
               children: [
                 Padding(

@@ -318,12 +318,15 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                       child:
                                           (_isSearching ||
                                               (_isLoadingNearby && !hasQuery))
-                                          ? const Center(
-                                              child: CircularProgressIndicator(
-                                                color: AppTheme.primaryColor,
-                                                strokeWidth: 2,
-                                              ),
-                                            )
+                                           ? SkeletonListWidget(
+                                               padding: EdgeInsets.fromLTRB(
+                                                 16,
+                                                 4,
+                                                 16,
+                                                 bottomPadding + 16,
+                                               ),
+                                               itemCount: 6,
+                                             )
                                           : displayList.isEmpty
                                           ? Center(
                                               child: Text(

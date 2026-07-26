@@ -187,9 +187,7 @@ class _PassengerViewAllActivityScreenState extends State<PassengerViewAllActivit
         ],
       ),
       body: _isActivityDataLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
-            )
+          ? const SkeletonListWidget()
           : _networkErrorMessage.isNotEmpty
           ? Center(
               child: Padding(

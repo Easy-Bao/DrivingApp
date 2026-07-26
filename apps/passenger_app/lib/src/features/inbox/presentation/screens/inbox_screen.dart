@@ -58,11 +58,7 @@ class _InboxScreenState extends State<InboxScreen> {
           child: BlocBuilder<InboxCubit, InboxState>(
             builder: (context, state) {
               if (state is InboxLoadingState || state is InboxInitialState) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primaryColor,
-                  ),
-                );
+                return const SkeletonListWidget(hasTrailingIcon: false);
               }
 
               final notifications = state is InboxLoadedState
