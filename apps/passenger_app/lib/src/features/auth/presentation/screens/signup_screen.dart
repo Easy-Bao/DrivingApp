@@ -78,7 +78,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
   void _submitRegistration(BuildContext context) {
     FocusScope.of(context).unfocus();
     final name = _passengerNameController.text.trim();
-    final rawPhone = _passengerPhoneController.text.replaceAll(RegExp(r'\D'), '');
+    final rawPhone = _passengerPhoneController.text.trim();
     final email = _passengerEmailController.text.trim();
     final password = _passengerPasswordController.text;
 
@@ -86,8 +86,8 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       _nameError = name.isEmpty ? 'Please enter your name' : null;
       if (rawPhone.isEmpty) {
         _phoneError = 'Please enter your phone number';
-      } else if (rawPhone.length != 10 || !rawPhone.startsWith('9')) {
-        _phoneError = 'Please enter a valid 10-digit PH mobile number';
+      } else if (!validatePhPhoneNumber(rawPhone)) {
+        _phoneError = 'Enter a valid number';
       } else {
         _phoneError = null;
       }
@@ -110,7 +110,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       return;
     }
 
-    final formattedPhone = '+63$rawPhone';
+    final formattedPhone = normalizePhPhoneNumber(rawPhone);
     unawaited(
       BlocProvider.of<SignUpCubit>(context).registerPassenger(
         name: name,
@@ -295,7 +295,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 setState(() => _phoneError = null);
                               },
                               decoration: InputDecoration(
-                                hintText: '9XX XXX XXXX',
+                                hintText: '09XX XXX XXXX',
                                 errorText: _phoneError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
