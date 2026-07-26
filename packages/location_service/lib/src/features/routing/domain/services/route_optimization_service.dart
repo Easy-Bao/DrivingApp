@@ -1,7 +1,28 @@
+import 'dart:math' as math;
 import 'package:core_models/core_models.dart';
-import 'package:location_service/src/features/map/data/repositories/map_native_service_impl.dart';
 
 class RouteOptimizationService {
+  static double _calculateHaversine(
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
+  ) {
+    const double earthRadiusKm = 6371.0;
+    final double dLat = (lat2 - lat1) * math.pi / 180.0;
+    final double dLng = (lng2 - lng1) * math.pi / 180.0;
+
+    final double haversineA =
+        math.sin(dLat / 2.0) * math.sin(dLat / 2.0) +
+        math.cos(lat1 * math.pi / 180.0) *
+            math.cos(lat2 * math.pi / 180.0) *
+            math.sin(dLng / 2.0) *
+            math.sin(dLng / 2.0);
+
+    final double haversineC = 2.0 * math.asin(math.sqrt(haversineA));
+    return earthRadiusKm * haversineC;
+  }
+
   static List<List<int>> _permute(List<int> list) {
     final List<List<int>> result = [];
     _permuteHelper(list, 0, result);
@@ -20,7 +41,7 @@ class RouteOptimizationService {
     for (int index = start; index < list.length; index++) {
       _swap(list, start, index);
       _permuteHelper(list, start + 1, result);
-      _swap(list, start, index); // backtrack
+      _swap(list, start, index);
     }
   }
 
@@ -77,7 +98,7 @@ class RouteOptimizationService {
         double currentLng = startLng;
 
         for (final wp in candidate) {
-          totalDist += MapNativeServiceImpl.calculateHaversine(
+          totalDist += _calculateHaversine(
             currentLat,
             currentLng,
             wp.lat,
