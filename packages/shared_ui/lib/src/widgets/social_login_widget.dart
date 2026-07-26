@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/src/theme/app_theme.dart';
+import 'package:shared_ui/src/themes/app_themes.dart';
 
 class SocialLoginWidget extends StatelessWidget {
   final VoidCallback onGoogleTap;
@@ -64,7 +64,7 @@ class SocialLoginWidget extends StatelessWidget {
                 package: 'shared_ui',
                 width: 22,
                 height: 22,
-                errorBuilder: (context, error, stackTrace) => const Icon(
+                errorBuilder: (context, error, stackTrace) => Icon(
                   Icons.g_mobiledata,
                   size: 24,
                   color: AppTheme.primaryColor,
@@ -73,7 +73,7 @@ class SocialLoginWidget extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.primaryColor,
