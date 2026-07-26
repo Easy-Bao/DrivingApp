@@ -477,7 +477,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAddPlaceChip() {
     return GestureDetector(
       onTap: () async {
-        await context.pushNamed(HomeRoutes.addCategory);
+        final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+        final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
+        if (selectedPlace == null || selectedPlace is! PlaceModel) return;
+        if (!mounted) return;
+        await context.pushNamed(
+          HomeRoutes.addCategory,
+          extra: {
+            'onSave': (SavedPlace newPlace) => cubit.addPlace(newPlace),
+            'place': selectedPlace,
+          },
+        );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -661,7 +671,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _handleSavedPlaceTap(SavedPlace place) {
+  Future<void> _handleSavedPlaceTap(SavedPlace place) async {
     if (!mounted) return;
     if (place.hasLocation) {
       final syntheticPlace = PlaceModel(
@@ -682,14 +692,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else {
-      final address = BlocProvider.of<HomeCubit>(
-        context,
-      ).state.currentAddress;
-      unawaited(
-        context.pushNamed(
-          TripRoutes.searchDestination,
-          queryParameters: {'pickupAddress': address},
-        ),
+      final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+      final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
+      if (selectedPlace == null || selectedPlace is! PlaceModel) return;
+      if (!mounted) return;
+      await context.pushNamed(
+        HomeRoutes.addCategory,
+        extra: {
+          'onSave': (SavedPlace newPlace) => cubit.addPlace(newPlace),
+          'place': selectedPlace,
+          'initialLabel': place.label,
+        },
       );
     }
   }

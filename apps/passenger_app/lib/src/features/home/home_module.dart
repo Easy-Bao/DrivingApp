@@ -22,9 +22,11 @@ class HomeModule {
         final extra = SafeRouteExtra.asMap(state.extra);
         final onSave = extra['onSave'] as Function(SavedPlace)?;
         final place = extra['place'] as PlaceModel?;
+        final initialLabel = extra['initialLabel'] as String?;
         return AddCategoryScreen(
           onSave: onSave ?? (_) {},
           initialPlace: place,
+          initialLabel: initialLabel,
         );
       },
       transition: AppTransitions.modal.toTop,

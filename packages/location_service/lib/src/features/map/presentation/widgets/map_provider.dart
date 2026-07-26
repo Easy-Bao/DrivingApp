@@ -227,6 +227,15 @@ class MapProvider {
     );
   }
 
+  /// Subscribe to map camera change events.
+  static void subscribeCameraChanged(
+    AppMapController controller,
+    void Function() onCameraChanged,
+  ) {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    mapCtrl.subscribeCameraChanged((_) => onCameraChanged());
+  }
+
   /// Add a point annotation (marker) to the map.
   static Future<dynamic> addMarker(
     AppMapController controller,

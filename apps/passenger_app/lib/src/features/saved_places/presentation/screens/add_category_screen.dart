@@ -11,11 +11,13 @@ import 'package:shared_ui/shared_ui.dart';
 class AddCategoryScreen extends StatefulWidget {
   final Function(SavedPlace) onSave;
   final PlaceModel? initialPlace;
+  final String? initialLabel;
 
   const AddCategoryScreen({
     super.key,
     required this.onSave,
     this.initialPlace,
+    this.initialLabel,
   });
 
   @override
@@ -47,12 +49,15 @@ class _AddCategoryScreenState
   @override
   void initState() {
     super.initState();
+    final defaultLabel = widget.initialLabel ?? widget.initialPlace?.name;
+    if (defaultLabel != null) {
+      _controller.text = defaultLabel;
+    }
     if (widget.initialPlace != null) {
       _lat = widget.initialPlace!.latitude;
       _lng = widget.initialPlace!.longitude;
       _isLocationPinned = true;
       _isLoadingLocation = false;
-      _controller.text = widget.initialPlace!.name;
     } else {
       unawaited(_initLocation());
     }

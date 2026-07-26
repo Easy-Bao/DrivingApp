@@ -20,6 +20,8 @@ class _MapPinScreenState extends State<MapPinScreen>
   String _address = 'Move the map to select a location';
   String _subAddress = '';
   bool _isGeocoding = false;
+  bool _hasUserPannedMap = false;
+  Timer? _debounceTimer;
   double _centerLat = LocationService.lastPosition?.latitude ?? 0.0;
   double _centerLng = LocationService.lastPosition?.longitude ?? 0.0;
 
@@ -29,9 +31,15 @@ class _MapPinScreenState extends State<MapPinScreen>
     unawaited(_initLocation());
   }
 
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _initLocation() async {
     final pos = await LocationService.getCurrentPosition();
-    if (pos != null && mounted) {
+    if (pos != null && mounted && !_hasUserPannedMap) {
       setState(() {
         _centerLat = pos.latitude;
         _centerLng = pos.longitude;
@@ -44,6 +52,24 @@ class _MapPinScreenState extends State<MapPinScreen>
           zoom: 15.0,
         );
       }
+      unawaited(_reverseGeocode(_centerLat, _centerLng));
+    }
+  }
+
+  void _onMapCreated(AppMapController controller) {
+    _mapController = controller;
+    MapProvider.subscribeCameraChanged(controller, () {
+      _hasUserPannedMap = true;
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(const Duration(milliseconds: 350), () async {
+        if (!mounted || _mapController == null) return;
+        final center = await MapProvider.getCameraCenter(_mapController!);
+        unawaited(_reverseGeocode(center.latitude, center.longitude));
+      });
+    });
+
+    if (_centerLat != 0.0 && _centerLng != 0.0) {
+      unawaited(MapProvider.moveCamera(controller, _centerLat, _centerLng, zoom: 15.0));
       unawaited(_reverseGeocode(_centerLat, _centerLng));
     }
   }
@@ -67,6 +93,7 @@ class _MapPinScreenState extends State<MapPinScreen>
   Future<void> _relocate() async {
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && _mapController != null && mounted) {
+      _hasUserPannedMap = false;
       await MapProvider.moveCamera(
         _mapController!,
         pos.latitude,
@@ -101,7 +128,7 @@ class _MapPinScreenState extends State<MapPinScreen>
             latitude: _centerLat,
             longitude: _centerLng,
             zoom: 15.0,
-            onMapCreated: (coordinate) => _mapController = coordinate,
+            onMapCreated: _onMapCreated,
           ),
           Center(
             child: Hero(
