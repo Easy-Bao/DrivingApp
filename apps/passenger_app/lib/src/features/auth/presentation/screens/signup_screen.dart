@@ -45,14 +45,30 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
   String? _phoneError;
   String? _emailError;
   String? _passwordError;
+  Timer? _validationErrorTimer;
 
   @override
   void dispose() {
+    _validationErrorTimer?.cancel();
     _passengerNameController.dispose();
     _passengerPhoneController.dispose();
     _passengerEmailController.dispose();
     _passengerPasswordController.dispose();
     super.dispose();
+  }
+
+  void _startErrorAutoDismissTimer() {
+    _validationErrorTimer?.cancel();
+    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _nameError = null;
+          _phoneError = null;
+          _emailError = null;
+          _passwordError = null;
+        });
+      }
+    });
   }
 
   void _submitRegistration(BuildContext context) {
@@ -79,6 +95,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
         _phoneError != null ||
         _emailError != null ||
         _passwordError != null) {
+      _startErrorAutoDismissTimer();
       return;
     }
 

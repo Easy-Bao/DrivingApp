@@ -39,12 +39,27 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
   String? _emailError;
   String? _passwordError;
   bool _isServerErrorCleared = false;
+  Timer? _validationErrorTimer;
 
   @override
   void dispose() {
+    _validationErrorTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _startErrorAutoDismissTimer() {
+    _validationErrorTimer?.cancel();
+    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _emailError = null;
+          _passwordError = null;
+          _isServerErrorCleared = true;
+        });
+      }
+    });
   }
 
   void _submitSignIn(BuildContext context) {
@@ -66,6 +81,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
     });
 
     if (_emailError != null || _passwordError != null) {
+      _startErrorAutoDismissTimer();
       return;
     }
 
@@ -106,6 +122,8 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                   queryParameters: {'email': state.email},
                 ),
               );
+            } else if (state is SignInFailure) {
+              _startErrorAutoDismissTimer();
             }
           },
           builder: (context, state) {

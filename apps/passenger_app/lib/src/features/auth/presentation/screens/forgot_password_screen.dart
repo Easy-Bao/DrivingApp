@@ -34,11 +34,25 @@ class _ForgotPasswordScreenContentState
   final TextEditingController _emailController = TextEditingController();
   String? _emailError;
   bool _isServerErrorCleared = false;
+  Timer? _validationErrorTimer;
 
   @override
   void dispose() {
+    _validationErrorTimer?.cancel();
     _emailController.dispose();
     super.dispose();
+  }
+
+  void _startErrorAutoDismissTimer() {
+    _validationErrorTimer?.cancel();
+    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _emailError = null;
+          _isServerErrorCleared = true;
+        });
+      }
+    });
   }
 
   void _submitResetLink(BuildContext context) {
@@ -57,6 +71,7 @@ class _ForgotPasswordScreenContentState
     });
 
     if (_emailError != null) {
+      _startErrorAutoDismissTimer();
       return;
     }
 
