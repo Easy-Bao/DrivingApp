@@ -225,42 +225,48 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           ],
                         ),
                         const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: isLoading ? null : () => _submitSignIn(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: AppTheme.neutralColor,
-                            minimumSize: const Size.fromHeight(60),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Sign In',
-                                   style: TextStyle(
-                                     fontSize: 16,
-                                     fontWeight: FontWeight.w600,
+                         Hero(
+                           tag: 'auth_primary_button',
+                           child: ElevatedButton(
+                             onPressed: isLoading ? null : () => _submitSignIn(context),
+                             style: ElevatedButton.styleFrom(
+                               backgroundColor: AppTheme.primaryColor,
+                               foregroundColor: AppTheme.neutralColor,
+                               minimumSize: const Size.fromHeight(60),
+                               shape: RoundedRectangleBorder(
+                                 borderRadius: BorderRadius.circular(32),
+                               ),
+                               elevation: 0,
+                             ),
+                             child: isLoading
+                                 ? const SizedBox(
+                                     width: 24,
+                                     height: 24,
+                                     child: CircularProgressIndicator(
+                                       color: Colors.white,
+                                       strokeWidth: 2,
+                                     ),
+                                   )
+                                 : const Text(
+                                     'Sign In',
+                                     style: TextStyle(
+                                       fontSize: 16,
+                                       fontWeight: FontWeight.w600,
+                                     ),
                                    ),
-                                 ),
+                           ),
                          ),
                          const SizedBox(height: 24),
-                         SocialLoginWidget(
-                           onGoogleTap: () {
-                             CustomToast.show(
-                               context,
-                               'Google Sign-In coming soon',
-                             );
-                           },
+                         Hero(
+                           tag: 'auth_google_button',
+                           child: SocialLoginWidget(
+                             onGoogleTap: () {
+                               CustomToast.show(
+                                 context,
+                                 'Google Sign-In coming soon',
+                               );
+                             },
+                           ),
                          ),
                          const Spacer(),
                       ],
