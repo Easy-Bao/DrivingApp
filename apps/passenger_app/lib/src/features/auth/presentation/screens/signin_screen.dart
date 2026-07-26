@@ -30,6 +30,10 @@ class _SigninScreenContent extends StatefulWidget {
 }
 
 class _SigninScreenContentState extends State<_SigninScreenContent> {
+  static final RegExp _emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -71,7 +75,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
       _isServerErrorCleared = false;
       if (email.isEmpty) {
         _emailError = 'Please enter your email';
-      } else if (!email.contains('@')) {
+      } else if (!_emailRegex.hasMatch(email)) {
         _emailError = 'Please enter a valid email address';
       } else {
         _emailError = null;

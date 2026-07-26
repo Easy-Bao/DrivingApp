@@ -30,23 +30,61 @@ class _SigninScreenContent extends StatefulWidget {
 }
 
 class _SigninScreenContentState extends State<_SigninScreenContent> {
+  static final RegExp _emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
   bool _rememberMeChecked = false;
 
+  String? _emailError;
+  String? _passwordError;
+  Timer? _validationErrorTimer;
+
   @override
   void dispose() {
+    _validationErrorTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  void _startErrorAutoDismissTimer() {
+    _validationErrorTimer?.cancel();
+    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _emailError = null;
+          _passwordError = null;
+        });
+      }
+    });
+  }
+
   void _submitSignIn(BuildContext context) {
     FocusScope.of(context).unfocus();
-    final email = _emailController.text;
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
+
+    setState(() {
+      if (email.isEmpty) {
+        _emailError = 'Please enter your email';
+      } else if (!_emailRegex.hasMatch(email)) {
+        _emailError = 'Please enter a valid email address';
+      } else {
+        _emailError = null;
+      }
+      _passwordError = password.isEmpty ? 'Please enter your password' : null;
+    });
+
+    if (_emailError != null || _passwordError != null) {
+      _startErrorAutoDismissTimer();
+      return;
+    }
+
     unawaited(BlocProvider.of<SignInCubit>(context).signIn(email, password));
   }
 
@@ -118,8 +156,14 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                               keyboardType: TextInputType.emailAddress,
                               controller: _emailController,
                               textInputAction: TextInputAction.next,
+                              onChanged: (_) {
+                                if (_emailError != null) {
+                                  setState(() => _emailError = null);
+                                }
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Email',
+                                errorText: _emailError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsetsGeometry.only(left: 10),
                                   child: Icon(LucideIcons.mail, size: 20),
@@ -138,6 +182,20 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                     width: 1.5,
                                   ),
                                 ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.5,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -147,9 +205,14 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           obscureText: !_isPasswordVisible,
                           controller: _passwordController,
                           textInputAction: TextInputAction.done,
+                          onChanged: (_) {
+                            if (_passwordError != null) {
+                              setState(() => _passwordError = null);
+                            }
+                          },
                           decoration: InputDecoration(
                             hintText: 'Password',
-                            errorText: errorMessage,
+                            errorText: _passwordError ?? errorMessage,
                             prefixIcon: const Padding(
                               padding: EdgeInsetsGeometry.only(left: 10),
                               child: Icon(LucideIcons.lock, size: 20),

@@ -30,6 +30,10 @@ class _SignupScreenContent extends StatefulWidget {
 }
 
 class _SignupScreenContentState extends State<_SignupScreenContent> {
+  static final RegExp _emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
+
   final TextEditingController _passengerNameController =
       TextEditingController();
   final TextEditingController _passengerPhoneController =
@@ -74,16 +78,23 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
   void _submitRegistration(BuildContext context) {
     FocusScope.of(context).unfocus();
     final name = _passengerNameController.text.trim();
-    final phone = _passengerPhoneController.text.trim();
+    final rawPhone = _passengerPhoneController.text.replaceAll(RegExp(r'\D'), '');
     final email = _passengerEmailController.text.trim();
     final password = _passengerPasswordController.text;
 
     setState(() {
       _nameError = name.isEmpty ? 'Please enter your name' : null;
-      _phoneError = phone.isEmpty ? 'Please enter your phone number' : null;
+      if (rawPhone.isEmpty) {
+        _phoneError = 'Please enter your phone number';
+      } else if (rawPhone.length != 10 || !rawPhone.startsWith('9')) {
+        _phoneError = 'Please enter a valid 10-digit PH mobile number';
+      } else {
+        _phoneError = null;
+      }
+
       if (email.isEmpty) {
         _emailError = 'Please enter your email';
-      } else if (!email.contains('@')) {
+      } else if (!_emailRegex.hasMatch(email)) {
         _emailError = 'Please enter a valid email address';
       } else {
         _emailError = null;
@@ -99,11 +110,12 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       return;
     }
 
+    final formattedPhone = '+63$rawPhone';
     unawaited(
       BlocProvider.of<SignUpCubit>(context).registerPassenger(
         name: name,
         email: email,
-        phone: phone,
+        phone: formattedPhone,
         password: password,
       ),
     );
@@ -278,11 +290,12 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               controller: _passengerPhoneController,
                               keyboardType: TextInputType.phone,
                               textInputAction: TextInputAction.next,
+                              inputFormatters: [PhPhoneTextInputFormatter()],
                               onChanged: (_) {
                                 setState(() => _phoneError = null);
                               },
                               decoration: InputDecoration(
-                                hintText: 'Phone Number',
+                                hintText: '9XX XXX XXXX',
                                 errorText: _phoneError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
@@ -290,6 +303,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                     LucideIcons.phone,
                                     size: 20,
                                     color: Color(0xFF495057),
+                                  ),
+                                ),
+                                prefix: const Text(
+                                  '+63 ',
+                                  style: TextStyle(
+                                    color: AppTheme.primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
                                   ),
                                 ),
                                 filled: true,
