@@ -4,6 +4,7 @@ import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_state.dart';
 import 'package:driver_app/src/features/home/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
+import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
@@ -289,7 +290,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               child: Column(
                 children: [
                   _buildTopBar(state),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+                  _buildOnlineCardBanner(context, state),
+                  const SizedBox(height: 16),
                   _buildStatsRow(state),
                   const SizedBox(height: 16),
                   if (showFeed)
@@ -307,8 +310,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                             const SizedBox(height: 24),
                           ],
                           if (_activeBids.isNotEmpty) ...[
-                            _buildSectionLabel(
-                              'Available Requests',
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildSectionLabel('Incoming request'),
+                                const Text(
+                                  '0:12',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.secondaryColor,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 10),
                             ..._activeBids.map(_buildPoolBidCard),
@@ -321,8 +335,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     _buildStatusIndicator(state),
                     const Spacer(),
                   ],
-                  _buildToggleButton(context, state),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -337,35 +349,112 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Good ${_greeting()}',
+                'BaoRide',
                 style: TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                  fontWeight: FontWeight.w500,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 2),
-              const Text(
+              SizedBox(height: 2),
+              Text(
                 'Driver',
                 style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                   color: AppTheme.primaryColor,
                 ),
               ),
             ],
           ),
-          _StatusPill(
-            isOnline: state.isOnline,
-            isLoading: state.isLoadingHeatmap,
+          GestureDetector(
+            onTap: () async {
+              await context.pushNamed(ProfileRoutes.account);
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Icon(
+                  LucideIcons.user,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOnlineCardBanner(BuildContext context, DashboardState state) {
+    final isOnline = state.isOnline;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isOnline
+              ? AppTheme.secondaryColor
+              : AppTheme.neutralColor,
+          borderRadius: BorderRadius.circular(20),
+          border: isOnline ? null : Border.all(color: AppTheme.borderSide),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isOnline ? "You're online" : "You're offline",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: isOnline ? Colors.white : AppTheme.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isOnline
+                      ? 'Looking for rides nearby'
+                      : 'Go online to receive rides',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: isOnline
+                        ? Colors.white.withValues(alpha: 0.8)
+                        : AppTheme.primaryColor.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+            Transform.scale(
+              scale: 1.1,
+              child: Switch(
+                value: isOnline,
+                activeThumbColor: Colors.white,
+                activeTrackColor: Colors.white.withValues(alpha: 0.3),
+                inactiveThumbColor: AppTheme.primaryColor.withValues(alpha: 0.4),
+                inactiveTrackColor: AppTheme.borderSide,
+                onChanged: (_) => _toggleOnline(context, isOnline),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -452,53 +541,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildToggleButton(BuildContext context, DashboardState state) {
-    final isOnline = state.isOnline;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GestureDetector(
-        onTap: () => _toggleOnline(context, isOnline),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          width: double.infinity,
-          height: 56,
-          decoration: BoxDecoration(
-            color: isOnline ? AppTheme.cancel : Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: (isOnline ? AppTheme.cancel : Colors.black)
-                    .withValues(alpha: 0.2),
-                blurRadius: 15,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                LucideIcons.power,
-                size: 18,
-                color: isOnline ? Colors.white : AppTheme.primaryColor,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                isOnline ? 'Go offline' : 'Go online',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: isOnline ? Colors.white : AppTheme.primaryColor,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -686,43 +728,22 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildPoolBidCard(Map<String, dynamic> bid) {
-    final rating = bid['passenger_rating'] ?? '4.8';
-    final isPriority = bid['ride_type'] == 'Bao Premium';
-
-    final Position? driverPos = LocationService.lastPosition;
-    final double passengerLat = SafeParse.toDouble(
-      bid['pickup_latitude'] ?? 0.0,
-    );
-    final double passengerLng = SafeParse.toDouble(
-      bid['pickup_longitude'] ?? 0.0,
-    );
-
-    double distanceToPassenger = SafeParse.toDouble(
-      bid['distance_km'] ?? bid['distance'] ?? 1.5,
-    );
-    if (driverPos != null && passengerLat != 0.0 && passengerLng != 0.0) {
-      distanceToPassenger = MapNativeServiceImpl.calculateHaversine(
-        driverPos.latitude,
-        driverPos.longitude,
-        passengerLat,
-        passengerLng,
-      );
-    }
+    final pickup = bid['pickup_name'] ?? 'Guiwan, Zamboanga City';
+    final dropoff = bid['dropoff_name'] ?? 'KCC Mall, Zamboanga City';
+    final fare = SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']);
+    final distance = (bid['distance'] as num?)?.toDouble() ?? 2.4;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isPriority ? AppTheme.cancel : AppTheme.primaryColor.withValues(alpha: 0.12),
-          width: isPriority ? 1.5 : 1.0,
-        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.borderSide),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -731,156 +752,145 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                LucideIcons.map_pin,
+                color: AppTheme.secondaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pickup',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      pickup,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                LucideIcons.navigation,
+                color: AppTheme.secondaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Drop-off',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      dropoff,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: AppTheme.borderSide),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                bid['passenger_name'] ?? 'Passenger',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppTheme.complete.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  '★ ',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.complete,
-                  ),
+                '${distance.toStringAsFixed(1)} km away · ~8 min',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
                 ),
               ),
               Text(
-                '$rating',
+                '₱${fare > 0 ? fare.toStringAsFixed(0) : '145'}',
                 style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              if (isPriority) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cancel.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'PRIORITY',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.cancel,
-                    ),
-                  ),
-                ),
-              ],
-              const Spacer(),
-              Text(
-                '₱${SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']).toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
                   color: AppTheme.primaryColor,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(
-                LucideIcons.navigation,
-                size: 14,
-                color: AppTheme.primaryColor.withValues(alpha: 0.7),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${distanceToPassenger.toStringAsFixed(1)} km away',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(
-                LucideIcons.map_pin,
-                size: 14,
-                color: AppTheme.primaryColor.withValues(alpha: 0.7),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'From: ${bid['pickup_name'] ?? 'Current Location'}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(
-                LucideIcons.map_pin,
-                size: 14,
-                color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'To: ${bid['dropoff_name']}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Row(
             children: [
               Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => _acceptBid(bid),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      _activeBids.removeWhere((b) => b['id'] == bid['id']);
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppTheme.borderSide),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
                     ),
-                    child: Text(
-                      isPriority ? 'Accept Priority' : 'Accept Ride',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
+                  ),
+                  child: const Text(
+                    'Decline',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _acceptBid(bid),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.secondaryColor,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
+                  child: const Text(
+                    'Accept',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -903,66 +913,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           color: AppTheme.primaryColor.withValues(alpha: 0.6),
           letterSpacing: 1.2,
         ),
-      ),
-    );
-  }
-
-  String _greeting() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'morning';
-    if (h < 17) return 'afternoon';
-    return 'evening';
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.isOnline, required this.isLoading});
-
-  final bool isOnline;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primaryColor.withValues(alpha: 0.12),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isOnline && isLoading)
-            SizedBox(
-              width: 8,
-              height: 8,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.5,
-                valueColor: AlwaysStoppedAnimation(AppTheme.complete),
-              ),
-            )
-          else
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: isOnline ? AppTheme.complete : AppTheme.cancel,
-                shape: BoxShape.circle,
-              ),
-            ),
-          const SizedBox(width: 8),
-          Text(
-            isOnline ? 'Online' : 'Offline',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -10,7 +10,10 @@ import 'package:passenger_app/src/features/chat/chat_module.dart';
 import 'package:passenger_app/src/features/home/data/repositories/home_repository_impl.dart';
 import 'package:passenger_app/src/features/home/home_module.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home_cubit.dart';
+import 'package:passenger_app/src/features/inbox/data/repositories/inbox_repository_impl.dart';
+import 'package:passenger_app/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/inbox_module.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_module.dart';
 import 'package:passenger_app/src/features/saved_places/data/repositories/saved_places_repository_impl.dart';
@@ -59,11 +62,22 @@ class PassengerModule extends Module {
           biddingRepository: i.get<BiddingRepository>(),
         ),
       )
-      ..addFactory<SavedPlacesCubit>(
+      ..addLazySingleton<InboxRepository>(
+        (i) => InboxRepositoryImpl(
+          remoteDataSource: i.get<PassengerRemoteDataSource>(),
+        ),
+      )
+      ..addLazySingleton<SavedPlacesCubit>(
         (i) => SavedPlacesCubit(repository: i.get<SavedPlacesRepository>()),
       )
-      ..addFactory<ActivityBloc>(
+      ..addLazySingleton<ActivityBloc>(
         (i) => ActivityBloc(repository: i.get<ActivityRepository>()),
+      )
+      ..addLazySingleton<InboxCubit>(
+        (i) => InboxCubit(inboxRepository: i.get<InboxRepository>()),
+      )
+      ..addLazySingleton<HomeCubit>(
+        (i) => HomeCubit(repository: i.get<PassengerHomeRepository>()),
       )
       ..addFactory<BookingBloc>(
         (i) => BookingBloc(
@@ -81,9 +95,6 @@ class PassengerModule extends Module {
         (i) => ProfileCubit(
           profileRepository: i.get<PassengerProfileRepository>(),
         ),
-      )
-      ..addFactory<HomeCubit>(
-        (i) => HomeCubit(repository: i.get<PassengerHomeRepository>()),
       )
       ..addFactory<TrackDriverCubit>(
         (i) => TrackDriverCubit(

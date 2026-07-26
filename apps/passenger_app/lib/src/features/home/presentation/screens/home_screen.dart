@@ -7,6 +7,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -221,18 +222,21 @@ class _HomeScreenState extends State<HomeScreen> {
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           child: Row(
-            children: state.places.asMap().entries.map((entry) {
-              final index = entry.key;
-              final place = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () => _handleSavedPlaceTap(place),
-                  onLongPress: () => _showChipOptions(index, place.label),
-                  child: _buildSavedPlaceChip(place),
-                ),
-              );
-            }).toList(),
+            children: [
+              ...state.places.asMap().entries.map((entry) {
+                final index = entry.key;
+                final place = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: GestureDetector(
+                    onTap: () => _handleSavedPlaceTap(place),
+                    onLongPress: () => _showChipOptions(index, place.label),
+                    child: _buildSavedPlaceChip(place),
+                  ),
+                );
+              }),
+              _buildAddPlaceChip(),
+            ],
           ),
         );
       },
@@ -470,11 +474,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildAddPlaceChip() {
+    return GestureDetector(
+      onTap: () async {
+        await context.pushNamed(HomeRoutes.addCategory);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border.all(
+            color: AppTheme.primaryColor.withValues(alpha: 0.25),
+          ),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.plus,
+              size: 16,
+              color: AppTheme.primaryColor.withValues(alpha: 0.7),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Add place',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryColor.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSavedPlaceChip(SavedPlace place) {
     final hasLocation = place.hasLocation;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
         color: hasLocation
             ? AppTheme.secondaryColor.withValues(alpha: 0.25)
@@ -483,22 +524,22 @@ class _HomeScreenState extends State<HomeScreen> {
           color: hasLocation ? AppTheme.secondaryColor : AppTheme.borderSide,
           width: hasLocation ? 1.5 : 1.0,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             _iconFromName(place.iconName),
-            size: 14,
+            size: 16,
             color: AppTheme.primaryColor,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Text(
             place.label,
             style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
               color: AppTheme.primaryColor,
             ),
           ),

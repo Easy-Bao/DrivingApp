@@ -4,13 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/inbox/data/repositories/inbox_repository_impl.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/presentation/widgets/inbox_empty_state_widget.dart';
 import 'package:passenger_app/src/features/inbox/presentation/widgets/inbox_notification_card_widget.dart';
-import 'package:passenger_services/passenger_services.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -27,24 +25,17 @@ class _InboxScreenState extends State<InboxScreen> {
   @override
   void initState() {
     super.initState();
-    final repo = InboxRepositoryImpl(
-      remoteDataSource: Modular.get<PassengerRemoteDataSource>(),
-    );
-    _inboxCubit = InboxCubit(inboxRepository: repo);
+    _inboxCubit = Modular.get<InboxCubit>();
     unawaited(_initializeInbox());
   }
 
-  @override
-  void dispose() {
-    unawaited(_inboxCubit.close());
-    super.dispose();
-  }
-
   Future<void> _initializeInbox() async {
-    final passengerId =
-        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
-    if (passengerId.isNotEmpty) {
-      unawaited(_inboxCubit.loadNotifications(passengerId));
+    if (_inboxCubit.state is! InboxLoadedState) {
+      final passengerId =
+          await Modular.get<SecureSessionService>().readPassengerId() ?? '';
+      if (passengerId.isNotEmpty) {
+        unawaited(_inboxCubit.loadNotifications(passengerId));
+      }
     }
   }
 

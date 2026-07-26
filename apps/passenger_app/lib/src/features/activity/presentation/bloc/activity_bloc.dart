@@ -32,7 +32,9 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     LoadActivityEvent event,
     Emitter<ActivityState> emit,
   ) async {
-    emit(ActivityLoading());
+    if (state is! ActivityLoaded) {
+      emit(ActivityLoading());
+    }
     await _fetchAndEmit(event.passengerId, emit);
   }
 

@@ -6,12 +6,25 @@ import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dar
 
 class HomeCubit extends Cubit<HomeState> {
   final PassengerHomeRepository _repository;
+  double? _lastLat;
+  double? _lastLng;
 
   HomeCubit({required PassengerHomeRepository repository})
     : _repository = repository,
       super(const HomeState());
 
   Future<void> loadHomeData({required double lat, required double lng}) async {
+    if (_lastLat != null && _lastLng != null && state.currentAddress.isNotEmpty) {
+      final deltaLat = (lat - _lastLat!).abs();
+      final deltaLng = (lng - _lastLng!).abs();
+      if (deltaLat < 0.0005 && deltaLng < 0.0005) {
+        return;
+      }
+    }
+
+    _lastLat = lat;
+    _lastLng = lng;
+
     if (state.currentAddress.isEmpty && state.recentLocations.isEmpty) {
       emit(state.copyWith(isLoading: true));
     }

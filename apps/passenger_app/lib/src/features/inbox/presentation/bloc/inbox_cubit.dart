@@ -10,7 +10,9 @@ class InboxCubit extends Cubit<InboxState> {
     : super(const InboxInitialState());
 
   Future<void> loadNotifications(String passengerId) async {
-    emit(const InboxLoadingState());
+    if (state is! InboxLoadedState) {
+      emit(const InboxLoadingState());
+    }
     final result = await inboxRepository.fetchPassengerNotifications(
       passengerId,
     );
