@@ -58,20 +58,20 @@ class _MapPinScreenState extends State<MapPinScreen>
 
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
-    MapProvider.subscribeCameraChanged(controller, () {
-      _hasUserPannedMap = true;
-      _debounceTimer?.cancel();
-      _debounceTimer = Timer(const Duration(milliseconds: 350), () async {
-        if (!mounted || _mapController == null) return;
-        final center = await MapProvider.getCameraCenter(_mapController!);
-        unawaited(_reverseGeocode(center.latitude, center.longitude));
-      });
-    });
-
     if (_centerLat != 0.0 && _centerLng != 0.0) {
       unawaited(MapProvider.moveCamera(controller, _centerLat, _centerLng, zoom: 15.0));
       unawaited(_reverseGeocode(_centerLat, _centerLng));
     }
+  }
+
+  void _onCameraChanged(AppMapController controller) {
+    _hasUserPannedMap = true;
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () async {
+      if (!mounted || _mapController == null) return;
+      final center = await MapProvider.getCameraCenter(_mapController!);
+      unawaited(_reverseGeocode(center.latitude, center.longitude));
+    });
   }
 
   Future<void> _reverseGeocode(double lat, double lng) async {
@@ -129,6 +129,7 @@ class _MapPinScreenState extends State<MapPinScreen>
             longitude: _centerLng,
             zoom: 15.0,
             onMapCreated: _onMapCreated,
+            onCameraChanged: _onCameraChanged,
           ),
           Center(
             child: Hero(

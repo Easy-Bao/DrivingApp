@@ -1,9 +1,7 @@
 import 'package:core_models/core_models.dart';
 import 'package:location_service/src/features/map/data/repositories/map_native_service_impl.dart';
 
-/// Service to calculate the optimal route traversal order (TSP) under constraints.
 class RouteOptimizationService {
-  /// Generates all index permutations recursively.
   static List<List<int>> _permute(List<int> list) {
     final List<List<int>> result = [];
     _permuteHelper(list, 0, result);
@@ -32,7 +30,6 @@ class RouteOptimizationService {
     list[j] = temp;
   }
 
-  /// Validates that all passenger pickups are visited before dropoffs.
   static bool _isValidSequence(List<Waypoint> seq) {
     for (int index = 0; index < seq.length; index++) {
       final wp = seq[index];
@@ -51,7 +48,6 @@ class RouteOptimizationService {
     return true;
   }
 
-  /// Calculates the optimal route sequence using a TSP search with pickup-before-dropoff constraints.
   static RouteSequenceResult calculateOptimalRoute({
     required double startLat,
     required double startLng,

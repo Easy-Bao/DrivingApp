@@ -69,7 +69,7 @@ class MapNativeServiceImpl implements MapNativeService {
     try {
       final Uri uri = Uri.https(
         'api.mapbox.com',
-        '/geocoding/v5/mapbox.places/$query.json',
+        '/geocoding/v5/mapbox.places/${Uri.encodeComponent(query.trim())}.json',
         queryParameters,
       );
       final response = await _clientDio.getUri(uri);
@@ -85,8 +85,10 @@ class MapNativeServiceImpl implements MapNativeService {
 
       for (final f in features) {
         final List<dynamic> center = f['center'] ?? [0.0, 0.0];
-        final double placeLng = (center.isNotEmpty ? center[0] : 0.0) as double;
-        final double placeLat = (center.length > 1 ? center[1] : 0.0) as double;
+        final double placeLng =
+            center.isNotEmpty ? (center[0] as num).toDouble() : 0.0;
+        final double placeLat =
+            center.length > 1 ? (center[1] as num).toDouble() : 0.0;
 
         double? distanceKm;
         if (userLat != null && userLng != null) {
@@ -131,7 +133,7 @@ class MapNativeServiceImpl implements MapNativeService {
     try {
       final Uri uri = Uri.https(
         'api.mapbox.com',
-        '/geocoding/v5/mapbox.places/$lng,$lat.json',
+        '/geocoding/v5/mapbox.places/${Uri.encodeComponent('$lng,$lat')}.json',
         queryParameters,
       );
       final response = await _clientDio.getUri(uri);
@@ -181,7 +183,7 @@ class MapNativeServiceImpl implements MapNativeService {
     try {
       final Uri uri = Uri.https(
         'api.mapbox.com',
-        '/directions/v5/mapbox/driving/$originLng,$originLat;$destLng,$destLat',
+        '/directions/v5/mapbox/driving/${Uri.encodeComponent('$originLng,$originLat;$destLng,$destLat')}',
         queryParameters,
       );
       final response = await _clientDio.getUri(uri);
@@ -240,7 +242,7 @@ class MapNativeServiceImpl implements MapNativeService {
     try {
       final Uri uri = Uri.https(
         'api.mapbox.com',
-        '/v4/mapbox.mapbox-streets-v8/tilequery/$lng,$lat.json',
+        '/v4/mapbox.mapbox-streets-v8/tilequery/${Uri.encodeComponent('$lng,$lat')}.json',
         queryParameters,
       );
       final response = await _clientDio.getUri(uri);
@@ -262,14 +264,18 @@ class MapNativeServiceImpl implements MapNativeService {
 
         if (geom != null && props != null) {
           final List<dynamic> coords = geom['coordinates'] ?? [0.0, 0.0];
-          final double pLng = (coords.isNotEmpty ? coords[0] : 0.0) as double;
-          final double pLat = (coords.length > 1 ? coords[1] : 0.0) as double;
+          final double pLng =
+              coords.isNotEmpty ? (coords[0] as num).toDouble() : 0.0;
+          final double pLat =
+              coords.length > 1 ? (coords[1] as num).toDouble() : 0.0;
 
           final String name = (props['name'] ?? 'Unknown') as String;
           final String category = (props['type'] ?? 'poi') as String;
           final Map<String, dynamic>? tilequery =
               props['tilequery'] as Map<String, dynamic>?;
-          final double distanceM = (tilequery?['distance'] ?? 0.0) as double;
+          final double distanceM = tilequery != null && tilequery['distance'] is num
+              ? (tilequery['distance'] as num).toDouble()
+              : 0.0;
 
           if (name.trim().isEmpty || name == 'Unknown') {
             continue;
