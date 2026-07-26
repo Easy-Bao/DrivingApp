@@ -10,15 +10,14 @@ import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-///TODO: Convert into account screen rather than PassengerAccountScreen
-class PassengerAccountScreen extends StatefulWidget {
-  const PassengerAccountScreen({super.key});
+class AccountScreen extends StatefulWidget {
+  const AccountScreen({super.key});
 
   @override
-  State<PassengerAccountScreen> createState() => _PassengerAccountScreenState();
+  State<AccountScreen> createState() => _AccountScreenState();
 }
 
-class _PassengerAccountScreenState extends State<PassengerAccountScreen> {
+class _AccountScreenState extends State<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ProfileCubit>(

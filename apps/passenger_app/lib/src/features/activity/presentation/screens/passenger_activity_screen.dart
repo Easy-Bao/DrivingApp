@@ -379,12 +379,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              LucideIcons.history,
-              size: 48,
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
             const Text(
               'No rides yet',
               style: TextStyle(

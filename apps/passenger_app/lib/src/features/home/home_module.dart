@@ -22,7 +22,7 @@ class HomeModule {
         final extra = SafeRouteExtra.asMap(state.extra);
         final onSave = extra['onSave'] as Function(SavedPlace)?;
         final place = extra['place'] as PlaceModel?;
-        return PassengerAddCategoryScreen(
+        return AddCategoryScreen(
           onSave: onSave ?? (_) {},
           initialPlace: place,
         );

@@ -14,8 +14,8 @@ class ActivityModule {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: ActivityRoutes.viewAllSuggestions,
-      'activity/suggestions',
+      name: ActivityRoutes.viewAllRecentActivity,
+      'activity/view-all',
       child: (context, GoRouterState state) =>
           const PassengerViewAllActivityScreen(),
       transition: AppTransitions.push.toLeft,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class InboxEmptyStateWidget extends StatelessWidget {
@@ -13,12 +12,6 @@ class InboxEmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              LucideIcons.bell_off,
-              size: 48,
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
             const Text(
               'No notifications yet',
               style: TextStyle(

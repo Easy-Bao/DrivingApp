@@ -8,24 +8,23 @@ import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-///TODO: Should addcategoryscreen
-class PassengerAddCategoryScreen extends StatefulWidget {
+class AddCategoryScreen extends StatefulWidget {
   final Function(SavedPlace) onSave;
   final PlaceModel? initialPlace;
 
-  const PassengerAddCategoryScreen({
+  const AddCategoryScreen({
     super.key,
     required this.onSave,
     this.initialPlace,
   });
 
   @override
-  State<PassengerAddCategoryScreen> createState() =>
-      _PassengerAddCategoryScreenState();
+  State<AddCategoryScreen> createState() =>
+      _AddCategoryScreenState();
 }
 
-class _PassengerAddCategoryScreenState
-    extends State<PassengerAddCategoryScreen> {
+class _AddCategoryScreenState
+    extends State<AddCategoryScreen> {
   final TextEditingController _controller = TextEditingController();
   IconData selectedIcon = LucideIcons.heart;
   bool _isLocationPinned = false;
