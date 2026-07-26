@@ -20,15 +20,15 @@ bootstrap:
     flutter pub global run melos bootstrap
 
 db-up:
-    docker compose up -d passenger-db
+    docker compose up -d postgres-db
     @echo "PostgreSQL started on port 5432"
 
 db-down:
-    docker compose stop passenger-db
+    docker compose stop postgres-db
 
 db-migrate:
-    docker exec driveapp-passenger-db-1 psql -U driveapp -d passenger_db -f /dev/stdin < server/passenger-service/prisma/migrations/20260626000000_create_passenger_tables/migration.sql
-    docker exec driveapp-passenger-db-1 psql -U driveapp -d passenger_db -f /dev/stdin < server/passenger-service/prisma/migrations/20260627000000_add_password_hash/migration.sql
+    docker exec postgres-db psql -U driveapp -d passenger_db -f /dev/stdin < server/passenger-service/prisma/migrations/20260626000000_create_passenger_tables/migration.sql
+    docker exec postgres-db psql -U driveapp -d passenger_db -f /dev/stdin < server/passenger-service/prisma/migrations/20260627000000_add_password_hash/migration.sql
 
 test-services:
     @echo "=== Auth Service ==="
