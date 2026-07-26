@@ -105,11 +105,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
     unawaited(
       BlocProvider.of<VerifyOtpCubit>(
         context,
-      ).verifyOtp(
-        email: widget.email,
-        code: code,
-        password: widget.password,
-      ),
+      ).verifyOtp(email: widget.email, code: code, password: widget.password),
     );
   }
 
@@ -307,10 +303,11 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: AppTheme.primaryColor
                             .withValues(alpha: 0.3),
-                        disabledForegroundColor: Colors.white
-                            .withValues(alpha: 0.5),
+                        disabledForegroundColor: Colors.white.withValues(
+                          alpha: 0.5,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(36),
                         ),
                         elevation: 0,
                       ),
