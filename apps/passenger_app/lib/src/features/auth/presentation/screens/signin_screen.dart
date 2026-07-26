@@ -321,50 +321,50 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                         const SizedBox(height: 24),
                         Hero(
                           tag: 'auth_primary_button',
-                          child: ElevatedButton(
-                            onPressed: isLoading
-                                ? null
-                                : () => _submitSignIn(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size.fromHeight(56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(36),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: ElevatedButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () => _submitSignIn(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size.fromHeight(56),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                ),
+                                elevation: 0,
                               ),
-                              elevation: 0,
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Sign In',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                             ),
-                            child: isLoading
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Sign In',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
                           ),
                         ),
                         const SizedBox(height: 24),
-                        Hero(
-                          tag: 'auth_google_button',
-                          child: SocialLoginWidget(
-                            onGoogleTap: () {
-                              CustomToast.show(
-                                context,
-                                'Google Sign-In coming soon',
-                              );
-                            },
-                          ),
+                        SocialLoginWidget(
+                          onGoogleTap: () {
+                            CustomToast.show(
+                              context,
+                              'Google Sign-In coming soon',
+                            );
+                          },
                         ),
-                        const Spacer(),
+                        const SizedBox(height: 32),
                         Center(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,

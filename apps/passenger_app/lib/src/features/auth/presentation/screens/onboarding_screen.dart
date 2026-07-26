@@ -79,23 +79,26 @@ class OnBoardingScreen extends StatelessWidget {
                           height: 56,
                           child: Hero(
                             tag: 'auth_primary_button',
-                            child: ElevatedButton(
-                              onPressed: () {
-                                unawaited(context.pushNamed(AuthRoutes.signin));
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryColor,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  unawaited(context.pushNamed(AuthRoutes.signin));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(36),
+                                  ),
                                 ),
-                              ),
-                              child: const Text(
-                                'Continue with Email',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
+                                child: const Text(
+                                  'Continue with Email',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
                             ),
@@ -110,43 +113,46 @@ class OnBoardingScreen extends StatelessWidget {
                     height: 56,
                     child: Hero(
                       tag: 'auth_google_button',
-                      child: OutlinedButton(
-                        onPressed: () {
-                          CustomToast.show(
-                            context,
-                            'Google Sign-In coming soon',
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: AppTheme.borderSide,
-                            width: 1,
-                          ),
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(36),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/icons/google.png',
-                              package: 'shared_ui',
-                              height: 20,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            CustomToast.show(
+                              context,
+                              'Google Sign-In coming soon',
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppTheme.borderSide,
+                              width: 1,
                             ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Continue with Google',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.w800,
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppTheme.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(36),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/icons/google.png',
+                                package: 'shared_ui',
+                                height: 20,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Continue with Google',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

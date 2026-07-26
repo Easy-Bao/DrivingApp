@@ -437,54 +437,54 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 32),
-                            Hero(
-                              tag: 'auth_primary_button',
-                              child: ElevatedButton(
-                                onPressed: isLoading
-                                    ? null
-                                    : () => _submitRegistration(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryColor,
-                                  foregroundColor: Colors.white,
-                                  minimumSize: const Size.fromHeight(56),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(36),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: isLoading
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Continue',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Hero(
-                              tag: 'auth_google_button',
-                              child: SocialLoginWidget(
-                                label: 'Sign up with Google',
-                                onGoogleTap: () {
-                                  CustomToast.show(
-                                    context,
-                                    'Google Sign-In coming soon',
-                                  );
-                                },
-                              ),
-                            ),
-                            const Spacer(),
+                             const SizedBox(height: 32),
+                             Hero(
+                               tag: 'auth_primary_button',
+                               child: Material(
+                                 type: MaterialType.transparency,
+                                 child: ElevatedButton(
+                                   onPressed: isLoading
+                                       ? null
+                                       : () => _submitRegistration(context),
+                                   style: ElevatedButton.styleFrom(
+                                     backgroundColor: AppTheme.primaryColor,
+                                     foregroundColor: Colors.white,
+                                     minimumSize: const Size.fromHeight(56),
+                                     shape: RoundedRectangleBorder(
+                                       borderRadius: BorderRadius.circular(36),
+                                     ),
+                                     elevation: 0,
+                                   ),
+                                   child: isLoading
+                                       ? const SizedBox(
+                                           width: 24,
+                                           height: 24,
+                                           child: CircularProgressIndicator(
+                                             color: Colors.white,
+                                             strokeWidth: 2,
+                                           ),
+                                         )
+                                       : const Text(
+                                           'Continue',
+                                           style: TextStyle(
+                                             fontSize: 16,
+                                             fontWeight: FontWeight.w700,
+                                           ),
+                                         ),
+                                 ),
+                               ),
+                             ),
+                             const SizedBox(height: 24),
+                             SocialLoginWidget(
+                               label: 'Sign up with Google',
+                               onGoogleTap: () {
+                                 CustomToast.show(
+                                   context,
+                                   'Google Sign-In coming soon',
+                                 );
+                               },
+                             ),
+                             const SizedBox(height: 32),
                           ],
                         ),
                       ),

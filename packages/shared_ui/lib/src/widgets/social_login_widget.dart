@@ -4,11 +4,13 @@ import 'package:shared_ui/src/themes/app_themes.dart';
 class SocialLoginWidget extends StatelessWidget {
   final VoidCallback onGoogleTap;
   final String label;
+  final String heroTag;
 
   const SocialLoginWidget({
     super.key,
     required this.onGoogleTap,
     this.label = 'Continue with Google',
+    this.heroTag = 'auth_google_button',
   });
 
   @override
@@ -43,43 +45,49 @@ class SocialLoginWidget extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        OutlinedButton(
-          onPressed: onGoogleTap,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(56),
-            side: BorderSide(
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(36),
-            ),
-            elevation: 0,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/icons/google.png',
-                package: 'shared_ui',
-                width: 22,
-                height: 22,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.g_mobiledata,
-                  size: 24,
-                  color: AppTheme.primaryColor,
+        Hero(
+          tag: heroTag,
+          child: Material(
+            type: MaterialType.transparency,
+            child: OutlinedButton(
+              onPressed: onGoogleTap,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(56),
+                side: BorderSide(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(36),
                 ),
+                elevation: 0,
               ),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/icons/google.png',
+                    package: 'shared_ui',
+                    width: 22,
+                    height: 22,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Icons.g_mobiledata,
+                      size: 24,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],
