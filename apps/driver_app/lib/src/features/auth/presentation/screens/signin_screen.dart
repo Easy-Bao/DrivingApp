@@ -110,28 +110,34 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           ),
                         ),
                         const SizedBox(height: 40),
-                        TextField(
-                          keyboardType: TextInputType.emailAddress,
-                          controller: _emailController,
-                          textInputAction: TextInputAction.next,
-                          decoration: InputDecoration(
-                            hintText: 'Email',
-                            prefixIcon: const Padding(
-                              padding: EdgeInsetsGeometry.only(left: 10),
-                              child: Icon(LucideIcons.mail, size: 20),
-                            ),
-                            filled: false,
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
-                              borderSide: BorderSide(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
-                              borderSide: const BorderSide(
-                                color: AppTheme.primaryColor,
-                                width: 1.5,
+                        Hero(
+                          tag: 'auth_email_field',
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: TextField(
+                              keyboardType: TextInputType.emailAddress,
+                              controller: _emailController,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                hintText: 'Email',
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsetsGeometry.only(left: 10),
+                                  child: Icon(LucideIcons.mail, size: 20),
+                                ),
+                                filled: false,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -268,7 +274,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                               );
                             },
                           ),
-                          const SizedBox(height: 32),
+                          const Spacer(),
                       ],
                     ),
                   ),

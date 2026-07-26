@@ -10,9 +10,9 @@ class AppTransitions {
   static const modal = GoTransitions.slide;
   static const none = GoTransitions.none;
 
-  static const Duration pushDuration = Duration(milliseconds: 160);
-  static const Duration fadeDuration = Duration(milliseconds: 120);
-  static const Duration modalDuration = Duration(milliseconds: 220);
+  static const Duration pushDuration = Duration(milliseconds: 300);
+  static const Duration fadeDuration = Duration(milliseconds: 300);
+  static const Duration modalDuration = Duration(milliseconds: 300);
 
   static void configure() {
     GoTransition.defaultDuration = pushDuration;

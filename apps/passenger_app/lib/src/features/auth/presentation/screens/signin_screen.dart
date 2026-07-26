@@ -156,57 +156,63 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           ),
                         ),
                         const SizedBox(height: 40),
-                        TextField(
-                          style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          controller: _emailController,
-                          textInputAction: TextInputAction.next,
-                          onChanged: (_) {
-                            if (_emailError != null) {
-                              setState(() => _emailError = null);
-                            }
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Email',
-                            errorText: effectiveEmailError,
-                            errorStyle: const TextStyle(
-                              color: AppTheme.cancel,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            prefixIcon: const Padding(
-                              padding: EdgeInsets.only(left: 10),
-                              child: Icon(LucideIcons.mail, size: 20, color: Color(0xFF495057)),
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(36),
-                              borderSide: const BorderSide(color: AppTheme.borderSide),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(36),
-                              borderSide: const BorderSide(
+                        Hero(
+                          tag: 'auth_email_field',
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: TextField(
+                              style: const TextStyle(
                                 color: AppTheme.primaryColor,
-                                width: 1.5,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                               ),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(36),
-                              borderSide: const BorderSide(
-                                color: AppTheme.cancel,
-                                width: 1.0,
-                              ),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(36),
-                              borderSide: const BorderSide(
-                                color: AppTheme.cancel,
-                                width: 1.5,
+                              keyboardType: TextInputType.emailAddress,
+                              controller: _emailController,
+                              textInputAction: TextInputAction.next,
+                              onChanged: (_) {
+                                if (_emailError != null) {
+                                  setState(() => _emailError = null);
+                                }
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Email',
+                                errorText: effectiveEmailError,
+                                errorStyle: const TextStyle(
+                                  color: AppTheme.cancel,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Icon(LucideIcons.mail, size: 20, color: Color(0xFF495057)),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(color: AppTheme.borderSide),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(36),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.5,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -364,7 +370,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                             );
                           },
                         ),
-                        const SizedBox(height: 32),
+                        const Spacer(),
                         Center(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,

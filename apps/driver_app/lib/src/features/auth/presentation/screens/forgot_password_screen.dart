@@ -159,30 +159,36 @@ class __ForgotPasswordScreenContentState
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              TextField(
-                                keyboardType: TextInputType.emailAddress,
-                                controller: _emailController,
-                                textInputAction: TextInputAction.done,
-                                decoration: InputDecoration(
-                                  hintText: 'Email',
-                                  prefixIcon: const Padding(
-                                    padding: EdgeInsets.only(left: 10),
-                                    child: Icon(LucideIcons.mail, size: 20),
-                                  ),
-                                  filled: false,
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(32),
-                                    borderSide: BorderSide(
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.2,
+                              Hero(
+                                tag: 'auth_email_field',
+                                child: Material(
+                                  type: MaterialType.transparency,
+                                  child: TextField(
+                                    keyboardType: TextInputType.emailAddress,
+                                    controller: _emailController,
+                                    textInputAction: TextInputAction.done,
+                                    decoration: InputDecoration(
+                                      hintText: 'Email',
+                                      prefixIcon: const Padding(
+                                        padding: EdgeInsets.only(left: 10),
+                                        child: Icon(LucideIcons.mail, size: 20),
                                       ),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(32),
-                                    borderSide: const BorderSide(
-                                      color: AppTheme.primaryColor,
-                                      width: 1.5,
+                                      filled: false,
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(32),
+                                        borderSide: BorderSide(
+                                          color: AppTheme.primaryColor.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(32),
+                                        borderSide: const BorderSide(
+                                          color: AppTheme.primaryColor,
+                                          width: 1.5,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -193,41 +199,47 @@ class __ForgotPasswordScreenContentState
                         const SizedBox(height: 20),
                         Column(
                           children: [
-                            ElevatedButton(
-                              onPressed:
-                                  isLoading ? null : () => _submitResetLink(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryColor,
-                                foregroundColor: AppTheme.neutralColor,
-                                minimumSize: const Size.fromHeight(60),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'Send Reset Link',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(width: 10),
-                                        Icon(LucideIcons.send_horizontal),
-                                      ],
+                            Hero(
+                              tag: 'auth_primary_button',
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: ElevatedButton(
+                                  onPressed:
+                                      isLoading ? null : () => _submitResetLink(context),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    foregroundColor: AppTheme.neutralColor,
+                                    minimumSize: const Size.fromHeight(60),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(32),
                                     ),
+                                    elevation: 0,
+                                  ),
+                                  child: isLoading
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Send Reset Link',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Icon(LucideIcons.send_horizontal),
+                                          ],
+                                        ),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 10),
                             TextButton(

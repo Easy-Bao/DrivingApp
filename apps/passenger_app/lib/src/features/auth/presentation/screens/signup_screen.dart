@@ -474,17 +474,44 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                  ),
                                ),
                              ),
-                             const SizedBox(height: 24),
-                             SocialLoginWidget(
-                               label: 'Sign up with Google',
-                               onGoogleTap: () {
-                                 CustomToast.show(
-                                   context,
-                                   'Google Sign-In coming soon',
-                                 );
-                               },
-                             ),
-                             const SizedBox(height: 32),
+                              const SizedBox(height: 24),
+                              SocialLoginWidget(
+                                label: 'Sign up with Google',
+                                onGoogleTap: () {
+                                  CustomToast.show(
+                                    context,
+                                    'Google Sign-In coming soon',
+                                  );
+                                },
+                              ),
+                              const Spacer(),
+                              Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text(
+                                      'Already have an account?',
+                                      style: TextStyle(
+                                        color: AppTheme.tertiaryColor,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        unawaited(
+                                          context.pushNamed(AuthRoutes.signin),
+                                        );
+                                      },
+                                      child: const Text(
+                                        'Sign in',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),
