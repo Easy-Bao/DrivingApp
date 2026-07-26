@@ -33,23 +33,30 @@ class RideSelectionScreen extends StatefulWidget {
 
 class _RideSelectionScreenState extends State<RideSelectionScreen> {
   int _selectedIdx = 0;
-  late final List<RideOptionData> _options;
+  late List<RideOptionData> _options;
   AppMapController? _mapController;
 
   @override
   void initState() {
     super.initState();
-    final km = widget.distanceKm;
-    final formattedFare = widget.fares ?? {};
+    initializeRideOptionsData(widget.fares);
+    unawaited(fetchServerFareQuotes());
+  }
+
+  void initializeRideOptionsData(Map<String, double>? fareMap) {
+    final distanceKm = widget.distanceKm;
+    final formattedFares = fareMap ?? {};
+
     _options = [
       RideOptionData(
         name: 'Solo Ride',
         subtitle: 'Direct booking, just you',
         icon: LucideIcons.bike,
-        fare: formattedFare['Solo Ride'] ??
+        fare:
+            formattedFares['Solo Ride'] ??
             FareCalculatorHelper.estimateFare(
               serviceType: 'Solo Ride',
-              distanceKm: km,
+              distanceKm: distanceKm,
             ),
         eta: '3 min',
         badge: null,
@@ -58,10 +65,11 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         name: 'Share-Bao',
         subtitle: 'Pasabay, split the fare',
         icon: LucideIcons.users,
-        fare: formattedFare['Share-Bao'] ??
+        fare:
+            formattedFares['Share-Bao'] ??
             FareCalculatorHelper.estimateFare(
               serviceType: 'Share-Bao',
-              distanceKm: km,
+              distanceKm: distanceKm,
             ),
         eta: '5 min',
         badge: 'Cheapest',
@@ -70,15 +78,64 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         name: 'Bao Premium',
         subtitle: 'Priority pickup, top rated',
         icon: LucideIcons.crown,
-        fare: formattedFare['Bao Premium'] ??
+        fare:
+            formattedFares['Bao Premium'] ??
             FareCalculatorHelper.estimateFare(
               serviceType: 'Bao Premium',
-              distanceKm: km,
+              distanceKm: distanceKm,
             ),
         eta: '2 min',
         badge: 'Fastest',
       ),
     ];
+  }
+
+  Future<void> fetchServerFareQuotes() async {
+    final distanceKm = widget.distanceKm;
+    final durationMins =
+        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+        10.0;
+
+    try {
+      final fareRepository = Modular.get<FareRepository>();
+      final soloResult = await fareRepository.getFareQuote(
+        distanceKm: distanceKm,
+        durationMinutes: durationMins,
+        rideType: 'Solo Ride',
+      );
+      final shareResult = await fareRepository.getFareQuote(
+        distanceKm: distanceKm,
+        durationMinutes: durationMins,
+        rideType: 'Share-Bao',
+      );
+      final premiumResult = await fareRepository.getFareQuote(
+        distanceKm: distanceKm,
+        durationMinutes: durationMins,
+        rideType: 'Bao Premium',
+      );
+
+      final Map<String, double> serverFares = {};
+      soloResult.fold(
+        (_) {},
+        (quote) => serverFares['Solo Ride'] = quote.breakdown.totalFare,
+      );
+      shareResult.fold(
+        (_) {},
+        (quote) => serverFares['Share-Bao'] = quote.breakdown.totalFare,
+      );
+      premiumResult.fold(
+        (_) {},
+        (quote) => serverFares['Bao Premium'] = quote.breakdown.totalFare,
+      );
+
+      if (mounted && serverFares.isNotEmpty) {
+        setState(() {
+          initializeRideOptionsData(serverFares);
+        });
+      }
+    } catch (error) {
+      debugPrint('Error fetching server fare quotes: $error');
+    }
   }
 
   Future<void> _drawRoute() async {
@@ -162,13 +219,12 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
               child: GestureDetector(
                 onTap: () => context.pop(),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(20),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppTheme.borderSide),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.08),
@@ -177,24 +233,12 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                       ),
                     ],
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        LucideIcons.chevron_left,
-                        color: AppTheme.primaryColor,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Back',
-                        style: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                  child: const Center(
+                    child: Icon(
+                      LucideIcons.arrow_left,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),

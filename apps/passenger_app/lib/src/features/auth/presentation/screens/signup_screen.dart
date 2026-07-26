@@ -30,10 +30,14 @@ class _SignupScreenContent extends StatefulWidget {
 }
 
 class _SignupScreenContentState extends State<_SignupScreenContent> {
-  final TextEditingController _passengerNameController = TextEditingController();
-  final TextEditingController _passengerPhoneController = TextEditingController();
-  final TextEditingController _passengerEmailController = TextEditingController();
-  final TextEditingController _passengerPasswordController = TextEditingController();
+  final TextEditingController _passengerNameController =
+      TextEditingController();
+  final TextEditingController _passengerPhoneController =
+      TextEditingController();
+  final TextEditingController _passengerEmailController =
+      TextEditingController();
+  final TextEditingController _passengerPasswordController =
+      TextEditingController();
 
   bool _isPasswordInputVisible = false;
 
@@ -71,7 +75,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       _passwordError = password.isEmpty ? 'Please enter your password' : null;
     });
 
-    if (_nameError != null || _phoneError != null || _emailError != null || _passwordError != null) {
+    if (_nameError != null ||
+        _phoneError != null ||
+        _emailError != null ||
+        _passwordError != null) {
       return;
     }
 
@@ -94,9 +101,8 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
-            LucideIcons.chevron_left,
+            LucideIcons.arrow_left,
             color: AppTheme.primaryColor,
-            size: 24,
           ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
@@ -176,7 +182,11 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 decoration: BoxDecoration(
                                   color: AppTheme.cancel.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.3)),
+                                  border: Border.all(
+                                    color: AppTheme.cancel.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
                                 ),
                                 child: Text(
                                   errorMessage,
@@ -206,13 +216,19 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 errorText: _nameError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
-                                  child: Icon(LucideIcons.user, size: 20, color: Color(0xFF495057)),
+                                  child: Icon(
+                                    LucideIcons.user,
+                                    size: 20,
+                                    color: Color(0xFF495057),
+                                  ),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.borderSide),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.borderSide,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
@@ -223,11 +239,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.0,
+                                  ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.5,
+                                  ),
                                 ),
                               ),
                             ),
@@ -251,13 +273,19 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 errorText: _phoneError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
-                                  child: Icon(LucideIcons.phone, size: 20, color: Color(0xFF495057)),
+                                  child: Icon(
+                                    LucideIcons.phone,
+                                    size: 20,
+                                    color: Color(0xFF495057),
+                                  ),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.borderSide),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.borderSide,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
@@ -268,11 +296,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.0,
+                                  ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.5,
+                                  ),
                                 ),
                               ),
                             ),
@@ -296,13 +330,19 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 errorText: _emailError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
-                                  child: Icon(LucideIcons.mail, size: 20, color: Color(0xFF495057)),
+                                  child: Icon(
+                                    LucideIcons.mail,
+                                    size: 20,
+                                    color: Color(0xFF495057),
+                                  ),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.borderSide),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.borderSide,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
@@ -313,11 +353,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.0,
+                                  ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.5,
+                                  ),
                                 ),
                               ),
                             ),
@@ -341,7 +387,11 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 errorText: _passwordError,
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 10),
-                                  child: Icon(LucideIcons.lock, size: 20, color: Color(0xFF495057)),
+                                  child: Icon(
+                                    LucideIcons.lock,
+                                    size: 20,
+                                    color: Color(0xFF495057),
+                                  ),
                                 ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
@@ -352,16 +402,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                     color: const Color(0xFF6C757D),
                                   ),
                                   onPressed: () => setState(
-                                    () =>
-                                        _isPasswordInputVisible =
-                                            !_isPasswordInputVisible,
+                                    () => _isPasswordInputVisible =
+                                        !_isPasswordInputVisible,
                                   ),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.borderSide),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.borderSide,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
@@ -372,11 +423,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.0),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.0,
+                                  ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.5,
+                                  ),
                                 ),
                               ),
                             ),

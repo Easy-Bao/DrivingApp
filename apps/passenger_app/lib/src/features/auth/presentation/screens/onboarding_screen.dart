@@ -93,7 +93,7 @@ class OnBoardingScreen extends StatelessWidget {
                               'Continue with Email',
                               style: TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
@@ -132,8 +132,8 @@ class OnBoardingScreen extends StatelessWidget {
                             'Continue with Google',
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.w600,
                               color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
