@@ -69,7 +69,7 @@ class MapNativeServiceImpl implements MapNativeService {
     try {
       final Uri uri = Uri.https(
         'api.mapbox.com',
-        '/geocoding/v5/mapbox.places/${Uri.encodeComponent(query.trim())}.json',
+        '/geocoding/v5/mapbox.places/${query.trim()}.json',
         queryParameters,
       );
       final response = await _clientDio.getUri(uri);
@@ -133,7 +133,7 @@ class MapNativeServiceImpl implements MapNativeService {
     try {
       final Uri uri = Uri.https(
         'api.mapbox.com',
-        '/geocoding/v5/mapbox.places/${Uri.encodeComponent('$lng,$lat')}.json',
+        '/geocoding/v5/mapbox.places/$lng,$lat.json',
         queryParameters,
       );
       final response = await _clientDio.getUri(uri);
@@ -183,7 +183,7 @@ class MapNativeServiceImpl implements MapNativeService {
     try {
       final Uri uri = Uri.https(
         'api.mapbox.com',
-        '/directions/v5/mapbox/driving/${Uri.encodeComponent('$originLng,$originLat;$destLng,$destLat')}',
+        '/directions/v5/mapbox/driving/$originLng,$originLat;$destLng,$destLat',
         queryParameters,
       );
       final response = await _clientDio.getUri(uri);
@@ -242,7 +242,7 @@ class MapNativeServiceImpl implements MapNativeService {
     try {
       final Uri uri = Uri.https(
         'api.mapbox.com',
-        '/v4/mapbox.mapbox-streets-v8/tilequery/${Uri.encodeComponent('$lng,$lat')}.json',
+        '/v4/mapbox.mapbox-streets-v8/tilequery/$lng,$lat.json',
         queryParameters,
       );
       final response = await _clientDio.getUri(uri);
