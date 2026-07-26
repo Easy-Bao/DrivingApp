@@ -295,24 +295,39 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                 setState(() => _phoneError = null);
                               },
                               decoration: InputDecoration(
-                                hintText: '09XX XXX XXXX',
+                                hintText: '9XX XXX XXXX',
                                 errorText: _phoneError,
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
-                                  child: Icon(
-                                    LucideIcons.phone,
-                                    size: 20,
-                                    color: Color(0xFF495057),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 14, right: 8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(
+                                        LucideIcons.phone,
+                                        size: 18,
+                                        color: Color(0xFF495057),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        '+63',
+                                        style: TextStyle(
+                                          color: AppTheme.primaryColor,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '|',
+                                        style: TextStyle(
+                                          color: Color(0xFFCED4DA),
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                prefix: const Text(
-                                  '+63 ',
-                                  style: TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                  ),
-                                ),
+                                prefixIconConstraints: const BoxConstraints(),
                                 filled: true,
                                 fillColor: Colors.white,
                                 enabledBorder: OutlineInputBorder(
