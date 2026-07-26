@@ -207,9 +207,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               controller: _passengerNameController,
                               textInputAction: TextInputAction.next,
                               onChanged: (_) {
-                                if (_nameError != null) {
-                                  setState(() => _nameError = null);
-                                }
+                                setState(() => _nameError = null);
                               },
                               decoration: InputDecoration(
                                 hintText: 'Full Name',
@@ -264,9 +262,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               keyboardType: TextInputType.phone,
                               textInputAction: TextInputAction.next,
                               onChanged: (_) {
-                                if (_phoneError != null) {
-                                  setState(() => _phoneError = null);
-                                }
+                                setState(() => _phoneError = null);
                               },
                               decoration: InputDecoration(
                                 hintText: 'Phone Number',
@@ -321,9 +317,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               controller: _passengerEmailController,
                               textInputAction: TextInputAction.next,
                               onChanged: (_) {
-                                if (_emailError != null) {
-                                  setState(() => _emailError = null);
-                                }
+                                setState(() => _emailError = null);
                               },
                               decoration: InputDecoration(
                                 hintText: 'Email address',
@@ -378,9 +372,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               controller: _passengerPasswordController,
                               textInputAction: TextInputAction.done,
                               onChanged: (_) {
-                                if (_passwordError != null) {
-                                  setState(() => _passwordError = null);
-                                }
+                                setState(() => _passwordError = null);
                               },
                               decoration: InputDecoration(
                                 hintText: 'Password',

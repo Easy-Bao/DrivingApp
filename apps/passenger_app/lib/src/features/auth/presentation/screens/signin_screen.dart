@@ -38,6 +38,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
 
   String? _emailError;
   String? _passwordError;
+  bool _isServerErrorCleared = false;
 
   @override
   void dispose() {
@@ -52,6 +53,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
     final password = _passwordController.text;
 
     setState(() {
+      _isServerErrorCleared = false;
       if (email.isEmpty) {
         _emailError = 'Please enter your email';
       } else if (!email.contains('@')) {
@@ -113,16 +115,18 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                 : null;
 
             final effectiveEmailError = _emailError ??
-                ((errorMessage != null &&
-                    errorMessage.toLowerCase().contains('email'))
-                ? errorMessage
-                : null);
+                (!_isServerErrorCleared &&
+                        errorMessage != null &&
+                        errorMessage.toLowerCase().contains('email')
+                    ? errorMessage
+                    : null);
 
             final effectivePasswordError = _passwordError ??
-                ((errorMessage != null &&
-                    !errorMessage.toLowerCase().contains('email'))
-                ? errorMessage
-                : null);
+                (!_isServerErrorCleared &&
+                        errorMessage != null &&
+                        !errorMessage.toLowerCase().contains('email')
+                    ? errorMessage
+                    : null);
 
             return CustomScrollView(
               slivers: [
@@ -170,9 +174,10 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                               controller: _emailController,
                               textInputAction: TextInputAction.next,
                               onChanged: (_) {
-                                if (_emailError != null) {
-                                  setState(() => _emailError = null);
-                                }
+                                setState(() {
+                                  _emailError = null;
+                                  _isServerErrorCleared = true;
+                                });
                               },
                               decoration: InputDecoration(
                                 hintText: 'Email',
@@ -228,9 +233,10 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                           controller: _passwordController,
                           textInputAction: TextInputAction.done,
                           onChanged: (_) {
-                            if (_passwordError != null) {
-                              setState(() => _passwordError = null);
-                            }
+                            setState(() {
+                              _passwordError = null;
+                              _isServerErrorCleared = true;
+                            });
                           },
                           decoration: InputDecoration(
                             hintText: 'Password',

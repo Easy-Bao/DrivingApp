@@ -33,6 +33,7 @@ class _ForgotPasswordScreenContentState
     extends State<_ForgotPasswordScreenContent> {
   final TextEditingController _emailController = TextEditingController();
   String? _emailError;
+  bool _isServerErrorCleared = false;
 
   @override
   void dispose() {
@@ -45,6 +46,7 @@ class _ForgotPasswordScreenContentState
     final email = _emailController.text.trim();
 
     setState(() {
+      _isServerErrorCleared = false;
       if (email.isEmpty) {
         _emailError = 'Please enter your email';
       } else if (!email.contains('@')) {
@@ -109,7 +111,8 @@ class _ForgotPasswordScreenContentState
               ? state.errorMessage
               : null;
 
-          final effectiveEmailError = _emailError ?? errorMessage;
+          final effectiveEmailError = _emailError ??
+              (!_isServerErrorCleared ? errorMessage : null);
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -176,9 +179,10 @@ class _ForgotPasswordScreenContentState
                                     controller: _emailController,
                                     textInputAction: TextInputAction.done,
                                     onChanged: (_) {
-                                      if (_emailError != null) {
-                                        setState(() => _emailError = null);
-                                      }
+                                      setState(() {
+                                        _emailError = null;
+                                        _isServerErrorCleared = true;
+                                      });
                                     },
                                     decoration: InputDecoration(
                                       hintText: 'Email',
