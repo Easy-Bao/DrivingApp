@@ -325,7 +325,9 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                                  16,
                                                  bottomPadding + 16,
                                                ),
-                                               itemCount: 6,
+                                               itemCount: displayList.isNotEmpty
+                                                   ? displayList.length
+                                                   : null,
                                              )
                                           : displayList.isEmpty
                                           ? Center(

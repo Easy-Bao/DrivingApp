@@ -70,7 +70,7 @@ class SocialLoginWidget extends StatelessWidget {
                     package: 'shared_ui',
                     width: 22,
                     height: 22,
-                    errorBuilder: (context, error, stackTrace) => Icon(
+                    errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.g_mobiledata,
                       size: 24,
                       color: AppTheme.primaryColor,
@@ -79,7 +79,7 @@ class SocialLoginWidget extends StatelessWidget {
                   const SizedBox(width: 12),
                   Text(
                     label,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.primaryColor,
