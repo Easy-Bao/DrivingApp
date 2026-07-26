@@ -349,6 +349,15 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                   ),
                                 ),
                         ),
+                        const SizedBox(height: 24),
+                        SocialLoginWidget(
+                          onGoogleTap: () {
+                            CustomToast.show(
+                              context,
+                              'Google Sign-In coming soon',
+                            );
+                          },
+                        ),
                         const Spacer(),
                         Center(
                           child: Row(

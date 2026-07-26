@@ -247,13 +247,22 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                 )
                               : const Text(
                                   'Sign In',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                        ),
-                        const Spacer(),
+                                   style: TextStyle(
+                                     fontSize: 16,
+                                     fontWeight: FontWeight.w600,
+                                   ),
+                                 ),
+                         ),
+                         const SizedBox(height: 24),
+                         SocialLoginWidget(
+                           onGoogleTap: () {
+                             CustomToast.show(
+                               context,
+                               'Google Sign-In coming soon',
+                             );
+                           },
+                         ),
+                         const Spacer(),
                       ],
                     ),
                   ),
