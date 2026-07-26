@@ -7,8 +7,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_state.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/home_cubit.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
@@ -16,20 +16,14 @@ import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-///TODO: Convert into homescreen rather than passenger extension
-class PassengerHomeScreen extends StatefulWidget {
-  const PassengerHomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<PassengerHomeScreen> createState() => _PassengerHomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _PassengerHomeScreenState extends State<PassengerHomeScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _entranceController;
-  late Animation<double> _fadeIn;
-  late Animation<Offset> _slideIn;
-
+class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _locationSubscription;
 
   StreamSubscription? _bidSessionStatusSubscription;
@@ -43,40 +37,34 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
-            child: FadeTransition(
-              opacity: _fadeIn,
-              child: SlideTransition(
-                position: _slideIn,
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(),
-                          const SizedBox(height: 12),
-                          _buildLocationRow(),
-                          const SizedBox(height: 24),
-                          _buildSearchBar(),
-                          const SizedBox(height: 16),
-                          _buildChipRow(),
-                          const SizedBox(height: 24),
-                          _buildRecentActivityHeader(),
-                          Expanded(child: _buildRecentActivityList()),
-                        ],
-                      ),
-                    ),
-                    if (_bidSessionService.isActive)
-                      Positioned(
-                        left: 20,
-                        right: 20,
-                        bottom: 16,
-                        child: _buildBackgroundSearchingBanner(),
-                      ),
-                  ],
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 12),
+                      _buildLocationRow(),
+                      const SizedBox(height: 24),
+                      _buildSearchBar(),
+                      const SizedBox(height: 16),
+                      _buildChipRow(),
+                      const SizedBox(height: 24),
+                      _buildRecentActivityHeader(),
+                      Expanded(child: _buildRecentActivityList()),
+                    ],
+                  ),
                 ),
-              ),
+                if (_bidSessionService.isActive)
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    bottom: 16,
+                    child: _buildBackgroundSearchingBanner(),
+                  ),
+              ],
             ),
           ),
         ),
@@ -95,31 +83,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     if (_bidSessionMatchSubscription != null) {
       unawaited(_bidSessionMatchSubscription!.cancel());
     }
-    _entranceController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-
-    _entranceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-    );
-
-    _fadeIn = CurvedAnimation(
-      parent: _entranceController,
-      curve: Curves.easeOut,
-    );
-
-    _slideIn = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
-        .animate(
-          CurvedAnimation(
-            parent: _entranceController,
-            curve: Curves.easeOutCubic,
-          ),
-        );
 
     _bidSessionService = Modular.get<BidSessionService>();
     _bidSessionService.setForeground(false);
@@ -143,7 +112,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      unawaited(_entranceController.forward());
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
     });
@@ -341,10 +309,36 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     );
   }
 
+  Widget _buildShimmerLocationRow() {
+    return Row(
+      children: [
+        const Icon(
+          LucideIcons.map_pin,
+          size: 14,
+          color: AppTheme.primaryColor,
+        ),
+        const SizedBox(width: 6),
+        Container(
+          width: 140,
+          height: 12,
+          decoration: BoxDecoration(
+            color: AppTheme.neutralColor,
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildLocationRow() {
-    return BlocBuilder<PassengerHomeCubit, PassengerHomeState>(
-      buildWhen: (prev, curr) => prev.currentAddress != curr.currentAddress,
+    return BlocBuilder<HomeCubit, HomeState>(
+      buildWhen: (prev, curr) =>
+          prev.currentAddress != curr.currentAddress ||
+          prev.isLoading != curr.isLoading,
       builder: (context, state) {
+        if (state.isLoading || state.currentAddress.isEmpty) {
+          return _buildShimmerLocationRow();
+        }
         return Row(
           children: [
             const Icon(
@@ -399,7 +393,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   }
 
   Widget _buildRecentActivityList() {
-    return BlocBuilder<PassengerHomeCubit, PassengerHomeState>(
+    return BlocBuilder<HomeCubit, HomeState>(
       buildWhen: (prev, curr) =>
           prev.recentLocations != curr.recentLocations ||
           prev.isLoading != curr.isLoading,
@@ -415,24 +409,36 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         }
         if (state.recentLocations.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LucideIcons.clock,
-                  size: 36,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.25),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'No recent trips yet',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                    fontWeight: FontWeight.w500,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.history,
+                    size: 48,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No recent trips yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Your recent ride history will appear here.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -521,7 +527,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   Widget _buildSearchBar() {
     return GestureDetector(
       onTap: () {
-        final address = BlocProvider.of<PassengerHomeCubit>(
+        final address = BlocProvider.of<HomeCubit>(
           context,
         ).state.currentAddress;
         unawaited(
@@ -630,7 +636,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         latitude: place.latitude!,
         longitude: place.longitude!,
       );
-      final address = BlocProvider.of<PassengerHomeCubit>(
+      final address = BlocProvider.of<HomeCubit>(
         context,
       ).state.currentAddress;
       unawaited(
@@ -641,7 +647,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         ),
       );
     } else {
-      final address = BlocProvider.of<PassengerHomeCubit>(
+      final address = BlocProvider.of<HomeCubit>(
         context,
       ).state.currentAddress;
       unawaited(
@@ -657,7 +663,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
 
   Future<void> _initLocationAndLoadData() async {
     if (!mounted) return;
-    final cubit = BlocProvider.of<PassengerHomeCubit>(context);
+    final cubit = BlocProvider.of<HomeCubit>(context);
 
     final hasPermission = await LocationService.checkAndRequestPermission();
     if (!hasPermission) {

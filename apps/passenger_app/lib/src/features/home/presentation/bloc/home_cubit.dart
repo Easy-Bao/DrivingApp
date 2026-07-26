@@ -2,18 +2,19 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_state.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dart';
 
-///TODO: Should change to HomeCubit rather than PassengerHomeCubit
-class PassengerHomeCubit extends Cubit<PassengerHomeState> {
+class HomeCubit extends Cubit<HomeState> {
   final PassengerHomeRepository _repository;
 
-  PassengerHomeCubit({required PassengerHomeRepository repository})
+  HomeCubit({required PassengerHomeRepository repository})
     : _repository = repository,
-      super(const PassengerHomeState());
+      super(const HomeState());
 
   Future<void> loadHomeData({required double lat, required double lng}) async {
-    emit(state.copyWith(isLoading: true));
+    if (state.currentAddress.isEmpty && state.recentLocations.isEmpty) {
+      emit(state.copyWith(isLoading: true));
+    }
     try {
       final results = await Future.wait([
         _repository.resolveAddress(lat: lat, lng: lng),

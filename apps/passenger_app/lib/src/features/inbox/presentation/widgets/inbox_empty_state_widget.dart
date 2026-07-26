@@ -8,37 +8,36 @@ class InboxEmptyStateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
-            child: Icon(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
               LucideIcons.bell_off,
-              size: 36,
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              size: 48,
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'No notifications yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
+            const SizedBox(height: 16),
+            const Text(
+              'No notifications yet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryColor,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "We'll notify you about rides and account activity",
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+            const SizedBox(height: 6),
+            Text(
+              "We'll notify you about rides and account activity.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

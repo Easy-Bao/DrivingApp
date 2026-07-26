@@ -144,27 +144,40 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
                       final rides = _filteredRides(i);
                       if (rides.isEmpty) {
                         return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                LucideIcons.history,
-                                size: 40,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.2,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'No rides yet',
-                                style: TextStyle(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  LucideIcons.history,
+                                  size: 48,
                                   color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.4,
+                                    alpha: 0.2,
                                   ),
-                                  fontWeight: FontWeight.w600,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'No rides yet',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Your completed and canceled trips will appear here.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }

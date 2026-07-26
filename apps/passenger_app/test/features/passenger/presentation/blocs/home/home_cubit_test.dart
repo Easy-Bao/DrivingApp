@@ -3,8 +3,8 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_state.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/home_cubit.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dart';
 
 // Mock Repositories
 
@@ -12,8 +12,8 @@ class MockHomeRepo extends Mock implements PassengerHomeRepository {}
 
 // Helper Factory Methods
 
-PassengerHomeCubit _makeCubit(PassengerHomeRepository repo) =>
-    PassengerHomeCubit(repository: repo);
+HomeCubit _makeCubit(PassengerHomeRepository repo) =>
+    HomeCubit(repository: repo);
 
 // Unit Tests
 
@@ -22,7 +22,7 @@ void main() {
 
   setUp(() => repo = MockHomeRepo());
 
-  group('PassengerHomeCubit — initial state', () {
+  group('HomeCubit — initial state', () {
     test('starts with empty address and no locations', () async {
       final cubit = _makeCubit(repo);
       expect(cubit.state.isLoading, isFalse);
@@ -32,7 +32,7 @@ void main() {
     });
   });
 
-  group('PassengerHomeCubit — loadHomeData()', () {
+  group('HomeCubit — loadHomeData()', () {
     const resolvedAddress = 'Tuburan, Pagadian';
     final mockLocations = [
       {
@@ -43,7 +43,7 @@ void main() {
       },
     ];
 
-    blocTest<PassengerHomeCubit, PassengerHomeState>(
+    blocTest<HomeCubit, HomeState>(
       'emits [loading=true, loaded with address+locations] on success',
       build: () {
         when(
@@ -59,8 +59,8 @@ void main() {
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
       expect: () => [
-        const PassengerHomeState(isLoading: true),
-        PassengerHomeState(
+        const HomeState(isLoading: true),
+        HomeState(
           isLoading: false,
           currentAddress: resolvedAddress,
           recentLocations: mockLocations,
@@ -68,7 +68,7 @@ void main() {
       ],
     );
 
-    blocTest<PassengerHomeCubit, PassengerHomeState>(
+    blocTest<HomeCubit, HomeState>(
       'emits [loading=true, loading=false] gracefully on error',
       build: () {
         when(
@@ -84,19 +84,19 @@ void main() {
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
       expect: () => [
-        const PassengerHomeState(isLoading: true),
-        const PassengerHomeState(isLoading: false),
+        const HomeState(isLoading: true),
+        const HomeState(isLoading: false),
       ],
     );
   });
 
-  group('PassengerHomeCubit — updateAddress()', () {
-    blocTest<PassengerHomeCubit, PassengerHomeState>(
+  group('HomeCubit — updateAddress()', () {
+    blocTest<HomeCubit, HomeState>(
       'emits updated address without touching other state',
       build: () => _makeCubit(repo),
       act: (cubit) => cubit.updateAddress('SM City Pagadian'),
       expect: () => [
-        const PassengerHomeState(currentAddress: 'SM City Pagadian'),
+        const HomeState(currentAddress: 'SM City Pagadian'),
       ],
     );
   });

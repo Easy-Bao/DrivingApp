@@ -7,9 +7,9 @@ import 'package:passenger_app/src/features/activity/data/repositories/activity_r
 import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
 import 'package:passenger_app/src/features/chat/chat_module.dart';
-import 'package:passenger_app/src/features/home/data/repositories/passenger_home_repository_impl.dart';
+import 'package:passenger_app/src/features/home/data/repositories/home_repository_impl.dart';
 import 'package:passenger_app/src/features/home/home_module.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/passenger_home_cubit.dart';
+import 'package:passenger_app/src/features/home/presentation/bloc/home_cubit.dart';
 import 'package:passenger_app/src/features/inbox/inbox_module.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_module.dart';
@@ -42,7 +42,7 @@ class PassengerModule extends Module {
         ),
       )
       ..addLazySingleton<PassengerHomeRepository>(
-        (i) => PassengerHomeRepositoryImpl(
+        (i) => HomeRepositoryImpl(
           passengerRemoteDataSource: i.get<PassengerRemoteDataSource>(),
         ),
       )
@@ -82,8 +82,8 @@ class PassengerModule extends Module {
           profileRepository: i.get<PassengerProfileRepository>(),
         ),
       )
-      ..addFactory<PassengerHomeCubit>(
-        (i) => PassengerHomeCubit(repository: i.get<PassengerHomeRepository>()),
+      ..addFactory<HomeCubit>(
+        (i) => HomeCubit(repository: i.get<PassengerHomeRepository>()),
       )
       ..addFactory<TrackDriverCubit>(
         (i) => TrackDriverCubit(

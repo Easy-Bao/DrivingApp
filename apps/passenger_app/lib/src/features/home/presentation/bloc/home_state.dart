@@ -1,23 +1,22 @@
 import 'package:equatable/equatable.dart';
 
-///TODO: Convert PassengerHomeState into HomeState
-class PassengerHomeState extends Equatable {
+class HomeState extends Equatable {
   final bool isLoading;
   final String currentAddress;
   final List<Map<String, dynamic>> recentLocations;
 
-  const PassengerHomeState({
+  const HomeState({
     this.isLoading = false,
     this.currentAddress = '',
     this.recentLocations = const [],
   });
 
-  PassengerHomeState copyWith({
+  HomeState copyWith({
     bool? isLoading,
     String? currentAddress,
     List<Map<String, dynamic>>? recentLocations,
   }) {
-    return PassengerHomeState(
+    return HomeState(
       isLoading: isLoading ?? this.isLoading,
       currentAddress: currentAddress ?? this.currentAddress,
       recentLocations: recentLocations ?? this.recentLocations,

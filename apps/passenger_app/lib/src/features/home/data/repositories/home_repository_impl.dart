@@ -12,10 +12,10 @@ String _shortenAddress(String fullAddress) {
   return fullAddress;
 }
 
-class PassengerHomeRepositoryImpl implements PassengerHomeRepository {
+class HomeRepositoryImpl implements PassengerHomeRepository {
   final PassengerRemoteDataSource _passengerRemoteDataSource;
 
-  PassengerHomeRepositoryImpl({
+  HomeRepositoryImpl({
     required PassengerRemoteDataSource passengerRemoteDataSource,
   }) : _passengerRemoteDataSource = passengerRemoteDataSource;
 
