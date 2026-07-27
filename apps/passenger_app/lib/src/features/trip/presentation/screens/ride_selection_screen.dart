@@ -177,7 +177,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         await MapProvider.fitBounds(_mapController!, [
           LatLng(pickupLat, pickupLng),
           LatLng(destLat, destLng),
-        ], padding: 60.0);
+        ], padding: 80.0);
       }
     } catch (error) {
       debugPrint('Error drawing route preview: $error');
@@ -203,7 +203,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                   latitude: defaultLat,
                   longitude: defaultLng,
                   zoom: 13.5,
-                  interactive: false,
+                  interactive: true,
                   onMapCreated: (controller) {
                     _mapController = controller;
                     unawaited(_drawRoute());
