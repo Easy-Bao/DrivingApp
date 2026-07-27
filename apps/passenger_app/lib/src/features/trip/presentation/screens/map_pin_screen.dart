@@ -22,18 +22,13 @@ class _MapPinScreenState extends State<MapPinScreen>
   bool _isGeocoding = false;
   bool _hasUserPannedMap = false;
   Timer? _debounceTimer;
-  double _centerLat = LocationService.lastPosition?.latitude ?? 0.0;
-  double _centerLng = LocationService.lastPosition?.longitude ?? 0.0;
-
-  late final double _initialLat = LocationService.lastPosition?.latitude ?? 14.5995;
-  late final double _initialLng = LocationService.lastPosition?.longitude ?? 120.9842;
+  double? _centerLat = LocationService.lastPosition?.latitude;
+  double? _centerLng = LocationService.lastPosition?.longitude;
   Widget? _cachedMapView;
 
   @override
   void initState() {
     super.initState();
-    _centerLat = _initialLat;
-    _centerLng = _initialLng;
     unawaited(_initLocation());
   }
 
@@ -45,26 +40,37 @@ class _MapPinScreenState extends State<MapPinScreen>
 
   Future<void> _initLocation() async {
     final pos = await LocationService.getCurrentPosition();
-    if (pos != null && mounted && !_hasUserPannedMap) {
-      _centerLat = pos.latitude;
-      _centerLng = pos.longitude;
-      if (_mapController != null) {
-        await MapProvider.moveCamera(
-          _mapController!,
-          _centerLat,
-          _centerLng,
-          zoom: 15.0,
-        );
+    if (pos != null && mounted) {
+      if (!_hasUserPannedMap) {
+        setState(() {
+          _centerLat = pos.latitude;
+          _centerLng = pos.longitude;
+        });
+        if (_mapController != null) {
+          await MapProvider.moveCamera(
+            _mapController!,
+            pos.latitude,
+            pos.longitude,
+            zoom: 15.0,
+          );
+        }
       }
-      unawaited(_reverseGeocode(_centerLat, _centerLng));
+      unawaited(_reverseGeocode(pos.latitude, pos.longitude));
     }
   }
 
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
-    if (_centerLat != 0.0 && _centerLng != 0.0) {
-      unawaited(MapProvider.moveCamera(controller, _centerLat, _centerLng, zoom: 15.0));
-      unawaited(_reverseGeocode(_centerLat, _centerLng));
+    if (_centerLat != null && _centerLng != null) {
+      unawaited(
+        MapProvider.moveCamera(
+          controller,
+          _centerLat!,
+          _centerLng!,
+          zoom: 15.0,
+        ),
+      );
+      unawaited(_reverseGeocode(_centerLat!, _centerLng!));
     }
   }
 
@@ -86,7 +92,8 @@ class _MapPinScreenState extends State<MapPinScreen>
       final parts = full.split(',');
       setState(() {
         _address = parts.first.trim();
-        _subAddress = parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
+        _subAddress =
+            parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
         _centerLat = lat;
         _centerLng = lng;
         _isGeocoding = false;
@@ -109,6 +116,7 @@ class _MapPinScreenState extends State<MapPinScreen>
   }
 
   void _confirmLocation() {
+    if (_centerLat == null || _centerLng == null) return;
     final result = PlaceModel(
       id: 'pin_${DateTime.now().millisecondsSinceEpoch}',
       name: _address,
@@ -116,16 +124,19 @@ class _MapPinScreenState extends State<MapPinScreen>
         _address,
         if (_subAddress.isNotEmpty) _subAddress,
       ].join(', '),
-      latitude: _centerLat,
-      longitude: _centerLng,
+      latitude: _centerLat!,
+      longitude: _centerLng!,
     );
     context.pop(result);
   }
 
   Widget _getMapView() {
+    if (_centerLat == null || _centerLng == null) {
+      return const SizedBox.shrink();
+    }
     _cachedMapView ??= MapProvider.buildMapView(
-      latitude: _initialLat,
-      longitude: _initialLng,
+      latitude: _centerLat!,
+      longitude: _centerLng!,
       zoom: 15.0,
       onMapCreated: _onMapCreated,
       onCameraChanged: _onCameraChanged,
@@ -135,6 +146,27 @@ class _MapPinScreenState extends State<MapPinScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_centerLat == null || _centerLng == null) {
+      return Scaffold(
+        backgroundColor: AppTheme.surface,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              color: AppTheme.primaryColor,
+            ),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(

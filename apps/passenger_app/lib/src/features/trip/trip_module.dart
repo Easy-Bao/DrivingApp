@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/activity_detail_map_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/destination_preview_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/driver_matched_screen.dart';
@@ -32,8 +33,12 @@ class TripModule {
         return ActivityDetailMapScreen(
           placeName: data['title'] as String? ?? 'Location Detail',
           placeSubtitle: data['subtitle'] as String? ?? '',
-          destinationLat: (data['lat'] as num?)?.toDouble() ?? 14.5995,
-          destinationLng: (data['lng'] as num?)?.toDouble() ?? 120.9842,
+          destinationLat: (data['lat'] as num?)?.toDouble() ??
+              LocationService.lastPosition?.latitude ??
+              0.0,
+          destinationLng: (data['lng'] as num?)?.toDouble() ??
+              LocationService.lastPosition?.longitude ??
+              0.0,
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -69,11 +74,13 @@ class TripModule {
           latitude: double.tryParse(
                 state.uri.queryParameters['destinationLat'] ?? '',
               ) ??
-              14.5995,
+              LocationService.lastPosition?.latitude ??
+              0.0,
           longitude: double.tryParse(
                 state.uri.queryParameters['destinationLng'] ?? '',
               ) ??
-              120.9842,
+              LocationService.lastPosition?.longitude ??
+              0.0,
         );
 
         return DestinationPreviewScreen(
@@ -101,11 +108,13 @@ class TripModule {
                 latitude: double.tryParse(
                       state.uri.queryParameters['destinationLat'] ?? '',
                     ) ??
-                    14.5995,
+                    LocationService.lastPosition?.latitude ??
+                    0.0,
                 longitude: double.tryParse(
                       state.uri.queryParameters['destinationLng'] ?? '',
                     ) ??
-                    120.9842,
+                    LocationService.lastPosition?.longitude ??
+                    0.0,
               );
           Map<String, double>? fares;
           if (data['fares'] is Map) {

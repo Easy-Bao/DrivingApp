@@ -230,8 +230,29 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
 
   @override
   Widget build(BuildContext context) {
-    final defaultLat = _userLat ?? 14.5995;
-    final defaultLng = _userLng ?? 120.9842;
+    if (_userLat == null || _userLng == null) {
+      return Scaffold(
+        backgroundColor: AppTheme.surface,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              color: AppTheme.primaryColor,
+            ),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      );
+    }
+    final defaultLat = _userLat!;
+    final defaultLng = _userLng!;
     final hasQuery = _searchController.text.trim().isNotEmpty;
     final displayList = hasQuery ? _results : _nearbyPlaces;
     final screenSize = MediaQuery.of(context).size;
