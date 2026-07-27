@@ -297,11 +297,11 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               decoration: InputDecoration(
                                 hintText: '9XX XXX XXXX',
                                 errorText: _phoneError,
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(left: 14, right: 8),
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsets.only(left: 14, right: 8),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
-                                    children: const [
+                                    children: [
                                       Icon(
                                         LucideIcons.phone,
                                         size: 18,
