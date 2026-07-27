@@ -147,6 +147,19 @@ class _AddCategoryScreenState
     return 'map_pin';
   }
 
+  Widget? _cachedMapView;
+
+  Widget _getMapView() {
+    _cachedMapView ??= MapProvider.buildMapView(
+      latitude: _lat,
+      longitude: _lng,
+      zoom: 14.0,
+      interactive: true,
+      onMapCreated: _onMapCreated,
+    );
+    return _cachedMapView!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -204,13 +217,7 @@ class _AddCategoryScreenState
                             ),
                           ),
                         )
-                      : MapProvider.buildMapView(
-                          latitude: _lat,
-                          longitude: _lng,
-                          zoom: 14.0,
-                          interactive: true,
-                          onMapCreated: _onMapCreated,
-                        ),
+                      : _getMapView(),
                 ),
               ],
             ),

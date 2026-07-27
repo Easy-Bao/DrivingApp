@@ -25,9 +25,15 @@ class _MapPinScreenState extends State<MapPinScreen>
   double _centerLat = LocationService.lastPosition?.latitude ?? 0.0;
   double _centerLng = LocationService.lastPosition?.longitude ?? 0.0;
 
+  late final double _initialLat = LocationService.lastPosition?.latitude ?? 14.5995;
+  late final double _initialLng = LocationService.lastPosition?.longitude ?? 120.9842;
+  Widget? _cachedMapView;
+
   @override
   void initState() {
     super.initState();
+    _centerLat = _initialLat;
+    _centerLng = _initialLng;
     unawaited(_initLocation());
   }
 
@@ -40,10 +46,8 @@ class _MapPinScreenState extends State<MapPinScreen>
   Future<void> _initLocation() async {
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && mounted && !_hasUserPannedMap) {
-      setState(() {
-        _centerLat = pos.latitude;
-        _centerLng = pos.longitude;
-      });
+      _centerLat = pos.latitude;
+      _centerLng = pos.longitude;
       if (_mapController != null) {
         await MapProvider.moveCamera(
           _mapController!,
@@ -118,63 +122,74 @@ class _MapPinScreenState extends State<MapPinScreen>
     context.pop(result);
   }
 
+  Widget _getMapView() {
+    _cachedMapView ??= MapProvider.buildMapView(
+      latitude: _initialLat,
+      longitude: _initialLng,
+      zoom: 15.0,
+      onMapCreated: _onMapCreated,
+      onCameraChanged: _onCameraChanged,
+    );
+    return _cachedMapView!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
-          MapProvider.buildMapView(
-            latitude: _centerLat,
-            longitude: _centerLng,
-            zoom: 15.0,
-            onMapCreated: _onMapCreated,
-            onCameraChanged: _onCameraChanged,
-          ),
+          _getMapView(),
           Center(
-            child: Hero(
-              tag: 'map_pin_button',
-              child: Material(
-                color: Colors.transparent,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
+            child: SizedBox(
+              width: 48,
+              height: 64,
+              child: FittedBox(
+                child: Hero(
+                  tag: 'map_pin_button',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          LucideIcons.map_pin,
-                          color: Colors.white,
-                          size: 24,
+                          child: const Center(
+                            child: Icon(
+                              LucideIcons.map_pin,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
                         ),
-                      ),
+                        Container(
+                          width: 3,
+                          height: 12,
+                          color: AppTheme.primaryColor,
+                        ),
+                        Container(
+                          width: 8,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
                     ),
-                    Container(
-                      width: 3,
-                      height: 12,
-                      color: AppTheme.primaryColor,
-                    ),
-                    Container(
-                      width: 8,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
