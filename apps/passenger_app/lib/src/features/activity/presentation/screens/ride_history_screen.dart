@@ -99,89 +99,90 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
         ),
         centerTitle: true,
       ),
-      body: _isLoading
-          ? const SkeletonListWidget()
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    height: 50,
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.outlineBorderColor,
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      dividerColor: Colors.transparent,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        color: AppTheme.neutralColor,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      labelColor: AppTheme.selectedItemColor,
-                      unselectedLabelColor: AppTheme.unselectedItemColor,
-                      labelStyle: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                      tabs: const [
-                        Tab(text: 'All'),
-                        Tab(text: 'Completed'),
-                        Tab(text: 'Canceled'),
-                      ],
-                    ),
-                  ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 50,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppTheme.outlineBorderColor,
+                borderRadius: BorderRadius.circular(26),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                dividerColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  color: AppTheme.neutralColor,
+                  borderRadius: BorderRadius.circular(22),
                 ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: List.generate(3, (i) {
-                      final rides = _filteredRides(i);
-                      if (rides.isEmpty) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text(
-                                  'No rides yet',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Your completed and canceled trips will appear here.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                labelColor: AppTheme.selectedItemColor,
+                unselectedLabelColor: AppTheme.unselectedItemColor,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                tabs: const [
+                  Tab(text: 'All'),
+                  Tab(text: 'Completed'),
+                  Tab(text: 'Canceled'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: List.generate(3, (i) {
+                if (_isLoading) {
+                  return const SkeletonListWidget();
+                }
+                final rides = _filteredRides(i);
+                if (rides.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'No rides yet',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
-                        );
-                      }
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: rides.length,
-                        itemBuilder: (ctx, idx) => _buildRideCard(rides[idx]),
-                      );
-                    }),
-                  ),
-                ),
-              ],
+                          const SizedBox(height: 6),
+                          Text(
+                            'Your completed and canceled trips will appear here.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: rides.length,
+                  itemBuilder: (ctx, idx) => _buildRideCard(rides[idx]),
+                );
+              }),
             ),
+          ),
+        ],
+      ),
     );
   }
 
