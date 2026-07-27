@@ -216,6 +216,18 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     return LucideIcons.map_pin;
   }
 
+  Widget? _cachedMapView;
+
+  Widget _getMapView(double lat, double lng) {
+    _cachedMapView ??= MapProvider.buildMapView(
+      latitude: lat,
+      longitude: lng,
+      zoom: 14.5,
+      interactive: true,
+    );
+    return _cachedMapView!;
+  }
+
   @override
   Widget build(BuildContext context) {
     final defaultLat = _userLat ?? 14.5995;
@@ -260,12 +272,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                           }
                           unawaited(_expandController.reverse());
                         },
-                        child: MapProvider.buildMapView(
-                          latitude: defaultLat,
-                          longitude: defaultLng,
-                          zoom: 14.5,
-                          interactive: true,
-                        ),
+                        child: _getMapView(defaultLat, defaultLng),
                       ),
                     ),
                   ),
@@ -645,7 +652,6 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                 ),
                               ),
                             ),
-                          if (t < 0.4)
                             Positioned(
                               right: 0,
                               top: 3,
@@ -655,34 +661,40 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                   scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
                                   child: GestureDetector(
                                     onTap: _openMapPin,
-                                    child: Hero(
-                                      tag: 'map_pin_button',
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: Container(
-                                          width: 46,
-                                          height: 46,
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.surface,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: AppTheme.borderSide,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(
-                                                  alpha: 0.08,
+                                    child: SizedBox(
+                                      width: 46,
+                                      height: 46,
+                                      child: FittedBox(
+                                        child: Hero(
+                                          tag: 'map_pin_button',
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: Container(
+                                              width: 46,
+                                              height: 46,
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.surface,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: AppTheme.borderSide,
                                                 ),
-                                                blurRadius: 15,
-                                                offset: const Offset(0, 4),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withValues(
+                                                      alpha: 0.08,
+                                                    ),
+                                                    blurRadius: 15,
+                                                    offset: const Offset(0, 4),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
-                                          child: const Center(
-                                            child: Icon(
-                                              LucideIcons.map_pin,
-                                              color: AppTheme.primaryColor,
-                                              size: 20,
+                                              child: const Center(
+                                                child: Icon(
+                                                  LucideIcons.map_pin,
+                                                  color: AppTheme.primaryColor,
+                                                  size: 20,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
