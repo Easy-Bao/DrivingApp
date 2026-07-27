@@ -51,6 +51,8 @@ dependencies:
   # UI & Images
   flutter_lucide: ^1.8.2
   cached_network_image: ^3.4.1
+  animations: ^2.0.11
+
 
   # Maps & Navigation
   mapbox_maps_flutter: ^2.23.0

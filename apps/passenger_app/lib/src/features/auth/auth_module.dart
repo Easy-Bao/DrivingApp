@@ -76,28 +76,28 @@ class AuthModule extends Module {
           name: AuthRoutes.onBoarding,
           '/',
           child: (context, GoRouterState state) => const OnBoardingScreen(),
-          transition: AppTransitions.fade,
+          transition: AppTransitions.fadeThrough,
           transitionDuration: AppTransitions.fadeDuration,
         ),
         ChildRoute(
           name: AuthRoutes.signin,
           '/auth/signin',
           child: (context, GoRouterState state) => const SigninScreen(),
-          transition: AppTransitions.push.toLeft,
+          transition: AppTransitions.sharedAxisHorizontal,
           transitionDuration: AppTransitions.pushDuration,
         ),
         ChildRoute(
           name: AuthRoutes.signup,
           '/auth/signup',
           child: (context, GoRouterState state) => const SignupScreen(),
-          transition: AppTransitions.push.toLeft,
+          transition: AppTransitions.sharedAxisHorizontal,
           transitionDuration: AppTransitions.pushDuration,
         ),
         ChildRoute(
           name: AuthRoutes.forgotPassword,
           '/auth/forgotpassword',
           child: (context, GoRouterState state) => const ForgotPasswordScreen(),
-          transition: AppTransitions.push.toLeft,
+          transition: AppTransitions.sharedAxisHorizontal,
           transitionDuration: AppTransitions.pushDuration,
         ),
         ChildRoute(
@@ -115,7 +115,7 @@ class AuthModule extends Module {
               isForgotPassword: isForgotPassword,
             );
           },
-          transition: AppTransitions.push.toLeft,
+          transition: AppTransitions.sharedAxisHorizontal,
           transitionDuration: AppTransitions.pushDuration,
         ),
         ChildRoute(
@@ -127,7 +127,7 @@ class AuthModule extends Module {
             final code = extra['code']?.toString() ?? '';
             return ResetPasswordConfirmScreen(email: email, code: code);
           },
-          transition: AppTransitions.push.toLeft,
+          transition: AppTransitions.sharedAxisHorizontal,
           transitionDuration: AppTransitions.pushDuration,
         ),
       ];

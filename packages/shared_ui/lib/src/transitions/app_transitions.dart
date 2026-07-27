@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_transitions/go_transitions.dart';
 import 'package:shared_ui/src/transitions/custom_page_transition.dart';
@@ -10,6 +11,12 @@ class AppTransitions {
   static const modal = GoTransitions.slide;
   static const none = GoTransitions.none;
 
+  static final sharedAxisHorizontal = _SharedAxisPageTransition(
+    transitionType: SharedAxisTransitionType.horizontal,
+  );
+
+  static final fadeThrough = _FadeThroughPageTransition();
+
   static const Duration pushDuration = Duration(milliseconds: 300);
   static const Duration fadeDuration = Duration(milliseconds: 300);
   static const Duration modalDuration = Duration(milliseconds: 300);
@@ -18,6 +25,36 @@ class AppTransitions {
     GoTransition.defaultDuration = pushDuration;
     GoTransition.defaultCurve = Curves.easeOutCubic;
   }
+}
+
+class _SharedAxisPageTransition extends GoTransition {
+  _SharedAxisPageTransition({
+    required SharedAxisTransitionType transitionType,
+  }) : super(
+          builder: (route, context, animation, secondaryAnimation, child) {
+            return SharedAxisTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              transitionType: transitionType,
+              fillColor: Colors.transparent,
+              child: child,
+            );
+          },
+        );
+}
+
+class _FadeThroughPageTransition extends GoTransition {
+  _FadeThroughPageTransition()
+      : super(
+          builder: (route, context, animation, secondaryAnimation, child) {
+            return FadeThroughTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              fillColor: Colors.transparent,
+              child: child,
+            );
+          },
+        );
 }
 
 class _CustomPushTransitions {
