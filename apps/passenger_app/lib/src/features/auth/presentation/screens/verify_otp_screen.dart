@@ -110,15 +110,8 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
   }
 
   void _onVerifySuccess() {
-    CustomToast.show(context, 'Email verified successfully!');
-    Timer(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      if (Navigator.of(context).canPop()) {
-        context.pop(true);
-      } else {
-        context.goNamed(HomeRoutes.home);
-      }
-    });
+    if (!mounted) return;
+    context.goNamed(HomeRoutes.home);
   }
 
   @override
@@ -143,6 +136,14 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
         listener: (context, state) {
           if (state is VerifyOtpSuccess) {
             _onVerifySuccess();
+          } else if (state is VerifyOtpFailure) {
+            CustomToast.show(
+              context,
+              state.errorMessage.isEmpty
+                  ? 'Incorrect verification code'
+                  : state.errorMessage,
+              isError: true,
+            );
           }
         },
         builder: (context, state) {
