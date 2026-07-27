@@ -27,6 +27,7 @@ class DestinationPreviewScreen extends StatefulWidget {
 }
 
 class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
+  AppMapController? _mapController;
   double? _userLat = LocationService.lastPosition?.latitude;
   double? _userLng = LocationService.lastPosition?.longitude;
   String _distance = '';
@@ -106,6 +107,35 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         _distanceKm = km;
         _fares = calculatedFares;
       });
+
+      if (_mapController != null) {
+        await MapProvider.addMarker(
+          _mapController!,
+          _userLat!,
+          _userLng!,
+          isOrigin: true,
+        );
+        await MapProvider.addMarker(
+          _mapController!,
+          widget.destination.latitude,
+          widget.destination.longitude,
+          isOrigin: false,
+        );
+        await MapProvider.addPolyline(
+          _mapController!,
+          route.polylinePoints,
+          color: AppTheme.primaryColor,
+          width: 5.0,
+        );
+        await MapProvider.fitBounds(
+          _mapController!,
+          [
+            LatLng(_userLat!, _userLng!),
+            LatLng(widget.destination.latitude, widget.destination.longitude),
+          ],
+          padding: 80.0,
+        );
+      }
     }
   }
 
@@ -121,7 +151,8 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               latitude: widget.destination.latitude,
               longitude: widget.destination.longitude,
               zoom: 14.5,
-              onMapCreated: (_) async {
+              onMapCreated: (controller) async {
+                _mapController = controller;
                 await _loadRoute();
               },
             ),
