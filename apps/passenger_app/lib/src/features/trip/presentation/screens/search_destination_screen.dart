@@ -104,7 +104,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
 
     if (mounted) {
       setState(() {
-        _nearbyPlaces = results.take(15).toList();
+        _nearbyPlaces = results.take(25).toList();
         _isLoadingNearby = false;
       });
     }
@@ -135,14 +135,37 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
-    final results = await MapProvider.searchPlaces(
+    final String normQuery = query.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final List<PlaceModel> localMatches = _nearbyPlaces.where((p) {
+      final normName = p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      final normAddr = p.fullAddress.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      return (normQuery.isNotEmpty && normName.contains(normQuery)) ||
+             (normQuery.isNotEmpty && normAddr.contains(normQuery));
+    }).toList();
+
+    final apiResults = await MapProvider.searchPlaces(
       query,
       lat: _userLat,
       lng: _userLng,
     );
+
+    final mergedResults = <PlaceModel>[...localMatches];
+    for (final res in apiResults) {
+      final isDuplicate = mergedResults.any(
+        (m) =>
+            m.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ==
+                res.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ||
+            ((m.latitude - res.latitude).abs() < 0.0001 &&
+                (m.longitude - res.longitude).abs() < 0.0001),
+      );
+      if (!isDuplicate) {
+        mergedResults.add(res);
+      }
+    }
+
     if (mounted) {
       setState(() {
-        _results = results;
+        _results = mergedResults;
         _isSearching = false;
       });
     }
