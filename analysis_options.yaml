@@ -1,10 +1,7 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  plugins:
-    - custom_lint
   errors:
-    # Treat these as errors — not warnings
     missing_required_param: error
     missing_return: error
     dead_code: warning
@@ -55,14 +52,15 @@ linter:
     avoid_void_async: true
     exhaustive_cases: true 
 
-custom_lint:
+bloc:
   rules:
-    # Strict Architecture
+    # Strict Architecture (recommended rules)
+    - avoid_flutter_imports
     - avoid_public_fields
     - avoid_public_bloc_methods
     - prefer_void_public_cubit_methods
     - prefer_file_naming_conventions
-    
+    - avoid_build_context_extensions
+
     # Project Preferences
     - prefer_cubit
-    - prefer_build_context_extensions

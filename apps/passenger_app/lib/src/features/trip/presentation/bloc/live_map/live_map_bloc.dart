@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:developer' as dev;
+import 'dart:ui' show Color;
 
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
@@ -72,7 +73,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.driverLat,
       event.driverLng,
       label: 'Driver',
-      color: Colors.blue,
+      color: const Color(0xFF1565C0),
     );
     if (driverManager != null) _markerManagers.add(driverManager);
 
@@ -118,7 +119,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.lng,
       isOrigin: event.isOrigin,
       label: event.label,
-      color: event.isOrigin ? null : Colors.blue,
+      color: event.isOrigin ? null : const Color(0xFF1565C0),
     );
     if (manager != null) {
       _markerManagers.add(manager);
@@ -137,7 +138,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       try {
         await MapProvider.clearAnnotations(manager);
       } catch (error) {
-        debugPrint('Error clearing annotation marker: $error');
+        dev.log('Error clearing annotation marker: $error');
       }
     }
     _markerManagers.clear();

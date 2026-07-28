@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:chat_service/chat_service.dart';
 import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:session_service/session_service.dart';
 
@@ -87,7 +87,7 @@ class ChatCubit extends Cubit<ChatState> {
         ),
       );
     } catch (error, stackTrace) {
-      debugPrint('Error connecting to chat room: $error\n$stackTrace');
+      dev.log('Error connecting to chat room: $error\n$stackTrace');
       emit(
         state.copyWith(
           isConnecting: false,
@@ -118,7 +118,7 @@ class ChatCubit extends Cubit<ChatState> {
         await _chatService.connectToChatRoom(roomId: roomId, chatUri: wsUri);
       }
     } catch (error, stackTrace) {
-      debugPrint('Error resolving chat room in cubit: $error\n$stackTrace');
+      dev.log('Error resolving chat room in cubit: $error\n$stackTrace');
     }
   }
 

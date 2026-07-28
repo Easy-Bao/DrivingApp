@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
@@ -100,7 +100,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
       }
     } catch (error) {
-      debugPrint('Error loading driver stats, fallback to seed: $error');
+      dev.log('Error loading driver stats, fallback to seed: $error');
       _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
     }
 
@@ -144,7 +144,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
               dateFormatted =
                   '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
             } catch (error) {
-              debugPrint('Failed to parse review date: $error');
+              dev.log('Failed to parse review date: $error');
             }
           }
           processedReviews.add({
@@ -158,7 +158,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       }
       _reviews = processedReviews;
     } catch (error) {
-      debugPrint('Failed to process reviews: $error');
+      dev.log('Failed to process reviews: $error');
       _reviews = const [];
     } finally {
       _isLoadingReviews = false;
@@ -342,7 +342,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           );
         }
       } catch (error) {
-        debugPrint(
+        dev.log(
           'Error creating ride request, falling back to matched result: $error',
         );
       }

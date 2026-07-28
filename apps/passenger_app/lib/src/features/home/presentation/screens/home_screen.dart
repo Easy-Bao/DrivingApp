@@ -13,6 +13,7 @@ import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dar
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
+import 'package:passenger_app/src/features/saved_places/presentation/screens/saved_place_screen.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -707,7 +708,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  IconData _iconFromName(String name) => SavedPlacesCubit.iconFromName(name);
+  IconData _iconFromName(String name) => savedPlaceIconFromName(name);
 
   Future<void> _initLocationAndLoadData() async {
     if (!mounted) return;

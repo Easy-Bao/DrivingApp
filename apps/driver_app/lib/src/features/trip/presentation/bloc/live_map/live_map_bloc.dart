@@ -1,16 +1,15 @@
 import 'dart:async';
+import 'dart:developer' as dev;
+import 'dart:ui' show Color;
 
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_state.dart';
 import 'package:driver_services/driver_services.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location_service/location_service.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:session_service/session_service.dart';
 
-/// State controller managing map overlay layouts, marker assets, routing
-/// sequence rendering, and real-time backend telemetry dispatching.
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final TelemetryRemoteDataSource _telemetryDataSource;
   final SecureSessionService _sessionService;
@@ -128,7 +127,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       try {
         await MapProvider.clearAnnotations(manager);
       } catch (error) {
-        debugPrint('Error clearing driver map marker: $error');
+        dev.log('Error clearing driver map marker: $error');
       }
     }
     _markerManagers.clear();

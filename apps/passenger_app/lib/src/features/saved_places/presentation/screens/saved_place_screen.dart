@@ -275,7 +275,7 @@ class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
                       for (final place in customPlaces) ...[
                         const SizedBox(height: 16),
                         _buildPlaceTile(
-                          icon: SavedPlacesCubit.iconFromName(place.iconName),
+                          icon: savedPlaceIconFromName(place.iconName),
                           label: place.label,
                           address: place.savedAddress ?? 'Not set',
                           onTap: () =>
@@ -464,4 +464,29 @@ class DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+IconData savedPlaceIconFromName(String iconName) {
+  switch (iconName) {
+    case 'house':
+      return LucideIcons.house;
+    case 'graduation_cap':
+      return LucideIcons.graduation_cap;
+    case 'briefcase':
+      return LucideIcons.briefcase;
+    case 'map_pin':
+      return LucideIcons.map_pin;
+    case 'heart':
+      return LucideIcons.heart;
+    case 'star':
+      return LucideIcons.star;
+    case 'coffee':
+      return LucideIcons.coffee;
+    case 'dumbbell':
+      return LucideIcons.dumbbell;
+    case 'shopping_cart':
+      return LucideIcons.shopping_cart;
+    default:
+      return LucideIcons.map_pin;
+  }
 }

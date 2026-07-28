@@ -1,12 +1,12 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
 import 'package:driver_services/driver_services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:session_service/session_service.dart';
 
-import 'ride_flow_state.dart';
+import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
   final RideRepository _repository;
@@ -64,7 +64,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         ),
       );
     } catch (error) {
-      debugPrint(
+      dev.log(
         'Error accepting ride on backend: ${ErrorHandler.getErrorMessage(error)}',
       );
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
@@ -112,7 +112,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       try {
         await _tripRemoteDataSource.updateRideStatus(_activeRideId!, 'arrived');
       } catch (error) {
-        debugPrint(
+        dev.log(
           'Error updating status to arrived: ${ErrorHandler.getErrorMessage(error)}',
         );
       }
@@ -148,7 +148,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       try {
         await _tripRemoteDataSource.updateRideStatus(_activeRideId!, 'in_transit');
       } catch (error) {
-        debugPrint(
+        dev.log(
           'Error updating status to in_transit: ${ErrorHandler.getErrorMessage(error)}',
         );
       }
@@ -174,7 +174,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       try {
         await _tripRemoteDataSource.updateRideStatus(_activeRideId!, 'completed');
       } catch (error) {
-        debugPrint(
+        dev.log(
           'Error updating status to completed: ${ErrorHandler.getErrorMessage(error)}',
         );
       }
@@ -185,7 +185,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       durationMinutes: durationMinutes,
     );
     fareResult.fold((failure) {
-      debugPrint(
+      dev.log(
         'Error loading dynamic fare calculation: ${failure.message}. Falling back to default.',
       );
       emit(const RideFlowComplete(fare: 50.0));

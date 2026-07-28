@@ -1,5 +1,6 @@
+import 'dart:developer' as dev;
+
 import 'package:core_models/core_models.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dart';
@@ -43,12 +44,12 @@ class HomeCubit extends Cubit<HomeState> {
 
       addressResult.fold(
         (Failure failure) =>
-            debugPrint('Error resolving passenger address: ${failure.message}'),
+            dev.log('Error resolving passenger address: ${failure.message}'),
         (address) => resolvedAddress = address,
       );
 
       locationsResult.fold(
-        (Failure failure) => debugPrint(
+        (Failure failure) => dev.log(
           'Error loading recent passenger locations: ${failure.message}',
         ),
         (locations) => resolvedLocations = locations,
@@ -62,7 +63,7 @@ class HomeCubit extends Cubit<HomeState> {
         ),
       );
     } catch (error) {
-      debugPrint('Error executing parallel home data load: $error');
+      dev.log('Error executing parallel home data load: $error');
       emit(state.copyWith(isLoading: false));
     }
   }

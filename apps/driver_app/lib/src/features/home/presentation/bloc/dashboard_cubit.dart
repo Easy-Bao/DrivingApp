@@ -1,11 +1,9 @@
+import 'dart:developer' as dev;
+
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_state.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Cubit managing the driver dashboard lifecycle: daily earnings, trips,
-/// hours online, and surge heatmap grid. Uses [DashboardRepository] returning
-/// `Either<Failure, T>` for type-safe error propagation.
 class DashboardCubit extends Cubit<DashboardState> {
   final DashboardRepository _repository;
 
@@ -60,7 +58,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         ),
       );
     } catch (error) {
-      debugPrint('Error loading driver dashboard stats: $error');
+      dev.log('Error loading driver dashboard stats: $error');
       emit(
         state.copyWith(
           isLoadingStats: false,
@@ -93,7 +91,7 @@ class DashboardCubit extends Cubit<DashboardState> {
 
       heatmapResult.fold(
         (failure) {
-          debugPrint('Error loading surge heatmap: ${failure.message}');
+          dev.log('Error loading surge heatmap: ${failure.message}');
           emit(
             state.copyWith(
               isLoadingHeatmap: false,

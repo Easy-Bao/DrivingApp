@@ -1,7 +1,5 @@
 import 'package:core_models/core_models.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/saved_places/data/models/saved_place_model.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/saved_places_repository.dart';
@@ -54,31 +52,6 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
       await _repository.savePlaces(updated);
     } catch (error) {
       emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(error)));
-    }
-  }
-
-  static IconData iconFromName(String iconName) {
-    switch (iconName) {
-      case 'house':
-        return LucideIcons.house;
-      case 'graduation_cap':
-        return LucideIcons.graduation_cap;
-      case 'briefcase':
-        return LucideIcons.briefcase;
-      case 'map_pin':
-        return LucideIcons.map_pin;
-      case 'heart':
-        return LucideIcons.heart;
-      case 'star':
-        return LucideIcons.star;
-      case 'coffee':
-        return LucideIcons.coffee;
-      case 'dumbbell':
-        return LucideIcons.dumbbell;
-      case 'shopping_cart':
-        return LucideIcons.shopping_cart;
-      default:
-        return LucideIcons.map_pin;
     }
   }
 }

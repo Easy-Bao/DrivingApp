@@ -1,6 +1,7 @@
+import 'dart:developer' as dev;
+
 import 'package:core_models/core_models.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -93,7 +94,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         },
       );
     } catch (error, stackTrace) {
-      debugPrint('Error syncing profile values in cubit: $error\n$stackTrace');
+      dev.log('Error syncing profile values in cubit: $error\n$stackTrace');
       emit(
         state.copyWith(
           isLoading: false,

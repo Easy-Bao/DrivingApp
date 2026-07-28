@@ -79,9 +79,7 @@ class OnBoardingScreen extends StatelessWidget {
                           height: 56,
                           child: ElevatedButton(
                             onPressed: () {
-                              unawaited(
-                                context.pushNamed(AuthRoutes.signin),
-                              );
+                              unawaited(context.pushNamed(AuthRoutes.signin));
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryColor,
@@ -106,10 +104,7 @@ class OnBoardingScreen extends StatelessWidget {
                     height: 56,
                     child: OutlinedButton(
                       onPressed: () {
-                        CustomToast.show(
-                          context,
-                          'Google Sign-In coming soon',
-                        );
+                        CustomToast.show(context, 'Google Sign-In coming soon');
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(

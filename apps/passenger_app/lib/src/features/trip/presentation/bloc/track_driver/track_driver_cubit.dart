@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:session_service/session_service.dart';
@@ -19,12 +19,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
        _sessionService = sessionService,
        super(TrackDriverInitial());
 
-  /// Starts periodic tracking of the driver's location and status for the active ride.
-  ///
-  /// Polls the repository every two seconds to fetch current status updates and maps
-  /// coordinates into live [TrackDriverState] transitions. If the API fails or is not
-  /// updated, simulates progress tracking cleanly along the route polyline using the
-  /// provided driver details [driverId], [driverName], [vehiclePlate], and [vehicleType].
   Future<void> startTracking({
     required double startLat,
     required double startLng,
@@ -64,7 +58,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         final result = await _repository.getRideStatusUpdate(activeRideId);
         await result.fold(
           (failure) async {
-            debugPrint('Error fetching status update: ${failure.message}');
+            dev.log('Error fetching status update: ${failure.message}');
           },
           (rideUpdate) async {
             if (rideUpdate.status == RideStatus.completed) {
@@ -92,7 +86,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               final locResult = await _repository.fetchDriverLocation(driverId);
               locResult.fold(
                 (failure) {
-                  debugPrint(
+                  dev.log(
                     'Error fetching coordinate location: ${failure.message}',
                   );
                 },
@@ -183,7 +177,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         await _sessionService.deleteActiveRideId();
       }
     } catch (error) {
-      debugPrint('Error canceling trip in track cubit: $error');
+      dev.log('Error canceling trip in track cubit: $error');
     }
     emit(TrackDriverCanceled());
   }
