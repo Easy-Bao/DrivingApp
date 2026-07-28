@@ -45,7 +45,6 @@ class MapProvider {
       final userLng = lng ?? LocationService.lastPosition?.longitude;
 
       final places = await nativeService.searchPlaces(
-        token: token,
         query: query,
         proximityLat: lat,
         proximityLng: lng,
@@ -75,7 +74,6 @@ class MapProvider {
 
     try {
       return await nativeService.reverseGeocode(
-        token: token,
         lat: lat,
         lng: lng,
       );
@@ -99,7 +97,6 @@ class MapProvider {
 
     try {
       return await nativeService.getRoute(
-        token: token,
         originLat: originLat,
         originLng: originLng,
         destLat: destLat,
@@ -124,7 +121,6 @@ class MapProvider {
 
     try {
       return await nativeService.getNearbyPois(
-        token: token,
         lat: lat,
         lng: lng,
         page: page,
