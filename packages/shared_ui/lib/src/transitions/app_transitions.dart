@@ -36,7 +36,7 @@ class _SharedAxisPageTransition extends GoTransition {
               animation: animation,
               secondaryAnimation: secondaryAnimation,
               transitionType: transitionType,
-              fillColor: Colors.transparent,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
               child: child,
             );
           },
@@ -50,7 +50,7 @@ class _FadeThroughPageTransition extends GoTransition {
             return FadeThroughTransition(
               animation: animation,
               secondaryAnimation: secondaryAnimation,
-              fillColor: Colors.transparent,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
               child: child,
             );
           },
