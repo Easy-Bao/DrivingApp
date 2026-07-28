@@ -685,9 +685,9 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                     child: SizedBox(
                                       width: 46,
                                       height: 46,
-                                      child: FittedBox(
-                                        child: Hero(
-                                          tag: 'map_pin_button',
+                                      child: Hero(
+                                        tag: 'map_pin_button',
+                                        child: FittedBox(
                                           child: Material(
                                             color: Colors.transparent,
                                             child: Container(

@@ -176,9 +176,9 @@ class _MapPinScreenState extends State<MapPinScreen>
             child: SizedBox(
               width: 48,
               height: 64,
-              child: FittedBox(
-                child: Hero(
-                  tag: 'map_pin_button',
+              child: Hero(
+                tag: 'map_pin_button',
+                child: FittedBox(
                   child: Material(
                     color: Colors.transparent,
                     child: Column(
