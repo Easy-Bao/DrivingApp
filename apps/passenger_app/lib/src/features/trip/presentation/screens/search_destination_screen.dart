@@ -27,13 +27,18 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
 
   late final AnimationController _expandController;
   late final Animation<double> _expandAnimation;
 
   Timer? _debounce;
   List<PlaceModel> _results = [];
-  List<PlaceModel> _nearbyPlaces = [];
+  List<PlaceModel> _allNearbyPlaces = [];
+  int _displayedCount = 10;
+  int _currentNearbyPage = 1;
+  bool _isLoadingMoreNearby = false;
+  bool _hasMoreNearbyPages = true;
   bool _isSearching = false;
   bool _isLoadingNearby = true;
   double? _userLat = LocationService.lastPosition?.latitude;
@@ -53,6 +58,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
 
     _focusNode.addListener(_onFocusChanged);
     _searchController.addListener(_onSearchChanged);
+    _scrollController.addListener(_onScroll);
     unawaited(_initLocation());
   }
 
@@ -63,8 +69,76 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     _focusNode.dispose();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _expandController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_searchController.text.trim().isNotEmpty) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (currentScroll >= maxScroll - 160) {
+      _loadNextLazyBatch();
+    }
+  }
+
+  void _loadNextLazyBatch() {
+    if (_searchController.text.trim().isNotEmpty) return;
+
+    if (_displayedCount < _allNearbyPlaces.length) {
+      setState(() {
+        _displayedCount =
+            (_displayedCount + 10).clamp(0, _allNearbyPlaces.length);
+      });
+      return;
+    }
+
+    if (!_isLoadingMoreNearby &&
+        _hasMoreNearbyPages &&
+        _currentNearbyPage < 3) {
+      unawaited(_fetchMoreNearbyFromApi());
+    }
+  }
+
+  Future<void> _fetchMoreNearbyFromApi() async {
+    if (_userLat == null || _userLng == null || _isLoadingMoreNearby) return;
+    setState(() => _isLoadingMoreNearby = true);
+
+    _currentNearbyPage++;
+    final moreResults = await MapProvider.getNearbyPOIs(
+      lat: _userLat!,
+      lng: _userLng!,
+      page: _currentNearbyPage,
+    );
+
+    if (mounted) {
+      if (moreResults.isEmpty) {
+        _hasMoreNearbyPages = false;
+      } else {
+        for (final item in moreResults) {
+          final isDup = _allNearbyPlaces.any(
+            (p) =>
+                p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ==
+                item.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''),
+          );
+          if (!isDup) {
+            _allNearbyPlaces.add(item);
+          }
+        }
+        _allNearbyPlaces.sort((a, b) {
+          final double distA = a.distanceKm ?? double.maxFinite;
+          final double distB = b.distanceKm ?? double.maxFinite;
+          return distA.compareTo(distB);
+        });
+        _displayedCount =
+            (_displayedCount + 10).clamp(0, _allNearbyPlaces.length);
+      }
+      setState(() => _isLoadingMoreNearby = false);
+    }
   }
 
   void _onFocusChanged() {
@@ -100,11 +174,13 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final results = await MapProvider.getNearbyPOIs(
       lat: _userLat!,
       lng: _userLng!,
+      page: 1,
     );
 
     if (mounted) {
       setState(() {
-        _nearbyPlaces = results.take(25).toList();
+        _allNearbyPlaces = results;
+        _displayedCount = 10;
         _isLoadingNearby = false;
       });
     }
@@ -135,12 +211,15 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
-    final String normQuery = query.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-    final List<PlaceModel> localMatches = _nearbyPlaces.where((p) {
-      final normName = p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-      final normAddr = p.fullAddress.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final String normQuery =
+        query.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final List<PlaceModel> localMatches = _allNearbyPlaces.where((p) {
+      final normName =
+          p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      final normAddr =
+          p.fullAddress.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
       return (normQuery.isNotEmpty && normName.contains(normQuery)) ||
-             (normQuery.isNotEmpty && normAddr.contains(normQuery));
+          (normQuery.isNotEmpty && normAddr.contains(normQuery));
     }).toList();
 
     final apiResults = await MapProvider.searchPlaces(
@@ -279,7 +358,8 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final defaultLat = _userLat!;
     final defaultLng = _userLng!;
     final hasQuery = _searchController.text.trim().isNotEmpty;
-    final displayList = hasQuery ? _results : _nearbyPlaces;
+    final displayList =
+        hasQuery ? _results : _allNearbyPlaces.take(_displayedCount).toList();
     final screenSize = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
@@ -398,9 +478,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                                  16,
                                                  bottomPadding + 16,
                                                ),
-                                               itemCount: displayList.isNotEmpty
-                                                   ? displayList.length
-                                                   : null,
+                                               itemCount: 8,
                                              )
                                           : displayList.isEmpty
                                           ? Center(
@@ -416,6 +494,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                               ),
                                             )
                                           : ListView.separated(
+                                              controller: _scrollController,
                                               padding: EdgeInsets.fromLTRB(
                                                 16,
                                                 4,
@@ -423,14 +502,67 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                                 bottomPadding + 16,
                                               ),
                                               physics:
-                                                  const BouncingScrollPhysics(),
-                                              itemCount: displayList.length,
+                                                  const AlwaysScrollableScrollPhysics(
+                                                    parent:
+                                                        BouncingScrollPhysics(),
+                                                  ),
+                                              itemCount:
+                                                  displayList.length +
+                                                  (!hasQuery &&
+                                                          _isLoadingMoreNearby
+                                                      ? 1
+                                                      : 0),
                                               separatorBuilder: (_, _) =>
                                                   const Divider(
                                                     height: 1,
                                                     color: AppTheme.borderSide,
                                                   ),
                                               itemBuilder: (context, index) {
+                                                if (index ==
+                                                    displayList.length) {
+                                                  return const Padding(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 12,
+                                                        ),
+                                                    child: Row(
+                                                      children: [
+                                                        SizedBox(
+                                                          width: 44,
+                                                          height: 44,
+                                                          child: Center(
+                                                            child: SizedBox(
+                                                              width: 20,
+                                                              height: 20,
+                                                              child:
+                                                                  CircularProgressIndicator(
+                                                                    strokeWidth:
+                                                                        2.0,
+                                                                    color: AppTheme
+                                                                        .primaryColor,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 14),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'Loading more nearby places...',
+                                                            style: TextStyle(
+                                                              color: AppTheme
+                                                                  .borderSide,
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }
                                                 final place =
                                                     displayList[index];
                                                 final icon =

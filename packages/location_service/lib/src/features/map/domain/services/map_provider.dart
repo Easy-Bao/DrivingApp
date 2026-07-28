@@ -37,7 +37,7 @@ class MapProvider {
     final nativeService = _nativeService;
     final token = _token;
     if (nativeService == null || token == null) {
-      throw StateError('MapProvider not initialized. Call initialize() first.');
+      throw StateError('MapProvider not initialized.');
     }
 
     try {
@@ -70,7 +70,7 @@ class MapProvider {
     final nativeService = _nativeService;
     final token = _token;
     if (nativeService == null || token == null) {
-      throw StateError('MapProvider not initialized. Call initialize() first.');
+      throw StateError('MapProvider not initialized.');
     }
 
     try {
@@ -94,7 +94,7 @@ class MapProvider {
     final nativeService = _nativeService;
     final token = _token;
     if (nativeService == null || token == null) {
-      throw StateError('MapProvider not initialized. Call initialize() first.');
+      throw StateError('MapProvider not initialized.');
     }
 
     try {
@@ -114,11 +114,12 @@ class MapProvider {
   static Future<List<PlaceModel>> getNearbyPOIs({
     required double lat,
     required double lng,
+    int page = 1,
   }) async {
     final nativeService = _nativeService;
     final token = _token;
     if (nativeService == null || token == null) {
-      throw StateError('MapProvider not initialized. Call initialize() first.');
+      throw StateError('MapProvider not initialized.');
     }
 
     try {
@@ -126,6 +127,7 @@ class MapProvider {
         token: token,
         lat: lat,
         lng: lng,
+        page: page,
       );
     } catch (error) {
       debugPrint('MapProvider.getNearbyPOIs error: $error');

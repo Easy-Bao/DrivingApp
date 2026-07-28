@@ -59,7 +59,9 @@ class MapNativeServiceImpl implements MapNativeService {
     if (cleanedQuery.isNotEmpty && cleanedQuery != trimmedQuery) {
       queryVariations.add(cleanedQuery);
     }
-    if (noDotNoSpaceQuery.isNotEmpty && noDotNoSpaceQuery != trimmedQuery && noDotNoSpaceQuery.length >= 2) {
+    if (noDotNoSpaceQuery.isNotEmpty &&
+        noDotNoSpaceQuery != trimmedQuery &&
+        noDotNoSpaceQuery.length >= 2) {
       queryVariations.add(noDotNoSpaceQuery);
     }
 
@@ -73,7 +75,6 @@ class MapNativeServiceImpl implements MapNativeService {
         'language': 'en',
         'autocomplete': 'true',
         'fuzzyMatch': 'true',
-        'types': 'poi,address,neighborhood,locality,place',
       };
 
       if (proximityLat != null && proximityLng != null) {
@@ -106,11 +107,13 @@ class MapNativeServiceImpl implements MapNativeService {
               : 0.0;
 
           final String id = (f['id'] ?? '') as String;
-          final String name = (f['text'] ?? '') as String;
+          final String name = (f['text'] ?? (f['place_name'] ?? '')) as String;
           final String fullAddress = (f['place_name'] ?? '') as String;
 
-          final String dedupKey = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-          if (seenIdsOrNames.contains(id) || (dedupKey.isNotEmpty && seenIdsOrNames.contains(dedupKey))) {
+          final String dedupKey =
+              name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+          if (seenIdsOrNames.contains(id) ||
+              (dedupKey.isNotEmpty && seenIdsOrNames.contains(dedupKey))) {
             continue;
           }
           if (id.isNotEmpty) seenIdsOrNames.add(id);
@@ -118,7 +121,8 @@ class MapNativeServiceImpl implements MapNativeService {
 
           double? distanceKm;
           if (userLat != null && userLng != null) {
-            distanceKm = calculateHaversine(userLat, userLng, placeLat, placeLng);
+            distanceKm =
+                calculateHaversine(userLat, userLng, placeLat, placeLng);
           }
 
           final Map<String, dynamic>? properties =
@@ -137,9 +141,8 @@ class MapNativeServiceImpl implements MapNativeService {
             ),
           );
         }
-      } catch (error) {
+      } catch (_) {
         // Continue to next variation on network error
-        //TODO: 
       }
     }
 
@@ -262,25 +265,32 @@ class MapNativeServiceImpl implements MapNativeService {
     required String token,
     required double lat,
     required double lng,
+    int page = 1,
   }) async {
     final List<PlaceModel> combinedPois = [];
     final Set<String> seenKeys = {};
 
-    // 1. Fetch POIs using Mapbox Geocoding API around user coordinates (up to 5km)
-    final List<String> searchCategories = ['poi', 'college', 'school', 'hospital', 'resort', 'park'];
+    final List<List<String>> categoryPages = [
+      ['school', 'college', 'hospital', 'resort', 'hotel', 'bank', 'restaurant', 'gas', 'supermarket', 'park'],
+      ['church', 'mall', 'police', 'market', 'cemetery', 'store', 'agency', 'canteen', 'barber', 'laundry'],
+      ['cafe', 'gym', 'hardware', 'pharmacy', 'bakery', 'office', 'station', 'terminal', 'government'],
+    ];
+
+    final int targetPageIndex = (page - 1).clamp(0, categoryPages.length - 1);
+    final List<String> searchCategories = categoryPages[targetPageIndex];
+
     for (final cat in searchCategories) {
       final Map<String, String> geoParams = {
         'access_token': token,
         'proximity': '$lng,$lat',
-        'types': 'poi',
-        'limit': '15',
+        'limit': '10',
         'language': 'en',
       };
 
       try {
         final Uri uri = Uri.https(
           'api.mapbox.com',
-          '/geocoding/v5/mapbox.places/$cat.json',
+          '/geocoding/v5/mapbox.places/${Uri.encodeComponent(cat)}.json',
           geoParams,
         );
         final response = await _clientDio.getUri(uri);
@@ -295,7 +305,7 @@ class MapNativeServiceImpl implements MapNativeService {
             final double pLng = center.isNotEmpty ? (center[0] as num).toDouble() : 0.0;
             final double pLat = center.length > 1 ? (center[1] as num).toDouble() : 0.0;
 
-            final String name = (f['text'] ?? '') as String;
+            final String name = (f['text'] ?? (f['place_name'] ?? '')) as String;
             final String fullAddress = (f['place_name'] ?? '') as String;
             if (name.trim().isEmpty) continue;
 
@@ -316,7 +326,7 @@ class MapNativeServiceImpl implements MapNativeService {
                 fullAddress: fullAddress,
                 latitude: pLat,
                 longitude: pLng,
-                category: category ?? 'poi',
+                category: category ?? cat,
                 distanceKm: distanceKm,
               ),
             );
@@ -327,63 +337,65 @@ class MapNativeServiceImpl implements MapNativeService {
       }
     }
 
-    // 2. Fetch hyper-local POIs via Tilequery API
-    final Map<String, String> tileQueryParams = {
-      'radius': '5000',
-      'limit': '50',
-      'layers': 'poi_label',
-      'access_token': token,
-    };
+    if (page == 1) {
+      // Fetch hyper-local POIs via Tilequery API on initial page
+      final Map<String, String> tileQueryParams = {
+        'radius': '5000',
+        'limit': '50',
+        'layers': 'poi_label',
+        'access_token': token,
+      };
 
-    try {
-      final Uri uri = Uri.https(
-        'api.mapbox.com',
-        '/v4/mapbox.mapbox-streets-v8/tilequery/$lng,$lat.json',
-        tileQueryParams,
-      );
-      final response = await _clientDio.getUri(uri);
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = response.data is Map<String, dynamic>
-            ? response.data as Map<String, dynamic>
-            : jsonDecode(response.data.toString());
-        final List<dynamic> features = data['features'] ?? [];
+      try {
+        final Uri uri = Uri.https(
+          'api.mapbox.com',
+          '/v4/mapbox.mapbox-streets-v8/tilequery/$lng,$lat.json',
+          tileQueryParams,
+        );
+        final response = await _clientDio.getUri(uri);
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = response.data is Map<String, dynamic>
+              ? response.data as Map<String, dynamic>
+              : jsonDecode(response.data.toString());
+          final List<dynamic> features = data['features'] ?? [];
 
-        for (final f in features) {
-          final Map<String, dynamic>? geom = f['geometry'] as Map<String, dynamic>?;
-          final Map<String, dynamic>? props = f['properties'] as Map<String, dynamic>?;
+          for (final f in features) {
+            final Map<String, dynamic>? geom = f['geometry'] as Map<String, dynamic>?;
+            final Map<String, dynamic>? props = f['properties'] as Map<String, dynamic>?;
 
-          if (geom != null && props != null) {
-            final List<dynamic> coords = geom['coordinates'] ?? [0.0, 0.0];
-            final double pLng = coords.isNotEmpty ? (coords[0] as num).toDouble() : 0.0;
-            final double pLat = coords.length > 1 ? (coords[1] as num).toDouble() : 0.0;
+            if (geom != null && props != null) {
+              final List<dynamic> coords = geom['coordinates'] ?? [0.0, 0.0];
+              final double pLng = coords.isNotEmpty ? (coords[0] as num).toDouble() : 0.0;
+              final double pLat = coords.length > 1 ? (coords[1] as num).toDouble() : 0.0;
 
-            final String name = (props['name'] ?? '') as String;
-            final String category = (props['type'] ?? 'poi') as String;
-            if (name.trim().isEmpty || name == 'Unknown') continue;
+              final String name = (props['name'] ?? '') as String;
+              final String category = (props['type'] ?? 'poi') as String;
+              if (name.trim().isEmpty || name == 'Unknown') continue;
 
-            final double distanceKm = calculateHaversine(lat, lng, pLat, pLng);
-            if (distanceKm > 5.0) continue;
+              final double distanceKm = calculateHaversine(lat, lng, pLat, pLng);
+              if (distanceKm > 5.0) continue;
 
-            final String key = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-            if (seenKeys.contains(key)) continue;
-            seenKeys.add(key);
+              final String key = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+              if (seenKeys.contains(key)) continue;
+              seenKeys.add(key);
 
-            combinedPois.add(
-              PlaceModel(
-                id: 'poi_${pLat}_$pLng',
-                name: name,
-                fullAddress: '$name, $category',
-                latitude: pLat,
-                longitude: pLng,
-                category: category,
-                distanceKm: distanceKm,
-              ),
-            );
+              combinedPois.add(
+                PlaceModel(
+                  id: 'poi_${pLat}_$pLng',
+                  name: name,
+                  fullAddress: '$name, $category',
+                  latitude: pLat,
+                  longitude: pLng,
+                  category: category,
+                  distanceKm: distanceKm,
+                ),
+              );
+            }
           }
         }
+      } catch (_) {
+        // Ignore tilequery errors
       }
-    } catch (_) {
-      // Ignore tilequery errors
     }
 
     combinedPois.sort((a, b) {

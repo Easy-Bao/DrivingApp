@@ -29,6 +29,7 @@ abstract class MapNativeService {
     required String token,
     required double lat,
     required double lng,
+    int page = 1,
   });
 
   Future<double> haversineDistance({
