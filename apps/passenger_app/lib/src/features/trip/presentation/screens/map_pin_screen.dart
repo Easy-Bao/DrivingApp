@@ -250,6 +250,22 @@ class _MapPinScreenState extends State<MapPinScreen>
               ),
             ),
           ),
+          Positioned(
+            right: 16,
+            bottom: 220,
+            child: MapZoomControlsWidget(
+              onZoomIn: () {
+                if (_mapController != null) {
+                  unawaited(MapProvider.zoomIn(_mapController!));
+                }
+              },
+              onZoomOut: () {
+                if (_mapController != null) {
+                  unawaited(MapProvider.zoomOut(_mapController!));
+                }
+              },
+            ),
+          ),
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(

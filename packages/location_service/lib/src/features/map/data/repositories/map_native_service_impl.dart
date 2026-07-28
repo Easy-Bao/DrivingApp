@@ -233,7 +233,7 @@ class MapNativeServiceImpl implements MapNativeService {
     required double lng,
   }) async {
     final Map<String, String> queryParameters = {
-      'radius': '2000',
+      'radius': '5000',
       'limit': '50',
       'layers': 'poi_label',
       'access_token': token,

@@ -138,6 +138,22 @@ class _ActivityDetailMapScreenState extends State<ActivityDetailMapScreen> {
               ),
             ),
           ),
+          Positioned(
+            right: 16,
+            bottom: 260,
+            child: MapZoomControlsWidget(
+              onZoomIn: () {
+                if (_mapController != null) {
+                  unawaited(MapProvider.zoomIn(_mapController!));
+                }
+              },
+              onZoomOut: () {
+                if (_mapController != null) {
+                  unawaited(MapProvider.zoomOut(_mapController!));
+                }
+              },
+            ),
+          ),
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(

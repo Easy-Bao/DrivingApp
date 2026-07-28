@@ -206,6 +206,12 @@ class MapProvider {
   }) =>
       MapCameraService.fitBounds(controller, points, padding: padding);
 
+  static Future<void> zoomIn(AppMapController controller) =>
+      MapCameraService.zoomIn(controller);
+
+  static Future<void> zoomOut(AppMapController controller) =>
+      MapCameraService.zoomOut(controller);
+
   static Future<dynamic> addMarker(
     AppMapController controller,
     double lat,

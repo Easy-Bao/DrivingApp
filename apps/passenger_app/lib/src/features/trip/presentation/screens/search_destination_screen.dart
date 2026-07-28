@@ -217,6 +217,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
   }
 
   Widget? _cachedMapView;
+  AppMapController? _mapController;
 
   Widget _getMapView(double lat, double lng) {
     _cachedMapView ??= MapProvider.buildMapView(
@@ -224,6 +225,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
       longitude: lng,
       zoom: 14.5,
       interactive: true,
+      onMapCreated: (controller) => _mapController = controller,
     );
     return _cachedMapView!;
   }
@@ -298,6 +300,26 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                     ),
                   ),
                 ),
+                if (t < 0.5)
+                  Positioned(
+                    right: 16,
+                    bottom: 80,
+                    child: Opacity(
+                      opacity: (1.0 - t * 2.0).clamp(0.0, 1.0),
+                      child: MapZoomControlsWidget(
+                        onZoomIn: () {
+                          if (_mapController != null) {
+                            unawaited(MapProvider.zoomIn(_mapController!));
+                          }
+                        },
+                        onZoomOut: () {
+                          if (_mapController != null) {
+                            unawaited(MapProvider.zoomOut(_mapController!));
+                          }
+                        },
+                      ),
+                    ),
+                  ),
                 if (t > 0.01)
                   Positioned(
                     left: containerLeft,

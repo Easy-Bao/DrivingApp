@@ -36,6 +36,28 @@ class MapCameraService {
     }
   }
 
+  static Future<void> zoomIn(AppMapController controller) async {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final cameraState = await mapCtrl.getCameraState();
+    final currentZoom = cameraState.zoom;
+    final targetZoom = (currentZoom + 1.0).clamp(2.0, 20.0);
+    await mapCtrl.flyTo(
+      mapbox.CameraOptions(zoom: targetZoom),
+      mapbox.MapAnimationOptions(duration: 350),
+    );
+  }
+
+  static Future<void> zoomOut(AppMapController controller) async {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final cameraState = await mapCtrl.getCameraState();
+    final currentZoom = cameraState.zoom;
+    final targetZoom = (currentZoom - 1.0).clamp(2.0, 20.0);
+    await mapCtrl.flyTo(
+      mapbox.CameraOptions(zoom: targetZoom),
+      mapbox.MapAnimationOptions(duration: 350),
+    );
+  }
+
   static Future<LatLng> getCameraCenter(AppMapController controller) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
     final camera = await mapCtrl.getCameraState();
