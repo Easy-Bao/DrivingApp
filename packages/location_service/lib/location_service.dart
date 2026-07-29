@@ -1,5 +1,6 @@
 export 'src/features/geolocation/data/datasources/location_datasource.dart';
 export 'src/features/map/data/repositories/map_native_service_impl.dart';
+export 'src/features/map/domain/failures/place_failure.dart';
 export 'src/features/map/domain/repositories/map_native_service.dart';
 export 'src/features/map/domain/services/map_provider.dart';
 export 'src/features/map/presentation/map_navigation_launcher.dart';
