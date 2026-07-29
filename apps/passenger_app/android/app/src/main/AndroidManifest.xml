@@ -39,7 +39,7 @@
             android:value="2" />
         <meta-data
             android:name="com.mapbox.token"
-            android:value="YOUR_MAPBOX_PUBLIC_TOKEN" />
+            android:value="${MAPBOX_PUBLIC_TOKEN}" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -47,7 +47,7 @@
             android:value="2" />
         <meta-data
             android:name="com.mapbox.token"
-            android:value="YOUR_MAPBOX_PUBLIC_TOKEN" />
+            android:value="${MAPBOX_PUBLIC_TOKEN}" />
     </application>
 
     <queries>
