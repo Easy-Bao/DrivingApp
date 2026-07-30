@@ -11,8 +11,12 @@ class EnvironmentConfig {
   static String get mapboxPublicToken =>
       dotenv.env['MAPBOX_PUBLIC_TOKEN'] ?? '';
 
-  static String get mapboxSecretToken =>
-      dotenv.env['MAPBOX_SECRET_TOKEN'] ?? '';
+  static Uri get placeServiceUri {
+    final rawUrl = dotenv.env['PLACE_SERVICE_BASE_URL'] ??
+        dotenv.env['PASSENGER_SERVICE_URL'] ??
+        'http://127.0.0.1:8080';
+    return _resolveUri(rawUrl);
+  }
 
   static bool get offlineMode =>
       dotenv.env['OFFLINE_MODE']?.toLowerCase() == 'true';

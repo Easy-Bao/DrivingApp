@@ -8,17 +8,17 @@ import 'package:passenger_app/src/features/auth/domain/usecases/register_use_cas
 import 'package:passenger_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
-import 'package:passenger_app/src/features/auth/presentation/cubits/forgot_password_cubit.dart';
-import 'package:passenger_app/src/features/auth/presentation/cubits/reset_password_confirm_cubit.dart';
-import 'package:passenger_app/src/features/auth/presentation/cubits/signin_cubit.dart';
-import 'package:passenger_app/src/features/auth/presentation/cubits/signup_cubit.dart';
-import 'package:passenger_app/src/features/auth/presentation/cubits/verify_otp_cubit.dart';
-import 'package:passenger_app/src/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:passenger_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/forgot_password/screens/forgot_password_screen.dart';
+import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/screens/reset_password_confirm_screen.dart';
 import 'package:passenger_app/src/features/auth/presentation/screens/onboarding_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/screens/reset_password_confirm_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/screens/signin_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/screens/signup_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/screens/verify_otp_screen.dart';
+import 'package:passenger_app/src/features/auth/presentation/signin/bloc/sign_in_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/signin/screens/sign_in_screen.dart';
+import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/signup/screens/sign_up_screen.dart';
+import 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/verify_otp/screens/verify_otp_screen.dart';
 import 'package:passenger_services/passenger_services.dart' as ps;
 import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -50,23 +50,20 @@ class AuthModule extends Module {
     i.addLazySingleton<ConfirmResetPasswordUseCase>(
       (i) => ConfirmResetPasswordUseCase(i.get<AuthRepository>()),
     );
-    i.add<SignInCubit>(
-      (i) => SignInCubit(i.get<SignInUseCase>()),
+    i.add<SignInBloc>(
+      (i) => SignInBloc(i.get<SignInUseCase>()),
     );
-    i.add<SignUpCubit>(
-      (i) => SignUpCubit(
-        registerUseCase: i.get<RegisterUseCase>(),
-        verifyOtpUseCase: i.get<VerifyOtpUseCase>(),
-      ),
+    i.add<SignUpBloc>(
+      (i) => SignUpBloc(i.get<RegisterUseCase>()),
     );
-    i.add<VerifyOtpCubit>(
-      (i) => VerifyOtpCubit(i.get<VerifyOtpUseCase>()),
+    i.add<VerifyOtpBloc>(
+      (i) => VerifyOtpBloc(i.get<VerifyOtpUseCase>()),
     );
-    i.add<ForgotPasswordCubit>(
-      (i) => ForgotPasswordCubit(i.get<ResetPasswordUseCase>()),
+    i.add<ForgotPasswordBloc>(
+      (i) => ForgotPasswordBloc(i.get<ResetPasswordUseCase>()),
     );
-    i.add<ResetPasswordConfirmCubit>(
-      (i) => ResetPasswordConfirmCubit(i.get<ConfirmResetPasswordUseCase>()),
+    i.add<ResetPasswordConfirmBloc>(
+      (i) => ResetPasswordConfirmBloc(i.get<ConfirmResetPasswordUseCase>()),
     );
   }
 

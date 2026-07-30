@@ -1,34 +1,16 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class UserSettings extends Equatable {
-  final bool pushNotificationsEnabled;
-  final bool locationSharingEnabled;
-  final String preferredThemeMode;
+part 'generated/user_settings.freezed.dart';
+part 'generated/user_settings.g.dart';
 
-  const UserSettings({
-    required this.pushNotificationsEnabled,
-    required this.locationSharingEnabled,
-    required this.preferredThemeMode,
-  });
+@freezed
+abstract class UserSettings with _$UserSettings {
+  const factory UserSettings({
+    required bool pushNotificationsEnabled,
+    required bool locationSharingEnabled,
+    required String preferredThemeMode,
+  }) = _UserSettings;
 
-  UserSettings copyWith({
-    bool? pushNotificationsEnabled,
-    bool? locationSharingEnabled,
-    String? preferredThemeMode,
-  }) {
-    return UserSettings(
-      pushNotificationsEnabled:
-          pushNotificationsEnabled ?? this.pushNotificationsEnabled,
-      locationSharingEnabled:
-          locationSharingEnabled ?? this.locationSharingEnabled,
-      preferredThemeMode: preferredThemeMode ?? this.preferredThemeMode,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-    pushNotificationsEnabled,
-    locationSharingEnabled,
-    preferredThemeMode,
-  ];
+  factory UserSettings.fromJson(Map<String, dynamic> json) =>
+      _$UserSettingsFromJson(json);
 }

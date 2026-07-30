@@ -108,13 +108,17 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       );
     }
 
-    _chatCubit = ChatCubit(currentUserId: currentUserId);
+    _chatCubit = ChatCubit(
+      chatService: ChatService(currentUserId: currentUserId),
+    );
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
       roomId: currentRoomId,
       userId: currentUserId,
       token: widget.token,
     );
-    unawaited(_chatCubit.connect(currentRoomId, wsUri));
+    unawaited(
+      _chatCubit.connectToChatRoom(roomId: currentRoomId, wsUri: wsUri),
+    );
     unawaited(_checkTripStatus());
   }
 

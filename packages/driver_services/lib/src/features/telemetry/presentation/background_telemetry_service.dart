@@ -29,7 +29,7 @@ void onTelemetryServiceStart(ServiceInstance service) {
       if (isForeground) {
         unawaited(
           service.setForegroundNotificationInfo(
-            title: 'Telemetry Active',
+            title: 'EasyRide Telemetry Active',
             content: 'Driver background location telemetry active',
           ),
         );
@@ -55,9 +55,12 @@ class BackgroundTelemetryService {
         onStart: onTelemetryServiceStart,
         autoStart: false,
         isForegroundMode: true,
-        foregroundServiceTypes: [AndroidForegroundType.location],
+        notificationChannelId: 'easyride_driver_telemetry',
         initialNotificationTitle: 'EasyRide Telemetry Sync',
         initialNotificationContent: 'Tracking driver dispatch location...',
+        foregroundServiceNotificationId: 888,
+        foregroundServiceTypes: [AndroidForegroundType.location],
+        defaultNotificationIcon: 'mipmap/ic_launcher',
       ),
       iosConfiguration: IosConfiguration(
         autoStart: false,
@@ -67,4 +70,3 @@ class BackgroundTelemetryService {
     );
   }
 }
-

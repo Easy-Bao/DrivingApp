@@ -1,52 +1,19 @@
 import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/features/profile/presentation/bloc/profile_state.dart';
 import 'package:passenger_services/passenger_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfileState extends Equatable {
-  final String name;
-  final String phone;
-  final String email;
-  final bool isLoading;
-  final String? errorMessage;
-
-  const ProfileState({
-    this.name = '',
-    this.phone = '',
-    this.email = '',
-    this.isLoading = false,
-    this.errorMessage,
-  });
-
-  ProfileState copyWith({
-    String? name,
-    String? phone,
-    String? email,
-    bool? isLoading,
-    String? errorMessage,
-  }) {
-    return ProfileState(
-      name: name ?? this.name,
-      phone: phone ?? this.phone,
-      email: email ?? this.email,
-      isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
-
-  @override
-  List<Object?> get props => [name, phone, email, isLoading, errorMessage];
-}
+export 'package:passenger_app/src/features/profile/presentation/bloc/profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   final PassengerProfileRepository _profileRepository;
 
   ProfileCubit({required PassengerProfileRepository profileRepository})
-    : _profileRepository = profileRepository,
-      super(const ProfileState());
+      : _profileRepository = profileRepository,
+        super(const ProfileState());
 
   Future<void> loadProfile() async {
     emit(state.copyWith(isLoading: true));
@@ -72,7 +39,9 @@ class ProfileCubit extends Cubit<ProfileState> {
       final result = await _profileRepository.getPassengerProfile(passengerId);
       await result.fold(
         (failure) async {
-          emit(state.copyWith(isLoading: false, errorMessage: failure.message));
+          emit(
+            state.copyWith(isLoading: false, errorMessage: failure.message),
+          );
         },
         (profile) async {
           final name = profile['name'] as String? ?? cachedName;

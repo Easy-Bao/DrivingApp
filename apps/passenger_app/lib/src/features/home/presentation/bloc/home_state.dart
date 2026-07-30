@@ -1,28 +1,12 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class HomeState extends Equatable {
-  final bool isLoading;
-  final String currentAddress;
-  final List<Map<String, dynamic>> recentLocations;
+part 'generated/home_state.freezed.dart';
 
-  const HomeState({
-    this.isLoading = false,
-    this.currentAddress = '',
-    this.recentLocations = const [],
-  });
-
-  HomeState copyWith({
-    bool? isLoading,
-    String? currentAddress,
-    List<Map<String, dynamic>>? recentLocations,
-  }) {
-    return HomeState(
-      isLoading: isLoading ?? this.isLoading,
-      currentAddress: currentAddress ?? this.currentAddress,
-      recentLocations: recentLocations ?? this.recentLocations,
-    );
-  }
-
-  @override
-  List<Object?> get props => [isLoading, currentAddress, recentLocations];
+@freezed
+abstract class HomeState with _$HomeState {
+  const factory HomeState({
+    @Default(false) bool isLoading,
+    @Default('') String currentAddress,
+    @Default([]) List<Map<String, dynamic>> recentLocations,
+  }) = _HomeState;
 }

@@ -13,7 +13,6 @@ class MapProvider {
   MapProvider._();
 
   static bool _initialized = false;
-  static String? _token;
   static MapNativeService? _nativeService;
 
   static Future<void> initialize({
@@ -21,7 +20,6 @@ class MapProvider {
     required MapNativeService nativeService,
   }) async {
     if (_initialized) return;
-    _token = token;
     _nativeService = nativeService;
     mapbox.MapboxOptions.setAccessToken(token);
     _initialized = true;
@@ -35,8 +33,7 @@ class MapProvider {
     if (query.trim().isEmpty) return [];
 
     final nativeService = _nativeService;
-    final token = _token;
-    if (nativeService == null || token == null) {
+    if (nativeService == null) {
       throw StateError('MapProvider not initialized.');
     }
 
@@ -44,7 +41,7 @@ class MapProvider {
       final userLat = lat ?? LocationService.lastPosition?.latitude;
       final userLng = lng ?? LocationService.lastPosition?.longitude;
 
-      final places = await nativeService.searchPlaces(
+      final either = await nativeService.searchPlaces(
         query: query,
         proximityLat: lat,
         proximityLng: lng,
@@ -52,10 +49,16 @@ class MapProvider {
         userLng: userLng,
       );
 
-      return places.where((p) {
-        if (p.distanceKm == null) return true;
-        return p.distanceKm! <= 30.0;
-      }).toList();
+      return either.fold(
+        (failure) {
+          debugPrint('MapProvider.searchPlaces failure: $failure');
+          return <PlaceModel>[];
+        },
+        (places) => places.where((p) {
+          if (p.distanceKm == null) return true;
+          return p.distanceKm! <= 30.0;
+        }).toList(),
+      );
     } catch (error) {
       debugPrint('MapProvider.searchPlaces error: $error');
       return [];
@@ -67,15 +70,21 @@ class MapProvider {
     double lng,
   ) async {
     final nativeService = _nativeService;
-    final token = _token;
-    if (nativeService == null || token == null) {
+    if (nativeService == null) {
       throw StateError('MapProvider not initialized.');
     }
 
     try {
-      return await nativeService.reverseGeocode(
+      final either = await nativeService.reverseGeocode(
         lat: lat,
         lng: lng,
+      );
+      return either.fold(
+        (failure) {
+          debugPrint('MapProvider.getPlaceFromCoordinates failure: $failure');
+          return null;
+        },
+        (place) => place,
       );
     } catch (error) {
       debugPrint('MapProvider.getPlaceFromCoordinates error: $error');
@@ -90,17 +99,23 @@ class MapProvider {
     double destLng,
   ) async {
     final nativeService = _nativeService;
-    final token = _token;
-    if (nativeService == null || token == null) {
+    if (nativeService == null) {
       throw StateError('MapProvider not initialized.');
     }
 
     try {
-      return await nativeService.getRoute(
+      final either = await nativeService.getRoute(
         originLat: originLat,
         originLng: originLng,
         destLat: destLat,
         destLng: destLng,
+      );
+      return either.fold(
+        (failure) {
+          debugPrint('MapProvider.getRoute failure: $failure');
+          return null;
+        },
+        (route) => route,
       );
     } catch (error) {
       debugPrint('MapProvider.getRoute error: $error');
@@ -114,16 +129,22 @@ class MapProvider {
     int page = 1,
   }) async {
     final nativeService = _nativeService;
-    final token = _token;
-    if (nativeService == null || token == null) {
+    if (nativeService == null) {
       throw StateError('MapProvider not initialized.');
     }
 
     try {
-      return await nativeService.getNearbyPois(
+      final either = await nativeService.getNearbyPois(
         lat: lat,
         lng: lng,
         page: page,
+      );
+      return either.fold(
+        (failure) {
+          debugPrint('MapProvider.getNearbyPOIs failure: $failure');
+          return <PlaceModel>[];
+        },
+        (pois) => pois,
       );
     } catch (error) {
       debugPrint('MapProvider.getNearbyPOIs error: $error');

@@ -1,26 +1,13 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-abstract class AuthEvent extends Equatable {
-  const AuthEvent();
+part 'auth_event.freezed.dart';
 
-  @override
-  List<Object?> get props => [];
-}
-
-class AuthCheckRequested extends AuthEvent {
-  const AuthCheckRequested();
-}
-
-class AuthLoggedIn extends AuthEvent {
-  final String token;
-  final String userId;
-
-  const AuthLoggedIn({required this.token, required this.userId});
-
-  @override
-  List<Object?> get props => [token, userId];
-}
-
-class AuthLoggedOut extends AuthEvent {
-  const AuthLoggedOut();
+@freezed
+sealed class AuthEvent with _$AuthEvent {
+  const factory AuthEvent.checkRequested() = AuthCheckRequested;
+  const factory AuthEvent.loggedIn({
+    required String token,
+    required String userId,
+  }) = AuthLoggedIn;
+  const factory AuthEvent.loggedOut() = AuthLoggedOut;
 }

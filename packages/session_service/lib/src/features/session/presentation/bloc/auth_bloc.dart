@@ -8,7 +8,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc({required SecureSessionService secureSessionService})
       : _secureSessionService = secureSessionService,
-        super(const AuthInitial()) {
+        super(const AuthState.initial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthLoggedIn>(_onAuthLoggedIn);
     on<AuthLoggedOut>(_onAuthLoggedOut);
@@ -26,9 +26,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         : (driverId ?? '');
 
     if (token != null && token.isNotEmpty && userId.isNotEmpty) {
-      emit(Authenticated(token: token, userId: userId));
+      emit(AuthState.authenticated(token: token, userId: userId));
     } else {
-      emit(const Unauthenticated());
+      emit(const AuthState.unauthenticated());
     }
   }
 
@@ -37,7 +37,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     await _secureSessionService.writeAuthToken(event.token);
-    emit(Authenticated(token: event.token, userId: event.userId));
+    emit(AuthState.authenticated(token: event.token, userId: event.userId));
   }
 
   Future<void> _onAuthLoggedOut(
@@ -45,6 +45,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     await _secureSessionService.clearSession();
-    emit(const Unauthenticated());
+    emit(const AuthState.unauthenticated());
   }
 }

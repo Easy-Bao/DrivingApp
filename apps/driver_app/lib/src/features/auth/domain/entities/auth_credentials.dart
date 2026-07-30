@@ -1,29 +1,19 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class AuthCredentials extends Equatable {
-  final String driverId;
-  final String driverName;
-  final String driverEmail;
-  final String vehicleType;
-  final String plateNumber;
-  final double rating;
+part 'generated/auth_credentials.freezed.dart';
+part 'generated/auth_credentials.g.dart';
 
-  const AuthCredentials({
-    required this.driverId,
-    required this.driverName,
-    required this.driverEmail,
-    required this.vehicleType,
-    required this.plateNumber,
-    required this.rating,
-  });
+@freezed
+abstract class AuthCredentials with _$AuthCredentials {
+  const factory AuthCredentials({
+    required String driverId,
+    required String driverName,
+    required String driverEmail,
+    required String vehicleType,
+    required String plateNumber,
+    required double rating,
+  }) = _AuthCredentials;
 
-  @override
-  List<Object?> get props => [
-        driverId,
-        driverName,
-        driverEmail,
-        vehicleType,
-        plateNumber,
-        rating,
-      ];
+  factory AuthCredentials.fromJson(Map<String, dynamic> json) =>
+      _$AuthCredentialsFromJson(json);
 }

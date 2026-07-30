@@ -1,59 +1,23 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-abstract class TrackDriverState extends Equatable {
-  const TrackDriverState();
+part 'generated/track_driver_state.freezed.dart';
 
-  @override
-  List<Object?> get props => [];
+@freezed
+sealed class TrackDriverState with _$TrackDriverState {
+  const factory TrackDriverState.initial() = TrackDriverInitial;
+  const factory TrackDriverState.inProgress({
+    required double driverLat,
+    required double driverLng,
+    required double progress,
+    required String eta,
+    required String driverName,
+    required String vehiclePlate,
+    required String vehicleType,
+    List<List<double>>? routePoints,
+  }) = TrackDriverInProgress;
+  const factory TrackDriverState.completed({
+    required String driverId,
+    required String driverName,
+  }) = TrackDriverCompleted;
+  const factory TrackDriverState.canceled() = TrackDriverCanceled;
 }
-
-class TrackDriverInitial extends TrackDriverState {}
-
-class TrackDriverInProgress extends TrackDriverState {
-  final double driverLat;
-  final double driverLng;
-  final double progress;
-  final String eta;
-  final List<List<double>>? routePoints;
-  final String driverName;
-  final String vehiclePlate;
-  final String vehicleType;
-
-  const TrackDriverInProgress({
-    required this.driverLat,
-    required this.driverLng,
-    required this.progress,
-    required this.eta,
-    required this.driverName,
-    required this.vehiclePlate,
-    required this.vehicleType,
-    this.routePoints,
-  });
-
-  @override
-  List<Object?> get props => [
-    driverLat,
-    driverLng,
-    progress,
-    eta,
-    routePoints,
-    driverName,
-    vehiclePlate,
-    vehicleType,
-  ];
-}
-
-class TrackDriverCompleted extends TrackDriverState {
-  final String driverId;
-  final String driverName;
-
-  const TrackDriverCompleted({
-    required this.driverId,
-    required this.driverName,
-  });
-
-  @override
-  List<Object?> get props => [driverId, driverName];
-}
-
-class TrackDriverCanceled extends TrackDriverState {}

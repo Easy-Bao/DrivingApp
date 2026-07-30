@@ -17,7 +17,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     required SecureSessionService sessionService,
   }) : _repository = repository,
        _sessionService = sessionService,
-       super(TrackDriverInitial());
+       super(const TrackDriverInitial());
 
   Future<void> startTracking({
     required double startLat,
@@ -179,7 +179,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     } catch (error) {
       dev.log('Error canceling trip in track cubit: $error');
     }
-    emit(TrackDriverCanceled());
+    emit(const TrackDriverCanceled());
   }
 
   String _getEtaLabel(RideStatus status) {

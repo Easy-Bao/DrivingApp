@@ -55,13 +55,13 @@ extension PlaceFailurePatterns on PlaceFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PlaceNetworkFailure value)?  networkError,TResult Function( PlaceServerFailure value)?  serverError,TResult Function( PlaceParseFailure value)?  parseError,TResult Function( PlaceNotFoundFailure value)?  notFound,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PlaceNetworkError value)?  networkError,TResult Function( PlaceServerError value)?  serverError,TResult Function( PlaceParseError value)?  parseError,TResult Function( PlaceNotFound value)?  notFound,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case PlaceNetworkFailure() when networkError != null:
-return networkError(_that);case PlaceServerFailure() when serverError != null:
-return serverError(_that);case PlaceParseFailure() when parseError != null:
-return parseError(_that);case PlaceNotFoundFailure() when notFound != null:
+case PlaceNetworkError() when networkError != null:
+return networkError(_that);case PlaceServerError() when serverError != null:
+return serverError(_that);case PlaceParseError() when parseError != null:
+return parseError(_that);case PlaceNotFound() when notFound != null:
 return notFound(_that);case _:
   return orElse();
 
@@ -80,13 +80,13 @@ return notFound(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PlaceNetworkFailure value)  networkError,required TResult Function( PlaceServerFailure value)  serverError,required TResult Function( PlaceParseFailure value)  parseError,required TResult Function( PlaceNotFoundFailure value)  notFound,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PlaceNetworkError value)  networkError,required TResult Function( PlaceServerError value)  serverError,required TResult Function( PlaceParseError value)  parseError,required TResult Function( PlaceNotFound value)  notFound,}){
 final _that = this;
 switch (_that) {
-case PlaceNetworkFailure():
-return networkError(_that);case PlaceServerFailure():
-return serverError(_that);case PlaceParseFailure():
-return parseError(_that);case PlaceNotFoundFailure():
+case PlaceNetworkError():
+return networkError(_that);case PlaceServerError():
+return serverError(_that);case PlaceParseError():
+return parseError(_that);case PlaceNotFound():
 return notFound(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -101,13 +101,13 @@ return notFound(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PlaceNetworkFailure value)?  networkError,TResult? Function( PlaceServerFailure value)?  serverError,TResult? Function( PlaceParseFailure value)?  parseError,TResult? Function( PlaceNotFoundFailure value)?  notFound,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PlaceNetworkError value)?  networkError,TResult? Function( PlaceServerError value)?  serverError,TResult? Function( PlaceParseError value)?  parseError,TResult? Function( PlaceNotFound value)?  notFound,}){
 final _that = this;
 switch (_that) {
-case PlaceNetworkFailure() when networkError != null:
-return networkError(_that);case PlaceServerFailure() when serverError != null:
-return serverError(_that);case PlaceParseFailure() when parseError != null:
-return parseError(_that);case PlaceNotFoundFailure() when notFound != null:
+case PlaceNetworkError() when networkError != null:
+return networkError(_that);case PlaceServerError() when serverError != null:
+return serverError(_that);case PlaceParseError() when parseError != null:
+return parseError(_that);case PlaceNotFound() when notFound != null:
 return notFound(_that);case _:
   return null;
 
@@ -127,10 +127,10 @@ return notFound(_that);case _:
 
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String? message)?  networkError,TResult Function( int statusCode,  String? message)?  serverError,TResult Function( String? message)?  parseError,TResult Function()?  notFound,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case PlaceNetworkFailure() when networkError != null:
-return networkError(_that.message);case PlaceServerFailure() when serverError != null:
-return serverError(_that.statusCode,_that.message);case PlaceParseFailure() when parseError != null:
-return parseError(_that.message);case PlaceNotFoundFailure() when notFound != null:
+case PlaceNetworkError() when networkError != null:
+return networkError(_that.message);case PlaceServerError() when serverError != null:
+return serverError(_that.statusCode,_that.message);case PlaceParseError() when parseError != null:
+return parseError(_that.message);case PlaceNotFound() when notFound != null:
 return notFound();case _:
   return orElse();
 
@@ -151,10 +151,10 @@ return notFound();case _:
 
 @optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String? message)  networkError,required TResult Function( int statusCode,  String? message)  serverError,required TResult Function( String? message)  parseError,required TResult Function()  notFound,}) {final _that = this;
 switch (_that) {
-case PlaceNetworkFailure():
-return networkError(_that.message);case PlaceServerFailure():
-return serverError(_that.statusCode,_that.message);case PlaceParseFailure():
-return parseError(_that.message);case PlaceNotFoundFailure():
+case PlaceNetworkError():
+return networkError(_that.message);case PlaceServerError():
+return serverError(_that.statusCode,_that.message);case PlaceParseError():
+return parseError(_that.message);case PlaceNotFound():
 return notFound();}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -171,10 +171,10 @@ return notFound();}
 
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String? message)?  networkError,TResult? Function( int statusCode,  String? message)?  serverError,TResult? Function( String? message)?  parseError,TResult? Function()?  notFound,}) {final _that = this;
 switch (_that) {
-case PlaceNetworkFailure() when networkError != null:
-return networkError(_that.message);case PlaceServerFailure() when serverError != null:
-return serverError(_that.statusCode,_that.message);case PlaceParseFailure() when parseError != null:
-return parseError(_that.message);case PlaceNotFoundFailure() when notFound != null:
+case PlaceNetworkError() when networkError != null:
+return networkError(_that.message);case PlaceServerError() when serverError != null:
+return serverError(_that.statusCode,_that.message);case PlaceParseError() when parseError != null:
+return parseError(_that.message);case PlaceNotFound() when notFound != null:
 return notFound();case _:
   return null;
 
@@ -186,8 +186,8 @@ return notFound();case _:
 /// @nodoc
 
 
-class PlaceNetworkFailure implements PlaceFailure {
-  const PlaceNetworkFailure({this.message});
+class PlaceNetworkError implements PlaceFailure {
+  const PlaceNetworkError({this.message});
   
 
  final  String? message;
@@ -196,13 +196,13 @@ class PlaceNetworkFailure implements PlaceFailure {
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$PlaceNetworkFailureCopyWith<PlaceNetworkFailure> get copyWith => _$PlaceNetworkFailureCopyWithImpl<PlaceNetworkFailure>(this, _$identity);
+$PlaceNetworkErrorCopyWith<PlaceNetworkError> get copyWith => _$PlaceNetworkErrorCopyWithImpl<PlaceNetworkError>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceNetworkFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceNetworkError&&(identical(other.message, message) || other.message == message));
 }
 
 
@@ -218,8 +218,8 @@ String toString() {
 }
 
 /// @nodoc
-abstract mixin class $PlaceNetworkFailureCopyWith<$Res> implements $PlaceFailureCopyWith<$Res> {
-  factory $PlaceNetworkFailureCopyWith(PlaceNetworkFailure value, $Res Function(PlaceNetworkFailure) _then) = _$PlaceNetworkFailureCopyWithImpl;
+abstract mixin class $PlaceNetworkErrorCopyWith<$Res> implements $PlaceFailureCopyWith<$Res> {
+  factory $PlaceNetworkErrorCopyWith(PlaceNetworkError value, $Res Function(PlaceNetworkError) _then) = _$PlaceNetworkErrorCopyWithImpl;
 @useResult
 $Res call({
  String? message
@@ -230,17 +230,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$PlaceNetworkFailureCopyWithImpl<$Res>
-    implements $PlaceNetworkFailureCopyWith<$Res> {
-  _$PlaceNetworkFailureCopyWithImpl(this._self, this._then);
+class _$PlaceNetworkErrorCopyWithImpl<$Res>
+    implements $PlaceNetworkErrorCopyWith<$Res> {
+  _$PlaceNetworkErrorCopyWithImpl(this._self, this._then);
 
-  final PlaceNetworkFailure _self;
-  final $Res Function(PlaceNetworkFailure) _then;
+  final PlaceNetworkError _self;
+  final $Res Function(PlaceNetworkError) _then;
 
 /// Create a copy of PlaceFailure
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? message = freezed,}) {
-  return _then(PlaceNetworkFailure(
+  return _then(PlaceNetworkError(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -252,8 +252,8 @@ as String?,
 /// @nodoc
 
 
-class PlaceServerFailure implements PlaceFailure {
-  const PlaceServerFailure({required this.statusCode, this.message});
+class PlaceServerError implements PlaceFailure {
+  const PlaceServerError({required this.statusCode, this.message});
   
 
  final  int statusCode;
@@ -263,13 +263,13 @@ class PlaceServerFailure implements PlaceFailure {
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$PlaceServerFailureCopyWith<PlaceServerFailure> get copyWith => _$PlaceServerFailureCopyWithImpl<PlaceServerFailure>(this, _$identity);
+$PlaceServerErrorCopyWith<PlaceServerError> get copyWith => _$PlaceServerErrorCopyWithImpl<PlaceServerError>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceServerFailure&&(identical(other.statusCode, statusCode) || other.statusCode == statusCode)&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceServerError&&(identical(other.statusCode, statusCode) || other.statusCode == statusCode)&&(identical(other.message, message) || other.message == message));
 }
 
 
@@ -285,8 +285,8 @@ String toString() {
 }
 
 /// @nodoc
-abstract mixin class $PlaceServerFailureCopyWith<$Res> implements $PlaceFailureCopyWith<$Res> {
-  factory $PlaceServerFailureCopyWith(PlaceServerFailure value, $Res Function(PlaceServerFailure) _then) = _$PlaceServerFailureCopyWithImpl;
+abstract mixin class $PlaceServerErrorCopyWith<$Res> implements $PlaceFailureCopyWith<$Res> {
+  factory $PlaceServerErrorCopyWith(PlaceServerError value, $Res Function(PlaceServerError) _then) = _$PlaceServerErrorCopyWithImpl;
 @useResult
 $Res call({
  int statusCode, String? message
@@ -297,17 +297,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$PlaceServerFailureCopyWithImpl<$Res>
-    implements $PlaceServerFailureCopyWith<$Res> {
-  _$PlaceServerFailureCopyWithImpl(this._self, this._then);
+class _$PlaceServerErrorCopyWithImpl<$Res>
+    implements $PlaceServerErrorCopyWith<$Res> {
+  _$PlaceServerErrorCopyWithImpl(this._self, this._then);
 
-  final PlaceServerFailure _self;
-  final $Res Function(PlaceServerFailure) _then;
+  final PlaceServerError _self;
+  final $Res Function(PlaceServerError) _then;
 
 /// Create a copy of PlaceFailure
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? statusCode = null,Object? message = freezed,}) {
-  return _then(PlaceServerFailure(
+  return _then(PlaceServerError(
 statusCode: null == statusCode ? _self.statusCode : statusCode // ignore: cast_nullable_to_non_nullable
 as int,message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -320,8 +320,8 @@ as String?,
 /// @nodoc
 
 
-class PlaceParseFailure implements PlaceFailure {
-  const PlaceParseFailure({this.message});
+class PlaceParseError implements PlaceFailure {
+  const PlaceParseError({this.message});
   
 
  final  String? message;
@@ -330,13 +330,13 @@ class PlaceParseFailure implements PlaceFailure {
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$PlaceParseFailureCopyWith<PlaceParseFailure> get copyWith => _$PlaceParseFailureCopyWithImpl<PlaceParseFailure>(this, _$identity);
+$PlaceParseErrorCopyWith<PlaceParseError> get copyWith => _$PlaceParseErrorCopyWithImpl<PlaceParseError>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceParseFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceParseError&&(identical(other.message, message) || other.message == message));
 }
 
 
@@ -352,8 +352,8 @@ String toString() {
 }
 
 /// @nodoc
-abstract mixin class $PlaceParseFailureCopyWith<$Res> implements $PlaceFailureCopyWith<$Res> {
-  factory $PlaceParseFailureCopyWith(PlaceParseFailure value, $Res Function(PlaceParseFailure) _then) = _$PlaceParseFailureCopyWithImpl;
+abstract mixin class $PlaceParseErrorCopyWith<$Res> implements $PlaceFailureCopyWith<$Res> {
+  factory $PlaceParseErrorCopyWith(PlaceParseError value, $Res Function(PlaceParseError) _then) = _$PlaceParseErrorCopyWithImpl;
 @useResult
 $Res call({
  String? message
@@ -364,17 +364,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$PlaceParseFailureCopyWithImpl<$Res>
-    implements $PlaceParseFailureCopyWith<$Res> {
-  _$PlaceParseFailureCopyWithImpl(this._self, this._then);
+class _$PlaceParseErrorCopyWithImpl<$Res>
+    implements $PlaceParseErrorCopyWith<$Res> {
+  _$PlaceParseErrorCopyWithImpl(this._self, this._then);
 
-  final PlaceParseFailure _self;
-  final $Res Function(PlaceParseFailure) _then;
+  final PlaceParseError _self;
+  final $Res Function(PlaceParseError) _then;
 
 /// Create a copy of PlaceFailure
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? message = freezed,}) {
-  return _then(PlaceParseFailure(
+  return _then(PlaceParseError(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -386,8 +386,8 @@ as String?,
 /// @nodoc
 
 
-class PlaceNotFoundFailure implements PlaceFailure {
-  const PlaceNotFoundFailure();
+class PlaceNotFound implements PlaceFailure {
+  const PlaceNotFound();
   
 
 
@@ -397,7 +397,7 @@ class PlaceNotFoundFailure implements PlaceFailure {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceNotFoundFailure);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceNotFound);
 }
 
 

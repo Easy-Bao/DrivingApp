@@ -4,93 +4,60 @@ import 'dart:developer' as dev;
 import 'package:chat_service/chat_service.dart';
 import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
-import 'package:equatable/equatable.dart';
+import 'package:driver_app/src/features/chat/presentation/bloc/chat_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:session_service/session_service.dart';
 
-class ChatState extends Equatable {
-  final List<ChatMessage> messages;
-  final bool isConnecting;
-  final bool isConnected;
-  final bool isRoomLocked;
-  final String lockReasonMessage;
-  final String? errorMessage;
-
-  const ChatState({
-    this.messages = const [],
-    this.isConnecting = false,
-    this.isConnected = false,
-    this.isRoomLocked = false,
-    this.lockReasonMessage = 'This chat room has been resolved.',
-    this.errorMessage,
-  });
-
-  ChatState copyWith({
-    List<ChatMessage>? messages,
-    bool? isConnecting,
-    bool? isConnected,
-    bool? isRoomLocked,
-    String? lockReasonMessage,
-    String? errorMessage,
-  }) {
-    return ChatState(
-      messages: messages ?? this.messages,
-      isConnecting: isConnecting ?? this.isConnecting,
-      isConnected: isConnected ?? this.isConnected,
-      isRoomLocked: isRoomLocked ?? this.isRoomLocked,
-      lockReasonMessage: lockReasonMessage ?? this.lockReasonMessage,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-    messages,
-    isConnecting,
-    isConnected,
-    isRoomLocked,
-    lockReasonMessage,
-    errorMessage,
-  ];
-}
+export 'package:driver_app/src/features/chat/presentation/bloc/chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
   final ChatService _chatService;
-  StreamSubscription? _chatSubscription;
+  StreamSubscription<void>? _chatSubscription;
 
-  ChatCubit({required String currentUserId})
-    : _chatService = ChatService(currentUserId: currentUserId),
-      super(const ChatState()) {
-    _chatSubscription = _chatService.chatUpdatesStream.listen((_) {
-      emit(
-        state.copyWith(
-          messages: List.from(_chatService.chatHistoryMessages),
-          isConnected: _chatService.isConnectionActive,
-          isRoomLocked: _chatService.isRoomLocked,
-          lockReasonMessage: _chatService.lockReasonMessage,
-        ),
-      );
-    });
-  }
+  ChatCubit({required ChatService chatService})
+      : _chatService = chatService,
+        super(const ChatState());
 
-  Future<void> connect(String roomId, Uri wsUri) async {
-    emit(state.copyWith(isConnecting: true));
+  Future<void> connectToChatRoom({
+    required String roomId,
+    required Uri wsUri,
+  }) async {
+    emit(state.copyWith(isConnecting: true, errorMessage: null));
+
     try {
       await _chatService.connectToChatRoom(roomId: roomId, chatUri: wsUri);
+      unawaited(_chatSubscription?.cancel());
+      _chatSubscription = _chatService.chatUpdatesStream.listen(
+        (_) {
+          emit(
+            state.copyWith(
+              messages: _chatService.chatHistoryMessages,
+              isRoomLocked: _chatService.isRoomLocked,
+              lockReasonMessage: _chatService.lockReasonMessage,
+            ),
+          );
+        },
+        onError: (error) {
+          emit(
+            state.copyWith(
+              errorMessage: ErrorHandler.getErrorMessage(error),
+            ),
+          );
+        },
+      );
+
       emit(
         state.copyWith(
           isConnecting: false,
-          isConnected: _chatService.isConnectionActive,
-          isRoomLocked: _chatService.isRoomLocked,
-          lockReasonMessage: _chatService.lockReasonMessage,
-          messages: List.from(_chatService.chatHistoryMessages),
+          isConnected: true,
+          messages: _chatService.chatHistoryMessages,
         ),
       );
-    } catch (error, stackTrace) {
-      dev.log('Error connecting to chat room: $error\n$stackTrace');
+    } catch (error) {
       emit(
         state.copyWith(
           isConnecting: false,
+          isConnected: false,
           errorMessage: ErrorHandler.getErrorMessage(error),
         ),
       );

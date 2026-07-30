@@ -15,7 +15,7 @@ void main() async {
   await dotenv.load(fileName: '.env');
 
   final nativeService = MapNativeServiceImpl(
-    token: EnvironmentConfig.mapboxPublicToken,
+    placeServiceBaseUri: EnvironmentConfig.placeServiceUri,
   );
   LocationService.initialize(nativeService);
   await MapProvider.initialize(

@@ -1,35 +1,13 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 
-abstract class InboxState extends Equatable {
-  const InboxState();
+part 'generated/inbox_state.freezed.dart';
 
-  @override
-  List<Object?> get props => [];
-}
-
-class InboxInitialState extends InboxState {
-  const InboxInitialState();
-}
-
-class InboxLoadingState extends InboxState {
-  const InboxLoadingState();
-}
-
-class InboxLoadedState extends InboxState {
-  final List<InboxNotification> notifications;
-
-  const InboxLoadedState(this.notifications);
-
-  @override
-  List<Object?> get props => [notifications];
-}
-
-class InboxErrorState extends InboxState {
-  final String message;
-
-  const InboxErrorState(this.message);
-
-  @override
-  List<Object?> get props => [message];
+@freezed
+sealed class InboxState with _$InboxState {
+  const factory InboxState.initial() = InboxInitialState;
+  const factory InboxState.loading() = InboxLoadingState;
+  const factory InboxState.loaded(List<InboxNotification> notifications) =
+      InboxLoadedState;
+  const factory InboxState.error(String message) = InboxErrorState;
 }

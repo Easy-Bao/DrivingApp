@@ -4,10 +4,10 @@ import 'package:driver_app/src/features/auth/data/repositories/auth_repository_i
 import 'package:driver_app/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:driver_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
-import 'package:driver_app/src/features/auth/presentation/cubits/forgot_password_cubit.dart';
-import 'package:driver_app/src/features/auth/presentation/cubits/signin_cubit.dart';
-import 'package:driver_app/src/features/auth/presentation/screens/forgot_password_screen.dart';
-import 'package:driver_app/src/features/auth/presentation/screens/signin_screen.dart';
+import 'package:driver_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_bloc.dart';
+import 'package:driver_app/src/features/auth/presentation/forgot_password/screens/forgot_password_screen.dart';
+import 'package:driver_app/src/features/auth/presentation/signin/bloc/sign_in_bloc.dart';
+import 'package:driver_app/src/features/auth/presentation/signin/screens/sign_in_screen.dart';
 import 'package:driver_services/driver_services.dart' as ps;
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:session_service/session_service.dart';
@@ -31,27 +31,27 @@ class AuthModule extends Module {
     i.addLazySingleton<ResetPasswordUseCase>(
       (i) => ResetPasswordUseCase(i.get<AuthRepository>()),
     );
-    i.add<SignInCubit>((i) => SignInCubit(i.get<SignInUseCase>()));
-    i.add<ForgotPasswordCubit>(
-      (i) => ForgotPasswordCubit(i.get<ResetPasswordUseCase>()),
+    i.add<SignInBloc>((i) => SignInBloc(i.get<SignInUseCase>()));
+    i.add<ForgotPasswordBloc>(
+      (i) => ForgotPasswordBloc(i.get<ResetPasswordUseCase>()),
     );
   }
 
   @override
   List<ModularRoute> get routes => [
-    ChildRoute(
-      name: AuthRoutes.signin,
-      '/',
-      child: (context, GoRouterState state) => const SigninScreen(),
-      transition: AppTransitions.fade,
-      transitionDuration: AppTransitions.fadeDuration,
-    ),
-    ChildRoute(
-      name: AuthRoutes.forgotPassword,
-      '/auth/forgotpassword',
-      child: (context, GoRouterState state) => const ForgotPasswordScreen(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-  ];
+        ChildRoute(
+          name: AuthRoutes.signin,
+          '/',
+          child: (context, GoRouterState state) => const SigninScreen(),
+          transition: AppTransitions.fade,
+          transitionDuration: AppTransitions.fadeDuration,
+        ),
+        ChildRoute(
+          name: AuthRoutes.forgotPassword,
+          '/auth/forgotpassword',
+          child: (context, GoRouterState state) => const ForgotPasswordScreen(),
+          transition: AppTransitions.push.toLeft,
+          transitionDuration: AppTransitions.pushDuration,
+        ),
+      ];
 }
