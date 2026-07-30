@@ -45,6 +45,8 @@ test-services:
     cd server/chat-service && bun test
     @echo "=== Fare Service ==="
     cd server/fare-service && bun test
+    @echo "=== Location Service ==="
+    cd server/location-service && go test ./...
 
 start-all:
     (cd server/api-gateway && bun run dev) & \
@@ -56,6 +58,7 @@ start-all:
     (cd server/telemetry-service && bun run dev) & \
     (cd server/chat-service && bun run dev) & \
     (cd server/fare-service && bun run dev) & \
+    (cd server/location-service && go run ./cmd/main.go) & \
     wait
 
 run-passenger:

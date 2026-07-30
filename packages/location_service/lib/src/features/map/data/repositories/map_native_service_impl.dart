@@ -4,18 +4,22 @@ import 'dart:math' as math;
 import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:location_service/src/features/map/data/datasources/location_api_client.dart';
 import 'package:location_service/src/features/map/domain/failures/place_failure.dart';
 import 'package:location_service/src/features/map/domain/repositories/map_native_service.dart';
 
 class MapNativeServiceImpl implements MapNativeService {
-  final Dio _clientDio;
-  final Uri _placeServiceBaseUri;
+  final LocationApiClient _apiClient;
 
   MapNativeServiceImpl({
     required Uri placeServiceBaseUri,
     Dio? dio,
-  })  : _placeServiceBaseUri = placeServiceBaseUri,
-        _clientDio = dio ?? Dio();
+    LocationApiClient? apiClient,
+  }) : _apiClient = apiClient ??
+            LocationApiClient(
+              dio ?? Dio(),
+              baseUrl: placeServiceBaseUri.toString(),
+            );
 
   static double _toRadians(double degree) => degree * math.pi / 180.0;
 
@@ -63,38 +67,15 @@ class MapNativeServiceImpl implements MapNativeService {
     }
 
     try {
-      final queryParams = <String, String>{
-        'query': trimmed,
-      };
-      if (proximityLat != null) queryParams['proximityLat'] = '$proximityLat';
-      if (proximityLng != null) queryParams['proximityLng'] = '$proximityLng';
-      if (userLat != null) queryParams['userLat'] = '$userLat';
-      if (userLng != null) queryParams['userLng'] = '$userLng';
-
-      final Uri uri = _placeServiceBaseUri.replace(
-        path: '${_placeServiceBaseUri.path}/places/search',
-        queryParameters: queryParams,
+      final responseData = await _apiClient.searchPlaces(
+        query: trimmed,
+        userLat: userLat ?? proximityLat,
+        userLng: userLng ?? proximityLng,
       );
 
-      final response = await _clientDio.getUri(
-        uri,
-        options: Options(sendTimeout: const Duration(seconds: 10)),
-      );
-
-      if (response.statusCode != 200) {
-        return left(PlaceFailure.serverError(
-          statusCode: response.statusCode ?? 500,
-          message: response.statusMessage,
-        ));
-      }
-
-      final dynamic responseData = response.data;
-      final List<dynamic> dataList = (responseData is List)
-          ? responseData
-          : (responseData is Map<String, dynamic>
-              ? (responseData['places'] ?? responseData['results'] ?? [])
-                  as List<dynamic>
-              : []);
+      final List<dynamic> dataList = (responseData['places'] ??
+              responseData['results'] ??
+              []) as List<dynamic>;
 
       final places = dataList
           .map((item) => PlaceModel.fromJson(item as Map<String, dynamic>))
@@ -118,27 +99,7 @@ class MapNativeServiceImpl implements MapNativeService {
     required double lng,
   }) async {
     try {
-      final Uri uri = _placeServiceBaseUri.replace(
-        path: '${_placeServiceBaseUri.path}/places/reverse',
-        queryParameters: {
-          'lat': '$lat',
-          'lng': '$lng',
-        },
-      );
-
-      final response = await _clientDio.getUri(
-        uri,
-        options: Options(sendTimeout: const Duration(seconds: 10)),
-      );
-
-      if (response.statusCode != 200) {
-        return left(PlaceFailure.serverError(
-          statusCode: response.statusCode ?? 500,
-          message: response.statusMessage,
-        ));
-      }
-
-      final place = PlaceModel.fromJson(response.data as Map<String, dynamic>);
+      final place = await _apiClient.reverseGeocode(lat: lat, lng: lng);
       return right(place);
     } on DioException catch (e) {
       dev.log('reverseGeocode network failure',
@@ -159,29 +120,12 @@ class MapNativeServiceImpl implements MapNativeService {
     required double destLng,
   }) async {
     try {
-      final Uri uri = _placeServiceBaseUri.replace(
-        path: '${_placeServiceBaseUri.path}/places/route',
-      );
-
-      final response = await _clientDio.postUri(
-        uri,
-        data: {
-          'originLat': originLat,
-          'originLng': originLng,
-          'destLat': destLat,
-          'destLng': destLng,
-        },
-        options: Options(sendTimeout: const Duration(seconds: 10)),
-      );
-
-      if (response.statusCode != 200) {
-        return left(PlaceFailure.serverError(
-          statusCode: response.statusCode ?? 500,
-          message: response.statusMessage,
-        ));
-      }
-
-      final route = RouteModel.fromJson(response.data as Map<String, dynamic>);
+      final route = await _apiClient.getRoute(body: {
+        'originLat': originLat,
+        'originLng': originLng,
+        'destLat': destLat,
+        'destLng': destLng,
+      });
       return right(route);
     } on DioException catch (e) {
       dev.log('getRoute network failure',
@@ -201,34 +145,15 @@ class MapNativeServiceImpl implements MapNativeService {
     int page = 1,
   }) async {
     try {
-      final Uri uri = _placeServiceBaseUri.replace(
-        path: '${_placeServiceBaseUri.path}/places/nearby',
-        queryParameters: {
-          'lat': '$lat',
-          'lng': '$lng',
-          'page': '$page',
-        },
+      final responseData = await _apiClient.getNearbyPois(
+        lat: lat,
+        lng: lng,
+        page: page,
       );
 
-      final response = await _clientDio.getUri(
-        uri,
-        options: Options(sendTimeout: const Duration(seconds: 10)),
-      );
-
-      if (response.statusCode != 200) {
-        return left(PlaceFailure.serverError(
-          statusCode: response.statusCode ?? 500,
-          message: response.statusMessage,
-        ));
-      }
-
-      final dynamic responseData = response.data;
-      final List<dynamic> dataList = (responseData is List)
-          ? responseData
-          : (responseData is Map<String, dynamic>
-              ? (responseData['places'] ?? responseData['results'] ?? [])
-                  as List<dynamic>
-              : []);
+      final List<dynamic> dataList = (responseData['places'] ??
+              responseData['results'] ??
+              []) as List<dynamic>;
 
       final places = dataList
           .map((item) => PlaceModel.fromJson(item as Map<String, dynamic>))

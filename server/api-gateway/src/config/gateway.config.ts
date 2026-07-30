@@ -9,6 +9,7 @@ const ServiceRegistrySchema = z.object({
   BIDDING_SERVICE_URL: z.string().url('BIDDING_SERVICE_URL must be a valid absolute URI'),
   CHAT_SERVICE_URL: z.string().url('CHAT_SERVICE_URL must be a valid absolute URI'),
   FARE_SERVICE_URL: z.string().url('FARE_SERVICE_URL must be a valid absolute URI'),
+  LOCATION_SERVICE_URL: z.string().url('LOCATION_SERVICE_URL must be a valid absolute URI'),
 });
 
 function validateServiceRegistry() {
@@ -30,6 +31,7 @@ function validateServiceRegistry() {
     bidding: result.data.BIDDING_SERVICE_URL,
     chat: result.data.CHAT_SERVICE_URL,
     fares: result.data.FARE_SERVICE_URL,
+    location: result.data.LOCATION_SERVICE_URL,
   } as const;
 }
 

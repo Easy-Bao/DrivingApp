@@ -1,0 +1,21 @@
+package domain
+
+import "context"
+
+type LocationRepository interface {
+	SearchPlaces(ctx context.Context, query string, lat, lng float64) ([]Place, error)
+	ReverseGeocode(ctx context.Context, lat, lng float64) (*Place, error)
+	GetNearbyPois(ctx context.Context, lat, lng float64, page int) ([]Place, error)
+	GetRoute(ctx context.Context, originLat, originLng, destLat, destLng float64) (*Route, error)
+}
+
+type CacheRepository interface {
+	GetGeocodeCache(ctx context.Context, lat, lng float64) (*Place, error)
+	SetGeocodeCache(ctx context.Context, lat, lng float64, place *Place) error
+	GetNearbyCache(ctx context.Context, lat, lng float64, page int) ([]Place, error)
+	SetNearbyCache(ctx context.Context, lat, lng float64, page int, places []Place) error
+}
+
+type QueuePublisher interface {
+	PublishLocationEvent(ctx context.Context, event *LocationUpdateEvent) error
+}
