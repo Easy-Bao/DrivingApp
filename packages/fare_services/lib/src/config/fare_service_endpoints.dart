@@ -1,3 +1,4 @@
+import 'package:config/config.dart';
 import 'package:session_service/session_service.dart';
 
 class FareServiceEndpoints {

@@ -51,6 +51,9 @@ dependencies:
   session_service:
     path: ../../packages/session_service
 
+  config:
+    path: ../../packages/config
+
   driver_services:
     path: ../../packages/driver_services
 

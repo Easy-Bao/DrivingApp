@@ -1,8 +1,15 @@
 import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:location_service/src/features/map/domain/failures/place_failure.dart';
+import 'package:location_service/src/models/place_failure.dart';
 
 abstract class MapNativeService {
+  Future<double> haversineDistance({
+    required double lat1,
+    required double lng1,
+    required double lat2,
+    required double lng2,
+  });
+
   Future<Either<PlaceFailure, List<PlaceModel>>> searchPlaces({
     required String query,
     double? proximityLat,
@@ -27,12 +34,5 @@ abstract class MapNativeService {
     required double lat,
     required double lng,
     int page = 1,
-  });
-
-  Future<double> haversineDistance({
-    required double lat1,
-    required double lng1,
-    required double lat2,
-    required double lng2,
   });
 }

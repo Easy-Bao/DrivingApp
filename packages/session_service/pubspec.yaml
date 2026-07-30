@@ -17,6 +17,8 @@ dependencies:
   freezed_annotation: ^3.0.0
   core_models:
     path: ../core_models
+  config:
+    path: ../config
 
 dev_dependencies:
   flutter_test:

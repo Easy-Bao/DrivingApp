@@ -55,6 +55,9 @@ dependencies:
   session_service:
     path: ../../packages/session_service
 
+  config:
+    path: ../../packages/config
+
   passenger_services:
     path: ../../packages/passenger_services
 

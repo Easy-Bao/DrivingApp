@@ -18,6 +18,8 @@ dependencies:
   dio: ^5.10.0
   session_service:
     path: ../session_service
+  config:
+    path: ../config
 
 
 dev_dependencies:

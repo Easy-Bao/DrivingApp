@@ -1,11 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:location_service/src/features/map/data/repositories/map_native_service_impl.dart';
+import 'package:location_service/location_service.dart';
+
+import 'mock_location_api_client.dart';
 
 void main() {
   group('Reverse Geocode Tests', () {
     test('reverseGeocode returns place model for valid coordinates', () async {
       final mapService = MapNativeServiceImpl(
         placeServiceBaseUri: Uri(scheme: 'http', host: '127.0.0.1', port: 8089),
+        apiClient: MockLocationApiClient(),
       );
 
       final result = await mapService.reverseGeocode(

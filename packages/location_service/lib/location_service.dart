@@ -1,7 +1,10 @@
-export 'src/features/geolocation/data/datasources/location_datasource.dart';
-export 'src/features/map/data/repositories/map_native_service_impl.dart';
-export 'src/features/map/domain/failures/place_failure.dart';
-export 'src/features/map/domain/repositories/map_native_service.dart';
-export 'src/features/map/domain/services/map_provider.dart';
-export 'src/features/map/presentation/map_navigation_launcher.dart';
-export 'src/features/routing/domain/services/route_optimization_service.dart';
+export 'src/api/clients/location_api_client.dart';
+export 'src/models/place_failure.dart';
+export 'src/repositories/map_native_service.dart';
+export 'src/repositories/map_native_service_impl.dart';
+export 'src/services/device_location_service.dart';
+export 'src/services/map_annotation_service.dart';
+export 'src/services/map_camera_service.dart';
+export 'src/services/map_navigation_service.dart';
+export 'src/services/map_provider.dart';
+export 'src/services/route_optimization_service.dart';

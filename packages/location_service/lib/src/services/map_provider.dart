@@ -1,13 +1,13 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
-import 'package:location_service/src/features/geolocation/data/datasources/location_datasource.dart';
-import 'package:location_service/src/features/map/domain/repositories/map_native_service.dart';
-import 'package:location_service/src/features/map/domain/services/map_annotation_service.dart';
-import 'package:location_service/src/features/map/domain/services/map_camera_service.dart';
+import 'package:location_service/src/repositories/map_native_service.dart';
+import 'package:location_service/src/services/device_location_service.dart';
+import 'package:location_service/src/services/map_annotation_service.dart';
+import 'package:location_service/src/services/map_camera_service.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
-export 'package:location_service/src/features/map/domain/services/map_annotation_service.dart';
-export 'package:location_service/src/features/map/domain/services/map_camera_service.dart';
+export 'package:location_service/src/services/map_annotation_service.dart';
+export 'package:location_service/src/services/map_camera_service.dart';
 
 class MapProvider {
   MapProvider._();

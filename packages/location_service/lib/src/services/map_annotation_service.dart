@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:location_service/src/features/map/domain/services/map_camera_service.dart';
+import 'package:location_service/src/services/map_camera_service.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 class MapAnnotationService {

@@ -1,7 +1,7 @@
 import 'package:map_launcher/map_launcher.dart';
 
-class MapNavigationLauncher {
-  MapNavigationLauncher._();
+class MapNavigationService {
+  MapNavigationService._();
 
   static Future<List<AvailableMap>> getInstalledMaps() async {
     try {
@@ -38,3 +38,5 @@ class MapNavigationLauncher {
     }
   }
 }
+
+typedef MapNavigationLauncher = MapNavigationService;

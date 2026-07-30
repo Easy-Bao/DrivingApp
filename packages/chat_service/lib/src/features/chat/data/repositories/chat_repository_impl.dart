@@ -5,6 +5,7 @@ import 'package:chat_service/src/features/chat/data/models/chat_message_model.da
 import 'package:chat_service/src/features/chat/domain/entities/chat_event.dart';
 import 'package:chat_service/src/features/chat/domain/entities/chat_message.dart';
 import 'package:chat_service/src/features/chat/domain/repositories/chat_repository.dart';
+import 'package:config/config.dart';
 import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';

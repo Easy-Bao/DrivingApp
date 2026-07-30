@@ -4,9 +4,9 @@ import 'dart:math' as math;
 import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:location_service/src/features/map/data/datasources/location_api_client.dart';
-import 'package:location_service/src/features/map/domain/failures/place_failure.dart';
-import 'package:location_service/src/features/map/domain/repositories/map_native_service.dart';
+import 'package:location_service/src/api/clients/location_api_client.dart';
+import 'package:location_service/src/models/place_failure.dart';
+import 'package:location_service/src/repositories/map_native_service.dart';
 
 class MapNativeServiceImpl implements MapNativeService {
   final LocationApiClient _apiClient;

@@ -14,15 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PlaceFailure {
 
-
-
-
-
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceFailure);
 }
-
 
 @override
 int get hashCode => runtimeType.hashCode;
@@ -32,7 +27,6 @@ String toString() {
   return 'PlaceFailure()';
 }
 
-
 }
 
 /// @nodoc
@@ -40,21 +34,8 @@ class $PlaceFailureCopyWith<$Res>  {
 $PlaceFailureCopyWith(PlaceFailure _, $Res Function(PlaceFailure) __);
 }
 
-
 /// Adds pattern-matching-related methods to [PlaceFailure].
 extension PlaceFailurePatterns on PlaceFailure {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
 @optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PlaceNetworkError value)?  networkError,TResult Function( PlaceServerError value)?  serverError,TResult Function( PlaceParseError value)?  parseError,TResult Function( PlaceNotFound value)?  notFound,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
@@ -67,18 +48,6 @@ return notFound(_that);case _:
 
 }
 }
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
 
 @optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PlaceNetworkError value)  networkError,required TResult Function( PlaceServerError value)  serverError,required TResult Function( PlaceParseError value)  parseError,required TResult Function( PlaceNotFound value)  notFound,}){
 final _that = this;
@@ -89,17 +58,6 @@ return serverError(_that);case PlaceParseError():
 return parseError(_that);case PlaceNotFound():
 return notFound(_that);}
 }
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
 
 @optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PlaceNetworkError value)?  networkError,TResult? Function( PlaceServerError value)?  serverError,TResult? Function( PlaceParseError value)?  parseError,TResult? Function( PlaceNotFound value)?  notFound,}){
 final _that = this;
@@ -113,17 +71,6 @@ return notFound(_that);case _:
 
 }
 }
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
 
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String? message)?  networkError,TResult Function( int statusCode,  String? message)?  serverError,TResult Function( String? message)?  parseError,TResult Function()?  notFound,required TResult orElse(),}) {final _that = this;
 switch (_that) {
@@ -136,18 +83,6 @@ return notFound();case _:
 
 }
 }
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
 
 @optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String? message)  networkError,required TResult Function( int statusCode,  String? message)  serverError,required TResult Function( String? message)  parseError,required TResult Function()  notFound,}) {final _that = this;
 switch (_that) {
@@ -157,17 +92,6 @@ return serverError(_that.statusCode,_that.message);case PlaceParseError():
 return parseError(_that.message);case PlaceNotFound():
 return notFound();}
 }
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
 
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String? message)?  networkError,TResult? Function( int statusCode,  String? message)?  serverError,TResult? Function( String? message)?  parseError,TResult? Function()?  notFound,}) {final _that = this;
 switch (_that) {
@@ -185,26 +109,20 @@ return notFound();case _:
 
 /// @nodoc
 
-
 class PlaceNetworkError implements PlaceFailure {
   const PlaceNetworkError({this.message});
   
 
  final  String? message;
 
-/// Create a copy of PlaceFailure
-/// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $PlaceNetworkErrorCopyWith<PlaceNetworkError> get copyWith => _$PlaceNetworkErrorCopyWithImpl<PlaceNetworkError>(this, _$identity);
-
-
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceNetworkError&&(identical(other.message, message) || other.message == message));
 }
-
 
 @override
 int get hashCode => Object.hash(runtimeType,message);
@@ -213,7 +131,6 @@ int get hashCode => Object.hash(runtimeType,message);
 String toString() {
   return 'PlaceFailure.networkError(message: $message)';
 }
-
 
 }
 
@@ -225,9 +142,6 @@ $Res call({
  String? message
 });
 
-
-
-
 }
 /// @nodoc
 class _$PlaceNetworkErrorCopyWithImpl<$Res>
@@ -237,8 +151,6 @@ class _$PlaceNetworkErrorCopyWithImpl<$Res>
   final PlaceNetworkError _self;
   final $Res Function(PlaceNetworkError) _then;
 
-/// Create a copy of PlaceFailure
-/// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? message = freezed,}) {
   return _then(PlaceNetworkError(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
@@ -246,11 +158,9 @@ as String?,
   ));
 }
 
-
 }
 
 /// @nodoc
-
 
 class PlaceServerError implements PlaceFailure {
   const PlaceServerError({required this.statusCode, this.message});
@@ -259,19 +169,14 @@ class PlaceServerError implements PlaceFailure {
  final  int statusCode;
  final  String? message;
 
-/// Create a copy of PlaceFailure
-/// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $PlaceServerErrorCopyWith<PlaceServerError> get copyWith => _$PlaceServerErrorCopyWithImpl<PlaceServerError>(this, _$identity);
-
-
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceServerError&&(identical(other.statusCode, statusCode) || other.statusCode == statusCode)&&(identical(other.message, message) || other.message == message));
 }
-
 
 @override
 int get hashCode => Object.hash(runtimeType,statusCode,message);
@@ -280,7 +185,6 @@ int get hashCode => Object.hash(runtimeType,statusCode,message);
 String toString() {
   return 'PlaceFailure.serverError(statusCode: $statusCode, message: $message)';
 }
-
 
 }
 
@@ -292,9 +196,6 @@ $Res call({
  int statusCode, String? message
 });
 
-
-
-
 }
 /// @nodoc
 class _$PlaceServerErrorCopyWithImpl<$Res>
@@ -304,8 +205,6 @@ class _$PlaceServerErrorCopyWithImpl<$Res>
   final PlaceServerError _self;
   final $Res Function(PlaceServerError) _then;
 
-/// Create a copy of PlaceFailure
-/// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? statusCode = null,Object? message = freezed,}) {
   return _then(PlaceServerError(
 statusCode: null == statusCode ? _self.statusCode : statusCode // ignore: cast_nullable_to_non_nullable
@@ -314,11 +213,9 @@ as String?,
   ));
 }
 
-
 }
 
 /// @nodoc
-
 
 class PlaceParseError implements PlaceFailure {
   const PlaceParseError({this.message});
@@ -326,19 +223,14 @@ class PlaceParseError implements PlaceFailure {
 
  final  String? message;
 
-/// Create a copy of PlaceFailure
-/// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $PlaceParseErrorCopyWith<PlaceParseError> get copyWith => _$PlaceParseErrorCopyWithImpl<PlaceParseError>(this, _$identity);
-
-
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceParseError&&(identical(other.message, message) || other.message == message));
 }
-
 
 @override
 int get hashCode => Object.hash(runtimeType,message);
@@ -347,7 +239,6 @@ int get hashCode => Object.hash(runtimeType,message);
 String toString() {
   return 'PlaceFailure.parseError(message: $message)';
 }
-
 
 }
 
@@ -359,9 +250,6 @@ $Res call({
  String? message
 });
 
-
-
-
 }
 /// @nodoc
 class _$PlaceParseErrorCopyWithImpl<$Res>
@@ -371,8 +259,6 @@ class _$PlaceParseErrorCopyWithImpl<$Res>
   final PlaceParseError _self;
   final $Res Function(PlaceParseError) _then;
 
-/// Create a copy of PlaceFailure
-/// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? message = freezed,}) {
   return _then(PlaceParseError(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
@@ -380,26 +266,17 @@ as String?,
   ));
 }
 
-
 }
 
 /// @nodoc
 
-
 class PlaceNotFound implements PlaceFailure {
   const PlaceNotFound();
-  
-
-
-
-
-
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceNotFound);
 }
-
 
 @override
 int get hashCode => runtimeType.hashCode;
@@ -409,10 +286,6 @@ String toString() {
   return 'PlaceFailure.notFound()';
 }
 
-
 }
-
-
-
 
 // dart format on
