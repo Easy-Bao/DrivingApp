@@ -55,7 +55,7 @@ class BackgroundTelemetryService {
         onStart: onTelemetryServiceStart,
         autoStart: false,
         isForegroundMode: true,
-        notificationChannelId: 'telemetry_channel',
+        foregroundServiceTypes: [AndroidForegroundType.location],
         initialNotificationTitle: 'EasyRide Telemetry Sync',
         initialNotificationContent: 'Tracking driver dispatch location...',
       ),
