@@ -6,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class SearchDestinationScreen extends StatefulWidget {
@@ -151,9 +152,10 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
   }
 
   Future<void> _initLocation() async {
-    if (_userLat != null && _userLng != null) {
-      unawaited(_loadNearbyPlaces());
-    }
+    _userLat ??= LocationService.lastPosition?.latitude ?? EnvironmentConfig.defaultLatitude;
+    _userLng ??= LocationService.lastPosition?.longitude ?? EnvironmentConfig.defaultLongitude;
+    unawaited(_loadNearbyPlaces());
+
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && mounted) {
       setState(() {
@@ -161,19 +163,16 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
         _userLng = pos.longitude;
       });
       unawaited(_loadNearbyPlaces());
-    } else if (_userLat == null || _userLng == null) {
-      if (mounted) {
-        setState(() => _isLoadingNearby = false);
-      }
     }
   }
 
   Future<void> _loadNearbyPlaces() async {
-    if (_userLat == null || _userLng == null) return;
+    final lat = _userLat ?? EnvironmentConfig.defaultLatitude;
+    final lng = _userLng ?? EnvironmentConfig.defaultLongitude;
 
     final results = await MapProvider.getNearbyPOIs(
-      lat: _userLat!,
-      lng: _userLng!,
+      lat: lat,
+      lng: lng,
       page: 1,
     );
 

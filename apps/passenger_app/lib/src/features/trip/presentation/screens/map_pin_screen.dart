@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
+import 'package:session_service/session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class MapPinScreen extends StatefulWidget {
@@ -22,13 +23,14 @@ class _MapPinScreenState extends State<MapPinScreen>
   bool _isGeocoding = false;
   bool _hasUserPannedMap = false;
   Timer? _debounceTimer;
-  double? _centerLat = LocationService.lastPosition?.latitude;
-  double? _centerLng = LocationService.lastPosition?.longitude;
+  double? _centerLat = LocationService.lastPosition?.latitude ?? EnvironmentConfig.defaultLatitude;
+  double? _centerLng = LocationService.lastPosition?.longitude ?? EnvironmentConfig.defaultLongitude;
   Widget? _cachedMapView;
 
   @override
   void initState() {
     super.initState();
+    unawaited(_reverseGeocode(_centerLat!, _centerLng!));
     unawaited(_initLocation());
   }
 
@@ -56,6 +58,8 @@ class _MapPinScreenState extends State<MapPinScreen>
         }
       }
       unawaited(_reverseGeocode(pos.latitude, pos.longitude));
+    } else if (mounted && _address == 'Move the map to select a location') {
+      unawaited(_reverseGeocode(_centerLat!, _centerLng!));
     }
   }
 

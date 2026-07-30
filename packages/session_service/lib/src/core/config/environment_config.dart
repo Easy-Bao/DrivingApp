@@ -8,13 +8,37 @@ class EnvironmentConfig {
 
   static const AppEnvironment currentEnvironment = AppEnvironment.development;
 
-  static String get mapboxPublicToken =>
-      dotenv.env['MAPBOX_PUBLIC_TOKEN'] ?? '';
+  static String get mapboxPublicToken {
+    final token = dotenv.env['MAPBOX_PUBLIC_TOKEN'];
+    if (token == null || token.isEmpty) {
+      throw StateError('MAPBOX_PUBLIC_TOKEN environment variable is missing.');
+    }
+    return token;
+  }
+
+  static double get defaultLatitude {
+    final raw = dotenv.env['DEFAULT_LATITUDE'];
+    if (raw == null || raw.isEmpty) {
+      throw StateError('DEFAULT_LATITUDE environment variable is missing.');
+    }
+    return double.parse(raw);
+  }
+
+  static double get defaultLongitude {
+    final raw = dotenv.env['DEFAULT_LONGITUDE'];
+    if (raw == null || raw.isEmpty) {
+      throw StateError('DEFAULT_LONGITUDE environment variable is missing.');
+    }
+    return double.parse(raw);
+  }
 
   static Uri get placeServiceUri {
     final rawUrl = dotenv.env['PLACE_SERVICE_BASE_URL'] ??
-        dotenv.env['PASSENGER_SERVICE_URL'] ??
-        'http://127.0.0.1:8080';
+        dotenv.env['LOCATION_SERVICE_URL'] ??
+        dotenv.env['PASSENGER_SERVICE_URL'];
+    if (rawUrl == null || rawUrl.isEmpty) {
+      throw StateError('PLACE_SERVICE_BASE_URL environment variable is missing.');
+    }
     return _resolveUri(rawUrl);
   }
 
@@ -71,9 +95,6 @@ class EnvironmentConfig {
     final uri = dotenv.env['DRIVER_SERVICE_URL'] != null
         ? driverServiceUri
         : passengerServiceUri;
-    if (uri.port == 8081 || uri.port == 8082 || uri.port == 8083) {
-      return uri.replace(port: 8080);
-    }
     return uri;
   }
 
@@ -91,8 +112,9 @@ class EnvironmentConfig {
     var uri = Uri.parse(rawUrl);
     final isPhysicalDevice = dotenv.env['PHYSICAL_DEVICE'] == 'true';
     if (!isPhysicalDevice && !kIsWeb && Platform.isAndroid) {
+      final loopbackHost = dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'] ?? '10.0.2.2';
       if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
-        uri = uri.replace(host: '10.0.2.2');
+        uri = uri.replace(host: loopbackHost);
       }
     }
     return uri;

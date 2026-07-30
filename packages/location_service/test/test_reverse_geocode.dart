@@ -5,7 +5,7 @@ void main() {
   group('Reverse Geocode Tests', () {
     test('reverseGeocode returns place model for valid coordinates', () async {
       final mapService = MapNativeServiceImpl(
-        placeServiceBaseUri: Uri.parse('http://localhost:8089'),
+        placeServiceBaseUri: Uri(scheme: 'http', host: '127.0.0.1', port: 8089),
       );
 
       final result = await mapService.reverseGeocode(

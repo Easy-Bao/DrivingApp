@@ -5,7 +5,7 @@ void main() {
   group('Get Route Tests', () {
     test('getRoute returns route model for origin and destination', () async {
       final mapService = MapNativeServiceImpl(
-        placeServiceBaseUri: Uri.parse('http://localhost:8089'),
+        placeServiceBaseUri: Uri(scheme: 'http', host: '127.0.0.1', port: 8089),
       );
 
       final result = await mapService.getRoute(
