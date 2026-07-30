@@ -60,7 +60,6 @@ class BackgroundTelemetryService {
         initialNotificationContent: 'Tracking driver dispatch location...',
         foregroundServiceNotificationId: 888,
         foregroundServiceTypes: [AndroidForegroundType.location],
-        defaultNotificationIcon: 'mipmap/ic_launcher',
       ),
       iosConfiguration: IosConfiguration(
         autoStart: false,

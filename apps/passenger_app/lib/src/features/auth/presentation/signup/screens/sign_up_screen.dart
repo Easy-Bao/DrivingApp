@@ -150,12 +150,14 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                 context.goNamed(HomeRoutes.home);
               },
               needsVerification: (email) {
-                context.pushNamed(
-                  AuthRoutes.verifyOtp,
-                  extra: {
-                    'email': email,
-                    'password': _passengerPasswordController.text,
-                  },
+                unawaited(
+                  context.pushNamed(
+                    AuthRoutes.verifyOtp,
+                    extra: {
+                      'email': email,
+                      'password': _passengerPasswordController.text,
+                    },
+                  ),
                 );
               },
               failure: (message) {
@@ -183,9 +185,9 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const SizedBox(height: 20),
-                          Center(
+                          const Center(
                             child: Column(
-                              children: const [
+                              children: [
                                 Text(
                                   'Create Account',
                                   style: TextStyle(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -113,12 +115,14 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
               success: () {
                 if (widget.isForgotPassword) {
                   final code = _controllers.map((c) => c.text).join();
-                  context.pushNamed(
-                    AuthRoutes.resetPasswordConfirm,
-                    extra: {
-                      'email': widget.email,
-                      'code': code,
-                    },
+                  unawaited(
+                    context.pushNamed(
+                      AuthRoutes.resetPasswordConfirm,
+                      extra: {
+                        'email': widget.email,
+                        'code': code,
+                      },
+                    ),
                   );
                 } else {
                   context.goNamed(HomeRoutes.home);
