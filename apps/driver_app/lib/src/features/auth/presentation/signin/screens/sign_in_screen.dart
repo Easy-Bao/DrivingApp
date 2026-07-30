@@ -37,7 +37,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
-  bool _isChecked = false;
+  bool _rememberMeChecked = false;
 
   String? _emailError;
   String? _passwordError;
@@ -96,13 +96,6 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
-          onPressed: () => context.pop(),
-        ),
         centerTitle: true,
         title: Image.asset(
           'assets/logo/applogo.png',
@@ -129,175 +122,251 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
               loading: () => true,
               orElse: () => false,
             );
+            final errorMessage = state.maybeWhen(
+              failure: (message) => message,
+              orElse: () => null,
+            );
 
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
+            return CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 16.0,
                     ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 20),
-                          Center(
-                            child: Column(
-                              children: const [
-                                Text(
-                                  'Driver Portal Sign In',
-                                  style: TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryColor,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Driver Portal',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Sign in to manage your rides and earnings',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.tertiaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 36),
+                        Hero(
+                          tag: 'auth_email_field',
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: TextField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              onChanged: (_) {
+                                if (_emailError != null) {
+                                  setState(() => _emailError = null);
+                                }
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Email',
+                                errorText: _emailError,
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Icon(LucideIcons.mail, size: 20),
+                                ),
+                                filled: false,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(
+                                    color: AppTheme.primaryColor
+                                        .withValues(alpha: 0.2),
                                   ),
                                 ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Enter your driver credentials to continue',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.tertiaryColor,
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
                                   ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Hero(
+                          tag: 'auth_password_field',
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: TextField(
+                              obscureText: !_isPasswordVisible,
+                              controller: _passwordController,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _submitSignIn(context),
+                              onChanged: (_) {
+                                if (_passwordError != null) {
+                                  setState(() => _passwordError = null);
+                                }
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Password',
+                                errorText: _passwordError ?? errorMessage,
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Icon(LucideIcons.lock, size: 20),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isPasswordVisible
+                                        ? LucideIcons.eye
+                                        : LucideIcons.eye_off,
+                                    size: 20,
+                                  ),
+                                  onPressed: () => setState(
+                                    () => _isPasswordVisible =
+                                        !_isPasswordVisible,
+                                  ),
+                                ),
+                                filled: false,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(
+                                    color: AppTheme.primaryColor
+                                        .withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.cancel,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _rememberMeChecked,
+                                  activeColor: AppTheme.primaryColor,
+                                  onChanged: (bool? val) {
+                                    setState(() {
+                                      _rememberMeChecked = val ?? false;
+                                    });
+                                  },
+                                ),
+                                const Text(
+                                  'Remember me',
+                                  style: TextStyle(fontSize: 14),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 32),
-                          TextField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              hintText: 'driver@example.com',
-                              errorText: _emailError,
-                              prefixIcon: const Icon(LucideIcons.mail),
-                            ),
-                            onChanged: (_) {
-                              if (_emailError != null) {
-                                setState(() {
-                                  _emailError = null;
-                                });
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          TextField(
-                            controller: _passwordController,
-                            obscureText: !_isPasswordVisible,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              hintText: '••••••••',
-                              errorText: _passwordError,
-                              prefixIcon: const Icon(LucideIcons.lock),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _isPasswordVisible
-                                      ? LucideIcons.eye
-                                      : LucideIcons.eye_off,
-                                  color: AppTheme.tertiaryColor,
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
-                                },
-                              ),
-                            ),
-                            onChanged: (_) {
-                              if (_passwordError != null) {
-                                setState(() {
-                                  _passwordError = null;
-                                });
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: Checkbox(
-                                      value: _isChecked,
-                                      activeColor: AppTheme.primaryColor,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          _isChecked = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Remember me',
-                                    style: TextStyle(
-                                      color: AppTheme.tertiaryColor,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  unawaited(
-                                    context.pushNamed(AuthRoutes.forgotPassword),
-                                  );
-                                },
-                                child: const Text(
-                                  'Forgot password?',
-                                  style: TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
+                            TextButton(
+                              onPressed: () {
+                                unawaited(
+                                  context.pushNamed(AuthRoutes.forgotPassword),
+                                );
+                              },
+                              child: const Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryColor,
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 28),
-                          SizedBox(
-                            height: 56,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Hero(
+                          tag: 'auth_primary_button',
+                          child: Material(
+                            type: MaterialType.transparency,
                             child: ElevatedButton(
                               onPressed: isLoading
                                   ? null
                                   : () => _submitSignIn(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                foregroundColor: AppTheme.neutralColor,
+                                minimumSize: const Size.fromHeight(60),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
+                                elevation: 0,
+                              ),
                               child: isLoading
                                   ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
+                                      width: 24,
+                                      height: 24,
                                       child: CircularProgressIndicator(
+                                        color: Colors.white,
                                         strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
                                       ),
                                     )
                                   : const Text(
                                       'Sign In',
                                       style: TextStyle(
                                         fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                             ),
                           ),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 24),
+                        SocialLoginWidget(
+                          onGoogleTap: () {
+                            CustomToast.show(
+                              context,
+                              'Google Sign-In coming soon',
+                            );
+                          },
+                        ),
+                        const Spacer(),
+                      ],
                     ),
                   ),
-                );
-              },
+                ),
+              ],
             );
           },
         ),

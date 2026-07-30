@@ -52,49 +52,57 @@ class _VerifyOtpScreenContent extends StatefulWidget {
 }
 
 class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final TextEditingController _otpController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
-  String? _otpError;
+  @override
+  void initState() {
+    super.initState();
+    _otpController.addListener(_onOtpChanged);
+  }
 
   @override
   void dispose() {
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-    for (final node in _focusNodes) {
-      node.dispose();
-    }
+    _otpController.removeListener(_onOtpChanged);
+    _otpController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  void _submitOtp(BuildContext context) {
-    final code = _controllers.map((c) => c.text).join();
-    if (code.length < 6) {
-      setState(() {
-        _otpError = 'Please enter all 6 digits.';
-      });
-      return;
+  void _onOtpChanged() {
+    setState(() {});
+    if (_otpController.text.length == 6) {
+      _triggerVerify(_otpController.text);
     }
+  }
 
-    setState(() {
-      _otpError = null;
-    });
-
-    BlocProvider.of<VerifyOtpBloc>(context).add(
-      VerifyOtpEvent.submitted(
-        email: widget.email,
-        code: code,
-        password: widget.password,
-      ),
-    );
+  void _triggerVerify(String code) {
+    FocusScope.of(context).unfocus();
+    if (widget.isForgotPassword) {
+      unawaited(
+        context.pushNamed(
+          AuthRoutes.resetPasswordConfirm,
+          extra: {
+            'email': widget.email,
+            'code': code,
+          },
+        ),
+      );
+    } else {
+      BlocProvider.of<VerifyOtpBloc>(context).add(
+        VerifyOtpEvent.submitted(
+          email: widget.email,
+          code: code,
+          password: widget.password,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final text = _otpController.text;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -102,8 +110,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
-            LucideIcons.arrow_left,
+            LucideIcons.chevron_left,
             color: AppTheme.primaryColor,
+            size: 24,
           ),
           onPressed: () => context.pop(),
         ),
@@ -114,13 +123,12 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
             state.maybeWhen(
               success: () {
                 if (widget.isForgotPassword) {
-                  final code = _controllers.map((c) => c.text).join();
                   unawaited(
                     context.pushNamed(
                       AuthRoutes.resetPasswordConfirm,
                       extra: {
                         'email': widget.email,
-                        'code': code,
+                        'code': text,
                       },
                     ),
                   );
@@ -129,7 +137,10 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                 }
               },
               failure: (message) {
-                CustomToast.show(context, message);
+                CustomToast.show(
+                  context,
+                  message.isEmpty ? 'Incorrect verification code' : message,
+                );
               },
               orElse: () {},
             );
@@ -139,156 +150,189 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
               loading: () => true,
               orElse: () => false,
             );
-
+            final errorMessage = state.maybeWhen(
+              failure: (message) => message,
+              orElse: () => null,
+            );
             final secondsRemaining = state.maybeWhen(
               timerTicking: (s) => s,
-              orElse: () => 0,
+              orElse: () => 60,
             );
-
             final isTimerExpired = state.maybeWhen(
               timerExpired: () => true,
               orElse: () => false,
             );
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 40.0,
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20),
-                  const Text(
-                    'Verify Email',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
+                  Text(
+                    widget.isForgotPassword
+                        ? 'Verify Identity'
+                        : 'Verify Email',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
                       color: AppTheme.primaryColor,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
-                    'We sent a 6-digit verification code to ${widget.email}. Enter code below.',
+                    widget.isForgotPassword
+                        ? 'We sent a 6-digit code to ${widget.email}. Enter it to continue resetting your password.'
+                        : 'We sent a 6-digit OTP to ${widget.email}. Please enter it below to verify your account.',
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       color: AppTheme.tertiaryColor,
+                      height: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(
-                      6,
-                      (index) => SizedBox(
-                        width: 45,
-                        height: 55,
-                        child: TextField(
-                          controller: _controllers[index],
-                          focusNode: _focusNodes[index],
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          maxLength: 1,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                          ),
-                          decoration: InputDecoration(
-                            counterText: '',
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: _otpError != null
-                                    ? AppTheme.cancel
-                                    : AppTheme.borderSide,
-                              ),
+                  const SizedBox(height: 48),
+                  GestureDetector(
+                    onTap: () {
+                      _focusNode.requestFocus();
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(6, (index) {
+                        String digit = '';
+                        if (text.length > index) {
+                          digit = text[index];
+                        }
+                        final isFocused =
+                            text.length == index && _focusNode.hasFocus;
+                        return Container(
+                          width: 46,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isFocused
+                                  ? AppTheme.primaryColor
+                                  : (errorMessage != null
+                                        ? AppTheme.cancel
+                                        : AppTheme.borderSide),
+                              width: isFocused ? 2 : 1,
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                color: AppTheme.primaryColor,
-                                width: 2,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
                               ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            digit,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
-                          onChanged: (value) {
-                            if (value.isNotEmpty && index < 5) {
-                              _focusNodes[index + 1].requestFocus();
-                            } else if (value.isEmpty && index > 0) {
-                              _focusNodes[index - 1].requestFocus();
-                            }
-                            if (_controllers
-                                .every((c) => c.text.isNotEmpty)) {
-                              _submitOtp(context);
-                            }
-                          },
-                        ),
+                        );
+                      }),
+                    ),
+                  ),
+                  Transform.translate(
+                    offset: const Offset(-9999, 0),
+                    child: SizedBox(
+                      height: 1,
+                      width: 1,
+                      child: TextField(
+                        controller: _otpController,
+                        focusNode: _focusNode,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        autofocus: true,
+                        enableInteractiveSelection: false,
+                        decoration: const InputDecoration(counterText: ''),
                       ),
                     ),
                   ),
-                  if (_otpError != null) ...[
-                    const SizedBox(height: 12),
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 24),
                     Text(
-                      _otpError!,
+                      errorMessage,
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: AppTheme.cancel,
-                        fontSize: 13,
+                        fontSize: 14,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: isLoading
-                          ? null
-                          : () => _submitOtp(context),
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              'Verify Code',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: isTimerExpired
+                        ? () => BlocProvider.of<VerifyOtpBloc>(context).add(
+                            const VerifyOtpEvent.timerStarted(),
+                          )
+                        : null,
+                    child: Text(
+                      isTimerExpired
+                          ? 'Resend code'
+                          : 'Resend code in ${secondsRemaining}s',
+                      style: TextStyle(
+                        color: isTimerExpired
+                            ? AppTheme.primaryColor
+                            : AppTheme.tertiaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        isTimerExpired
-                            ? "Didn't receive code? "
-                            : 'Resend code in ${secondsRemaining}s',
-                        style: const TextStyle(
-                          color: AppTheme.tertiaryColor,
+                  Hero(
+                    tag: 'auth_primary_button',
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: (text.length == 6 && !isLoading)
+                              ? () => _triggerVerify(text)
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: AppTheme.primaryColor
+                                .withValues(alpha: 0.3),
+                            disabledForegroundColor: Colors.white.withValues(
+                              alpha: 0.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(36),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Verify',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                         ),
                       ),
-                      if (isTimerExpired)
-                        GestureDetector(
-                          onTap: () {
-                            BlocProvider.of<VerifyOtpBloc>(context).add(
-                              const VerifyOtpEvent.timerStarted(),
-                            );
-                          },
-                          child: const Text(
-                            'Resend Code',
-                            style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ],
               ),
