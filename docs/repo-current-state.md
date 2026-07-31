@@ -8,30 +8,30 @@ belong in `admin-mvp.md`. Do not place credentials or secret values here.
 
 ## Git state
 
-- Checkout: current repository worktree
-- Current branch: `codex/admin-service-mvp`
-- Current commit: `4a61d7b` (`Merge upstream/main into
-  codex/admin-service-mvp`)
+- Checkout: clean pull-request integration worktree
+- Current branch: `codex/admin-service-mvp-pr`
 - Official upstream: `Easy-Bao/DrivingApp`
 - Fork: `zenon-dev98/DrivingApp`
 - Live upstream `main`: `2b9f422`
-- Live fork `main`: `ad0f57f`
-- The branch is one commit behind and six local commits ahead of live upstream.
-  It is seventeen commits ahead of the fork's `main`.
+- The branch is based directly on live upstream `2b9f422` and contains
+  additive Admin implementation, security, and documentation commits.
 - The upstream Android/Mapbox configuration, auth and telemetry refactors, and
   location-service architecture are now integrated.
-- The merge checkpoint is local only. No push or pull request was performed.
+- This is the review branch for a draft pull request against official `main`;
+  verify publication status and review activity on GitHub rather than relying
+  on a copied commit hash in this file.
 
 Upstream `2b9f422` restructures the Flutter apps/packages into PascalCase paths
-and replaces several service-package implementations. It was fetched and
-audited read-only. It is not merged because the current uncommitted ADM-015,
-location-contract, Admin-web move, documentation, and logo work must first be
-preserved and manually ported; a blind pull would orphan verified mobile code.
+and replaces several service-package implementations. This branch starts at
+that commit. The required Driver, Passenger, and CoreModels contract changes
+were manually ported to the new PascalCase paths rather than reviving deleted
+lowercase trees.
 
-The worktree is intentionally not clean. Existing logo edits remain modified.
-Product-planning changes, ticket records, and meeting documents are also
-uncommitted. The repository-level `AGENTS.md` and this file are new workflow
-documents. The pre-merge stashes remain available as an additional backup.
+This pull-request worktree is separate from the original working folder. The
+user's uncommitted logo and meeting-document work remains excluded and
+recoverable there. Upstream tracks logo paths that differ only by letter case;
+those logo directories are intentionally excluded from this Windows sparse
+worktree so the Admin integration cannot overwrite either variant.
 
 ## Tooling and devices
 
@@ -89,19 +89,18 @@ On 2026-07-31, Xy reported:
 
 These reports are not reproduced on a device. Upstream commits `38399eb`
 through `7eabfc8`, which substantially replace location resolution and service
-configuration, are integrated. The later structural commit `2b9f422` is not.
+configuration, and the later structural commit `2b9f422` are integrated.
 
 A read-only upstream audit identified two concrete nearby-location risks:
 
 - Focusing the destination field only starts its expansion animation; it does
   not retry failed GPS or nearby-place loading.
 - The new Go location service emits `address`, `lat`, `lng`, and `distance_km`.
-  The checked-out Flutter model now normalizes those names, and a focused
-  contract test passes. That fix still needs a manual port into the PascalCase
-  CoreModels tree from upstream `2b9f422`.
+  The checked-out PascalCase Flutter model now normalizes those names, and a
+  focused contract test passes.
 
-Port the verified contract fix after preserving the working tree, then
-reproduce on a real target. The animation report still needs the exact screen,
+Reproduce the location behavior on a real target. The animation report still
+needs the exact screen,
 triggering action, device, and preferably a short recording. The current
 destination-search expansion is a likely hotspot because one `AnimatedBuilder`
 rebuilds a large stack containing the native Mapbox view, clipping, shadow,
@@ -157,31 +156,47 @@ Partial or unverified:
   ride dataset. Browser Print / Save as PDF still needs visual acceptance.
 - Private identity-document object storage, signed access, retention, and the
   driver application-intake browser flow are not complete.
-- The verified mobile integration files are based on the lowercase pre-
-  `2b9f422` tree and must be ported before the next upstream merge.
-- The Admin frontend now lives under `web/admin_app`; `apps/` contains only the
+- The required mobile integration files are ported into the PascalCase
+  `Apps/` and `Packages/` trees from upstream `2b9f422`.
+- The Admin frontend now lives under `web/admin_app`; `Apps/` contains only the
   Passenger and Driver Flutter clients.
 
-## Verification completed on this checkout
+## Verification evidence
+
+### After the upstream replay on this checkout
 
 - No unresolved merge entries or conflict markers remain.
+- No tracked legacy lowercase `apps/` or `packages/` replacement paths remain.
 - Docker Compose configuration renders successfully with fifteen services.
+- Compose reports expected warnings because this clean review worktree does not
+  contain local database, SMTP, Mapbox, JWT, or internal-service secret values.
 - Admin frontend `bun run check`: 0 errors and 0 warnings.
-- Admin frontend tests: 3 passed.
+- Admin frontend tests: 11 passed.
 - Admin frontend production build: passed with adapter-node; the Mapbox client
   chunk exceeds Vite's default 500 kB warning threshold.
-- Admin-service geometry and zone tests: 3 passed.
 - Admin-service TypeScript check: passed.
-- Auth-service suite: 22 passed, including 10 focused Admin tests.
 - Auth-service TypeScript check: passed.
+- API-gateway suite: 5 passed.
+- API-gateway TypeScript check: passed.
+- CoreModels tests: 4 passed; analysis completed without errors or warnings and
+  retained 20 upstream PascalCase filename-style notices.
+- Admin-service loaded tests: 30 passed and 1 skipped; one integration module
+  could not initialize because this clean worktree intentionally has no
+  `DATABASE_URL`.
+- Auth-service focused owner/Admin and email-privacy tests: 11 passed; four
+  other integration modules could not initialize because no disposable
+  Passenger/Driver database URLs are configured.
+- Passenger and Driver Flutter tests were not rerun after the replay. Their
+  ignored `.env` files are absent, the sparse worktree excludes the upstream
+  case-colliding SharedUi logo assets, and no Android target is running.
+
+### Earlier isolated prototype acceptance, before the upstream replay
+
 - Owner provisioning, rotation, second-owner refusal, login lock, verified
   session cookie, protected route, and logout passed against disposable
   PostgreSQL and containerized HTTP services.
-- API-gateway configuration/header tests: 3 passed.
-- API-gateway TypeScript check: passed.
-- Driver app analysis: passed; Driver app tests: 14 passed.
-- Passenger app analysis: passed after refreshing local package metadata;
-  Passenger app tests: 26 passed.
+- Driver app analysis passed with 14 tests; Passenger app analysis passed with
+  26 tests after refreshing local package metadata.
 - Location-service image build: passed after correcting the Docker build
   context and adding the generated Go module lockfile.
 - Location-service Go tests: passed inside the Go 1.22 container.
@@ -237,18 +252,15 @@ Not completed:
 
 ## Immediate blockers and next sequence
 
-1. Preserve the current uncommitted ticket batch, then integrate upstream
-   `2b9f422` on a clean tree and manually port the audited mobile changes and
-   user logo assets into the PascalCase destinations.
-2. Run focused Flutter analyses/tests again, then build both Android apps once
+1. Run focused Flutter analyses/tests again, then build both Android apps once
    an emulator or authorized phone is available.
-3. Resolve only the product decisions that block code: final matching contract,
+2. Resolve only the product decisions that block code: final matching contract,
    fare/commission rules, Shared/Premium rules, refund provenance, and support
    workflow.
-4. Add a controlled SMTP/OTP sink and private document-evidence workflow, then
+3. Add a controlled SMTP/OTP sink and private document-evidence workflow, then
    verify real Android Passenger and Driver clients without recording test
    credentials in this repository.
-5. Re-run the isolated owner-to-report acceptance on the final contracts, then
+4. Re-run the isolated owner-to-report acceptance on the final contracts, then
    visually accept the protected Admin sections and printable reports.
 
 ## Ticket queue

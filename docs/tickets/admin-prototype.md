@@ -29,7 +29,7 @@ operational procedures remain in [the Admin guide](../admin-mvp.md).
 
 | ID | Ticket | Implementation maturity | Verification |
 |---|---|---|---|
-| ADM-001 | Synchronize upstream and establish a clean baseline | Accepted at `4a61d7b`; refresh required | Upstream `2b9f422` was fetched but not merged over the dirty ticket batch |
+| ADM-001 | Synchronize upstream and establish a clean baseline | Accepted on `2b9f422` | Admin changes were replayed on the official PascalCase tree; unrelated local files remain excluded |
 | ADM-002 | Establish the Admin API and database foundation | Accepted | Fresh, upgrade, seed, and start acceptance passed |
 | ADM-003 | Provide private owner authentication | Accepted | Database and HTTP session flow passed |
 | ADM-004 | Secure gateway and internal-service access | Accepted | Gateway, JWT, and internal-service acceptance passed |
@@ -43,14 +43,13 @@ operational procedures remain in [the Admin guide](../admin-mvp.md).
 | ADM-012 | Configure Pagadian service zones | Accepted software slice | Geometry, workflow, seed, and fail-closed checks passed |
 | ADM-013 | Monitor dispatch and assign a driver manually | Concurrency slice accepted; contract mismatch remains | Real PostgreSQL assignment races passed; final matching flow pending |
 | ADM-014 | Export reports and inspect audit history | Backend/export acceptance passed | Controlled data reconciled through protected CSV/print routes; visual print review remains |
-| ADM-015 | Integrate Admin rules with Passenger and Driver | Pre-upstream contract slice verified | Focused analyses/tests passed; port to upstream `2b9f422` and device E2E required |
+| ADM-015 | Integrate Admin rules with Passenger and Driver | PascalCase contract slice implemented | CoreModels checks pass; full mobile/device E2E remains |
 | ADM-016 | Prove the disposable-stack end-to-end workflow | Current-prototype software acceptance passed | Clean isolated success, retry/cancel, case, restriction, report, and audit flow passed |
 
 ## Reality check
 
-- **Foundation accepted on this checkout:** ADM-002 through ADM-005. ADM-001
-  needs the fetched upstream restructure integrated before the branch can again
-  be called current.
+- **Foundation accepted on this checkout:** ADM-001 through ADM-005. The branch
+  is based directly on upstream `2b9f422`.
 - **Additional backend slices accepted:** ADM-007 compliance enforcement,
   ADM-008 restriction enforcement, ADM-011 snapshot integrity, and ADM-013
   assignment concurrency.
@@ -64,7 +63,7 @@ operational procedures remain in [the Admin guide](../admin-mvp.md).
 
 Therefore, the repository now contains a working and substantially hardened
 Admin prototype, but it is **not yet an accepted combined MVP**. The unresolved
-matching/fare/Shared/Premium policies, the upstream Flutter port, remaining
+matching/fare/Shared/Premium policies, remaining
 authenticated visual operations, and Android-device checks still separate the
 prototype from release readiness.
 
@@ -100,7 +99,7 @@ baseline on which later ticket results are trustworthy.
 - `docker-compose.yml`
 - `server/api-gateway/src/config/gateway.config.ts`
 - `server/api-gateway/src/routes/gateway.ts`
-- `apps/driver_app/lib/src/features/home/presentation/bloc/dashboard_state.dart`
+- `Apps/DriverApp/lib/src/Features/Home/Presentation/Bloc/DashboardState.dart`
 
 ### Acceptance criteria
 
@@ -113,7 +112,7 @@ baseline on which later ticket results are trustworthy.
 
 ### Verification record
 
-- Local merge checkpoint: `4a61d7b`.
+- Pull-request integration base: upstream `2b9f422`.
 - No unresolved merge entries or conflict markers remain.
 - Admin-service, Auth-service, and API-gateway tests and TypeScript checks pass.
 - Admin Svelte checks, tests, and production build pass.
@@ -122,14 +121,14 @@ baseline on which later ticket results are trustworthy.
 - Docker Compose configuration renders successfully with fifteen services.
 - Go location-service tests pass in the pinned Go 1.22 container, and its
   production image builds successfully.
-- Existing documentation and logo edits remain recoverable and excluded from
-  the merge checkpoint.
+- Existing logo and meeting-document edits remain recoverable and excluded from
+  the pull-request branch.
 
-On 2026-08-01, live upstream advanced to `2b9f422`, a broad PascalCase Flutter
-tree restructure. It was fetched and audited but not merged over this dirty
-ticket batch. The branch remains functionally based on the accepted `4a61d7b`
-checkpoint until the verified mobile changes and logo edits are preserved and
-ported deliberately.
+On 2026-08-01, the Admin work was replayed on live upstream `2b9f422`. Required
+Driver, Passenger, location-contract, and ride-status changes were manually
+ported to the PascalCase tree. The upstream case-colliding logo paths remain
+untouched, and the user's logo work remains recoverable in the original
+worktree.
 
 ## ADM-002 — Establish the Admin API and database foundation
 
@@ -570,7 +569,7 @@ without permitting a negative balance.
 - `server/driver-service/src/features/repositories/driver_operations.repository.ts`
 - `server/driver-service/tests/unit/driver_operations.test.ts`
 - `server/admin-service/src/features/services/admin.service.ts`
-- `apps/driver_app/lib/src/features/profile/presentation/screens/service_credits_screen.dart`
+- `Apps/DriverApp/lib/src/Features/Profile/Presentation/Screens/service_credits_screen.dart`
 
 ### Acceptance criteria
 
@@ -626,7 +625,7 @@ reject it exactly once after independently checking the receiving account.
 - `server/driver-service/src/features/repositories/driver_operations.repository.ts`
 - `server/admin-service/src/features/routes/admin.routes.ts`
 - `server/admin-service/src/features/services/admin.service.ts`
-- `apps/driver_app/lib/src/features/profile/presentation/screens/service_credits_screen.dart`
+- `Apps/DriverApp/lib/src/Features/Profile/Presentation/Screens/service_credits_screen.dart`
 - `web/admin_app/src/routes/(admin)/[section]/+page.server.ts`
 
 ### Acceptance criteria
@@ -883,7 +882,7 @@ acceptance.
 ## ADM-015 — Integrate Admin rules with Passenger and Driver
 
 - **Type:** Reconstructed ticket
-- **Status:** Contract slice verified on the pre-`2b9f422` tree; port and E2E remain
+- **Status:** PascalCase contract slice implemented; full mobile/device E2E remains
 - **Dependencies:** ADM-007 through ADM-013
 
 ### Goal
@@ -906,11 +905,11 @@ rules clearly in the Passenger and Driver applications.
 
 ### Evidence
 
-- `apps/driver_app/lib/src/core/network/driver_operations_client.dart`
-- `apps/driver_app/lib/src/features/home/presentation/bloc/dashboard_cubit.dart`
-- `apps/driver_app/lib/src/features/profile/presentation/screens/service_credits_screen.dart`
-- `apps/passenger_app/lib/src/core/network/error_aware_bidding_remote_data_source.dart`
-- `apps/passenger_app/lib/src/features/trip/presentation/bloc/booking_bloc.dart`
+- `Apps/DriverApp/lib/src/Core/Network/DriverOperationsClient.dart`
+- `Apps/DriverApp/lib/src/Features/Home/Presentation/Bloc/DashboardCubit.dart`
+- `Apps/DriverApp/lib/src/Features/Profile/Presentation/Screens/service_credits_screen.dart`
+- `Apps/PassengerApp/lib/src/Features/Booking/Data/DataSources/BiddingRemoteDataSource.dart`
+- `Apps/PassengerApp/lib/src/Features/Trip/Presentation/Bloc/BookingBloc.dart`
 - `server/driver-service/src/features/routes/driver_operations.routes.ts`
 - `server/passenger-service/src/features/routes/passenger.routes.ts`
 
@@ -933,9 +932,8 @@ rules clearly in the Passenger and Driver applications.
   pass. Live location search, nearby places, and route calculation also return
   real data through the rebuilt gateway.
 
-Upstream `2b9f422` deletes or replaces these lowercase Flutter/package paths,
-so the verified changes must be manually ported into the new PascalCase apps
-before integration. No Android device is connected, and a real cross-app ride
+The verified changes are ported into the PascalCase Flutter/package paths from
+upstream `2b9f422`. No Android device is connected, and a real cross-app ride
 and driver registration/verification UX remain unverified.
 
 ## ADM-016 — Prove the disposable-stack end-to-end workflow

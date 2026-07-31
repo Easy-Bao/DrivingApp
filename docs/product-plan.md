@@ -1,6 +1,6 @@
 # EasyRide product plan and feature map
 
-Last updated: 2026-07-30
+Last updated: 2026-08-01
 
 This is the shared product-level source of truth for ongoing passenger, driver,
 public-web, private-operations, and backend discussions. It records confirmed
@@ -51,8 +51,8 @@ flowchart LR
 Current:
 
 ```text
-apps/passenger_app          Flutter passenger mobile app
-apps/driver_app             Flutter driver mobile app
+Apps/PassengerApp           Flutter passenger mobile app
+Apps/DriverApp              Flutter driver mobile app
 web/admin_app               SvelteKit operations frontend
 server/admin-service        Bun/Hono admin backend (placement is correct)
 ```
@@ -60,14 +60,14 @@ server/admin-service        Bun/Hono admin backend (placement is correct)
 Confirmed target layout:
 
 ```text
-apps/passenger_app
-apps/driver_app
+Apps/PassengerApp
+Apps/DriverApp
 web/public_site
 web/admin_app
 server/admin-service
 ```
 
-Mobile applications remain under `apps`. Both web frontends belong under
+Mobile applications remain under `Apps`. Both web frontends belong under
 `web`, as requested by the teammate. The Admin backend remains under `server`.
 The operations frontend move has been performed.
 

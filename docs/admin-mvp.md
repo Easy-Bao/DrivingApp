@@ -9,7 +9,7 @@ application. It is desktop-first, remains usable on a tablet, and is not a
 native desktop application.
 
 The frontend lives in `web/admin_app`; Passenger and Driver mobile clients
-remain under `apps/`.
+remain under `Apps/`.
 
 The browser talks only to SvelteKit. SvelteKit calls the API gateway from its
 server-side loads and form actions, so the eight-hour admin JWT stays in the

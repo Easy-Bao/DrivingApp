@@ -7,11 +7,11 @@ change.
 ## Project context
 
 - EasyRide is a Pagadian City ride-booking pilot for Bao Bao vehicles.
-- Passenger and Driver clients are Flutter applications under `apps/`.
-- Shared Dart and Flutter code belongs under `packages/`.
+- Passenger and Driver clients are Flutter applications under `Apps/`.
+- Shared Dart and Flutter code belongs under `Packages/`.
 - Backend services use Bun, TypeScript, Hono, Drizzle, Zod, and PostgreSQL under
   `server/`.
-- The private operations frontend lives at `web/admin_app`. Keep `apps/` for
+- The private operations frontend lives at `web/admin_app`. Keep `Apps/` for
   the Passenger and Driver Flutter clients.
 - The official upstream repository is `Easy-Bao/DrivingApp`. A configured
   `origin` may be a fork.

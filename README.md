@@ -10,12 +10,12 @@ portal prototype for the Pagadian City Bao Bao pilot.
 
 ```text
 .
-├── apps/
-│   ├── driver_app/          # Driver Flutter client
-│   └── passenger_app/       # Passenger Flutter client
+├── Apps/
+│   ├── DriverApp/           # Driver Flutter client
+│   └── PassengerApp/        # Passenger Flutter client
 ├── web/
 │   └── admin_app/           # Private SvelteKit operations portal
-├── packages/                # Shared Dart and Flutter packages
+├── Packages/                # Shared Dart and Flutter packages
 ├── server/                  # Gateway and Bun/Hono backend services
 ├── docs/                    # Product, operations, runtime, and meeting documents
 ├── pubspec.yaml             # Flutter workspace configuration
