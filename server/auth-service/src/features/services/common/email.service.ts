@@ -7,7 +7,7 @@ export class EmailService {
     action: 'verification' | 'reset' = 'verification'
   ): Promise<boolean> {
     if (process.env.EMAIL_DELIVERY_DISABLED === 'true') {
-      console.log(`[EMAIL DISPATCH SKIPPED (EMAIL_DELIVERY_DISABLED)] To: ${toEmail}`);
+      console.log('[EMAIL DISPATCH SKIPPED] Email delivery is disabled');
       return false;
     }
 
@@ -36,7 +36,7 @@ export class EmailService {
     `;
 
     if (!smtpHost || !smtpUser || !smtpPass) {
-      console.log(`[EMAIL DISPATCH SKIPPED (Missing SMTP_HOST/SMTP_USER/SMTP_PASS in env)] To: ${toEmail} | Code: ${otpCode}`);
+      console.log('[EMAIL DISPATCH SKIPPED] SMTP configuration is incomplete');
       return false;
     }
 
@@ -59,11 +59,10 @@ export class EmailService {
         html: htmlContent,
       });
 
-      console.log(`[EMAIL SENT SUCCESS] Real OTP email successfully delivered to ${toEmail}`);
+      console.log('[EMAIL SENT SUCCESS] One-time password email delivered');
       return true;
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[EMAIL DISPATCH ERROR] Failed to send email to ${toEmail}: ${errorMessage}`);
+    } catch {
+      console.error('[EMAIL DISPATCH ERROR] Failed to send one-time password email');
       return false;
     }
   }
