@@ -13,8 +13,10 @@ const ServiceRegistrySchema = z.object({
   LOCATION_SERVICE_URL: z.string().url('LOCATION_SERVICE_URL must be a valid absolute URI'),
 });
 
-function validateServiceRegistry() {
-  const result = ServiceRegistrySchema.safeParse(process.env);
+export function validateServiceRegistry(
+  environment: Record<string, string | undefined> = process.env,
+) {
+  const result = ServiceRegistrySchema.safeParse(environment);
   if (!result.success) {
     const formattedErrors = result.error.errors
       .map((e) => `  - ${e.path.join('.')}: ${e.message}`)

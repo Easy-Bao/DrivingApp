@@ -32,6 +32,7 @@ export const driverDocumentRequirements = pgTable(
     name: text('name').notNull(),
     normalizedName: text('normalized_name').notNull(),
     isActive: boolean('is_active').default(true).notNull(),
+    requiresExpiry: boolean('requires_expiry').default(false).notNull(),
     createdBy: text('created_by').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .defaultNow()

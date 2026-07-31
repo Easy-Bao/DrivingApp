@@ -1,6 +1,6 @@
 import { db } from '../../shared/drizzle.ts';
 import { servicePricingRules, fareTransactions } from '../../db/schema.ts';
-import { and, eq, type InferSelectModel } from 'drizzle-orm';
+import { and, eq, inArray, type InferSelectModel } from 'drizzle-orm';
 import { PricingConfigService } from './pricing_config.service.ts';
 import { calculateCommissionCentavos } from './commission.ts';
 
@@ -232,10 +232,14 @@ export class FareCalculationService {
     commissionCentavos: number;
     assignmentSource: 'driver_offer' | 'admin';
   }) {
-    const driverEarningsCentavos = input.totalFareCentavos - input.commissionCentavos;
-    if (driverEarningsCentavos < 0) {
+    const expectedCommissionCentavos = calculateCommissionCentavos(
+      input.totalFareCentavos,
+      input.commissionRateBasisPoints,
+    );
+    if (input.commissionCentavos !== expectedCommissionCentavos) {
       throw new Error('INVALID_COMMISSION_SNAPSHOT');
     }
+    const driverEarningsCentavos = input.totalFareCentavos - input.commissionCentavos;
     const [created] = await db.insert(fareTransactions)
       .values({
         rideId: input.rideId,
@@ -267,6 +271,7 @@ export class FareCalculationService {
     if (
       !existing
       || existing.driverId !== input.driverId
+      || existing.serviceType !== input.serviceType
       || existing.totalFareCentavos !== input.totalFareCentavos
       || existing.platformFeeCentavos !== input.commissionCentavos
       || existing.commissionRateBasisPoints !== input.commissionRateBasisPoints
@@ -278,11 +283,32 @@ export class FareCalculationService {
   }
 
   async updatePaymentStatus(rideId: string, paymentStatus: string) {
-    const [updated] = await db.update(fareTransactions)
-      .set({ paymentStatus, updatedAt: new Date() })
+    const allowedPreviousStatuses: Record<string, string[]> = {
+      cash_pending: [],
+      cash_received: ['cash_pending', 'cash_disputed'],
+      cash_disputed: ['cash_pending'],
+      canceled: ['cash_pending', 'cash_disputed'],
+    };
+    const allowedPrevious = allowedPreviousStatuses[paymentStatus];
+    if (!allowedPrevious) throw new Error('INVALID_FARE_PAYMENT_STATUS');
+
+    if (allowedPrevious.length > 0) {
+      const [updated] = await db.update(fareTransactions)
+        .set({ paymentStatus, updatedAt: new Date() })
+        .where(and(
+          eq(fareTransactions.rideId, rideId),
+          inArray(fareTransactions.paymentStatus, allowedPrevious),
+        ))
+        .returning();
+      if (updated) return updated;
+    }
+
+    const [existing] = await db.select()
+      .from(fareTransactions)
       .where(eq(fareTransactions.rideId, rideId))
-      .returning();
-    if (!updated) throw new Error('FARE_SNAPSHOT_NOT_FOUND');
-    return updated;
+      .limit(1);
+    if (!existing) throw new Error('FARE_SNAPSHOT_NOT_FOUND');
+    if (existing.paymentStatus === paymentStatus) return existing;
+    throw new Error('FARE_STATUS_CONFLICT');
   }
 }

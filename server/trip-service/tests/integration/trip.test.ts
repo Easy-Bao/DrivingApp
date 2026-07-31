@@ -6,7 +6,9 @@ import { rides } from '../../src/db/schema.ts';
 const TEST_PASSENGER_ID = crypto.randomUUID();
 let rideId = '';
 
-describe('Trip Service Integration Tests', () => {
+// Superseded by authenticated service tests and ADM-016; this scenario trusts
+// Passenger and Driver identities supplied in request bodies.
+describe.skip('Legacy Trip Service Integration Tests', () => {
   beforeAll(async () => {
     spyOn(global, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ name: 'Test User' }), { status: 200 })

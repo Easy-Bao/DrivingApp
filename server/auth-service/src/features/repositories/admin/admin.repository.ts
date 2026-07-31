@@ -22,7 +22,14 @@ export interface AdminAccountRepository {
   clearFailedLogins(id: string): Promise<void>;
 }
 
-export class DrizzleAdminAccountRepository implements AdminAccountRepository {
+export interface AdminOwnerProvisioningRepository {
+  createOwnerIfAbsent(email: string, passwordHash: string): Promise<boolean>;
+  findOwner(): Promise<AdminAccountRecord | undefined>;
+  rotateOwnerPassword(id: string, passwordHash: string): Promise<void>;
+}
+
+export class DrizzleAdminAccountRepository
+  implements AdminAccountRepository, AdminOwnerProvisioningRepository {
   async findOwnerByEmail(email: string): Promise<AdminAccountRecord | undefined> {
     const [owner] = await authDb.select()
       .from(adminAuthAccounts)
@@ -78,10 +85,7 @@ export class DrizzleAdminAccountRepository implements AdminAccountRepository {
       .where(eq(adminAuthAccounts.id, id));
   }
 
-  /**
-   * Creates the only owner, or rotates its password when the email matches.
-   */
-  async provisionOwner(email: string, passwordHash: string): Promise<'created' | 'rotated'> {
+  async createOwnerIfAbsent(email: string, passwordHash: string): Promise<boolean> {
     const [created] = await authDb.insert(adminAuthAccounts)
       .values({
         singletonKey: true,
@@ -92,28 +96,29 @@ export class DrizzleAdminAccountRepository implements AdminAccountRepository {
       .onConflictDoNothing()
       .returning();
 
-    if (created) {
-      return 'created';
-    }
+    return Boolean(created);
+  }
 
+  async findOwner(): Promise<AdminAccountRecord | undefined> {
     const [owner] = await authDb.select()
       .from(adminAuthAccounts)
       .limit(1);
+    return owner;
+  }
 
-    if (!owner || owner.email !== email) {
-      throw new Error(
-        'An owner account already exists with a different email address. Refusing to replace it.',
-      );
-    }
-
-    await authDb.update(adminAuthAccounts)
+  async rotateOwnerPassword(id: string, passwordHash: string): Promise<void> {
+    const [updated] = await authDb.update(adminAuthAccounts)
       .set({
         passwordHash,
         failedLoginAttempts: 0,
         lockedUntil: null,
         updatedAt: new Date(),
       })
-      .where(eq(adminAuthAccounts.singletonKey, true));
-    return 'rotated';
+      .where(eq(adminAuthAccounts.id, id))
+      .returning({ id: adminAuthAccounts.id });
+
+    if (!updated) {
+      throw new Error('Owner account no longer exists.');
+    }
   }
 }

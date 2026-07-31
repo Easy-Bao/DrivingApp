@@ -42,9 +42,41 @@ export class RideService {
     this.fareClient = new FareClient(fareServiceUrl);
   }
 
-  async createRideRequest(payload: any, idempotencyKey?: string) {
+  private async ensurePassengerRideAccess(passengerId: string) {
     try {
-      await this.passengerClient.checkRideAccess(payload.passenger_id);
+      await this.passengerClient.checkRideAccess(passengerId);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'PASSENGER_SERVICE_UNAVAILABLE';
+      throw new HTTPException(code === 'ACCOUNT_RESTRICTED' ? 403 : 503, {
+        message: code === 'ACCOUNT_RESTRICTED'
+          ? code
+          : 'PASSENGER_SERVICE_UNAVAILABLE',
+      });
+    }
+  }
+
+  private async ensureDriverRideAccess(driverId: string | null) {
+    if (!driverId) {
+      throw new HTTPException(409, { message: 'DRIVER_NOT_ASSIGNED' });
+    }
+    try {
+      await this.driverClient.checkEligibility(driverId);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'DRIVER_SERVICE_UNAVAILABLE';
+      const status = code === 'ACCOUNT_RESTRICTED'
+        ? 403
+        : ['DRIVER_NOT_APPROVED', 'DRIVER_DOCUMENTS_INCOMPLETE'].includes(code)
+          ? 409
+          : 503;
+      throw new HTTPException(status, {
+        message: status === 503 ? 'DRIVER_SERVICE_UNAVAILABLE' : code,
+      });
+    }
+  }
+
+  async createRideRequest(payload: any, idempotencyKey?: string) {
+    await this.ensurePassengerRideAccess(payload.passenger_id);
+    try {
       await this.adminClient.checkZones({
         pickup_latitude: Number(payload.pickup_latitude),
         pickup_longitude: Number(payload.pickup_longitude),
@@ -104,6 +136,7 @@ export class RideService {
       }
       throw new HTTPException(409, { message: 'Ride already accepted' });
     }
+    await this.ensurePassengerRideAccess(ride.passengerId);
 
     let reservationCreated = false;
     let fareSnapshotCreated = false;
@@ -210,6 +243,12 @@ export class RideService {
       throw new HTTPException(409, {
         message: `INVALID_RIDE_STATUS_TRANSITION:${ride.status}:${status}`,
       });
+    }
+    if (['arrived', 'in_transit'].includes(status) && !ride.pendingStatus) {
+      await this.ensureDriverRideAccess(ride.driverId);
+      if (status === 'in_transit') {
+        await this.ensurePassengerRideAccess(ride.passengerId);
+      }
     }
 
     const transition = ride.pendingStatus

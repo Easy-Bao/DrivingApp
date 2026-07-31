@@ -29,17 +29,21 @@ import {
   handleUpdateFareRule,
   handleUpdateCase,
   handleUpdateDriverApproval,
+  handleUpdateDocumentRequirement,
   handleUpdateTopUpChannel,
   handleUpdateZone,
 } from '../controllers/admin.controller.ts';
 import {
   ApprovalSchema,
+  AuditListQuerySchema,
+  CaseListQuerySchema,
   CommissionPolicySchema,
   ComplaintCreateSchema,
   ComplaintUpdateSchema,
   CreditAdjustmentSchema,
   CreditRefundSchema,
   DocumentRequirementSchema,
+  DocumentRequirementUpdateSchema,
   DocumentReviewSchema,
   FareRuleSchema,
   ManualAssignmentSchema,
@@ -73,6 +77,11 @@ adminRouter.post(
   '/v1/document-requirements',
   zValidator('json', DocumentRequirementSchema),
   handleCreateDocumentRequirement,
+);
+adminRouter.patch(
+  '/v1/document-requirements/:requirementId',
+  zValidator('json', DocumentRequirementUpdateSchema),
+  handleUpdateDocumentRequirement,
 );
 adminRouter.put(
   '/v1/drivers/:driverId/documents/:requirementId',
@@ -129,7 +138,11 @@ adminRouter.put(
   zValidator('json', ZoneUpdateSchema),
   handleUpdateZone,
 );
-adminRouter.get('/v1/cases', handleListCases);
+adminRouter.get(
+  '/v1/cases',
+  zValidator('query', CaseListQuerySchema),
+  handleListCases,
+);
 adminRouter.post(
   '/v1/cases',
   zValidator('json', ComplaintCreateSchema),
@@ -150,8 +163,16 @@ adminRouter.post(
   zValidator('json', RestrictionLiftSchema),
   handleLiftRestriction,
 );
-adminRouter.get('/v1/audits', handleAudits);
-adminRouter.get('/v1/audit', handleAudits);
+adminRouter.get(
+  '/v1/audits',
+  zValidator('query', AuditListQuerySchema),
+  handleAudits,
+);
+adminRouter.get(
+  '/v1/audit',
+  zValidator('query', AuditListQuerySchema),
+  handleAudits,
+);
 adminRouter.get('/v1/reports/:type', handleReport);
 
 adminRouter.use('/internal/*', internalAuthMiddleware);

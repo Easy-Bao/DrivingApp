@@ -3,6 +3,7 @@ import {
   asc,
   desc,
   eq,
+  gte,
   gt,
   inArray,
   isNull,
@@ -32,6 +33,7 @@ import {
   MAXIMUM_CREDIT_BALANCE_CENTAVOS,
   Page,
   calculateCommissionCentavos,
+  isDocumentRequirementSatisfied,
 } from '../entities/driver_operations.types.ts';
 
 type Executor = any;
@@ -192,11 +194,13 @@ export class DriverOperationsRepository {
             },
           };
         }
-        const hasInvalidDocument = compliance.documents.some(({ check }: any) => (
-          !check
-          || check.status !== 'verified'
-          || (check.expiresAt && new Date(check.expiresAt) <= compliance.now)
-        ));
+        const hasInvalidDocument = compliance.documents.some(
+          ({ requirement, check }: any) => !isDocumentRequirementSatisfied(
+            requirement,
+            check,
+            compliance.now,
+          ),
+        );
         if (hasInvalidDocument) {
           return {
             error: {
@@ -231,10 +235,17 @@ export class DriverOperationsRepository {
     page: number,
     limit: number,
     approvalStatus?: DriverApprovalStatus,
+    from?: Date,
+    to?: Date,
   ): Promise<Page<typeof drivers.$inferSelect>> {
     const offset = (page - 1) * limit;
-    const condition = approvalStatus
-      ? eq(drivers.approvalStatus, approvalStatus)
+    const conditions = [
+      approvalStatus ? eq(drivers.approvalStatus, approvalStatus) : undefined,
+      from ? gte(drivers.createdAt, from) : undefined,
+      to ? lte(drivers.createdAt, to) : undefined,
+    ].filter(Boolean);
+    const condition = conditions.length > 0
+      ? and(...conditions as any[])
       : undefined;
     const [countRow] = await db.select({ count: sql<number>`count(*)::int` })
       .from(drivers)
@@ -340,9 +351,18 @@ export class DriverOperationsRepository {
       .orderBy(asc(driverDocumentRequirements.name));
   }
 
+  async getDocumentRequirement(requirementId: string) {
+    const [requirement] = await db.select()
+      .from(driverDocumentRequirements)
+      .where(eq(driverDocumentRequirements.id, requirementId));
+    return requirement || null;
+  }
+
   async createDocumentRequirement(
     name: string,
     normalizedName: string,
+    requiresExpiry: boolean,
+    isActive: boolean,
     actorId: string,
     idempotencyKey: string,
     requestHash: string,
@@ -371,10 +391,14 @@ export class DriverOperationsRepository {
             id: crypto.randomUUID(),
             name,
             normalizedName,
+            requiresExpiry,
+            isActive,
             createdBy: actorId,
           })
           .returning();
-        await transaction.update(drivers).set({ isOnline: false });
+        if (isActive) {
+          await transaction.update(drivers).set({ isOnline: false });
+        }
         return created;
       },
     );
@@ -382,7 +406,12 @@ export class DriverOperationsRepository {
 
   async updateDocumentRequirement(
     requirementId: string,
-    changes: { name?: string; normalizedName?: string; isActive?: boolean },
+    changes: {
+      name?: string;
+      normalizedName?: string;
+      isActive?: boolean;
+      requiresExpiry?: boolean;
+    },
     idempotencyKey: string,
     requestHash: string,
   ) {
@@ -426,7 +455,13 @@ export class DriverOperationsRepository {
           .set({ ...changes, updatedAt: new Date() })
           .where(eq(driverDocumentRequirements.id, requirementId))
           .returning();
-        if (changes.isActive === true && existing.isActive === false) {
+        const willBeActive = changes.isActive ?? existing.isActive;
+        const becomesActive = changes.isActive === true && existing.isActive === false;
+        const startsRequiringExpiry = (
+          changes.requiresExpiry === true
+          && existing.requiresExpiry === false
+        );
+        if (willBeActive && (becomesActive || startsRequiringExpiry)) {
           await transaction.update(drivers).set({ isOnline: false });
         }
         return updated;
@@ -508,7 +543,11 @@ export class DriverOperationsRepository {
             },
           })
           .returning();
-        if (status !== 'verified' || (expiresAt && expiresAt <= now)) {
+        if (!isDocumentRequirementSatisfied(
+          requirement,
+          { status, expiresAt },
+          now,
+        )) {
           await transaction.update(drivers)
             .set({ isOnline: false })
             .where(eq(drivers.id, driverId));
@@ -853,9 +892,18 @@ export class DriverOperationsRepository {
     page: number,
     limit: number,
     status?: TopupRequestStatus,
+    from?: Date,
+    to?: Date,
   ) {
     const offset = (page - 1) * limit;
-    const condition = status ? eq(driverTopupRequests.status, status) : undefined;
+    const conditions = [
+      status ? eq(driverTopupRequests.status, status) : undefined,
+      from ? gte(driverTopupRequests.submittedAt, from) : undefined,
+      to ? lte(driverTopupRequests.submittedAt, to) : undefined,
+    ].filter(Boolean);
+    const condition = conditions.length > 0
+      ? and(...conditions as any[])
+      : undefined;
     const [countRow] = await db.select({ count: sql<number>`count(*)::int` })
       .from(driverTopupRequests)
       .where(condition);
@@ -1086,11 +1134,13 @@ export class DriverOperationsRepository {
             'Driver account is restricted',
           );
         }
-        const hasInvalidDocument = compliance.documents.some(({ check }: any) => (
-          !check
-          || check.status !== 'verified'
-          || (check.expiresAt && new Date(check.expiresAt) <= compliance.now)
-        ));
+        const hasInvalidDocument = compliance.documents.some(
+          ({ requirement, check }: any) => !isDocumentRequirementSatisfied(
+            requirement,
+            check,
+            compliance.now,
+          ),
+        );
         if (hasInvalidDocument) {
           throw new DriverDomainError(
             409,

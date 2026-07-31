@@ -20,6 +20,10 @@ SELECT 'CREATE DATABASE chat_db'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'chat_db')
 \gexec
 
+SELECT 'CREATE DATABASE fare_db'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'fare_db')
+\gexec
+
 SELECT 'CREATE DATABASE admin_db'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'admin_db')
 \gexec

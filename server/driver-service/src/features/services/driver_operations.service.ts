@@ -9,8 +9,11 @@ import {
   MAXIMUM_CREDIT_BALANCE_CENTAVOS,
   MINIMUM_TOPUP_CENTAVOS,
   calculateCommissionCentavos,
+  getEffectiveDocumentStatus,
   hashIdempotencyPayload,
+  isDocumentRequirementSatisfied,
   normalizePaymentReference,
+  validateDocumentReviewExpiry,
 } from '../entities/driver_operations.types.ts';
 import { DriverRepositoryImpl } from '../repositories/driver.repository.ts';
 import { DriverOperationsRepository } from '../repositories/driver_operations.repository.ts';
@@ -76,11 +79,13 @@ export class DriverOperationsService {
     if (data.restriction) {
       return result(false, 'ACCOUNT_RESTRICTED', data.restriction.reason);
     }
-    const invalidDocument = data.documents.some(({ check }: any) => (
-      !check
-      || check.status !== 'verified'
-      || (check.expiresAt && new Date(check.expiresAt) <= data.now)
-    ));
+    const invalidDocument = data.documents.some(
+      ({ requirement, check }: any) => !isDocumentRequirementSatisfied(
+        requirement,
+        check,
+        data.now,
+      ),
+    );
     if (invalidDocument) {
       return result(
         false,
@@ -112,12 +117,7 @@ export class DriverOperationsService {
       documents: data.documents.map(({ requirement, check }: any) => ({
         requirement,
         check,
-        effectiveStatus:
-          check?.status === 'verified'
-          && check.expiresAt
-          && new Date(check.expiresAt) <= data.now
-            ? 'expired'
-            : check?.status || 'pending',
+        effectiveStatus: getEffectiveDocumentStatus(requirement, check, data.now),
       })),
       wallet: data.wallet,
     };
@@ -167,8 +167,20 @@ export class DriverOperationsService {
     };
   }
 
-  async listDrivers(page: number, limit: number, approvalStatus?: any) {
-    const result = await this.repository.listDrivers(page, limit, approvalStatus);
+  async listDrivers(
+    page: number,
+    limit: number,
+    approvalStatus?: any,
+    from?: Date,
+    to?: Date,
+  ) {
+    const result = await this.repository.listDrivers(
+      page,
+      limit,
+      approvalStatus,
+      from,
+      to,
+    );
     const summaries = await this.repository.getDriverComplianceSummaries(
       result.items.map((driver) => driver.id),
     );
@@ -176,17 +188,13 @@ export class DriverOperationsService {
       ...result,
       items: result.items.map((driver) => {
         const summary = summaries.get(driver.id)!;
-        const hasExpiredDocument = summary.documents.some(({ check }: any) => (
-          check?.status === 'expired'
-          || (
-            check?.status === 'verified'
-            && check.expiresAt
-            && new Date(check.expiresAt) <= summary.now
-          )
+        const statuses = summary.documents.map(({ requirement, check }: any) => (
+          getEffectiveDocumentStatus(requirement, check, summary.now)
         ));
-        const hasIncompleteDocument = summary.documents.some(({ check }: any) => (
-          !check || check.status !== 'verified'
-        ));
+        const hasExpiredDocument = statuses.includes('expired');
+        const hasIncompleteDocument = statuses.some(
+          (status: string) => status !== 'verified',
+        );
         return {
           ...this.sanitizeDriver(driver as Driver),
           restrictionStatus: summary.restriction ? 'active' : 'none',
@@ -200,7 +208,9 @@ export class DriverOperationsService {
           documents: summary.documents.map(({ requirement, check }: any) => ({
             requirementId: requirement.id,
             name: requirement.name,
-            status: check?.status || 'pending',
+            isActive: requirement.isActive,
+            requiresExpiry: requirement.requiresExpiry,
+            status: getEffectiveDocumentStatus(requirement, check, summary.now),
             expiresAt: check?.expiresAt || null,
           })),
         };
@@ -240,10 +250,14 @@ export class DriverOperationsService {
     idempotencyKey: string,
   ) {
     const normalizedName = payload.name.toLowerCase().replace(/\s+/g, ' ');
+    const requiresExpiry = payload.requiresExpiry ?? false;
+    const isActive = payload.isActive ?? true;
     const requestHash = await hashIdempotencyPayload({ ...payload, normalizedName });
     return this.repository.createDocumentRequirement(
       payload.name,
       normalizedName,
+      requiresExpiry,
+      isActive,
       actorId,
       idempotencyKey,
       requestHash,
@@ -276,12 +290,7 @@ export class DriverOperationsService {
     return documents.map(({ requirement, check }: any) => ({
       requirement,
       check,
-      effectiveStatus:
-        check?.status === 'verified'
-        && check.expiresAt
-        && new Date(check.expiresAt) <= now
-          ? 'expired'
-          : check?.status || 'pending',
+      effectiveStatus: getEffectiveDocumentStatus(requirement, check, now),
     }));
   }
 
@@ -293,7 +302,15 @@ export class DriverOperationsService {
     idempotencyKey: string,
   ) {
     const expiresAt = this.parseExpiry(payload.expiresAt);
-    if (payload.status === 'verified') this.ensureFutureExpiry(expiresAt);
+    const requirement = await this.repository.getDocumentRequirement(requirementId);
+    if (!requirement) {
+      throw new DriverDomainError(
+        404,
+        'DOCUMENT_REQUIREMENT_NOT_FOUND',
+        'Document requirement not found',
+      );
+    }
+    validateDocumentReviewExpiry(requirement, payload.status, expiresAt);
     const requestHash = await hashIdempotencyPayload({
       driverId,
       requirementId,
@@ -434,8 +451,14 @@ export class DriverOperationsService {
     return this.repository.listDriverTopups(driverId, page, limit);
   }
 
-  async listTopups(page: number, limit: number, status?: any) {
-    return this.repository.listTopups(page, limit, status);
+  async listTopups(
+    page: number,
+    limit: number,
+    status?: any,
+    from?: Date,
+    to?: Date,
+  ) {
+    return this.repository.listTopups(page, limit, status, from, to);
   }
 
   async reviewTopup(

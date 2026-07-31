@@ -14,7 +14,9 @@ Object.assign(process.env, {
 });
 
 const { app } = await import('../src/index.ts');
-const { SERVICE_REGISTRY } = await import('../src/config/gateway.config.ts');
+const { SERVICE_REGISTRY, validateServiceRegistry } = await import(
+  '../src/config/gateway.config.ts'
+);
 const originalFetch = globalThis.fetch;
 
 afterEach(() => {
@@ -39,11 +41,39 @@ describe('API Gateway Configuration & Zod Validation Tests', () => {
     expect(() => new URL(SERVICE_REGISTRY.location)).not.toThrow();
   });
 
+  test('fails clearly when required Admin and Location service URLs are missing', () => {
+    const incompleteEnvironment = { ...process.env };
+    delete incompleteEnvironment.ADMIN_SERVICE_URL;
+    delete incompleteEnvironment.LOCATION_SERVICE_URL;
+
+    expect(() => validateServiceRegistry(incompleteEnvironment)).toThrow(
+      /Gateway Configuration Error:[\s\S]*ADMIN_SERVICE_URL: Required[\s\S]*LOCATION_SERVICE_URL: Required/,
+    );
+  });
+
   test('GET / — returns status OK', async () => {
     const res = await app.request('/', { method: 'GET' });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.status).toBe('Gateway OK');
+  });
+
+  test('routes Admin and Location requests to their registered services', async () => {
+    const upstreamUrls: string[] = [];
+    globalThis.fetch = mock(async (input: string | URL | Request) => {
+      upstreamUrls.push(input.toString());
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+
+    const adminResponse = await app.request('/admin/v1/overview?range=today');
+    const locationResponse = await app.request('/places/v1/search?query=plaza');
+
+    expect(adminResponse.status).toBe(204);
+    expect(locationResponse.status).toBe(204);
+    expect(upstreamUrls).toEqual([
+      'http://admin-service:8089/admin/v1/overview?range=today',
+      'http://location-service:8090/places/v1/search?query=plaza',
+    ]);
   });
 
   test('strips client-supplied internal authentication headers', async () => {

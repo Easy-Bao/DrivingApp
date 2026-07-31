@@ -65,6 +65,7 @@ export interface PassengerRepository {
     endsAt?: Date | null;
     createdBy: string;
     idempotencyKey: string;
+    requestHash: string;
   }): Promise<{
     id: string;
     passengerId: string;
@@ -78,7 +79,13 @@ export interface PassengerRepository {
     endsAt: Date | null;
     revokedAt: Date | null;
   }>>;
-  revokeRestriction(restrictionId: string): Promise<{
+  revokeRestriction(input: {
+    restrictionId: string;
+    reason: string;
+    liftedBy: string;
+    idempotencyKey: string;
+    requestHash: string;
+  }): Promise<{
     id: string;
     passengerId: string;
     reason: string;

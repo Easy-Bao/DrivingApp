@@ -44,7 +44,12 @@ export class JsonWebTokenService {
     try {
       const secret = JsonWebTokenService.getJwtSecret();
       const decoded = jwt.verify(token, secret) as unknown as DecodedJwtTokenPayload;
-      if (!decoded || typeof decoded.sub !== 'string' || typeof decoded.email !== 'string') {
+      if (
+        !decoded ||
+        typeof decoded.sub !== 'string' ||
+        typeof decoded.email !== 'string' ||
+        typeof decoded.role !== 'string'
+      ) {
         throw new Error('Invalid token payload structure');
       }
       return {
@@ -55,5 +60,15 @@ export class JsonWebTokenService {
     } catch (_) {
       throw new Error('Invalid or expired authentication token');
     }
+  }
+
+  static verifyAdminJsonWebToken(
+    token: string,
+  ): { userId: string; email: string; role: 'admin' } {
+    const decoded = JsonWebTokenService.verifyJsonWebToken(token);
+    if (decoded.role !== 'admin') {
+      throw new Error('Admin access is required');
+    }
+    return { ...decoded, role: 'admin' };
   }
 }

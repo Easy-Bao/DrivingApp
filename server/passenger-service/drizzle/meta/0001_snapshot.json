@@ -1,0 +1,306 @@
+{
+  "id": "a2e2a4cc-f8cc-493e-8e0a-9c9a39d286b5",
+  "prevId": "59cba372-6f1f-4b9d-9e16-f2b1fe4e9fec",
+  "version": "6",
+  "dialect": "postgresql",
+  "tables": {
+    "public.passengers": {
+      "name": "passengers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preferred_ride_type": {
+          "name": "preferred_ride_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "is_verified": {
+          "name": "is_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "passengers_email_unique": {
+          "name": "passengers_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      }
+    },
+    "public.ride_requests": {
+      "name": "ride_requests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "passenger_id": {
+          "name": "passenger_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ride_type": {
+          "name": "ride_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pickup_latitude": {
+          "name": "pickup_latitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pickup_longitude": {
+          "name": "pickup_longitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pickup_name": {
+          "name": "pickup_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dropoff_latitude": {
+          "name": "dropoff_latitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dropoff_longitude": {
+          "name": "dropoff_longitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dropoff_name": {
+          "name": "dropoff_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fare": {
+          "name": "fare",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ride_requests_passenger_id_passengers_id_fk": {
+          "name": "ride_requests_passenger_id_passengers_id_fk",
+          "tableFrom": "ride_requests",
+          "tableTo": "passengers",
+          "columnsFrom": [
+            "passenger_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.passenger_restrictions": {
+      "name": "passenger_restrictions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "passenger_id": {
+          "name": "passenger_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lifted_by": {
+          "name": "lifted_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lift_reason": {
+          "name": "lift_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lift_idempotency_key": {
+          "name": "lift_idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lift_request_hash": {
+          "name": "lift_request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "passenger_restrictions_idempotency_unique": {
+          "name": "passenger_restrictions_idempotency_unique",
+          "columns": [
+            "idempotency_key"
+          ],
+          "isUnique": true
+        },
+        "passenger_restrictions_lift_idempotency_unique": {
+          "name": "passenger_restrictions_lift_idempotency_unique",
+          "columns": [
+            "lift_idempotency_key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "passenger_restrictions_passenger_id_passengers_id_fk": {
+          "name": "passenger_restrictions_passenger_id_passengers_id_fk",
+          "tableFrom": "passenger_restrictions",
+          "tableTo": "passengers",
+          "columnsFrom": [
+            "passenger_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

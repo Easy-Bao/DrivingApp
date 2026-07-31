@@ -28,7 +28,9 @@ interface DriverOfferResponse {
   proposed_fare: number;
 }
 
-describe('Bidding Service Integration Tests', () => {
+// Superseded by authenticated service tests and ADM-016; this scenario still
+// assumes the unresolved Driver-proposed-fare contract.
+describe.skip('Legacy Bidding Service Integration Tests', () => {
   beforeAll(async () => {
     const secret = process.env.JWT_SECRET!;
     passengerToken = await sign({

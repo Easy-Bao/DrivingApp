@@ -2,6 +2,7 @@ import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { ProvisionAdminSchema } from '../features/schemas/admin/admin.zod.ts';
 import { DrizzleAdminAccountRepository } from '../features/repositories/admin/admin.repository.ts';
+import { AdminOwnerProvisioningService } from '../features/services/admin/admin.service.ts';
 import { authPostgresClient } from '../shared/admin.drizzle.ts';
 
 type WritableReadline = ReturnType<typeof createInterface> & {
@@ -39,8 +40,9 @@ async function main(): Promise<void> {
 
     const input = ProvisionAdminSchema.parse({ email, password });
     const passwordHash = await Bun.password.hash(input.password);
-    const result = await new DrizzleAdminAccountRepository()
-      .provisionOwner(input.email, passwordHash);
+    const result = await new AdminOwnerProvisioningService(
+      new DrizzleAdminAccountRepository(),
+    ).provisionOwner(input.email, passwordHash);
 
     stdout.write(
       result === 'created'

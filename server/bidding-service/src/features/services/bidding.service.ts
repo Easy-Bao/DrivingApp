@@ -92,6 +92,14 @@ export class BiddingService {
     throw new HTTPException(500, { message: 'BIDDING_OPERATION_FAILED' });
   }
 
+  private async ensurePassengerRideAccess(passengerId: string) {
+    try {
+      await this.passengerClient.checkRideAccess(passengerId);
+    } catch (error) {
+      this.throwPublicError(error);
+    }
+  }
+
   private formatOffer(offer: DriverOffer) {
     return {
       id: offer.id,
@@ -297,6 +305,7 @@ export class BiddingService {
       ? session.offeredFareCentavos
       : Math.round(offerData.proposed_fare * 100);
     try {
+      await this.ensurePassengerRideAccess(session.passengerId);
       const profile = await this.validateDriverForOffer(
         session,
         driverId,
@@ -462,6 +471,9 @@ export class BiddingService {
       await this.repository.updateSessionStatus(sessionId, 'canceled');
       throw new HTTPException(409, { message: 'BID_SESSION_EXPIRED' });
     }
+    if (session.status === 'open') {
+      await this.ensurePassengerRideAccess(session.passengerId);
+    }
     const offer = session.offers.find((candidate) => (
       candidate.id === offerId
       && (
@@ -522,6 +534,7 @@ export class BiddingService {
 
     let offer: DriverOffer | undefined;
     try {
+      await this.ensurePassengerRideAccess(session.passengerId);
       const profile = await this.validateDriverForOffer(
         session,
         driverId,

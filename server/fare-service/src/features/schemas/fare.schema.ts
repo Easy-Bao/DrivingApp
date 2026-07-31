@@ -34,9 +34,9 @@ export const RecordFareSnapshotSchema = z.object({
   rideId: z.string().min(1),
   driverId: z.string().min(1),
   serviceType: z.string().min(1),
-  totalFareCentavos: z.number().int().nonnegative(),
+  totalFareCentavos: z.number().int().nonnegative().max(2_147_483_647),
   commissionRateBasisPoints: z.number().int().min(0).max(10_000),
-  commissionCentavos: z.number().int().nonnegative(),
+  commissionCentavos: z.number().int().nonnegative().max(2_147_483_647),
   assignmentSource: z.enum(['driver_offer', 'admin']),
 });
 

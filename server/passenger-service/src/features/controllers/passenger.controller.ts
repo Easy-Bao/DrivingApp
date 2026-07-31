@@ -3,9 +3,22 @@ import { verify } from 'hono/jwt';
 import { HTTPException } from 'hono/http-exception';
 import { PassengerRepositoryImpl } from '../repositories/passenger.repository.ts';
 import { PassengerService } from '../services/passenger.service.ts';
+import { requireAdminActorHeader } from '../schemas/passenger.schema.ts';
 
 const passengerRepository = new PassengerRepositoryImpl();
 const passengerService = new PassengerService(passengerRepository);
+
+export function requireAdminActor(context: Context): string {
+  return requireAdminActorHeader(context.req.header('x-admin-id'));
+}
+
+function requireIdempotencyKey(context: Context): string {
+  const key = context.req.header('Idempotency-Key')?.trim();
+  if (!key || key.length > 200) {
+    throw new HTTPException(422, { message: 'INVALID_IDEMPOTENCY_KEY' });
+  }
+  return key;
+}
 
 export async function handleGetPassengerProfile(context: Context) {
   const passengerIdFromRoute = context.req.param('id')!;
@@ -109,23 +122,18 @@ export async function handleGetPassengerRideAccess(context: Context) {
 }
 
 export async function handleRestrictPassenger(context: Context) {
-  const body = await context.req.json() as {
+  const body = context.req.valid('json' as never) as {
     case_id?: string | null;
     ends_at?: string | null;
     reason: string;
-    admin_id: string;
   };
-  const idempotencyKey = context.req.header('Idempotency-Key');
-  if (!idempotencyKey) {
-    throw new HTTPException(400, { message: 'Idempotency-Key header is required' });
-  }
   const result = await passengerService.restrictPassenger({
     passengerId: context.req.param('id')!,
     caseId: body.case_id,
     reason: body.reason,
     endsAt: body.ends_at ? new Date(body.ends_at) : null,
-    createdBy: body.admin_id,
-    idempotencyKey,
+    createdBy: requireAdminActor(context),
+    idempotencyKey: requireIdempotencyKey(context),
   });
   return context.json(result, 201);
 }
@@ -138,18 +146,13 @@ export async function handleListPassengerRestrictions(context: Context) {
 }
 
 export async function handleLiftPassengerRestriction(context: Context) {
-  const idempotencyKey = context.req.header('Idempotency-Key');
-  if (!idempotencyKey) {
-    throw new HTTPException(400, { message: 'Idempotency-Key header is required' });
-  }
-  const { reason, admin_id: adminId } = await context.req.json() as {
+  const { reason } = context.req.valid('json' as never) as {
     reason: string;
-    admin_id: string;
   };
   return context.json(await passengerService.liftPassengerRestriction({
     restrictionId: context.req.param('restrictionId')!,
     reason,
-    adminId,
-    idempotencyKey,
+    adminId: requireAdminActor(context),
+    idempotencyKey: requireIdempotencyKey(context),
   }), 200);
 }

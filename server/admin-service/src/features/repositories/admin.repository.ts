@@ -1,4 +1,4 @@
-import { and, desc, eq, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import { db } from '../../shared/drizzle.ts';
 import {
   adminAuditEvents,
@@ -7,6 +7,8 @@ import {
   complaintCases,
   serviceZones,
 } from '../../db/schema.ts';
+
+export type AdminExecutor = Pick<typeof db, 'select' | 'insert' | 'update'>;
 
 export type AuditInput = {
   actorAdminId: string;
@@ -21,8 +23,21 @@ export type AuditInput = {
 };
 
 export class AdminRepository {
-  async findMutationResult(requestId: string) {
-    const [result] = await db.select()
+  /** Serializes retries for one key and supplies one transaction to Admin-local writes. */
+  async withMutationLock<T>(
+    requestId: string,
+    operation: (transaction: AdminExecutor) => Promise<T>,
+  ): Promise<T> {
+    return await db.transaction(async (transaction) => {
+      await transaction.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${`admin-mutation:${requestId}`}))`,
+      );
+      return await operation(transaction);
+    });
+  }
+
+  async findMutationResult(requestId: string, executor: AdminExecutor = db) {
+    const [result] = await executor.select()
       .from(adminMutationResults)
       .where(eq(adminMutationResults.requestId, requestId))
       .limit(1);
@@ -32,29 +47,60 @@ export class AdminRepository {
   async saveMutationResult(input: {
     requestId: string;
     action: string;
+    targetType: string;
+    targetId?: string | null;
+    requestHash: string;
     response: unknown;
-  }) {
-    const [result] = await db.insert(adminMutationResults)
+  }, executor: AdminExecutor = db) {
+    const [result] = await executor.insert(adminMutationResults)
       .values(input)
       .onConflictDoNothing()
       .returning();
     if (result) return result;
-    return await this.findMutationResult(input.requestId);
+    return await this.findMutationResult(input.requestId, executor);
   }
 
-  async appendAudit(input: AuditInput) {
-    const [event] = await db.insert(adminAuditEvents)
+  async appendAudit(input: AuditInput, executor: AdminExecutor = db) {
+    const [event] = await executor.insert(adminAuditEvents)
       .values(input)
       .returning();
     return event;
   }
 
-  async listAudits(limit: number, offset: number) {
+  async listAudits(input: {
+    outcome?: string;
+    from?: Date;
+    to?: Date;
+    limit: number;
+    offset: number;
+  }) {
+    const conditions = [
+      input.outcome ? eq(adminAuditEvents.outcome, input.outcome) : undefined,
+      input.from ? gte(adminAuditEvents.createdAt, input.from) : undefined,
+      input.to ? lte(adminAuditEvents.createdAt, input.to) : undefined,
+    ].filter(Boolean);
     return await db.select()
       .from(adminAuditEvents)
+      .where(conditions.length > 0 ? and(...conditions as any[]) : undefined)
       .orderBy(desc(adminAuditEvents.createdAt))
-      .limit(limit)
-      .offset(offset);
+      .limit(input.limit)
+      .offset(input.offset);
+  }
+
+  async countAudits(input: {
+    outcome?: string;
+    from?: Date;
+    to?: Date;
+  }) {
+    const conditions = [
+      input.outcome ? eq(adminAuditEvents.outcome, input.outcome) : undefined,
+      input.from ? gte(adminAuditEvents.createdAt, input.from) : undefined,
+      input.to ? lte(adminAuditEvents.createdAt, input.to) : undefined,
+    ].filter(Boolean);
+    const [row] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(adminAuditEvents)
+      .where(conditions.length > 0 ? and(...conditions as any[]) : undefined);
+    return row?.count ?? 0;
   }
 
   async listZones() {
@@ -63,16 +109,20 @@ export class AdminRepository {
       .orderBy(serviceZones.name);
   }
 
-  async findZone(psgcCode: string) {
-    const [zone] = await db.select()
+  async findZone(psgcCode: string, executor: AdminExecutor = db) {
+    const [zone] = await executor.select()
       .from(serviceZones)
       .where(eq(serviceZones.psgcCode, psgcCode))
       .limit(1);
     return zone ?? null;
   }
 
-  async setZoneActive(psgcCode: string, isActive: boolean) {
-    const [zone] = await db.update(serviceZones)
+  async setZoneActive(
+    psgcCode: string,
+    isActive: boolean,
+    executor: AdminExecutor = db,
+  ) {
+    const [zone] = await executor.update(serviceZones)
       .set({ isActive, updatedAt: new Date() })
       .where(eq(serviceZones.psgcCode, psgcCode))
       .returning();
@@ -86,8 +136,8 @@ export class AdminRepository {
       .orderBy(serviceZones.name);
   }
 
-  async getCurrentCommission(at: Date = new Date()) {
-    const [policy] = await db.select()
+  async getCurrentCommission(at: Date = new Date(), executor: AdminExecutor = db) {
+    const [policy] = await executor.select()
       .from(commissionPolicies)
       .where(lte(commissionPolicies.effectiveAt, at))
       .orderBy(desc(commissionPolicies.effectiveAt))
@@ -106,8 +156,8 @@ export class AdminRepository {
     effectiveAt: Date;
     createdBy: string;
     reason: string;
-  }) {
-    const [policy] = await db.insert(commissionPolicies)
+  }, executor: AdminExecutor = db) {
+    const [policy] = await executor.insert(commissionPolicies)
       .values(input)
       .returning();
     return policy;
@@ -115,19 +165,42 @@ export class AdminRepository {
 
   async listCases(input: {
     status?: string;
+    from?: Date;
+    to?: Date;
     limit: number;
     offset: number;
   }) {
+    const conditions = [
+      input.status ? eq(complaintCases.status, input.status) : undefined,
+      input.from ? gte(complaintCases.createdAt, input.from) : undefined,
+      input.to ? lte(complaintCases.createdAt, input.to) : undefined,
+    ].filter(Boolean);
     return await db.select()
       .from(complaintCases)
-      .where(input.status ? eq(complaintCases.status, input.status) : undefined)
+      .where(conditions.length > 0 ? and(...conditions as any[]) : undefined)
       .orderBy(desc(complaintCases.createdAt))
       .limit(input.limit)
       .offset(input.offset);
   }
 
-  async findCase(id: string) {
-    const [caseRecord] = await db.select()
+  async countCases(input: {
+    status?: string;
+    from?: Date;
+    to?: Date;
+  }) {
+    const conditions = [
+      input.status ? eq(complaintCases.status, input.status) : undefined,
+      input.from ? gte(complaintCases.createdAt, input.from) : undefined,
+      input.to ? lte(complaintCases.createdAt, input.to) : undefined,
+    ].filter(Boolean);
+    const [row] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(complaintCases)
+      .where(conditions.length > 0 ? and(...conditions as any[]) : undefined);
+    return row?.count ?? 0;
+  }
+
+  async findCase(id: string, executor: AdminExecutor = db) {
+    const [caseRecord] = await executor.select()
       .from(complaintCases)
       .where(eq(complaintCases.id, id))
       .limit(1);
@@ -141,8 +214,8 @@ export class AdminRepository {
     category: string;
     notes: string;
     createdBy: string;
-  }) {
-    const [caseRecord] = await db.insert(complaintCases)
+  }, executor: AdminExecutor = db) {
+    const [caseRecord] = await executor.insert(complaintCases)
       .values(input)
       .returning();
     return caseRecord;
@@ -152,8 +225,8 @@ export class AdminRepository {
     status: string;
     resolution?: string | null;
     restrictionId?: string | null;
-  }) {
-    const [caseRecord] = await db.update(complaintCases)
+  }, executor: AdminExecutor = db) {
+    const [caseRecord] = await executor.update(complaintCases)
       .set({
         ...input,
         resolvedAt: input.status === 'resolved' || input.status === 'dismissed'

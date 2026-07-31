@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db, postgresClient } from '../shared/drizzle.ts';
 import { commissionPolicies, serviceZones } from './schema.ts';
 
@@ -86,49 +86,73 @@ async function readInterimGeometry(): Promise<Map<string, Record<string, unknown
 async function seed() {
   const geometryByCode = await readInterimGeometry();
 
-  for (const [psgcCode, correspondenceCode, name] of PAGADIAN_BARANGAYS) {
-    await db.insert(serviceZones)
-      .values({
-        psgcCode,
-        correspondenceCode,
-        name,
-        isActive: false,
-        geometry: geometryByCode.get(psgcCode) ?? geometryByCode.get(correspondenceCode) ?? null,
-        sourceName: geometryByCode.size > 0
-          ? 'UN OCHA HDX Philippines administrative boundaries'
-          : 'Philippine Statistics Authority PSGC roster',
-        sourceUrl: geometryByCode.size > 0
-          ? 'https://data.humdata.org/dataset/cod-ab-phl'
-          : SOURCE_URL,
-        sourceDate: geometryByCode.size > 0 ? 'interim; verify before public launch' : '2026-06-30',
-        sourceLicense: geometryByCode.size > 0 ? 'CC BY 3.0 IGO' : 'CC BY 4.0',
-      })
-      .onConflictDoUpdate({
-        target: serviceZones.psgcCode,
-        set: {
+  await db.transaction(async (transaction) => {
+    await transaction.execute(
+      sql`select pg_advisory_xact_lock(hashtext('admin-service.seed'))`,
+    );
+
+    for (const [psgcCode, correspondenceCode, name] of PAGADIAN_BARANGAYS) {
+      const geometry =
+        geometryByCode.get(psgcCode) ?? geometryByCode.get(correspondenceCode) ?? null;
+      const sourceName = geometryByCode.size > 0
+        ? 'UN OCHA HDX Philippines administrative boundaries'
+        : 'Philippine Statistics Authority PSGC roster';
+      const sourceUrl = geometryByCode.size > 0
+        ? 'https://data.humdata.org/dataset/cod-ab-phl'
+        : SOURCE_URL;
+      const sourceDate =
+        geometryByCode.size > 0 ? 'interim; verify before public launch' : '2026-06-30';
+      const sourceLicense = geometryByCode.size > 0 ? 'CC BY 3.0 IGO' : 'CC BY 4.0';
+
+      await transaction.insert(serviceZones)
+        .values({
+          psgcCode,
           correspondenceCode,
           name,
-          geometry: geometryByCode.get(psgcCode) ?? geometryByCode.get(correspondenceCode) ?? null,
-          updatedAt: new Date(),
-        },
-      });
-  }
+          isActive: false,
+          geometry,
+          sourceName,
+          sourceUrl,
+          sourceDate,
+          sourceLicense,
+        })
+        .onConflictDoUpdate({
+          target: serviceZones.psgcCode,
+          set: {
+            correspondenceCode,
+            name,
+            geometry,
+            sourceName,
+            sourceUrl,
+            sourceDate,
+            sourceLicense,
+            updatedAt: new Date(),
+          },
+        });
+    }
 
-  const [existingPolicy] = await db.select()
-    .from(commissionPolicies)
-    .where(eq(commissionPolicies.rateBasisPoints, 1000))
-    .limit(1);
-  if (!existingPolicy) {
-    await db.insert(commissionPolicies).values({
-      rateBasisPoints: 1000,
-      effectiveAt: new Date(0),
-      createdBy: 'system',
-      reason: 'Initial BaoBao MVP commission',
-    });
-  }
+    const [existingPolicy] = await transaction.select()
+      .from(commissionPolicies)
+      .where(and(
+        eq(commissionPolicies.rateBasisPoints, 1000),
+        eq(commissionPolicies.effectiveAt, new Date(0)),
+      ))
+      .limit(1);
+    if (!existingPolicy) {
+      await transaction.insert(commissionPolicies).values({
+        rateBasisPoints: 1000,
+        effectiveAt: new Date(0),
+        createdBy: 'system',
+        reason: 'Initial BaoBao MVP commission',
+      });
+    }
+  });
 
   console.log(`Seeded ${PAGADIAN_BARANGAYS.length} Pagadian barangays; ${geometryByCode.size} geometries loaded.`);
 }
 
-await seed();
-await postgresClient.end();
+try {
+  await seed();
+} finally {
+  await postgresClient.end();
+}

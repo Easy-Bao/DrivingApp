@@ -1,5 +1,5 @@
 import { db } from '../../shared/drizzle.ts';
-import { and, desc, eq, gte, lte } from 'drizzle-orm';
+import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
 import { servicePricingRules, ratingPricingConfigs, fareTransactions } from '../../db/schema.ts';
 
 export interface RatingPricingConfig {
@@ -69,12 +69,30 @@ export class PricingConfigService {
       input.from ? gte(fareTransactions.createdAt, new Date(input.from)) : undefined,
       input.to ? lte(fareTransactions.createdAt, new Date(input.to)) : undefined,
     ].filter(Boolean);
-    const limit = Math.min(10_000, Math.max(1, input.limit));
-    return await db.select()
-      .from(fareTransactions)
-      .where(conditions.length > 0 ? and(...conditions as any[]) : undefined)
-      .orderBy(desc(fareTransactions.createdAt))
-      .limit(limit)
-      .offset((Math.max(1, input.page) - 1) * limit);
+    const page = Number.isFinite(input.page)
+      ? Math.max(1, Math.trunc(input.page))
+      : 1;
+    const limit = Number.isFinite(input.limit)
+      ? Math.min(100, Math.max(1, Math.trunc(input.limit)))
+      : 100;
+    const where = conditions.length > 0 ? and(...conditions as any[]) : undefined;
+    const [items, [totalRow]] = await Promise.all([
+      db.select()
+        .from(fareTransactions)
+        .where(where)
+        .orderBy(desc(fareTransactions.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit),
+      db.select({ value: count() })
+        .from(fareTransactions)
+        .where(where),
+    ]);
+
+    return {
+      items,
+      page,
+      limit,
+      total: totalRow?.value ?? 0,
+    };
   }
 }

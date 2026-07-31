@@ -4,12 +4,19 @@ import { sign } from 'hono/jwt';
 import {
   calculateCommissionCentavos,
   DriverDomainError,
+  getEffectiveDocumentStatus,
   hashIdempotencyPayload,
+  isDocumentRequirementSatisfied,
   normalizePaymentReference,
+  validateDocumentReviewExpiry,
 } from '../../src/features/entities/driver_operations.types.ts';
 import {
+  AdminDriverListQuerySchema,
+  AdminTopupListQuerySchema,
+  CreateDocumentRequirementSchema,
   CreateTopupRequestSchema,
   ReserveCreditSchema,
+  UpdateDocumentRequirementSchema,
 } from '../../src/features/schemas/driver_operations.schema.ts';
 import {
   driverAuthMiddleware,
@@ -18,6 +25,19 @@ import {
 } from '../../src/shared/middleware/auth.ts';
 
 describe('driver service-credit rules', () => {
+  test('validates Admin report date ranges', () => {
+    const valid = {
+      from: '2026-07-01T00:00:00.000Z',
+      to: '2026-07-31T23:59:59.999Z',
+    };
+    expect(AdminDriverListQuerySchema.safeParse(valid).success).toBe(true);
+    expect(AdminTopupListQuerySchema.safeParse(valid).success).toBe(true);
+    expect(AdminDriverListQuerySchema.safeParse({
+      ...valid,
+      from: '2026-08-01T00:00:00.000Z',
+    }).success).toBe(false);
+  });
+
   test('calculates the 10% commission in exact centavos', () => {
     expect(calculateCommissionCentavos(12_345)).toBe(1_235);
     expect(calculateCommissionCentavos(10_000, 500)).toBe(500);
@@ -71,6 +91,78 @@ describe('driver service-credit rules', () => {
   });
 });
 
+describe('driver document requirement rules', () => {
+  const now = new Date('2026-07-31T00:00:00.000Z');
+  const verifiedWithoutExpiry = {
+    status: 'verified' as const,
+    expiresAt: null,
+  };
+
+  test('accepts additive expiry and active-state fields at API boundaries', () => {
+    expect(CreateDocumentRequirementSchema.parse({
+      name: 'Driver License',
+      isActive: false,
+      requiresExpiry: true,
+    })).toEqual({
+      name: 'Driver License',
+      isActive: false,
+      requiresExpiry: true,
+    });
+    expect(UpdateDocumentRequirementSchema.parse({
+      isActive: false,
+      requiresExpiry: true,
+    })).toEqual({
+      isActive: false,
+      requiresExpiry: true,
+    });
+    expect(UpdateDocumentRequirementSchema.safeParse({}).success).toBe(false);
+  });
+
+  test('requires a future expiry only when a verified requirement says so', () => {
+    expect(() => validateDocumentReviewExpiry(
+      { requiresExpiry: true },
+      'verified',
+      null,
+      now,
+    )).toThrow(DriverDomainError);
+    expect(() => validateDocumentReviewExpiry(
+      { requiresExpiry: true },
+      'verified',
+      new Date('2026-07-30T23:59:59.000Z'),
+      now,
+    )).toThrow(DriverDomainError);
+    expect(() => validateDocumentReviewExpiry(
+      { requiresExpiry: false },
+      'verified',
+      null,
+      now,
+    )).not.toThrow();
+  });
+
+  test('reevaluates existing checks when expiry policy or active state changes', () => {
+    expect(getEffectiveDocumentStatus(
+      { requiresExpiry: false },
+      verifiedWithoutExpiry,
+      now,
+    )).toBe('verified');
+    expect(getEffectiveDocumentStatus(
+      { requiresExpiry: true },
+      verifiedWithoutExpiry,
+      now,
+    )).toBe('pending');
+    expect(isDocumentRequirementSatisfied(
+      { isActive: true, requiresExpiry: true },
+      verifiedWithoutExpiry,
+      now,
+    )).toBe(false);
+    expect(isDocumentRequirementSatisfied(
+      { isActive: false, requiresExpiry: true },
+      null,
+      now,
+    )).toBe(true);
+  });
+});
+
 describe('driver-service authentication boundaries', () => {
   test('accepts only a driver JWT on public self-service routes', async () => {
     process.env.JWT_SECRET = 'driver-service-unit-test-secret';
@@ -115,5 +207,39 @@ describe('driver-service authentication boundaries', () => {
         'x-internal-service-token': process.env.INTERNAL_SERVICE_TOKEN,
       },
     })).status).toBe(200);
+  });
+
+  test('reports missing Admin actor and idempotency headers accurately', async () => {
+    process.env.INTERNAL_SERVICE_TOKEN = 'internal-unit-test-token';
+    const { app } = await import('../../src/index.ts');
+    const body = JSON.stringify({ name: 'Driver License' });
+    const baseHeaders = {
+      'content-type': 'application/json',
+      'x-internal-service-token': process.env.INTERNAL_SERVICE_TOKEN,
+    };
+
+    const missingActor = await app.request('/drivers/admin/document-requirements', {
+      method: 'POST',
+      headers: baseHeaders,
+      body,
+    });
+    expect(missingActor.status).toBe(422);
+    expect(await missingActor.json()).toMatchObject({ code: 'INVALID_ACTOR' });
+
+    const missingIdempotencyKey = await app.request(
+      '/drivers/admin/document-requirements',
+      {
+        method: 'POST',
+        headers: {
+          ...baseHeaders,
+          'x-admin-id': 'owner-1',
+        },
+        body,
+      },
+    );
+    expect(missingIdempotencyKey.status).toBe(422);
+    expect(await missingIdempotencyKey.json()).toMatchObject({
+      code: 'INVALID_IDEMPOTENCY_KEY',
+    });
   });
 });

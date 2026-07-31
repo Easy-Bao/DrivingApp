@@ -32,6 +32,9 @@ export const adminAuditEvents = pgTable('admin_audit_events', {
 export const adminMutationResults = pgTable('admin_mutation_results', {
   requestId: text('request_id').primaryKey(),
   action: text('action').notNull(),
+  targetType: text('target_type').notNull(),
+  targetId: text('target_id'),
+  requestHash: text('request_hash').notNull(),
   response: jsonb('response').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
     .defaultNow()

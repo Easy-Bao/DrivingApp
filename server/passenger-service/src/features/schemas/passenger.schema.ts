@@ -1,4 +1,15 @@
 import { z } from 'zod';
+import { HTTPException } from 'hono/http-exception';
+
+export const AdminActorHeaderSchema = z.string().trim().min(1).max(128);
+
+export function requireAdminActorHeader(value: string | undefined): string {
+  const actor = AdminActorHeaderSchema.safeParse(value);
+  if (!actor.success) {
+    throw new HTTPException(422, { message: 'INVALID_ADMIN_ACTOR' });
+  }
+  return actor.data;
+}
 
 export const CreatePassengerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -38,10 +49,8 @@ export const RestrictPassengerSchema = z.object({
   case_id: z.string().nullable().optional(),
   ends_at: z.string().datetime().nullable().optional(),
   reason: z.string().min(3).max(1000),
-  admin_id: z.string().min(1),
 });
 
 export const LiftPassengerRestrictionSchema = z.object({
   reason: z.string().min(3).max(1000),
-  admin_id: z.string().min(1),
 });

@@ -1,5 +1,33 @@
 import { z } from 'zod';
 
+const FilterDateSchema = z.string().refine(
+  (value) => Number.isFinite(new Date(value).getTime()),
+  'Invalid date filter',
+);
+
+const ListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  from: FilterDateSchema.optional(),
+  to: FilterDateSchema.optional(),
+});
+
+export const CaseListQuerySchema = ListQuerySchema.extend({
+  status: z.enum(['open', 'under_review', 'resolved', 'dismissed']).optional(),
+}).refine((value) => (
+  !value.from || !value.to || new Date(value.from) <= new Date(value.to)
+), {
+  message: 'from must not be after to',
+});
+
+export const AuditListQuerySchema = ListQuerySchema.extend({
+  status: z.enum(['succeeded', 'failed']).optional(),
+}).refine((value) => (
+  !value.from || !value.to || new Date(value.from) <= new Date(value.to)
+), {
+  message: 'from must not be after to',
+});
+
 export const ApprovalSchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected']),
   reason: z.string().min(3).max(1000),
@@ -10,6 +38,19 @@ export const DocumentRequirementSchema = z.object({
   requires_expiry: z.boolean().default(false),
   is_active: z.boolean().default(true),
   reason: z.string().min(3).max(1000),
+});
+
+export const DocumentRequirementUpdateSchema = z.object({
+  name: z.string().min(2).max(120).optional(),
+  requires_expiry: z.boolean().optional(),
+  is_active: z.boolean().optional(),
+  reason: z.string().min(3).max(1000),
+}).refine((value) => (
+  value.name !== undefined
+  || value.requires_expiry !== undefined
+  || value.is_active !== undefined
+), {
+  message: 'At least one requirement field must be supplied',
 });
 
 export const DocumentReviewSchema = z.object({
@@ -84,8 +125,19 @@ export const ComplaintCreateSchema = z.object({
 
 export const ComplaintUpdateSchema = z.object({
   status: z.enum(['open', 'under_review', 'resolved', 'dismissed']),
-  resolution: z.string().max(5000).nullable().optional(),
+  resolution: z.string().trim().max(5000).nullable().optional(),
   reason: z.string().min(3).max(1000),
+}).superRefine((value, context) => {
+  if (
+    (value.status === 'resolved' || value.status === 'dismissed')
+    && !value.resolution
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'A resolution is required when closing a case',
+      path: ['resolution'],
+    });
+  }
 });
 
 export const RestrictionSchema = z.object({

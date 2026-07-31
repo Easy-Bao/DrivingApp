@@ -8,7 +8,7 @@ function requireIdempotencyKey(context: Context): string {
   if (!key || key.length > 200) {
     throw new DriverDomainError(
       422,
-      'INVALID_ACTOR',
+      'INVALID_IDEMPOTENCY_KEY',
       'A valid Idempotency-Key header is required',
     );
   }
@@ -20,7 +20,7 @@ function requireAdminActor(context: Context): string {
   if (!actorId || actorId.length > 128) {
     throw new DriverDomainError(
       422,
-      'INVALID_IDEMPOTENCY_KEY',
+      'INVALID_ACTOR',
       'A valid x-admin-id header is required',
     );
   }
@@ -121,12 +121,18 @@ export async function handleListOwnTopups(
 
 export async function handleListAdminDrivers(context: Context) {
   const { page, limit } = pagination(context);
-  const query = validatedQuery<{ approvalStatus?: string }>(context);
+  const query = validatedQuery<{
+    approvalStatus?: string;
+    from?: string;
+    to?: string;
+  }>(context);
   return context.json(
     await driverOperationsService.listDrivers(
       page,
       limit,
       query.approvalStatus,
+      query.from ? new Date(query.from) : undefined,
+      query.to ? new Date(query.to) : undefined,
     ),
     200,
   );
@@ -300,12 +306,18 @@ export async function handleUpdateAdminTopupChannel(context: Context) {
 
 export async function handleListAdminTopups(context: Context) {
   const { page, limit } = pagination(context);
-  const query = validatedQuery<{ status?: string }>(context);
+  const query = validatedQuery<{
+    status?: string;
+    from?: string;
+    to?: string;
+  }>(context);
   return context.json(
     await driverOperationsService.listTopups(
       page,
       limit,
       query.status,
+      query.from ? new Date(query.from) : undefined,
+      query.to ? new Date(query.to) : undefined,
     ),
     200,
   );

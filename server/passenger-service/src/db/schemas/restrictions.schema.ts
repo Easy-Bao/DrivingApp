@@ -18,10 +18,17 @@ export const passengerRestrictions = pgTable('passenger_restrictions', {
   revokedAt: timestamp('revoked_at', { withTimezone: true, mode: 'date' }),
   createdBy: text('created_by').notNull(),
   idempotencyKey: text('idempotency_key').notNull(),
+  requestHash: text('request_hash'),
+  liftedBy: text('lifted_by'),
+  liftReason: text('lift_reason'),
+  liftIdempotencyKey: text('lift_idempotency_key'),
+  liftRequestHash: text('lift_request_hash'),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
     .defaultNow()
     .notNull(),
 }, (table) => ({
   idempotencyUnique: uniqueIndex('passenger_restrictions_idempotency_unique')
     .on(table.idempotencyKey),
+  liftIdempotencyUnique: uniqueIndex('passenger_restrictions_lift_idempotency_unique')
+    .on(table.liftIdempotencyKey),
 }));

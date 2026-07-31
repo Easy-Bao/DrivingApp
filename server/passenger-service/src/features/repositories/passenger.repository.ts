@@ -1,6 +1,6 @@
 import { db } from '../../shared/drizzle.ts';
 import { passengers, rideRequests, passengerRestrictions } from '../../db/schema.ts';
-import { and, eq, desc, gt, inArray, isNull, or } from 'drizzle-orm';
+import { and, eq, desc, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import {
   Passenger,
   RideRequest,
@@ -267,20 +267,38 @@ export class PassengerRepositoryImpl implements PassengerRepository {
     endsAt?: Date | null;
     createdBy: string;
     idempotencyKey: string;
+    requestHash: string;
   }) {
-    const [restriction] = await db.insert(passengerRestrictions)
-      .values(input)
-      .onConflictDoUpdate({
-        target: passengerRestrictions.idempotencyKey,
-        set: { reason: input.reason },
-      })
-      .returning();
-    return {
-      id: restriction.id,
-      passengerId: restriction.passengerId,
-      reason: restriction.reason,
-      endsAt: restriction.endsAt,
-    };
+    return await db.transaction(async (transaction) => {
+      await transaction.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${`passenger-restriction-create:${input.idempotencyKey}`}))`,
+      );
+      const [existing] = await transaction.select()
+        .from(passengerRestrictions)
+        .where(eq(passengerRestrictions.idempotencyKey, input.idempotencyKey))
+        .limit(1);
+      if (existing) {
+        if (existing.requestHash !== input.requestHash) {
+          throw new Error('IDEMPOTENCY_KEY_REUSED');
+        }
+        return {
+          id: existing.id,
+          passengerId: existing.passengerId,
+          reason: existing.reason,
+          endsAt: existing.endsAt,
+        };
+      }
+
+      const [restriction] = await transaction.insert(passengerRestrictions)
+        .values(input)
+        .returning();
+      return {
+        id: restriction.id,
+        passengerId: restriction.passengerId,
+        reason: restriction.reason,
+        endsAt: restriction.endsAt,
+      };
+    });
   }
 
   async listRestrictions(passengerId: string) {
@@ -297,29 +315,79 @@ export class PassengerRepositoryImpl implements PassengerRepository {
     }));
   }
 
-  async revokeRestriction(restrictionId: string) {
-    const [restriction] = await db.update(passengerRestrictions)
-      .set({ revokedAt: new Date() })
-      .where(and(
-        eq(passengerRestrictions.id, restrictionId),
-        isNull(passengerRestrictions.revokedAt),
-      ))
-      .returning();
-    const current = restriction ?? (
-      await db.select()
+  async revokeRestriction(input: {
+    restrictionId: string;
+    reason: string;
+    liftedBy: string;
+    idempotencyKey: string;
+    requestHash: string;
+  }) {
+    return await db.transaction(async (transaction) => {
+      await transaction.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${`passenger-restriction-lift:${input.idempotencyKey}`}))`,
+      );
+      const [existingRequest] = await transaction.select()
         .from(passengerRestrictions)
-        .where(eq(passengerRestrictions.id, restrictionId))
-        .limit(1)
-    )[0];
-    return current
-      ? {
+        .where(eq(passengerRestrictions.liftIdempotencyKey, input.idempotencyKey))
+        .limit(1);
+      if (existingRequest) {
+        if (
+          existingRequest.id !== input.restrictionId
+          || existingRequest.liftRequestHash !== input.requestHash
+        ) {
+          throw new Error('IDEMPOTENCY_KEY_REUSED');
+        }
+        return {
+          id: existingRequest.id,
+          passengerId: existingRequest.passengerId,
+          reason: existingRequest.reason,
+          endsAt: existingRequest.endsAt,
+          revokedAt: existingRequest.revokedAt,
+        };
+      }
+
+      const [restriction] = await transaction.update(passengerRestrictions)
+        .set({
+          revokedAt: new Date(),
+          liftedBy: input.liftedBy,
+          liftReason: input.reason,
+          liftIdempotencyKey: input.idempotencyKey,
+          liftRequestHash: input.requestHash,
+        })
+        .where(and(
+          eq(passengerRestrictions.id, input.restrictionId),
+          isNull(passengerRestrictions.revokedAt),
+        ))
+        .returning();
+      if (restriction) {
+        return {
+          id: restriction.id,
+          passengerId: restriction.passengerId,
+          reason: restriction.reason,
+          endsAt: restriction.endsAt,
+          revokedAt: restriction.revokedAt,
+        };
+      }
+
+      const [current] = await transaction.select()
+        .from(passengerRestrictions)
+        .where(eq(passengerRestrictions.id, input.restrictionId))
+        .limit(1);
+      if (!current) return null;
+      if (
+        current.liftIdempotencyKey === input.idempotencyKey
+        && current.liftRequestHash === input.requestHash
+      ) {
+        return {
           id: current.id,
           passengerId: current.passengerId,
           reason: current.reason,
           endsAt: current.endsAt,
           revokedAt: current.revokedAt,
-        }
-      : null;
+        };
+      }
+      throw new Error('RESTRICTION_ALREADY_LIFTED');
+    });
   }
 }
 

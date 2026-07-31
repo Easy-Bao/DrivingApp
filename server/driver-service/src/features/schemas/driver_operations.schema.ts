@@ -7,6 +7,10 @@ import {
 
 const ReasonSchema = z.string().trim().min(3).max(1_000);
 const OptionalExpirySchema = z.string().datetime({ offset: true }).nullable().optional();
+const DateRangeFields = {
+  from: z.string().datetime({ offset: true }).optional(),
+  to: z.string().datetime({ offset: true }).optional(),
+};
 
 export const PaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -15,6 +19,11 @@ export const PaginationSchema = z.object({
 
 export const AdminDriverListQuerySchema = PaginationSchema.extend({
   approvalStatus: z.enum(['pending', 'approved', 'rejected']).optional(),
+  ...DateRangeFields,
+}).refine((value) => (
+  !value.from || !value.to || new Date(value.from) <= new Date(value.to)
+), {
+  message: 'from must not be after to',
 });
 
 export const ApprovalUpdateSchema = z.object({
@@ -24,12 +33,19 @@ export const ApprovalUpdateSchema = z.object({
 
 export const CreateDocumentRequirementSchema = z.object({
   name: z.string().trim().min(2).max(120),
+  isActive: z.boolean().optional(),
+  requiresExpiry: z.boolean().optional(),
 });
 
 export const UpdateDocumentRequirementSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   isActive: z.boolean().optional(),
-}).refine((value) => value.name !== undefined || value.isActive !== undefined, {
+  requiresExpiry: z.boolean().optional(),
+}).refine((value) => (
+  value.name !== undefined
+  || value.isActive !== undefined
+  || value.requiresExpiry !== undefined
+), {
   message: 'At least one field must be supplied',
 });
 
@@ -73,6 +89,11 @@ export const CreateTopupRequestSchema = z.object({
 
 export const AdminTopupListQuerySchema = PaginationSchema.extend({
   status: z.enum(['pending', 'approved', 'rejected']).optional(),
+  ...DateRangeFields,
+}).refine((value) => (
+  !value.from || !value.to || new Date(value.from) <= new Date(value.to)
+), {
+  message: 'from must not be after to',
 });
 
 export const ReviewTopupSchema = z.object({

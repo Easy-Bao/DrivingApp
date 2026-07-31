@@ -102,6 +102,71 @@ function clients(
 }
 
 describe('BiddingService trust and assignment boundaries', () => {
+  test('blocks new bidding mutations while the passenger is restricted', async () => {
+    const mutations: string[] = [];
+    const repository = {
+      createSession: async () => {
+        mutations.push('create-session');
+        return session();
+      },
+      findSessionById: async () => session(),
+      findSessionWithOffers: async () => ({
+        ...session(),
+        offers: [offer()],
+      }),
+      findPendingOffer: async () => null,
+      createOffer: async () => {
+        mutations.push('create-offer');
+        return offer();
+      },
+      claimAssignment: async () => {
+        mutations.push('claim-assignment');
+        return { state: 'claimed' as const, session: session({ status: 'assigning' }) };
+      },
+    } as unknown as BiddingRepository;
+    const service = new BiddingService(repository, clients({
+      passengerClient: {
+        checkRideAccess: async () => {
+          throw new ServiceClientError(
+            'passenger',
+            403,
+            'ACCOUNT_RESTRICTED',
+            'ACCOUNT_RESTRICTED',
+          );
+        },
+        fetchPassengersBatch: async () => ({}),
+      },
+    }));
+    const operations = [
+      () => service.createSession({
+        ride_type: 'Solo Ride',
+        pickup_latitude: 7.82,
+        pickup_longitude: 123.43,
+        dropoff_latitude: 7.83,
+        dropoff_longitude: 123.44,
+        distance_km: 5,
+        duration_minutes: 10,
+      }, 'passenger-real'),
+      () => service.placeOffer('session-1', 'driver-real', {}),
+      () => service.acceptOffer('session-1', 'offer-1', 'passenger-real'),
+      () => service.manualAssign('session-1', 'driver-real', 'admin-1', 'manual-1'),
+    ];
+
+    for (const operation of operations) {
+      let thrown: unknown;
+      try {
+        await operation();
+      } catch (error) {
+        thrown = error;
+      }
+      expect(thrown).toMatchObject({
+        status: 403,
+        message: 'ACCOUNT_RESTRICTED',
+      });
+    }
+    expect(mutations).toEqual([]);
+  });
+
   test('uses JWT passenger identity and the fare-service snapshot', async () => {
     let created: Record<string, unknown> | undefined;
     const repository = {

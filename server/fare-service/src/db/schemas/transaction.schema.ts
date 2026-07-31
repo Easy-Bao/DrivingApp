@@ -1,4 +1,6 @@
+import { sql } from 'drizzle-orm';
 import {
+  check,
   pgTable,
   uuid,
   text,
@@ -32,4 +34,31 @@ export const fareTransactions = pgTable('fare_transactions', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   rideIdUnique: uniqueIndex('fare_transactions_ride_id_unique').on(table.rideId),
+  // Legacy rows can have an unknown rate; every rate-bearing snapshot must be exact.
+  snapshotIntegrity: check(
+    'fare_transactions_snapshot_integrity',
+    sql`${table.commissionRateBasisPoints} IS NULL OR (
+      ${table.totalFareCentavos} IS NOT NULL
+      AND ${table.driverEarningsCentavos} IS NOT NULL
+      AND ${table.platformFeeCentavos} IS NOT NULL
+      AND ${table.totalFareCentavos} >= 0
+      AND ${table.driverEarningsCentavos} >= 0
+      AND ${table.platformFeeCentavos} >= 0
+      AND ${table.commissionRateBasisPoints} BETWEEN 0 AND 10000
+      AND ${table.totalFareCentavos}::bigint =
+        ${table.driverEarningsCentavos}::bigint + ${table.platformFeeCentavos}::bigint
+      AND ${table.platformFeeCentavos} = (
+        (${table.totalFareCentavos}::bigint * ${table.commissionRateBasisPoints} + 5000)
+        / 10000
+      )::integer
+    )`,
+  ),
+  assignmentSourceAllowed: check(
+    'fare_transactions_assignment_source_allowed',
+    sql`${table.assignmentSource} IN ('driver_offer', 'admin')`,
+  ),
+  paymentStatusAllowed: check(
+    'fare_transactions_payment_status_allowed',
+    sql`${table.paymentStatus} IN ('cash_pending', 'cash_received', 'cash_disputed', 'canceled')`,
+  ),
 }));

@@ -1,6 +1,15 @@
 import { HTTPException } from 'hono/http-exception';
 import { AdminClients, ServiceName } from '../clients/admin.clients.ts';
-import { AdminRepository } from '../repositories/admin.repository.ts';
+import {
+  AdminExecutor,
+  AdminRepository,
+} from '../repositories/admin.repository.ts';
+import {
+  fingerprintMutationPayload,
+  sanitizeAuditError,
+  sanitizeAuditReason,
+  sanitizeAuditValue,
+} from './mutation.service.ts';
 import { isPointInZone, ZoneGeometry } from './zone.service.ts';
 
 type MutationContext = {
@@ -10,7 +19,31 @@ type MutationContext = {
   targetType: string;
   targetId?: string | null;
   reason?: string | null;
+  payload: unknown;
 };
+
+const caseTransitions: Record<string, ReadonlySet<string>> = {
+  open: new Set(['open', 'under_review', 'resolved', 'dismissed']),
+  under_review: new Set(['under_review', 'resolved', 'dismissed']),
+  resolved: new Set(['resolved']),
+  dismissed: new Set(['dismissed']),
+};
+
+function validateCaseTransition(
+  currentStatus: string,
+  nextStatus: string,
+  resolution?: string | null,
+) {
+  if (!caseTransitions[currentStatus]?.has(nextStatus)) {
+    throw new HTTPException(409, { message: 'INVALID_CASE_TRANSITION' });
+  }
+  if (
+    (nextStatus === 'resolved' || nextStatus === 'dismissed')
+    && !resolution?.trim()
+  ) {
+    throw new HTTPException(422, { message: 'CASE_RESOLUTION_REQUIRED' });
+  }
+}
 
 function listFromResponse(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
@@ -21,6 +54,26 @@ function listFromResponse(value: unknown): unknown[] {
     }
   }
   return [];
+}
+
+function totalFromResponse(value: unknown): number | null {
+  if (Array.isArray(value)) return value.length;
+  if (!value || typeof value !== 'object') return null;
+  const total = (value as Record<string, unknown>).total;
+  return typeof total === 'number' && Number.isSafeInteger(total) && total >= 0
+    ? total
+    : null;
+}
+
+function reportDate(value: string | null, endOfDay = false): Date | undefined {
+  if (!value) return undefined;
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00'}+08:00`)
+    : new Date(value);
+  if (!Number.isFinite(parsed.getTime())) {
+    throw new HTTPException(400, { message: 'INVALID_DATE_FILTER' });
+  }
+  return parsed;
 }
 
 function csvCell(value: unknown): string {
@@ -43,59 +96,102 @@ export class AdminService {
     private readonly clients: AdminClients,
   ) {}
 
+  private async reportRows(
+    service: ServiceName,
+    path: string,
+    search: URLSearchParams,
+  ): Promise<unknown[]> {
+    const pageSize = 100;
+    const query = new URLSearchParams(search);
+    query.set('page', '1');
+    query.set('limit', String(pageSize));
+    const first = await this.clients.request<unknown>(
+      service,
+      `${path}?${query}`,
+    );
+    const rows = listFromResponse(first);
+    const total = totalFromResponse(first);
+    if (total === null || rows.length >= total) return rows;
+
+    for (let page = 2; rows.length < total; page += 1) {
+      query.set('page', String(page));
+      const items = listFromResponse(await this.clients.request<unknown>(
+        service,
+        `${path}?${query}`,
+      ));
+      if (items.length === 0) break;
+      rows.push(...items);
+    }
+    return rows;
+  }
+
   private async mutate<T>(
     context: MutationContext,
-    operation: () => Promise<T>,
-    loadBeforeState?: () => Promise<unknown>,
+    operation: (transaction: AdminExecutor) => Promise<T>,
+    loadBeforeState?: (transaction: AdminExecutor) => Promise<unknown>,
   ): Promise<T> {
-    if (!context.requestId) {
+    const requestId = context.requestId.trim();
+    if (!requestId) {
       throw new HTTPException(400, { message: 'Idempotency-Key header is required.' });
     }
-    const existing = await this.repository.findMutationResult(context.requestId);
-    if (existing) {
-      if (existing.action !== context.action) {
-        throw new HTTPException(409, {
-          message: 'Idempotency-Key was already used for another operation.',
-        });
-      }
-      return existing.response as T;
+    if (requestId !== context.requestId || requestId.length > 200) {
+      throw new HTTPException(400, { message: 'INVALID_IDEMPOTENCY_KEY' });
     }
 
     let beforeState: unknown = null;
+    const requestHash = await fingerprintMutationPayload(context.payload);
     try {
-      beforeState = loadBeforeState ? await loadBeforeState() : null;
-      const result = await operation();
-      const stored = await this.repository.saveMutationResult({
-        requestId: context.requestId,
-        action: context.action,
-        response: result,
+      return await this.repository.withMutationLock(requestId, async (transaction) => {
+        const existing = await this.repository.findMutationResult(
+          requestId,
+          transaction,
+        );
+        if (existing) {
+          const sameRequest = existing.action === context.action
+            && existing.targetType === context.targetType
+            && (existing.targetId ?? null) === (context.targetId ?? null)
+            && existing.requestHash === requestHash;
+          if (!sameRequest) {
+            throw new HTTPException(409, { message: 'IDEMPOTENCY_KEY_REUSED' });
+          }
+          return existing.response as T;
+        }
+
+        beforeState = loadBeforeState ? await loadBeforeState(transaction) : null;
+        const result = await operation(transaction);
+        const stored = await this.repository.saveMutationResult({
+          requestId,
+          action: context.action,
+          targetType: context.targetType,
+          targetId: context.targetId,
+          requestHash,
+          response: result,
+        }, transaction);
+        const response = stored?.response as T ?? result;
+        await this.repository.appendAudit({
+          actorAdminId: context.adminId,
+          action: context.action,
+          targetType: context.targetType,
+          targetId: context.targetId,
+          reason: sanitizeAuditReason(context.reason),
+          beforeState: sanitizeAuditValue(beforeState),
+          afterState: sanitizeAuditValue(response),
+          outcome: 'succeeded',
+          requestId,
+        }, transaction);
+        return response;
       });
-      const response = stored?.response as T ?? result;
-      await this.repository.appendAudit({
-        actorAdminId: context.adminId,
-        action: context.action,
-        targetType: context.targetType,
-        targetId: context.targetId,
-        reason: context.reason,
-        beforeState,
-        afterState: response,
-        outcome: 'succeeded',
-        requestId: context.requestId,
-      });
-      return response;
     } catch (error) {
       await this.repository.appendAudit({
         actorAdminId: context.adminId,
         action: context.action,
         targetType: context.targetType,
         targetId: context.targetId,
-        reason: context.reason,
-        beforeState,
-        afterState: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-        },
+        reason: sanitizeAuditReason(context.reason),
+        beforeState: sanitizeAuditValue(beforeState),
+        afterState: { error: sanitizeAuditError(error) },
         outcome: 'failed',
-        requestId: context.requestId,
+        requestId,
       });
       throw error;
     }
@@ -112,10 +208,14 @@ export class AdminService {
 
     return {
       counts: {
-        drivers: drivers.ok ? listFromResponse(drivers.data).length : null,
+        drivers: drivers.ok
+          ? totalFromResponse(drivers.data) ?? listFromResponse(drivers.data).length
+          : null,
         active_rides: rides.ok ? listFromResponse(rides.data).length : null,
         open_requests: sessions.ok ? listFromResponse(sessions.data).length : null,
-        pending_topups: topups.ok ? listFromResponse(topups.data).length : null,
+        pending_topups: topups.ok
+          ? totalFromResponse(topups.data) ?? listFromResponse(topups.data).length
+          : null,
         open_cases: local.openCases,
         active_zones: local.activeZones,
       },
@@ -173,6 +273,7 @@ export class AdminService {
       targetType: 'driver',
       targetId: input.driverId,
       reason: input.reason,
+      payload: { status: input.status, reason: input.reason },
     }, () => this.clients.request(
       'driver',
       `/drivers/admin/drivers/${input.driverId}/approval`,
@@ -203,14 +304,59 @@ export class AdminService {
       action: 'driver.document_requirement.created',
       targetType: 'document_requirement',
       reason: input.reason,
+      payload: { ...input.payload, reason: input.reason },
     }, () => this.clients.request('driver', '/drivers/admin/document-requirements', {
       method: 'POST',
       headers: {
         'Idempotency-Key': input.requestId,
         'X-Admin-Id': input.adminId,
       },
-      body: JSON.stringify({ name: input.payload.name }),
+      body: JSON.stringify({
+        name: input.payload.name,
+        requiresExpiry: input.payload.requires_expiry,
+        isActive: input.payload.is_active,
+      }),
     }));
+  }
+
+  async updateDocumentRequirement(input: {
+    requirementId: string;
+    payload: Record<string, unknown>;
+    reason: string;
+    adminId: string;
+    requestId: string;
+  }) {
+    return await this.mutate({
+      adminId: input.adminId,
+      requestId: input.requestId,
+      action: 'driver.document_requirement.updated',
+      targetType: 'document_requirement',
+      targetId: input.requirementId,
+      reason: input.reason,
+      payload: { ...input.payload, reason: input.reason },
+    }, () => this.clients.request(
+      'driver',
+      `/drivers/admin/document-requirements/${input.requirementId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Idempotency-Key': input.requestId,
+          'X-Admin-Id': input.adminId,
+        },
+        body: JSON.stringify({
+          name: input.payload.name,
+          requiresExpiry: input.payload.requires_expiry,
+          isActive: input.payload.is_active,
+        }),
+      },
+    ), async () => {
+      const requirements = listFromResponse(await this.listDocumentRequirements());
+      return requirements.find((requirement) => (
+        typeof requirement === 'object'
+        && requirement !== null
+        && (requirement as Record<string, unknown>).id === input.requirementId
+      )) ?? null;
+    });
   }
 
   async reviewDriverDocument(input: {
@@ -228,6 +374,11 @@ export class AdminService {
       targetType: 'driver',
       targetId: input.driverId,
       reason: input.reason,
+      payload: {
+        requirementId: input.requirementId,
+        ...input.payload,
+        reason: input.reason,
+      },
     }, () => this.clients.request(
       'driver',
       `/drivers/admin/drivers/${input.driverId}/documents/${input.requirementId}`,
@@ -260,6 +411,10 @@ export class AdminService {
       targetType: 'driver_wallet',
       targetId: input.driverId,
       reason: input.reason,
+      payload: {
+        amountCentavos: input.amountCentavos,
+        reason: input.reason,
+      },
     }, () => this.clients.request(
       'driver',
       `/drivers/admin/drivers/${input.driverId}/credits/adjustments`,
@@ -294,6 +449,10 @@ export class AdminService {
       targetType: 'driver_wallet',
       targetId: input.driverId,
       reason: input.reason,
+      payload: {
+        amountCentavos: input.amountCentavos,
+        reason: input.reason,
+      },
     }, () => this.clients.request(
       'driver',
       `/drivers/admin/drivers/${input.driverId}/credits/refunds`,
@@ -332,6 +491,7 @@ export class AdminService {
       targetType: 'topup',
       targetId: input.topUpId,
       reason: input.reason,
+      payload: { status: input.status, reason: input.reason },
     }, () => this.clients.request(
       'driver',
       `/drivers/admin/topups/${input.topUpId}/${input.status === 'approved' ? 'approve' : 'reject'}`,
@@ -362,6 +522,7 @@ export class AdminService {
       action: 'topup_channel.created',
       targetType: 'topup_channel',
       reason: input.reason,
+      payload: { ...input.payload, reason: input.reason },
     }, () => this.clients.request('driver', '/drivers/admin/topup-channels', {
       method: 'POST',
       headers: {
@@ -391,6 +552,7 @@ export class AdminService {
       targetType: 'topup_channel',
       targetId: input.channelId,
       reason: input.reason,
+      payload: { ...input.payload, reason: input.reason },
     }, () => this.clients.request(
       'driver',
       `/drivers/admin/topup-channels/${input.channelId}`,
@@ -451,6 +613,7 @@ export class AdminService {
       targetType: 'bid_session',
       targetId: input.sessionId,
       reason: input.reason,
+      payload: { driverId: input.driverId, reason: input.reason },
     }, () => this.clients.request(
       'bidding',
       `/bids/internal/${input.sessionId}/assign`,
@@ -487,28 +650,38 @@ export class AdminService {
     adminId: string;
     requestId: string;
   }) {
-    const completedRides = listFromResponse(await this.clients.request(
-      'trip',
-      '/rides/admin/report?status=completed',
-    ));
-    const earliest = Date.now() + 30 * 24 * 60 * 60 * 1000;
-    if (completedRides.length > 0 && input.effectiveAt.getTime() < earliest) {
-      throw new HTTPException(400, {
-        message: 'Commission changes require at least 30 days notice.',
-      });
-    }
     return await this.mutate({
       adminId: input.adminId,
       requestId: input.requestId,
       action: 'pricing.commission.scheduled',
       targetType: 'commission_policy',
       reason: input.reason,
-    }, () => this.repository.createCommissionPolicy({
-      rateBasisPoints: input.rateBasisPoints,
-      effectiveAt: input.effectiveAt,
-      createdBy: input.adminId,
-      reason: input.reason,
-    }), () => this.repository.getCurrentCommission());
+      payload: {
+        rateBasisPoints: input.rateBasisPoints,
+        effectiveAt: input.effectiveAt,
+        reason: input.reason,
+      },
+    }, async (transaction) => {
+      const completedRides = listFromResponse(await this.clients.request(
+        'trip',
+        '/rides/admin/report?status=completed',
+      ));
+      const earliest = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      if (completedRides.length > 0 && input.effectiveAt.getTime() < earliest) {
+        throw new HTTPException(400, {
+          message: 'Commission changes require at least 30 days notice.',
+        });
+      }
+      return await this.repository.createCommissionPolicy({
+        rateBasisPoints: input.rateBasisPoints,
+        effectiveAt: input.effectiveAt,
+        createdBy: input.adminId,
+        reason: input.reason,
+      }, transaction);
+    }, (transaction) => this.repository.getCurrentCommission(
+      new Date(),
+      transaction,
+    ));
   }
 
   async updateFareRule(input: {
@@ -525,6 +698,7 @@ export class AdminService {
       targetType: 'fare_rule',
       targetId: input.serviceType,
       reason: input.reason,
+      payload: { ...input.payload, reason: input.reason },
     }, () => this.clients.request('fare', `/fares/admin/pricing/${input.serviceType}`, {
       method: 'PUT',
       headers: { 'Idempotency-Key': input.requestId },
@@ -560,20 +734,43 @@ export class AdminService {
       targetType: 'service_zone',
       targetId: input.psgcCode,
       reason: input.reason,
-    }, async () => {
-      const current = await this.repository.findZone(input.psgcCode);
+      payload: { isActive: input.isActive, reason: input.reason },
+    }, async (transaction) => {
+      const current = await this.repository.findZone(input.psgcCode, transaction);
       if (!current) throw new HTTPException(404, { message: 'Service zone not found.' });
       if (input.isActive && !current.geometry) {
         throw new HTTPException(409, {
           message: 'This barangay has no verified or interim geometry and cannot be activated.',
         });
       }
-      return await this.repository.setZoneActive(input.psgcCode, input.isActive);
-    }, () => this.repository.findZone(input.psgcCode));
+      return await this.repository.setZoneActive(
+        input.psgcCode,
+        input.isActive,
+        transaction,
+      );
+    }, (transaction) => this.repository.findZone(input.psgcCode, transaction));
   }
 
-  async listCases(status: string | undefined, limit: number, offset: number) {
-    return await this.repository.listCases({ status, limit, offset });
+  async listCases(
+    status: string | undefined,
+    limit: number,
+    offset: number,
+    fromValue?: string,
+    toValue?: string,
+  ) {
+    const from = reportDate(fromValue ?? null);
+    const to = reportDate(toValue ?? null, true);
+    const input = { status, from, to };
+    const [items, total] = await Promise.all([
+      this.repository.listCases({ ...input, limit, offset }),
+      this.repository.countCases(input),
+    ]);
+    return {
+      items,
+      page: Math.floor(offset / limit) + 1,
+      limit,
+      total,
+    };
   }
 
   async createCase(input: {
@@ -595,14 +792,15 @@ export class AdminService {
       targetType: input.payload.target_type,
       targetId: input.payload.target_id,
       reason: input.reason,
-    }, () => this.repository.createCase({
+      payload: { ...input.payload, reason: input.reason },
+    }, (transaction) => this.repository.createCase({
       targetType: input.payload.target_type,
       targetId: input.payload.target_id,
       rideId: input.payload.ride_id,
       category: input.payload.category,
       notes: input.payload.notes,
       createdBy: input.adminId,
-    }));
+    }, transaction));
   }
 
   async updateCase(input: {
@@ -620,14 +818,24 @@ export class AdminService {
       targetType: 'case',
       targetId: input.caseId,
       reason: input.reason,
-    }, async () => {
+      payload: {
+        status: input.status,
+        resolution: input.resolution,
+        reason: input.reason,
+      },
+    }, async (transaction) => {
+      const current = await this.repository.findCase(input.caseId, transaction);
+      if (!current) {
+        throw new HTTPException(404, { message: 'CASE_NOT_FOUND' });
+      }
+      validateCaseTransition(current.status, input.status, input.resolution);
       const updated = await this.repository.updateCase(input.caseId, {
         status: input.status,
         resolution: input.resolution,
-      });
-      if (!updated) throw new HTTPException(404, { message: 'Complaint case not found.' });
+      }, transaction);
+      if (!updated) throw new HTTPException(404, { message: 'CASE_NOT_FOUND' });
       return updated;
-    }, () => this.repository.findCase(input.caseId));
+    }, (transaction) => this.repository.findCase(input.caseId, transaction));
   }
 
   async restrictAccount(input: {
@@ -639,6 +847,7 @@ export class AdminService {
     adminId: string;
     requestId: string;
   }) {
+    const endsAt = input.endsAt ? new Date(input.endsAt) : null;
     const service = input.targetType as ServiceName;
     const path = input.targetType === 'driver'
       ? `/drivers/admin/drivers/${input.targetId}/restrictions`
@@ -650,7 +859,48 @@ export class AdminService {
       targetType: input.targetType,
       targetId: input.targetId,
       reason: input.reason,
-    }, async () => {
+      payload: {
+        caseId: input.caseId,
+        endsAt: input.endsAt,
+        reason: input.reason,
+      },
+    }, async (transaction) => {
+      if (
+        endsAt
+        && (!Number.isFinite(endsAt.getTime()) || endsAt <= new Date())
+      ) {
+        throw new HTTPException(422, { message: 'INVALID_EXPIRY' });
+      }
+      const linkedCase = input.caseId
+        ? await this.repository.findCase(input.caseId, transaction)
+        : null;
+      if (input.caseId && !linkedCase) {
+        throw new HTTPException(404, { message: 'CASE_NOT_FOUND' });
+      }
+      if (linkedCase) {
+        validateCaseTransition(
+          linkedCase.status,
+          'under_review',
+          linkedCase.resolution,
+        );
+        if (linkedCase.targetType === 'ride') {
+          const ride = await this.clients.request<Record<string, unknown>>(
+            'trip',
+            `/rides/${encodeURIComponent(linkedCase.targetId)}`,
+          );
+          const linkedAccountId = input.targetType === 'driver'
+            ? ride.driver_id ?? ride.driverId
+            : ride.passenger_id ?? ride.passengerId;
+          if (linkedAccountId !== input.targetId) {
+            throw new HTTPException(409, { message: 'CASE_TARGET_MISMATCH' });
+          }
+        } else if (
+          linkedCase.targetType !== input.targetType
+          || linkedCase.targetId !== input.targetId
+        ) {
+          throw new HTTPException(409, { message: 'CASE_TARGET_MISMATCH' });
+        }
+      }
       const restriction = await this.clients.request<Record<string, unknown>>(
         service,
         path,
@@ -671,10 +921,19 @@ export class AdminService {
         },
       );
       if (input.caseId) {
-        await this.repository.updateCase(input.caseId, {
+        const restrictionId = restriction.id;
+        if (typeof restrictionId !== 'string' || !restrictionId.trim()) {
+          throw new HTTPException(502, {
+            message: 'INVALID_RESTRICTION_RESPONSE',
+          });
+        }
+        const updatedCase = await this.repository.updateCase(input.caseId, {
           status: 'under_review',
-          restrictionId: String(restriction.id ?? ''),
-        });
+          restrictionId,
+        }, transaction);
+        if (!updatedCase) {
+          throw new HTTPException(404, { message: 'CASE_NOT_FOUND' });
+        }
       }
       return restriction;
     });
@@ -698,6 +957,7 @@ export class AdminService {
       targetType: input.targetType,
       targetId: input.restrictionId,
       reason: input.reason,
+      payload: { reason: input.reason },
     }, () => this.clients.request(service, path, {
       method: 'POST',
       headers: {
@@ -711,8 +971,26 @@ export class AdminService {
     }));
   }
 
-  async audits(limit: number, offset: number) {
-    return await this.repository.listAudits(limit, offset);
+  async audits(
+    limit: number,
+    offset: number,
+    outcome?: string,
+    fromValue?: string,
+    toValue?: string,
+  ) {
+    const from = reportDate(fromValue ?? null);
+    const to = reportDate(toValue ?? null, true);
+    const input = { outcome, from, to };
+    const [items, total] = await Promise.all([
+      this.repository.listAudits({ ...input, limit, offset }),
+      this.repository.countAudits(input),
+    ]);
+    return {
+      items,
+      page: Math.floor(offset / limit) + 1,
+      limit,
+      total,
+    };
   }
 
   async checkZones(input: {
@@ -759,23 +1037,57 @@ export class AdminService {
   }
 
   async report(type: string, search: URLSearchParams): Promise<string> {
+    const reportStatuses: Record<string, string[]> = {
+      trips: ['requested', 'accepted', 'arrived', 'in_transit', 'completed', 'canceled'],
+      commissions: ['cash_pending', 'cash_received', 'cash_disputed', 'canceled'],
+      topups: ['pending', 'approved', 'rejected'],
+      compliance: ['pending', 'approved', 'rejected'],
+      cases: ['open', 'under_review', 'resolved', 'dismissed'],
+    };
+    const allowedStatuses = reportStatuses[type];
+    if (!allowedStatuses) {
+      throw new HTTPException(404, { message: 'Report type not found.' });
+    }
+    const status = search.get('status');
+    if (status && !allowedStatuses.includes(status)) {
+      throw new HTTPException(400, { message: 'INVALID_REPORT_STATUS' });
+    }
+    const from = reportDate(search.get('from'));
+    const to = reportDate(search.get('to'), true);
+    if (from && to && from > to) {
+      throw new HTTPException(400, { message: 'INVALID_DATE_RANGE' });
+    }
     let rows: unknown[];
     if (type === 'cases') {
-      rows = await this.repository.listCases({
-        status: search.get('status') ?? undefined,
-        limit: 10_000,
-        offset: 0,
-      });
+      rows = [];
+      const limit = 1_000;
+      for (let offset = 0; ; offset += limit) {
+        const batch = await this.repository.listCases({
+          status: search.get('status') ?? undefined,
+          from,
+          to,
+          limit,
+          offset,
+        });
+        rows.push(...batch);
+        if (batch.length < limit) break;
+      }
     } else {
       const sources: Record<string, [ServiceName, string]> = {
-        trips: ['trip', `/rides/admin/report?${search}`],
-        commissions: ['fare', `/fares/admin/transactions?${search}`],
-        topups: ['driver', `/drivers/admin/topups?${search}`],
-        compliance: ['driver', `/drivers/admin/drivers?${search}`],
+        trips: ['trip', '/rides/admin/report'],
+        commissions: ['fare', '/fares/admin/transactions'],
+        topups: ['driver', '/drivers/admin/topups'],
+        compliance: ['driver', '/drivers/admin/drivers'],
       };
       const source = sources[type];
-      if (!source) throw new HTTPException(404, { message: 'Report type not found.' });
-      rows = listFromResponse(await this.clients.request(source[0], source[1]));
+      const sourceSearch = new URLSearchParams(search);
+      if (from) sourceSearch.set('from', from.toISOString());
+      if (to) sourceSearch.set('to', to.toISOString());
+      if (type === 'compliance' && status) {
+        sourceSearch.delete('status');
+        sourceSearch.set('approvalStatus', status);
+      }
+      rows = await this.reportRows(source[0], source[1], sourceSearch);
     }
     return rowsToCsv(rows as Array<Record<string, unknown>>);
   }

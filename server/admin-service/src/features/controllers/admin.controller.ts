@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { AdminClients } from '../clients/admin.clients.ts';
 import { AdminRepository } from '../repositories/admin.repository.ts';
 import { AdminService } from '../services/admin.service.ts';
@@ -17,7 +18,7 @@ function pagination(context: Context) {
 function mutation(context: AdminContext) {
   return {
     adminId: context.get('adminId'),
-    requestId: context.req.header('Idempotency-Key') ?? '',
+    requestId: (context.req.header('Idempotency-Key') ?? '').trim(),
   };
 }
 
@@ -61,6 +62,21 @@ export async function handleCreateDocumentRequirement(context: AdminContext) {
     reason: body.reason,
     ...mutation(context),
   }), 201);
+}
+
+export async function handleUpdateDocumentRequirement(context: AdminContext) {
+  const body = await context.req.json() as {
+    name?: string;
+    requires_expiry?: boolean;
+    is_active?: boolean;
+    reason: string;
+  };
+  return context.json(await adminService.updateDocumentRequirement({
+    requirementId: context.req.param('requirementId')!,
+    payload: body,
+    reason: body.reason,
+    ...mutation(context),
+  }));
 }
 
 export async function handleReviewDriverDocument(context: AdminContext) {
@@ -222,11 +238,19 @@ export async function handleUpdateZone(context: AdminContext) {
 }
 
 export async function handleListCases(context: AdminContext) {
-  const { limit, offset } = pagination(context);
+  const query = context.req.valid('query' as never) as {
+    page: number;
+    limit: number;
+    status?: string;
+    from?: string;
+    to?: string;
+  };
   return context.json(await adminService.listCases(
-    context.req.query('status'),
-    limit,
-    offset,
+    query.status,
+    query.limit,
+    (query.page - 1) * query.limit,
+    query.from,
+    query.to,
   ));
 }
 
@@ -282,7 +306,7 @@ export async function handleRestrictAccount(context: AdminContext) {
 export async function handleLiftRestriction(context: AdminContext) {
   const targetType = context.req.param('targetType');
   if (targetType !== 'driver' && targetType !== 'passenger') {
-    throw new Error('Restriction target must be driver or passenger.');
+    throw new HTTPException(400, { message: 'INVALID_RESTRICTION_TARGET' });
   }
   const { reason } = await context.req.json() as { reason: string };
   return context.json(await adminService.liftRestriction({
@@ -294,15 +318,27 @@ export async function handleLiftRestriction(context: AdminContext) {
 }
 
 export async function handleAudits(context: AdminContext) {
-  const { limit, offset } = pagination(context);
-  return context.json(await adminService.audits(limit, offset));
+  const query = context.req.valid('query' as never) as {
+    page: number;
+    limit: number;
+    status?: string;
+    from?: string;
+    to?: string;
+  };
+  return context.json(await adminService.audits(
+    query.limit,
+    (query.page - 1) * query.limit,
+    query.status,
+    query.from,
+    query.to,
+  ));
 }
 
 export async function handleReport(context: AdminContext) {
   const type = context.req.param('type')!;
   const csv = await adminService.report(type, new URL(context.req.url).searchParams);
   context.header('Content-Type', 'text/csv; charset=utf-8');
-  context.header('Content-Disposition', `attachment; filename="baobao-${type}.csv"`);
+  context.header('Content-Disposition', `attachment; filename="easyride-${type}.csv"`);
   return context.body(csv);
 }
 

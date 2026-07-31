@@ -36,6 +36,68 @@ export class DriverDomainError extends Error {
   }
 }
 
+export type DriverDocumentStatus = 'pending' | 'verified' | 'rejected' | 'expired';
+
+export interface DriverDocumentRequirementPolicy {
+  isActive: boolean;
+  requiresExpiry: boolean;
+}
+
+export interface DriverDocumentCheckState {
+  status: DriverDocumentStatus;
+  expiresAt: Date | string | null;
+}
+
+export function validateDocumentReviewExpiry(
+  requirement: Pick<DriverDocumentRequirementPolicy, 'requiresExpiry'>,
+  status: DriverDocumentStatus,
+  expiresAt: Date | null,
+  now = new Date(),
+) {
+  if (status !== 'verified') return;
+  if (requirement.requiresExpiry && !expiresAt) {
+    throw new DriverDomainError(
+      422,
+      'INVALID_EXPIRY',
+      'A future expiry is required for this document',
+    );
+  }
+  if (expiresAt && expiresAt <= now) {
+    throw new DriverDomainError(
+      422,
+      'INVALID_EXPIRY',
+      'Expiry must be in the future',
+    );
+  }
+}
+
+export function getEffectiveDocumentStatus(
+  requirement: Pick<DriverDocumentRequirementPolicy, 'requiresExpiry'>,
+  check: DriverDocumentCheckState | null | undefined,
+  now = new Date(),
+): DriverDocumentStatus {
+  if (!check || (check.status === 'verified' && requirement.requiresExpiry && !check.expiresAt)) {
+    return 'pending';
+  }
+  if (
+    check.status === 'verified'
+    && check.expiresAt
+    && new Date(check.expiresAt) <= now
+  ) {
+    return 'expired';
+  }
+  return check.status;
+}
+
+export function isDocumentRequirementSatisfied(
+  requirement: DriverDocumentRequirementPolicy,
+  check: DriverDocumentCheckState | null | undefined,
+  now = new Date(),
+): boolean {
+  return !requirement.isActive
+    || getEffectiveDocumentStatus(requirement, check, now) === 'verified';
+}
+
 export interface Page<T> {
   items: T[];
   page: number;

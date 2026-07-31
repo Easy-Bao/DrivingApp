@@ -5,6 +5,22 @@ import { HTTPException } from 'hono/http-exception';
 import { Passenger, PassengerRepository, SafePassenger } from '../entities/passenger.types.ts';
 import { CreateRideRequest } from '../schemas/passenger.schema.ts';
 
+function restrictionMutationHash(payload: Record<string, unknown>): string {
+  return new Bun.CryptoHasher('sha256')
+    .update(JSON.stringify(payload))
+    .digest('hex');
+}
+
+function rethrowRestrictionMutation(error: unknown): never {
+  if (
+    error instanceof Error
+    && ['IDEMPOTENCY_KEY_REUSED', 'RESTRICTION_ALREADY_LIFTED'].includes(error.message)
+  ) {
+    throw new HTTPException(409, { message: error.message });
+  }
+  throw error;
+}
+
 export class PassengerService {
   private repository: PassengerRepository;
 
@@ -79,7 +95,21 @@ export class PassengerService {
     if (!passenger) {
       throw new HTTPException(404, { message: 'Passenger not found' });
     }
-    return await this.repository.createRestriction(input);
+    try {
+      return await this.repository.createRestriction({
+        ...input,
+        requestHash: restrictionMutationHash({
+          operation: 'create_restriction',
+          passengerId: input.passengerId,
+          caseId: input.caseId ?? null,
+          reason: input.reason,
+          endsAt: input.endsAt?.toISOString() ?? null,
+          createdBy: input.createdBy,
+        }),
+      });
+    } catch (error) {
+      rethrowRestrictionMutation(error);
+    }
   }
 
   async listPassengerRestrictions(passengerId: string) {
@@ -92,7 +122,23 @@ export class PassengerService {
     adminId: string;
     idempotencyKey: string;
   }) {
-    const restriction = await this.repository.revokeRestriction(input.restrictionId);
+    let restriction;
+    try {
+      restriction = await this.repository.revokeRestriction({
+        restrictionId: input.restrictionId,
+        reason: input.reason,
+        liftedBy: input.adminId,
+        idempotencyKey: input.idempotencyKey,
+        requestHash: restrictionMutationHash({
+          operation: 'lift_restriction',
+          restrictionId: input.restrictionId,
+          reason: input.reason,
+          adminId: input.adminId,
+        }),
+      });
+    } catch (error) {
+      rethrowRestrictionMutation(error);
+    }
     if (!restriction) {
       throw new HTTPException(404, { message: 'Restriction not found' });
     }

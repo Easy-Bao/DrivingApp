@@ -39,7 +39,10 @@ export class PassengerClient {
       allowed?: boolean;
       code?: string;
     };
-    if (!response.ok || !body.allowed) {
+    if (!response.ok) {
+      throw new Error(body.code || 'PASSENGER_SERVICE_UNAVAILABLE');
+    }
+    if (!body.allowed) {
       throw new Error(body.code || 'ACCOUNT_RESTRICTED');
     }
   }
@@ -66,6 +69,30 @@ export type DriverProfile = {
 
 export class DriverClient {
   constructor(private readonly baseUrl: string) {}
+
+  async checkEligibility(driverId: string): Promise<void> {
+    const response = await fetch(
+      new URL('/drivers/internal/eligibility', this.baseUrl),
+      {
+        method: 'POST',
+        headers: internalHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          driverId,
+          requiredCommissionCentavos: 0,
+        }),
+      },
+    );
+    const body = await response.json().catch(() => ({})) as {
+      eligible?: boolean;
+      code?: string | null;
+    };
+    if (!response.ok) {
+      throw new Error(body.code || 'DRIVER_SERVICE_UNAVAILABLE');
+    }
+    if (!body.eligible) {
+      throw new Error(body.code || 'DRIVER_NOT_ELIGIBLE');
+    }
+  }
 
   async fetchProfile(driverId: string): Promise<DriverProfile> {
     const response = await fetch(

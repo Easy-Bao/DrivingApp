@@ -82,6 +82,76 @@ afterEach(() => {
 });
 
 describe('RideService safety workflow', () => {
+  test('blocks direct ride creation for a restricted passenger', async () => {
+    let created = false;
+    globalThis.fetch = (async (input) => {
+      const url = String(input);
+      if (url.includes('/ride-access')) {
+        return Response.json({
+          allowed: false,
+          code: 'ACCOUNT_RESTRICTED',
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+    const service = new RideService({
+      ...repository(),
+      createRide: async () => {
+        created = true;
+        return requestedRide();
+      },
+    } as any);
+
+    let thrown: unknown;
+    try {
+      await service.createRideRequest({
+        passenger_id: 'passenger-1',
+        pickup_latitude: 7.82,
+        pickup_longitude: 123.43,
+        dropoff_latitude: 7.83,
+        dropoff_longitude: 123.44,
+        fare: 150,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({
+      status: 403,
+      message: 'ACCOUNT_RESTRICTED',
+    });
+    expect(created).toBe(false);
+  });
+
+  test('does not misreport a passenger-service failure as a restriction', async () => {
+    globalThis.fetch = (async (input) => {
+      if (String(input).includes('/ride-access')) {
+        return Response.json({ error: 'Internal Server Error' }, { status: 500 });
+      }
+      throw new Error(`Unexpected request: ${String(input)}`);
+    }) as typeof fetch;
+    const service = new RideService(repository() as any);
+
+    let thrown: unknown;
+    try {
+      await service.createRideRequest({
+        passenger_id: 'passenger-1',
+        pickup_latitude: 7.82,
+        pickup_longitude: 123.43,
+        dropoff_latitude: 7.83,
+        dropoff_longitude: 123.44,
+        fare: 150,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({
+      status: 503,
+      message: 'PASSENGER_SERVICE_UNAVAILABLE',
+    });
+  });
+
   test('checks passenger and both service zones before creating a ride', async () => {
     const calls: string[] = [];
     globalThis.fetch = (async (input) => {
@@ -111,9 +181,135 @@ describe('RideService safety workflow', () => {
     expect(created.passengerName).toBe('Test Passenger');
   });
 
+  test('blocks assignment when the passenger becomes restricted', async () => {
+    let assigned = false;
+    globalThis.fetch = (async (input) => {
+      const url = String(input);
+      if (url.includes('/ride-access')) {
+        return Response.json({
+          allowed: false,
+          code: 'ACCOUNT_RESTRICTED',
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+    const service = new RideService({
+      ...repository(),
+      acceptRideTransaction: async () => {
+        assigned = true;
+        return requestedRide({ status: 'accepted' });
+      },
+    } as any);
+
+    let thrown: unknown;
+    try {
+      await service.acceptRideRequest(
+        'ride-1',
+        { driver_id: 'driver-1' },
+        'accept-key',
+      );
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({
+      status: 403,
+      message: 'ACCOUNT_RESTRICTED',
+    });
+    expect(assigned).toBe(false);
+  });
+
+  test.each([
+    ['accepted', 'arrived'],
+    ['arrived', 'in_transit'],
+  ])(
+    'rechecks Driver eligibility before %s -> %s',
+    async (currentStatus, nextStatus) => {
+      let transitionStarted = false;
+      globalThis.fetch = (async (input) => {
+        const url = String(input);
+        if (url.includes('/drivers/internal/eligibility')) {
+          return Response.json({
+            eligible: false,
+            code: 'ACCOUNT_RESTRICTED',
+          });
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      }) as typeof fetch;
+      const currentRide = requestedRide({
+        status: currentStatus,
+        driverId: 'driver-1',
+      });
+      const service = new RideService({
+        ...repository(currentRide),
+        beginStatusTransition: async () => {
+          transitionStarted = true;
+          return currentRide;
+        },
+      } as any);
+
+      let thrown: unknown;
+      try {
+        await service.updateRideStatus('ride-1', nextStatus, 'transition-key');
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toMatchObject({
+        status: 403,
+        message: 'ACCOUNT_RESTRICTED',
+      });
+      expect(transitionStarted).toBe(false);
+    },
+  );
+
+  test('blocks starting an accepted ride when the passenger is restricted', async () => {
+    let transitionStarted = false;
+    globalThis.fetch = (async (input) => {
+      const url = String(input);
+      if (url.includes('/drivers/internal/eligibility')) {
+        return Response.json({ eligible: true, code: null });
+      }
+      if (url.includes('/ride-access')) {
+        return Response.json({
+          allowed: false,
+          code: 'ACCOUNT_RESTRICTED',
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+    const arrivedRide = requestedRide({
+      status: 'arrived',
+      driverId: 'driver-1',
+    });
+    const service = new RideService({
+      ...repository(arrivedRide),
+      beginStatusTransition: async () => {
+        transitionStarted = true;
+        return arrivedRide;
+      },
+    } as any);
+
+    let thrown: unknown;
+    try {
+      await service.updateRideStatus('ride-1', 'in_transit', 'start-key');
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({
+      status: 403,
+      message: 'ACCOUNT_RESTRICTED',
+    });
+    expect(transitionStarted).toBe(false);
+  });
+
   test('reserves the snapshotted commission using the canonical driver profile', async () => {
     globalThis.fetch = (async (input) => {
       const url = String(input);
+      if (url.includes('/ride-access')) {
+        return Response.json({ allowed: true });
+      }
       if (url.includes('/profile')) {
         return Response.json({
           id: 'driver-1',
@@ -156,6 +352,9 @@ describe('RideService safety workflow', () => {
     globalThis.fetch = (async (input) => {
       const url = String(input);
       calls.push(url);
+      if (url.includes('/ride-access')) {
+        return Response.json({ allowed: true });
+      }
       if (url.includes('/profile')) {
         return Response.json({ id: 'driver-1', name: 'Driver' });
       }

@@ -2,6 +2,7 @@ import { JsonWebTokenService } from '../common/jwt.service.ts';
 import type {
   AdminAccountRepository,
   AdminAccountRecord,
+  AdminOwnerProvisioningRepository,
 } from '../../repositories/admin/admin.repository.ts';
 import type { LoginAdminInput } from '../../schemas/admin/admin.zod.ts';
 
@@ -26,6 +27,33 @@ export class AdminAuthenticationError extends Error {
     message: string,
   ) {
     super(message);
+  }
+}
+
+export class AdminOwnerProvisioningService {
+  constructor(private readonly repository: AdminOwnerProvisioningRepository) {}
+
+  /**
+   * Creates the only owner, or rotates its password when the email matches.
+   */
+  async provisionOwner(
+    email: string,
+    passwordHash: string,
+  ): Promise<'created' | 'rotated'> {
+    const normalizedEmail = email.toLowerCase().trim();
+    if (await this.repository.createOwnerIfAbsent(normalizedEmail, passwordHash)) {
+      return 'created';
+    }
+
+    const owner = await this.repository.findOwner();
+    if (!owner || owner.email.toLowerCase() !== normalizedEmail) {
+      throw new Error(
+        'An owner account already exists with a different email address. Refusing to replace it.',
+      );
+    }
+
+    await this.repository.rotateOwnerPassword(owner.id, passwordHash);
+    return 'rotated';
   }
 }
 

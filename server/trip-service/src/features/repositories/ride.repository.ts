@@ -1,6 +1,6 @@
 import { db } from '../../shared/drizzle.ts';
 import { rides } from '../../db/schema.ts';
-import { eq, desc, and, gte, inArray, isNotNull, isNull, lte } from 'drizzle-orm';
+import { eq, desc, and, gte, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm';
 import { Ride, RideRepository } from '../entities/ride.types.ts';
 
 export class RideRepositoryImpl implements RideRepository {
@@ -92,6 +92,11 @@ export class RideRepositoryImpl implements RideRepository {
     } = driverData;
 
     return await db.transaction(async (tx) => {
+      // Serialize the final capacity check for this Driver across all ride rows.
+      await tx.execute(sql`
+        select pg_advisory_xact_lock(hashtextextended(${driver_id}, 0))
+      `);
+
       const activeRides = await tx.select()
         .from(rides)
         .where(
