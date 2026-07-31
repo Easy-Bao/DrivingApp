@@ -7,10 +7,10 @@
 
 <svelte:head>
   <link rel="icon" href={favicon} />
-  <title>BaoBao Operations</title>
+  <title>EasyRide</title>
   <meta
     name="description"
-    content="Secure operations dashboard for the BaoBao Pagadian ride service."
+    content="Secure operations dashboard for EasyRide in Pagadian City."
   />
 </svelte:head>
 

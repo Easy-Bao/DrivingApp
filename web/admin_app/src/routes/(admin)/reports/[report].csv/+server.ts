@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals }) => {
     return new Response(csv, {
       headers: {
         'content-type': 'text/csv; charset=utf-8',
-        'content-disposition': `attachment; filename="baobao-${report}.csv"`,
+        'content-disposition': `attachment; filename="easyride-${report}.csv"`,
         'cache-control': 'private, no-store',
       },
     });

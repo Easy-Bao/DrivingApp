@@ -15,6 +15,7 @@
     textFrom,
     unwrapData,
     type AdminRecord,
+    type AdminSection,
   } from '$lib/admin';
 
   let { data, form } = $props();
@@ -51,10 +52,36 @@
       { value: 'approved', label: 'Approved' },
       { value: 'rejected', label: 'Rejected' },
       { value: 'open', label: 'Open' },
+      { value: 'under_review', label: 'Under review' },
       { value: 'resolved', label: 'Resolved' },
+      { value: 'dismissed', label: 'Dismissed' },
+      { value: 'requested', label: 'Requested' },
+      { value: 'accepted', label: 'Accepted' },
+      { value: 'arrived', label: 'Arrived' },
+      { value: 'in_transit', label: 'In transit' },
       { value: 'completed', label: 'Completed' },
-      { value: 'cancelled', label: 'Cancelled' },
+      { value: 'canceled', label: 'Canceled' },
+      { value: 'cash_pending', label: 'Cash pending' },
+      { value: 'cash_received', label: 'Cash received' },
+      { value: 'cash_disputed', label: 'Cash disputed' },
+      { value: 'succeeded', label: 'Audit succeeded' },
+      { value: 'failed', label: 'Audit failed' },
     ],
+  };
+
+  const reportStatusFilters: Record<string, string[]> = {
+    trips: ['requested', 'accepted', 'arrived', 'in_transit', 'completed', 'canceled'],
+    commissions: ['cash_pending', 'cash_received', 'cash_disputed', 'canceled'],
+    topups: ['pending', 'approved', 'rejected'],
+    compliance: ['pending', 'approved', 'rejected'],
+    cases: ['open', 'under_review', 'resolved', 'dismissed'],
+  };
+
+  const pageSizes: Partial<Record<AdminSection, number>> = {
+    drivers: 50,
+    finance: 50,
+    cases: 50,
+    reports: 100,
   };
 
   let body = $derived(recordBody(data.payload));
@@ -67,6 +94,12 @@
     ...nestedRecord(body, 'counts'),
   });
   let records = $derived(sectionRecords(data.section, data.payload));
+  let pageSize = $derived(pageSizes[data.section] ?? 50);
+  let hasNextPage = $derived(
+    typeof body.total === 'number'
+      ? data.filters.page * pageSize < body.total
+      : records.length === pageSize,
+  );
   let sectionTitle = $derived(
     ADMIN_SECTIONS.find((section) => section.slug === data.section)?.label ?? 'Admin',
   );
@@ -119,7 +152,14 @@
 
   function reportHref(path: string): string {
     const query = new URLSearchParams();
-    if (data.filters.status) query.set('status', data.filters.status);
+    const report = REPORTS.find(({ slug }) => path.includes(`/${slug}`));
+    if (
+      data.filters.status
+      && report
+      && reportStatusFilters[report.slug]?.includes(data.filters.status)
+    ) {
+      query.set('status', data.filters.status);
+    }
     if (data.filters.from) query.set('from', data.filters.from);
     if (data.filters.to) query.set('to', data.filters.to);
     const suffix = query.toString();
@@ -137,7 +177,7 @@
 </script>
 
 <svelte:head>
-  <title>{sectionTitle} · BaoBao Operations</title>
+  <title>{sectionTitle} · EasyRide</title>
 </svelte:head>
 
 <section class="page-heading">
@@ -183,7 +223,7 @@
   <section class="empty-state" role="alert">
     <span class="empty-icon" aria-hidden="true">!</span>
     <div>
-      <h2>Admin API is not ready</h2>
+      <h2>Operations API is not ready</h2>
       <p>{data.apiError}</p>
       <p>Start the gateway and admin service, then use “Refresh data.”</p>
     </div>
@@ -375,10 +415,67 @@
       <ul class="plain-list">
         {#each recordsFrom(data.extra, 'requirements') as requirement}
           <li>
-            <strong>{textFrom(requirement, 'name')}</strong>
-            <span class="status {statusClass(requirement.status)}">
-              {textFrom(requirement, 'status')}
+            <span>
+              <strong>{textFrom(requirement, 'name')}</strong>
+              <small>
+                {Boolean(requirement.requiresExpiry ?? requirement.requires_expiry)
+                  ? 'Expiry required'
+                  : 'No expiry required'}
+              </small>
             </span>
+            <details>
+              <summary>
+                <span
+                  class="status {Boolean(requirement.isActive ?? requirement.is_active)
+                    ? 'positive'
+                    : 'warning'}"
+                >
+                  {Boolean(requirement.isActive ?? requirement.is_active) ? 'Active' : 'Inactive'}
+                </span>
+              </summary>
+              <form method="POST" action="?/documentRequirementUpdate" class="compact-form">
+                <input type="hidden" name="requirementId" value={itemId(requirement)} />
+                <label>
+                  Expiry policy
+                  <select name="requiresExpiry" required>
+                    <option
+                      value="true"
+                      selected={Boolean(requirement.requiresExpiry ?? requirement.requires_expiry)}
+                    >
+                      Expiry required
+                    </option>
+                    <option
+                      value="false"
+                      selected={!Boolean(requirement.requiresExpiry ?? requirement.requires_expiry)}
+                    >
+                      No expiry required
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  Requirement status
+                  <select name="isActive" required>
+                    <option
+                      value="true"
+                      selected={Boolean(requirement.isActive ?? requirement.is_active)}
+                    >
+                      Active
+                    </option>
+                    <option
+                      value="false"
+                      selected={!Boolean(requirement.isActive ?? requirement.is_active)}
+                    >
+                      Inactive
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  Reason for change
+                  <textarea name="reason" rows="2" required></textarea>
+                </label>
+                <button class="button secondary" type="submit">Save requirement</button>
+              </form>
+            </details>
           </li>
         {:else}
           <li class="muted">No requirements configured.</li>
@@ -906,7 +1003,7 @@
       <a class="button secondary" href={filterHref(data.filters.page - 1)}>Previous</a>
     {/if}
     <span>Page {data.filters.page}</span>
-    {#if records.length > 0}
+    {#if hasNextPage}
       <a class="button secondary" href={filterHref(data.filters.page + 1)}>Next</a>
     {/if}
   </nav>

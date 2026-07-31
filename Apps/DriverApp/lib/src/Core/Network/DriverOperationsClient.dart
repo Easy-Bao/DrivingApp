@@ -139,14 +139,14 @@ String driverOperationMessage(Object error) {
   final code = (rawCode ?? '').toUpperCase();
 
   if (code.contains('DRIVER_NOT_APPROVED')) {
-    return 'Your driver account is waiting for owner approval. You cannot go online or offer rides yet.';
+    return 'Your driver account is not approved. Contact support before going online or accepting rides.';
   }
   if (code.contains('DOCUMENTS_EXPIRED')) {
     return 'One or more required documents have expired. Contact support to submit updated documents.';
   }
   if (code.contains('DOCUMENTS_INCOMPLETE') ||
       code.contains('DRIVER_DOCUMENTS_INCOMPLETE')) {
-    return 'Required driver documents are incomplete or expired. Contact support before going online.';
+    return 'Required driver documents are incomplete, rejected, or expired. Contact support before going online or accepting rides.';
   }
   if (code.contains('ACCOUNT_RESTRICTED')) {
     return 'Your account is restricted. You can still view credits and history; contact support for the reason.';

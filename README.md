@@ -1,24 +1,26 @@
-# BaoRide Monorepo
+# EasyRide Monorepo
 
-This is the Melos-based monorepo for the BaoRide booking application. It houses both passenger and driver applications, along with shared Dart and Flutter packages.
+This repository contains the EasyRide Passenger and Driver mobile apps, shared
+Flutter packages, Bun backend services, and the current private operations
+portal prototype for the Pagadian City Bao Bao pilot.
 
 ---
 
 ## Repository Structure
 
-```
+```text
 .
 ├── apps/
-│   ├── driver_app/          # Driver-specific UI, onboarding, background tracking
-│   └── passenger_app/       # Passenger-specific UI, ride booking, payment flows
-├── packages/
-│   ├── api_client/          # Shared HTTP/WebSocket network layer
-│   ├── core_models/         # Shared Dart classes (Trip, User, Location, RideStatus)
-│   ├── design_system/       # Shared UI components, theme, buttons, custom maps
-│   └── location_service/    # Shared background GPS and distance matrix utilities
-├── pubspec.yaml             # Workspace configuration
-├── melos.yaml               # Melos workspace scripts and package paths
-└── README.md
+│   ├── driver_app/          # Driver Flutter client
+│   └── passenger_app/       # Passenger Flutter client
+├── web/
+│   └── admin_app/           # Private SvelteKit operations portal
+├── packages/                # Shared Dart and Flutter packages
+├── server/                  # Gateway and Bun/Hono backend services
+├── docs/                    # Product, operations, runtime, and meeting documents
+├── pubspec.yaml             # Flutter workspace configuration
+├── melos.yaml               # Melos workspace scripts
+└── docker-compose.yml       # Local multi-service stack
 ```
 
 ---
@@ -55,15 +57,18 @@ The following commands are configured in `melos.yaml`:
 
 ## Coding Guidelines
 
-Please refer to the global agent configuration files (`.agent`, `.cursorrules`, `.clinerules`) in the root directory for instructions regarding:
-* SOLID design and architecture.
-* Strict naming conventions (camelCase/PascalCase for Dart).
-* Narrative and lifecycle-oriented code documentation and git commits.
+Start with [AGENTS.md](AGENTS.md) for repository-specific implementation,
+documentation, testing, security, and Git guidance. Existing tool-specific rule
+files remain secondary context when they apply.
 
 ## Admin MVP
 
-See [docs/admin-mvp.md](docs/admin-mvp.md) for the online owner dashboard,
-service-credit operations, migrations, deployment, and acceptance runbook.
+See [docs/admin-mvp.md](docs/admin-mvp.md) for the private operations portal,
+driver prepaid-balance operations, migrations, deployment, and acceptance
+runbook.
 
 See [docs/product-plan.md](docs/product-plan.md) for the cross-team passenger,
 driver, Admin, and backend feature map, decisions, gaps, and open questions.
+
+See [docs/repo-current-state.md](docs/repo-current-state.md) for the verified
+branch, local runtime, test results, and immediate blockers.

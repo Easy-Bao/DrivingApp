@@ -31,7 +31,14 @@ export const load: PageServerLoad = async ({ params, fetch, locals, cookies, url
   };
   const query = new URLSearchParams();
   if (filters.status) {
-    query.set(params.section === 'drivers' ? 'approvalStatus' : 'status', filters.status);
+    if (params.section === 'drivers') {
+      query.set('approvalStatus', filters.status);
+    } else if (
+      params.section !== 'reports'
+      || ['succeeded', 'failed'].includes(filters.status)
+    ) {
+      query.set('status', filters.status);
+    }
   }
   if (filters.from) query.set('from', filters.from);
   if (filters.to) query.set('to', filters.to);
@@ -177,6 +184,25 @@ export const actions: Actions = {
         reason: values.reason,
       },
       'Document requirement added.',
+    );
+  },
+
+  documentRequirementUpdate: async (event) => {
+    const values = formValues(await event.request.formData());
+    const empty = missing(values, 'requirementId', 'requiresExpiry', 'isActive', 'reason');
+    if (empty) {
+      return fail(400, { message: `${empty} is required.` });
+    }
+    return mutate(
+      event,
+      `/admin/v1/document-requirements/${encodeURIComponent(values.requirementId)}`,
+      'PATCH',
+      {
+        requires_expiry: values.requiresExpiry === 'true',
+        is_active: values.isActive === 'true',
+        reason: values.reason,
+      },
+      'Document requirement updated.',
     );
   },
 

@@ -12,15 +12,15 @@
 
 <div class="admin-shell">
   <aside class="sidebar">
-    <a class="brand" href="/overview" aria-label="BaoBao Operations home">
-      <span class="brand-mark" aria-hidden="true">B</span>
+    <a class="brand" href="/overview" aria-label="EasyRide operations home">
+      <span class="brand-mark" aria-hidden="true">E</span>
       <span>
-        BaoBao
+        EasyRide
         <small>Operations</small>
       </span>
     </a>
 
-    <nav aria-label="Admin sections">
+    <nav aria-label="Operations sections">
       {#each ADMIN_SECTIONS as section}
         <a
           href="/{section.slug}"
@@ -47,7 +47,7 @@
   <div class="workspace">
     <header class="topbar">
       <div>
-        <p class="eyebrow">BaoBao admin</p>
+        <p class="eyebrow">EasyRide operations</p>
         <h1>{activeSection.label}</h1>
       </div>
       <div class="topbar-meta">
@@ -63,7 +63,7 @@
       </div>
     </header>
 
-    <nav class="tablet-nav" aria-label="Admin sections">
+    <nav class="tablet-nav" aria-label="Operations sections">
       {#each ADMIN_SECTIONS as section}
         <a
           href="/{section.slug}"

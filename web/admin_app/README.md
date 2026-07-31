@@ -1,6 +1,6 @@
-# BaoBao admin app
+# EasyRide operations portal
 
-SvelteKit owner dashboard for BaoBao ride operations in Pagadian City. Browser
+SvelteKit owner dashboard for EasyRide operations in Pagadian City. Browser
 requests go to this server first so the eight-hour admin JWT remains in an
 HttpOnly, SameSite cookie and is never available to client JavaScript.
 
@@ -34,7 +34,7 @@ tokens in this app's environment.
 bun run check
 bun test
 bun run build
-docker build -t baobao-admin-app .
+docker build -t easyride-admin-app .
 ```
 
 Run the image with the environment above. Terminate TLS at the teammate-managed

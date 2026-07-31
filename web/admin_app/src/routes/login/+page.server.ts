@@ -1,6 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { AdminApiError, adminApi, loginToken } from '$lib/server/admin-api';
-import { setAdminSession } from '$lib/server/session';
+import {
+  adminSessionCookieIsSecure,
+  setAdminSession,
+} from '$lib/server/session';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
@@ -45,7 +48,7 @@ export const actions: Actions = {
       });
     }
 
-    setAdminSession(cookies, token, url.protocol === 'https:');
+    setAdminSession(cookies, token, adminSessionCookieIsSecure(url));
     redirect(303, '/overview');
   },
 };

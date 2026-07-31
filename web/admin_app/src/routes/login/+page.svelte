@@ -3,14 +3,14 @@
 </script>
 
 <svelte:head>
-  <title>Owner sign in · BaoBao Operations</title>
+  <title>Owner sign in · EasyRide</title>
 </svelte:head>
 
 <main class="login-page">
   <section class="login-intro" aria-labelledby="login-title">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true">B</span>
-      <span>BaoBao Operations</span>
+      <span class="brand-mark" aria-hidden="true">E</span>
+      <span>EasyRide</span>
     </div>
     <p class="eyebrow">Pagadian City ride operations</p>
     <h1 id="login-title">Keep every ride moving safely.</h1>

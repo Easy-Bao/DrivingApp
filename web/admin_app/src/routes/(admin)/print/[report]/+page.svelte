@@ -41,13 +41,13 @@
 </script>
 
 <svelte:head>
-  <title>{reportName} report · BaoBao Operations</title>
+  <title>{reportName} report · EasyRide</title>
 </svelte:head>
 
 <article class="print-report">
   <header>
     <div>
-      <p class="eyebrow">BaoBao Operations · Pagadian City</p>
+      <p class="eyebrow">EasyRide · Pagadian City</p>
       <h1>{reportName} report</h1>
       <p>Generated {formatManila(data.generatedAt)} · Asia/Manila</p>
     </div>

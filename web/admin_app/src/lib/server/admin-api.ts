@@ -57,7 +57,7 @@ export async function adminApi<T>(
       headers,
     });
   } catch {
-    throw new AdminApiError('The BaoBao gateway is unavailable.', 503, 'GATEWAY_UNAVAILABLE');
+    throw new AdminApiError('The EasyRide gateway is unavailable.', 503, 'GATEWAY_UNAVAILABLE');
   }
 
   const contentType = response.headers.get('content-type') ?? '';
