@@ -2,8 +2,9 @@ name: drive_app_workspace
 repository: https://github.com/Easy-Bao/DrivingApp
 
 packages:
-  - apps/*
-  - packages/*
+  - Apps/*
+  - Packages/*
+
 
 
 scripts:
