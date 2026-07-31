@@ -1,6 +1,6 @@
 import { db } from '../../shared/drizzle.ts';
 import { bidSessions, driverOffers } from '../../db/schema.ts';
-import { eq, desc, and, lt, gte, ne } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, lt, ne } from 'drizzle-orm';
 import { BidSession, DriverOffer, BiddingRepository } from '../entities/bidding.types.ts';
 
 export class BiddingRepositoryImpl implements BiddingRepository {
@@ -19,6 +19,8 @@ export class BiddingRepositoryImpl implements BiddingRepository {
         distanceKm: details.distanceKm,
         durationMinutes: details.durationMinutes,
         offeredFare: details.offeredFare,
+        offeredFareCentavos: details.offeredFareCentavos
+          ?? Math.round(details.offeredFare * 100),
         targetDriverId: details.targetDriverId,
         status: 'open',
         expiresAt: details.expiresAt,
@@ -104,27 +106,117 @@ export class BiddingRepositoryImpl implements BiddingRepository {
         plateNumber: offerDetails.plateNumber,
         vehicleType: offerDetails.vehicleType,
         proposedFare: offerDetails.proposedFare,
+        proposedFareCentavos: offerDetails.proposedFareCentavos
+          ?? Math.round(offerDetails.proposedFare * 100),
         status: 'pending',
       })
       .returning();
     return created;
   }
 
-  async acceptOfferTransaction(
+  async claimAssignment(input: {
+    sessionId: string;
+    offerId: string;
+    driverId: string;
+    idempotencyKey: string;
+    assignmentSource: 'driver_offer' | 'admin';
+    assignedByAdminId?: string | null;
+  }): Promise<{
+    state: 'claimed' | 'retry' | 'completed' | 'conflict';
+    session: BidSession | null;
+  }> {
+    const [claimed] = await db.update(bidSessions)
+      .set({
+        status: 'assigning',
+        acceptedDriverId: input.driverId,
+        acceptedOfferId: input.offerId,
+        acceptanceIdempotencyKey: input.idempotencyKey,
+        assignmentSource: input.assignmentSource,
+        assignedByAdminId: input.assignedByAdminId ?? null,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(bidSessions.id, input.sessionId),
+        eq(bidSessions.status, 'open'),
+      ))
+      .returning();
+    if (claimed) return { state: 'claimed', session: claimed };
+
+    const existing = await this.findSessionById(input.sessionId);
+    if (!existing) return { state: 'conflict', session: null };
+    const sameAssignment = (
+      existing.acceptanceIdempotencyKey === input.idempotencyKey
+      && existing.acceptedDriverId === input.driverId
+      && existing.acceptedOfferId === input.offerId
+      && existing.assignmentSource === input.assignmentSource
+      && existing.assignedByAdminId === (input.assignedByAdminId ?? null)
+    );
+    if (!sameAssignment) return { state: 'conflict', session: existing };
+    if (existing.status === 'accepted') return { state: 'completed', session: existing };
+    if (existing.status === 'assigning') return { state: 'retry', session: existing };
+    return { state: 'conflict', session: existing };
+  }
+
+  async recordAssignmentTrip(
+    sessionId: string,
+    idempotencyKey: string,
+    tripId: string,
+  ): Promise<BidSession> {
+    const [updated] = await db.update(bidSessions)
+      .set({ acceptedTripId: tripId, updatedAt: new Date() })
+      .where(and(
+        eq(bidSessions.id, sessionId),
+        eq(bidSessions.status, 'assigning'),
+        eq(bidSessions.acceptanceIdempotencyKey, idempotencyKey),
+        isNull(bidSessions.acceptedTripId),
+      ))
+      .returning();
+    if (updated) return updated;
+
+    const existing = await this.findSessionById(sessionId);
+    if (
+      existing
+      && existing.acceptanceIdempotencyKey === idempotencyKey
+      && existing.acceptedTripId === tripId
+    ) {
+      return existing;
+    }
+    throw new Error('Assignment state changed before the trip could be recorded');
+  }
+
+  async completeAssignment(
     sessionId: string,
     offerId: string,
-    acceptedDriverId: string
+    idempotencyKey: string,
+    tripId: string,
   ): Promise<{ session: BidSession; offer: DriverOffer }> {
     return await db.transaction(async (tx) => {
       const [updatedSession] = await tx.update(bidSessions)
-        .set({ status: 'accepted', acceptedDriverId })
-        .where(eq(bidSessions.id, sessionId))
+        .set({
+          status: 'accepted',
+          acceptedTripId: tripId,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(bidSessions.id, sessionId),
+          eq(bidSessions.status, 'assigning'),
+          eq(bidSessions.acceptanceIdempotencyKey, idempotencyKey),
+          eq(bidSessions.acceptedOfferId, offerId),
+        ))
         .returning();
 
       const [updatedOffer] = await tx.update(driverOffers)
         .set({ status: 'accepted' })
-        .where(eq(driverOffers.id, offerId))
+        .where(and(
+          eq(driverOffers.id, offerId),
+          eq(driverOffers.sessionId, sessionId),
+          eq(driverOffers.status, 'pending'),
+        ))
         .returning();
+
+      if (!updatedSession || !updatedOffer) {
+        throw new Error('Assignment state changed before it could be completed');
+      }
 
       await tx.update(driverOffers)
         .set({ status: 'rejected' })
@@ -140,9 +232,50 @@ export class BiddingRepositoryImpl implements BiddingRepository {
     });
   }
 
+  async releaseAssignment(
+    sessionId: string,
+    idempotencyKey: string,
+    offerId?: string,
+  ): Promise<void> {
+    const released = await db.transaction(async (tx) => {
+      const [released] = await tx.update(bidSessions)
+        .set({
+          status: 'open',
+          acceptedDriverId: null,
+          acceptedOfferId: null,
+          acceptedTripId: null,
+          acceptanceIdempotencyKey: null,
+          assignmentSource: null,
+          assignedByAdminId: null,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(bidSessions.id, sessionId),
+          eq(bidSessions.status, 'assigning'),
+          eq(bidSessions.acceptanceIdempotencyKey, idempotencyKey),
+        ))
+        .returning({ id: bidSessions.id });
+      if (released && offerId) {
+        await tx.update(driverOffers)
+          .set({ status: 'rejected' })
+          .where(and(
+            eq(driverOffers.id, offerId),
+            eq(driverOffers.sessionId, sessionId),
+            eq(driverOffers.status, 'pending'),
+          ));
+      }
+      return Boolean(released);
+    });
+    if (released) return;
+
+    const existing = await this.findSessionById(sessionId);
+    if (existing?.status === 'open' && !existing.acceptanceIdempotencyKey) return;
+    throw new Error('Assignment state changed before its claim could be released');
+  }
+
   async updateSessionStatus(id: string, status: string): Promise<BidSession> {
     const [updated] = await db.update(bidSessions)
-      .set({ status })
+      .set({ status, updatedAt: new Date() })
       .where(eq(bidSessions.id, id))
       .returning();
     if (!updated) throw new Error('Bid session not found');

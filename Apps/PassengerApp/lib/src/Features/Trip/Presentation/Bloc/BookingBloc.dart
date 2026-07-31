@@ -3,18 +3,17 @@ import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/Features/Booking/Data/DataSources/BiddingRemoteDataSource.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/BookingEvent.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/BookingState.dart';
-
-import 'package:passenger_app/src/Features/Booking/Data/DataSources/BiddingRemoteDataSource.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
   final BiddingRemoteDataSource _biddingDataSource;
 
-  StreamSubscription<List<dynamic>>? _offersSubscription;
-  StreamSubscription<DriverMatchResult>? _driverFoundSubscription;
+  StreamSubscription<void>? _sessionSubscription;
+  String? _sessionId;
 
   DriverModel? _nearestDriver;
   int _totalTrips = 0;
@@ -28,7 +27,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   double? _dropoffLng;
   String? _dropoffName;
   double? _fare;
-  String? _rideType;
 
   BookingBloc({
     required DriverRepository driverRepository,
@@ -36,7 +34,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }) : _driverRepository = driverRepository,
        _biddingDataSource = biddingDataSource,
        super(BookingInitial()) {
-
     on<LocateNearestDriverEvent>(_onLocateNearestDriver);
     on<StartDirectBookingEvent>(_onStartDirectBooking);
     on<StartOpenBookingEvent>(_onStartOpenBooking);
@@ -195,24 +192,30 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
     _fare = event.trip.fare;
-    _rideType = event.trip.rideType;
-
-    _subscribeToSession();
 
     try {
-      await _biddingDataSource.requestRide({
-        'passenger_id': passengerId,
+      final session = await _biddingDataSource.requestRide({
         'ride_type': event.trip.rideType,
-        'pickup_lat': event.pickupLat,
-        'pickup_lng': event.pickupLng,
+        'pickup_latitude': event.pickupLat,
+        'pickup_longitude': event.pickupLng,
+        'pickup_name': _pickupName,
+        'dropoff_latitude': _dropoffLat,
+        'dropoff_longitude': _dropoffLng,
+        'dropoff_name': _dropoffName,
         'distance_km': event.distanceKm,
         'duration_minutes': event.durationMinutes,
         'target_driver_id': _nearestDriver!.id,
       });
+      _startSessionPolling(session);
     } catch (error) {
-      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
+      emit(
+        BookingFailure(
+          passengerRideErrorMessage(
+            _takeRemotePublicError() ?? ErrorHandler.getErrorMessage(error),
+          ),
+        ),
+      );
     }
-
   }
 
   Future<void> _onStartOpenBooking(
@@ -235,35 +238,82 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
     _fare = event.trip.fare;
-    _rideType = event.trip.rideType;
-
-    _subscribeToSession();
 
     try {
-      await _biddingDataSource.requestRide({
-        'passenger_id': passengerId,
+      final session = await _biddingDataSource.requestRide({
         'ride_type': event.trip.rideType,
-        'pickup_lat': event.pickupLat,
-        'pickup_lng': event.pickupLng,
+        'pickup_latitude': event.pickupLat,
+        'pickup_longitude': event.pickupLng,
+        'pickup_name': _pickupName,
+        'dropoff_latitude': _dropoffLat,
+        'dropoff_longitude': _dropoffLng,
+        'dropoff_name': _dropoffName,
         'distance_km': event.distanceKm,
         'duration_minutes': event.durationMinutes,
       });
+      _startSessionPolling(session);
     } catch (error) {
-      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
+      emit(
+        BookingFailure(
+          passengerRideErrorMessage(
+            _takeRemotePublicError() ?? ErrorHandler.getErrorMessage(error),
+          ),
+        ),
+      );
     }
   }
 
-  void _subscribeToSession() {
-    unawaited(_offersSubscription?.cancel());
-    unawaited(_driverFoundSubscription?.cancel());
-
-    _offersSubscription = Stream.periodic(const Duration(seconds: 3))
-        .asyncMap((_) => _biddingDataSource.fetchOffers('current_session'))
-        .listen((offers) {
-      add(UpdateOffersEvent(offers));
-    });
+  void _startSessionPolling(Map<String, dynamic> session) {
+    final sessionId = session['id']?.toString() ?? '';
+    if (sessionId.isEmpty) {
+      throw const FormatException(
+        'Bid session response did not include an ID.',
+      );
+    }
+    _sessionId = sessionId;
+    unawaited(_sessionSubscription?.cancel());
+    _sessionSubscription =
+        Stream<int>.periodic(const Duration(seconds: 3), (tick) => tick)
+            .asyncMap((_) => _pollSession(sessionId))
+            .listen(
+              null,
+              onError: (Object error) {
+                dev.log('Unable to refresh bid session $sessionId: $error');
+              },
+            );
   }
 
+  Future<void> _pollSession(String sessionId) async {
+    final offers = await _biddingDataSource.fetchOffers(sessionId);
+    add(UpdateOffersEvent(offers));
+
+    final session = await _biddingDataSource.getSession(sessionId);
+    if (session['status'] != 'accepted') return;
+
+    final rideId = acceptedRideId(session);
+    final acceptedDriverId = session['accepted_driver_id']?.toString();
+    final acceptedOffer = offers.whereType<Map>().firstWhere(
+      (offer) => offer['driver_id']?.toString() == acceptedDriverId,
+      orElse: () => const <String, dynamic>{},
+    );
+    if (rideId == null || acceptedOffer.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('active_ride_id', rideId);
+    add(
+      DriverMatchedEvent(
+        DriverMatchResult(
+          driverId: acceptedDriverId ?? '',
+          driverName: acceptedOffer['driver_name']?.toString() ?? 'Driver',
+          vehicleType: acceptedOffer['vehicle_type']?.toString() ?? 'Bao Bao',
+          plateNumber: acceptedOffer['plate_number']?.toString() ?? 'Unknown',
+          proposedFare:
+              (acceptedOffer['proposed_fare'] as num?)?.toDouble() ??
+              (_fare ?? 0),
+        ),
+      ),
+    );
+  }
 
   void _onUpdateOffers(UpdateOffersEvent event, Emitter<BookingState> emit) {
     if (state is BookingSearching) {
@@ -294,55 +344,41 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _cleanupSubscriptions();
 
     final prefs = await SharedPreferences.getInstance();
-    final passengerId = prefs.getString('passenger_id') ?? '';
-
-    RideHistoryModel? createdRide;
-
-    if (passengerId.isNotEmpty) {
-      try {
-        ///TODO: Remove hardcoded fallback
-        final res = await _biddingDataSource.requestRide({
-          'passenger_id': passengerId,
-          'ride_type': _rideType ?? 'Bao Bao Standard',
-          'pickup_lat': _pickupLat ?? 0.0,
-          'pickup_lng': _pickupLng ?? 0.0,
-          'pickup_name': _pickupName ?? 'Current Location',
-          'dropoff_lat': _dropoffLat ?? 0.0,
-          'dropoff_lng': _dropoffLng ?? 0.0,
-          'dropoff_name': _dropoffName ?? 'Destination',
-          'fare': _fare ?? 0.0,
-        });
-        if (res['id'] != null) {
-          final activeRideId = res['id']?.toString() ?? '';
-          await prefs.setString('active_ride_id', activeRideId);
-
-          createdRide = RideHistoryModel(
-            id: activeRideId,
-            pickup: res['pickup_name'] as String? ?? _pickupName ?? '',
-
-            destination: _dropoffName ?? '',
-            pickupLat: SafeParse.toDouble(res['pickup_latitude']),
-            pickupLng: SafeParse.toDouble(res['pickup_longitude']),
-            destLat: _dropoffLat ?? 0.0,
-            destLng: _dropoffLng ?? 0.0,
-            date: DateTime.now().toLocal().toString(),
-            price: '₱${(_fare ?? 0.0).toStringAsFixed(2)}',
-            status: RideStatus.accepted.value,
-            driverId: res['driver_id'] as String? ?? event.matchResult.driverId,
-            driverName:
-                res['driver_name'] as String? ?? event.matchResult.driverName,
-            vehiclePlate:
-                res['plate_number'] as String? ?? event.matchResult.plateNumber,
-            vehicleType:
-                res['vehicle_type'] as String? ?? event.matchResult.vehicleType,
-          );
-        }
-      } catch (error) {
-        dev.log(
-          'Error creating ride request, falling back to matched result: $error',
-        );
-      }
+    final activeRideId = prefs.getString('active_ride_id') ?? '';
+    if (activeRideId.isEmpty) {
+      emit(
+        const BookingFailure(
+          'The ride assignment did not finish. Please request the ride again.',
+        ),
+      );
+      return;
     }
+
+    Map<String, dynamic>? ride;
+    try {
+      ride = await _biddingDataSource.getRideStatus(activeRideId);
+    } catch (error) {
+      dev.log('Unable to refresh accepted ride $activeRideId: $error');
+    }
+    final createdRide = RideHistoryModel(
+      id: activeRideId,
+      pickup: ride?['pickup_name'] as String? ?? _pickupName ?? '',
+      destination: ride?['dropoff_name'] as String? ?? _dropoffName ?? '',
+      pickupLat: SafeParse.toDouble(ride?['pickup_latitude'] ?? _pickupLat),
+      pickupLng: SafeParse.toDouble(ride?['pickup_longitude'] ?? _pickupLng),
+      destLat: SafeParse.toDouble(ride?['dropoff_latitude'] ?? _dropoffLat),
+      destLng: SafeParse.toDouble(ride?['dropoff_longitude'] ?? _dropoffLng),
+      date: DateTime.now().toLocal().toString(),
+      price: '₱${(_fare ?? event.matchResult.proposedFare).toStringAsFixed(2)}',
+      status: RideStatus.accepted.value,
+      driverId: ride?['driver_id'] as String? ?? event.matchResult.driverId,
+      driverName:
+          ride?['driver_name'] as String? ?? event.matchResult.driverName,
+      vehiclePlate:
+          ride?['plate_number'] as String? ?? event.matchResult.plateNumber,
+      vehicleType:
+          ride?['vehicle_type'] as String? ?? event.matchResult.vehicleType,
+    );
 
     emit(
       BookingDriverMatched(
@@ -356,28 +392,74 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     AcceptBidOfferEvent event,
     Emitter<BookingState> emit,
   ) async {
-    await _biddingDataSource.acceptOffer(
-      sessionId: 'current_session',
-      offerId: event.offerId,
-    );
+    final sessionId = _sessionId;
+    if (sessionId == null) {
+      emit(const BookingFailure('The booking session has expired.'));
+      return;
+    }
+
+    try {
+      final response = await _biddingDataSource.acceptOffer(
+        sessionId: sessionId,
+        offerId: event.offerId,
+      );
+      final rideId = acceptedRideId(response);
+      if (rideId == null) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('active_ride_id', rideId);
+      add(
+        DriverMatchedEvent(
+          DriverMatchResult(
+            driverId: event.driverId,
+            driverName: event.driverName,
+            vehicleType: event.vehicleType,
+            plateNumber: event.plateNumber,
+            proposedFare: event.proposedFare,
+          ),
+        ),
+      );
+    } catch (error) {
+      emit(
+        BookingFailure(
+          passengerRideErrorMessage(
+            _takeRemotePublicError() ?? ErrorHandler.getErrorMessage(error),
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _onCancelBooking(
     CancelBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
+    final sessionId = _sessionId;
     _cleanupSubscriptions();
-    await _biddingDataSource.cancelSession('current_session');
+    if (sessionId != null) {
+      try {
+        await _biddingDataSource.cancelSession(sessionId);
+      } catch (error) {
+        emit(
+          BookingFailure(
+            passengerRideErrorMessage(
+              _takeRemotePublicError() ?? ErrorHandler.getErrorMessage(error),
+            ),
+          ),
+        );
+        return;
+      }
+    }
     emit(BookingCanceled());
   }
 
-
   void _cleanupSubscriptions() {
-    unawaited(_offersSubscription?.cancel());
-    unawaited(_driverFoundSubscription?.cancel());
-    _offersSubscription = null;
-    _driverFoundSubscription = null;
+    unawaited(_sessionSubscription?.cancel());
+    _sessionSubscription = null;
+    _sessionId = null;
   }
+
+  String? _takeRemotePublicError() => _biddingDataSource.takeLastPublicError();
 
   @override
   Future<void> close() {

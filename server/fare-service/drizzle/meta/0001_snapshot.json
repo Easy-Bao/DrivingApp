@@ -1,0 +1,323 @@
+{
+  "id": "dd0662fa-16cf-416d-9c3e-2158463d47c4",
+  "prevId": "e08e13d6-c0f2-463f-9d87-84c0ddadd1fe",
+  "version": "6",
+  "dialect": "postgresql",
+  "tables": {
+    "public.rating_pricing_configs": {
+      "name": "rating_pricing_configs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "config_key": {
+          "name": "config_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'default'"
+        },
+        "minimum_rating_threshold": {
+          "name": "minimum_rating_threshold",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 4.5
+        },
+        "high_rating_bonus_multiplier": {
+          "name": "high_rating_bonus_multiplier",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1.05
+        },
+        "low_rating_surge_penalty_multiplier": {
+          "name": "low_rating_surge_penalty_multiplier",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "base_surge_cap": {
+          "name": "base_surge_cap",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 2.5
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "rating_pricing_configs_config_key_unique": {
+          "name": "rating_pricing_configs_config_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "config_key"
+          ]
+        }
+      }
+    },
+    "public.service_pricing_rules": {
+      "name": "service_pricing_rules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "service_type": {
+          "name": "service_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "base_fare": {
+          "name": "base_fare",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "per_km_rate": {
+          "name": "per_km_rate",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "per_minute_rate": {
+          "name": "per_minute_rate",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1.5
+        },
+        "minimum_fare": {
+          "name": "minimum_fare",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 25
+        },
+        "surge_multiplier": {
+          "name": "surge_multiplier",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "service_pricing_rules_service_type_unique": {
+          "name": "service_pricing_rules_service_type_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "service_type"
+          ]
+        }
+      }
+    },
+    "public.fare_transactions": {
+      "name": "fare_transactions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "ride_id": {
+          "name": "ride_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service_type": {
+          "name": "service_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "distance_km": {
+          "name": "distance_km",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "base_fare": {
+          "name": "base_fare",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "distance_charge": {
+          "name": "distance_charge",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time_charge": {
+          "name": "time_charge",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "surge_charge": {
+          "name": "surge_charge",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_fare": {
+          "name": "total_fare",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "driver_earnings": {
+          "name": "driver_earnings",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "platform_fee": {
+          "name": "platform_fee",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "driver_id": {
+          "name": "driver_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_fare_centavos": {
+          "name": "total_fare_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "driver_earnings_centavos": {
+          "name": "driver_earnings_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "platform_fee_centavos": {
+          "name": "platform_fee_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commission_rate_basis_points": {
+          "name": "commission_rate_basis_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assignment_source": {
+          "name": "assignment_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'driver_offer'"
+        },
+        "payment_status": {
+          "name": "payment_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'cash_pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fare_transactions_ride_id_unique": {
+          "name": "fare_transactions_ride_id_unique",
+          "columns": [
+            "ride_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

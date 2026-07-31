@@ -24,19 +24,28 @@ class PlaceModel extends Equatable {
   });
 
   factory PlaceModel.fromJson(Map<String, dynamic> json) =>
-      _$PlaceModelFromJson(json);
+      _$PlaceModelFromJson(_normalizePlaceJson(json));
 
   Map<String, dynamic> toJson() => _$PlaceModelToJson(this);
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        fullAddress,
-        latitude,
-        longitude,
-        category,
-        distanceKm,
-      ];
+    id,
+    name,
+    fullAddress,
+    latitude,
+    longitude,
+    category,
+    distanceKm,
+  ];
 }
 
+Map<String, dynamic> _normalizePlaceJson(Map<String, dynamic> json) {
+  return {
+    ...json,
+    'fullAddress': json['fullAddress'] ?? json['address'],
+    'latitude': json['latitude'] ?? json['lat'],
+    'longitude': json['longitude'] ?? json['lng'],
+    'distanceKm': json['distanceKm'] ?? json['distance_km'],
+  };
+}

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
+import 'package:driver_app/src/Core/Network/DriverOperationsClient.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Features/Activity/ActivityModule.dart';
 import 'package:driver_app/src/Features/Activity/Data/Repositories/DriverActivityRepositoryImpl.dart';
@@ -20,7 +21,6 @@ import 'package:driver_app/src/Features/Trip/Data/DataSources/TelemetryRemoteDat
 import 'package:driver_app/src/Features/Trip/Data/DataSources/TripRemoteDataSource.dart';
 import 'package:driver_app/src/Features/Trip/Data/DataSources/PassengerRemoteDataSource.dart';
 
-
 class DriverModule extends Module {
   @override
   FutureOr<void> binds(Injector i) {
@@ -32,14 +32,20 @@ class DriverModule extends Module {
         ),
       )
       ..addLazySingleton<RideRepository>(
-        (i) => RideRepositoryImpl(remoteDataSource: i.get<BiddingRemoteDataSource>()),
+        (i) => RideRepositoryImpl(
+          remoteDataSource: i.get<BiddingRemoteDataSource>(),
+        ),
       )
       ..addLazySingleton<DriverActivityRepository>(
-        (i) =>
-            DriverActivityRepositoryImpl(remoteDataSource: i.get<TripRemoteDataSource>()),
+        (i) => DriverActivityRepositoryImpl(
+          remoteDataSource: i.get<TripRemoteDataSource>(),
+        ),
       )
       ..addFactory<DashboardCubit>(
-        (i) => DashboardCubit(repository: i.get<DashboardRepository>()),
+        (i) => DashboardCubit(
+          repository: i.get<DashboardRepository>(),
+          operationsClient: i.get<DriverOperationsClient>(),
+        ),
       )
       ..addFactory<LiveMapBloc>(
         (i) => LiveMapBloc(
@@ -53,7 +59,6 @@ class DriverModule extends Module {
           sessionService: i.get<SecureSessionService>(),
         ),
       );
-
   }
 
   @override

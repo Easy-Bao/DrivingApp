@@ -1,4 +1,11 @@
-import { pgTable, text, timestamp, uuid, doublePrecision } from 'drizzle-orm/pg-core';
+import {
+  doublePrecision,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 
 export const rides = pgTable('rides', {
   id: text('id').primaryKey(),
@@ -12,12 +19,31 @@ export const rides = pgTable('rides', {
   dropoffLongitude: doublePrecision('dropoff_longitude').notNull(),
   dropoffName: text('dropoff_name').notNull(),
   fare: doublePrecision('fare').notNull(),
+  fareCentavos: integer('fare_centavos'),
+  commissionRateBasisPoints: integer('commission_rate_basis_points'),
+  commissionCentavos: integer('commission_centavos'),
+  creditReservationId: text('credit_reservation_id'),
+  assignmentSource: text('assignment_source').notNull().default('driver_offer'),
+  assignedByAdminId: text('assigned_by_admin_id'),
+  paymentStatus: text('payment_status').notNull().default('cash_pending'),
+  pendingStatus: text('pending_status'),
+  statusRequestId: text('status_request_id'),
+  statusTransitionStartedAt: timestamp('status_transition_started_at', {
+    withTimezone: true,
+    mode: 'date',
+  }),
   status: text('status').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
   completedAt: timestamp('completed_at', { withTimezone: true, mode: 'date' }),
   driverId: text('driver_id'),
   driverName: text('driver_name'),
   driverRating: text('driver_rating'),
   vehicleType: text('vehicle_type'),
   plateNumber: text('plate_number'),
-});
+  creationRequestId: text('creation_request_id'),
+  creationRequestHash: text('creation_request_hash'),
+}, (table) => ({
+  creationRequestIdUnique: uniqueIndex('rides_creation_request_id_unique')
+    .on(table.creationRequestId),
+}));

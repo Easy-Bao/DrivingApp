@@ -10,6 +10,10 @@ export interface Driver {
   isOnline: boolean;
   lat: number;
   lng: number;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvalReason: string | null;
+  approvalReviewedBy: string | null;
+  approvalReviewedAt: Date | null;
   createdAt: Date;
 }
 

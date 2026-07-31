@@ -120,12 +120,6 @@ export class DriverService {
   }
 
   async getDriverReviews(driverId: string, page = 1, limit = 5) {
-    const uuidFormatRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-    if (!uuidFormatRegex.test(driverId)) {
-      return [];
-    }
-
     return await this.repository.fetchDriverReviews(driverId, page, limit);
   }
 

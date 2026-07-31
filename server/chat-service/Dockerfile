@@ -1,16 +1,7 @@
-# Docker build for the chat-service Bun service.
-FROM oven/bun:1.1-alpine AS base
+FROM oven/bun:1.3.14-alpine
 WORKDIR /usr/src/app
-
-# Copy configuration and install dependencies
-COPY server/chat-service/package.json ./
-RUN bun install
-
-# Copy source
+COPY server/chat-service/package.json server/chat-service/bun.lock ./
+RUN bun install --frozen-lockfile --production
 COPY server/chat-service/src ./src
-
-# Expose server port
 EXPOSE 8086
-
-# Run Bun application
 CMD ["bun", "run", "src/index.ts"]

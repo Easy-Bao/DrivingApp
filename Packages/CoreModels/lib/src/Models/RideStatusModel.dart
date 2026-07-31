@@ -1,10 +1,14 @@
+import 'package:json_annotation/json_annotation.dart';
+
 enum RideStatus {
   requested('requested'),
   accepted('accepted'),
   arrived('arrived'),
+  @JsonValue('in_transit')
   inTransit('in_transit'),
   completed('completed'),
-  cancelled('cancelled'),
+  @JsonValue('canceled')
+  cancelled('canceled'),
   unknown('unknown');
 
   final String value;
@@ -13,7 +17,7 @@ enum RideStatus {
 
   static RideStatus fromString(String statusStr) {
     final normalized = statusStr.toLowerCase().trim();
-    if (normalized == 'canceled') {
+    if (normalized == 'cancelled') {
       return RideStatus.cancelled;
     }
     if (normalized == 'in_progress') {

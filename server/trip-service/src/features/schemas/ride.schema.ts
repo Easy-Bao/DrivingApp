@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
-export const CreateRideSchema = z.object({
-  passenger_id: z.string().min(1, 'Invalid passenger ID'),
+const RideDetailsSchema = z.object({
   ride_type: z.string().optional().default('solo-ride'),
   pickup_latitude: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
   pickup_longitude: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
@@ -12,14 +11,27 @@ export const CreateRideSchema = z.object({
   fare: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
 });
 
+export const CreateRideSchema = RideDetailsSchema;
+
+export const InternalCreateRideSchema = RideDetailsSchema.extend({
+  passenger_id: z.string().min(1, 'Invalid passenger ID'),
+  assignment_source: z.enum(['driver_offer', 'admin']).optional(),
+  assigned_by_admin_id: z.string().optional().nullable(),
+});
+
 export const AcceptRideSchema = z.object({
   driver_id: z.string().min(1, 'driver_id is required'),
-  driver_name: z.string().min(1, 'driver_name is required'),
-  driver_rating: z.string().optional().nullable(),
-  vehicle_type: z.string().optional().nullable(),
-  plate_number: z.string().optional().nullable(),
+  assignment_source: z.enum(['driver_offer', 'admin']).optional(),
+  assigned_by_admin_id: z.string().optional().nullable(),
 });
 
 export const UpdateStatusSchema = z.object({
-  status: z.string().min(1, 'status is required'),
+  status: z.enum([
+    'arrived',
+    'in_transit',
+    'completed',
+    'canceled',
+    'cancelled',
+    'payment_disputed',
+  ]),
 });

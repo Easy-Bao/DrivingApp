@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
+import 'package:driver_app/src/Core/Network/DriverOperationsClient.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardCubit.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardState.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Widgets/Driver_dashboard/DriverDashboardStatsRowWidget.dart';
@@ -9,15 +10,15 @@ import 'package:driver_app/src/Features/Trip/Presentation/Bloc/LiveMap/LiveMapBl
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/LiveMap/LiveMapEvent.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/RideFlow/RideFlowCubit.dart';
 import 'package:driver_app/src/Features/Trip/TripRoutes.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 import 'package:driver_app/src/Features/Trip/Data/DataSources/BiddingRemoteDataSource.dart';
+import 'package:location_service/location_service.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';
-
 
 class DriverDashboardScreen extends StatefulWidget {
   const DriverDashboardScreen({super.key});
@@ -85,12 +86,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       }
 
       try {
-        final driverProfile =
-            await Modular.get<DriverSessionService>().getProfile();
-        final driverId = driverProfile?.id ?? '';
+        final driverId =
+            await Modular.get<SecureSessionService>().readDriverId() ?? '';
         if (driverId.isEmpty) return;
 
-        final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(driverId);
+        final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
+          driverId,
+        );
         List<Map<String, dynamic>> trips = list
             .where((r) {
               final status = r['status'] as String?;
@@ -101,9 +103,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             .map((r) => r as Map<String, dynamic>)
             .toList();
 
-        final bidsList = await Modular.get<BiddingRemoteDataSource>().fetchActiveBids(
-          driverId,
-        );
+        final bidsList = await Modular.get<BiddingRemoteDataSource>()
+            .fetchActiveBids(driverId);
         final List<Map<String, dynamic>> bids = bidsList
             .map((b) => b as Map<String, dynamic>)
             .toList();
@@ -181,27 +182,29 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       return;
     }
 
-    final driverProfile =
-        await Modular.get<DriverSessionService>().getProfile();
-    final driverId = driverProfile?.id ?? '';
-    final driverName = driverProfile?.name ?? 'Driver';
-    final vehicleType = driverProfile?.vehicleType ?? 'Bao Bao';
-    final plateNumber = driverProfile?.plateNumber ?? 'ABC 1234';
+    try {
+      final driverId =
+          await Modular.get<SecureSessionService>().readDriverId() ?? '';
+      final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
+        sessionId: bid['id'],
+        driverId: driverId,
+        offerPrice: SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']),
+        proposedFare: SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']),
+      );
 
-    final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
-      sessionId: bid['id'],
-      driverId: driverId,
-      driverName: driverName,
-      plateNumber: plateNumber,
-      vehicleType: vehicleType,
-      proposedFare: SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']),
-    );
-
-    if (mounted) {
-      if (success) {
-        CustomToast.show(context, 'Offer submitted! Waiting for passenger...');
-      } else {
-        CustomToast.show(context, 'Failed to submit offer.', isError: true);
+      if (mounted) {
+        if (success) {
+          CustomToast.show(
+            context,
+            'Offer submitted! Waiting for passenger...',
+          );
+        } else {
+          CustomToast.show(context, 'Failed to submit offer.', isError: true);
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        CustomToast.show(context, driverOperationMessage(error), isError: true);
       }
     }
   }
@@ -271,12 +274,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return BlocListener<DashboardCubit, DashboardState>(
-      listenWhen: (previous, current) => previous.isOnline != current.isOnline,
+      listenWhen: (previous, current) =>
+          previous.isOnline != current.isOnline ||
+          previous.errorMessage != current.errorMessage,
       listener: (context, state) {
         if (state.isOnline) {
           _startPolling();
         } else {
           _stopPolling();
+        }
+        if (state.errorMessage != null) {
+          CustomToast.show(context, state.errorMessage!, isError: true);
         }
       },
       child: BlocBuilder<DashboardCubit, DashboardState>(
@@ -406,9 +414,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: isOnline
-              ? AppTheme.secondaryColor
-              : AppTheme.neutralColor,
+          color: isOnline ? AppTheme.secondaryColor : AppTheme.neutralColor,
           borderRadius: BorderRadius.circular(20),
           border: isOnline ? null : Border.all(color: AppTheme.borderSide),
         ),
@@ -448,7 +454,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 value: isOnline,
                 activeThumbColor: Colors.white,
                 activeTrackColor: Colors.white.withValues(alpha: 0.3),
-                inactiveThumbColor: AppTheme.primaryColor.withValues(alpha: 0.4),
+                inactiveThumbColor: AppTheme.primaryColor.withValues(
+                  alpha: 0.4,
+                ),
                 inactiveTrackColor: AppTheme.borderSide,
                 onChanged: (_) => _toggleOnline(context, isOnline),
               ),
@@ -506,6 +514,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       );
     }
 
+    final blocked = state.blockingCode != null;
+    final blockedMessage = blocked
+        ? driverOperationMessage(
+            DriverOperationException(
+              code: state.blockingCode,
+              message: state.blockingMessage ?? state.blockingCode!,
+            ),
+          )
+        : 'Go online to start receiving rides.';
+
     return Column(
       children: [
         Container(
@@ -517,16 +535,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           ),
           child: Center(
             child: Icon(
-              LucideIcons.moon,
+              blocked ? LucideIcons.shield_alert : LucideIcons.moon,
               size: 32,
               color: AppTheme.primaryColor.withValues(alpha: 0.7),
             ),
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          "You're offline",
-          style: TextStyle(
+        Text(
+          blocked ? 'Account not ready' : "You're offline",
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: AppTheme.primaryColor,
@@ -534,11 +552,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         ),
         const SizedBox(height: 6),
         Text(
-          'Go online to start receiving rides.',
+          blockedMessage,
           style: TextStyle(
             fontSize: 14,
             color: AppTheme.primaryColor.withValues(alpha: 0.6),
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );

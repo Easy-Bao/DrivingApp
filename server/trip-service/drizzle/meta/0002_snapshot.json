@@ -1,0 +1,229 @@
+{
+  "id": "4d1d167d-e072-442b-921f-37a155470c4f",
+  "prevId": "86ece467-89d1-4bbc-8b3c-d84a50d04708",
+  "version": "6",
+  "dialect": "postgresql",
+  "tables": {
+    "public.rides": {
+      "name": "rides",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "passenger_id": {
+          "name": "passenger_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passenger_name": {
+          "name": "passenger_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ride_type": {
+          "name": "ride_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pickup_latitude": {
+          "name": "pickup_latitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pickup_longitude": {
+          "name": "pickup_longitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pickup_name": {
+          "name": "pickup_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dropoff_latitude": {
+          "name": "dropoff_latitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dropoff_longitude": {
+          "name": "dropoff_longitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dropoff_name": {
+          "name": "dropoff_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fare": {
+          "name": "fare",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fare_centavos": {
+          "name": "fare_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commission_rate_basis_points": {
+          "name": "commission_rate_basis_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commission_centavos": {
+          "name": "commission_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "credit_reservation_id": {
+          "name": "credit_reservation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assignment_source": {
+          "name": "assignment_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'driver_offer'"
+        },
+        "assigned_by_admin_id": {
+          "name": "assigned_by_admin_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_status": {
+          "name": "payment_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'cash_pending'"
+        },
+        "pending_status": {
+          "name": "pending_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_request_id": {
+          "name": "status_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_transition_started_at": {
+          "name": "status_transition_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "driver_id": {
+          "name": "driver_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "driver_name": {
+          "name": "driver_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "driver_rating": {
+          "name": "driver_rating",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vehicle_type": {
+          "name": "vehicle_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "plate_number": {
+          "name": "plate_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creation_request_id": {
+          "name": "creation_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creation_request_hash": {
+          "name": "creation_request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "rides_creation_request_id_unique": {
+          "name": "rides_creation_request_id_unique",
+          "columns": [
+            "creation_request_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

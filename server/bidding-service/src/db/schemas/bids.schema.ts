@@ -1,4 +1,10 @@
-import { pgTable, text, timestamp, uuid, doublePrecision } from 'drizzle-orm/pg-core';
+import {
+  doublePrecision,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
 
 export const bidSessions = pgTable('bid_sessions', {
   id: text('id').primaryKey(),
@@ -13,9 +19,16 @@ export const bidSessions = pgTable('bid_sessions', {
   distanceKm: doublePrecision('distance_km').notNull(),
   durationMinutes: doublePrecision('duration_minutes').notNull(),
   offeredFare: doublePrecision('offered_fare').notNull(),
+  offeredFareCentavos: integer('offered_fare_centavos').notNull(),
   status: text('status').default('open').notNull(),
   acceptedDriverId: text('accepted_driver_id'),
+  acceptedOfferId: text('accepted_offer_id'),
+  acceptedTripId: text('accepted_trip_id'),
+  acceptanceIdempotencyKey: text('acceptance_idempotency_key'),
+  assignmentSource: text('assignment_source'),
+  assignedByAdminId: text('assigned_by_admin_id'),
   targetDriverId: text('target_driver_id'),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
   expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
 });

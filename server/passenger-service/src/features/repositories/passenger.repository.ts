@@ -1,6 +1,6 @@
 import { db } from '../../shared/drizzle.ts';
-import { passengers, rideRequests } from '../../db/schema.ts';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { passengers, rideRequests, passengerRestrictions } from '../../db/schema.ts';
+import { and, eq, desc, gt, inArray, isNull, or } from 'drizzle-orm';
 import {
   Passenger,
   RideRequest,
@@ -237,6 +237,89 @@ export class PassengerRepositoryImpl implements PassengerRepository {
     }
 
     return notificationsList;
+  }
+
+  async findActiveRestriction(passengerId: string) {
+    const [restriction] = await db.select()
+      .from(passengerRestrictions)
+      .where(and(
+        eq(passengerRestrictions.passengerId, passengerId),
+        isNull(passengerRestrictions.revokedAt),
+        or(
+          isNull(passengerRestrictions.endsAt),
+          gt(passengerRestrictions.endsAt, new Date()),
+        ),
+      ))
+      .limit(1);
+    return restriction
+      ? {
+          id: restriction.id,
+          reason: restriction.reason,
+          endsAt: restriction.endsAt,
+        }
+      : null;
+  }
+
+  async createRestriction(input: {
+    passengerId: string;
+    caseId?: string | null;
+    reason: string;
+    endsAt?: Date | null;
+    createdBy: string;
+    idempotencyKey: string;
+  }) {
+    const [restriction] = await db.insert(passengerRestrictions)
+      .values(input)
+      .onConflictDoUpdate({
+        target: passengerRestrictions.idempotencyKey,
+        set: { reason: input.reason },
+      })
+      .returning();
+    return {
+      id: restriction.id,
+      passengerId: restriction.passengerId,
+      reason: restriction.reason,
+      endsAt: restriction.endsAt,
+    };
+  }
+
+  async listRestrictions(passengerId: string) {
+    const restrictions = await db.select()
+      .from(passengerRestrictions)
+      .where(eq(passengerRestrictions.passengerId, passengerId))
+      .orderBy(desc(passengerRestrictions.createdAt));
+    return restrictions.map((restriction) => ({
+      id: restriction.id,
+      passengerId: restriction.passengerId,
+      reason: restriction.reason,
+      endsAt: restriction.endsAt,
+      revokedAt: restriction.revokedAt,
+    }));
+  }
+
+  async revokeRestriction(restrictionId: string) {
+    const [restriction] = await db.update(passengerRestrictions)
+      .set({ revokedAt: new Date() })
+      .where(and(
+        eq(passengerRestrictions.id, restrictionId),
+        isNull(passengerRestrictions.revokedAt),
+      ))
+      .returning();
+    const current = restriction ?? (
+      await db.select()
+        .from(passengerRestrictions)
+        .where(eq(passengerRestrictions.id, restrictionId))
+        .limit(1)
+    )[0];
+    return current
+      ? {
+          id: current.id,
+          passengerId: current.passengerId,
+          reason: current.reason,
+          endsAt: current.endsAt,
+          revokedAt: current.revokedAt,
+        }
+      : null;
   }
 }
 

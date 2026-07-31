@@ -16,6 +16,6 @@ WORKDIR /root/
 
 COPY --from=builder /app/location-service .
 
-EXPOSE 8089
+EXPOSE 8090
 
 CMD ["./location-service"]

@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:driver_app/driver_module.dart';
 import 'package:driver_app/src/Core/Network/Dioclient.dart';
+import 'package:driver_app/src/Core/Network/DriverOperationsClient.dart';
 import 'package:driver_app/src/Features/Auth/AuthModule.dart';
-
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,6 +28,9 @@ class AppModule extends Module {
           baseUrl: EnvConfig.driverServiceUri,
           sessionService: i.get<SecureSessionService>(),
         ),
+      )
+      ..addLazySingleton<DriverOperationsClient>(
+        (i) => DriverOperationsClient(dio: i.get<Dio>()),
       )
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => AuthRemoteDataSourceImpl(
@@ -60,19 +63,27 @@ class AppModule extends Module {
         ),
       )
       ..addLazySingleton<AuthRepository>(
-        (i) => AuthRepositoryImpl(remoteDataSource: i.get<AuthRemoteDataSource>()),
+        (i) =>
+            AuthRepositoryImpl(remoteDataSource: i.get<AuthRemoteDataSource>()),
       )
       ..addLazySingleton<BiddingRepository>(
-        (i) => BiddingRepositoryImpl(remoteDataSource: i.get<BiddingRemoteDataSource>()),
+        (i) => BiddingRepositoryImpl(
+          remoteDataSource: i.get<BiddingRemoteDataSource>(),
+        ),
       )
       ..addLazySingleton<TripRepository>(
-        (i) => TripRepositoryImpl(remoteDataSource: i.get<TripRemoteDataSource>()),
+        (i) =>
+            TripRepositoryImpl(remoteDataSource: i.get<TripRemoteDataSource>()),
       )
       ..addLazySingleton<TelemetryRepository>(
-        (i) => TelemetryRepositoryImpl(remoteDataSource: i.get<TelemetryRemoteDataSource>()),
+        (i) => TelemetryRepositoryImpl(
+          remoteDataSource: i.get<TelemetryRemoteDataSource>(),
+        ),
       )
       ..addLazySingleton<PassengerRepository>(
-        (i) => PassengerRepositoryImpl(remoteDataSource: i.get<PassengerRemoteDataSource>()),
+        (i) => PassengerRepositoryImpl(
+          remoteDataSource: i.get<PassengerRemoteDataSource>(),
+        ),
       );
   }
 

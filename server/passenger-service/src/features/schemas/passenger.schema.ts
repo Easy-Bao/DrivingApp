@@ -33,3 +33,15 @@ export const UpdatePassengerSchema = z.object({
   phone: z.string().min(1, 'Phone is required'),
   email: z.string().email('Invalid email address'),
 });
+
+export const RestrictPassengerSchema = z.object({
+  case_id: z.string().nullable().optional(),
+  ends_at: z.string().datetime().nullable().optional(),
+  reason: z.string().min(3).max(1000),
+  admin_id: z.string().min(1),
+});
+
+export const LiftPassengerRestrictionSchema = z.object({
+  reason: z.string().min(3).max(1000),
+  admin_id: z.string().min(1),
+});

@@ -45,11 +45,7 @@ class AppModule extends Module {
         ),
       )
       ..addLazySingleton<BiddingRemoteDataSource>(
-        (i) => BiddingRemoteDataSource(
-          baseUrl: EnvConfig.passengerServiceUri,
-          sessionService: i.get<SecureSessionService>(),
-          dio: i.get<Dio>(),
-        ),
+        (i) => BiddingRemoteDataSourceImpl(i.get<Dio>()),
       )
       ..addLazySingleton<AuthRepository>(
         (i) => AuthRepositoryImpl(remoteDataSource: i.get<AuthRemoteDataSource>()),

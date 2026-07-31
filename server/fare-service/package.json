@@ -6,6 +6,8 @@
   "scripts": {
     "db:push": "bunx drizzle-kit push",
     "db:generate": "bunx drizzle-kit generate",
+    "db:migrate": "bunx drizzle-kit migrate",
+    "db:seed": "bun run src/db/seed.ts",
     "dev": "bun --watch src/index.ts",
     "start": "bun run src/index.ts",
     "test": "bun test --env-file .env.test"

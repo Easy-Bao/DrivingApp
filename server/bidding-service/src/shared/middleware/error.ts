@@ -5,9 +5,17 @@ import { Logger } from '../logger/logger.ts';
 export const globalErrorHandler: ErrorHandler = (error, context) => {
   if (error instanceof HTTPException) {
     Logger.warn(`HTTP Exception status ${error.status}: ${error.message}`);
-    return context.json({ error: error.message }, error.status);
+    return context.json({
+      code: error.message,
+      message: error.message,
+      error: error.message,
+    }, error.status);
   }
 
   Logger.error('Unhandled runtime exception caught in middleware:', error);
-  return context.json({ error: 'Internal Server Error' }, 500);
+  return context.json({
+    code: 'INTERNAL_SERVER_ERROR',
+    message: 'Internal Server Error',
+    error: 'Internal Server Error',
+  }, 500);
 };

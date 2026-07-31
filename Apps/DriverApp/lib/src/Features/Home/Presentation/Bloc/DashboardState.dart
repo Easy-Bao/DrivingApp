@@ -10,6 +10,10 @@ class DashboardState extends Equatable {
   final double hoursOnline;
   final List<HeatmapCell> surgeCells;
   final String? errorMessage;
+  final String? blockingCode;
+  final String? blockingMessage;
+
+  static const Object _unset = Object();
 
   const DashboardState({
     this.isOnline = false,
@@ -20,6 +24,8 @@ class DashboardState extends Equatable {
     this.hoursOnline = 0.0,
     this.surgeCells = const [],
     this.errorMessage,
+    this.blockingCode,
+    this.blockingMessage,
   });
 
   DashboardState copyWith({
@@ -30,7 +36,9 @@ class DashboardState extends Equatable {
     int? todayTrips,
     double? hoursOnline,
     List<HeatmapCell>? surgeCells,
-    String? errorMessage,
+    Object? errorMessage = _unset,
+    Object? blockingCode = _unset,
+    Object? blockingMessage = _unset,
   }) {
     return DashboardState(
       isOnline: isOnline ?? this.isOnline,
@@ -40,20 +48,29 @@ class DashboardState extends Equatable {
       todayTrips: todayTrips ?? this.todayTrips,
       hoursOnline: hoursOnline ?? this.hoursOnline,
       surgeCells: surgeCells ?? this.surgeCells,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: identical(errorMessage, _unset)
+          ? this.errorMessage
+          : errorMessage as String?,
+      blockingCode: identical(blockingCode, _unset)
+          ? this.blockingCode
+          : blockingCode as String?,
+      blockingMessage: identical(blockingMessage, _unset)
+          ? this.blockingMessage
+          : blockingMessage as String?,
     );
   }
 
   @override
   List<Object?> get props => [
-        isOnline,
-        isLoadingStats,
-        isLoadingHeatmap,
-        todayEarnings,
-        todayTrips,
-        hoursOnline,
-        surgeCells,
-        errorMessage,
-      ];
+    isOnline,
+    isLoadingStats,
+    isLoadingHeatmap,
+    todayEarnings,
+    todayTrips,
+    hoursOnline,
+    surgeCells,
+    errorMessage,
+    blockingCode,
+    blockingMessage,
+  ];
 }
-

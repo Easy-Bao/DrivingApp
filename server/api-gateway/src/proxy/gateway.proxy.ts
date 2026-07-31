@@ -6,11 +6,15 @@ export async function handleProxy(context: Context, targetBaseUrl: string): Prom
 
   const forwardedHeaders = new Headers(context.req.raw.headers);
   forwardedHeaders.set('host', targetUrl.host);
+  forwardedHeaders.delete('x-internal-service-token');
+  forwardedHeaders.delete('x-internal-auth');
   const clientIpAddress =
     context.req.header('x-forwarded-for') ||
     context.req.header('x-real-ip');
-  forwardedHeaders.set('x-forwarded-for', clientIpAddress);
-  forwardedHeaders.set('x-real-ip', clientIpAddress);
+  if (clientIpAddress) {
+    forwardedHeaders.set('x-forwarded-for', clientIpAddress);
+    forwardedHeaders.set('x-real-ip', clientIpAddress);
+  }
 
   const requestBody =
     context.req.method === 'GET' || context.req.method === 'HEAD'

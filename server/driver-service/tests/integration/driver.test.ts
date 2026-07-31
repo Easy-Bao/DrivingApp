@@ -1,208 +1,65 @@
-import { expect, test, describe, beforeAll, afterAll } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { eq } from 'drizzle-orm';
 import { app } from '../../src/index.ts';
-import { db } from '../../src/shared/drizzle.ts';
 import { drivers, reviews } from '../../src/db/schema.ts';
+import { db } from '../../src/shared/drizzle.ts';
 
-let driverId = '';
+const driverId = `drv_profile_test_${Date.now()}`;
 
 beforeAll(async () => {
-  try {
-    await db.delete(reviews);
-    await db.delete(drivers);
-  } catch (e) {
-    console.error('Failed to clean driver database:', e);
-  }
+  await db.insert(drivers).values({
+    id: driverId,
+    name: 'Driver Profile Test',
+    email: `${driverId}@test.local`,
+    phone: '09111111111',
+    vehicleType: 'Bao Bao',
+    plateNumber: 'TEST 999',
+    passwordHash: 'not-a-real-password',
+    approvalStatus: 'approved',
+  });
 });
 
 afterAll(async () => {
-  try {
-    await db.delete(reviews);
-    await db.delete(drivers);
-  } catch (e) {
-    console.error('Failed to clean driver database after tests:', e);
-  }
+  await db.delete(reviews).where(eq(reviews.driverId, driverId));
+  await db.delete(drivers).where(eq(drivers.id, driverId));
 });
 
 describe('Driver Service Integration Tests', () => {
-  test('POST /drivers/signup & /drivers/login', async () => {
-    const signupRes = await app.request('/drivers/signup', {
+  test('GET /drivers/:id returns a safe driver profile', async () => {
+    const response = await app.request(`/drivers/${driverId}`);
+    expect(response.status).toBe(200);
+    const profile = await response.json() as Record<string, unknown>;
+    expect(profile).toMatchObject({
+      id: driverId,
+      approvalStatus: 'approved',
+    });
+    expect(profile.passwordHash).toBeUndefined();
+  });
+
+  test('POST and GET /drivers/:id/reviews update public reviews', async () => {
+    const created = await app.request(`/drivers/${driverId}/reviews`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: 'Ramil Sombilon',
-        email: 'xdemocrito1@gmail.com',
-        phone: '09111111111',
-        vehicleType: 'Bao Bao',
-        plateNumber: 'XYZ 9999',
-        password: '@Democrito111',
+        passengerName: 'Passenger Test',
+        rating: 4.8,
+        comment: 'Safe and punctual.',
       }),
     });
+    expect(created.status).toBe(201);
 
-    expect(signupRes.status).toBe(201);
-    const data: any = await signupRes.json();
-    expect(data.id).toBeDefined();
-    expect(data.email).toBe('xdemocrito1@gmail.com');
-    driverId = data.id;
-
-    const loginRes = await app.request('/drivers/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'xdemocrito1@gmail.com',
-        password: '@Democrito111',
-      }),
+    const response = await app.request(`/drivers/${driverId}/reviews`);
+    expect(response.status).toBe(200);
+    const list = await response.json() as Array<Record<string, unknown>>;
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({
+      passengerName: 'Passenger Test',
+      rating: 4.8,
     });
-
-    expect(loginRes.status).toBe(200);
-    const loginData: any = await loginRes.json();
-    expect(loginData.driver.email).toBe('xdemocrito1@gmail.com');
   });
 
-  test('POST /drivers/signup — rejects duplicate email', async () => {
-    const email = `dup_${Date.now()}@test.com`;
-    await app.request('/drivers/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Dup Driver',
-        email,
-        phone: '09111111112',
-        vehicleType: 'Bao Bao',
-        plateNumber: 'DUP 0001',
-        password: 'password123',
-      }),
-    });
-
-    const res = await app.request('/drivers/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Dup Driver 2',
-        email,
-        phone: '09111111113',
-        vehicleType: 'Bao Bao',
-        plateNumber: 'DUP 0002',
-        password: 'password123',
-      }),
-    });
-
-    expect(res.status).toBe(409);
-  });
-
-  test('POST /drivers/login — authenticates with correct password', async () => {
-    const email = `login_${Date.now()}@test.com`;
-    await app.request('/drivers/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Login Driver',
-        email,
-        phone: '09222222222',
-        vehicleType: 'Bao Bao',
-        plateNumber: 'LGN 1234',
-        password: 'secret999_password',
-      }),
-    });
-
-    const res = await app.request('/drivers/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: 'secret999_password' }),
-    });
-
-    expect(res.status).toBe(200);
-    const data: any = await res.json();
-    expect(data.driver.email).toBe(email);
-    expect(data.driver.passwordHash).toBeUndefined();
-  });
-
-  test('POST /drivers/login — rejects wrong password', async () => {
-    const email = `wrongpass_${Date.now()}@test.com`;
-    await app.request('/drivers/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'WP Driver',
-        email,
-        phone: '09333333333',
-        vehicleType: 'Bao Bao',
-        plateNumber: 'WP 0001',
-        password: 'correctpass_123',
-      }),
-    });
-
-    const res = await app.request('/drivers/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: 'wrongpass' }),
-    });
-
-    expect(res.status).toBe(401);
-  });
-
-  test('POST /drivers/:id/online — sets driver online with coordinates', async () => {
-    const res = await app.request(`/drivers/${driverId}/online`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isOnline: true, lat: 7.828282, lng: 123.434343 }),
-    });
-
-    expect(res.status).toBe(200);
-    const data: any = await res.json();
-    expect(data.isOnline).toBe(true);
-    expect(data.lat).toBe(7.828282);
-  });
-
-  test('GET /drivers/online — lists online drivers without passwordHash', async () => {
-    const res = await app.request('/drivers/online');
-    expect(res.status).toBe(200);
-    const data: any = await res.json();
-    expect(Array.isArray(data)).toBe(true);
-    expect(data.length).toBeGreaterThan(0);
-    expect(data[0].passwordHash).toBeUndefined();
-  });
-
-  test('GET /drivers/:id/reviews — retrieves driver reviews', async () => {
-    await db.insert(reviews).values([
-      {
-        id: crypto.randomUUID(),
-        driverId,
-        passengerName: 'Aria Cruz',
-        rating: 5.0,
-        comment: 'Highly recommend! Very pleasant conversation and smooth driving.',
-        createdAt: new Date('2026-07-07T12:00:00Z'),
-      },
-      {
-        id: crypto.randomUUID(),
-        driverId,
-        passengerName: 'Carlos Diaz',
-        rating: 4.9,
-        comment: 'Excellent service. Helped me with my heavy bags.',
-        createdAt: new Date('2026-07-05T12:00:00Z'),
-      },
-      {
-        id: crypto.randomUUID(),
-        driverId,
-        passengerName: 'Sophia Lim',
-        rating: 5.0,
-        comment: 'Punctual and very respectful driver. The Bao was in top condition.',
-        createdAt: new Date('2026-07-03T12:00:00Z'),
-      },
-      {
-        id: crypto.randomUUID(),
-        driverId,
-        passengerName: 'Maria Santos',
-        rating: 5.0,
-        comment: 'Amazing ride! The vehicle was extremely clean, and the driver was polite and punctual.',
-        createdAt: new Date('2026-07-01T12:00:00Z'),
-      },
-    ]);
-
-    const res = await app.request(`/drivers/${driverId}/reviews`);
-    expect(res.status).toBe(200);
-    const data: any = await res.json();
-    expect(Array.isArray(data)).toBe(true);
-    expect(data.length).toBe(4);
-    expect(data[0].passengerName).toBe('Aria Cruz');
+  test('GET /drivers/:id returns 404 for an unknown driver', async () => {
+    const response = await app.request('/drivers/does-not-exist');
+    expect(response.status).toBe(404);
   });
 });

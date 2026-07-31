@@ -17,11 +17,12 @@ describe('Passenger Service Integration Tests', () => {
     const inserted = await db
       .insert(passengers)
       .values({
+        id: crypto.randomUUID(),
         name: 'Test Passenger',
         email: 'passenger@example.com',
         phone: '09123456789',
-        password_hash: 'hashedPassword123',
-        is_verified: true,
+        passwordHash: 'hashedPassword123',
+        isVerified: true,
       })
       .returning();
 

@@ -11,6 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./server/database/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -23,13 +24,17 @@ services:
       dockerfile: server/auth-service/Dockerfile
     restart: always
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
       PORT: 8088
+      DATABASE_URL: ${PASSENGER_DATABASE_URL_DOCKER}
+      AUTH_DB_URL: ${AUTH_DATABASE_URL_DOCKER}
+      PASSENGER_DB_URL: ${PASSENGER_DATABASE_URL_DOCKER}
+      DRIVER_DB_URL: ${DRIVER_DATABASE_URL_DOCKER}
       JWT_SECRET: ${JWT_SECRET}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-}
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -40,8 +45,10 @@ services:
       dockerfile: server/passenger-service/Dockerfile
     restart: always
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
+      DATABASE_URL: ${PASSENGER_DATABASE_URL_DOCKER}
       JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      TRIP_SERVICE_URL: http://trip-service:8083
       PORT: 8081
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
@@ -51,94 +58,15 @@ services:
       postgres-db:
         condition: service_healthy
 
-  driver-service:
-    build:
-      context: .
-      dockerfile: server/driver-service/Dockerfile
-    restart: always
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
-      PORT: 8082
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-
-  trip-service:
-    build:
-      context: .
-      dockerfile: server/trip-service/Dockerfile
-    restart: always
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
-      PORT: 8083
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-
-  bidding-service:
-    build:
-      context: .
-      dockerfile: server/bidding-service/Dockerfile
-    restart: always
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
-      PORT: 8084
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-
-  telemetry-service:
-    build:
-      context: .
-      dockerfile: server/telemetry-service/Dockerfile
-    restart: always
-    environment:
-      PORT: 8085
-      JWT_SECRET: ${JWT_SECRET}
-
-  chat-service:
-    build:
-      context: .
-      dockerfile: server/chat-service/Dockerfile
-    restart: always
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
-      PORT: 8086
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-
-  fare-service:
-    build:
-      context: .
-      dockerfile: server/fare-service/Dockerfile
-    restart: always
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
-      PORT: 8087
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-
   redis:
     container_name: redis
     image: redis:7-alpine
     restart: always
-    ports:
-      - "6379:6379"
 
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management-alpine
     restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
 
   location-service:
     build:
@@ -149,7 +77,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      PORT: 8089
+      PORT: 8090
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -166,6 +94,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      PORT: 8080
       AUTH_SERVICE_URL: http://auth-service:8088
       PASSENGER_SERVICE_URL: http://passenger-service:8081
       DRIVER_SERVICE_URL: http://driver-service:8082
@@ -174,7 +103,8 @@ services:
       TELEMETRY_SERVICE_URL: http://telemetry-service:8085
       CHAT_SERVICE_URL: http://chat-service:8086
       FARE_SERVICE_URL: http://fare-service:8087
-      LOCATION_SERVICE_URL: http://location-service:8089
+      ADMIN_SERVICE_URL: http://admin-service:8089
+      LOCATION_SERVICE_URL: http://location-service:8090
     depends_on:
       - auth-service
       - passenger-service
@@ -184,7 +114,146 @@ services:
       - telemetry-service
       - chat-service
       - fare-service
+      - admin-service
       - location-service
+
+  driver-service:
+    build:
+      context: .
+      dockerfile: server/driver-service/Dockerfile
+    restart: always
+    environment:
+      PORT: 8082
+      DATABASE_URL: ${DRIVER_DATABASE_URL_DOCKER}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      TRIP_SERVICE_URL: http://trip-service:8083
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  trip-service:
+    build:
+      context: .
+      dockerfile: server/trip-service/Dockerfile
+    restart: always
+    environment:
+      PORT: 8083
+      DATABASE_URL: ${TRIP_DATABASE_URL_DOCKER}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      PASSENGER_SERVICE_URL: http://passenger-service:8081
+      DRIVER_SERVICE_URL: http://driver-service:8082
+      ADMIN_SERVICE_URL: http://admin-service:8089
+      FARE_SERVICE_URL: http://fare-service:8087
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  bidding-service:
+    build:
+      context: .
+      dockerfile: server/bidding-service/Dockerfile
+    restart: always
+    environment:
+      PORT: 8084
+      DATABASE_URL: ${BIDDING_DATABASE_URL_DOCKER}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      PASSENGER_SERVICE_URL: http://passenger-service:8081
+      DRIVER_SERVICE_URL: http://driver-service:8082
+      TRIP_SERVICE_URL: http://trip-service:8083
+      ADMIN_SERVICE_URL: http://admin-service:8089
+      FARE_SERVICE_URL: http://fare-service:8087
+      SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-5}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  telemetry-service:
+    build:
+      context: .
+      dockerfile: server/telemetry-service/Dockerfile
+    restart: always
+    environment:
+      PORT: 8085
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: server/chat-service/Dockerfile
+    restart: always
+    environment:
+      DATABASE_URL: ${CHAT_DATABASE_URL_DOCKER}
+      PORT: 8086
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      TRIP_SERVICE_URL: http://trip-service:8083
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  fare-service:
+    build:
+      context: .
+      dockerfile: server/fare-service/Dockerfile
+    restart: always
+    environment:
+      PORT: 8087
+      DATABASE_URL: ${FARE_DATABASE_URL_DOCKER}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      ADMIN_SERVICE_URL: http://admin-service:8089
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: server/admin-service/Dockerfile
+    restart: always
+    environment:
+      PORT: 8089
+      DATABASE_URL: ${ADMIN_DATABASE_URL_DOCKER}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      DRIVER_SERVICE_URL: http://driver-service:8082
+      PASSENGER_SERVICE_URL: http://passenger-service:8081
+      TRIP_SERVICE_URL: http://trip-service:8083
+      BIDDING_SERVICE_URL: http://bidding-service:8084
+      FARE_SERVICE_URL: http://fare-service:8087
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      driver-service:
+        condition: service_started
+      passenger-service:
+        condition: service_started
+      trip-service:
+        condition: service_started
+      bidding-service:
+        condition: service_started
+      fare-service:
+        condition: service_started
+
+  admin-app:
+    build:
+      context: ./apps/admin_app
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      GATEWAY_URL: http://api-gateway:8080
+      PUBLIC_MAPBOX_TOKEN: ${PUBLIC_MAPBOX_TOKEN}
+      ORIGIN: ${ADMIN_APP_ORIGIN:-http://localhost:5173}
+      HOST: 0.0.0.0
+      PORT: 5173
+    depends_on:
+      - api-gateway
 
 volumes:
   postgres_data:

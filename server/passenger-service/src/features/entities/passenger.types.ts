@@ -53,4 +53,36 @@ export interface PassengerRepository {
   retrievePassengerRideHistory(passengerId: string): Promise<RideRequest[]>;
   updatePassengerProfile(options: UpdatePassengerOptions): Promise<Passenger>;
   retrievePassengerNotifications(passengerId: string): Promise<PassengerNotification[]>;
+  findActiveRestriction(passengerId: string): Promise<{
+    id: string;
+    reason: string;
+    endsAt: Date | null;
+  } | null>;
+  createRestriction(input: {
+    passengerId: string;
+    caseId?: string | null;
+    reason: string;
+    endsAt?: Date | null;
+    createdBy: string;
+    idempotencyKey: string;
+  }): Promise<{
+    id: string;
+    passengerId: string;
+    reason: string;
+    endsAt: Date | null;
+  }>;
+  listRestrictions(passengerId: string): Promise<Array<{
+    id: string;
+    passengerId: string;
+    reason: string;
+    endsAt: Date | null;
+    revokedAt: Date | null;
+  }>>;
+  revokeRestriction(restrictionId: string): Promise<{
+    id: string;
+    passengerId: string;
+    reason: string;
+    endsAt: Date | null;
+    revokedAt: Date | null;
+  } | null>;
 }

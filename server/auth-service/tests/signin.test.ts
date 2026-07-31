@@ -2,6 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import { app } from '../src/index.ts';
 
 process.env.JWT_SECRET = 'test_environment_jwt_secret_key_12345';
+process.env.EMAIL_DELIVERY_DISABLED = 'true';
+
+const testRunId = crypto.randomUUID().slice(0, 8);
+const passengerEmail = `charlie.passenger.${testRunId}@example.test`;
+const driverEmail = `dave.driver.${testRunId}@example.test`;
 
 describe('Auth Service — Sign In Integration Tests', () => {
   test('POST /auth/passenger/login — authenticates registered passenger with valid credentials', async () => {
@@ -10,8 +15,8 @@ describe('Auth Service — Sign In Integration Tests', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'Charlie Passenger',
-        email: 'charlie.passenger@example.com',
-        phone: '+639170000004',
+        email: passengerEmail,
+        phone: `+63919${testRunId.replace(/\D/g, '').padEnd(7, '0').slice(0, 7)}`,
         password: 'loginPassword123',
         preferred_ride_type: 'solo-ride',
       }),
@@ -21,7 +26,7 @@ describe('Auth Service — Sign In Integration Tests', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'charlie.passenger@example.com',
+        email: passengerEmail,
         password: 'loginPassword123',
       }),
     });
@@ -29,7 +34,7 @@ describe('Auth Service — Sign In Integration Tests', () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.data.token).toBeDefined();
-    expect(body.data.user.email).toBe('charlie.passenger@example.com');
+    expect(body.data.user.email).toBe(passengerEmail);
   });
 
   test('POST /auth/driver/login — authenticates registered driver with valid credentials', async () => {
@@ -38,11 +43,11 @@ describe('Auth Service — Sign In Integration Tests', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'Dave Driver',
-        email: 'dave.driver@example.com',
-        phone: '+639170000005',
+        email: driverEmail,
+        phone: `+63916${testRunId.replace(/\D/g, '').padEnd(7, '0').slice(0, 7)}`,
         password: 'driverPassword123',
         vehicleType: 'Tricycle',
-        plateNumber: 'ABC 1234',
+        plateNumber: `TEST-${testRunId}`,
       }),
     });
 
@@ -50,7 +55,7 @@ describe('Auth Service — Sign In Integration Tests', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'dave.driver@example.com',
+        email: driverEmail,
         password: 'driverPassword123',
       }),
     });
@@ -58,7 +63,7 @@ describe('Auth Service — Sign In Integration Tests', () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.data.token).toBeDefined();
-    expect(body.data.user.email).toBe('dave.driver@example.com');
+    expect(body.data.user.email).toBe(driverEmail);
   });
 
   test('POST /auth/passenger/login — fails with wrong password', async () => {
@@ -66,7 +71,7 @@ describe('Auth Service — Sign In Integration Tests', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'charlie.passenger@example.com',
+        email: passengerEmail,
         password: 'wrongPassword123',
       }),
     });

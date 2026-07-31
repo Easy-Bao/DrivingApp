@@ -27,8 +27,8 @@ const _$RideStatusEnumMap = {
   RideStatus.requested: 'requested',
   RideStatus.accepted: 'accepted',
   RideStatus.arrived: 'arrived',
-  RideStatus.inTransit: 'inTransit',
+  RideStatus.inTransit: 'in_transit',
   RideStatus.completed: 'completed',
-  RideStatus.cancelled: 'cancelled',
+  RideStatus.cancelled: 'canceled',
   RideStatus.unknown: 'unknown',
 };

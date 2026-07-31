@@ -15,7 +15,11 @@ export async function authMiddleware(c: Context, next: Next) {
 
   try {
     const payload = await verify(token, secret, "HS256");
-    if (!payload || typeof payload.sub !== 'string') {
+    if (
+      !payload
+      || typeof payload.sub !== 'string'
+      || payload.role !== 'passenger'
+    ) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 

@@ -11,8 +11,10 @@ export async function handleVerifyOneTimePassword(c: Context) {
     const { email, code } = c.req.valid('json' as never) as VerifyOtpInput;
     const isVerified = OneTimePasswordStoreService.verifyOneTimePasswordCode(email, code);
     if (isVerified) {
-      PassengerAuthenticationService.verifyPassengerAccountState(email);
-      DriverAuthenticationService.verifyDriverAccountState(email);
+      await Promise.all([
+        PassengerAuthenticationService.verifyPassengerAccountState(email),
+        DriverAuthenticationService.verifyDriverAccountState(email),
+      ]);
     }
     return c.json({ success: true, data: { verified: true } });
   } catch (error: unknown) {
@@ -40,8 +42,10 @@ export async function handleResetPassword(c: Context) {
       throw new Error('Invalid or expired verification code');
     }
     const newPasswordHash = await Bun.password.hash(newPassword);
-    const updatedPassenger = PassengerAuthenticationService.updatePassengerPassword(email, newPasswordHash);
-    const updatedDriver = DriverAuthenticationService.updateDriverPassword(email, newPasswordHash);
+    const [updatedPassenger, updatedDriver] = await Promise.all([
+      PassengerAuthenticationService.updatePassengerPassword(email, newPasswordHash),
+      DriverAuthenticationService.updateDriverPassword(email, newPasswordHash),
+    ]);
 
     if (!updatedPassenger && !updatedDriver) {
       throw new Error('No account found with this email address');

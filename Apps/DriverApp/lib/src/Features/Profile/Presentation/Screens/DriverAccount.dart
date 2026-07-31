@@ -4,7 +4,6 @@ import 'package:driver_app/src/Features/Profile/ProfileRoutes.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-
 class DriverAccountScreen extends StatefulWidget {
   const DriverAccountScreen({super.key});
 
@@ -48,8 +47,9 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
     final driverId = currentProfile?.id ?? '';
     if (driverId.isEmpty) return;
 
-    final profileData =
-        await Modular.get<AuthRemoteDataSource>().fetchProfile(driverId);
+    final profileData = await Modular.get<AuthRemoteDataSource>().fetchProfile(
+      driverId,
+    );
     if (profileData.isNotEmpty && mounted) {
       final updatedProfile = DriverProfile(
         id: driverId,
@@ -70,7 +70,9 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
       await sessionService.saveProfile(updatedProfile);
     }
 
-    final stats = await Modular.get<TripRemoteDataSource>().fetchStats(driverId);
+    final stats = await Modular.get<TripRemoteDataSource>().fetchStats(
+      driverId,
+    );
     if (stats.isNotEmpty && mounted) {
       setState(() {
         _totalTrips = stats['totalTrips'] as int?;
@@ -130,6 +132,12 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
         title: 'Earnings',
         subtitle: 'View earnings breakdown',
         onTap: () => context.goNamed(ProfileRoutes.earnings),
+      ),
+      _DriverAccountMenuItem(
+        icon: LucideIcons.badge_cent,
+        title: 'Service Credits',
+        subtitle: 'Balance, ledger, and top-ups',
+        onTap: () => context.pushNamed(ProfileRoutes.serviceCredits),
       ),
     ];
   }

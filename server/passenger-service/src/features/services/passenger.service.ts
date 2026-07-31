@@ -38,6 +38,10 @@ export class PassengerService {
   }
 
   async createRideRequest(payload: CreateRideRequest) {
+    const restriction = await this.repository.findActiveRestriction(payload.passenger_id);
+    if (restriction) {
+      throw new HTTPException(403, { message: 'ACCOUNT_RESTRICTED' });
+    }
     return await this.repository.registerRideRequest(payload);
   }
 
@@ -47,5 +51,56 @@ export class PassengerService {
 
   async getPassengerNotifications(passengerId: string) {
     return await this.repository.retrievePassengerNotifications(passengerId);
+  }
+
+  async getRideAccess(passengerId: string) {
+    const passenger = await this.repository.retrievePassengerProfile(passengerId);
+    if (!passenger) {
+      throw new HTTPException(404, { message: 'Passenger not found' });
+    }
+    const restriction = await this.repository.findActiveRestriction(passengerId);
+    return {
+      allowed: !restriction,
+      code: restriction ? 'ACCOUNT_RESTRICTED' : null,
+      reason: restriction?.reason ?? null,
+      ends_at: restriction?.endsAt?.toISOString() ?? null,
+    };
+  }
+
+  async restrictPassenger(input: {
+    passengerId: string;
+    caseId?: string | null;
+    reason: string;
+    endsAt?: Date | null;
+    createdBy: string;
+    idempotencyKey: string;
+  }) {
+    const passenger = await this.repository.retrievePassengerProfile(input.passengerId);
+    if (!passenger) {
+      throw new HTTPException(404, { message: 'Passenger not found' });
+    }
+    return await this.repository.createRestriction(input);
+  }
+
+  async listPassengerRestrictions(passengerId: string) {
+    return await this.repository.listRestrictions(passengerId);
+  }
+
+  async liftPassengerRestriction(input: {
+    restrictionId: string;
+    reason: string;
+    adminId: string;
+    idempotencyKey: string;
+  }) {
+    const restriction = await this.repository.revokeRestriction(input.restrictionId);
+    if (!restriction) {
+      throw new HTTPException(404, { message: 'Restriction not found' });
+    }
+    return {
+      ...restriction,
+      liftedBy: input.adminId,
+      liftReason: input.reason,
+      requestId: input.idempotencyKey,
+    };
   }
 }

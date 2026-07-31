@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:driver_app/src/Core/Network/DriverOperationsClient.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Widgets/RideAlertCardWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 import 'package:driver_app/src/Features/Trip/Data/DataSources/BiddingRemoteDataSource.dart';
 import 'package:shared_ui/shared_ui.dart';
-
 
 class RideAlertScreen extends StatefulWidget {
   final Map<String, dynamic>? rideData;
@@ -65,23 +65,34 @@ class _RideAlertScreenState extends State<RideAlertScreen>
   Future<void> _accept() async {
     _autoDecline?.cancel();
 
-    final driverId = await Modular.get<SecureSessionService>().readDriverId() ?? 'driver_demo';
+    final driverId =
+        await Modular.get<SecureSessionService>().readDriverId() ??
+        'driver_demo';
 
-    final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
-      sessionId: _rideId,
-      driverId: driverId,
-      offerPrice: _fare,
-      proposedFare: _fare,
-    );
+    try {
+      final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
+        sessionId: _rideId,
+        driverId: driverId,
+        offerPrice: _fare,
+        proposedFare: _fare,
+      );
 
-
-    if (mounted) {
-      if (success) {
-        CustomToast.show(context, 'Offer submitted! Waiting for passenger...');
-      } else {
-        CustomToast.show(context, 'Failed to submit offer.', isError: true);
+      if (mounted) {
+        if (success) {
+          CustomToast.show(
+            context,
+            'Offer submitted! Waiting for passenger...',
+          );
+        } else {
+          CustomToast.show(context, 'Failed to submit offer.', isError: true);
+        }
+        context.pop();
       }
-      context.pop();
+    } catch (error) {
+      if (mounted) {
+        CustomToast.show(context, driverOperationMessage(error), isError: true);
+        context.pop();
+      }
     }
   }
 

@@ -16,11 +16,27 @@ export class JsonWebTokenService {
   }
 
   static generateJsonWebToken(userId: string, email: string, role: string): string {
+    return JsonWebTokenService.generateToken(userId, email, role, '7d');
+  }
+
+  /**
+   * Admin sessions are intentionally shorter than passenger and driver sessions.
+   */
+  static generateAdminJsonWebToken(userId: string, email: string): string {
+    return JsonWebTokenService.generateToken(userId, email, 'admin', '8h');
+  }
+
+  private static generateToken(
+    userId: string,
+    email: string,
+    role: string,
+    expiresIn: '7d' | '8h',
+  ): string {
     const secret = JsonWebTokenService.getJwtSecret();
     return jwt.sign(
       { sub: userId, email, role },
       secret,
-      { expiresIn: '7d' },
+      { expiresIn },
     );
   }
 

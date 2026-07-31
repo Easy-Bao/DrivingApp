@@ -1,15 +1,41 @@
 import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
+import 'package:driver_app/src/Core/Network/DriverOperationsClient.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardState.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
   final DashboardRepository _repository;
+  final DriverOperationsClient? _operationsClient;
 
-  DashboardCubit({required DashboardRepository repository})
-    : _repository = repository,
-      super(const DashboardState());
+  DashboardCubit({
+    required DashboardRepository repository,
+    DriverOperationsClient? operationsClient,
+  }) : _repository = repository,
+       _operationsClient = operationsClient,
+       super(const DashboardState());
+
+  Future<void> loadOperatingStatus() async {
+    final operationsClient = _operationsClient;
+    if (operationsClient == null) return;
+    try {
+      final status = await operationsClient.getOperatingStatus();
+      final driver = status['driver'];
+      emit(
+        state.copyWith(
+          isOnline: driver is Map && driver['isOnline'] == true,
+          blockingCode: status['blockingCode']?.toString(),
+          blockingMessage: status['blockingCode'] == null
+              ? null
+              : status['blockingMessage']?.toString(),
+          errorMessage: null,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(errorMessage: driverOperationMessage(error)));
+    }
+  }
 
   Future<void> loadStats() async {
     emit(state.copyWith(isLoadingStats: true, errorMessage: null));
@@ -74,11 +100,33 @@ class DashboardCubit extends Cubit<DashboardState> {
     if (goingOnline) {
       emit(
         state.copyWith(
-          isOnline: true,
+          isOnline: _operationsClient == null,
           isLoadingHeatmap: true,
           errorMessage: null,
         ),
       );
+      if (_operationsClient != null) {
+        try {
+          await _operationsClient.setOnline(isOnline: true, lat: lat, lng: lng);
+        } catch (error) {
+          emit(
+            state.copyWith(
+              isOnline: false,
+              isLoadingHeatmap: false,
+              errorMessage: driverOperationMessage(error),
+            ),
+          );
+          return;
+        }
+        emit(
+          state.copyWith(
+            isOnline: true,
+            blockingCode: null,
+            blockingMessage: null,
+            errorMessage: null,
+          ),
+        );
+      }
 
       final heatmapResult = await _repository.getSurgeHeatmap(
         lat: lat,
@@ -111,6 +159,12 @@ class DashboardCubit extends Cubit<DashboardState> {
         },
       );
     } else {
+      try {
+        await _operationsClient?.setOnline(isOnline: false, lat: lat, lng: lng);
+      } catch (error) {
+        emit(state.copyWith(errorMessage: driverOperationMessage(error)));
+        return;
+      }
       emit(
         state.copyWith(
           isOnline: false,

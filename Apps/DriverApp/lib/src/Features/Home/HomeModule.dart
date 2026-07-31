@@ -15,7 +15,9 @@ class HomeModule {
       name: HomeRoutes.dashboard,
       'dashboard',
       child: (context, GoRouterState state) => BlocProvider.value(
-        value: Modular.get<DashboardCubit>()..loadStats(),
+        value: Modular.get<DashboardCubit>()
+          ..loadStats()
+          ..loadOperatingStatus(),
         child: const DriverDashboardScreen(),
       ),
       transition: AppTransitions.fade,

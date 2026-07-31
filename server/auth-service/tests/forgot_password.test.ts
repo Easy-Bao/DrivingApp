@@ -3,6 +3,7 @@ import { app } from '../src/index.ts';
 import { OneTimePasswordStoreService } from '../src/features/services/common/otp_store.ts';
 
 process.env.JWT_SECRET = 'test_environment_jwt_secret_key_12345';
+process.env.EMAIL_DELIVERY_DISABLED = 'true';
 
 describe('Auth Service — Forgot Password & OTP Integration Tests', () => {
   const targetEmail = 'otp.user@example.com';

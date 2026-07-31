@@ -1,42 +1,43 @@
 import { Context } from 'hono';
-import { DriverRepositoryImpl } from '../repositories/driver.repository.ts';
-import { DriverService } from '../services/driver.service.ts';
-
-const driverRepository = new DriverRepositoryImpl();
-const driverService = new DriverService(driverRepository);
+import { DriverDomainError } from '../entities/driver_operations.types.ts';
+import { driverOperationsService, driverService } from '../driver.dependencies.ts';
 
 export async function handleGetOnlineDrivers(context: Context) {
-  const list = await driverService.getOnlineDrivers();
+  const list = await driverOperationsService.getOnlineDrivers();
   return context.json(list, 200);
 }
 
 export async function handleUpdateOnlineStatus(context: Context) {
-  const id = context.req.param('id');
+  const id = context.req.param('id')!;
+  const authenticatedDriverId = context.get('driverId');
+  if (authenticatedDriverId !== id) {
+    throw new DriverDomainError(403, 'FORBIDDEN', 'Forbidden');
+  }
   const body = await context.req.json();
-  const updated = await driverService.updateOnlineStatus(id, body);
+  const updated = await driverOperationsService.updateOnlineStatus(id, body);
   return context.json(updated, 200);
 }
 
 export async function handleGetDriverProfile(context: Context) {
-  const id = context.req.param('id');
+  const id = context.req.param('id')!;
   const driver = await driverService.getDriverProfile(id);
   return context.json(driver, 200);
 }
 
 export async function handleGetDriverStats(context: Context) {
-  const id = context.req.param('id');
+  const id = context.req.param('id')!;
   const stats = await driverService.getDriverStats(id);
   return context.json(stats, 200);
 }
 
 export async function handleGetDriverTripHistory(context: Context) {
-  const id = context.req.param('id');
+  const id = context.req.param('id')!;
   const trips = await driverService.getDriverTripHistory(id);
   return context.json(trips, 200);
 }
 
 export async function handleGetDriverReviews(context: Context) {
-  const id = context.req.param('id');
+  const id = context.req.param('id')!;
 
   if (!id) {
     return context.json({ message: 'Driver ID is required' }, 400);
@@ -55,7 +56,7 @@ export async function handleGetActiveRideRequests(context: Context) {
 }
 
 export async function handleAddDriverReview(context: Context) {
-  const id = context.req.param('id');
+  const id = context.req.param('id')!;
   const body = await context.req.json();
   const review = await driverService.addDriverReview(id, body);
   return context.json(review, 201);

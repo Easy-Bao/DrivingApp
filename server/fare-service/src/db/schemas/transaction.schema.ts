@@ -1,4 +1,12 @@
-import { pgTable, uuid, text, doublePrecision, timestamp } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  text,
+  doublePrecision,
+  integer,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 
 export const fareTransactions = pgTable('fare_transactions', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -13,5 +21,15 @@ export const fareTransactions = pgTable('fare_transactions', {
   totalFare: doublePrecision('total_fare').notNull(),
   driverEarnings: doublePrecision('driver_earnings').notNull(),
   platformFee: doublePrecision('platform_fee').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+  driverId: text('driver_id'),
+  totalFareCentavos: integer('total_fare_centavos'),
+  driverEarningsCentavos: integer('driver_earnings_centavos'),
+  platformFeeCentavos: integer('platform_fee_centavos'),
+  commissionRateBasisPoints: integer('commission_rate_basis_points'),
+  assignmentSource: text('assignment_source').notNull().default('driver_offer'),
+  paymentStatus: text('payment_status').notNull().default('cash_pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  rideIdUnique: uniqueIndex('fare_transactions_ride_id_unique').on(table.rideId),
+}));

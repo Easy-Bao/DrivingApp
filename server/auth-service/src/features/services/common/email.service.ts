@@ -6,6 +6,11 @@ export class EmailService {
     otpCode: string,
     action: 'verification' | 'reset' = 'verification'
   ): Promise<boolean> {
+    if (process.env.EMAIL_DELIVERY_DISABLED === 'true') {
+      console.log(`[EMAIL DISPATCH SKIPPED (EMAIL_DELIVERY_DISABLED)] To: ${toEmail}`);
+      return false;
+    }
+
     const smtpHost = process.env.SMTP_HOST;
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
     const smtpUser = process.env.SMTP_USER;

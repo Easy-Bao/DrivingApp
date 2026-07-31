@@ -59,3 +59,11 @@ Please refer to the global agent configuration files (`.agent`, `.cursorrules`, 
 * SOLID design and architecture.
 * Strict naming conventions (camelCase/PascalCase for Dart).
 * Narrative and lifecycle-oriented code documentation and git commits.
+
+## Admin MVP
+
+See [docs/admin-mvp.md](docs/admin-mvp.md) for the online owner dashboard,
+service-credit operations, migrations, deployment, and acceptance runbook.
+
+See [docs/product-plan.md](docs/product-plan.md) for the cross-team passenger,
+driver, Admin, and backend feature map, decisions, gaps, and open questions.
