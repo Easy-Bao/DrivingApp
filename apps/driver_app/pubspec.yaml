@@ -1,0 +1,85 @@
+name: driver_app
+description: "EasyRide Driver App by ZervX"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Routing
+  go_router_modular: ^5.0.5
+
+  # State Management
+  flutter_bloc: ^9.1.0
+  equatable: ^2.0.7
+
+  # Data Models & Serialization
+  json_annotation: ^4.9.0
+
+  # Dependency Injection & Utils
+  get_it: ^8.0.3
+  flutter_dotenv: ^6.0.1
+  url_launcher: ^6.3.1
+  shared_preferences: ^2.3.2
+
+  # UI & Images
+  flutter_lucide: ^1.8.2
+  cached_network_image: ^3.4.1
+
+  # Maps & Navigation
+  mapbox_maps_flutter: ^2.23.0
+  geolocator: ^13.0.2
+  map_launcher: ^3.4.0
+  flutter_polyline_points: ^2.1.0
+  permission_handler: ^11.4.0
+  location_service:
+    path: ../../packages/location_service
+
+  core_models:
+    path: ../../packages/core_models
+
+  shared_ui:
+    path: ../../packages/shared_ui
+
+  chat_service:
+    path: ../../packages/chat_service
+
+
+  fpdart: ^1.2.0
+  dio: ^5.10.0
+  rxdart: ^0.28.0
+  flutter_secure_storage: ^10.3.1
+  flutter_background_service: ^5.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  integration_test:
+    sdk: flutter
+
+  # Testing
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+
+  # Code Generation
+  json_serializable: ^6.9.4
+  build_runner: ^2.4.15
+  flutter_launcher_icons: ^0.14.3
+
+
+flutter_launcher_icons:
+  android: true
+  image_path: "assets/app-icon/easy-ride.png"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env
