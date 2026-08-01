@@ -1,0 +1,128 @@
+name: driving app ci
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: read
+
+concurrency:
+  group: driving-app-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conflict-and-security-guards:
+    name: conflict markers, secrets, and resource leaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run repository guards
+        run: ./scripts/ci/quality_guard.sh
+
+      - name: Scan for leaked secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  flutter-quality:
+    name: flutter format, analyze, and tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap workspace
+        run: melos bootstrap
+
+      - name: Check formatting
+        run: dart format --set-exit-if-changed apps packages
+
+      - name: Analyze workspace
+        run: melos run analyze
+
+      - name: Test driver app
+        working-directory: apps/driver_app
+        run: flutter test
+
+      - name: Test passenger app
+        working-directory: apps/passenger_app
+        run: flutter test
+
+  backend-quality:
+    name: backend type checks and tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: server/location-service/go.mod
+          cache-dependency-path: server/location-service/go.sum
+
+      - name: Install backend dependencies
+        run: ./scripts/ci/install_backend_dependencies.sh
+
+      - name: Prepare backend test environment
+        run: ./scripts/ci/prepare_backend_test_env.sh
+
+      - name: Start backend test infrastructure
+        run: docker compose up -d --wait --wait-timeout 90 postgres-db redis rabbitmq
+
+      - name: Initialize backend test databases
+        run: ./scripts/init_local_databases.sh
+
+      - name: Type check backend services
+        run: ./scripts/ci/typecheck_backend_services.sh
+
+      - name: Test backend services
+        run: ./scripts/ci/test_backend_services.sh
+
+      - name: Vet location service
+        working-directory: server/location-service
+        run: go vet ./...
+
+      - name: Test location service
+        working-directory: server/location-service
+        run: go test ./...
+
+      - name: Stop backend test infrastructure
+        if: always()
+        run: docker compose down --volumes
+
+  dependency-review:
+    name: dependency security review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high

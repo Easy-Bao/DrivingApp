@@ -16,6 +16,31 @@ watch-flutter:
 analyze:
     flutter pub global run melos run analyze
 
+ci-guards:
+    @./scripts/ci/quality_guard.sh
+
+ci-backend-install:
+    @./scripts/ci/install_backend_dependencies.sh
+
+ci-backend-typecheck:
+    @./scripts/ci/typecheck_backend_services.sh
+
+ci-backend-test:
+    @./scripts/ci/test_backend_services.sh
+
+ci-backend: ci-backend-install ci-backend-typecheck ci-backend-test
+    cd server/location-service && go vet ./...
+    cd server/location-service && go test ./...
+
+ci-flutter:
+    flutter pub global run melos bootstrap
+    dart format --set-exit-if-changed apps packages
+    flutter pub global run melos run analyze
+    cd apps/driver_app && flutter test
+    cd apps/passenger_app && flutter test
+
+ci-local: ci-guards ci-flutter ci-backend
+
 bootstrap:
     flutter pub global run melos bootstrap
 
