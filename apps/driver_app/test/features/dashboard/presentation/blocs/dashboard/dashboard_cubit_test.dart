@@ -80,8 +80,8 @@ void main() {
   group('DashboardCubit — toggleOnline()', () {
     const lat = 7.828282;
     const lng = 123.434343;
-    final mockCells = [
-      HeatmapCellModel(lat: lat + 0.002, lng: lng - 0.002, intensity: 2.5),
+    final mockCells = <HeatmapCell>[
+      HeatmapCell(lat: lat + 0.002, lng: lng - 0.002, intensity: 2.5),
     ];
 
     blocTest<DashboardCubit, DashboardState>(

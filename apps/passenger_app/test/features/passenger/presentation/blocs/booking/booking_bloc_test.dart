@@ -3,25 +3,28 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 class MockDriverRepo extends Mock implements IDriverRepository {}
 
 class MockBiddingRemoteDataSource extends Mock
     implements BiddingRemoteDataSource {}
 
+class MockSecureSessionService extends Mock implements SecureSessionService {}
+
 BookingBloc _makeBookingBloc({
   required IDriverRepository driverRepo,
   required BiddingRemoteDataSource biddingDataSource,
+  required SecureSessionService secureSessionService,
 }) => BookingBloc(
   driverRepository: driverRepo,
   biddingDataSource: biddingDataSource,
+  secureSessionService: secureSessionService,
 );
 
 void main() {
@@ -29,11 +32,18 @@ void main() {
 
   late MockDriverRepo driverRepo;
   late MockBiddingRemoteDataSource biddingDataSource;
+  late MockSecureSessionService secureSessionService;
 
   setUp(() {
     driverRepo = MockDriverRepo();
     biddingDataSource = MockBiddingRemoteDataSource();
-    SharedPreferences.setMockInitialValues({'passenger_id': 'pass-001'});
+    secureSessionService = MockSecureSessionService();
+    when(
+      () => secureSessionService.readPassengerId(),
+    ).thenAnswer((_) async => 'pass-001');
+    when(
+      () => biddingDataSource.cancelSession(any()),
+    ).thenAnswer((_) async => true);
   });
 
   const testDriver = DriverModel(
@@ -54,95 +64,63 @@ void main() {
       final bloc = _makeBookingBloc(
         driverRepo: driverRepo,
         biddingDataSource: biddingDataSource,
+        secureSessionService: secureSessionService,
       );
       expect(bloc.state, isA<BookingInitial>());
       await bloc.close();
     });
   });
 
-  group('BookingBloc — StartSearchEvent', () {
+  group('BookingBloc — LocateNearestDriverEvent', () {
     blocTest<BookingBloc, BookingState>(
-      'emits [SearchingDriver, NearestDriverFound] when nearby drivers exist',
+      'emits [FindingNearestDriver, NearestDriverFound] when nearby drivers exist',
       build: () {
-        when(() => driverRepo.getNearbyDrivers(
-          lat: any(named: 'lat'),
-          lng: any(named: 'lng'),
-        )).thenAnswer((_) async => const Right([testDriver]));
+        when(
+          () => driverRepo.getNearbyDrivers(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right([testDriver]));
 
-        when(() => biddingDataSource.fetchDriverStats(any())).thenAnswer(
-          (_) async => {'totalTrips': 42},
-        );
-        when(() => biddingDataSource.fetchDriverReviews(any())).thenAnswer(
-          (_) async => [],
-        );
+        when(
+          () => biddingDataSource.fetchDriverStats(any()),
+        ).thenAnswer((_) async => {'totalTrips': 42});
+        when(
+          () => biddingDataSource.fetchDriverReviews(any()),
+        ).thenAnswer((_) async => []);
         return _makeBookingBloc(
           driverRepo: driverRepo,
           biddingDataSource: biddingDataSource,
+          secureSessionService: secureSessionService,
         );
       },
-      act: (bloc) => bloc.add(const StartSearchEvent(
-        pickupLat: 7.828,
-        pickupLng: 123.434,
-        pickupName: 'SM Pagadian',
-        dropoffLat: 7.835,
-        dropoffLng: 123.444,
-        dropoffName: 'Tuburan',
-        fare: 150.0,
-        rideType: 'nearest',
-      )),
+      act: (bloc) => bloc.add(
+        const LocateNearestDriverEvent(pickupLat: 7.828, pickupLng: 123.434),
+      ),
       expect: () => [
-        isA<SearchingDriver>(),
+        isA<FindingNearestDriver>(),
         isA<NearestDriverFound>()
             .having((s) => s.driver.id, 'driver id', 'drv-01')
-            .having((s) => s.totalTrips, 'total trips', 42),
-      ],
-    );
-
-    blocTest<BookingBloc, BookingState>(
-      'emits [SearchingDriver, SearchFailed] when no drivers nearby',
-      build: () {
-        when(() => driverRepo.getNearbyDrivers(
-          lat: any(named: 'lat'),
-          lng: any(named: 'lng'),
-        )).thenAnswer((_) async => const Right([]));
-
-        return _makeBookingBloc(
-          driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
-        );
-      },
-      act: (bloc) => bloc.add(const StartSearchEvent(
-        pickupLat: 7.828,
-        pickupLng: 123.434,
-        pickupName: 'SM Pagadian',
-        dropoffLat: 7.835,
-        dropoffLng: 123.444,
-        dropoffName: 'Tuburan',
-        fare: 150.0,
-        rideType: 'nearest',
-      )),
-      expect: () => [
-        isA<SearchingDriver>(),
-        isA<SearchFailed>().having(
-          (s) => s.message,
-          'error message',
-          contains('No drivers'),
-        ),
+            .having((s) => s.isLoadingReviews, 'isLoadingReviews', true),
+        isA<NearestDriverFound>()
+            .having((s) => s.driver.id, 'driver id', 'drv-01')
+            .having((s) => s.isLoadingReviews, 'isLoadingReviews', false),
       ],
     );
   });
 
-  group('BookingBloc — CancelSearchEvent', () {
+  group('BookingBloc — CancelBookingEvent', () {
     blocTest<BookingBloc, BookingState>(
-      'emits BookingInitial upon cancellation',
+      'emits BookingCanceled upon cancellation',
       build: () {
         return _makeBookingBloc(
           driverRepo: driverRepo,
           biddingDataSource: biddingDataSource,
+          secureSessionService: secureSessionService,
         );
       },
-      act: (bloc) => bloc.add(const CancelSearchEvent()),
-      expect: () => [isA<BookingInitial>()],
+      act: (bloc) => bloc.add(const CancelBookingEvent()),
+      expect: () => [isA<BookingCanceled>()],
     );
   });
 }

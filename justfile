@@ -26,9 +26,13 @@ db-up:
 db-down:
     docker compose stop postgres-db
 
-db-migrate:
-    docker exec postgres-db psql -U driveapp -d passenger_db -f /dev/stdin < server/passenger-service/prisma/migrations/20260626000000_create_passenger_tables/migration.sql
-    docker exec postgres-db psql -U driveapp -d passenger_db -f /dev/stdin < server/passenger-service/prisma/migrations/20260627000000_add_password_hash/migration.sql
+# Start shared local infrastructure and wait for its health checks
+infra-up:
+    docker compose up -d --wait --wait-timeout 60 postgres-db redis rabbitmq
+
+# Idempotently initialize databases and tables required by local authentication
+db-migrate: infra-up
+    @./scripts/init_local_databases.sh
 
 test-services:
     @echo "=== Auth Service ==="
@@ -48,18 +52,8 @@ test-services:
     @echo "=== Location Service ==="
     cd server/location-service && go test ./...
 
-start-all:
-    (cd server/api-gateway && bun run dev) & \
-    (cd server/auth-service && bun run dev) & \
-    (cd server/passenger-service && bun run dev) & \
-    (cd server/driver-service && bun run dev) & \
-    (cd server/trip-service && bun run dev) & \
-    (cd server/bidding-service && bun run dev) & \
-    (cd server/telemetry-service && bun run dev) & \
-    (cd server/chat-service && bun run dev) & \
-    (cd server/fare-service && bun run dev) & \
-    (cd server/location-service && go run ./cmd/main.go) & \
-    wait
+start-all: db-migrate
+    @./scripts/start_all.sh
 
 run-passenger:
     cd apps/passenger_app && flutter run

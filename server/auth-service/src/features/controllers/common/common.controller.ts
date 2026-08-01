@@ -1,18 +1,27 @@
-import { Context } from 'hono';
+import type { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { OneTimePasswordStoreService } from '../../services/common/otp_store.ts';
+
+import type {
+  ForgotPasswordInput,
+  ResetPasswordInput,
+  VerifyOtpInput,
+  VerifyTokenInput,
+} from '../../schemas/common/common.zod.ts';
 import { JsonWebTokenService } from '../../services/common/jwt.service.ts';
-import { PassengerAuthenticationService } from '../../services/passenger/passenger.service.ts';
+import { OneTimePasswordStoreService } from '../../services/common/otp_store.ts';
 import { DriverAuthenticationService } from '../../services/driver/driver.service.ts';
-import { VerifyOtpInput, ForgotPasswordInput, ResetPasswordInput, VerifyTokenInput } from '../../schemas/common/common.zod.ts';
+import { PassengerAuthenticationService } from '../../services/passenger/passenger.service.ts';
 
 export async function handleVerifyOneTimePassword(c: Context) {
   try {
     const { email, code } = c.req.valid('json' as never) as VerifyOtpInput;
-    const isVerified = OneTimePasswordStoreService.verifyOneTimePasswordCode(email, code);
+    const isVerified = OneTimePasswordStoreService
+      .verifyOneTimePasswordCode(email, code);
     if (isVerified) {
-      PassengerAuthenticationService.verifyPassengerAccountState(email);
-      DriverAuthenticationService.verifyDriverAccountState(email);
+      await Promise.all([
+        PassengerAuthenticationService.verifyPassengerAccountState(email),
+        DriverAuthenticationService.verifyDriverAccountState(email),
+      ]);
     }
     return c.json({ success: true, data: { verified: true } });
   } catch (error: unknown) {
@@ -24,7 +33,10 @@ export async function handleVerifyOneTimePassword(c: Context) {
 export async function handleSendForgotPasswordOneTimePassword(c: Context) {
   try {
     const { email } = c.req.valid('json' as never) as ForgotPasswordInput;
-    await OneTimePasswordStoreService.generateOneTimePasswordCode(email, 'reset');
+    await OneTimePasswordStoreService.generateOneTimePasswordCode(
+      email,
+      'reset',
+    );
     return c.json({ success: true, data: { success: true } });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Forgot password failed';
@@ -34,14 +46,25 @@ export async function handleSendForgotPasswordOneTimePassword(c: Context) {
 
 export async function handleResetPassword(c: Context) {
   try {
-    const { email, code, newPassword } = c.req.valid('json' as never) as ResetPasswordInput;
-    const isOtpValid = OneTimePasswordStoreService.verifyOneTimePasswordCode(email, code);
+    const { email, code, newPassword } = c.req.valid(
+      'json' as never,
+    ) as ResetPasswordInput;
+    const isOtpValid = OneTimePasswordStoreService
+      .verifyOneTimePasswordCode(email, code);
     if (!isOtpValid) {
       throw new Error('Invalid or expired verification code');
     }
-    const newPasswordHash = await Bun.password.hash(newPassword);
-    const updatedPassenger = PassengerAuthenticationService.updatePassengerPassword(email, newPasswordHash);
-    const updatedDriver = DriverAuthenticationService.updateDriverPassword(email, newPasswordHash);
+    const newPasswordHash = await Bun.password.hash(newPassword, {
+      algorithm: 'bcrypt',
+      cost: 10,
+    });
+    const [updatedPassenger, updatedDriver] = await Promise.all([
+      PassengerAuthenticationService.updatePassengerPassword(
+        email,
+        newPasswordHash,
+      ),
+      DriverAuthenticationService.updateDriverPassword(email, newPasswordHash),
+    ]);
 
     if (!updatedPassenger && !updatedDriver) {
       throw new Error('No account found with this email address');

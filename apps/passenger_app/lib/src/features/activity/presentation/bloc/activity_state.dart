@@ -1,4 +1,4 @@
-part of 'ActivityBloc.dart';
+part of 'activity_bloc.dart';
 
 abstract class ActivityState {}
 

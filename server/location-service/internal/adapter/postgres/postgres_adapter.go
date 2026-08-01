@@ -14,7 +14,7 @@ import (
 )
 
 type postgresAdapter struct {
-	db          *sql.DB
+	db           *sql.DB
 	fallbackPOIs []domain.Place
 }
 
@@ -26,6 +26,7 @@ func NewPostgresAdapter(dbURL string) domain.LocationRepository {
 		}
 	}
 
+	//TODO: No seeders
 	seedPOIs := []domain.Place{
 		{ID: "poi-1", Name: "Springland Resort", Address: "Springland Resort Road, Pagadian City", Category: "Resort", Latitude: 7.8242, Longitude: 123.4350},
 		{ID: "poi-2", Name: "Four Queens Resort", Address: "Four Queens Road, Pagadian City", Category: "Resort", Latitude: 7.8280, Longitude: 123.4345},
@@ -40,7 +41,7 @@ func NewPostgresAdapter(dbURL string) domain.LocationRepository {
 	}
 
 	return &postgresAdapter{
-		db:          db,
+		db:           db,
 		fallbackPOIs: seedPOIs,
 	}
 }

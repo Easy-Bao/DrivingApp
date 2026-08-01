@@ -1,4 +1,3 @@
-import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/signin/bloc/sign_in_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -46,55 +46,6 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
   Timer? _validationErrorTimer;
 
   @override
-  void dispose() {
-    _validationErrorTimer?.cancel();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _startErrorAutoDismissTimer() {
-    _validationErrorTimer?.cancel();
-    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _emailError = null;
-          _passwordError = null;
-          _isServerErrorCleared = true;
-        });
-      }
-    });
-  }
-
-  void _submitSignIn(BuildContext context) {
-    FocusScope.of(context).unfocus();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    setState(() {
-      _isServerErrorCleared = false;
-      if (email.isEmpty) {
-        _emailError = 'Please enter your email';
-      } else if (!_emailRegex.hasMatch(email)) {
-        _emailError = 'Please enter a valid email address';
-      } else {
-        _emailError = null;
-      }
-
-      _passwordError = password.isEmpty ? 'Please enter your password' : null;
-    });
-
-    if (_emailError != null || _passwordError != null) {
-      _startErrorAutoDismissTimer();
-      return;
-    }
-
-    BlocProvider.of<SignInBloc>(context).add(
-      SignInSubmitted(email: email, password: password),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -128,14 +79,14 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                   extra: {'email': state.email},
                 ),
               );
-            } else if (state is SignInFailure) {
-              CustomToast.show(context, state.errorMessage);
             }
           },
           builder: (context, state) {
             final isLoading = state is SignInLoading;
             final serverErrorMessage =
-                state is SignInFailure && !_isServerErrorCleared ? state.errorMessage : null;
+                state is SignInFailure && !_isServerErrorCleared
+                ? state.errorMessage
+                : null;
 
             final effectiveEmailError = _emailError ?? serverErrorMessage;
             final effectivePasswordError = _passwordError;
@@ -485,5 +436,54 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _validationErrorTimer?.cancel();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _startErrorAutoDismissTimer() {
+    _validationErrorTimer?.cancel();
+    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _emailError = null;
+          _passwordError = null;
+          _isServerErrorCleared = true;
+        });
+      }
+    });
+  }
+
+  void _submitSignIn(BuildContext context) {
+    FocusScope.of(context).unfocus();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    setState(() {
+      _isServerErrorCleared = false;
+      if (email.isEmpty) {
+        _emailError = 'Please enter your email';
+      } else if (!_emailRegex.hasMatch(email)) {
+        _emailError = 'Please enter a valid email address';
+      } else {
+        _emailError = null;
+      }
+
+      _passwordError = password.isEmpty ? 'Please enter your password' : null;
+    });
+
+    if (_emailError != null || _passwordError != null) {
+      _startErrorAutoDismissTimer();
+      return;
+    }
+
+    BlocProvider.of<SignInBloc>(
+      context,
+    ).add(SignInSubmitted(email: email, password: password));
   }
 }

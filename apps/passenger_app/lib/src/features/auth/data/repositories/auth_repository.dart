@@ -4,18 +4,20 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/i_auth_repository.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthRepository implements IAuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final SecureSessionService _secureSessionService;
+  final SharedPreferences _preferences;
 
   AuthRepository({
     required AuthRemoteDataSource remoteDataSource,
     required SecureSessionService secureSessionService,
-  })  : _remoteDataSource = remoteDataSource,
-        _secureSessionService = secureSessionService;
+    required SharedPreferences preferences,
+  }) : _remoteDataSource = remoteDataSource,
+       _secureSessionService = secureSessionService,
+       _preferences = preferences;
 
   @override
   Future<Either<Failure, AuthCredentials>> authenticatePassenger({
@@ -29,26 +31,32 @@ class AuthRepository implements IAuthRepository {
       );
 
       final token = responseData['token'] as String? ?? '';
-      final passenger = responseData['passenger'] as Map<String, dynamic>? ?? {};
+      final passengerData = responseData['user'];
+      if (token.isEmpty || passengerData is! Map) {
+        throw DataParsingException(
+          message: 'Authentication response did not contain a valid session.',
+        );
+      }
+
+      final passenger = Map<String, dynamic>.from(passengerData);
       final passengerId = passenger['id'] as String? ?? '';
+      if (passengerId.isEmpty) {
+        throw DataParsingException(
+          message: 'Authentication response did not contain a passenger ID.',
+        );
+      }
+
       final passengerName = passenger['name'] as String? ?? '';
-      final passengerEmail = passenger['email'] as String? ?? '';
+      final passengerEmail = passenger['email'] as String? ?? email;
       final passengerPhone = passenger['phone'] as String? ?? '';
-      final needsVerification = responseData['needs_verification'] == true;
+      final needsVerification = responseData['needsVerification'] == true;
 
-      if (token.isNotEmpty) {
-        await _secureSessionService.saveToken(token);
-      }
-      if (passengerId.isNotEmpty) {
-        await _secureSessionService.savePassengerId(passengerId);
-      }
+      await _secureSessionService.saveToken(token);
+      await _secureSessionService.savePassengerId(passengerId);
 
-      final prefs = await SharedPreferences.getInstance();
-      if (token.isNotEmpty) await prefs.setString('jwt_token', token);
-      if (passengerId.isNotEmpty) await prefs.setString('passenger_id', passengerId);
-      await prefs.setString('passenger_name', passengerName);
-      await prefs.setString('passenger_email', passengerEmail);
-      await prefs.setString('passenger_phone', passengerPhone);
+      await _preferences.setString('passenger_name', passengerName);
+      await _preferences.setString('passenger_email', passengerEmail);
+      await _preferences.setString('passenger_phone', passengerPhone);
 
       return Right(
         AuthCredentials(
@@ -60,12 +68,20 @@ class AuthRepository implements IAuthRepository {
           needsVerification: needsVerification,
         ),
       );
-    } catch (error) {
-      final errorMsg = error.toString();
-      if (errorMsg.contains('No passenger registered') || errorMsg.contains('not found')) {
-        return const Left(AuthFailure('No account found with this email address.'));
+    } on ServerException catch (error) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        return const Left(AuthFailure('Invalid email or password.'));
       }
-      return const Left(AuthFailure('Invalid email or password'));
+      if (error.statusCode == 0) {
+        return Left(NetworkFailure(error.message));
+      }
+      return Left(ServerFailure(error.message));
+    } on DataParsingException catch (error) {
+      return Left(ServerFailure(error.message));
+    } catch (_) {
+      return const Left(
+        ServerFailure('Unable to sign in right now. Please try again.'),
+      );
     }
   }
 
@@ -107,7 +123,9 @@ class AuthRepository implements IAuthRepository {
         code: code,
       );
       if (!success) {
-        return const Left(ValidationFailure('Invalid or expired verification code.'));
+        return const Left(
+          ValidationFailure('Invalid or expired verification code.'),
+        );
       }
       if (password.isNotEmpty) {
         return authenticatePassenger(email: email, password: password);
@@ -126,22 +144,26 @@ class AuthRepository implements IAuthRepository {
       if (error is ServerException) {
         return Left(ValidationFailure(error.message));
       }
-      return const Left(ServerFailure('Verification failed. Please try again.'));
+      return const Left(
+        ServerFailure('Verification failed. Please try again.'),
+      );
     }
   }
 
   @override
-  Future<Either<Failure, void>> resetPassword({
-    required String email,
-  }) async {
+  Future<Either<Failure, void>> resetPassword({required String email}) async {
     try {
       final success = await _remoteDataSource.resetPassword(email: email);
       if (!success) {
-        return const Left(ServerFailure('Failed to send reset link. Please check email.'));
+        return const Left(
+          ServerFailure('Failed to send reset link. Please check email.'),
+        );
       }
       return const Right(null);
     } catch (error) {
-      return const Left(ServerFailure('Failed to send reset link. Please try again.'));
+      return const Left(
+        ServerFailure('Failed to send reset link. Please try again.'),
+      );
     }
   }
 
@@ -158,11 +180,15 @@ class AuthRepository implements IAuthRepository {
         newPassword: newPassword,
       );
       if (!success) {
-        return const Left(ServerFailure('Password reset failed. Please try again.'));
+        return const Left(
+          ServerFailure('Password reset failed. Please try again.'),
+        );
       }
       return const Right(null);
     } catch (error) {
-      return const Left(ServerFailure('Password reset failed. Please try again.'));
+      return const Left(
+        ServerFailure('Password reset failed. Please try again.'),
+      );
     }
   }
 }

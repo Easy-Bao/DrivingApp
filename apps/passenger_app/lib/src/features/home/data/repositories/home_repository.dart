@@ -1,11 +1,9 @@
 import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
-
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 String _shortenAddress(String fullAddress) {
   final parts = fullAddress.split(',').map((p) => p.trim()).toList();
@@ -17,10 +15,13 @@ String _shortenAddress(String fullAddress) {
 
 class HomeRepository implements IPassengerHomeRepository {
   final PassengerRemoteDataSource _passengerRemoteDataSource;
+  final SecureSessionService _secureSessionService;
 
   HomeRepository({
     required PassengerRemoteDataSource passengerRemoteDataSource,
-  }) : _passengerRemoteDataSource = passengerRemoteDataSource;
+    required SecureSessionService secureSessionService,
+  }) : _passengerRemoteDataSource = passengerRemoteDataSource,
+       _secureSessionService = secureSessionService;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {
@@ -69,7 +70,9 @@ class HomeRepository implements IPassengerHomeRepository {
           CacheFailure('No passenger ID found in local cache.'),
         );
       }
-      final rawRides = await _passengerRemoteDataSource.fetchRideHistory(passengerId);
+      final rawRides = await _passengerRemoteDataSource.fetchRideHistory(
+        passengerId,
+      );
       return Right(_filterAndFormatRecentLocations(rawRides));
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
@@ -78,11 +81,10 @@ class HomeRepository implements IPassengerHomeRepository {
 
   Future<String> _getPassengerId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('passenger_id') ?? '';
+      return await _secureSessionService.readPassengerId() ?? '';
     } catch (error) {
       throw CacheException(
-        message: 'Failed to access local preferences: $error',
+        message: 'Failed to access the secure passenger session: $error',
       );
     }
   }

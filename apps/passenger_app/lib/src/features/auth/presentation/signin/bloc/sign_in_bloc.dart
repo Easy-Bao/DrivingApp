@@ -18,7 +18,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     Emitter<SignInState> emit,
   ) async {
     final normalizedEmail = event.email.trim().toLowerCase();
-    final normalizedPassword = event.password.trim();
+    final password = event.password;
 
     if (normalizedEmail.isEmpty) {
       emit(const SignInFailure('Please enter email'));
@@ -28,7 +28,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
       emit(const SignInFailure('Please enter a valid email'));
       return;
     }
-    if (normalizedPassword.isEmpty) {
+    if (password.isEmpty) {
       emit(const SignInFailure('Please enter password'));
       return;
     }
@@ -37,18 +37,17 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
 
     final result = await _signInUseCase.execute(
       email: normalizedEmail,
-      password: normalizedPassword,
+      password: password,
     );
 
-    result.fold(
-      (failure) => emit(SignInFailure(failure.message)),
-      (credentials) {
-        if (credentials.needsVerification) {
-          emit(SignInNeedsVerification(normalizedEmail));
-        } else {
-          emit(SignInSuccess(credentials));
-        }
-      },
-    );
+    result.fold((failure) => emit(SignInFailure(failure.message)), (
+      credentials,
+    ) {
+      if (credentials.needsVerification) {
+        emit(SignInNeedsVerification(normalizedEmail));
+      } else {
+        emit(SignInSuccess(credentials));
+      }
+    });
   }
 }

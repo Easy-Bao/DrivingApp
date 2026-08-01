@@ -37,26 +37,30 @@ class EnvConfig {
       dotenv.env['OFFLINE_MODE']?.toLowerCase() == 'true';
 
   static Uri get passengerServiceUri {
-    final rawUrl = dotenv.env['PASSENGER_SERVICE_URL'] ?? 'http://localhost:8080';
+    final rawUrl =
+        dotenv.env['PASSENGER_SERVICE_URL'] ?? 'http://localhost:8080';
     return _resolveUri(rawUrl);
   }
 
   static Uri get authServiceUri {
-    final rawUrl = dotenv.env['AUTH_SERVICE_URL'] ??
+    final rawUrl =
+        dotenv.env['AUTH_SERVICE_URL'] ??
         dotenv.env['PASSENGER_SERVICE_URL'] ??
         'http://localhost:8080';
     return _resolveUri(rawUrl);
   }
 
   static Uri get tripServiceUri {
-    final rawUrl = dotenv.env['TRIP_SERVICE_URL'] ??
+    final rawUrl =
+        dotenv.env['TRIP_SERVICE_URL'] ??
         dotenv.env['PASSENGER_SERVICE_URL'] ??
         'http://localhost:8080';
     return _resolveUri(rawUrl);
   }
 
   static Uri get placeServiceUri {
-    final rawUrl = dotenv.env['PLACE_SERVICE_BASE_URL'] ??
+    final rawUrl =
+        dotenv.env['PLACE_SERVICE_BASE_URL'] ??
         dotenv.env['PASSENGER_SERVICE_URL'] ??
         'http://localhost:8080';
     return _resolveUri(rawUrl);
@@ -76,9 +80,11 @@ class EnvConfig {
 
   static Uri _resolveUri(String rawUrl) {
     var uri = Uri.parse(rawUrl);
-    final isPhysicalDevice = dotenv.env['PHYSICAL_DEVICE'] == 'true';
-    if (!isPhysicalDevice && !kIsWeb && Platform.isAndroid) {
-      final loopbackHost = dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'] ?? '10.0.2.2';
+    final usesAdbReverse =
+        dotenv.env['ANDROID_USE_ADB_REVERSE']?.toLowerCase() != 'false';
+    if (!usesAdbReverse && !kIsWeb && Platform.isAndroid) {
+      final loopbackHost =
+          dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'] ?? '10.0.2.2';
       if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
         uri = uri.replace(host: loopbackHost);
       }

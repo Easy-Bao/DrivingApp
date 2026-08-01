@@ -35,10 +35,6 @@ void main() {
       () => mockTripRemoteDataSource.acceptRide(
         tripId: any(named: 'tripId'),
         driverId: any(named: 'driverId'),
-        driverName: any(named: 'driverName'),
-        plateNumber: any(named: 'plateNumber'),
-        vehicleType: any(named: 'vehicleType'),
-        status: any(named: 'status'),
       ),
     ).thenAnswer((_) async => true);
 

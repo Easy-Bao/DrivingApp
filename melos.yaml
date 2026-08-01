@@ -2,16 +2,13 @@ name: drive_app_workspace
 repository: https://github.com/Easy-Bao/DrivingApp
 
 packages:
-  - Apps/*
-  - Packages/*
-
-
+  - apps/*
+  - packages/*
 
 scripts:
   postbootstrap:
     exec: flutter pub get
     description: Run pub get in all packages after bootstrapping.
-
 
   analyze:
     exec: flutter analyze .

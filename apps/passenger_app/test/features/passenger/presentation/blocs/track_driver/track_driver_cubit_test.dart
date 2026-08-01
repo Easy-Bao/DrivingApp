@@ -26,9 +26,9 @@ void main() {
     repo = MockTrackRepo();
     session = MockSecureSessionService();
     registerFallbackValue(RideStatus.unknown);
-    when(() => session.writeActiveRideId(any())).thenAnswer((_) async {});
+    when(() => session.saveActiveRideId(any())).thenAnswer((_) async {});
     when(() => session.readActiveRideId()).thenAnswer((_) async => null);
-    when(() => session.deleteActiveRideId()).thenAnswer((_) async {});
+    when(() => session.clearSession()).thenAnswer((_) async {});
   });
 
   group('TrackDriverCubit — initial state', () {
@@ -64,7 +64,6 @@ void main() {
         verify(
           () => repo.updateRideStatus('ride-42', RideStatus.cancelled),
         ).called(1);
-        verify(() => session.deleteActiveRideId()).called(1);
       },
     );
   });

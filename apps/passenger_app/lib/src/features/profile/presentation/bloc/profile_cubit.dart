@@ -2,6 +2,7 @@ import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,10 +11,14 @@ export 'package:passenger_app/src/features/profile/presentation/bloc/profile_sta
 
 class ProfileCubit extends Cubit<ProfileState> {
   final PassengerRemoteDataSource _remoteDataSource;
+  final SecureSessionService _secureSessionService;
 
-  ProfileCubit({required PassengerRemoteDataSource remoteDataSource})
-      : _remoteDataSource = remoteDataSource,
-        super(const ProfileState());
+  ProfileCubit({
+    required PassengerRemoteDataSource remoteDataSource,
+    required SecureSessionService secureSessionService,
+  }) : _remoteDataSource = remoteDataSource,
+       _secureSessionService = secureSessionService,
+       super(const ProfileState());
 
   Future<void> loadProfile() async {
     emit(state.copyWith(isLoading: true));
@@ -33,10 +38,12 @@ class ProfileCubit extends Cubit<ProfileState> {
         ),
       );
 
-      final passengerId = prefs.getString('passenger_id') ?? '';
+      final passengerId = await _secureSessionService.readPassengerId() ?? '';
       if (passengerId.isEmpty) return;
 
-      final profile = await _remoteDataSource.fetchPassengerProfile(passengerId);
+      final profile = await _remoteDataSource.fetchPassengerProfile(
+        passengerId,
+      );
       final name = profile['name'] as String? ?? cachedName;
       final phone = profile['phone'] as String? ?? cachedPhone;
       final email = profile['email'] as String? ?? cachedEmail;
@@ -46,12 +53,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       await prefs.setString('passenger_email', email);
 
       emit(
-        ProfileState(
-          name: name,
-          phone: phone,
-          email: email,
-          isLoading: false,
-        ),
+        ProfileState(name: name, phone: phone, email: email, isLoading: false),
       );
     } catch (error, stackTrace) {
       dev.log('Error syncing profile values in cubit: $error\n$stackTrace');

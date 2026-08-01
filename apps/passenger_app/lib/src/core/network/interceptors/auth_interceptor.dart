@@ -6,8 +6,11 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._secureSessionService);
 
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
-    final token = await _secureSessionService.readJwtToken();
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final token = await _secureSessionService.readToken();
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }

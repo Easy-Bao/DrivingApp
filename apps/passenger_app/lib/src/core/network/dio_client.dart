@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:passenger_app/src/core/network/interceptors/auth_interceptor.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 
 class DioClient {
@@ -18,29 +19,10 @@ class DioClient {
       ),
     );
 
-    dio.interceptors.add(_AuthTokenInterceptor(sessionService: sessionService));
+    dio.interceptors.add(AuthInterceptor(sessionService));
     dio.interceptors.add(_RetryOnNetworkFailureInterceptor(dio: dio));
 
     return dio;
-  }
-}
-
-class _AuthTokenInterceptor extends Interceptor {
-  final SecureSessionService _sessionService;
-
-  _AuthTokenInterceptor({required SecureSessionService sessionService})
-    : _sessionService = sessionService;
-
-  @override
-  Future<void> onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    final token = await _sessionService.readToken();
-    if (token != null && token.isNotEmpty) {
-      options.headers['Authorization'] = 'Bearer $token';
-    }
-    super.onRequest(options, handler);
   }
 }
 

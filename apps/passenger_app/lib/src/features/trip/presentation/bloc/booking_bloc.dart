@@ -2,17 +2,17 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
-import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
-
-import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final IDriverRepository _driverRepository;
   final BiddingRemoteDataSource _biddingDataSource;
+  final SecureSessionService _secureSessionService;
 
   StreamSubscription<List<dynamic>>? _offersSubscription;
   StreamSubscription<DriverMatchResult>? _driverFoundSubscription;
@@ -34,10 +34,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   BookingBloc({
     required IDriverRepository driverRepository,
     required BiddingRemoteDataSource biddingDataSource,
+    required SecureSessionService secureSessionService,
   }) : _driverRepository = driverRepository,
        _biddingDataSource = biddingDataSource,
+       _secureSessionService = secureSessionService,
        super(BookingInitial()) {
-
     on<LocateNearestDriverEvent>(_onLocateNearestDriver);
     on<StartDirectBookingEvent>(_onStartDirectBooking);
     on<StartOpenBookingEvent>(_onStartOpenBooking);
@@ -182,8 +183,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     if (_nearestDriver == null) return;
     emit(BookingSearching(isDirect: true, targetDriver: _nearestDriver));
 
-    final prefs = await SharedPreferences.getInstance();
-    final passengerId = prefs.getString('passenger_id') ?? '';
+    final passengerId = await _secureSessionService.readPassengerId() ?? '';
     if (passengerId.isEmpty) {
       emit(const BookingFailure('Passenger ID is missing.'));
       return;
@@ -213,7 +213,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     } catch (error) {
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
-
   }
 
   Future<void> _onStartOpenBooking(
@@ -222,8 +221,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     emit(const BookingSearching(isDirect: false));
 
-    final prefs = await SharedPreferences.getInstance();
-    final passengerId = prefs.getString('passenger_id') ?? '';
+    final passengerId = await _secureSessionService.readPassengerId() ?? '';
     if (passengerId.isEmpty) {
       emit(const BookingFailure('Passenger ID is missing.'));
       return;
@@ -261,10 +259,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _offersSubscription = Stream.periodic(const Duration(seconds: 3))
         .asyncMap((_) => _biddingDataSource.fetchOffers('current_session'))
         .listen((offers) {
-      add(UpdateOffersEvent(offers));
-    });
+          add(UpdateOffersEvent(offers));
+        });
   }
-
 
   void _onUpdateOffers(UpdateOffersEvent event, Emitter<BookingState> emit) {
     if (state is BookingSearching) {
@@ -294,8 +291,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     _cleanupSubscriptions();
 
-    final prefs = await SharedPreferences.getInstance();
-    final passengerId = prefs.getString('passenger_id') ?? '';
+    final passengerId = await _secureSessionService.readPassengerId() ?? '';
 
     RideHistoryModel? createdRide;
 
@@ -315,7 +311,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         });
         if (res['id'] != null) {
           final activeRideId = res['id']?.toString() ?? '';
-          await prefs.setString('active_ride_id', activeRideId);
+          await _secureSessionService.saveActiveRideId(activeRideId);
 
           createdRide = RideHistoryModel(
             id: activeRideId,
@@ -371,7 +367,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     await _biddingDataSource.cancelSession('current_session');
     emit(BookingCanceled());
   }
-
 
   void _cleanupSubscriptions() {
     unawaited(_offersSubscription?.cancel());

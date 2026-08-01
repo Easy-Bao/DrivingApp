@@ -1,12 +1,13 @@
 import { eq } from 'drizzle-orm';
-import {
-  RegisterPassengerInput,
-  LoginPassengerInput,
-} from '../../schemas/passenger/passenger.zod.ts';
-import { AuthUserResponse } from '../../schemas/common/common.zod.ts';
-import { OneTimePasswordStoreService } from '../common/otp_store.ts';
-import { JsonWebTokenService } from '../common/jwt.service.ts';
+
 import { passengerDb, passengersTable } from '../../../shared/drizzle.ts';
+import type { AuthUserResponse } from '../../schemas/common/common.zod.ts';
+import type {
+  LoginPassengerInput,
+  RegisterPassengerInput,
+} from '../../schemas/passenger/passenger.zod.ts';
+import { JsonWebTokenService } from '../common/jwt.service.ts';
+import { OneTimePasswordStoreService } from '../common/otp_store.ts';
 
 export interface PassengerSessionResult {
   token: string;
@@ -14,15 +15,27 @@ export interface PassengerSessionResult {
   needsVerification: boolean;
 }
 
+export class InvalidPassengerCredentialsError extends Error {
+  constructor() {
+    super('Invalid email or password');
+    this.name = 'InvalidPassengerCredentialsError';
+  }
+}
+
 export class PassengerAuthenticationService {
-  static async verifyPassengerAccountState(passengerEmailAddress: string): Promise<void> {
+  static async verifyPassengerAccountState(
+    passengerEmailAddress: string,
+  ): Promise<void> {
     const normalizedEmailAddress = passengerEmailAddress.toLowerCase().trim();
     await passengerDb.update(passengersTable)
       .set({ isVerified: true })
       .where(eq(passengersTable.email, normalizedEmailAddress));
   }
 
-  static async updatePassengerPassword(passengerEmailAddress: string, newPasswordHash: string): Promise<boolean> {
+  static async updatePassengerPassword(
+    passengerEmailAddress: string,
+    newPasswordHash: string,
+  ): Promise<boolean> {
     const normalizedEmailAddress = passengerEmailAddress.toLowerCase().trim();
     const [updated] = await passengerDb.update(passengersTable)
       .set({ passwordHash: newPasswordHash })
@@ -31,7 +44,9 @@ export class PassengerAuthenticationService {
     return !!updated;
   }
 
-  async registerPassengerAccount(passengerInput: RegisterPassengerInput): Promise<PassengerSessionResult> {
+  async registerPassengerAccount(
+    passengerInput: RegisterPassengerInput,
+  ): Promise<PassengerSessionResult> {
     const normalizedEmailAddress = passengerInput.email.toLowerCase().trim();
 
     const [existingAccount] = await passengerDb.select()
@@ -42,7 +57,10 @@ export class PassengerAuthenticationService {
       throw new Error('Passenger account with this email address already exists');
     }
 
-    const passwordHash = await Bun.password.hash(passengerInput.password);
+    const passwordHash = await Bun.password.hash(passengerInput.password, {
+      algorithm: 'bcrypt',
+      cost: 10,
+    });
     const passengerId = `usr_${Math.random().toString(36).substring(2, 11)}`;
 
     const [createdAccount] = await passengerDb.insert(passengersTable)
@@ -57,7 +75,10 @@ export class PassengerAuthenticationService {
       })
       .returning();
 
-    await OneTimePasswordStoreService.generateOneTimePasswordCode(normalizedEmailAddress, 'verification');
+    await OneTimePasswordStoreService.generateOneTimePasswordCode(
+      normalizedEmailAddress,
+      'verification',
+    );
 
     const authenticationToken = JsonWebTokenService.generateJsonWebToken(
       createdAccount.id,
@@ -81,7 +102,9 @@ export class PassengerAuthenticationService {
     };
   }
 
-  async authenticatePassengerCredential(loginInput: LoginPassengerInput): Promise<PassengerSessionResult> {
+  async authenticatePassengerCredential(
+    loginInput: LoginPassengerInput,
+  ): Promise<PassengerSessionResult> {
     const normalizedEmailAddress = loginInput.email.toLowerCase().trim();
 
     const [existingAccount] = await passengerDb.select()
@@ -89,12 +112,15 @@ export class PassengerAuthenticationService {
       .where(eq(passengersTable.email, normalizedEmailAddress));
 
     if (!existingAccount) {
-      throw new Error('Invalid email or password');
+      throw new InvalidPassengerCredentialsError();
     }
 
-    const isPasswordValid = await Bun.password.verify(loginInput.password, existingAccount.passwordHash);
+    const isPasswordValid = await Bun.password.verify(
+      loginInput.password,
+      existingAccount.passwordHash,
+    );
     if (!isPasswordValid) {
-      throw new Error('Invalid email or password');
+      throw new InvalidPassengerCredentialsError();
     }
 
     const authenticationToken = JsonWebTokenService.generateJsonWebToken(
