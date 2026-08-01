@@ -1,4 +1,4 @@
-name: driving app ci
+name: DriveApp Continuous Integration
 
 on:
   pull_request:
@@ -14,12 +14,12 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: driving-app-ci-${{ github.workflow }}-${{ github.ref }}
+  group: driveapp-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  conflict-and-security-guards:
-    name: conflict markers, secrets, and resource leaks
+  repository-integrity:
+    name: Repository Integrity
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -33,8 +33,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  flutter-quality:
-    name: flutter format, analyze, and tests
+  mobile-quality-gate:
+    name: Mobile Quality Gate
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -66,8 +66,8 @@ jobs:
         working-directory: apps/passenger_app
         run: flutter test
 
-  backend-quality:
-    name: backend type checks and tests
+  backend-quality-gate:
+    name: Backend Quality Gate
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -93,8 +93,8 @@ jobs:
       - name: Start backend test infrastructure
         run: docker compose up -d --wait --wait-timeout 90 postgres-db redis rabbitmq
 
-      - name: Initialize backend test databases
-        run: ./scripts/init_local_databases.sh
+      - name: Apply backend service schemas
+        run: ./scripts/database/apply_service_schemas.sh
 
       - name: Type check backend services
         run: ./scripts/ci/typecheck_backend_services.sh
@@ -115,7 +115,7 @@ jobs:
         run: docker compose down --volumes
 
   dependency-review:
-    name: dependency security review
+    name: Dependency Security Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:

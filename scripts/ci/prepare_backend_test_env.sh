@@ -5,7 +5,7 @@ set -Eeuo pipefail
 readonly repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly test_database_url="postgresql://driveapp:driveapp_ci_password@127.0.0.1:5432/passenger_db"
 readonly passenger_database_url="postgresql://driveapp:driveapp_ci_password@127.0.0.1:5432/passenger_db"
-readonly driver_database_url="postgresql://driveapp:driveapp_ci_password@127.0.0.1:5432/driver_db"
+readonly driver_database_url="${test_database_url}"
 readonly ci_jwt_secret_value="ci_jwt_secret_for_automated_test_runs_only"
 readonly service_directories=(
   "server/api-gateway"

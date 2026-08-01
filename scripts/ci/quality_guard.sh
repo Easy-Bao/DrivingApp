@@ -17,16 +17,21 @@ tracked_source_files() {
     ':!:*.ttf' \
     ':!:*.otf' \
     ':!:**/test/**' \
-    ':!:**/tests/**'
+    ':!:**/tests/**' \
+    | while IFS= read -r tracked_file; do
+      if [[ -f "${tracked_file}" ]]; then
+        echo "${tracked_file}"
+      fi
+    done
 }
 
 check_conflict_markers() {
   local conflict_matches
   conflict_matches="$(
-    tracked_source_files | xargs -r rg --line-number --fixed-strings \
-      -e '<<<<<<< ' \
-      -e '=======' \
-      -e '>>>>>>> ' || true
+    tracked_source_files | xargs -r rg --line-number \
+      -e '^<<<<<<< ' \
+      -e '^=======$' \
+      -e '^>>>>>>> ' || true
   )"
 
   if [[ -n "${conflict_matches}" ]]; then

@@ -57,7 +57,7 @@ infra-up:
 
 # Idempotently initialize databases and tables required by local authentication
 db-migrate: infra-up
-    @./scripts/init_local_databases.sh
+    @./scripts/database/apply_service_schemas.sh
 
 test-services:
     @echo "=== Auth Service ==="
