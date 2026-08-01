@@ -11,10 +11,7 @@ import {
   adminMutationResults,
   complaintCases,
 } from '../../src/db/schema.ts';
-import { AdminClients } from '../../src/features/clients/admin.clients.ts';
-import { AdminRepository } from '../../src/features/repositories/admin.repository.ts';
-import { AdminService } from '../../src/features/services/admin.service.ts';
-import { db, postgresClient } from '../../src/shared/drizzle.ts';
+import type { AdminClients } from '../../src/features/clients/admin.clients.ts';
 
 class SupportClients {
   restrictionCalls = 0;
@@ -34,19 +31,40 @@ class SupportClients {
   }
 }
 
-const databaseDescribe = process.env.RUN_ADMIN_SUPPORT_INTEGRATION === '1'
+async function loadIntegrationHarness() {
+  const [repositoryModule, serviceModule, databaseModule] = await Promise.all([
+    import('../../src/features/repositories/admin.repository.ts'),
+    import('../../src/features/services/admin.service.ts'),
+    import('../../src/shared/drizzle.ts'),
+  ]);
+  const repository = new repositoryModule.AdminRepository();
+  const clients = new SupportClients();
+  return {
+    repository,
+    clients,
+    service: new serviceModule.AdminService(
+      repository,
+      clients as unknown as AdminClients,
+    ),
+    db: databaseModule.db,
+    postgresClient: databaseModule.postgresClient,
+  };
+}
+
+const runDatabaseIntegration = process.env.RUN_ADMIN_SUPPORT_INTEGRATION === '1';
+const integration = runDatabaseIntegration ? await loadIntegrationHarness() : null;
+const databaseDescribe = runDatabaseIntegration
   ? describe
   : describe.skip;
 
-databaseDescribe('Admin complaint and restriction transactions', () => {
-  const repository = new AdminRepository();
-  const clients = new SupportClients();
-  const service = new AdminService(
-    repository,
-    clients as unknown as AdminClients,
-  );
+function integrationHarness() {
+  if (!integration) throw new Error('Admin support integration is not enabled.');
+  return integration;
+}
 
+databaseDescribe('Admin complaint and restriction transactions', () => {
   beforeEach(async () => {
+    const { clients, db } = integrationHarness();
     clients.restrictionCalls = 0;
     await db.delete(adminAuditEvents);
     await db.delete(adminMutationResults);
@@ -54,10 +72,11 @@ databaseDescribe('Admin complaint and restriction transactions', () => {
   });
 
   afterAll(async () => {
-    await postgresClient.end();
+    await integration?.postgresClient.end();
   });
 
   test('links a restriction and audits case closure', async () => {
+    const { clients, db, repository, service } = integrationHarness();
     const created = await service.createCase({
       payload: {
         target_type: 'driver',
@@ -120,6 +139,7 @@ databaseDescribe('Admin complaint and restriction transactions', () => {
   });
 
   test('paginates and filters case and audit records with complete totals', async () => {
+    const { service } = integrationHarness();
     const created = await service.createCase({
       payload: {
         target_type: 'passenger',

@@ -9,7 +9,8 @@
     "db:migrate": "bunx drizzle-kit migrate",
     "dev": "bun --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "test": "bun test --env-file .env.test"
+    "test": "bun test tests/unit",
+    "test:integration": "bun test tests/unit tests/integration --env-file .env.test"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.9.0",

@@ -7,7 +7,8 @@
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "owner:provision": "bun run src/scripts/provision_owner.ts",
-    "test": "bun test"
+    "test": "bun test tests/admin.test.ts tests/email.test.ts",
+    "test:integration": "bun test tests/health.test.ts tests/signup.test.ts tests/signin.test.ts tests/forgot_password.test.ts --env-file .env.test"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.3",

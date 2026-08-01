@@ -180,15 +180,29 @@ Partial or unverified:
 - API-gateway TypeScript check: passed.
 - CoreModels tests: 4 passed; analysis completed without errors or warnings and
   retained 20 upstream PascalCase filename-style notices.
-- Admin-service loaded tests: 30 passed and 1 skipped; one integration module
-  could not initialize because this clean worktree intentionally has no
-  `DATABASE_URL`.
-- Auth-service focused owner/Admin and email-privacy tests: 11 passed; four
-  other integration modules could not initialize because no disposable
-  Passenger/Driver database URLs are configured.
-- Passenger and Driver Flutter tests were not rerun after the replay. Their
+- Admin-service default tests: 30 passed and 4 database-backed cases skipped.
+- Auth-service focused owner/Admin and email-privacy tests: 11 passed; database
+  route suites are exposed separately and require disposable Passenger/Driver
+  database URLs.
+- Passenger and Driver Flutter analyses were rerun as recorded below. Their
   ignored `.env` files are absent, the sparse worktree excludes the upstream
   case-colliding SharedUi logo assets, and no Android target is running.
+
+### Latest pull-request readiness check
+
+- Database-free default suites now pass for Admin (30), Auth (11), Driver (12),
+  Passenger (6), Trip (10), Bidding (12), and Fare (2). Database-backed suites
+  remain explicit integration commands and still require disposable migrated
+  databases.
+- Driver and Passenger `flutter analyze --no-pub` do not pass on this branch:
+  Driver reports 367 issues and Passenger reports 569 issues. The first failures
+  include malformed or missing imports, unresolved session/config types, stale
+  test contracts, missing generated sources, and absent ignored `.env` assets.
+- The malformed Driver `AuthModule.dart` and much of the broken PascalCase
+  import state are already present in upstream `2b9f422`; they were not created
+  by the Admin commits. The Admin branch nevertheless cannot be described as a
+  clean combined mobile build until upstream or a focused mobile repair resolves
+  them.
 
 ### Earlier isolated prototype acceptance, before the upstream replay
 
@@ -252,8 +266,9 @@ Not completed:
 
 ## Immediate blockers and next sequence
 
-1. Run focused Flutter analyses/tests again, then build both Android apps once
-   an emulator or authorized phone is available.
+1. Repair or replace the broken upstream PascalCase Flutter import/generation
+   state, then rerun focused analyses/tests and build both Android apps once an
+   emulator or authorized phone is available.
 2. Resolve only the product decisions that block code: final matching contract,
    fare/commission rules, Shared/Premium rules, refund provenance, and support
    workflow.

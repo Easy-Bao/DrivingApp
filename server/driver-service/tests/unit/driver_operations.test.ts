@@ -24,6 +24,8 @@ import {
   internalServiceMiddleware,
 } from '../../src/shared/middleware/auth.ts';
 
+const databaseTest = process.env.DATABASE_URL ? test : test.skip;
+
 describe('driver service-credit rules', () => {
   test('validates Admin report date ranges', () => {
     const valid = {
@@ -209,7 +211,7 @@ describe('driver-service authentication boundaries', () => {
     })).status).toBe(200);
   });
 
-  test('reports missing Admin actor and idempotency headers accurately', async () => {
+  databaseTest('reports missing Admin actor and idempotency headers accurately', async () => {
     process.env.INTERNAL_SERVICE_TOKEN = 'internal-unit-test-token';
     const { app } = await import('../../src/index.ts');
     const body = JSON.stringify({ name: 'Driver License' });
