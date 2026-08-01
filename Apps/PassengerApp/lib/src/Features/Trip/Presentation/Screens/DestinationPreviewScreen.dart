@@ -1,4 +1,3 @@
-import 'package:passenger_app/src/Features/Trip/Presentation/Screens/DestinationPreviewScreen.dart' ;
 import 'package:passenger_app/src/Shared/Widgets/MapZoomControlsWidget.dart';
 import 'dart:async';
 

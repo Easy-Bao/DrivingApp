@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'RideStatusModel.dart';
+import '../Enums/RideStatus.dart';
 
 class RideUpdate extends Equatable {
   final RideStatus status;

@@ -113,7 +113,7 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
     if (driverId == null || driverId.isEmpty) return;
     try {
       final driverProfile = await Modular.get<BiddingRemoteDataSource>().getDriverProfile(driverId);
-      final phone = driverProfile?['phone'] as String?;
+      final phone = driverProfile['phone'] as String?;
       if (phone != null && phone.isNotEmpty) {
         final uri = Uri.parse('tel:$phone');
         if (await canLaunchUrl(uri)) {

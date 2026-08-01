@@ -5,10 +5,9 @@ import 'package:core_models/CoreModels.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:location_service/src/Api/Clients/LocationApiClient.dart';
-import 'package:location_service/src/Models/PlaceFailure.dart';
-import 'package:location_service/src/Repositories/MapNativeService.dart';
+import 'package:location_service/src/Errors/PlaceFailure.dart';
 
-class MapNativeService implements MapNativeService {
+class MapNativeService {
   final LocationApiClient _apiClient;
 
   MapNativeService({
@@ -16,10 +15,9 @@ class MapNativeService implements MapNativeService {
     Dio? dio,
     LocationApiClient? apiClient,
   }) : _apiClient = apiClient ??
-            LocationApiClientImpl(
+            LocationApiClient(
               dio ?? Dio(BaseOptions(baseUrl: placeServiceBaseUri.toString())),
             );
-
 
   static double _toRadians(double degree) => degree * math.pi / 180.0;
 
@@ -43,7 +41,6 @@ class MapNativeService implements MapNativeService {
     return earthRadiusKm * 2.0 * math.asin(math.sqrt(haversineA));
   }
 
-  @override
   Future<double> haversineDistance({
     required double lat1,
     required double lng1,
@@ -53,7 +50,6 @@ class MapNativeService implements MapNativeService {
     return calculateHaversine(lat1, lng1, lat2, lng2);
   }
 
-  @override
   Future<Either<PlaceFailure, List<PlaceModel>>> searchPlaces({
     required String query,
     double? proximityLat,
@@ -93,7 +89,6 @@ class MapNativeService implements MapNativeService {
     }
   }
 
-  @override
   Future<Either<PlaceFailure, PlaceModel>> reverseGeocode({
     required double lat,
     required double lng,
@@ -111,7 +106,6 @@ class MapNativeService implements MapNativeService {
     }
   }
 
-  @override
   Future<Either<PlaceFailure, RouteModel>> getRoute({
     required double originLat,
     required double originLng,
@@ -136,7 +130,6 @@ class MapNativeService implements MapNativeService {
     }
   }
 
-  @override
   Future<Either<PlaceFailure, List<PlaceModel>>> getNearbyPois({
     required double lat,
     required double lng,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/src/Themes/AppTheme.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class SocialLoginWidget extends StatelessWidget {
   final VoidCallback onGoogleTap;

@@ -1,6 +1,6 @@
+export 'src/Api/Clients/ILocationApiClient.dart';
 export 'src/Api/Clients/LocationApiClient.dart';
-export 'src/Models/PlaceFailure.dart';
-export 'src/Repositories/MapNativeService.dart';
+export 'src/Errors/PlaceFailure.dart';
 export 'src/Repositories/MapNativeService.dart';
 export 'src/Services/DeviceLocationService.dart';
 export 'src/Services/MapAnnotationService.dart';

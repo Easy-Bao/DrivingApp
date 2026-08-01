@@ -1,33 +1,11 @@
 import 'package:core_models/CoreModels.dart';
 import 'package:dio/dio.dart';
+import 'ILocationApiClient.dart';
 
-abstract class LocationApiClient {
-  Future<Map<String, dynamic>> searchPlaces({
-    required String query,
-    double? userLat,
-    double? userLng,
-  });
-
-  Future<PlaceModel> reverseGeocode({
-    required double lat,
-    required double lng,
-  });
-
-  Future<Map<String, dynamic>> getNearbyPois({
-    required double lat,
-    required double lng,
-    int page = 1,
-  });
-
-  Future<RouteModel> getRoute({
-    required Map<String, dynamic> body,
-  });
-}
-
-class LocationApiClientImpl implements LocationApiClient {
+class LocationApiClient implements ILocationApiClient {
   final Dio _dio;
 
-  LocationApiClientImpl(this._dio);
+  LocationApiClient(this._dio);
 
   @override
   Future<Map<String, dynamic>> searchPlaces({

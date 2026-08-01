@@ -60,7 +60,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     try {
       final statsData = await Modular.get<BiddingRemoteDataSource>()
           .fetchDriverStats(widget.driverId);
-      if (statsData != null && statsData['totalTrips'] != null) {
+      if (statsData['totalTrips'] != null) {
         if (mounted) {
           setState(() {
             _totalTripsCount = statsData['totalTrips'] as int;

@@ -94,7 +94,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     try {
       final stats = await _biddingDataSource.fetchDriverStats(closestDriver.id);
-      if (stats != null && stats['totalTrips'] != null) {
+      if (stats['totalTrips'] != null) {
         _totalTrips = stats['totalTrips'] as int;
       } else {
         _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
