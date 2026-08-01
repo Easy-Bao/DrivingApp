@@ -29,9 +29,9 @@ jobs:
         run: ./scripts/ci/quality_guard.sh
 
       - name: Scan for leaked secrets
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: docker://ghcr.io/gitleaks/gitleaks:latest
+        with:
+          args: detect --source=. --verbose --redact
 
   mobile-quality-gate:
     name: Mobile Quality Gate
