@@ -1,12 +1,23 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 
-part 'generated/reset_password_confirm_event.freezed.dart';
+sealed class ResetPasswordConfirmEvent extends Equatable {
+  const ResetPasswordConfirmEvent();
 
-@freezed
-sealed class ResetPasswordConfirmEvent with _$ResetPasswordConfirmEvent {
-  const factory ResetPasswordConfirmEvent.submitted({
-    required String email,
-    required String code,
-    required String newPassword,
-  }) = ResetPasswordConfirmSubmitted;
+  @override
+  List<Object?> get props => [];
+}
+
+class ResetPasswordConfirmSubmitted extends ResetPasswordConfirmEvent {
+  final String email;
+  final String code;
+  final String newPassword;
+
+  const ResetPasswordConfirmSubmitted({
+    required this.email,
+    required this.code,
+    required this.newPassword,
+  });
+
+  @override
+  List<Object?> get props => [email, code, newPassword];
 }

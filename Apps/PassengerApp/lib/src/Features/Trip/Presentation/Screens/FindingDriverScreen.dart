@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
+import 'package:location_service/LocationService.dart';
 import 'package:passenger_app/src/Features/Booking/Domain/Entities/BidSessionTrip.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/BookingBloc.dart';
 
@@ -19,7 +19,7 @@ import 'package:passenger_app/src/Features/Trip/Presentation/Widgets/FindingDriv
 import 'package:passenger_app/src/Features/Trip/Presentation/Widgets/FindingDriverSearchingPanelWidget.dart';
 import 'package:passenger_app/src/Shared/Widgets/DriverProfileDetailsSheet.dart';
 
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class FindingDriverScreen extends StatelessWidget {
   final String rideType;

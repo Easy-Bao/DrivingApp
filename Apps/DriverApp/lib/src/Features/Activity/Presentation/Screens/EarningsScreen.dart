@@ -1,11 +1,13 @@
-import 'package:core_models/core_models.dart';
-import 'package:driver_app/src/Features/Activity/Domain/Repositories/DriverActivityRepository.dart';
+import 'package:core_models/CoreModels.dart';
+import 'package:driver_app/src/Features/Activity/Domain/Repositories/IDriverActivityRepository.dart';
 import 'package:driver_app/src/Features/Activity/ActivityRoutes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/SharedUi.dart';
+
 
 class DriverEarningsScreen extends StatefulWidget {
   const DriverEarningsScreen({super.key});
@@ -44,10 +46,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
   Future<void> _loadData() async {
     final secureSession = Modular.get<SecureSessionService>();
     final driverId = await secureSession.readDriverId() ?? '';
-    final driverProfile = await Modular.get<DriverSessionService>().getProfile();
+    final prefs = await SharedPreferences.getInstance();
+    ///TODO: Remove hardcoded fallback
+    final rating = prefs.getString('rating') ?? '4.9';
     if (mounted) {
       setState(() {
-        _rating = driverProfile?.rating ?? '4.9';
+        _rating = rating;
       });
     }
 
@@ -60,7 +64,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
       return;
     }
 
-    final result = await Modular.get<DriverActivityRepository>().fetchTripHistory(
+    final result = await Modular.get<IDriverActivityRepository>().fetchTripHistory(
       driverId,
     );
     final now = DateTime.now();

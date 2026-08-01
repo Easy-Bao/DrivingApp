@@ -5,8 +5,8 @@ import 'package:passenger_app/src/Features/Auth/Domain/Usecases/VerifyOtpUseCase
 import 'package:passenger_app/src/Features/Auth/Presentation/Verify_otp/Bloc/VerifyOtpEvent.dart';
 import 'package:passenger_app/src/Features/Auth/Presentation/Verify_otp/Bloc/VerifyOtpState.dart';
 
-export 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_event.dart';
-export 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_state.dart';
+export 'package:passenger_app/src/Features/Auth/Presentation/Verify_otp/Bloc/VerifyOtpEvent.dart';
+export 'package:passenger_app/src/Features/Auth/Presentation/Verify_otp/Bloc/VerifyOtpState.dart';
 
 class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
   final VerifyOtpUseCase _verifyOtpUseCase;
@@ -14,7 +14,7 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
   int _seconds = 60;
 
   VerifyOtpBloc(this._verifyOtpUseCase)
-      : super(const VerifyOtpState.initial()) {
+      : super(const VerifyOtpInitial()) {
     on<VerifyOtpTimerStarted>(_onVerifyOtpTimerStarted);
     on<VerifyOtpTimerTicked>(_onVerifyOtpTimerTicked);
     on<VerifyOtpSubmitted>(_onVerifyOtpSubmitted);
@@ -26,14 +26,14 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
   ) {
     _timer?.cancel();
     _seconds = 60;
-    emit(const VerifyOtpState.timerTicking(60));
+    emit(const VerifyOtpTimerTicking(60));
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _seconds--;
       if (_seconds <= 0) {
         timer.cancel();
-        add(const VerifyOtpEvent.timerTicked(secondsRemaining: 0));
+        add(const VerifyOtpTimerTicked(secondsRemaining: 0));
       } else {
-        add(VerifyOtpEvent.timerTicked(secondsRemaining: _seconds));
+        add(VerifyOtpTimerTicked(secondsRemaining: _seconds));
       }
     });
   }
@@ -43,9 +43,9 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
     Emitter<VerifyOtpState> emit,
   ) {
     if (event.secondsRemaining <= 0) {
-      emit(const VerifyOtpState.timerExpired());
+      emit(const VerifyOtpTimerExpired());
     } else {
-      emit(VerifyOtpState.timerTicking(event.secondsRemaining));
+      emit(VerifyOtpTimerTicking(event.secondsRemaining));
     }
   }
 
@@ -57,14 +57,14 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
     final normalizedEmail = event.email.trim().toLowerCase();
     if (normalizedCode.length < 6) {
       emit(
-        const VerifyOtpState.failure(
+        const VerifyOtpFailure(
           'Please enter a 6-digit verification code.',
         ),
       );
       return;
     }
 
-    emit(const VerifyOtpState.loading());
+    emit(const VerifyOtpLoading());
 
     final result = await _verifyOtpUseCase.execute(
       email: normalizedEmail,
@@ -73,8 +73,8 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
     );
 
     result.fold(
-      (failure) => emit(VerifyOtpState.failure(failure.message)),
-      (_) => emit(const VerifyOtpState.success()),
+      (failure) => emit(VerifyOtpFailure(failure.message)),
+      (_) => emit(const VerifyOtpSuccess()),
     );
   }
 

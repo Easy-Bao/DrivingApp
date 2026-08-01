@@ -2,6 +2,8 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   errors:
+    file_names: ignore
+    package_names: ignore
     missing_required_param: error
     missing_return: error
     dead_code: warning
@@ -15,6 +17,8 @@ analyzer:
 
 linter:
   rules:
+    file_names: false
+    package_names: false
     # Style
     slash_for_doc_comments: false
     prefer_single_quotes: true
@@ -55,6 +59,8 @@ linter:
 
 bloc:
   rules:
+    file_names: false
+    package_names: false
     # Strict Architecture (recommended rules)
     - avoid_flutter_imports
     - avoid_public_fields

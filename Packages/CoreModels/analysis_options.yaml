@@ -17,9 +17,14 @@ include: package:lints/recommended.yaml
 
 linter:
   rules:
+    file_names: false
+    package_names: false
     slash_for_doc_comments: false
 
 analyzer:
+  errors:
+    file_names: ignore
+    package_names: ignore
   exclude:
     - "lib/src/models/generated/**"
 

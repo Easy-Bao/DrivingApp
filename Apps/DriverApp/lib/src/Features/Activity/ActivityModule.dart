@@ -2,7 +2,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Features/Activity/ActivityRoutes.dart';
 import 'package:driver_app/src/Features/Activity/Presentation/Screens/DriverTripHistoryScreen.dart';
 import 'package:driver_app/src/Features/Activity/Presentation/Screens/DriverTripDetailScreen.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class ActivityModule {
   ActivityModule._();

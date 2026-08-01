@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/BookingState.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class FindingDriverNearestPanelWidget extends StatelessWidget {
   final NearestDriverFound state;

@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 
 class RouteOptimizationService {
   static double _calculateHaversine(

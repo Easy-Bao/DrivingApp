@@ -1,5 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 import 'package:driver_app/src/Features/Trip/Data/DataSources/TripRemoteDataSource.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/RideFlow/RideFlowCubit.dart';
@@ -9,7 +9,7 @@ import 'package:mocktail/mocktail.dart';
 
 
 
-class MockRideRepo extends Mock implements RideRepository {}
+class MockRideRepo extends Mock implements IRideRepository {}
 
 class MockTripRemoteDataSource extends Mock implements TripRemoteDataSource {}
 

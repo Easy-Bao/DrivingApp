@@ -2,7 +2,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Features/Profile/ProfileRoutes.dart';
 import 'package:driver_app/src/Features/Profile/Presentation/Screens/DriverAccount.dart';
 import 'package:driver_app/src/Features/Activity/Presentation/Screens/EarningsScreen.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class ProfileModule {
   ProfileModule._();

@@ -1,13 +1,14 @@
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
+import 'package:driver_app/src/Features/Home/Domain/Repositories/IDashboardRepository.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardState.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
-  final DashboardRepository _repository;
+  final IDashboardRepository _repository;
 
-  DashboardCubit({required DashboardRepository repository})
+  DashboardCubit({required IDashboardRepository repository})
     : _repository = repository,
       super(const DashboardState());
 

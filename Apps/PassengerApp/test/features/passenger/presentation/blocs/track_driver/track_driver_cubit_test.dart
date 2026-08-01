@@ -1,5 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -7,7 +7,7 @@ import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/TrackDriver/Tr
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/TrackDriver/TrackDriverState.dart';
 import 'package:passenger_app/src/Core/Services/Securesessionservice.dart';
 
-class MockTrackRepo extends Mock implements TrackRepository {}
+class MockTrackRepo extends Mock implements ITrackRepository {}
 
 class MockSecureSessionService extends Mock implements SecureSessionService {}
 

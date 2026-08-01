@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/Features/Auth/AuthRoutes.dart';
 import 'package:passenger_app/src/Features/Auth/Presentation/ForgotPassword/Bloc/ForgotPasswordBloc.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -80,7 +79,7 @@ class _ForgotPasswordScreenContentState
     }
 
     BlocProvider.of<ForgotPasswordBloc>(context).add(
-      ForgotPasswordEvent.submitted(email: email),
+      ForgotPasswordSubmitted(email: email),
     );
   }
 
@@ -102,33 +101,20 @@ class _ForgotPasswordScreenContentState
       body: SafeArea(
         child: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
           listener: (context, state) {
-            state.maybeWhen(
-              success: () {
-                unawaited(
-                  context.pushNamed(
-                    AuthRoutes.verifyOtp,
-                    extra: {
-                      'email': _emailController.text.trim(),
-                      'isForgotPassword': true,
-                    },
-                  ),
-                );
-              },
-              failure: (message) {
-                CustomToast.show(context, message);
-              },
-              orElse: () {},
-            );
+            if (state is ForgotPasswordSuccess) {
+              CustomToast.show(
+                context,
+                'Reset link sent to ${_emailController.text.trim()}',
+              );
+              context.pop();
+            } else if (state is ForgotPasswordFailure) {
+              CustomToast.show(context, state.errorMessage);
+            }
           },
           builder: (context, state) {
-            final isLoading = state.maybeWhen(
-              loading: () => true,
-              orElse: () => false,
-            );
-            final serverErrorMessage = state.maybeWhen(
-              failure: (message) => _isServerErrorCleared ? null : message,
-              orElse: () => null,
-            );
+            final isLoading = state is ForgotPasswordLoading;
+            final serverErrorMessage =
+                state is ForgotPasswordFailure && !_isServerErrorCleared ? state.errorMessage : null;
 
             final effectiveEmailError = _emailError ?? serverErrorMessage;
 

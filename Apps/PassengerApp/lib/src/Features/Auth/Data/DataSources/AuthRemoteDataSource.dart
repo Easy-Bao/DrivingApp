@@ -1,4 +1,4 @@
- as ps;
+import 'package:dio/dio.dart';
 
 abstract class AuthRemoteDataSource {
   Future<Map<String, dynamic>> loginPassenger({
@@ -30,20 +30,20 @@ abstract class AuthRemoteDataSource {
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final ps.AuthRemoteDataSource _authRemoteDataSource;
+  final Dio _dio;
 
-  AuthRemoteDataSourceImpl(this._authRemoteDataSource);
+  AuthRemoteDataSourceImpl(this._dio);
 
   @override
   Future<Map<String, dynamic>> loginPassenger({
     required String email,
     required String password,
   }) async {
-    final result = await _authRemoteDataSource.loginPassenger(
-      email: email,
-      password: password,
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/passenger/signin',
+      data: {'email': email, 'password': password},
     );
-    return result;
+    return response.data ?? {};
   }
 
   @override
@@ -53,28 +53,29 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String phone,
     required String password,
   }) async {
-    final result = await _authRemoteDataSource.registerPassenger(
-      name: name,
-      email: email,
-      phone: phone,
-      password: password,
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/passenger/signup',
+      data: {'name': name, 'email': email, 'phone': phone, 'password': password},
     );
-    return result;
+    return response.data ?? {};
   }
 
   @override
-  Future<bool> verifyOtp({
-    required String email,
-    required String code,
-  }) async {
-    return _authRemoteDataSource.verifyOtp(email: email, code: code);
+  Future<bool> verifyOtp({required String email, required String code}) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/passenger/verify-otp',
+      data: {'email': email, 'code': code},
+    );
+    return response.statusCode == 200;
   }
 
   @override
-  Future<bool> resetPassword({
-    required String email,
-  }) async {
-    return _authRemoteDataSource.forgotPassword(email: email);
+  Future<bool> resetPassword({required String email}) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/passenger/forgot-password',
+      data: {'email': email},
+    );
+    return response.statusCode == 200;
   }
 
   @override
@@ -83,10 +84,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String code,
     required String newPassword,
   }) async {
-    return _authRemoteDataSource.confirmResetPassword(
-      email: email,
-      code: code,
-      newPassword: newPassword,
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/passenger/reset-password',
+      data: {'email': email, 'code': code, 'new_password': newPassword},
     );
+    return response.statusCode == 200;
   }
 }

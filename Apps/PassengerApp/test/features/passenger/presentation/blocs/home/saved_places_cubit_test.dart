@@ -7,7 +7,7 @@ import 'package:passenger_app/src/Features/SavedPlaces/Domain/Repositories/Saved
 import 'package:passenger_app/src/Features/SavedPlaces/Presentation/Bloc/SavedPlacesCubit.dart';
 import 'package:passenger_app/src/Features/SavedPlaces/Presentation/Bloc/SavedPlacesState.dart';
 
-class MockSavedPlacesRepository extends Mock implements SavedPlacesRepository {}
+class MockSavedPlacesRepository extends Mock implements ISavedPlacesRepository {}
 
 void main() {
   late MockSavedPlacesRepository mockRepository;

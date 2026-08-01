@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'Generated/RideHistoryModel.g.dart';
-
-@JsonSerializable()
 class RideHistoryModel extends Equatable {
   final String id;
   final String pickup;
@@ -37,10 +33,43 @@ class RideHistoryModel extends Equatable {
     required this.vehicleType,
   });
 
-  factory RideHistoryModel.fromJson(Map<String, dynamic> json) =>
-      _$RideHistoryModelFromJson(json);
+  factory RideHistoryModel.fromJson(Map<String, dynamic> json) {
+    return RideHistoryModel(
+      id: json['id'] as String? ?? '',
+      pickup: json['pickup'] as String? ?? json['pickup_name'] as String? ?? '',
+      destination: json['destination'] as String? ?? json['dropoff_name'] as String? ?? '',
+      pickupLat: (json['pickupLat'] as num? ?? json['pickup_latitude'] as num? ?? 0.0).toDouble(),
+      pickupLng: (json['pickupLng'] as num? ?? json['pickup_longitude'] as num? ?? 0.0).toDouble(),
+      destLat: (json['destLat'] as num? ?? json['dropoff_latitude'] as num? ?? 0.0).toDouble(),
+      destLng: (json['destLng'] as num? ?? json['dropoff_longitude'] as num? ?? 0.0).toDouble(),
+      date: json['date'] as String? ?? json['created_at'] as String? ?? '',
+      price: json['price'] as String? ?? json['fare']?.toString() ?? '',
+      status: json['status'] as String? ?? '',
+      driverId: json['driverId'] as String? ?? json['driver_id'] as String? ?? '',
+      driverName: json['driverName'] as String? ?? json['driver_name'] as String? ?? '',
+      vehiclePlate: json['vehiclePlate'] as String? ?? json['plate_number'] as String? ?? '',
+      vehicleType: json['vehicleType'] as String? ?? json['vehicle_type'] as String? ?? '',
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$RideHistoryModelToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'pickup': pickup,
+      'destination': destination,
+      'pickupLat': pickupLat,
+      'pickupLng': pickupLng,
+      'destLat': destLat,
+      'destLng': destLng,
+      'date': date,
+      'price': price,
+      'status': status,
+      'driverId': driverId,
+      'driverName': driverName,
+      'vehiclePlate': vehiclePlate,
+      'vehicleType': vehicleType,
+    };
+  }
 
   @override
   List<Object?> get props => [
@@ -60,4 +89,3 @@ class RideHistoryModel extends Equatable {
         vehicleType,
       ];
 }
-

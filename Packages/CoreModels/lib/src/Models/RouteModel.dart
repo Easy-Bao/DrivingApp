@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'Generated/RouteModel.g.dart';
-
-@JsonSerializable()
 class RouteModel extends Equatable {
   final List<List<double>> polylinePoints;
   final double distanceKm;
@@ -17,10 +13,29 @@ class RouteModel extends Equatable {
     this.summary = '',
   });
 
-  factory RouteModel.fromJson(Map<String, dynamic> json) =>
-      _$RouteModelFromJson(json);
+  factory RouteModel.fromJson(Map<String, dynamic> json) {
+    final rawPoints = json['polylinePoints'] as List<dynamic>? ?? [];
+    final points = rawPoints.map((item) {
+      final list = item as List<dynamic>;
+      return [ (list[0] as num).toDouble(), (list[1] as num).toDouble() ];
+    }).toList();
 
-  Map<String, dynamic> toJson() => _$RouteModelToJson(this);
+    return RouteModel(
+      polylinePoints: points,
+      distanceKm: (json['distanceKm'] as num? ?? json['distance_km'] as num? ?? 0.0).toDouble(),
+      durationSeconds: json['durationSeconds'] as int? ?? json['duration_seconds'] as int? ?? 0,
+      summary: json['summary'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'polylinePoints': polylinePoints,
+      'distanceKm': distanceKm,
+      'durationSeconds': durationSeconds,
+      'summary': summary,
+    };
+  }
 
   @override
   List<Object?> get props => [
@@ -30,7 +45,6 @@ class RouteModel extends Equatable {
         summary,
       ];
 }
-
 
 extension RouteModelExtension on RouteModel {
   Duration get estimatedTime => Duration(seconds: durationSeconds);

@@ -1,7 +1,7 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/Features/Chat/ChatRoutes.dart';
 import 'package:passenger_app/src/Features/Chat/Presentation/Screens/DriverChatScreen.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class ChatModule {
   ChatModule._();

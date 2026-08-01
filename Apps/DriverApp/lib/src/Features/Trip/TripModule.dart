@@ -8,7 +8,7 @@ import 'package:driver_app/src/Features/Trip/Presentation/Screens/InTransitScree
 import 'package:driver_app/src/Features/Trip/Presentation/Screens/RatePassengerScreen.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Screens/RideAlertScreen.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Screens/WaitingPassengerScreen.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class TripModule {
   TripModule._();

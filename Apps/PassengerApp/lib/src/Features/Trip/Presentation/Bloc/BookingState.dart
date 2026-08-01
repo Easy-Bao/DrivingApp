@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 
 
 abstract class BookingState {

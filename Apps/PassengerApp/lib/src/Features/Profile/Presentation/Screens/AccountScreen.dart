@@ -8,7 +8,9 @@ import 'package:passenger_app/src/Features/Profile/Presentation/Bloc/ProfileCubi
 import 'package:passenger_app/src/Features/Profile/ProfileRoutes.dart';
 import 'package:passenger_app/src/Features/Settings/SettingsRoutes.dart';
 
-import 'package:shared_ui/shared_ui.dart';
+import 'package:passenger_app/src/Core/Services/SecureSessionService.dart';
+import 'package:shared_ui/SharedUi.dart';
+
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -266,7 +268,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    await Modular.get<PassengerSessionService>().clearSession();
+    await Modular.get<SecureSessionService>().clearSession();
     if (context.mounted) {
       context.go('/');
     }

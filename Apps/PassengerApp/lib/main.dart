@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
-import 'package:passenger_app/app_module.dart';
-import 'package:passenger_app/app_widget.dart';
+import 'package:location_service/LocationService.dart';
+import 'package:passenger_app/AppModule.dart';
+import 'package:passenger_app/AppWidget.dart';
 
+import 'package:passenger_app/src/Core/Constants/EnvConfig.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,7 +16,7 @@ void main() async {
 
   await dotenv.load(fileName: '.env');
 
-  final nativeService = MapNativeServiceImpl(
+  final nativeService = MapNativeService(
     placeServiceBaseUri: EnvConfig.placeServiceUri,
   );
   LocationService.initialize(nativeService);

@@ -3,7 +3,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Features/Home/HomeRoutes.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardCubit.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Screens/DriverDashboard.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class HomeModule {
   HomeModule._();

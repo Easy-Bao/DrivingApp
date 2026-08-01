@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/Features/Settings/Domain/Repositories/SettingsRepository.dart';
+import 'package:passenger_app/src/Features/Settings/Domain/Repositories/ISettingsRepository.dart';
 import 'package:passenger_app/src/Features/Settings/Presentation/Bloc/SettingsState.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
-  final SettingsRepository settingsRepository;
+  final ISettingsRepository settingsRepository;
 
   SettingsCubit({required this.settingsRepository})
     : super(const SettingsInitialState());

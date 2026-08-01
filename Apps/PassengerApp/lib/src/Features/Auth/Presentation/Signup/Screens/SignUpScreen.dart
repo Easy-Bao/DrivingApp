@@ -1,3 +1,4 @@
+import 'package:passenger_app/src/Features/Auth/Presentation/Widgets/SocialLoginWidget.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,7 +8,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/Features/Auth/AuthRoutes.dart';
 import 'package:passenger_app/src/Features/Auth/Presentation/Signup/Bloc/SignUpBloc.dart';
 import 'package:passenger_app/src/Features/Home/HomeRoutes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
@@ -74,6 +75,19 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
     });
   }
 
+  ///TODO: Should be on Core or Shared lib
+  bool _validatePhPhoneNumber(String phone) {
+    final cleaned = phone.replaceAll(RegExp(r'\D'), '');
+    return cleaned.length >= 10;
+  }
+  ///TODO: Should be on Core
+  String _normalizePhPhoneNumber(String phone) {
+    final cleaned = phone.replaceAll(RegExp(r'\D'), '');
+    if (cleaned.startsWith('63')) return '+$cleaned';
+    if (cleaned.startsWith('0')) return '+63${cleaned.substring(1)}';
+    return '+63$cleaned';
+  }
+
   void _submitRegistration(BuildContext context) {
     FocusScope.of(context).unfocus();
     final name = _passengerNameController.text.trim();
@@ -85,7 +99,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       _nameError = name.isEmpty ? 'Please enter your name' : null;
       if (rawPhone.isEmpty) {
         _phoneError = 'Please enter your phone number';
-      } else if (!validatePhPhoneNumber(rawPhone)) {
+      } else if (!_validatePhPhoneNumber(rawPhone)) {
         _phoneError = 'Enter a valid number';
       } else {
         _phoneError = null;
@@ -109,9 +123,9 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       return;
     }
 
-    final formattedPhone = normalizePhPhoneNumber(rawPhone);
+    final formattedPhone = _normalizePhPhoneNumber(rawPhone);
     BlocProvider.of<SignUpBloc>(context).add(
-      SignUpEvent.submitted(
+      SignUpSubmitted(
         name: name,
         email: email,
         phone: formattedPhone,
@@ -145,36 +159,26 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       body: SafeArea(
         child: BlocConsumer<SignUpBloc, SignUpState>(
           listener: (context, state) {
-            state.maybeWhen(
-              success: (_) {
-                context.goNamed(HomeRoutes.home);
-              },
-              needsVerification: (email) {
-                unawaited(
-                  context.pushNamed(
-                    AuthRoutes.verifyOtp,
-                    extra: {
-                      'email': email,
-                      'password': _passengerPasswordController.text,
-                    },
-                  ),
-                );
-              },
-              failure: (message) {
-                CustomToast.show(context, message);
-              },
-              orElse: () {},
-            );
+            if (state is SignUpSuccess) {
+              context.goNamed(HomeRoutes.home);
+            } else if (state is SignUpNeedsVerification) {
+              unawaited(
+                context.pushNamed(
+                  AuthRoutes.verifyOtp,
+                  extra: {
+                    'email': state.email,
+                    'password': _passengerPasswordController.text,
+                  },
+                ),
+              );
+            } else if (state is SignUpFailure) {
+              CustomToast.show(context, state.errorMessage);
+            }
           },
           builder: (context, state) {
-            final isLoading = state.maybeWhen(
-              loading: () => true,
-              orElse: () => false,
-            );
-            final errorMessage = state.maybeWhen(
-              failure: (message) => message,
-              orElse: () => null,
-            );
+            final isLoading = state is SignUpLoading;
+            final errorMessage =
+                state is SignUpFailure ? state.errorMessage : null;
 
             return Center(
               child: ConstrainedBox(

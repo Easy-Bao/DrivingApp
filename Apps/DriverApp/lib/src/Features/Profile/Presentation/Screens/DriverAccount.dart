@@ -1,9 +1,15 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+
 import 'package:driver_app/src/Features/Auth/AuthRoutes.dart';
 import 'package:driver_app/src/Features/Activity/ActivityRoutes.dart';
 import 'package:driver_app/src/Features/Profile/ProfileRoutes.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
-import 'package:shared_ui/shared_ui.dart';
-
+import 'package:driver_app/src/Features/Trip/Data/DataSources/PassengerRemoteDataSource.dart';
+import 'package:driver_app/src/Features/Trip/Data/DataSources/TripRemoteDataSource.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class DriverAccountScreen extends StatefulWidget {
   const DriverAccountScreen({super.key});
@@ -29,45 +35,46 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
     _fetchUpdatedData();
   }
 
+  ///TODO: Remove hardcoded fallback
   Future<void> _loadCachedProfile() async {
-    final sessionService = Modular.get<DriverSessionService>();
-    final profile = await sessionService.getProfile();
-    if (mounted && profile != null) {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
       setState(() {
-        _name = profile.name;
-        _vehicleType = profile.vehicleType;
-        _plateNumber = profile.plateNumber;
-        _rating = profile.rating;
+        _name = prefs.getString('driver_name') ?? '';
+        _vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
+        _plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
+        _rating = prefs.getString('rating') ?? '5.0';
       });
     }
   }
 
   Future<void> _fetchUpdatedData() async {
-    final sessionService = Modular.get<DriverSessionService>();
-    final currentProfile = await sessionService.getProfile();
-    final driverId = currentProfile?.id ?? '';
+    final driverId =
+        await Modular.get<SecureSessionService>().readDriverId() ?? '';
     if (driverId.isEmpty) return;
 
     final profileData =
-        await Modular.get<AuthRemoteDataSource>().fetchProfile(driverId);
+        await Modular.get<PassengerRemoteDataSource>().fetchPassengerProfile(driverId);
     if (profileData.isNotEmpty && mounted) {
-      final updatedProfile = DriverProfile(
-        id: driverId,
-        name: profileData['name'] as String? ?? _name,
-        email: currentProfile?.email ?? '',
-        vehicleType: profileData['vehicleType'] as String? ?? _vehicleType,
-        plateNumber: profileData['plateNumber'] as String? ?? _plateNumber,
-        rating: (profileData['rating'] ?? 5.0).toString(),
-      );
+      final prefs = await SharedPreferences.getInstance();
+      final name = profileData['name'] as String? ?? _name;
+      final vehicleType = profileData['vehicleType'] as String? ?? _vehicleType;
+      final plateNumber = profileData['plateNumber'] as String? ?? _plateNumber;
+      final rating = (profileData['rating'] ?? 5.0).toString();
 
-      setState(() {
-        _name = updatedProfile.name;
-        _vehicleType = updatedProfile.vehicleType;
-        _plateNumber = updatedProfile.plateNumber;
-        _rating = updatedProfile.rating;
-      });
+      await prefs.setString('driver_name', name);
+      await prefs.setString('vehicle_type', vehicleType);
+      await prefs.setString('plate_number', plateNumber);
+      await prefs.setString('rating', rating);
 
-      await sessionService.saveProfile(updatedProfile);
+      if (mounted) {
+        setState(() {
+          _name = name;
+          _vehicleType = vehicleType;
+          _plateNumber = plateNumber;
+          _rating = rating;
+        });
+      }
     }
 
     final stats = await Modular.get<TripRemoteDataSource>().fetchStats(driverId);

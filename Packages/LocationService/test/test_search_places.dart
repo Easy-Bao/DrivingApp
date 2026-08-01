@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:location_service/location_service.dart';
+import 'package:location_service/LocationService.dart';
 
 import 'mock_location_api_client.dart';
 
 void main() {
   group('Search Places Tests', () {
     test('searchPlaces returns matching places for query', () async {
-      final mapService = MapNativeServiceImpl(
+      final mapService = MapNativeService(
         placeServiceBaseUri: Uri(scheme: 'http', host: '127.0.0.1', port: 8089),
         apiClient: MockLocationApiClient(),
       );

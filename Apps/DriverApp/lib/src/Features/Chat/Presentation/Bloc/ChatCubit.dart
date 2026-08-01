@@ -1,21 +1,20 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:chat_service/chat_service.dart';
-import 'package:core_models/core_models.dart';
+import 'package:chat_service/ChatService.dart';
 import 'package:dio/dio.dart';
+import 'package:driver_app/src/Core/Constants/EnvConfig.dart';
 import 'package:driver_app/src/Features/Chat/Presentation/Bloc/ChatState.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 
-export 'package:driver_app/src/features/chat/presentation/bloc/chat_state.dart';
+export 'package:driver_app/src/Features/Chat/Presentation/Bloc/ChatState.dart';
 
 class ChatCubit extends Cubit<ChatState> {
-  final ChatService _chatService;
-  StreamSubscription<void>? _chatSubscription;
+  final IChatRepository _chatRepository;
+  StreamSubscription? _chatSubscription;
 
-  ChatCubit({required ChatService chatService})
-      : _chatService = chatService,
+  ChatCubit({required IChatRepository chatRepository})
+      : _chatRepository = chatRepository,
         super(const ChatState());
 
   Future<void> connectToChatRoom({
@@ -25,40 +24,67 @@ class ChatCubit extends Cubit<ChatState> {
     emit(state.copyWith(isConnecting: true, errorMessage: null));
 
     try {
-      await _chatService.connectToChatRoom(roomId: roomId, chatUri: wsUri);
-      unawaited(_chatSubscription?.cancel());
-      _chatSubscription = _chatService.chatUpdatesStream.listen(
-        (_) {
-          emit(
-            state.copyWith(
-              messages: _chatService.chatHistoryMessages,
-              isRoomLocked: _chatService.isRoomLocked,
-              lockReasonMessage: _chatService.lockReasonMessage,
-            ),
-          );
-        },
-        onError: (error) {
-          emit(
-            state.copyWith(
-              errorMessage: ErrorHandler.getErrorMessage(error),
-            ),
-          );
-        },
+      final connResult = await _chatRepository.establishChatConnection(
+        roomId: roomId,
+        chatUri: wsUri,
       );
 
-      emit(
-        state.copyWith(
-          isConnecting: false,
-          isConnected: true,
-          messages: _chatService.chatHistoryMessages,
-        ),
+      connResult.fold(
+        (failure) {
+          emit(
+            state.copyWith(
+              isConnecting: false,
+              isConnected: false,
+              errorMessage: failure.message,
+            ),
+          );
+        },
+        (_) {
+          unawaited(_chatSubscription?.cancel());
+          _chatSubscription = _chatRepository.chatEventsStream.listen(
+            (eitherEvent) {
+              eitherEvent.fold(
+                (failure) => emit(state.copyWith(errorMessage: failure.message)),
+                (chatEvent) {
+                  if (chatEvent is ChatHistoryReceived) {
+                    emit(state.copyWith(messages: chatEvent.messages));
+                  } else if (chatEvent is ChatMessageReceived) {
+                    final updated = List<ChatMessage>.from(state.messages)..add(chatEvent.message);
+                    emit(state.copyWith(messages: updated));
+                  } else if (chatEvent is ChatRoomLocked) {
+                    emit(
+                      state.copyWith(
+                        isRoomLocked: true,
+                        lockReasonMessage: chatEvent.reason,
+                      ),
+                    );
+                  }
+                },
+              );
+            },
+            onError: (error) {
+              emit(
+                state.copyWith(
+                  errorMessage: 'Chat stream error: $error',
+                ),
+              );
+            },
+          );
+
+          emit(
+            state.copyWith(
+              isConnecting: false,
+              isConnected: true,
+            ),
+          );
+        },
       );
     } catch (error) {
       emit(
         state.copyWith(
           isConnecting: false,
           isConnected: false,
-          errorMessage: ErrorHandler.getErrorMessage(error),
+          errorMessage: 'Failed to connect: $error',
         ),
       );
     }
@@ -68,8 +94,8 @@ class ChatCubit extends Cubit<ChatState> {
     if (state.isRoomLocked) return;
     if (text.trim().isEmpty) return;
 
-    if (_chatService.isConnectionActive) {
-      _chatService.sendMessageToRoom(text);
+    if (_chatRepository.isSessionConnected) {
+      unawaited(_chatRepository.sendChatMessage(text));
     }
   }
 
@@ -84,7 +110,7 @@ class ChatCubit extends Cubit<ChatState> {
       );
 
       if (response.statusCode == 200) {
-        await _chatService.connectToChatRoom(roomId: roomId, chatUri: wsUri);
+        await connectToChatRoom(roomId: roomId, wsUri: wsUri);
       }
     } catch (error, stackTrace) {
       dev.log('Error resolving chat room in cubit: $error\n$stackTrace');
@@ -94,7 +120,7 @@ class ChatCubit extends Cubit<ChatState> {
   @override
   Future<void> close() {
     unawaited(_chatSubscription?.cancel());
-    unawaited(_chatService.disconnectChatRoom());
+    unawaited(_chatRepository.terminateChatConnection());
     return super.close();
   }
 }

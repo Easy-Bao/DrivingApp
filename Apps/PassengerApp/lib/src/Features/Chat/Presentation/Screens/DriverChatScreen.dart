@@ -1,14 +1,16 @@
 import 'dart:async';
 
-import 'package:chat_service/chat_service.dart';
+import 'package:chat_service/ChatService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/Core/Network/Apiendpoints.dart';
+import 'package:dio/dio.dart';
+import 'package:passenger_app/src/Core/Constants/ApiEndpoints.dart';
+import 'package:passenger_app/src/Features/Booking/Data/DataSources/BiddingRemoteDataSource.dart';
 import 'package:passenger_app/src/Features/Chat/Presentation/Bloc/ChatCubit.dart';
 
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class DriverChatScreen extends StatefulWidget {
   final String? roomId;
@@ -72,7 +74,6 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
       roomId: chatRoomId,
       userId: currentUserId,
-      token: widget.token,
     );
     await _chatCubit.resolveChatRoom(chatRoomId, currentUserId, wsUri);
   }
@@ -109,12 +110,15 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     }
 
     _chatCubit = ChatCubit(
-      chatService: ChatService(currentUserId: currentUserId),
+      chatRepository: ChatRepository(
+        remoteDataSource: WebSocketChatRemoteDataSource(),
+        currentUserId: currentUserId,
+        clientDio: Dio(),
+      ),
     );
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
       roomId: currentRoomId,
       userId: currentUserId,
-      token: widget.token,
     );
     unawaited(
       _chatCubit.connectToChatRoom(roomId: currentRoomId, wsUri: wsUri),

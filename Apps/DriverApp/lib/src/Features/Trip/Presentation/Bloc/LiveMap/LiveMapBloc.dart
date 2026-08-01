@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/LiveMap/LiveMapEvent.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/LiveMap/LiveMapState.dart';
 
-import 'package:location_service/location_service.dart';
+import 'package:location_service/LocationService.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';

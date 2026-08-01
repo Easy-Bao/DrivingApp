@@ -1,12 +1,12 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardCubit.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardState.dart';
 
-class MockDashboardRepo extends Mock implements DashboardRepository {}
+class MockDashboardRepo extends Mock implements IDashboardRepository {}
 
 DashboardCubit _makeCubit(DashboardRepository repo) =>
     DashboardCubit(repository: repo);

@@ -1,4 +1,4 @@
-import 'package:driver_app/app_widget.dart' as widget;
+import 'package:driver_app/AppWidget.dart' as widget;
 import 'package:driver_app/main.dart' as app;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';

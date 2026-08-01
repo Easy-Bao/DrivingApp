@@ -1,0 +1,113 @@
+import 'package:core_models/CoreModels.dart';
+import 'package:flutter/foundation.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:location_service/LocationService.dart';
+import 'package:passenger_app/src/Features/Booking/Data/DataSources/BiddingRemoteDataSource.dart';
+import 'package:passenger_app/src/Features/Trip/Domain/Repositories/ITrackRepository.dart';
+
+class TrackRepository implements ITrackRepository {
+  final BiddingRemoteDataSource _biddingDataSource;
+
+  TrackRepository({required BiddingRemoteDataSource biddingDataSource})
+    : _biddingDataSource = biddingDataSource;
+
+  @override
+  Future<List<List<double>>?> getRoutePolyline({
+    required double startLat,
+    required double startLng,
+    required double endLat,
+    required double endLng,
+  }) async {
+    try {
+      final route = await MapProvider.getRoute(
+        startLat,
+        startLng,
+        endLat,
+        endLng,
+      );
+      if (route != null && route.polylinePoints.isNotEmpty) {
+        return route.polylinePoints;
+      }
+      return _linearInterpolation(startLat, startLng, endLat, endLng);
+    } catch (error) {
+      debugPrint('TrackRepository.getRoutePolyline failed: $error');
+      return _linearInterpolation(startLat, startLng, endLat, endLng);
+    }
+  }
+
+  @override
+  Future<Either<Failure, RideUpdate>> getRideStatusUpdate(String rideId) async {
+    try {
+      final data = await _biddingDataSource.getRideStatus(rideId);
+      if (data != null) {
+        return Right(RideUpdate.fromJson(data));
+      }
+      return const Left(ServerFailure('No status data returned from server.'));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (error) {
+      return Left(ServerFailure(error.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, (double latitude, double longitude)>>
+  fetchDriverLocation(String driverId) async {
+    try {
+      final locData = await _biddingDataSource.fetchDriverLocation(driverId);
+      if (locData != null && locData['lat'] != null && locData['lng'] != null) {
+        final lat = (locData['lat'] as num).toDouble();
+        final lng = (locData['lng'] as num).toDouble();
+        return Right((lat, lng));
+      }
+      return const Left(
+        ServerFailure('Driver location coordinates unavailable.'),
+      );
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (error) {
+      return Left(ServerFailure(error.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateRideStatus(
+    String rideId,
+    RideStatus status,
+  ) async {
+    try {
+      final success = await _biddingDataSource.updateRideStatus(
+        rideId,
+        status.value,
+      );
+      if (success) {
+        return const Right(null);
+      }
+      return const Left(
+        ServerFailure('Failed to update ride status on server.'),
+      );
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (error) {
+      return Left(ServerFailure(error.toString()));
+    }
+  }
+
+  List<List<double>> _linearInterpolation(
+    double startLat,
+    double startLng,
+    double endLat,
+    double endLng, {
+    int steps = 5,
+  }) {
+    final points = <List<double>>[];
+    for (var index = 0; index <= steps; index++) {
+      final t = index / steps;
+      points.add([
+        startLat + (endLat - startLat) * t,
+        startLng + (endLng - startLng) * t,
+      ]);
+    }
+    return points;
+  }
+}

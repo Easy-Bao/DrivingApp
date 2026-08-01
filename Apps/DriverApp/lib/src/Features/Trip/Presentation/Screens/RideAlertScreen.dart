@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 import 'package:driver_app/src/Features/Trip/Data/DataSources/BiddingRemoteDataSource.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 
 class RideAlertScreen extends StatefulWidget {

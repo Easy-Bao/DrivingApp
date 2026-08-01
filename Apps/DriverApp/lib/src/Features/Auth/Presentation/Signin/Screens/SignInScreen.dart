@@ -1,3 +1,4 @@
+import 'package:driver_app/src/Features/Auth/Presentation/Widgets/SocialLoginWidget.dart';
 import 'dart:async';
 
 import 'package:driver_app/src/Features/Auth/AuthRoutes.dart';
@@ -7,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class SigninScreen extends StatelessWidget {
   const SigninScreen({super.key});
@@ -85,7 +86,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
     }
 
     BlocProvider.of<SignInBloc>(context).add(
-      SignInEvent.submitted(email: email, password: password),
+      SignInSubmitted(email: email, password: password),
     );
   }
 
@@ -107,25 +108,16 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
       body: SafeArea(
         child: BlocConsumer<SignInBloc, SignInState>(
           listener: (context, state) {
-            state.maybeWhen(
-              success: (_) {
-                context.goNamed(HomeRoutes.dashboard);
-              },
-              failure: (message) {
-                CustomToast.show(context, message);
-              },
-              orElse: () {},
-            );
+            if (state is SignInSuccess) {
+              context.goNamed(HomeRoutes.dashboard);
+            } else if (state is SignInFailure) {
+              CustomToast.show(context, state.errorMessage);
+            }
           },
           builder: (context, state) {
-            final isLoading = state.maybeWhen(
-              loading: () => true,
-              orElse: () => false,
-            );
-            final errorMessage = state.maybeWhen(
-              failure: (message) => message,
-              orElse: () => null,
-            );
+            final isLoading = state is SignInLoading;
+            final errorMessage =
+                state is SignInFailure ? state.errorMessage : null;
 
             return CustomScrollView(
               slivers: [

@@ -1,11 +1,6 @@
 import 'package:chat_service/src/Models/ChatMessage.dart';
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'Generated/ChatMessageModel.g.dart';
-
-
-@JsonSerializable()
 class ChatMessageModel extends Equatable {
   final String text;
   final String senderId;
@@ -17,10 +12,21 @@ class ChatMessageModel extends Equatable {
     required this.createdAt,
   });
 
-  factory ChatMessageModel.fromJson(Map<String, dynamic> json) =>
-      _$ChatMessageModelFromJson(json);
+  factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
+    return ChatMessageModel(
+      text: json['text'] as String? ?? json['message'] as String? ?? '',
+      senderId: json['senderId'] as String? ?? json['sender_id'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? json['created_at'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$ChatMessageModelToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'text': text,
+      'senderId': senderId,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
 
   ChatMessage toEntity({required String currentUserId}) {
     return ChatMessage(
@@ -34,4 +40,3 @@ class ChatMessageModel extends Equatable {
   @override
   List<Object?> get props => [text, senderId, createdAt];
 }
-

@@ -1,12 +1,12 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/Features/Activity/Domain/Repositories/ActivityRepository.dart';
 import 'package:passenger_app/src/Features/Activity/Presentation/Bloc/ActivityBloc.dart';
 
-class MockActivityRepo extends Mock implements ActivityRepository {}
+class MockActivityRepo extends Mock implements IActivityRepository {}
 
 ActivityBloc _makeCubit(ActivityRepository repo) =>
     ActivityBloc(repository: repo);

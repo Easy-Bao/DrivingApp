@@ -1,18 +1,18 @@
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/Features/Booking/Data/DataSources/PassengerRemoteDataSource.dart';
 import 'package:passenger_app/src/Features/Profile/Presentation/Bloc/ProfileState.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
-export 'package:passenger_app/src/features/profile/presentation/bloc/profile_state.dart';
+export 'package:passenger_app/src/Features/Profile/Presentation/Bloc/ProfileState.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  final PassengerProfileRepository _profileRepository;
+  final PassengerRemoteDataSource _remoteDataSource;
 
-  ProfileCubit({required PassengerProfileRepository profileRepository})
-      : _profileRepository = profileRepository,
+  ProfileCubit({required PassengerRemoteDataSource remoteDataSource})
+      : _remoteDataSource = remoteDataSource,
         super(const ProfileState());
 
   Future<void> loadProfile() async {
@@ -36,31 +36,22 @@ class ProfileCubit extends Cubit<ProfileState> {
       final passengerId = prefs.getString('passenger_id') ?? '';
       if (passengerId.isEmpty) return;
 
-      final result = await _profileRepository.getPassengerProfile(passengerId);
-      await result.fold(
-        (failure) async {
-          emit(
-            state.copyWith(isLoading: false, errorMessage: failure.message),
-          );
-        },
-        (profile) async {
-          final name = profile['name'] as String? ?? cachedName;
-          final phone = profile['phone'] as String? ?? cachedPhone;
-          final email = profile['email'] as String? ?? cachedEmail;
+      final profile = await _remoteDataSource.fetchPassengerProfile(passengerId);
+      final name = profile['name'] as String? ?? cachedName;
+      final phone = profile['phone'] as String? ?? cachedPhone;
+      final email = profile['email'] as String? ?? cachedEmail;
 
-          await prefs.setString('passenger_name', name);
-          await prefs.setString('passenger_phone', phone);
-          await prefs.setString('passenger_email', email);
+      await prefs.setString('passenger_name', name);
+      await prefs.setString('passenger_phone', phone);
+      await prefs.setString('passenger_email', email);
 
-          emit(
-            ProfileState(
-              name: name,
-              phone: phone,
-              email: email,
-              isLoading: false,
-            ),
-          );
-        },
+      emit(
+        ProfileState(
+          name: name,
+          phone: phone,
+          email: email,
+          isLoading: false,
+        ),
       );
     } catch (error, stackTrace) {
       dev.log('Error syncing profile values in cubit: $error\n$stackTrace');

@@ -1,20 +1,11 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 import 'RideStatusModel.dart';
 
-part 'Generated/RideUpdateModel.g.dart';
-
-@JsonSerializable()
 class RideUpdate extends Equatable {
-  @JsonKey(fromJson: RideStatus.fromString)
   final RideStatus status;
-  @JsonKey(name: 'driver_id')
   final String? driverId;
-  @JsonKey(name: 'driver_name', defaultValue: 'Driver')
   final String driverName;
-  @JsonKey(name: 'plate_number', defaultValue: '—')
   final String vehiclePlate;
-  @JsonKey(name: 'vehicle_type', defaultValue: 'Bao Bao')
   final String vehicleType;
 
   const RideUpdate({
@@ -25,10 +16,25 @@ class RideUpdate extends Equatable {
     this.vehicleType = 'Bao Bao',
   });
 
-  factory RideUpdate.fromJson(Map<String, dynamic> json) =>
-      _$RideUpdateFromJson(json);
+  factory RideUpdate.fromJson(Map<String, dynamic> json) {
+    return RideUpdate(
+      status: RideStatus.fromString(json['status'] as String? ?? 'requested'),
+      driverId: json['driver_id'] as String? ?? json['driverId'] as String?,
+      driverName: json['driver_name'] as String? ?? json['driverName'] as String? ?? 'Driver',
+      vehiclePlate: json['plate_number'] as String? ?? json['vehiclePlate'] as String? ?? '—',
+      vehicleType: json['vehicle_type'] as String? ?? json['vehicleType'] as String? ?? 'Bao Bao',
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$RideUpdateToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status.value,
+      'driver_id': driverId,
+      'driver_name': driverName,
+      'plate_number': vehiclePlate,
+      'vehicle_type': vehicleType,
+    };
+  }
 
   @override
   List<Object?> get props => [
@@ -39,4 +45,3 @@ class RideUpdate extends Equatable {
         vehicleType,
       ];
 }
-

@@ -3,7 +3,7 @@ import 'package:driver_app/src/Features/Profile/ProfileRoutes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class DriverShellLayout extends StatefulWidget {
   final Widget child;

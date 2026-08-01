@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'Generated/NotificationModel.g.dart';
-
-@JsonSerializable()
 class NotificationModel extends Equatable {
   final String id;
   final String title;
@@ -21,12 +17,28 @@ class NotificationModel extends Equatable {
     this.isRead = false,
   });
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) =>
-      _$NotificationModelFromJson(json);
+  factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    return NotificationModel(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      message: json['message'] as String? ?? '',
+      timestamp: DateTime.tryParse(json['timestamp'] as String? ?? '') ?? DateTime.now(),
+      type: json['type'] as String? ?? 'system',
+      isRead: json['isRead'] as bool? ?? json['is_read'] as bool? ?? false,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'message': message,
+      'timestamp': timestamp.toIso8601String(),
+      'type': type,
+      'isRead': isRead,
+    };
+  }
 
   @override
   List<Object?> get props => [id, title, message, timestamp, type, isRead];
 }
-

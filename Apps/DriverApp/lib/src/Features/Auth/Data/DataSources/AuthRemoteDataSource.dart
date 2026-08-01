@@ -1,4 +1,4 @@
- as ps;
+import 'package:dio/dio.dart';
 
 abstract class AuthRemoteDataSource {
   Future<Map<String, dynamic>> authenticateDriver({
@@ -12,26 +12,27 @@ abstract class AuthRemoteDataSource {
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final ps.AuthRemoteDataSource _authRemoteDataSource;
+  final Dio _dio;
 
-  AuthRemoteDataSourceImpl(this._authRemoteDataSource);
+  AuthRemoteDataSourceImpl(this._dio);
 
   @override
   Future<Map<String, dynamic>> authenticateDriver({
     required String email,
     required String password,
   }) async {
-    final result = await _authRemoteDataSource.authenticateDriver(
-      email: email,
-      password: password,
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/driver/signin',
+      data: {'email': email, 'password': password},
     );
-    return result;
+    return response.data ?? {};
   }
 
   @override
-  Future<void> resetPassword({
-    required String email,
-  }) async {
-    await _authRemoteDataSource.forgotPassword(email: email);
+  Future<void> resetPassword({required String email}) async {
+    await _dio.post<void>(
+      '/auth/driver/forgot-password',
+      data: {'email': email},
+    );
   }
 }

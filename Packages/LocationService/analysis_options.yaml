@@ -5,5 +5,12 @@ include: package:flutter_lints/flutter.yaml
 
 linter:
   rules:
+    file_names: false
+    package_names: false
     slash_for_doc_comments: false
 
+
+analyzer:
+  errors:
+    file_names: ignore
+    package_names: ignore

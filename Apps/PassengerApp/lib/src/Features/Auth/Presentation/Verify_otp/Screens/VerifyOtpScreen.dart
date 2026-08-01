@@ -7,7 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/Features/Auth/AuthRoutes.dart';
 import 'package:passenger_app/src/Features/Auth/Presentation/Verify_otp/Bloc/VerifyOtpBloc.dart';
 import 'package:passenger_app/src/Features/Home/HomeRoutes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class VerifyOtpScreen extends StatelessWidget {
   final String email;
@@ -25,7 +25,7 @@ class VerifyOtpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<VerifyOtpBloc>(
       create: (context) => Modular.get<VerifyOtpBloc>()
-        ..add(const VerifyOtpEvent.timerStarted()),
+        ..add(const VerifyOtpTimerStarted()),
       child: _VerifyOtpScreenContent(
         email: email,
         password: password,
@@ -90,7 +90,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       );
     } else {
       BlocProvider.of<VerifyOtpBloc>(context).add(
-        VerifyOtpEvent.submitted(
+        VerifyOtpSubmitted(
           email: widget.email,
           code: code,
           password: widget.password,
@@ -120,48 +120,34 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       body: SafeArea(
         child: BlocConsumer<VerifyOtpBloc, VerifyOtpState>(
           listener: (context, state) {
-            state.maybeWhen(
-              success: () {
-                if (widget.isForgotPassword) {
-                  unawaited(
-                    context.pushNamed(
-                      AuthRoutes.resetPasswordConfirm,
-                      extra: {
-                        'email': widget.email,
-                        'code': text,
-                      },
-                    ),
-                  );
-                } else {
-                  context.goNamed(HomeRoutes.home);
-                }
-              },
-              failure: (message) {
-                CustomToast.show(
-                  context,
-                  message.isEmpty ? 'Incorrect verification code' : message,
+            if (state is VerifyOtpSuccess) {
+              if (widget.isForgotPassword) {
+                unawaited(
+                  context.pushNamed(
+                    AuthRoutes.resetPasswordConfirm,
+                    extra: {
+                      'email': widget.email,
+                      'code': text,
+                    },
+                  ),
                 );
-              },
-              orElse: () {},
-            );
+              } else {
+                context.goNamed(HomeRoutes.home);
+              }
+            } else if (state is VerifyOtpFailure) {
+              CustomToast.show(
+                context,
+                state.errorMessage.isEmpty ? 'Incorrect verification code' : state.errorMessage,
+              );
+            }
           },
           builder: (context, state) {
-            final isLoading = state.maybeWhen(
-              loading: () => true,
-              orElse: () => false,
-            );
-            final errorMessage = state.maybeWhen(
-              failure: (message) => message,
-              orElse: () => null,
-            );
-            final secondsRemaining = state.maybeWhen(
-              timerTicking: (s) => s,
-              orElse: () => 60,
-            );
-            final isTimerExpired = state.maybeWhen(
-              timerExpired: () => true,
-              orElse: () => false,
-            );
+            final isLoading = state is VerifyOtpLoading;
+            final errorMessage =
+                state is VerifyOtpFailure ? state.errorMessage : null;
+            final secondsRemaining =
+                state is VerifyOtpTimerTicking ? state.secondsRemaining : 60;
+            final isTimerExpired = state is VerifyOtpTimerExpired;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
@@ -274,7 +260,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                   TextButton(
                     onPressed: isTimerExpired
                         ? () => BlocProvider.of<VerifyOtpBloc>(context).add(
-                            const VerifyOtpEvent.timerStarted(),
+                            const VerifyOtpTimerStarted(),
                           )
                         : null,
                     child: Text(

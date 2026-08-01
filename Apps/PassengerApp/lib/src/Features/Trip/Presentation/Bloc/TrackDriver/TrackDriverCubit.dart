@@ -1,21 +1,22 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
+import 'package:passenger_app/src/Features/Trip/Domain/Repositories/ITrackRepository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/Core/Services/Securesessionservice.dart';
+import 'package:passenger_app/src/Core/Services/SecureSessionService.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/TrackDriver/TrackDriverState.dart';
 
 
 
 class TrackDriverCubit extends Cubit<TrackDriverState> {
-  final TrackRepository _repository;
+  final ITrackRepository _repository;
   final SecureSessionService _sessionService;
   Timer? _ticker;
   bool _isSyncing = false;
 
   TrackDriverCubit({
-    required TrackRepository repository,
+    required ITrackRepository repository,
     required SecureSessionService sessionService,
   }) : _repository = repository,
        _sessionService = sessionService,

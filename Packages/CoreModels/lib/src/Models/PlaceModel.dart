@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'Generated/PlaceModel.g.dart';
-
-@JsonSerializable()
 class PlaceModel extends Equatable {
   final String id;
   final String name;
@@ -23,10 +19,29 @@ class PlaceModel extends Equatable {
     this.distanceKm,
   });
 
-  factory PlaceModel.fromJson(Map<String, dynamic> json) =>
-      _$PlaceModelFromJson(json);
+  factory PlaceModel.fromJson(Map<String, dynamic> json) {
+    return PlaceModel(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      fullAddress: json['fullAddress'] as String? ?? json['full_address'] as String? ?? '',
+      latitude: (json['latitude'] as num? ?? json['lat'] as num? ?? 0.0).toDouble(),
+      longitude: (json['longitude'] as num? ?? json['lng'] as num? ?? 0.0).toDouble(),
+      category: json['category'] as String?,
+      distanceKm: (json['distanceKm'] as num? ?? json['distance_km'] as num?)?.toDouble(),
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$PlaceModelToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'fullAddress': fullAddress,
+      'latitude': latitude,
+      'longitude': longitude,
+      'category': category,
+      'distanceKm': distanceKm,
+    };
+  }
 
   @override
   List<Object?> get props => [
@@ -39,4 +54,3 @@ class PlaceModel extends Equatable {
         distanceKm,
       ];
 }
-

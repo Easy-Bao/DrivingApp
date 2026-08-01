@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_ui/src/Themes/AppThemes.dart';
+import 'package:shared_ui/src/Themes/AppTheme.dart';
 
 class CustomToast {
   CustomToast._();

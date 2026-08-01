@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/src/Themes/AppThemes.dart';
+import 'package:shared_ui/src/Themes/AppTheme.dart';
 
 class SkeletonListWidget extends StatelessWidget {
   final int? itemCount;

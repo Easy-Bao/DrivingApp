@@ -5,7 +5,10 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 
-import 'package:shared_ui/shared_ui.dart';
+import 'package:passenger_app/src/Core/Services/SecureSessionService.dart';
+import 'package:passenger_app/src/Features/Booking/Data/DataSources/PassengerRemoteDataSource.dart';
+import 'package:shared_ui/SharedUi.dart';
+
 
 class ProfileInfoScreen extends StatefulWidget {
   const ProfileInfoScreen({super.key});
@@ -42,13 +45,10 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final profile = await Modular.get<PassengerSessionService>().getProfile();
-    if (profile == null) return;
+    final session = Modular.get<SecureSessionService>();
+    final pId = await session.readPassengerId() ?? '';
     setState(() {
-      _passengerId = profile.id;
-      _nameController.text = profile.name;
-      _phoneController.text = profile.phone;
-      _emailController.text = profile.email;
+      _passengerId = pId;
     });
   }
 
@@ -86,29 +86,25 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
       }
 
       try {
-        final updated = await Modular.get<PassengerRemoteDataSource>().updateProfile(
-          id: _passengerId,
-          name: name,
-          phone: phone,
-          email: email,
-        );
-        await Modular.get<PassengerSessionService>().saveProfile(
-          PassengerProfile(
-            id: _passengerId,
-            name: updated['name'] as String,
-            email: updated['email'] as String,
-            phone: updated['phone'] as String,
-          ),
-        );
-
-        if (!mounted) return;
-        CustomToast.show(context, 'Profile updated successfully!');
+        final updated = await Modular.get<PassengerRemoteDataSource>().updateProfile({
+          'id': _passengerId,
+          'name': name,
+          'phone': phone,
+          'email': email,
+        });
+        if (updated.isNotEmpty) {
+          if (!mounted) return;
+          CustomToast.show(context, 'Profile updated successfully!');
+        }
       } catch (error) {
         if (!mounted) return;
-        CustomToast.show(context, 'Connection failed: $error', isError: true);
+        CustomToast.show(context, 'Failed to update profile: $error', isError: true);
       }
     }
-    setState(() => _isEditing = !_isEditing);
+
+    setState(() {
+      _isEditing = !_isEditing;
+    });
   }
 
   @override

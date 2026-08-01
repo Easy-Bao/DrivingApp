@@ -3,13 +3,13 @@ import 'package:driver_app/src/Features/Auth/Presentation/Signin/Bloc/SignInEven
 import 'package:driver_app/src/Features/Auth/Presentation/Signin/Bloc/SignInState.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-export 'package:driver_app/src/features/auth/presentation/signin/bloc/sign_in_event.dart';
-export 'package:driver_app/src/features/auth/presentation/signin/bloc/sign_in_state.dart';
+export 'package:driver_app/src/Features/Auth/Presentation/Signin/Bloc/SignInEvent.dart';
+export 'package:driver_app/src/Features/Auth/Presentation/Signin/Bloc/SignInState.dart';
 
 class SignInBloc extends Bloc<SignInEvent, SignInState> {
   final SignInUseCase _signInUseCase;
 
-  SignInBloc(this._signInUseCase) : super(const SignInState.initial()) {
+  SignInBloc(this._signInUseCase) : super(const SignInInitial()) {
     on<SignInSubmitted>(_onSignInSubmitted);
   }
 
@@ -21,19 +21,19 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     final normalizedPassword = event.password.trim();
 
     if (normalizedEmail.isEmpty) {
-      emit(const SignInState.failure('Please enter email'));
+      emit(const SignInFailure('Please enter email'));
       return;
     }
     if (!normalizedEmail.contains('@')) {
-      emit(const SignInState.failure('Please enter a valid email'));
+      emit(const SignInFailure('Please enter a valid email'));
       return;
     }
     if (normalizedPassword.isEmpty) {
-      emit(const SignInState.failure('Please enter password'));
+      emit(const SignInFailure('Please enter password'));
       return;
     }
 
-    emit(const SignInState.loading());
+    emit(const SignInLoading());
 
     final result = await _signInUseCase.execute(
       email: normalizedEmail,
@@ -41,8 +41,8 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     );
 
     result.fold(
-      (failure) => emit(SignInState.failure(failure.message)),
-      (credentials) => emit(SignInState.success(credentials)),
+      (failure) => emit(SignInFailure(failure.message)),
+      (credentials) => emit(SignInSuccess(credentials)),
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:driver_app/src/Features/Trip/TripRoutes.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class CompleteTripScreen extends StatelessWidget {
   final String pickup;

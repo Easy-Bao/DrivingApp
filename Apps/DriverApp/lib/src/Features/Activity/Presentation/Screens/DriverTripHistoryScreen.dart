@@ -1,10 +1,10 @@
-import 'package:driver_app/src/Features/Activity/Domain/Repositories/DriverActivityRepository.dart';
+import 'package:driver_app/src/Features/Activity/Domain/Repositories/IDriverActivityRepository.dart';
 import 'package:driver_app/src/Features/Activity/ActivityRoutes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class DriverTripHistoryScreen extends StatefulWidget {
   const DriverTripHistoryScreen({super.key});
@@ -46,7 +46,7 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
       }
       return;
     }
-    final result = await Modular.get<DriverActivityRepository>().fetchTripHistory(
+    final result = await Modular.get<IDriverActivityRepository>().fetchTripHistory(
       driverId,
     );
     if (mounted) {

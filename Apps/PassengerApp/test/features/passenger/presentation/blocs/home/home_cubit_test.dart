@@ -1,5 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -8,7 +8,7 @@ import 'package:passenger_app/src/Features/Home/Presentation/Bloc/HomeState.dart
 
 // Mock Repositories
 
-class MockHomeRepo extends Mock implements PassengerHomeRepository {}
+class MockHomeRepo extends Mock implements IPassengerHomeRepository {}
 
 // Helper Factory Methods
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/Features/Inbox/Domain/Entities/InboxNotification.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class InboxNotificationCardWidget extends StatelessWidget {
   final InboxNotification notification;

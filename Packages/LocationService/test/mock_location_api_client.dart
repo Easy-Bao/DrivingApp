@@ -1,5 +1,5 @@
-import 'package:core_models/core_models.dart';
-import 'package:location_service/location_service.dart';
+import 'package:core_models/CoreModels.dart';
+import 'package:location_service/LocationService.dart';
 
 class MockLocationApiClient implements LocationApiClient {
   @override

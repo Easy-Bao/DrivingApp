@@ -1,15 +1,44 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 import 'package:passenger_app/src/Features/Auth/Domain/Entities/AuthCredentials.dart';
 
-part 'generated/sign_in_state.freezed.dart';
+sealed class SignInState extends Equatable {
+  const SignInState();
 
-@freezed
-sealed class SignInState with _$SignInState {
-  const factory SignInState.initial() = SignInInitial;
-  const factory SignInState.loading() = SignInLoading;
-  const factory SignInState.success(AuthCredentials credentials) =
-      SignInSuccess;
-  const factory SignInState.needsVerification(String email) =
-      SignInNeedsVerification;
-  const factory SignInState.failure(String errorMessage) = SignInFailure;
+  @override
+  List<Object?> get props => [];
+}
+
+class SignInInitial extends SignInState {
+  const SignInInitial();
+}
+
+class SignInLoading extends SignInState {
+  const SignInLoading();
+}
+
+class SignInSuccess extends SignInState {
+  final AuthCredentials credentials;
+
+  const SignInSuccess(this.credentials);
+
+  @override
+  List<Object?> get props => [credentials];
+}
+
+class SignInNeedsVerification extends SignInState {
+  final String email;
+
+  const SignInNeedsVerification(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+class SignInFailure extends SignInState {
+  final String errorMessage;
+
+  const SignInFailure(this.errorMessage);
+
+  @override
+  List<Object?> get props => [errorMessage];
 }

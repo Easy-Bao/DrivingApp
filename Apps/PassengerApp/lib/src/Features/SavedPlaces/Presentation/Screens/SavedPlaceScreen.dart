@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -10,7 +10,7 @@ import 'package:passenger_app/src/Features/SavedPlaces/Domain/Entities/SavedPlac
 import 'package:passenger_app/src/Features/SavedPlaces/Presentation/Bloc/SavedPlacesCubit.dart';
 import 'package:passenger_app/src/Features/SavedPlaces/Presentation/Bloc/SavedPlacesState.dart';
 import 'package:passenger_app/src/Features/Trip/TripRoutes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class SavedPlaceScreen extends StatefulWidget {
   const SavedPlaceScreen({super.key});

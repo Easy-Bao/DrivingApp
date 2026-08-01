@@ -4,7 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/Features/Auth/AuthRoutes.dart';
 import 'package:passenger_app/src/Features/Auth/Presentation/ResetPasswordConfirm/Bloc/ResetPasswordConfirmBloc.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class ResetPasswordConfirmScreen extends StatelessWidget {
   final String email;
@@ -90,7 +90,7 @@ class _ResetPasswordConfirmScreenContentState
     }
 
     BlocProvider.of<ResetPasswordConfirmBloc>(context).add(
-      ResetPasswordConfirmEvent.submitted(
+      ResetPasswordConfirmSubmitted(
         email: widget.email,
         code: widget.code,
         newPassword: newPassword,
@@ -116,22 +116,15 @@ class _ResetPasswordConfirmScreenContentState
       body: SafeArea(
         child: BlocConsumer<ResetPasswordConfirmBloc, ResetPasswordConfirmState>(
           listener: (context, state) {
-            state.maybeWhen(
-              success: () {
-                CustomToast.show(context, 'Password updated successfully!');
-                context.goNamed(AuthRoutes.signin);
-              },
-              failure: (message) {
-                CustomToast.show(context, message);
-              },
-              orElse: () {},
-            );
+            if (state is ResetPasswordConfirmSuccess) {
+              CustomToast.show(context, 'Password updated successfully!');
+              context.goNamed(AuthRoutes.signin);
+            } else if (state is ResetPasswordConfirmFailure) {
+              CustomToast.show(context, state.errorMessage);
+            }
           },
           builder: (context, state) {
-            final isLoading = state.maybeWhen(
-              loading: () => true,
-              orElse: () => false,
-            );
+            final isLoading = state is ResetPasswordConfirmLoading;
 
             return SingleChildScrollView(
               physics: const ClampingScrollPhysics(),

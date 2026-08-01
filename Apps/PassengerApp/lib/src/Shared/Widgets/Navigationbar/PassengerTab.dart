@@ -5,7 +5,7 @@ import 'package:passenger_app/src/Features/Activity/ActivityRoutes.dart';
 import 'package:passenger_app/src/Features/Home/HomeRoutes.dart';
 import 'package:passenger_app/src/Features/Inbox/InboxRoutes.dart';
 import 'package:passenger_app/src/Features/Profile/ProfileRoutes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class PassengerShellLayout extends StatefulWidget {
   final Widget child;

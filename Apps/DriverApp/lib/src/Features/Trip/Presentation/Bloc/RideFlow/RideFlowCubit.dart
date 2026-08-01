@@ -23,6 +23,43 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
   String? get activeRideId => _activeRideId;
 
+  void resumeRide({
+    required String rideId,
+    required String status,
+    required String passengerName,
+    required double pickupLat,
+    required double pickupLng,
+    required double destLat,
+    required double destLng,
+  }) {
+    _activeRideId = rideId;
+    if (status == 'arrived') {
+      emit(
+        RideFlowWaitingPassenger(
+          passengerName: passengerName,
+          waitTimeSeconds: 0,
+        ),
+      );
+    } else if (status == 'in_transit') {
+      emit(
+        RideFlowInTransit(
+          passengerName: passengerName,
+          destLat: destLat,
+          destLng: destLng,
+          distanceKm: 3.2,
+        ),
+      );
+    } else {
+      emit(
+        RideFlowEnRoutePickup(
+          passengerName: passengerName,
+          pickupLat: pickupLat,
+          pickupLng: pickupLng,
+        ),
+      );
+    }
+  }
+
   Future<void> acceptRide({
     required String rideId,
     required String passengerName,

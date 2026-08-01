@@ -10,7 +10,8 @@ import 'package:passenger_app/src/Features/Inbox/Presentation/Bloc/InboxState.da
 import 'package:passenger_app/src/Features/Inbox/Presentation/Widgets/InboxEmptyStateWidget.dart';
 import 'package:passenger_app/src/Features/Inbox/Presentation/Widgets/InboxNotificationCardWidget.dart';
 
-import 'package:shared_ui/shared_ui.dart';
+import 'package:passenger_app/src/Core/Services/SecureSessionService.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class InboxScreen extends StatefulWidget {
   const InboxScreen({super.key});

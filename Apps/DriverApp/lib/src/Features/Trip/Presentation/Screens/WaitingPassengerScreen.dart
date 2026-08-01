@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:chat_service/chat_service.dart';
+import 'package:chat_service/ChatService.dart';
 import 'package:driver_app/src/Features/Chat/ChatRoutes.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/RideFlow/RideFlowCubit.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/RideFlow/RideFlowState.dart';
@@ -10,11 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
+import 'package:location_service/LocationService.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 import 'package:driver_app/src/Features/Trip/Data/DataSources/TripRemoteDataSource.dart';
 import 'package:driver_app/src/Features/Trip/Data/DataSources/PassengerRemoteDataSource.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 

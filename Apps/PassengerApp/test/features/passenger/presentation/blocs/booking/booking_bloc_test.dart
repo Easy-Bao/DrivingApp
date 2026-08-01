@@ -1,5 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -9,7 +9,7 @@ import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/BookingState.d
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MockDriverRepo extends Mock implements DriverRepository {}
+class MockDriverRepo extends Mock implements IDriverRepository {}
 
 class MockBidSessionService extends Mock implements BidSessionService {}
 

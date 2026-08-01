@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
+import 'package:passenger_app/src/Features/Trip/Domain/Repositories/IDriverRepository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/BookingEvent.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/BookingState.dart';
@@ -10,7 +11,7 @@ import 'package:passenger_app/src/Features/Booking/Data/DataSources/BiddingRemot
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
-  final DriverRepository _driverRepository;
+  final IDriverRepository _driverRepository;
   final BiddingRemoteDataSource _biddingDataSource;
 
   StreamSubscription<List<dynamic>>? _offersSubscription;
@@ -31,7 +32,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   String? _rideType;
 
   BookingBloc({
-    required DriverRepository driverRepository,
+    required IDriverRepository driverRepository,
     required BiddingRemoteDataSource biddingDataSource,
   }) : _driverRepository = driverRepository,
        _biddingDataSource = biddingDataSource,

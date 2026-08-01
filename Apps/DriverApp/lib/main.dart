@@ -1,10 +1,11 @@
-import 'package:driver_app/app_module.dart';
-import 'package:driver_app/app_widget.dart';
+import 'package:driver_app/AppModule.dart';
+import 'package:driver_app/AppWidget.dart';
+import 'package:driver_app/src/Core/Constants/EnvConfig.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
+import 'package:location_service/LocationService.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,7 +15,7 @@ void main() async {
 
   await dotenv.load(fileName: '.env');
 
-  final nativeService = MapNativeServiceImpl(
+  final nativeService = MapNativeService(
     placeServiceBaseUri: EnvConfig.placeServiceUri,
   );
   LocationService.initialize(nativeService);
@@ -22,10 +23,6 @@ void main() async {
     token: EnvConfig.mapboxPublicToken,
     nativeService: nativeService,
   );
-
-
-
-  await BackgroundTelemetryService.initialize();
 
   await Modular.configure(
     appModule: AppModule(prefs: prefs),

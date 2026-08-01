@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/Features/Booking/Data/DataSources/BiddingRemoteDataSource.dart';
 import 'package:passenger_app/src/Features/Home/HomeRoutes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class PassengerRatingScreen extends StatefulWidget {
   final String driverId;
@@ -42,9 +43,8 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
     });
 
     try {
-      final passengerProfile =
-          await Modular.get<PassengerSessionService>().getProfile();
-      final passengerName = passengerProfile?.name ?? 'Passenger';
+      final prefs = await SharedPreferences.getInstance();
+      final passengerName = prefs.getString('passenger_name') ?? 'Passenger';
 
       await Modular.get<BiddingRemoteDataSource>().submitDriverReview(
         driverId: widget.driverId,

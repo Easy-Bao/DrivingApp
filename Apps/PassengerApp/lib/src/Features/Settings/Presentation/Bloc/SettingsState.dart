@@ -1,13 +1,35 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 import 'package:passenger_app/src/Features/Settings/Domain/Entities/UserSettings.dart';
 
-part 'generated/settings_state.freezed.dart';
+sealed class SettingsState extends Equatable {
+  const SettingsState();
 
-@freezed
-sealed class SettingsState with _$SettingsState {
-  const factory SettingsState.initial() = SettingsInitialState;
-  const factory SettingsState.loading() = SettingsLoadingState;
-  const factory SettingsState.loaded(UserSettings settings) =
-      SettingsLoadedState;
-  const factory SettingsState.error(String message) = SettingsErrorState;
+  @override
+  List<Object?> get props => [];
+}
+
+class SettingsInitialState extends SettingsState {
+  const SettingsInitialState();
+}
+
+class SettingsLoadingState extends SettingsState {
+  const SettingsLoadingState();
+}
+
+class SettingsLoadedState extends SettingsState {
+  final UserSettings settings;
+
+  const SettingsLoadedState(this.settings);
+
+  @override
+  List<Object?> get props => [settings];
+}
+
+class SettingsErrorState extends SettingsState {
+  final String message;
+
+  const SettingsErrorState(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

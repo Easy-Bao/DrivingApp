@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'Generated/DriverModel.g.dart';
-
-@JsonSerializable()
 class DriverModel extends Equatable {
   final String id;
   final String name;
@@ -35,10 +31,41 @@ class DriverModel extends Equatable {
     this.recentFeedback,
   });
 
-  factory DriverModel.fromJson(Map<String, dynamic> json) =>
-      _$DriverModelFromJson(json);
+  factory DriverModel.fromJson(Map<String, dynamic> json) {
+    return DriverModel(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Driver',
+      vehicleType: json['vehicleType'] as String? ?? json['vehicle_type'] as String? ?? 'Bao Bao',
+      plateNumber: json['plateNumber'] as String? ?? json['plate_number'] as String? ?? 'Unknown',
+      rating: (json['rating'] as num? ?? 5.0).toDouble(),
+      lat: (json['lat'] as num? ?? 0.0).toDouble(),
+      lng: (json['lng'] as num? ?? 0.0).toDouble(),
+      distanceKm: (json['distanceKm'] as num? ?? json['distance_km'] as num? ?? 0.0).toDouble(),
+      etaMinutes: (json['etaMinutes'] as num? ?? json['eta_minutes'] as num? ?? 0.0).toDouble(),
+      score: (json['score'] as num? ?? 0.0).toDouble(),
+      hasPassengerOnboard: json['hasPassengerOnboard'] as bool? ?? json['has_passenger_onboard'] as bool? ?? false,
+      avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
+      recentFeedback: json['recentFeedback'] as String? ?? json['recent_feedback'] as String?,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$DriverModelToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'vehicleType': vehicleType,
+      'plateNumber': plateNumber,
+      'rating': rating,
+      'lat': lat,
+      'lng': lng,
+      'distanceKm': distanceKm,
+      'etaMinutes': etaMinutes,
+      'score': score,
+      'hasPassengerOnboard': hasPassengerOnboard,
+      'avatarUrl': avatarUrl,
+      'recentFeedback': recentFeedback,
+    };
+  }
 
   @override
   List<Object?> get props => [
@@ -57,4 +84,3 @@ class DriverModel extends Equatable {
         recentFeedback,
       ];
 }
-

@@ -4,13 +4,13 @@ import 'package:passenger_app/src/Features/Auth/Domain/Usecases/RegisterUseCase.
 import 'package:passenger_app/src/Features/Auth/Presentation/Signup/Bloc/SignUpEvent.dart';
 import 'package:passenger_app/src/Features/Auth/Presentation/Signup/Bloc/SignUpState.dart';
 
-export 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_event.dart';
-export 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_state.dart';
+export 'package:passenger_app/src/Features/Auth/Presentation/Signup/Bloc/SignUpEvent.dart';
+export 'package:passenger_app/src/Features/Auth/Presentation/Signup/Bloc/SignUpState.dart';
 
 class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   final RegisterUseCase _registerUseCase;
 
-  SignUpBloc(this._registerUseCase) : super(const SignUpState.initial()) {
+  SignUpBloc(this._registerUseCase) : super(const SignUpInitial()) {
     on<SignUpSubmitted>(_onSignUpSubmitted);
   }
 
@@ -24,31 +24,31 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     final normalizedPassword = event.password.trim();
 
     if (normalizedName.isEmpty) {
-      emit(const SignUpState.failure('Please enter your full name'));
+      emit(const SignUpFailure('Please enter your full name'));
       return;
     }
     if (normalizedEmail.isEmpty) {
-      emit(const SignUpState.failure('Please enter email address'));
+      emit(const SignUpFailure('Please enter email address'));
       return;
     }
     if (!normalizedEmail.contains('@')) {
-      emit(const SignUpState.failure('Please enter a valid email address'));
+      emit(const SignUpFailure('Please enter a valid email address'));
       return;
     }
     if (normalizedPhone.isEmpty) {
-      emit(const SignUpState.failure('Please enter phone number'));
+      emit(const SignUpFailure('Please enter phone number'));
       return;
     }
     if (normalizedPassword.length < 6) {
       emit(
-        const SignUpState.failure(
+        const SignUpFailure(
           'Password must be at least 6 characters long',
         ),
       );
       return;
     }
 
-    emit(const SignUpState.loading());
+    emit(const SignUpLoading());
 
     final result = await _registerUseCase.execute(
       name: normalizedName,
@@ -58,11 +58,11 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     );
 
     result.fold(
-      (failure) => emit(SignUpState.failure(failure.message)),
+      (failure) => emit(SignUpFailure(failure.message)),
       (response) {
         final needsVerification = response['needsVerification'] == true;
         if (needsVerification) {
-          emit(SignUpState.needsVerification(normalizedEmail));
+          emit(SignUpNeedsVerification(normalizedEmail));
         } else {
           final credentials = AuthCredentials(
             passengerId: response['passengerId'] as String? ?? '',
@@ -71,7 +71,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
             passengerPhone: normalizedPhone,
             token: response['token'] as String? ?? '',
           );
-          emit(SignUpState.success(credentials));
+          emit(SignUpSuccess(credentials));
         }
       },
     );

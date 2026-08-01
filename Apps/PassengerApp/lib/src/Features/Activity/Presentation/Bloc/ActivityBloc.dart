@@ -1,16 +1,12 @@
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/Features/Activity/Domain/Repositories/ActivityRepository.dart';
+import 'package:passenger_app/src/Features/Activity/Domain/Repositories/IActivityRepository.dart';
 
-part 'activity_event.dart';
-part 'activity_state.dart';
+part 'ActivityEvent.dart';
+part 'ActivityState.dart';
 
-/// State controller managing the retrieval and segregation of passenger ride logs.
-///
-/// Divides histories into historical records (completed or cancelled) and ongoing active
-/// requests (requested, accepted, arrived, in-transit) to prevent UI-level sorting.
 class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
-  final ActivityRepository _repository;
+  final IActivityRepository _repository;
 
   static const _pastStatuses = {RideStatus.completed, RideStatus.cancelled};
 
@@ -21,7 +17,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     RideStatus.inTransit,
   };
 
-  ActivityBloc({required ActivityRepository repository})
+  ActivityBloc({required IActivityRepository repository})
     : _repository = repository,
       super(ActivityInitial()) {
     on<LoadActivityEvent>(_onLoad);

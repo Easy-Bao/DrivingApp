@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter/material.dart';
 import 'package:location_service/src/Repositories/MapNativeService.dart';
 import 'package:location_service/src/Services/DeviceLocationService.dart';

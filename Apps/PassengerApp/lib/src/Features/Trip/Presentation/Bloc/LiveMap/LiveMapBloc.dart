@@ -3,7 +3,7 @@ import 'dart:developer' as dev;
 import 'dart:ui' show Color;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:location_service/location_service.dart';
+import 'package:location_service/LocationService.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/LiveMap/LiveMapEvent.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Bloc/LiveMap/LiveMapState.dart';
 

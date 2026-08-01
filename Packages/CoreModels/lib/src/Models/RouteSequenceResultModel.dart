@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 import 'WaypointModel.dart';
 
-part 'Generated/RouteSequenceResultModel.g.dart';
-
-@JsonSerializable()
 class RouteSequenceResult extends Equatable {
   final List<Waypoint> optimalSequence;
   final double totalDistanceKm;
@@ -14,12 +10,22 @@ class RouteSequenceResult extends Equatable {
     required this.totalDistanceKm,
   });
 
-  factory RouteSequenceResult.fromJson(Map<String, dynamic> json) =>
-      _$RouteSequenceResultFromJson(json);
+  factory RouteSequenceResult.fromJson(Map<String, dynamic> json) {
+    final rawList = json['optimalSequence'] as List<dynamic>? ?? json['optimal_sequence'] as List<dynamic>? ?? [];
+    final waypoints = rawList.map((item) => Waypoint.fromJson(item as Map<String, dynamic>)).toList();
+    return RouteSequenceResult(
+      optimalSequence: waypoints,
+      totalDistanceKm: (json['totalDistanceKm'] as num? ?? json['total_distance_km'] as num? ?? 0.0).toDouble(),
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$RouteSequenceResultToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'optimalSequence': optimalSequence.map((w) => w.toJson()).toList(),
+      'totalDistanceKm': totalDistanceKm,
+    };
+  }
 
   @override
   List<Object?> get props => [optimalSequence, totalDistanceKm];
 }
-

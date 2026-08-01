@@ -3,15 +3,15 @@ import 'package:driver_app/src/Features/Auth/Presentation/ForgotPassword/Bloc/Fo
 import 'package:driver_app/src/Features/Auth/Presentation/ForgotPassword/Bloc/ForgotPasswordState.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-export 'package:driver_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_event.dart';
-export 'package:driver_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_state.dart';
+export 'package:driver_app/src/Features/Auth/Presentation/ForgotPassword/Bloc/ForgotPasswordEvent.dart';
+export 'package:driver_app/src/Features/Auth/Presentation/ForgotPassword/Bloc/ForgotPasswordState.dart';
 
 class ForgotPasswordBloc
     extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {
   final ResetPasswordUseCase _resetPasswordUseCase;
 
   ForgotPasswordBloc(this._resetPasswordUseCase)
-      : super(const ForgotPasswordState.initial()) {
+      : super(const ForgotPasswordInitial()) {
     on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
   }
 
@@ -22,20 +22,20 @@ class ForgotPasswordBloc
     final normalizedEmail = event.email.trim();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
       emit(
-        const ForgotPasswordState.failure(
+        const ForgotPasswordFailure(
           'Please enter a valid email address.',
         ),
       );
       return;
     }
 
-    emit(const ForgotPasswordState.loading());
+    emit(const ForgotPasswordLoading());
 
     final result = await _resetPasswordUseCase.execute(email: normalizedEmail);
 
     result.fold(
-      (failure) => emit(ForgotPasswordState.failure(failure.message)),
-      (_) => emit(const ForgotPasswordState.success()),
+      (failure) => emit(ForgotPasswordFailure(failure.message)),
+      (_) => emit(const ForgotPasswordSuccess()),
     );
   }
 }

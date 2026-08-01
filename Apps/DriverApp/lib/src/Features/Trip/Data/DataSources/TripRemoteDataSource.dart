@@ -5,6 +5,8 @@ abstract class TripRemoteDataSource {
   Future<bool> updateRideStatus({required String tripId, required String status});
   Future<Map<String, dynamic>> fetchTripDetails(String tripId);
   Future<Map<String, dynamic>> getRideStatus(String tripId);
+  Future<Map<String, dynamic>> fetchStats(String driverId);
+  Future<List<dynamic>> fetchTripHistory(String driverId);
 }
 
 class TripRemoteDataSourceImpl implements TripRemoteDataSource {
@@ -41,5 +43,16 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
     final response = await _dio.get<Map<String, dynamic>>('/trips/$tripId/status');
     return response.data ?? {};
   }
-}
 
+  @override
+  Future<Map<String, dynamic>> fetchStats(String driverId) async {
+    final response = await _dio.get<Map<String, dynamic>>('/drivers/$driverId/stats');
+    return response.data ?? {};
+  }
+
+  @override
+  Future<List<dynamic>> fetchTripHistory(String driverId) async {
+    final response = await _dio.get<List<dynamic>>('/drivers/$driverId/trips');
+    return response.data ?? [];
+  }
+}

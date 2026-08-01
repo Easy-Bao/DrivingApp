@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/Features/Activity/ActivityRoutes.dart';
@@ -7,7 +7,7 @@ import 'package:passenger_app/src/Features/Activity/Presentation/Screens/Passeng
 import 'package:passenger_app/src/Features/Activity/Presentation/Screens/ViewAllActivityScreen.dart';
 import 'package:passenger_app/src/Features/Activity/Presentation/Screens/ViewDetailsScreen.dart';
 import 'package:passenger_app/src/Features/Trip/Presentation/Screens/TrackDriverScreen.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class ActivityModule {
   ActivityModule._();

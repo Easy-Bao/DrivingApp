@@ -1,10 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/Features/Inbox/Domain/Entities/InboxNotification.dart';
-import 'package:passenger_app/src/Features/Inbox/Domain/Repositories/InboxRepository.dart';
+import 'package:passenger_app/src/Features/Inbox/Domain/Repositories/IInboxRepository.dart';
 import 'package:passenger_app/src/Features/Inbox/Presentation/Bloc/InboxState.dart';
 
 class InboxCubit extends Cubit<InboxState> {
-  final InboxRepository inboxRepository;
+  final IInboxRepository inboxRepository;
 
   InboxCubit({required this.inboxRepository})
     : super(const InboxInitialState());

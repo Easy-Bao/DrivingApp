@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'auth_credentials.g.dart';
-
-@JsonSerializable()
 class AuthCredentials extends Equatable {
   final String driverId;
   final String driverName;
@@ -21,10 +17,27 @@ class AuthCredentials extends Equatable {
     required this.rating,
   });
 
-  factory AuthCredentials.fromJson(Map<String, dynamic> json) =>
-      _$AuthCredentialsFromJson(json);
+  factory AuthCredentials.fromJson(Map<String, dynamic> json) {
+    return AuthCredentials(
+      driverId: json['driverId'] as String? ?? json['id'] as String? ?? '',
+      driverName: json['driverName'] as String? ?? json['name'] as String? ?? '',
+      driverEmail: json['driverEmail'] as String? ?? json['email'] as String? ?? '',
+      vehicleType: json['vehicleType'] as String? ?? 'Bao Bao',
+      plateNumber: json['plateNumber'] as String? ?? 'ABC 1234',
+      rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$AuthCredentialsToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'driverId': driverId,
+      'driverName': driverName,
+      'driverEmail': driverEmail,
+      'vehicleType': vehicleType,
+      'plateNumber': plateNumber,
+      'rating': rating,
+    };
+  }
 
   @override
   List<Object?> get props => [
@@ -36,4 +49,3 @@ class AuthCredentials extends Equatable {
         rating,
       ];
 }
-

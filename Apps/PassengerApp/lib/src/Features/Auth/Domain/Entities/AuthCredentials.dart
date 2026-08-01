@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'auth_credentials.g.dart';
-
-@JsonSerializable()
 class AuthCredentials extends Equatable {
   final String passengerId;
   final String passengerName;
@@ -21,10 +17,27 @@ class AuthCredentials extends Equatable {
     this.needsVerification = false,
   });
 
-  factory AuthCredentials.fromJson(Map<String, dynamic> json) =>
-      _$AuthCredentialsFromJson(json);
+  factory AuthCredentials.fromJson(Map<String, dynamic> json) {
+    return AuthCredentials(
+      passengerId: json['passengerId'] as String? ?? json['id'] as String? ?? '',
+      passengerName: json['passengerName'] as String? ?? json['name'] as String? ?? '',
+      passengerEmail: json['passengerEmail'] as String? ?? json['email'] as String? ?? '',
+      passengerPhone: json['passengerPhone'] as String? ?? json['phone'] as String? ?? '',
+      token: json['token'] as String? ?? '',
+      needsVerification: json['needsVerification'] as bool? ?? false,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$AuthCredentialsToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'passengerId': passengerId,
+      'passengerName': passengerName,
+      'passengerEmail': passengerEmail,
+      'passengerPhone': passengerPhone,
+      'token': token,
+      'needsVerification': needsVerification,
+    };
+  }
 
   @override
   List<Object?> get props => [
@@ -36,4 +49,3 @@ class AuthCredentials extends Equatable {
         needsVerification,
       ];
 }
-

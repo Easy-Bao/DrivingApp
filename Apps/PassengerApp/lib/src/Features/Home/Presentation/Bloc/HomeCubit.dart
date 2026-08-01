@@ -1,16 +1,17 @@
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
+import 'package:passenger_app/src/Features/Home/Domain/Repositories/IPassengerHomeRepository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/Features/Home/Presentation/Bloc/HomeState.dart';
 
 class HomeCubit extends Cubit<HomeState> {
-  final PassengerHomeRepository _repository;
+  final IPassengerHomeRepository _repository;
   double? _lastLat;
   double? _lastLng;
 
-  HomeCubit({required PassengerHomeRepository repository})
+  HomeCubit({required IPassengerHomeRepository repository})
     : _repository = repository,
       super(const HomeState());
 

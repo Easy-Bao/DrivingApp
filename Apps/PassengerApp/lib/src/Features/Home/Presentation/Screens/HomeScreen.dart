@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
+import 'package:location_service/LocationService.dart';
 import 'package:passenger_app/src/Features/Activity/ActivityRoutes.dart';
 import 'package:passenger_app/src/Features/Home/HomeRoutes.dart';
 import 'package:passenger_app/src/Features/Home/Presentation/Bloc/HomeCubit.dart';
@@ -16,7 +16,7 @@ import 'package:passenger_app/src/Features/SavedPlaces/Presentation/Bloc/SavedPl
 import 'package:passenger_app/src/Features/SavedPlaces/Presentation/Screens/SavedPlaceScreen.dart';
 import 'package:passenger_app/src/Features/Trip/TripRoutes.dart';
 
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,9 +28,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _locationSubscription;
 
-  StreamSubscription? _bidSessionStatusSubscription;
-  StreamSubscription? _bidSessionMatchSubscription;
-  late BidSessionService _bidSessionService;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,13 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                if (_bidSessionService.isActive)
-                  Positioned(
-                    left: 20,
-                    right: 20,
-                    bottom: 16,
-                    child: _buildBackgroundSearchingBanner(),
-                  ),
               ],
             ),
           ),
@@ -79,12 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_locationSubscription != null) {
       unawaited(_locationSubscription!.cancel());
     }
-    if (_bidSessionStatusSubscription != null) {
-      unawaited(_bidSessionStatusSubscription!.cancel());
-    }
-    if (_bidSessionMatchSubscription != null) {
-      unawaited(_bidSessionMatchSubscription!.cancel());
-    }
     super.dispose();
   }
 
@@ -92,112 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    _bidSessionService = Modular.get<BidSessionService>();
-    _bidSessionService.setForeground(false);
-
-    _bidSessionStatusSubscription = _bidSessionService.statusStream.listen((_) {
-      if (mounted) {
-        setState(() {});
-      }
-    });
-
-    _bidSessionMatchSubscription = _bidSessionService.driverFoundStream.listen((
-      driverMatchResult,
-    ) {
-      if (mounted) {
-        CustomToast.show(context, 'Driver Found! Matching you now.');
-        context.pushReplacementNamed(
-          'DriverMatched',
-          extra: driverMatchResult.toNavigationExtra(),
-        );
-      }
-    });
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
     });
-  }
-
-  Widget _buildBackgroundSearchingBanner() {
-    final activeTrip = _bidSessionService.trip;
-    return GestureDetector(
-      onTap: () {
-        if (activeTrip != null) {
-          unawaited(
-            context.pushNamed(
-              TripRoutes.findingDriver,
-              extra: {
-                'rideType': activeTrip.rideType,
-                'fare': activeTrip.fare,
-                'destination': activeTrip.destination,
-                'distance': activeTrip.distance,
-                'duration': activeTrip.duration,
-                'pickupAddress': activeTrip.pickupAddress,
-              },
-            ),
-          );
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Searching for drivers...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    activeTrip?.destination.name ?? 'Destination',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 12,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    maxLines: 1,
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              LucideIcons.chevron_right,
-              color: Colors.white,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildChipRow() {

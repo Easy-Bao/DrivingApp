@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:equatable/equatable.dart';
 
 class BidSessionTrip extends Equatable {

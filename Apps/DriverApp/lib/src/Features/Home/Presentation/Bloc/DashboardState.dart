@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:driver_app/src/Features/Home/Data/Models/HeatmapCellModel.dart';
 import 'package:equatable/equatable.dart';
 
 class DashboardState extends Equatable {

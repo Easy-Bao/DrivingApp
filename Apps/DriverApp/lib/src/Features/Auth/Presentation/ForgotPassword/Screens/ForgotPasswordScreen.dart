@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -44,7 +44,7 @@ class _ForgotPasswordScreenContentState
     }
 
     BlocProvider.of<ForgotPasswordBloc>(context).add(
-      ForgotPasswordEvent.submitted(email: email),
+      ForgotPasswordSubmitted(email: email),
     );
   }
 
@@ -66,29 +66,20 @@ class _ForgotPasswordScreenContentState
       body: SafeArea(
         child: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
           listener: (context, state) {
-            state.maybeWhen(
-              success: () {
-                CustomToast.show(
-                  context,
-                  'Reset link sent to ${_emailController.text.trim()}',
-                );
-                context.pop();
-              },
-              failure: (message) {
-                CustomToast.show(context, message);
-              },
-              orElse: () {},
-            );
+            if (state is ForgotPasswordSuccess) {
+              CustomToast.show(
+                context,
+                'Reset link sent to ${_emailController.text.trim()}',
+              );
+              context.pop();
+            } else if (state is ForgotPasswordFailure) {
+              CustomToast.show(context, state.errorMessage);
+            }
           },
           builder: (context, state) {
-            final isLoading = state.maybeWhen(
-              loading: () => true,
-              orElse: () => false,
-            );
-            final errorMessage = state.maybeWhen(
-              failure: (message) => message,
-              orElse: () => null,
-            );
+            final isLoading = state is ForgotPasswordLoading;
+            final errorMessage =
+                state is ForgotPasswordFailure ? state.errorMessage : null;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),

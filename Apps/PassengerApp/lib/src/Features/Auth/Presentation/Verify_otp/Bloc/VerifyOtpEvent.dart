@@ -1,16 +1,36 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 
-part 'generated/verify_otp_event.freezed.dart';
+sealed class VerifyOtpEvent extends Equatable {
+  const VerifyOtpEvent();
 
-@freezed
-sealed class VerifyOtpEvent with _$VerifyOtpEvent {
-  const factory VerifyOtpEvent.timerStarted() = VerifyOtpTimerStarted;
-  const factory VerifyOtpEvent.timerTicked({
-    required int secondsRemaining,
-  }) = VerifyOtpTimerTicked;
-  const factory VerifyOtpEvent.submitted({
-    required String email,
-    required String code,
-    @Default('') String password,
-  }) = VerifyOtpSubmitted;
+  @override
+  List<Object?> get props => [];
+}
+
+class VerifyOtpTimerStarted extends VerifyOtpEvent {
+  const VerifyOtpTimerStarted();
+}
+
+class VerifyOtpTimerTicked extends VerifyOtpEvent {
+  final int secondsRemaining;
+
+  const VerifyOtpTimerTicked({required this.secondsRemaining});
+
+  @override
+  List<Object?> get props => [secondsRemaining];
+}
+
+class VerifyOtpSubmitted extends VerifyOtpEvent {
+  final String email;
+  final String code;
+  final String password;
+
+  const VerifyOtpSubmitted({
+    required this.email,
+    required this.code,
+    this.password = '',
+  });
+
+  @override
+  List<Object?> get props => [email, code, password];
 }

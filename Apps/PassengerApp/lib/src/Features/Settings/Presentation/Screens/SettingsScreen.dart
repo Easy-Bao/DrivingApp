@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/Features/Settings/Data/Repositories/SettingsRepositoryImpl.dart';
+import 'package:passenger_app/src/Features/Settings/Data/Repositories/SettingsRepository.dart';
 import 'package:passenger_app/src/Features/Settings/Presentation/Bloc/SettingsCubit.dart';
 import 'package:passenger_app/src/Features/Settings/Presentation/Bloc/SettingsState.dart';
 import 'package:passenger_app/src/Features/Settings/Presentation/Widgets/SettingsItemTileWidget.dart';
 import 'package:passenger_app/src/Features/Settings/Presentation/Widgets/SettingsThemeSelectorWidget.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,8 +25,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _settingsCubit = SettingsCubit(
-      settingsRepository: SettingsRepositoryImpl(),
+      settingsRepository: SettingsRepository(),
     );
+
     unawaited(_settingsCubit.loadSettings());
   }
 

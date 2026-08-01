@@ -1,8 +1,9 @@
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/Core/Services/SecureSessionService.dart';
 import 'package:passenger_app/src/Features/Auth/AuthRoutes.dart';
 import 'package:passenger_app/src/Features/Auth/Data/DataSources/AuthRemoteDataSource.dart';
-import 'package:passenger_app/src/Features/Auth/Data/Repositories/AuthRepositoryImpl.dart';
-import 'package:passenger_app/src/Features/Auth/Domain/Repositories/AuthRepository.dart';
+import 'package:passenger_app/src/Features/Auth/Data/Repositories/AuthRepository.dart';
+import 'package:passenger_app/src/Features/Auth/Domain/Repositories/IAuthRepository.dart';
 import 'package:passenger_app/src/Features/Auth/Domain/Usecases/ConfirmResetPasswordUseCase.dart';
 import 'package:passenger_app/src/Features/Auth/Domain/Usecases/RegisterUseCase.dart';
 import 'package:passenger_app/src/Features/Auth/Domain/Usecases/ResetPasswordUseCase.dart';
@@ -19,36 +20,31 @@ import 'package:passenger_app/src/Features/Auth/Presentation/Signup/Bloc/SignUpB
 import 'package:passenger_app/src/Features/Auth/Presentation/Signup/Screens/SignUpScreen.dart';
 import 'package:passenger_app/src/Features/Auth/Presentation/Verify_otp/Bloc/VerifyOtpBloc.dart';
 import 'package:passenger_app/src/Features/Auth/Presentation/Verify_otp/Screens/VerifyOtpScreen.dart';
- as ps;
-
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class AuthModule extends Module {
   @override
   void binds(Injector i) {
-    i.addLazySingleton<AuthRemoteDataSource>(
-      (i) => AuthRemoteDataSourceImpl(i.get<ps.AuthRemoteDataSource>()),
-    );
-    i.addLazySingleton<AuthRepository>(
-      (i) => AuthRepositoryImpl(
+    i.addLazySingleton<IAuthRepository>(
+      (i) => AuthRepository(
         remoteDataSource: i.get<AuthRemoteDataSource>(),
         secureSessionService: i.get<SecureSessionService>(),
       ),
     );
     i.addLazySingleton<SignInUseCase>(
-      (i) => SignInUseCase(i.get<AuthRepository>()),
+      (i) => SignInUseCase(i.get<IAuthRepository>()),
     );
     i.addLazySingleton<RegisterUseCase>(
-      (i) => RegisterUseCase(i.get<AuthRepository>()),
+      (i) => RegisterUseCase(i.get<IAuthRepository>()),
     );
     i.addLazySingleton<VerifyOtpUseCase>(
-      (i) => VerifyOtpUseCase(i.get<AuthRepository>()),
+      (i) => VerifyOtpUseCase(i.get<IAuthRepository>()),
     );
     i.addLazySingleton<ResetPasswordUseCase>(
-      (i) => ResetPasswordUseCase(i.get<AuthRepository>()),
+      (i) => ResetPasswordUseCase(i.get<IAuthRepository>()),
     );
     i.addLazySingleton<ConfirmResetPasswordUseCase>(
-      (i) => ConfirmResetPasswordUseCase(i.get<AuthRepository>()),
+      (i) => ConfirmResetPasswordUseCase(i.get<IAuthRepository>()),
     );
     i.add<SignInBloc>(
       (i) => SignInBloc(i.get<SignInUseCase>()),

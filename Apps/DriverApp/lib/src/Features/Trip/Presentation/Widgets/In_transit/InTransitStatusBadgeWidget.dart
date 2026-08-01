@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class InTransitStatusBadgeWidget extends StatelessWidget {
   const InTransitStatusBadgeWidget({super.key});

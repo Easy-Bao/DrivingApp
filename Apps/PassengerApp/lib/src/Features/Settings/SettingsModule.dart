@@ -1,7 +1,7 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/Features/Settings/Presentation/Screens/SettingsScreen.dart';
 import 'package:passenger_app/src/Features/Settings/SettingsRoutes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class SettingsModule {
   SettingsModule._();

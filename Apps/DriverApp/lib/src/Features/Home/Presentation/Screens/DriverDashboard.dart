@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
+import 'package:core_models/CoreModels.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardCubit.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Bloc/DashboardState.dart';
 import 'package:driver_app/src/Features/Home/Presentation/Widgets/Driver_dashboard/DriverDashboardStatsRowWidget.dart';
@@ -8,16 +8,18 @@ import 'package:driver_app/src/Features/Profile/ProfileRoutes.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/LiveMap/LiveMapBloc.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/LiveMap/LiveMapEvent.dart';
 import 'package:driver_app/src/Features/Trip/Presentation/Bloc/RideFlow/RideFlowCubit.dart';
-import 'package:driver_app/src/Features/Trip/TripRoutes.dart';
-
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:location_service/LocationService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/Core/Services/SecureSessionService.dart';
 import 'package:driver_app/src/Features/Trip/Data/DataSources/BiddingRemoteDataSource.dart';
-import 'package:shared_ui/shared_ui.dart';
-
+import 'package:driver_app/src/Features/Trip/Data/DataSources/TripRemoteDataSource.dart';
+import 'package:driver_app/src/Features/Trip/TripRoutes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/SharedUi.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
   const DriverDashboardScreen({super.key});
@@ -85,9 +87,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       }
 
       try {
-        final driverProfile =
-            await Modular.get<DriverSessionService>().getProfile();
-        final driverId = driverProfile?.id ?? '';
+        final driverId =
+            await Modular.get<SecureSessionService>().readDriverId() ?? '';
         if (driverId.isEmpty) return;
 
         final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(driverId);
@@ -181,12 +182,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       return;
     }
 
-    final driverProfile =
-        await Modular.get<DriverSessionService>().getProfile();
-    final driverId = driverProfile?.id ?? '';
-    final driverName = driverProfile?.name ?? 'Driver';
-    final vehicleType = driverProfile?.vehicleType ?? 'Bao Bao';
-    final plateNumber = driverProfile?.plateNumber ?? 'ABC 1234';
+    ///TODO: Will remove hardcoded fallback
+    final driverId =
+        await Modular.get<SecureSessionService>().readDriverId() ?? '';
+    final prefs = await SharedPreferences.getInstance();
+    final driverName = prefs.getString('driver_name') ?? 'Driver';
+    final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
+    final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
 
     final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: bid['id'],
@@ -194,6 +196,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       driverName: driverName,
       plateNumber: plateNumber,
       vehicleType: vehicleType,
+      offerPrice: SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']),
       proposedFare: SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']),
     );
 
@@ -225,6 +228,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       destLng: SafeParse.toDouble(trip['dropoff_longitude']),
     );
 
+    ///TODO: Remove hardcoded data below when modular routing is implemented properly
     context.pushNamed(
       routeName,
       extra: {

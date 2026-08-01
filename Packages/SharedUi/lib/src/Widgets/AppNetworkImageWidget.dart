@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_ui/src/Themes/AppThemes.dart';
+import 'package:shared_ui/src/Themes/AppTheme.dart';
 
 class AppNetworkImageWidget extends StatelessWidget {
   final String? imageUrl;
