@@ -15,4 +15,5 @@ gatewayRouter.all('/telemetry/*',  (context) => handleProxy(context, SERVICE_REG
 gatewayRouter.all('/bids/*',       (context) => handleProxy(context, SERVICE_REGISTRY.bidding));
 gatewayRouter.all('/chat/*',       (context) => handleProxy(context, SERVICE_REGISTRY.chat));
 gatewayRouter.all('/fares/*',      (context) => handleProxy(context, SERVICE_REGISTRY.fares));
+gatewayRouter.all('/admin/*',      (context) => handleProxy(context, SERVICE_REGISTRY.admin));
 gatewayRouter.all('/places/*',     (context) => handleProxy(context, SERVICE_REGISTRY.location));

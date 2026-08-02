@@ -9,8 +9,10 @@ export async function handleProxy(context: Context, targetBaseUrl: string): Prom
   const clientIpAddress =
     context.req.header('x-forwarded-for') ||
     context.req.header('x-real-ip');
-  forwardedHeaders.set('x-forwarded-for', clientIpAddress);
-  forwardedHeaders.set('x-real-ip', clientIpAddress);
+  if (clientIpAddress) {
+    forwardedHeaders.set('x-forwarded-for', clientIpAddress);
+    forwardedHeaders.set('x-real-ip', clientIpAddress);
+  }
 
   const requestBody =
     context.req.method === 'GET' || context.req.method === 'HEAD'
@@ -27,7 +29,7 @@ export async function handleProxy(context: Context, targetBaseUrl: string): Prom
       status: upstreamResponse.status,
       headers: upstreamResponse.headers,
     });
-  } catch (err: any) {
-    return context.json({ error: 'Service Unavailable', details: err.message }, 502);
+  } catch {
+    return context.json({ error: 'Service Unavailable' }, 502);
   }
 }
