@@ -17,6 +17,8 @@ readonly bun_service_directories=(
 
 cd "${repository_root}"
 
+./scripts/database/apply_service_schemas.sh
+
 for service_directory in "${bun_service_directories[@]}"; do
   echo "Testing ${service_directory}"
   (
