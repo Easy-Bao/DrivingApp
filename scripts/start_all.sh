@@ -7,6 +7,7 @@ readonly repository_root="$(cd "${script_directory}/.." && pwd)"
 readonly readiness_timeout_seconds="${READINESS_TIMEOUT_SECONDS:-30}"
 readonly local_database_url="$(awk -F= '$1 == "DATABASE_URL" { print substr($0, index($0, "=") + 1); exit }' "${repository_root}/.env")"
 readonly local_mapbox_token="$(awk -F= '$1 == "MAPBOX_PUBLIC_TOKEN" { print substr($0, index($0, "=") + 1); exit }' "${repository_root}/.env")"
+local_admin_jwt_secret="${ADMIN_JWT_SECRET:-}"
 
 service_pids=()
 service_names=()
@@ -131,6 +132,7 @@ trap 'handle_signal 143' TERM
 require_command bun
 require_command curl
 require_command go
+require_command openssl
 assert_valid_timeout
 
 if [[ -z "${local_database_url}" ]]; then
@@ -138,11 +140,31 @@ if [[ -z "${local_database_url}" ]]; then
   exit 1
 fi
 
-for port in {8080..8089}; do
+if [[ -z "${local_admin_jwt_secret}" ]]; then
+  local_admin_jwt_secret="$(openssl rand -hex 32)"
+fi
+
+for port in {8080..8090}; do
   assert_port_available "${port}"
 done
 
-start_service api-gateway server/api-gateway bun run dev
+start_service admin-service server/admin-service \
+  env DATABASE_URL="${local_database_url%/*}/admin_db" \
+  ADMIN_JWT_SECRET="${local_admin_jwt_secret}" \
+  PORT=8090 \
+  bun run dev
+start_service api-gateway server/api-gateway \
+  env AUTH_SERVICE_URL=http://127.0.0.1:8088 \
+  PASSENGER_SERVICE_URL=http://127.0.0.1:8081 \
+  DRIVER_SERVICE_URL=http://127.0.0.1:8082 \
+  TRIP_SERVICE_URL=http://127.0.0.1:8083 \
+  BIDDING_SERVICE_URL=http://127.0.0.1:8084 \
+  TELEMETRY_SERVICE_URL=http://127.0.0.1:8085 \
+  CHAT_SERVICE_URL=http://127.0.0.1:8086 \
+  FARE_SERVICE_URL=http://127.0.0.1:8087 \
+  ADMIN_SERVICE_URL=http://127.0.0.1:8090 \
+  LOCATION_SERVICE_URL=http://127.0.0.1:8089 \
+  bun run dev
 start_service auth-service server/auth-service \
   env DATABASE_URL="${local_database_url}" \
   PASSENGER_DB_URL="${local_database_url}" \

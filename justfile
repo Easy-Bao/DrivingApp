@@ -53,7 +53,7 @@ db-down:
 
 # Start shared local infrastructure and wait for its health checks
 infra-up:
-    docker compose up -d --wait --wait-timeout 60 postgres-db redis rabbitmq
+    ADMIN_JWT_SECRET="$$(openssl rand -hex 32)" docker compose up -d --wait --wait-timeout 60 postgres-db redis rabbitmq
 
 # Idempotently initialize databases and tables required by local authentication
 db-migrate: infra-up
