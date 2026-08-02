@@ -4,6 +4,7 @@ set -Eeuo pipefail
 
 readonly repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly bun_service_directories=(
+  "server/admin-service"
   "server/api-gateway"
   "server/auth-service"
   "server/bidding-service"

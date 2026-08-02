@@ -29,7 +29,7 @@ export async function handleProxy(context: Context, targetBaseUrl: string): Prom
       status: upstreamResponse.status,
       headers: upstreamResponse.headers,
     });
-  } catch (err: any) {
-    return context.json({ error: 'Service Unavailable', details: err.message }, 502);
+  } catch {
+    return context.json({ error: 'Service Unavailable' }, 502);
   }
 }

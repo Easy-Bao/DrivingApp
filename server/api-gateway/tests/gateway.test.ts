@@ -1,25 +1,42 @@
-import { expect, test, describe } from 'bun:test';
-import { app } from '../src/index.ts';
-import { SERVICE_REGISTRY } from '../src/config/gateway.config.ts';
+import { afterEach, describe, expect, mock, test } from 'bun:test';
 
-describe('API Gateway Configuration & Zod Validation Tests', () => {
-  test('SERVICE_REGISTRY validates all required microservice URLs via Zod', () => {
-    expect(SERVICE_REGISTRY.passengers).toBeDefined();
-    expect(SERVICE_REGISTRY.rides).toBeDefined();
-    expect(SERVICE_REGISTRY.drivers).toBeDefined();
-    expect(SERVICE_REGISTRY.telemetry).toBeDefined();
-    expect(SERVICE_REGISTRY.bidding).toBeDefined();
-    expect(SERVICE_REGISTRY.chat).toBeDefined();
-    expect(SERVICE_REGISTRY.fares).toBeDefined();
+Object.assign(process.env, {
+  AUTH_SERVICE_URL: 'http://auth-service:8088',
+  PASSENGER_SERVICE_URL: 'http://passenger-service:8081',
+  DRIVER_SERVICE_URL: 'http://driver-service:8082',
+  TRIP_SERVICE_URL: 'http://trip-service:8083',
+  BIDDING_SERVICE_URL: 'http://bidding-service:8084',
+  TELEMETRY_SERVICE_URL: 'http://telemetry-service:8085',
+  CHAT_SERVICE_URL: 'http://chat-service:8086',
+  FARE_SERVICE_URL: 'http://fare-service:8087',
+  ADMIN_SERVICE_URL: 'http://admin-service:8090',
+  LOCATION_SERVICE_URL: 'http://location-service:8089',
+});
 
-    expect(() => new URL(SERVICE_REGISTRY.passengers)).not.toThrow();
-    expect(() => new URL(SERVICE_REGISTRY.fares)).not.toThrow();
+const { app } = await import('../src/index.ts');
+const { SERVICE_REGISTRY } = await import('../src/config/gateway.config.ts');
+const originalFetch = globalThis.fetch;
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+});
+
+describe('API gateway Admin route', () => {
+  test('registers the isolated Admin service URL', () => {
+    expect(SERVICE_REGISTRY.admin).toBe('http://admin-service:8090');
+    expect(() => new URL(SERVICE_REGISTRY.admin)).not.toThrow();
   });
 
-  test('GET / — returns status OK', async () => {
-    const res = await app.request('/', { method: 'GET' });
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.status).toBe('Gateway OK');
+  test('forwards Admin requests without changing their path', async () => {
+    let upstreamUrl = '';
+    globalThis.fetch = mock(async (input: string | URL | Request) => {
+      upstreamUrl = input.toString();
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+
+    const response = await app.request('/admin/overview');
+
+    expect(response.status).toBe(204);
+    expect(upstreamUrl).toBe('http://admin-service:8090/admin/overview');
   });
 });

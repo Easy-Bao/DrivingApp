@@ -18,6 +18,62 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  change_scope:
+    name: Detect Changed Areas
+    runs-on: ubuntu-latest
+    outputs:
+      mobile: ${{ steps.scope.outputs.mobile }}
+      backend: ${{ steps.scope.outputs.backend }}
+      admin_backend: ${{ steps.scope.outputs.admin_backend }}
+      admin_web: ${{ steps.scope.outputs.admin_web }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed paths
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          mobile=false
+          backend=false
+          admin_backend=false
+          admin_web=false
+
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            mobile=true
+            backend=true
+            admin_backend=true
+            admin_web=true
+          else
+            while IFS= read -r file; do
+              case "${file}" in
+                apps/*|packages/*|pubspec.yaml|melos.yaml|analysis_options.yaml)
+                  mobile=true
+                  ;;
+                server/admin-service/*|server/api-gateway/*|server/database/init/*|web/admin_app/Dockerfile|docker-compose.yml|.env.example|scripts/ci/*|scripts/database/*|.github/workflows/ci.yml)
+                  admin_backend=true
+                  ;;
+                server/*)
+                  backend=true
+                  ;;
+                web/admin_app/*)
+                  admin_web=true
+                  ;;
+              esac
+            done < <(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")
+          fi
+
+          echo "mobile=${mobile}" >> "${GITHUB_OUTPUT}"
+          echo "backend=${backend}" >> "${GITHUB_OUTPUT}"
+          echo "admin_backend=${admin_backend}" >> "${GITHUB_OUTPUT}"
+          echo "admin_web=${admin_web}" >> "${GITHUB_OUTPUT}"
+
   repository-integrity:
     name: Repository Integrity
     runs-on: ubuntu-latest
@@ -35,6 +91,8 @@ jobs:
 
   mobile-quality-gate:
     name: Mobile Quality Gate
+    needs: change_scope
+    if: needs.change_scope.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -68,6 +126,8 @@ jobs:
 
   backend-quality-gate:
     name: Backend Quality Gate
+    needs: change_scope
+    if: needs.change_scope.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -113,6 +173,91 @@ jobs:
       - name: Stop backend test infrastructure
         if: always()
         run: docker compose down --volumes
+
+  admin_backend_quality_gate:
+    name: Admin Backend Quality Gate
+    needs: change_scope
+    if: needs.change_scope.outputs.admin_backend == 'true'
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_USER: driveapp
+      POSTGRES_PASSWORD: driveapp_ci_password
+      POSTGRES_DB: driveapp
+      JWT_SECRET: ci_jwt_secret_for_existing_services
+      ADMIN_JWT_SECRET: ci_admin_jwt_secret_for_automated_tests
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      SMTP_USER: ci@example.test
+      SMTP_PASS: ci_password
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Admin and gateway dependencies
+        run: |
+          (cd server/admin-service && bun install --frozen-lockfile)
+          (cd server/api-gateway && bun install --frozen-lockfile)
+
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
+
+      - name: Start Admin database
+        run: docker compose up -d --wait --wait-timeout 90 postgres-db
+
+      - name: Migrate and verify Admin service
+        working-directory: server/admin-service
+        env:
+          DATABASE_URL: postgresql://driveapp:driveapp_ci_password@127.0.0.1:5432/admin_db
+        run: |
+          bun run db:migrate
+          bun run db:check
+          bun run typecheck
+          bun test
+          RUN_DB_INTEGRATION_TESTS=1 bun test tests/integration/auth.http.test.ts
+
+      - name: Verify gateway
+        working-directory: server/api-gateway
+        run: |
+          bun x tsc --noEmit
+          bun test
+
+      - name: Stop Admin test infrastructure
+        if: always()
+        run: docker compose down --volumes
+
+  admin_web_quality_gate:
+    name: Admin Web Quality Gate
+    needs: change_scope
+    if: needs.change_scope.outputs.admin_web == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web/admin_app
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check Admin web
+        run: bun run check
+
+      - name: Test Admin web
+        run: bun run test
+
+      - name: Build Admin web
+        run: bun run build
 
   dependency-review:
     name: Dependency Security Review
