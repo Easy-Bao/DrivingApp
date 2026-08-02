@@ -1,7 +1,22 @@
-CREATE TYPE "public"."audit_outcome" AS ENUM('succeeded', 'failed');--> statement-breakpoint
-CREATE TYPE "public"."case_status" AS ENUM('open', 'under_review', 'resolved', 'dismissed');--> statement-breakpoint
-CREATE TYPE "public"."case_target_type" AS ENUM('ride', 'driver', 'passenger');--> statement-breakpoint
-CREATE TABLE "admin_audit_events" (
+DO $$ BEGIN
+	CREATE TYPE "public"."audit_outcome" AS ENUM('succeeded', 'failed');
+EXCEPTION
+	WHEN duplicate_object THEN NULL;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+	CREATE TYPE "public"."case_status" AS ENUM('open', 'under_review', 'resolved', 'dismissed');
+EXCEPTION
+	WHEN duplicate_object THEN NULL;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+	CREATE TYPE "public"."case_target_type" AS ENUM('ride', 'driver', 'passenger');
+EXCEPTION
+	WHEN duplicate_object THEN NULL;
+END $$;
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "admin_audit_events" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"actor_admin_id" text NOT NULL,
 	"action" text NOT NULL,
@@ -15,7 +30,7 @@ CREATE TABLE "admin_audit_events" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "admin_mutation_results" (
+CREATE TABLE IF NOT EXISTS "admin_mutation_results" (
 	"request_id" text PRIMARY KEY NOT NULL,
 	"action" text NOT NULL,
 	"target_type" text NOT NULL,
@@ -25,7 +40,7 @@ CREATE TABLE "admin_mutation_results" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "admin_owners" (
+CREATE TABLE IF NOT EXISTS "admin_owners" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" text NOT NULL,
 	"password_hash" text NOT NULL,
@@ -35,7 +50,7 @@ CREATE TABLE "admin_owners" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "complaint_cases" (
+CREATE TABLE IF NOT EXISTS "complaint_cases" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"target_type" "case_target_type" NOT NULL,
 	"target_id" text NOT NULL,
@@ -50,6 +65,55 @@ CREATE TABLE "complaint_cases" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX "admin_audit_events_request_id_idx" ON "admin_audit_events" USING btree ("request_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "admin_owners_email_unique" ON "admin_owners" USING btree ("email");--> statement-breakpoint
-CREATE INDEX "complaint_cases_status_created_at_idx" ON "complaint_cases" USING btree ("status","created_at");
+DO $$ BEGIN
+	IF EXISTS (
+		SELECT 1
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+			AND table_name = 'admin_audit_events'
+			AND column_name = 'outcome'
+			AND udt_name = 'text'
+	) THEN
+		ALTER TABLE "admin_audit_events"
+			ALTER COLUMN "outcome" TYPE "audit_outcome"
+			USING "outcome"::"audit_outcome";
+	END IF;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+	IF EXISTS (
+		SELECT 1
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+			AND table_name = 'complaint_cases'
+			AND column_name = 'target_type'
+			AND udt_name = 'text'
+	) THEN
+		ALTER TABLE "complaint_cases"
+			ALTER COLUMN "target_type" TYPE "case_target_type"
+			USING "target_type"::"case_target_type";
+	END IF;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+	IF EXISTS (
+		SELECT 1
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+			AND table_name = 'complaint_cases'
+			AND column_name = 'status'
+			AND udt_name = 'text'
+	) THEN
+		ALTER TABLE "complaint_cases" ALTER COLUMN "status" DROP DEFAULT;
+		ALTER TABLE "complaint_cases"
+			ALTER COLUMN "status" TYPE "case_status"
+			USING "status"::"case_status";
+		ALTER TABLE "complaint_cases" ALTER COLUMN "status" SET DEFAULT 'open';
+	END IF;
+END $$;
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "admin_audit_events_request_id_idx" ON "admin_audit_events" USING btree ("request_id");
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "admin_owners_email_unique" ON "admin_owners" USING btree ("email");
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "complaint_cases_status_created_at_idx" ON "complaint_cases" USING btree ("status","created_at");
