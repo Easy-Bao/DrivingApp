@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"location-service/internal/adapter/postgres"
+	"location-service/internal/adapter/mapbox"
 	"location-service/internal/adapter/queue"
 	"location-service/internal/adapter/redis"
 	httptransport "location-service/internal/transport/http"
@@ -20,16 +20,19 @@ func main() {
 		port = "8089"
 	}
 
-	dbURL := os.Getenv("DATABASE_URL")
 	redisURL := os.Getenv("REDIS_URL")
 	amqpURL := os.Getenv("RABBITMQ_URL")
+	mapboxToken := os.Getenv("MAPBOX_ACCESS_TOKEN")
+	if mapboxToken == "" {
+		mapboxToken = os.Getenv("MAPBOX_PUBLIC_TOKEN")
+	}
 
-	postgresAdapter := postgres.NewPostgresAdapter(dbURL)
+	mapboxAdapter := mapbox.NewMapboxAdapter(mapboxToken)
 	redisAdapter := redis.NewRedisAdapter(redisURL)
 	queueAdapter := queue.NewRabbitMQAdapter(amqpURL)
 
 	locationUseCase := usecase.NewLocationUseCase(
-		postgresAdapter,
+		mapboxAdapter,
 		redisAdapter,
 		queueAdapter,
 	)

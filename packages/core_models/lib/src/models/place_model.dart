@@ -26,6 +26,7 @@ class PlaceModel extends Equatable {
       fullAddress:
           json['fullAddress'] as String? ??
           json['full_address'] as String? ??
+          json['address'] as String? ??
           '',
       latitude: (json['latitude'] as num? ?? json['lat'] as num? ?? 0.0)
           .toDouble(),

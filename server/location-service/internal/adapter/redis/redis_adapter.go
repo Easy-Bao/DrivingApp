@@ -51,7 +51,7 @@ func (r *redisAdapter) SetGeocodeCache(ctx context.Context, lat, lng float64, pl
 }
 
 func (r *redisAdapter) GetNearbyCache(ctx context.Context, lat, lng float64, page int) ([]domain.Place, error) {
-	key := fmt.Sprintf("nearby:%.3f:%.3f:%d", lat, lng, page)
+	key := fmt.Sprintf("nearby:v2:%.3f:%.3f:%d", lat, lng, page)
 	val, err := r.client.Get(ctx, key).Result()
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (r *redisAdapter) GetNearbyCache(ctx context.Context, lat, lng float64, pag
 }
 
 func (r *redisAdapter) SetNearbyCache(ctx context.Context, lat, lng float64, page int, places []domain.Place) error {
-	key := fmt.Sprintf("nearby:%.3f:%.3f:%d", lat, lng, page)
+	key := fmt.Sprintf("nearby:v2:%.3f:%.3f:%d", lat, lng, page)
 	data, err := json.Marshal(places)
 	if err != nil {
 		return err

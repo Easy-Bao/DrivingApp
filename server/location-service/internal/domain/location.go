@@ -25,14 +25,13 @@ type Place struct {
 }
 
 type Route struct {
-	OriginLat   float64   `json:"originLat"`
-	OriginLng   float64   `json:"originLng"`
-	DestLat     float64   `json:"destLat"`
-	DestLng     float64   `json:"destLng"`
-	DistanceKm  float64   `json:"distanceKm"`
-	DurationMin float64   `json:"durationMin"`
-	Polyline    string    `json:"polyline"`
-	Waypoints   [][]float64 `json:"waypoints"`
+	OriginLat      float64     `json:"originLat"`
+	OriginLng      float64     `json:"originLng"`
+	DestLat        float64     `json:"destLat"`
+	DestLng        float64     `json:"destLng"`
+	DistanceKm     float64     `json:"distanceKm"`
+	DurationMin    float64     `json:"durationMin"`
+	PolylinePoints [][]float64 `json:"polylinePoints"`
 }
 
 type LocationUpdateEvent struct {
