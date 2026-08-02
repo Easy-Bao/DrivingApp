@@ -1,4 +1,3 @@
-import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
@@ -6,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-
 import 'package:passenger_app/src/core/constants/env_config.dart';
+import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
-
 
 class MapPinScreen extends StatefulWidget {
   const MapPinScreen({super.key});
@@ -26,13 +24,21 @@ class _MapPinScreenState extends State<MapPinScreen>
   bool _isGeocoding = false;
   bool _hasUserPannedMap = false;
   Timer? _debounceTimer;
-  double? _centerLat = LocationService.lastPosition?.latitude ?? EnvConfig.defaultLatitude;
-  double? _centerLng = LocationService.lastPosition?.longitude ?? EnvConfig.defaultLongitude;
+  late final AnimationController _pinAnimationController;
+  double? _centerLat =
+      LocationService.lastPosition?.latitude ?? EnvConfig.defaultLatitude;
+  double? _centerLng =
+      LocationService.lastPosition?.longitude ?? EnvConfig.defaultLongitude;
   Widget? _cachedMapView;
 
   @override
   void initState() {
     super.initState();
+    _pinAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+      reverseDuration: const Duration(milliseconds: 220),
+    );
     unawaited(_reverseGeocode(_centerLat!, _centerLng!));
     unawaited(_initLocation());
   }
@@ -40,6 +46,7 @@ class _MapPinScreenState extends State<MapPinScreen>
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _pinAnimationController.dispose();
     super.dispose();
   }
 
@@ -83,6 +90,7 @@ class _MapPinScreenState extends State<MapPinScreen>
 
   void _onCameraChanged(AppMapController controller) {
     _hasUserPannedMap = true;
+    unawaited(_pinAnimationController.forward());
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 350), () async {
       if (!mounted || _mapController == null) return;
@@ -99,12 +107,12 @@ class _MapPinScreenState extends State<MapPinScreen>
       final parts = full.split(',');
       setState(() {
         _address = parts.first.trim();
-        _subAddress =
-            parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
+        _subAddress = parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
         _centerLat = lat;
         _centerLng = lng;
         _isGeocoding = false;
       });
+      unawaited(_pinAnimationController.reverse());
     }
   }
 
@@ -168,9 +176,7 @@ class _MapPinScreenState extends State<MapPinScreen>
           ),
         ),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: AppTheme.primaryColor,
-          ),
+          child: CircularProgressIndicator(color: AppTheme.primaryColor),
         ),
       );
     }
@@ -180,53 +186,67 @@ class _MapPinScreenState extends State<MapPinScreen>
         children: [
           _getMapView(),
           Center(
-            child: SizedBox(
-              width: 48,
-              height: 64,
-              child: Hero(
-                tag: 'map_pin_button',
-                child: FittedBox(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
+            child: AnimatedBuilder(
+              animation: _pinAnimationController,
+              builder: (context, child) {
+                final lift = Curves.easeOut.transform(
+                  _pinAnimationController.value,
+                );
+                return Transform.translate(
+                  offset: Offset(0, -10 * lift),
+                  child: child,
+                );
+              },
+              child: SizedBox(
+                width: 48,
+                height: 64,
+                child: Hero(
+                  tag: 'map_pin_button',
+                  child: FittedBox(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                LucideIcons.map_pin,
+                                color: Colors.white,
+                                size: 24,
                               ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              LucideIcons.map_pin,
-                              color: Colors.white,
-                              size: 24,
                             ),
                           ),
-                        ),
-                        Container(
-                          width: 3,
-                          height: 12,
-                          color: AppTheme.primaryColor,
-                        ),
-                        Container(
-                          width: 8,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(4),
+                          Container(
+                            width: 3,
+                            height: 12,
+                            color: AppTheme.primaryColor,
                           ),
-                        ),
-                      ],
+                          Container(
+                            width: 8,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -235,10 +255,7 @@ class _MapPinScreenState extends State<MapPinScreen>
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: SizedBox(
                 height: 52,
                 child: Row(
@@ -413,11 +430,7 @@ class _TopButton extends StatelessWidget {
           ],
         ),
         child: Center(
-          child: Icon(
-            icon,
-            color: AppTheme.primaryColor,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppTheme.primaryColor, size: 20),
         ),
       ),
     );
