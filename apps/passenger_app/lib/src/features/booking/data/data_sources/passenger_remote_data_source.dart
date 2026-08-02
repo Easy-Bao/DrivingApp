@@ -33,7 +33,7 @@ class PassengerRemoteDataSourceImpl implements PassengerRemoteDataSource {
   @override
   Future<List<dynamic>> fetchRideHistory(String passengerId) async {
     final response = await _dio.get<List<dynamic>>(
-      '/passengers/$passengerId/trips',
+      '/passengers/$passengerId/rides',
     );
     return response.data ?? [];
   }

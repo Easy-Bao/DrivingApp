@@ -71,9 +71,6 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
 
   void _onOtpChanged() {
     setState(() {});
-    if (_otpController.text.length == 6) {
-      _triggerVerify(_otpController.text);
-    }
   }
 
   void _triggerVerify(String code) {

@@ -5,6 +5,7 @@ set -Eeuo pipefail
 readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly repository_root="$(cd "${script_directory}/.." && pwd)"
 readonly readiness_timeout_seconds="${READINESS_TIMEOUT_SECONDS:-30}"
+readonly local_database_url="$(awk -F= '$1 == "DATABASE_URL" { print substr($0, index($0, "=") + 1); exit }' "${repository_root}/.env")"
 
 service_pids=()
 service_names=()
@@ -131,19 +132,28 @@ require_command curl
 require_command go
 assert_valid_timeout
 
+if [[ -z "${local_database_url}" ]]; then
+  echo "DATABASE_URL is required in the root .env for local services." >&2
+  exit 1
+fi
+
 for port in {8080..8089}; do
   assert_port_available "${port}"
 done
 
 start_service api-gateway server/api-gateway bun run dev
-start_service auth-service server/auth-service bun run dev
-start_service passenger-service server/passenger-service bun run dev
-start_service driver-service server/driver-service bun run dev
-start_service trip-service server/trip-service bun run dev
-start_service bidding-service server/bidding-service bun run dev
+start_service auth-service server/auth-service \
+  env DATABASE_URL="${local_database_url}" \
+  PASSENGER_DB_URL="${local_database_url}" \
+  DRIVER_DB_URL="${local_database_url}" \
+  bun run dev
+start_service passenger-service server/passenger-service env DATABASE_URL="${local_database_url}" bun run dev
+start_service driver-service server/driver-service env DATABASE_URL="${local_database_url}" bun run dev
+start_service trip-service server/trip-service env DATABASE_URL="${local_database_url}" bun run dev
+start_service bidding-service server/bidding-service env DATABASE_URL="${local_database_url}" bun run dev
 start_service telemetry-service server/telemetry-service bun run dev
-start_service chat-service server/chat-service bun run dev
-start_service fare-service server/fare-service bun run dev
+start_service chat-service server/chat-service env DATABASE_URL="${local_database_url}" bun run dev
+start_service fare-service server/fare-service env DATABASE_URL="${local_database_url}" bun run dev
 start_service location-service server/location-service \
   env REDIS_URL=redis://127.0.0.1:6379 \
   RABBITMQ_URL=amqp://guest:guest@127.0.0.1:5672/ \

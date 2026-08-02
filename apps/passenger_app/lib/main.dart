@@ -19,8 +19,12 @@ void main() async {
     placeServiceBaseUri: EnvConfig.placeServiceUri,
   );
   LocationService.initialize(nativeService);
+  final mapboxToken = EnvConfig.mapboxPublicToken;
+  if (mapboxToken == null) {
+    debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');
+  }
   await MapProvider.initialize(
-    token: EnvConfig.mapboxPublicToken,
+    token: mapboxToken,
     nativeService: nativeService,
   );
 

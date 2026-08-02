@@ -16,12 +16,14 @@ class MapProvider {
   static MapNativeService? _nativeService;
 
   static Future<void> initialize({
-    required String token,
+    String? token,
     required MapNativeService nativeService,
   }) async {
     if (_initialized) return;
     _nativeService = nativeService;
-    mapbox.MapboxOptions.setAccessToken(token);
+    if (token != null && token.isNotEmpty) {
+      mapbox.MapboxOptions.setAccessToken(token);
+    }
     _initialized = true;
   }
 
