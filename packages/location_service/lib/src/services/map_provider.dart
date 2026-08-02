@@ -211,7 +211,13 @@ class MapProvider {
     AppMapController controller,
     List<LatLng> points, {
     double padding = 80.0,
-  }) => MapCameraService.fitBounds(controller, points, padding: padding);
+    double? maxZoom,
+  }) => MapCameraService.fitBounds(
+    controller,
+    points,
+    padding: padding,
+    maxZoom: maxZoom,
+  );
 
   static Future<void> zoomIn(AppMapController controller) =>
       MapCameraService.zoomIn(controller);

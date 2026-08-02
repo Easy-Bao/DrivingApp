@@ -134,10 +134,19 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
           color: AppTheme.primaryColor,
           width: 5.0,
         );
-        await MapProvider.fitBounds(_mapController!, [
-          LatLng(pickupLat, pickupLng),
-          LatLng(destLat, destLng),
-        ], padding: 80.0);
+        final routePoints = route.polylinePoints
+            .where((point) => point.length >= 2)
+            .map((point) => LatLng(point[1], point[0]));
+        await MapProvider.fitBounds(
+          _mapController!,
+          [
+            LatLng(pickupLat, pickupLng),
+            LatLng(destLat, destLng),
+            ...routePoints,
+          ],
+          padding: 80.0,
+          maxZoom: 14.5,
+        );
       }
     } catch (error) {
       debugPrint('Error drawing route preview: $error');

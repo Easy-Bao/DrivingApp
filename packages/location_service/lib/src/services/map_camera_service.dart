@@ -72,6 +72,7 @@ class MapCameraService {
     AppMapController controller,
     List<LatLng> points, {
     double padding = 80.0,
+    double? maxZoom,
   }) async {
     if (points.isEmpty) return;
 
@@ -109,6 +110,21 @@ class MapCameraService {
       null,
     );
 
-    await mapCtrl.flyTo(camera, mapbox.MapAnimationOptions(duration: 1000));
+    final zoom = camera.zoom;
+    final cameraToShow = maxZoom != null && zoom != null && zoom > maxZoom
+        ? mapbox.CameraOptions(
+            center: camera.center,
+            padding: camera.padding,
+            anchor: camera.anchor,
+            zoom: maxZoom,
+            bearing: camera.bearing,
+            pitch: camera.pitch,
+          )
+        : camera;
+
+    await mapCtrl.flyTo(
+      cameraToShow,
+      mapbox.MapAnimationOptions(duration: 1000),
+    );
   }
 }

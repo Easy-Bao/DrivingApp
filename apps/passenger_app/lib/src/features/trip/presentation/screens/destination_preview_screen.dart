@@ -102,10 +102,19 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
           color: AppTheme.primaryColor,
           width: 5.0,
         );
-        await MapProvider.fitBounds(_mapController!, [
-          LatLng(_userLat!, _userLng!),
-          LatLng(widget.destination.latitude, widget.destination.longitude),
-        ], padding: 80.0);
+        final routePoints = route.polylinePoints
+            .where((point) => point.length >= 2)
+            .map((point) => LatLng(point[1], point[0]));
+        await MapProvider.fitBounds(
+          _mapController!,
+          [
+            LatLng(_userLat!, _userLng!),
+            LatLng(widget.destination.latitude, widget.destination.longitude),
+            ...routePoints,
+          ],
+          padding: 80.0,
+          maxZoom: 14.5,
+        );
       }
     }
   }
