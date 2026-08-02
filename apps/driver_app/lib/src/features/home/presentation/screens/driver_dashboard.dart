@@ -183,13 +183,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       return;
     }
 
-    ///TODO: Will remove hardcoded fallback
     final driverId =
         await Modular.get<SecureSessionService>().readDriverId() ?? '';
     final prefs = await SharedPreferences.getInstance();
-    final driverName = prefs.getString('driver_name') ?? 'Driver';
-    final vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
-    final plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
+    final driverName = prefs.getString('driver_name') ?? '';
+    final vehicleType = prefs.getString('vehicle_type') ?? '';
+    final plateNumber = prefs.getString('plate_number') ?? '';
 
     final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: bid['id'],

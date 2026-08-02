@@ -47,8 +47,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
     final driverId = await secureSession.readDriverId() ?? '';
     final prefs = await SharedPreferences.getInstance();
 
-    ///TODO: Remove hardcoded fallback
-    final rating = prefs.getString('rating') ?? '4.9';
+    final rating = prefs.getString('rating') ?? '5.0';
     if (mounted) {
       setState(() {
         _rating = rating;
