@@ -1,18 +1,44 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 
-part 'rating_pricing_config.freezed.dart';
-part 'rating_pricing_config.g.dart';
+class RatingPricingConfig extends Equatable {
+  final double minimumRatingThreshold;
+  final double highRatingBonusMultiplier;
+  final double lowRatingSurgePenaltyMultiplier;
+  final double baseSurgeCap;
 
-///TODO: No default here should based on fare services server
-@freezed
-abstract class RatingPricingConfig with _$RatingPricingConfig {
-  const factory RatingPricingConfig({
-    @Default(4.5) double minimumRatingThreshold,
-    @Default(1.05) double highRatingBonusMultiplier,
-    @Default(1.0) double lowRatingSurgePenaltyMultiplier,
-    @Default(2.5) double baseSurgeCap,
-  }) = _RatingPricingConfig;
+  const RatingPricingConfig({
+    this.minimumRatingThreshold = 4.5,
+    this.highRatingBonusMultiplier = 1.05,
+    this.lowRatingSurgePenaltyMultiplier = 1.0,
+    this.baseSurgeCap = 2.5,
+  });
 
-  factory RatingPricingConfig.fromJson(Map<String, dynamic> json) =>
-      _$RatingPricingConfigFromJson(json);
+  factory RatingPricingConfig.fromJson(Map<String, dynamic> json) {
+    return RatingPricingConfig(
+      minimumRatingThreshold:
+          (json['minimumRatingThreshold'] as num?)?.toDouble() ?? 4.5,
+      highRatingBonusMultiplier:
+          (json['highRatingBonusMultiplier'] as num?)?.toDouble() ?? 1.05,
+      lowRatingSurgePenaltyMultiplier:
+          (json['lowRatingSurgePenaltyMultiplier'] as num?)?.toDouble() ?? 1.0,
+      baseSurgeCap: (json['baseSurgeCap'] as num?)?.toDouble() ?? 2.5,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'minimumRatingThreshold': minimumRatingThreshold,
+      'highRatingBonusMultiplier': highRatingBonusMultiplier,
+      'lowRatingSurgePenaltyMultiplier': lowRatingSurgePenaltyMultiplier,
+      'baseSurgeCap': baseSurgeCap,
+    };
+  }
+
+  @override
+  List<Object?> get props => [
+    minimumRatingThreshold,
+    highRatingBonusMultiplier,
+    lowRatingSurgePenaltyMultiplier,
+    baseSurgeCap,
+  ];
 }

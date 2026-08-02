@@ -5,14 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/features/activity/activity_routes.dart';
-import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
-
-
-import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_ui/shared_ui.dart';
-
 
 class DriverMatchedScreen extends StatefulWidget {
   final String rideType;
@@ -95,18 +92,17 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       if (activeRideId.isEmpty) {
         final passengerId = await secureSession.readPassengerId() ?? '';
         if (passengerId.isNotEmpty) {
-          final res = await Modular.get<BiddingRemoteDataSource>()
-              .requestRide({
-                'passenger_id': passengerId,
-                'ride_type': widget.rideType,
-                'pickup_lat': pickupLat,
-                'pickup_lng': pickupLng,
-                'pickup_name': pickupName,
-                'dropoff_lat': widget.destination.latitude,
-                'dropoff_lng': widget.destination.longitude,
-                'dropoff_name': widget.destination.name,
-                'fare': widget.fare,
-              });
+          final res = await Modular.get<BiddingRemoteDataSource>().requestRide({
+            'passenger_id': passengerId,
+            'ride_type': widget.rideType,
+            'pickup_lat': pickupLat,
+            'pickup_lng': pickupLng,
+            'pickup_name': pickupName,
+            'dropoff_lat': widget.destination.latitude,
+            'dropoff_lng': widget.destination.longitude,
+            'dropoff_name': widget.destination.name,
+            'fare': widget.fare,
+          });
           if (res['id'] != null) {
             activeRideId = res['id']?.toString() ?? '';
             await secureSession.saveActiveRideId(activeRideId);
@@ -121,9 +117,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           }
         }
       } else {
-        final res = await Modular.get<BiddingRemoteDataSource>().fetchDriverStats(
-          activeRideId,
-        );
+        final res = await Modular.get<BiddingRemoteDataSource>()
+            .fetchDriverStats(activeRideId);
         if (res.isNotEmpty) {
           pickupLat = SafeParse.toDouble(res['pickup_latitude']);
           pickupLng = SafeParse.toDouble(res['pickup_longitude']);
@@ -131,7 +126,6 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
       }
 
       if (mounted) {
-
         setState(() {
           _createdRide = RideHistoryModel(
             id: activeRideId,

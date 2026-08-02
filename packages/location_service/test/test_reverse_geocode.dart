@@ -17,13 +17,10 @@ void main() {
       );
 
       expect(result.isRight(), isTrue);
-      result.fold(
-        (failure) => fail('Should not fail'),
-        (place) {
-          expect(place.name, isNotEmpty);
-          expect(place.name, isNot(equals('Unknown location')));
-        },
-      );
+      result.fold((failure) => fail('Should not fail'), (place) {
+        expect(place.name, isNotEmpty);
+        expect(place.name, isNot(equals('Unknown location')));
+      });
     });
   });
 }

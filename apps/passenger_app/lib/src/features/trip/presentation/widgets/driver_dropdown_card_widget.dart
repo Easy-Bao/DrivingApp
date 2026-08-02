@@ -40,15 +40,13 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
       duration: const Duration(milliseconds: 400),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _dropdownAnimationController,
-        curve: Curves.easeOutBack,
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, -0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _dropdownAnimationController,
+            curve: Curves.easeOutBack,
+          ),
+        );
 
     _fadeAnimation = CurvedAnimation(
       parent: _dropdownAnimationController,
@@ -109,7 +107,9 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                           width: 56.0,
                           height: 56.0,
                           decoration: BoxDecoration(
-                            color: AppTheme.secondaryColor.withValues(alpha: 0.2),
+                            color: AppTheme.secondaryColor.withValues(
+                              alpha: 0.2,
+                            ),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: widget.isNearestDriver
@@ -153,7 +153,9 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                         color: AppTheme.primaryColor.withValues(
                                           alpha: 0.1,
                                         ),
-                                        borderRadius: BorderRadius.circular(12.0),
+                                        borderRadius: BorderRadius.circular(
+                                          12.0,
+                                        ),
                                       ),
                                       child: const Text(
                                         'Top Match',
@@ -311,7 +313,9 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                             style: TextStyle(
                               fontSize: 12.0,
                               height: 1.35,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.8,
+                              ),
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,

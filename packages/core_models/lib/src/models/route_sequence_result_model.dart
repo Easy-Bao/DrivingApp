@@ -11,11 +11,20 @@ class RouteSequenceResult extends Equatable {
   });
 
   factory RouteSequenceResult.fromJson(Map<String, dynamic> json) {
-    final rawList = json['optimalSequence'] as List<dynamic>? ?? json['optimal_sequence'] as List<dynamic>? ?? [];
-    final waypoints = rawList.map((item) => Waypoint.fromJson(item as Map<String, dynamic>)).toList();
+    final rawList =
+        json['optimalSequence'] as List<dynamic>? ??
+        json['optimal_sequence'] as List<dynamic>? ??
+        [];
+    final waypoints = rawList
+        .map((item) => Waypoint.fromJson(item as Map<String, dynamic>))
+        .toList();
     return RouteSequenceResult(
       optimalSequence: waypoints,
-      totalDistanceKm: (json['totalDistanceKm'] as num? ?? json['total_distance_km'] as num? ?? 0.0).toDouble(),
+      totalDistanceKm:
+          (json['totalDistanceKm'] as num? ??
+                  json['total_distance_km'] as num? ??
+                  0.0)
+              .toDouble(),
     );
   }
 

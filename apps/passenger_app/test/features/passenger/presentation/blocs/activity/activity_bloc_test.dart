@@ -62,9 +62,9 @@ void main() {
     blocTest<ActivityBloc, ActivityState>(
       'emits [Loading, Loaded] with correctly segregated past and upcoming rides',
       build: () {
-        when(() => repo.fetchRideHistory(any())).thenAnswer(
-          (_) async => const Right([completedRide, requestedRide]),
-        );
+        when(
+          () => repo.fetchRideHistory(any()),
+        ).thenAnswer((_) async => const Right([completedRide, requestedRide]));
         return _makeCubit(repo);
       },
       act: (bloc) => bloc.add(LoadActivityEvent(passengerId: 'pass-1')),
@@ -81,9 +81,9 @@ void main() {
     blocTest<ActivityBloc, ActivityState>(
       'emits [Loading, ActivityError] on repository failure',
       build: () {
-        when(() => repo.fetchRideHistory(any())).thenAnswer(
-          (_) async => const Left(ServerFailure('network error')),
-        );
+        when(
+          () => repo.fetchRideHistory(any()),
+        ).thenAnswer((_) async => const Left(ServerFailure('network error')));
         return _makeCubit(repo);
       },
       act: (bloc) => bloc.add(LoadActivityEvent(passengerId: 'pass-1')),
@@ -100,9 +100,9 @@ void main() {
     blocTest<ActivityBloc, ActivityState>(
       'emits ActivityLoaded with empty lists when repository returns no rides',
       build: () {
-        when(() => repo.fetchRideHistory(any())).thenAnswer(
-          (_) async => const Right([]),
-        );
+        when(
+          () => repo.fetchRideHistory(any()),
+        ).thenAnswer((_) async => const Right([]));
         return _makeCubit(repo);
       },
       act: (bloc) => bloc.add(LoadActivityEvent(passengerId: 'pass-1')),
@@ -119,9 +119,9 @@ void main() {
     blocTest<ActivityBloc, ActivityState>(
       'refreshes without emitting ActivityLoading first',
       build: () {
-        when(() => repo.fetchRideHistory(any())).thenAnswer(
-          (_) async => const Right([]),
-        );
+        when(
+          () => repo.fetchRideHistory(any()),
+        ).thenAnswer((_) async => const Right([]));
         return _makeCubit(repo);
       },
       act: (bloc) => bloc.add(RefreshActivityEvent(passengerId: 'pass-1')),

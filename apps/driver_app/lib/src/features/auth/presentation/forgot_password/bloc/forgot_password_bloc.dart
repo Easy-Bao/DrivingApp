@@ -11,7 +11,7 @@ class ForgotPasswordBloc
   final ResetPasswordUseCase _resetPasswordUseCase;
 
   ForgotPasswordBloc(this._resetPasswordUseCase)
-      : super(const ForgotPasswordInitial()) {
+    : super(const ForgotPasswordInitial()) {
     on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
   }
 
@@ -21,11 +21,7 @@ class ForgotPasswordBloc
   ) async {
     final normalizedEmail = event.email.trim();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
-      emit(
-        const ForgotPasswordFailure(
-          'Please enter a valid email address.',
-        ),
-      );
+      emit(const ForgotPasswordFailure('Please enter a valid email address.'));
       return;
     }
 

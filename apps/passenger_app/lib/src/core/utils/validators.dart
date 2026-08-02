@@ -1,3 +1,3 @@
-class Validators {
+mixin Validators {
   static bool isNotEmpty(String? val) => val != null && val.trim().isNotEmpty;
 }

@@ -7,7 +7,6 @@ import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/bidding_remote_data_source.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-
 class RideAlertScreen extends StatefulWidget {
   final Map<String, dynamic>? rideData;
   const RideAlertScreen({super.key, this.rideData});
@@ -65,7 +64,9 @@ class _RideAlertScreenState extends State<RideAlertScreen>
   Future<void> _accept() async {
     _autoDecline?.cancel();
 
-    final driverId = await Modular.get<SecureSessionService>().readDriverId() ?? 'driver_demo';
+    final driverId =
+        await Modular.get<SecureSessionService>().readDriverId() ??
+        'driver_demo';
 
     final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: _rideId,
@@ -73,7 +74,6 @@ class _RideAlertScreenState extends State<RideAlertScreen>
       offerPrice: _fare,
       proposedFare: _fare,
     );
-
 
     if (mounted) {
       if (success) {

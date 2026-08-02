@@ -31,55 +31,55 @@ class _RatePassengerScreenState extends State<RatePassengerScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
-            children: [
-              const Spacer(),
-              _buildAvatar(),
-              const SizedBox(height: 20),
-              const Text(
-                'Rate Your Passenger',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Juan D. Cruz',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.tertiaryColor,
-                ),
-              ),
-              const SizedBox(height: 44),
-              _buildThumbs(),
-              const SizedBox(height: 14),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Text(
-                  _labels[_rating] ?? '',
-                  key: ValueKey(_rating),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                children: [
+                  const Spacer(),
+                  _buildAvatar(),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Rate Your Passenger',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Juan D. Cruz',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.tertiaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 44),
+                  _buildThumbs(),
+                  const SizedBox(height: 14),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      _labels[_rating] ?? '',
+                      key: ValueKey(_rating),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  _buildSubmitButton(context),
+                  const SizedBox(height: 12),
+                  _buildSkipButton(context),
+                  const SizedBox(height: 32),
+                ],
               ),
-              const Spacer(),
-              _buildSubmitButton(context),
-              const SizedBox(height: 12),
-              _buildSkipButton(context),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 
   Widget _buildAvatar() {
     return Container(

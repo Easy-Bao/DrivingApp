@@ -14,7 +14,9 @@ class PassengerRemoteDataSourceImpl implements PassengerRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> fetchPassengerProfile(String passengerId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/passengers/$passengerId');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/passengers/$passengerId',
+    );
     return response.data ?? {};
   }
 
@@ -30,13 +32,17 @@ class PassengerRemoteDataSourceImpl implements PassengerRemoteDataSource {
 
   @override
   Future<List<dynamic>> fetchRideHistory(String passengerId) async {
-    final response = await _dio.get<List<dynamic>>('/passengers/$passengerId/trips');
+    final response = await _dio.get<List<dynamic>>(
+      '/passengers/$passengerId/trips',
+    );
     return response.data ?? [];
   }
 
   @override
   Future<List<dynamic>> fetchNotifications(String passengerId) async {
-    final response = await _dio.get<List<dynamic>>('/passengers/$passengerId/notifications');
+    final response = await _dio.get<List<dynamic>>(
+      '/passengers/$passengerId/notifications',
+    );
     return response.data ?? [];
   }
 }

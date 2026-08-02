@@ -33,10 +33,12 @@ class TripModule {
         return ActivityDetailMapScreen(
           placeName: data['title'] as String? ?? 'Location Detail',
           placeSubtitle: data['subtitle'] as String? ?? '',
-          destinationLat: (data['lat'] as num?)?.toDouble() ??
+          destinationLat:
+              (data['lat'] as num?)?.toDouble() ??
               LocationService.lastPosition?.latitude ??
               0.0,
-          destinationLng: (data['lng'] as num?)?.toDouble() ??
+          destinationLng:
+              (data['lng'] as num?)?.toDouble() ??
               LocationService.lastPosition?.longitude ??
               0.0,
         );
@@ -67,16 +69,18 @@ class TripModule {
 
         place ??= PlaceModel(
           id: 'dest_${DateTime.now().millisecondsSinceEpoch}',
-          name: state.uri.queryParameters['destinationName'] ??
+          name:
+              state.uri.queryParameters['destinationName'] ??
               'Selected Destination',
-          fullAddress:
-              state.uri.queryParameters['destinationAddress'] ?? '',
-          latitude: double.tryParse(
+          fullAddress: state.uri.queryParameters['destinationAddress'] ?? '',
+          latitude:
+              double.tryParse(
                 state.uri.queryParameters['destinationLat'] ?? '',
               ) ??
               LocationService.lastPosition?.latitude ??
               0.0,
-          longitude: double.tryParse(
+          longitude:
+              double.tryParse(
                 state.uri.queryParameters['destinationLng'] ?? '',
               ) ??
               LocationService.lastPosition?.longitude ??
@@ -101,44 +105,49 @@ class TripModule {
             ? data['destination'] as PlaceModel
             : PlaceModel(
                 id: 'dest_${DateTime.now().millisecondsSinceEpoch}',
-                name: state.uri.queryParameters['destinationName'] ??
+                name:
+                    state.uri.queryParameters['destinationName'] ??
                     'Selected Destination',
                 fullAddress:
                     state.uri.queryParameters['destinationAddress'] ?? '',
-                latitude: double.tryParse(
+                latitude:
+                    double.tryParse(
                       state.uri.queryParameters['destinationLat'] ?? '',
                     ) ??
                     LocationService.lastPosition?.latitude ??
                     0.0,
-                longitude: double.tryParse(
+                longitude:
+                    double.tryParse(
                       state.uri.queryParameters['destinationLng'] ?? '',
                     ) ??
                     LocationService.lastPosition?.longitude ??
                     0.0,
               );
-          Map<String, double>? fares;
-          if (data['fares'] is Map) {
-            fares = (data['fares'] as Map).map(
-              (k, v) => MapEntry(k.toString(), (v as num).toDouble()),
-            );
-          }
-          return RideSelectionScreen(
-            destination: destination,
-            distance: data['distance'] as String? ??
-                state.uri.queryParameters['distance'] ??
-                '0.0 km',
-            duration: data['duration'] as String? ??
-                state.uri.queryParameters['duration'] ??
-                '0 min',
-            distanceKm: (data['distanceKm'] as num?)?.toDouble() ??
-                double.tryParse(
-                  state.uri.queryParameters['distanceKm'] ?? '',
-                ) ??
-                0.0,
-            fares: fares,
-            pickupAddress: data['pickupAddress'] as String? ??
-                state.uri.queryParameters['pickupAddress'],
+        Map<String, double>? fares;
+        if (data['fares'] is Map) {
+          fares = (data['fares'] as Map).map(
+            (k, v) => MapEntry(k.toString(), (v as num).toDouble()),
           );
+        }
+        return RideSelectionScreen(
+          destination: destination,
+          distance:
+              data['distance'] as String? ??
+              state.uri.queryParameters['distance'] ??
+              '0.0 km',
+          duration:
+              data['duration'] as String? ??
+              state.uri.queryParameters['duration'] ??
+              '0 min',
+          distanceKm:
+              (data['distanceKm'] as num?)?.toDouble() ??
+              double.tryParse(state.uri.queryParameters['distanceKm'] ?? '') ??
+              0.0,
+          fares: fares,
+          pickupAddress:
+              data['pickupAddress'] as String? ??
+              state.uri.queryParameters['pickupAddress'],
+        );
       },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -152,7 +161,8 @@ class TripModule {
             ? data['destination'] as PlaceModel
             : PlaceModel(
                 id: 'dest_${DateTime.now().millisecondsSinceEpoch}',
-                name: state.uri.queryParameters['destinationName'] ??
+                name:
+                    state.uri.queryParameters['destinationName'] ??
                     'Destination',
                 fullAddress:
                     state.uri.queryParameters['destinationAddress'] ?? '',
@@ -180,7 +190,8 @@ class TripModule {
             ? data['destination'] as PlaceModel
             : PlaceModel(
                 id: 'dest_${DateTime.now().millisecondsSinceEpoch}',
-                name: state.uri.queryParameters['destinationName'] ??
+                name:
+                    state.uri.queryParameters['destinationName'] ??
                     'Destination',
                 fullAddress:
                     state.uri.queryParameters['destinationAddress'] ?? '',

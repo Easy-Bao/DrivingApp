@@ -26,7 +26,6 @@ class FareSummaryScreen extends StatelessWidget {
     final distCharge = fare * 0.6;
     final surgePlus = 0.0;
 
-
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(

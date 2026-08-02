@@ -4,12 +4,10 @@ import 'dart:ui' show Color;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_state.dart';
-
-import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:rxdart/rxdart.dart';
-
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final BiddingRemoteDataSource _biddingDataSource;
@@ -33,10 +31,10 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
         .listen((event) {
-          dev.log('Telemetry dispatch (${_biddingDataSource.runtimeType}): ${event.lat}, ${event.lng}');
+          dev.log(
+            'Telemetry dispatch (${_biddingDataSource.runtimeType}): ${event.lat}, ${event.lng}',
+          );
         });
-
-
 
     on<DispatchTelemetryLocationEvent>((event, emit) {
       _locationSubject.add(event);

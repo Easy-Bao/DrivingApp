@@ -23,4 +23,3 @@ class SignUpSubmitted extends SignUpEvent {
   @override
   List<Object?> get props => [name, email, phone, password];
 }
-

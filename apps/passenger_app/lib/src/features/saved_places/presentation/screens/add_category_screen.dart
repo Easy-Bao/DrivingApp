@@ -21,12 +21,10 @@ class AddCategoryScreen extends StatefulWidget {
   });
 
   @override
-  State<AddCategoryScreen> createState() =>
-      _AddCategoryScreenState();
+  State<AddCategoryScreen> createState() => _AddCategoryScreenState();
 }
 
-class _AddCategoryScreenState
-    extends State<AddCategoryScreen> {
+class _AddCategoryScreenState extends State<AddCategoryScreen> {
   final TextEditingController _controller = TextEditingController();
   IconData selectedIcon = LucideIcons.heart;
   bool _isLocationPinned = false;

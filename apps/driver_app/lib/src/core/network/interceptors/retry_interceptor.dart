@@ -5,8 +5,12 @@ class RetryInterceptor extends Interceptor {
   RetryInterceptor(this.dio);
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.type == DioExceptionType.connectionError || err.type == DioExceptionType.connectionTimeout) {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout) {
       try {
         final response = await dio.fetch(err.requestOptions);
         return handler.resolve(response);

@@ -91,7 +91,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             await Modular.get<SecureSessionService>().readDriverId() ?? '';
         if (driverId.isEmpty) return;
 
-        final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(driverId);
+        final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
+          driverId,
+        );
         List<Map<String, dynamic>> trips = list
             .where((r) {
               final status = r['status'] as String?;
@@ -102,9 +104,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             .map((r) => r as Map<String, dynamic>)
             .toList();
 
-        final bidsList = await Modular.get<BiddingRemoteDataSource>().fetchActiveBids(
-          driverId,
-        );
+        final bidsList = await Modular.get<BiddingRemoteDataSource>()
+            .fetchActiveBids(driverId);
         final List<Map<String, dynamic>> bids = bidsList
             .map((b) => b as Map<String, dynamic>)
             .toList();
@@ -410,9 +411,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: isOnline
-              ? AppTheme.secondaryColor
-              : AppTheme.neutralColor,
+          color: isOnline ? AppTheme.secondaryColor : AppTheme.neutralColor,
           borderRadius: BorderRadius.circular(20),
           border: isOnline ? null : Border.all(color: AppTheme.borderSide),
         ),
@@ -452,7 +451,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 value: isOnline,
                 activeThumbColor: Colors.white,
                 activeTrackColor: Colors.white.withValues(alpha: 0.3),
-                inactiveThumbColor: AppTheme.primaryColor.withValues(alpha: 0.4),
+                inactiveThumbColor: AppTheme.primaryColor.withValues(
+                  alpha: 0.4,
+                ),
                 inactiveTrackColor: AppTheme.borderSide,
                 onChanged: (_) => _toggleOnline(context, isOnline),
               ),

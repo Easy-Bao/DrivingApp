@@ -32,14 +32,19 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/bids/fare',
-      data: body ?? {'distance_km': distanceKm, 'duration_minutes': durationMinutes},
+      data:
+          body ??
+          {'distance_km': distanceKm, 'duration_minutes': durationMinutes},
     );
     return response.data ?? {};
   }
 
   @override
   Future<List<dynamic>> fetchActiveBids(String driverId) async {
-    final response = await _dio.get<List<dynamic>>('/bids/active', queryParameters: {'driver_id': driverId});
+    final response = await _dio.get<List<dynamic>>(
+      '/bids/active',
+      queryParameters: {'driver_id': driverId},
+    );
     return response.data ?? [];
   }
 
@@ -58,17 +63,20 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
       data: {
         'driver_id': driverId,
         'offer_price': offerPrice,
-        if (driverName != null) 'driver_name': driverName,
-        if (plateNumber != null) 'plate_number': plateNumber,
-        if (vehicleType != null) 'vehicle_type': vehicleType,
-        if (proposedFare != null) 'proposed_fare': proposedFare,
+        'driver_name': ?driverName,
+        'plate_number': ?plateNumber,
+        'vehicle_type': ?vehicleType,
+        'proposed_fare': ?proposedFare,
       },
     );
     return response.statusCode == 200 || response.statusCode == 201;
   }
 
   @override
-  Future<bool> cancelBid({required String sessionId, required String driverId}) async {
+  Future<bool> cancelBid({
+    required String sessionId,
+    required String driverId,
+  }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/bids/$sessionId/cancel-offer',
       data: {'driver_id': driverId},
@@ -76,4 +84,3 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     return response.statusCode == 200;
   }
 }
-

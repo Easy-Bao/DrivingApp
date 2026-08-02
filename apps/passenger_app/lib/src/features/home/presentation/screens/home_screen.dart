@@ -199,11 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildShimmerLocationRow() {
     return Row(
       children: [
-        const Icon(
-          LucideIcons.map_pin,
-          size: 14,
-          color: AppTheme.primaryColor,
-        ),
+        const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
         const SizedBox(width: 6),
         Container(
           width: 140,
@@ -564,9 +560,7 @@ class _HomeScreenState extends State<HomeScreen> {
         latitude: place.latitude!,
         longitude: place.longitude!,
       );
-      final address = BlocProvider.of<HomeCubit>(
-        context,
-      ).state.currentAddress;
+      final address = BlocProvider.of<HomeCubit>(context).state.currentAddress;
       unawaited(
         context.pushNamed(
           TripRoutes.destinationPreview,

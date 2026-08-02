@@ -4,16 +4,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:location_service/location_service.dart';
 
 void main() {
-  group('MapNativeServiceImpl Unit Tests', () {
+  group('MapNativeService Unit Tests', () {
     late Dio dio;
-    late MapNativeServiceImpl service;
+    late MapNativeService service;
 
     setUp(() {
-      dio = Dio(BaseOptions(
-        baseUrl: 'http://localhost:8080',
-        connectTimeout: const Duration(seconds: 5),
-      ));
-      service = MapNativeServiceImpl(
+      dio = Dio(
+        BaseOptions(
+          baseUrl: 'http://localhost:8080',
+          connectTimeout: const Duration(seconds: 5),
+        ),
+      );
+      service = MapNativeService(
         placeServiceBaseUri: Uri.parse('http://localhost:8080'),
         dio: dio,
       );
@@ -52,15 +54,14 @@ void main() {
       );
 
       expect(result.isRight(), isTrue);
-      result.fold(
-        (failure) => fail('Expected Right but got Left: $failure'),
-        (places) {
-          expect(places.length, equals(1));
-          expect(places.first.name, equals('Mendero General Hospital'));
-          expect(places.first.latitude, equals(7.8282));
-          expect(places.first.longitude, equals(123.4361));
-        },
-      );
+      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
+        places,
+      ) {
+        expect(places.length, equals(1));
+        expect(places.first.name, equals('Mendero General Hospital'));
+        expect(places.first.latitude, equals(7.8282));
+        expect(places.first.longitude, equals(123.4361));
+      });
     });
 
     test('searchPlaces parses places JSON response correctly', () async {
@@ -92,13 +93,12 @@ void main() {
       final result = await service.searchPlaces(query: 'Ben Sagun');
 
       expect(result.isRight(), isTrue);
-      result.fold(
-        (failure) => fail('Expected Right but got Left: $failure'),
-        (places) {
-          expect(places.length, equals(1));
-          expect(places.first.name, equals('Ben Sagun Elementary School'));
-        },
-      );
+      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
+        places,
+      ) {
+        expect(places.length, equals(1));
+        expect(places.first.name, equals('Ben Sagun Elementary School'));
+      });
     });
 
     test('reverseGeocode handles 404 not found cleanly', () async {
@@ -109,12 +109,9 @@ void main() {
       final result = await service.reverseGeocode(lat: 0.0, lng: 0.0);
 
       expect(result.isLeft(), isTrue);
-      result.fold(
-        (failure) {
-          expect(failure, isA<PlaceNotFoundFailure>());
-        },
-        (_) => fail('Expected Left but got Right'),
-      );
+      result.fold((failure) {
+        expect(failure, isA<PlaceNetworkError>());
+      }, (_) => fail('Expected Left but got Right'));
     });
   });
 }

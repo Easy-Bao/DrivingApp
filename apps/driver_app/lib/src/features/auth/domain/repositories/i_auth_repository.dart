@@ -8,7 +8,5 @@ abstract class IAuthRepository {
     required String password,
   });
 
-  Future<Either<Failure, void>> resetPassword({
-    required String email,
-  });
+  Future<Either<Failure, void>> resetPassword({required String email});
 }

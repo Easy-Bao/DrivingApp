@@ -4,7 +4,6 @@ import 'package:location_service/location_service.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_ride_repository.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/bidding_remote_data_source.dart';
 
-
 class RideRepository implements IRideRepository {
   final BiddingRemoteDataSource _remoteDataSource;
 

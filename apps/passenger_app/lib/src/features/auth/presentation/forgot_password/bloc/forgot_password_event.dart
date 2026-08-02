@@ -15,4 +15,3 @@ class ForgotPasswordSubmitted extends ForgotPasswordEvent {
   @override
   List<Object?> get props => [email];
 }
-

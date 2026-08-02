@@ -1,15 +1,13 @@
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/features/trip/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
-
 
 class RideSelectionScreen extends StatefulWidget {
   final PlaceModel destination;
@@ -75,9 +73,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         badge: 'Fastest',
       ),
     ];
-
-
-
   }
 
   Future<void> fetchServerFareQuotes() async {
@@ -88,7 +83,10 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
 
     try {
       final datasource = Modular.get<BiddingRemoteDataSource>();
-      final res = await datasource.requestRide({'distance_km': distanceKm, 'duration_minutes': durationMins});
+      final res = await datasource.requestRide({
+        'distance_km': distanceKm,
+        'duration_minutes': durationMins,
+      });
       final totalFare = (res['estimated_fare'] as num?)?.toDouble();
       if (totalFare != null && mounted) {
         setState(() {

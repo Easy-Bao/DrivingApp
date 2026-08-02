@@ -27,4 +27,3 @@ class ForgotPasswordFailure extends ForgotPasswordState {
   @override
   List<Object?> get props => [errorMessage];
 }
-

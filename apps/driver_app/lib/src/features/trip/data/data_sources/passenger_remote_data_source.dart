@@ -11,7 +11,9 @@ class PassengerRemoteDataSourceImpl implements PassengerRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> fetchPassengerProfile(String passengerId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/passengers/$passengerId');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/passengers/$passengerId',
+    );
     return response.data ?? {};
   }
 }

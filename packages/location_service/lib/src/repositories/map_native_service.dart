@@ -14,10 +14,11 @@ class MapNativeService {
     required Uri placeServiceBaseUri,
     Dio? dio,
     LocationApiClient? apiClient,
-  }) : _apiClient = apiClient ??
-            LocationApiClient(
-              dio ?? Dio(BaseOptions(baseUrl: placeServiceBaseUri.toString())),
-            );
+  }) : _apiClient =
+           apiClient ??
+           LocationApiClient(
+             dio ?? Dio(BaseOptions(baseUrl: placeServiceBaseUri.toString())),
+           );
 
   static double _toRadians(double degree) => degree * math.pi / 180.0;
 
@@ -69,9 +70,9 @@ class MapNativeService {
         userLng: userLng ?? proximityLng,
       );
 
-      final List<dynamic> dataList = (responseData['places'] ??
-              responseData['results'] ??
-              []) as List<dynamic>;
+      final List<dynamic> dataList =
+          (responseData['places'] ?? responseData['results'] ?? [])
+              as List<dynamic>;
 
       final places = dataList
           .map((item) => PlaceModel.fromJson(item as Map<String, dynamic>))
@@ -79,12 +80,14 @@ class MapNativeService {
 
       return right(places);
     } on DioException catch (e) {
-      dev.log('searchPlaces network failure',
-          name: 'MapNativeService', error: e);
+      dev.log(
+        'searchPlaces network failure',
+        name: 'MapNativeService',
+        error: e,
+      );
       return left(PlaceNetworkError(message: e.message));
     } catch (e) {
-      dev.log('searchPlaces parse error',
-          name: 'MapNativeService', error: e);
+      dev.log('searchPlaces parse error', name: 'MapNativeService', error: e);
       return left(PlaceParseError(message: e.toString()));
     }
   }
@@ -97,8 +100,11 @@ class MapNativeService {
       final place = await _apiClient.reverseGeocode(lat: lat, lng: lng);
       return right(place);
     } on DioException catch (e) {
-      dev.log('reverseGeocode network failure',
-          name: 'MapNativeService', error: e);
+      dev.log(
+        'reverseGeocode network failure',
+        name: 'MapNativeService',
+        error: e,
+      );
       return left(PlaceNetworkError(message: e.message));
     } catch (e) {
       dev.log('error', name: 'MapNativeService', error: e);
@@ -113,16 +119,17 @@ class MapNativeService {
     required double destLng,
   }) async {
     try {
-      final route = await _apiClient.getRoute(body: {
-        'originLat': originLat,
-        'originLng': originLng,
-        'destLat': destLat,
-        'destLng': destLng,
-      });
+      final route = await _apiClient.getRoute(
+        body: {
+          'originLat': originLat,
+          'originLng': originLng,
+          'destLat': destLat,
+          'destLng': destLng,
+        },
+      );
       return right(route);
     } on DioException catch (e) {
-      dev.log('getRoute network failure',
-          name: 'MapNativeService', error: e);
+      dev.log('getRoute network failure', name: 'MapNativeService', error: e);
       return left(PlaceNetworkError(message: e.message));
     } catch (e) {
       dev.log('error', name: 'MapNativeService', error: e);
@@ -142,9 +149,9 @@ class MapNativeService {
         page: page,
       );
 
-      final List<dynamic> dataList = (responseData['places'] ??
-              responseData['results'] ??
-              []) as List<dynamic>;
+      final List<dynamic> dataList =
+          (responseData['places'] ?? responseData['results'] ?? [])
+              as List<dynamic>;
 
       final places = dataList
           .map((item) => PlaceModel.fromJson(item as Map<String, dynamic>))
@@ -152,8 +159,11 @@ class MapNativeService {
 
       return right(places);
     } on DioException catch (e) {
-      dev.log('getNearbyPois network failure',
-          name: 'MapNativeService', error: e);
+      dev.log(
+        'getNearbyPois network failure',
+        name: 'MapNativeService',
+        error: e,
+      );
       return left(PlaceNetworkError(message: e.message));
     } catch (e) {
       dev.log('error', name: 'MapNativeService', error: e);

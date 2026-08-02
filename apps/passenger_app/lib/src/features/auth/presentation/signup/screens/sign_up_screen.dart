@@ -1,4 +1,3 @@
-import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -80,6 +80,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
     final cleaned = phone.replaceAll(RegExp(r'\D'), '');
     return cleaned.length >= 10;
   }
+
   ///TODO: Should be on Core
   String _normalizePhPhoneNumber(String phone) {
     final cleaned = phone.replaceAll(RegExp(r'\D'), '');
@@ -177,8 +178,9 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
           },
           builder: (context, state) {
             final isLoading = state is SignUpLoading;
-            final errorMessage =
-                state is SignUpFailure ? state.errorMessage : null;
+            final errorMessage = state is SignUpFailure
+                ? state.errorMessage
+                : null;
 
             return Center(
               child: ConstrainedBox(

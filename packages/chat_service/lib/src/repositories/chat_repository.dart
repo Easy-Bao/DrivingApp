@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+
+import 'package:chat_service/src/data_sources/chat_remote_data_source.dart';
 import 'package:chat_service/src/models/chat_event.dart';
 import 'package:chat_service/src/models/chat_message.dart';
 import 'package:chat_service/src/models/chat_message_model.dart';
 import 'package:chat_service/src/repositories/i_chat_repository.dart';
-import 'package:chat_service/src/data_sources/chat_remote_data_source.dart';
-
 import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-
 
 class ChatRepository implements IChatRepository {
   final ChatRemoteDataSource remoteDataSource;
@@ -70,15 +69,18 @@ class ChatRepository implements IChatRepository {
   }
 
   @override
-  Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(String roomId) async {
+  Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(
+      String roomId,) async {
     try {
       final response = await clientDio.get(
         '/chat/rooms/$roomId/messages',
       );
 
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        final Map<String, dynamic> dataMap = response.data as Map<String, dynamic>;
-        final List<dynamic> list = (dataMap['messages'] ?? dataMap['data'] ?? []) as List<dynamic>;
+        final Map<String, dynamic> dataMap =
+            response.data as Map<String, dynamic>;
+        final List<dynamic> list =
+            (dataMap['messages'] ?? dataMap['data'] ?? []) as List<dynamic>;
 
         final messages = list.map((item) {
           final model = ChatMessageModel.fromJson(item as Map<String, dynamic>);
@@ -89,7 +91,8 @@ class ChatRepository implements IChatRepository {
       }
       return const Right([]);
     } catch (error) {
-      return Left(ServerFailure('Failed to fetch historical chat room logs: $error'));
+      return Left(
+          ServerFailure('Failed to fetch historical chat room logs: $error'),);
     }
   }
 
@@ -103,7 +106,8 @@ class ChatRepository implements IChatRepository {
         if (type == 'history' && decoded['messages'] is List) {
           final list = decoded['messages'] as List;
           final messages = list.map((item) {
-            final model = ChatMessageModel.fromJson(item as Map<String, dynamic>);
+            final model =
+                ChatMessageModel.fromJson(item as Map<String, dynamic>);
             return model.toEntity(currentUserId: currentUserId);
           }).toList();
           return Right(ChatHistoryReceived(messages));
@@ -111,7 +115,8 @@ class ChatRepository implements IChatRepository {
 
         if (type == 'message') {
           final model = ChatMessageModel.fromJson(decoded);
-          return Right(ChatMessageReceived(model.toEntity(currentUserId: currentUserId)));
+          return Right(ChatMessageReceived(
+              model.toEntity(currentUserId: currentUserId),),);
         }
 
         if (type == 'room_locked') {
@@ -121,7 +126,8 @@ class ChatRepository implements IChatRepository {
 
         return Left(ServerFailure('Unknown websocket chat event type: $type'));
       } catch (error) {
-        return Left(ServerFailure('Failed to parse incoming websocket payload: $error'));
+        return Left(ServerFailure(
+            'Failed to parse incoming websocket payload: $error',),);
       }
     });
   }

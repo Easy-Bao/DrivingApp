@@ -24,9 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _settingsCubit = SettingsCubit(
-      settingsRepository: SettingsRepository(),
-    );
+    _settingsCubit = SettingsCubit(settingsRepository: SettingsRepository());
 
     unawaited(_settingsCubit.loadSettings());
   }

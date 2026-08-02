@@ -1,6 +1,5 @@
 import 'package:core_models/core_models.dart';
 
-
 abstract class BookingState {
   const BookingState();
 }

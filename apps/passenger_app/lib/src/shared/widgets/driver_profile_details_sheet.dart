@@ -197,208 +197,225 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           ),
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
           child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: AppTheme.borderSide,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
-          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 68,
-                height: 68,
-                decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Icon(
-                  LucideIcons.user,
-                  color: AppTheme.primaryColor,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.driverName,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${widget.vehicleType} • ${widget.plateNumber}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-          const Divider(height: 1, color: AppTheme.borderSide),
-          const SizedBox(height: 20),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMetricCard(
-                icon: LucideIcons.star,
-                value: widget.rating,
-                label: 'Rating',
-                iconColor: Colors.amber,
-              ),
-              Container(width: 1, height: 40, color: AppTheme.borderSide),
-              _buildMetricCard(
-                icon: LucideIcons.bike,
-                value: _isLoadingStats ? '...' : '$_totalTripsCount',
-                label: 'Total Trips',
-                iconColor: AppTheme.primaryColor,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-          const Text(
-            'Passenger Reviews',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          if (_isLoadingStats)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: CircularProgressIndicator(color: AppTheme.primaryColor),
-              ),
-            )
-          else if (_driverReviewsList.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Text(
-                  'No reviews available yet.',
-                  style: TextStyle(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                    fontSize: 14,
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.borderSide,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-            )
-          else
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount:
-                    _driverReviewsList.length +
-                    (_hasMore || _isLoadingMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == _driverReviewsList.length) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: CircularProgressIndicator(
-                          color: AppTheme.primaryColor,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    );
-                  }
-                  final reviewItem = _driverReviewsList[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
+
+              Row(
+                children: [
+                  Container(
+                    width: 68,
+                    height: 68,
                     decoration: BoxDecoration(
-                      color: AppTheme.neutralColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.borderSide),
+                      color: AppTheme.secondaryColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(24),
                     ),
+                    child: const Icon(
+                      LucideIcons.user,
+                      color: AppTheme.primaryColor,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              reviewItem['passengerName']?.toString() ?? 'Passenger',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                            Text(
-                              reviewItem['date']?.toString() ?? 'Recent',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.4,
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          widget.driverName,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.primaryColor,
+                          ),
                         ),
-                        const SizedBox(height: 6),
-                        Row(
+                        const SizedBox(height: 4),
+                        Text(
+                          '${widget.vehicleType} • ${widget.plateNumber}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+              const Divider(height: 1, color: AppTheme.borderSide),
+              const SizedBox(height: 20),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMetricCard(
+                    icon: LucideIcons.star,
+                    value: widget.rating,
+                    label: 'Rating',
+                    iconColor: Colors.amber,
+                  ),
+                  Container(width: 1, height: 40, color: AppTheme.borderSide),
+                  _buildMetricCard(
+                    icon: LucideIcons.bike,
+                    value: _isLoadingStats ? '...' : '$_totalTripsCount',
+                    label: 'Total Trips',
+                    iconColor: AppTheme.primaryColor,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+              const Text(
+                'Passenger Reviews',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              if (_isLoadingStats)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                )
+              else if (_driverReviewsList.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'No reviews available yet.',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount:
+                        _driverReviewsList.length +
+                        (_hasMore || _isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _driverReviewsList.length) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: CircularProgressIndicator(
+                              color: AppTheme.primaryColor,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      }
+                      final reviewItem = _driverReviewsList[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.neutralColor,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppTheme.borderSide),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ...List.generate(5, (starIndex) {
-                              final ratingValue =
-                                  (reviewItem['rating'] as num?)?.toDouble() ??
-                                  5.0;
-                              if (ratingValue >= starIndex + 1) {
-                                return const Icon(
-                                  Icons.star_rounded,
-                                  color: Colors.amber,
-                                  size: 13,
-                                );
-                              } else if (ratingValue >= starIndex + 0.5) {
-                                return const Icon(
-                                  Icons.star_half_rounded,
-                                  color: Colors.amber,
-                                  size: 13,
-                                );
-                              } else {
-                                return Icon(
-                                  Icons.star_rounded,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.12,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  reviewItem['passengerName']?.toString() ??
+                                      'Passenger',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: AppTheme.primaryColor,
                                   ),
-                                  size: 13,
-                                );
-                              }
-                            }),
-                            const SizedBox(width: 6),
+                                ),
+                                Text(
+                                  reviewItem['date']?.toString() ?? 'Recent',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                ...List.generate(5, (starIndex) {
+                                  final ratingValue =
+                                      (reviewItem['rating'] as num?)
+                                          ?.toDouble() ??
+                                      5.0;
+                                  if (ratingValue >= starIndex + 1) {
+                                    return const Icon(
+                                      Icons.star_rounded,
+                                      color: Colors.amber,
+                                      size: 13,
+                                    );
+                                  } else if (ratingValue >= starIndex + 0.5) {
+                                    return const Icon(
+                                      Icons.star_half_rounded,
+                                      color: Colors.amber,
+                                      size: 13,
+                                    );
+                                  } else {
+                                    return Icon(
+                                      Icons.star_rounded,
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                      size: 13,
+                                    );
+                                  }
+                                }),
+                                const SizedBox(width: 6),
+                                Text(
+                                  ((reviewItem['rating'] as num?)?.toDouble() ??
+                                          5.0)
+                                      .toStringAsFixed(1),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
                             Text(
-                              ((reviewItem['rating'] as num?)?.toDouble() ??
-                                      5.0)
-                                  .toStringAsFixed(1),
+                              reviewItem['comment']?.toString() ?? '',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                height: 1.4,
                                 color: AppTheme.primaryColor.withValues(
                                   alpha: 0.7,
                                 ),
@@ -406,27 +423,16 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          reviewItem['comment']?.toString() ?? '',
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.4,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-        ],
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 
   Widget _buildMetricCard({
     required IconData icon,

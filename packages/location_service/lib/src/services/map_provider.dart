@@ -9,7 +9,6 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 export 'package:location_service/src/services/map_annotation_service.dart';
 export 'package:location_service/src/services/map_camera_service.dart';
 
-
 class MapProvider {
   MapProvider._();
 
@@ -76,17 +75,11 @@ class MapProvider {
     }
 
     try {
-      final either = await nativeService.reverseGeocode(
-        lat: lat,
-        lng: lng,
-      );
-      return either.fold(
-        (failure) {
-          debugPrint('MapProvider.getPlaceFromCoordinates failure: $failure');
-          return null;
-        },
-        (place) => place,
-      );
+      final either = await nativeService.reverseGeocode(lat: lat, lng: lng);
+      return either.fold((failure) {
+        debugPrint('MapProvider.getPlaceFromCoordinates failure: $failure');
+        return null;
+      }, (place) => place);
     } catch (error) {
       debugPrint('MapProvider.getPlaceFromCoordinates error: $error');
       return null;
@@ -111,13 +104,10 @@ class MapProvider {
         destLat: destLat,
         destLng: destLng,
       );
-      return either.fold(
-        (failure) {
-          debugPrint('MapProvider.getRoute failure: $failure');
-          return null;
-        },
-        (route) => route,
-      );
+      return either.fold((failure) {
+        debugPrint('MapProvider.getRoute failure: $failure');
+        return null;
+      }, (route) => route);
     } catch (error) {
       debugPrint('MapProvider.getRoute error: $error');
       return null;
@@ -140,13 +130,10 @@ class MapProvider {
         lng: lng,
         page: page,
       );
-      return either.fold(
-        (failure) {
-          debugPrint('MapProvider.getNearbyPOIs failure: $failure');
-          return <PlaceModel>[];
-        },
-        (pois) => pois,
-      );
+      return either.fold((failure) {
+        debugPrint('MapProvider.getNearbyPOIs failure: $failure');
+        return <PlaceModel>[];
+      }, (pois) => pois);
     } catch (error) {
       debugPrint('MapProvider.getNearbyPOIs error: $error');
       return [];
@@ -207,14 +194,13 @@ class MapProvider {
     double lng, {
     double? zoom,
     bool animate = true,
-  }) =>
-      MapCameraService.moveCamera(
-        controller,
-        lat,
-        lng,
-        zoom: zoom,
-        animate: animate,
-      );
+  }) => MapCameraService.moveCamera(
+    controller,
+    lat,
+    lng,
+    zoom: zoom,
+    animate: animate,
+  );
 
   static Future<LatLng> getCameraCenter(AppMapController controller) =>
       MapCameraService.getCameraCenter(controller);
@@ -223,8 +209,7 @@ class MapProvider {
     AppMapController controller,
     List<LatLng> points, {
     double padding = 80.0,
-  }) =>
-      MapCameraService.fitBounds(controller, points, padding: padding);
+  }) => MapCameraService.fitBounds(controller, points, padding: padding);
 
   static Future<void> zoomIn(AppMapController controller) =>
       MapCameraService.zoomIn(controller);
@@ -239,41 +224,38 @@ class MapProvider {
     String? label,
     bool isOrigin = false,
     Color? color,
-  }) =>
-      MapAnnotationService.addMarker(
-        controller,
-        lat,
-        lng,
-        label: label,
-        isOrigin: isOrigin,
-        color: color,
-      );
+  }) => MapAnnotationService.addMarker(
+    controller,
+    lat,
+    lng,
+    label: label,
+    isOrigin: isOrigin,
+    color: color,
+  );
 
   static Future<void> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
     Color color = const Color(0xFF222222),
     double width = 4.0,
-  }) =>
-      MapAnnotationService.addPolyline(
-        controller,
-        points,
-        color: color,
-        width: width,
-      );
+  }) => MapAnnotationService.addPolyline(
+    controller,
+    points,
+    color: color,
+    width: width,
+  );
 
   static Future<dynamic> addAnimatedPolylineSegment(
     AppMapController controller,
     List<List<double>> points, {
     Color color = const Color(0xFF222222),
     double width = 5.0,
-  }) =>
-      MapAnnotationService.addAnimatedPolylineSegment(
-        controller,
-        points,
-        color: color,
-        width: width,
-      );
+  }) => MapAnnotationService.addAnimatedPolylineSegment(
+    controller,
+    points,
+    color: color,
+    width: width,
+  );
 
   static Future<void> clearAnnotations(dynamic manager) =>
       MapAnnotationService.clearAnnotations(manager);

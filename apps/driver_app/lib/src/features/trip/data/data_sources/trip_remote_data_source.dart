@@ -2,7 +2,10 @@ import 'package:dio/dio.dart';
 
 abstract class TripRemoteDataSource {
   Future<bool> acceptRide({required String tripId, required String driverId});
-  Future<bool> updateRideStatus({required String tripId, required String status});
+  Future<bool> updateRideStatus({
+    required String tripId,
+    required String status,
+  });
   Future<Map<String, dynamic>> fetchTripDetails(String tripId);
   Future<Map<String, dynamic>> getRideStatus(String tripId);
   Future<Map<String, dynamic>> fetchStats(String driverId);
@@ -15,7 +18,10 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
   TripRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<bool> acceptRide({required String tripId, required String driverId}) async {
+  Future<bool> acceptRide({
+    required String tripId,
+    required String driverId,
+  }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/trips/$tripId/accept',
       data: {'driver_id': driverId},
@@ -24,7 +30,10 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
   }
 
   @override
-  Future<bool> updateRideStatus({required String tripId, required String status}) async {
+  Future<bool> updateRideStatus({
+    required String tripId,
+    required String status,
+  }) async {
     final response = await _dio.patch<Map<String, dynamic>>(
       '/trips/$tripId/status',
       data: {'status': status},
@@ -40,13 +49,17 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> getRideStatus(String tripId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/trips/$tripId/status');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/trips/$tripId/status',
+    );
     return response.data ?? {};
   }
 
   @override
   Future<Map<String, dynamic>> fetchStats(String driverId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/drivers/$driverId/stats');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/drivers/$driverId/stats',
+    );
     return response.data ?? {};
   }
 

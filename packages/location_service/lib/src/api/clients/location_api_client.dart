@@ -17,8 +17,8 @@ class LocationApiClient implements ILocationApiClient {
       '/places/search',
       queryParameters: {
         'query': query,
-        if (userLat != null) 'userLat': userLat,
-        if (userLng != null) 'userLng': userLng,
+        'userLat': ?userLat,
+        'userLng': ?userLng,
       },
     );
     return response.data ?? {};
@@ -50,9 +50,7 @@ class LocationApiClient implements ILocationApiClient {
   }
 
   @override
-  Future<RouteModel> getRoute({
-    required Map<String, dynamic> body,
-  }) async {
+  Future<RouteModel> getRoute({required Map<String, dynamic> body}) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/places/route',
       data: body,

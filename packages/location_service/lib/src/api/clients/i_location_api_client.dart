@@ -7,10 +7,7 @@ abstract class ILocationApiClient {
     double? userLng,
   });
 
-  Future<PlaceModel> reverseGeocode({
-    required double lat,
-    required double lng,
-  });
+  Future<PlaceModel> reverseGeocode({required double lat, required double lng});
 
   Future<Map<String, dynamic>> getNearbyPois({
     required double lat,
@@ -18,7 +15,5 @@ abstract class ILocationApiClient {
     int page = 1,
   });
 
-  Future<RouteModel> getRoute({
-    required Map<String, dynamic> body,
-  });
+  Future<RouteModel> getRoute({required Map<String, dynamic> body});
 }

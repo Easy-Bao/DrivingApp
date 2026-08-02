@@ -40,11 +40,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       return;
     }
     if (normalizedPassword.length < 6) {
-      emit(
-        const SignUpFailure(
-          'Password must be at least 6 characters long',
-        ),
-      );
+      emit(const SignUpFailure('Password must be at least 6 characters long'));
       return;
     }
 
@@ -57,23 +53,20 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       password: normalizedPassword,
     );
 
-    result.fold(
-      (failure) => emit(SignUpFailure(failure.message)),
-      (response) {
-        final needsVerification = response['needsVerification'] == true;
-        if (needsVerification) {
-          emit(SignUpNeedsVerification(normalizedEmail));
-        } else {
-          final credentials = AuthCredentials(
-            passengerId: response['passengerId'] as String? ?? '',
-            passengerName: normalizedName,
-            passengerEmail: normalizedEmail,
-            passengerPhone: normalizedPhone,
-            token: response['token'] as String? ?? '',
-          );
-          emit(SignUpSuccess(credentials));
-        }
-      },
-    );
+    result.fold((failure) => emit(SignUpFailure(failure.message)), (response) {
+      final needsVerification = response['needsVerification'] == true;
+      if (needsVerification) {
+        emit(SignUpNeedsVerification(normalizedEmail));
+      } else {
+        final credentials = AuthCredentials(
+          passengerId: response['passengerId'] as String? ?? '',
+          passengerName: normalizedName,
+          passengerEmail: normalizedEmail,
+          passengerPhone: normalizedPhone,
+          token: response['token'] as String? ?? '',
+        );
+        emit(SignUpSuccess(credentials));
+      }
+    });
   }
 }

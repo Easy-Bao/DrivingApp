@@ -1,11 +1,7 @@
-
-
 import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
 
 abstract class BookingEvent {
-
-
   const BookingEvent();
 }
 

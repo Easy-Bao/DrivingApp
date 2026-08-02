@@ -153,153 +153,155 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: AppTheme.secondaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  LucideIcons.check,
-                  color: AppTheme.primaryColor,
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Ride Completed!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'How was your trip with your driver?',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedStars = index + 1;
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Icon(
-                        index < _selectedStars
-                            ? LucideIcons.star
-                            : LucideIcons.star,
-                        color: index < _selectedStars
-                            ? Colors.amber
-                            : AppTheme.borderSide,
-                        size: 40,
-                      ),
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 20),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.secondaryColor,
+                      shape: BoxShape.circle,
                     ),
-                  );
-                }),
-              ),
-
-              const SizedBox(height: 40),
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.borderSide),
-                ),
-                child: TextField(
-                  controller: _feedbackController,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: 'Leave a feedback (optional)',
-                    hintStyle: TextStyle(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                      fontSize: 15,
+                    child: const Icon(
+                      LucideIcons.check,
+                      color: AppTheme.primaryColor,
+                      size: 40,
                     ),
-                    border: InputBorder.none,
                   ),
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontSize: 15,
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Ride Completed!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
-                ),
-              ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'How was your trip with your driver?',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
 
-              const Spacer(),
-
-              GestureDetector(
-                onTap: _isSubmitting ? null : _finishRating,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  decoration: BoxDecoration(
-                    color: _isSubmitting ? AppTheme.primaryColor.withValues(alpha: 0.5) : AppTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(32),
-                  ),
-                  alignment: Alignment.center,
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Submit Rating',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedStars = index + 1;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Icon(
+                            index < _selectedStars
+                                ? LucideIcons.star
+                                : LucideIcons.star,
+                            color: index < _selectedStars
+                                ? Colors.amber
+                                : AppTheme.borderSide,
+                            size: 40,
                           ),
                         ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: _checkForgottenItemsAndFinish,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Skip for now',
-                    style: TextStyle(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      );
+                    }),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.neutralColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.borderSide),
+                    ),
+                    child: TextField(
+                      controller: _feedbackController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: 'Leave a feedback (optional)',
+                        hintStyle: TextStyle(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                      ),
+                      style: const TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
-                ),
+
+                  const Spacer(),
+
+                  GestureDetector(
+                    onTap: _isSubmitting ? null : _finishRating,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      decoration: BoxDecoration(
+                        color: _isSubmitting
+                            ? AppTheme.primaryColor.withValues(alpha: 0.5)
+                            : AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(32),
+                      ),
+                      alignment: Alignment.center,
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Submit Rating',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: _checkForgottenItemsAndFinish,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Skip for now',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 }

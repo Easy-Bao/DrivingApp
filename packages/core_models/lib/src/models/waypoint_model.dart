@@ -23,8 +23,12 @@ class Waypoint extends Equatable {
       lat: (json['lat'] as num? ?? 0.0).toDouble(),
       lng: (json['lng'] as num? ?? 0.0).toDouble(),
       name: json['name'] as String? ?? '',
-      isPickup: json['isPickup'] as bool? ?? json['is_pickup'] as bool? ?? false,
-      passengerId: json['passengerId'] as String? ?? json['passenger_id'] as String? ?? '',
+      isPickup:
+          json['isPickup'] as bool? ?? json['is_pickup'] as bool? ?? false,
+      passengerId:
+          json['passengerId'] as String? ??
+          json['passenger_id'] as String? ??
+          '',
     );
   }
 

@@ -40,4 +40,3 @@ class VerifyOtpFailure extends VerifyOtpState {
   @override
   List<Object?> get props => [errorMessage];
 }
-

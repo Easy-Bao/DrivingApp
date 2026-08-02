@@ -14,8 +14,8 @@ class AuthRepository implements IAuthRepository {
   AuthRepository({
     required AuthRemoteDataSource remoteDataSource,
     required SecureSessionService secureSessionService,
-  })  : _remoteDataSource = remoteDataSource,
-        _secureSessionService = secureSessionService;
+  }) : _remoteDataSource = remoteDataSource,
+       _secureSessionService = secureSessionService;
 
   @override
   Future<Either<Failure, AuthCredentials>> authenticateDriver({
@@ -29,7 +29,8 @@ class AuthRepository implements IAuthRepository {
       );
 
       final token = responseData['token'] as String? ?? '';
-      final driver = (responseData['driver'] as Map<String, dynamic>?) ??
+      final driver =
+          (responseData['driver'] as Map<String, dynamic>?) ??
           (responseData['user'] as Map<String, dynamic>?) ??
           responseData;
       final driverId = driver['id'] as String? ?? '';
@@ -63,16 +64,12 @@ class AuthRepository implements IAuthRepository {
 
       return Right(credentials);
     } catch (error) {
-      return const Left(
-        AuthFailure('Invalid email or password'),
-      );
+      return const Left(AuthFailure('Invalid email or password'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> resetPassword({
-    required String email,
-  }) async {
+  Future<Either<Failure, void>> resetPassword({required String email}) async {
     try {
       await _remoteDataSource.resetPassword(email: email);
       return const Right(null);

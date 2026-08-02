@@ -8,7 +8,6 @@ import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-
 class DriverEarningsScreen extends StatefulWidget {
   const DriverEarningsScreen({super.key});
 
@@ -47,6 +46,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
     final secureSession = Modular.get<SecureSessionService>();
     final driverId = await secureSession.readDriverId() ?? '';
     final prefs = await SharedPreferences.getInstance();
+
     ///TODO: Remove hardcoded fallback
     final rating = prefs.getString('rating') ?? '4.9';
     if (mounted) {
@@ -64,9 +64,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
       return;
     }
 
-    final result = await Modular.get<IDriverActivityRepository>().fetchTripHistory(
-      driverId,
-    );
+    final result = await Modular.get<IDriverActivityRepository>()
+        .fetchTripHistory(driverId);
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeek = DateTime(monday.year, monday.month, monday.day);

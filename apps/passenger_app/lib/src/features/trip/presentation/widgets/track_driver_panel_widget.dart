@@ -91,7 +91,9 @@ class TrackDriverPanelWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: PassengerTheme.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: PassengerTheme.accent.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: PassengerTheme.accent.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Text(
                   etaText,
@@ -126,9 +128,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ride.driverName.isNotEmpty
-                            ? ride.driverName
-                            : 'Driver',
+                        ride.driverName.isNotEmpty ? ride.driverName : 'Driver',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -184,7 +184,9 @@ class TrackDriverPanelWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 color: PassengerTheme.cancel.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: PassengerTheme.cancel.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: PassengerTheme.cancel.withValues(alpha: 0.3),
+                ),
               ),
               child: const Text(
                 'Cancel Trip',

@@ -20,11 +20,11 @@ class BidSessionTrip extends Equatable {
 
   @override
   List<Object?> get props => [
-        rideType,
-        fare,
-        destination,
-        distance,
-        duration,
-        pickupAddress,
-      ];
+    rideType,
+    fare,
+    destination,
+    distance,
+    duration,
+    pickupAddress,
+  ];
 }

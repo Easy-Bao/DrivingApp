@@ -1,4 +1,3 @@
-import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
@@ -6,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-
 import 'package:passenger_app/src/core/constants/env_config.dart';
+import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
-
 
 class MapPinScreen extends StatefulWidget {
   const MapPinScreen({super.key});
@@ -26,8 +24,10 @@ class _MapPinScreenState extends State<MapPinScreen>
   bool _isGeocoding = false;
   bool _hasUserPannedMap = false;
   Timer? _debounceTimer;
-  double? _centerLat = LocationService.lastPosition?.latitude ?? EnvConfig.defaultLatitude;
-  double? _centerLng = LocationService.lastPosition?.longitude ?? EnvConfig.defaultLongitude;
+  double? _centerLat =
+      LocationService.lastPosition?.latitude ?? EnvConfig.defaultLatitude;
+  double? _centerLng =
+      LocationService.lastPosition?.longitude ?? EnvConfig.defaultLongitude;
   Widget? _cachedMapView;
 
   @override
@@ -99,8 +99,7 @@ class _MapPinScreenState extends State<MapPinScreen>
       final parts = full.split(',');
       setState(() {
         _address = parts.first.trim();
-        _subAddress =
-            parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
+        _subAddress = parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
         _centerLat = lat;
         _centerLng = lng;
         _isGeocoding = false;
@@ -168,9 +167,7 @@ class _MapPinScreenState extends State<MapPinScreen>
           ),
         ),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: AppTheme.primaryColor,
-          ),
+          child: CircularProgressIndicator(color: AppTheme.primaryColor),
         ),
       );
     }
@@ -199,7 +196,9 @@ class _MapPinScreenState extends State<MapPinScreen>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.3,
+                                ),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
@@ -235,10 +234,7 @@ class _MapPinScreenState extends State<MapPinScreen>
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: SizedBox(
                 height: 52,
                 child: Row(
@@ -413,11 +409,7 @@ class _TopButton extends StatelessWidget {
           ],
         ),
         child: Center(
-          child: Icon(
-            icon,
-            color: AppTheme.primaryColor,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppTheme.primaryColor, size: 20),
         ),
       ),
     );

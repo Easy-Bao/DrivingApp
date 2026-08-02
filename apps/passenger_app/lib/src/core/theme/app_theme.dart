@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import 'package:passenger_app/src/core/theme/app_colors.dart';
 
-class AppTheme {
+mixin AppTheme {
   static ThemeData get darkTheme {
     return ThemeData.dark().copyWith(
       primaryColor: AppColors.primary,

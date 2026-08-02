@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 class PassengerTheme {
   PassengerTheme._();
 
-  static const Color primaryColor = Color(0xFF1A1D20);       // Dark Obsidian Charcoal
-  static const Color secondaryColor = Color(0xFFE3E2C3);     // Healing Springs Sand Accent
-  static const Color tertiaryColor = Color(0xFF6C757D);      // Slate Grey Subtitle
-  static const Color neutralColor = Color(0xFFF1F3F5);       // Soft Tint Neutral
-  static const Color surface = Color(0xFFFFFFFF);            // Pure White Card/Input Surface
-  static const Color background = Color(0xFFF8F9FA);         // Soft Off-White Scaffold Background
-  static const Color borderSide = Color(0xFFDEE2E6);         // Clean Subtle Border
+  static const Color primaryColor = Color(0xFF1A1D20); // Dark Obsidian Charcoal
+  static const Color secondaryColor =
+      Color(0xFFE3E2C3); // Healing Springs Sand Accent
+  static const Color tertiaryColor = Color(0xFF6C757D); // Slate Grey Subtitle
+  static const Color neutralColor = Color(0xFFF1F3F5); // Soft Tint Neutral
+  static const Color surface =
+      Color(0xFFFFFFFF); // Pure White Card/Input Surface
+  static const Color background =
+      Color(0xFFF8F9FA); // Soft Off-White Scaffold Background
+  static const Color borderSide = Color(0xFFDEE2E6); // Clean Subtle Border
 
   static const Color accent = primaryColor;
   static const Color mutedSand = secondaryColor;
@@ -49,17 +52,30 @@ class PassengerTheme {
         ),
       ),
       textTheme: const TextTheme(
-        displayLarge: TextStyle(color: primaryColor, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1.0),
-        titleLarge: TextStyle(color: primaryColor, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-        titleMedium: TextStyle(color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(color: primaryColor, fontSize: 15, fontWeight: FontWeight.w500),
-        bodyMedium: TextStyle(color: tertiaryColor, fontSize: 14, fontWeight: FontWeight.w400),
-        labelLarge: TextStyle(color: primaryColor, fontSize: 15, fontWeight: FontWeight.w700),
+        displayLarge: TextStyle(
+            color: primaryColor,
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1.0,),
+        titleLarge: TextStyle(
+            color: primaryColor,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,),
+        titleMedium: TextStyle(
+            color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600,),
+        bodyLarge: TextStyle(
+            color: primaryColor, fontSize: 15, fontWeight: FontWeight.w500,),
+        bodyMedium: TextStyle(
+            color: tertiaryColor, fontSize: 14, fontWeight: FontWeight.w400,),
+        labelLarge: TextStyle(
+            color: primaryColor, fontSize: 15, fontWeight: FontWeight.w700,),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         hintStyle: const TextStyle(
           color: Color(0xFFA0AEC0),
           fontSize: 15,
@@ -157,10 +173,13 @@ class DriverTheme {
         onSurface: primaryColor,
       ),
       textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
+        bodyLarge: TextStyle(
+            color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600,),
         bodyMedium: TextStyle(color: primaryColor, fontSize: 14),
-        titleLarge: TextStyle(color: primaryColor, fontSize: 22, fontWeight: FontWeight.bold),
-        titleMedium: TextStyle(color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600),
+        titleLarge: TextStyle(
+            color: primaryColor, fontSize: 22, fontWeight: FontWeight.bold,),
+        titleMedium: TextStyle(
+            color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600,),
       ),
       fontFamily: 'packages/shared_ui/ProductSans',
     );
