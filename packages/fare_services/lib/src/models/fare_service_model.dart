@@ -43,10 +43,10 @@ class FareServiceModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        serviceName,
-        baseFare,
-        perKmRate,
-        ratingConfig,
-      ];
+    id,
+    serviceName,
+    baseFare,
+    perKmRate,
+    ratingConfig,
+  ];
 }

@@ -48,6 +48,9 @@ export async function handleCreateChatRoom(context: Context) {
  */
 export async function handleGetChatRoomMessages(context: Context) {
   const roomId = context.req.param('roomId');
+  if (!roomId) {
+    throw new HTTPException(400, { message: 'roomId is required' });
+  }
   const messagesList = await getChatRoomMessages(roomId);
   return context.json(messagesList);
 }
@@ -57,6 +60,9 @@ export async function handleGetChatRoomMessages(context: Context) {
  */
 export async function handleResolveChatRoom(context: Context) {
   const roomId = context.req.param('roomId');
+  if (!roomId) {
+    throw new HTTPException(400, { message: 'roomId is required' });
+  }
   await resolveChatRoom(roomId);
 
   const activePeers = activeChatConnectionsMap.get(roomId);

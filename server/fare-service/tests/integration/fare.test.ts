@@ -6,9 +6,9 @@ import { FareCalculationService } from '../../src/features/services/fare_calcula
 describe('Fare Service Integration Tests', () => {
   beforeAll(() => {
     spyOn(PricingConfigService.prototype, 'getPricingConfigs').mockImplementation(async () => [
-      { id: '1', serviceType: 'Solo Ride', baseFare: 20.0, perKmRate: 10.0, perMinuteRate: 1.5, minimumFare: 25.0, surgeMultiplier: 1.0, isActive: true },
-      { id: '2', serviceType: 'Share-Bao', baseFare: 15.0, perKmRate: 7.0, perMinuteRate: 1.0, minimumFare: 20.0, surgeMultiplier: 1.0, isActive: true },
-      { id: '3', serviceType: 'Bao Premium', baseFare: 35.0, perKmRate: 15.0, perMinuteRate: 2.0, minimumFare: 40.0, surgeMultiplier: 1.0, isActive: true },
+      { id: '1', serviceType: 'Solo Ride', baseFare: 20.0, perKmRate: 10.0, perMinuteRate: 1.5, minimumFare: 25.0, surgeMultiplier: 1.0, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: '2', serviceType: 'Share-Bao', baseFare: 15.0, perKmRate: 7.0, perMinuteRate: 1.0, minimumFare: 20.0, surgeMultiplier: 1.0, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: '3', serviceType: 'Bao Premium', baseFare: 35.0, perKmRate: 15.0, perMinuteRate: 2.0, minimumFare: 40.0, surgeMultiplier: 1.0, isActive: true, createdAt: new Date(), updatedAt: new Date() },
     ]);
 
     spyOn(PricingConfigService.prototype, 'getRatingConfig').mockImplementation(async () => ({

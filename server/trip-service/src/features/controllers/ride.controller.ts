@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { RideRepositoryImpl } from '../repositories/ride.repository.ts';
 import { RideService } from '../services/ride.service.ts';
 
@@ -43,24 +44,28 @@ export async function handleGetActiveRides(context: Context) {
 
 export async function handleGetRideDetails(context: Context) {
   const id = context.req.param('id');
+  if (!id) throw new HTTPException(400, { message: 'id is required' });
   const ride = await rideService.getRideDetails(id);
   return context.json(mapRideToSnakeCase(ride));
 }
 
 export async function handleGetRidesByDriver(context: Context) {
   const driverId = context.req.param('driverId');
+  if (!driverId) throw new HTTPException(400, { message: 'driverId is required' });
   const list = await rideService.getRidesByDriverId(driverId);
   return context.json(list.map(mapRideToSnakeCase));
 }
 
 export async function handleGetRidesByPassenger(context: Context) {
   const passengerId = context.req.param('passengerId');
+  if (!passengerId) throw new HTTPException(400, { message: 'passengerId is required' });
   const list = await rideService.getRidesByPassengerId(passengerId);
   return context.json(list.map(mapRideToSnakeCase));
 }
 
 export async function handleAcceptRide(context: Context) {
   const id = context.req.param('id');
+  if (!id) throw new HTTPException(400, { message: 'id is required' });
   const body = await context.req.json();
   const updated = await rideService.acceptRideRequest(id, body);
   return context.json(mapRideToSnakeCase(updated));
@@ -68,6 +73,7 @@ export async function handleAcceptRide(context: Context) {
 
 export async function handleUpdateRideStatus(context: Context) {
   const id = context.req.param('id');
+  if (!id) throw new HTTPException(400, { message: 'id is required' });
   const { status } = await context.req.json();
   const updated = await rideService.updateRideStatus(id, status);
   return context.json(mapRideToSnakeCase(updated));

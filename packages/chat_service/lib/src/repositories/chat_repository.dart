@@ -70,7 +70,8 @@ class ChatRepository implements IChatRepository {
 
   @override
   Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(
-      String roomId,) async {
+    String roomId,
+  ) async {
     try {
       final response = await clientDio.get(
         '/chat/rooms/$roomId/messages',
@@ -92,7 +93,8 @@ class ChatRepository implements IChatRepository {
       return const Right([]);
     } catch (error) {
       return Left(
-          ServerFailure('Failed to fetch historical chat room logs: $error'),);
+        ServerFailure('Failed to fetch historical chat room logs: $error'),
+      );
     }
   }
 
@@ -115,8 +117,11 @@ class ChatRepository implements IChatRepository {
 
         if (type == 'message') {
           final model = ChatMessageModel.fromJson(decoded);
-          return Right(ChatMessageReceived(
-              model.toEntity(currentUserId: currentUserId),),);
+          return Right(
+            ChatMessageReceived(
+              model.toEntity(currentUserId: currentUserId),
+            ),
+          );
         }
 
         if (type == 'room_locked') {
@@ -126,8 +131,11 @@ class ChatRepository implements IChatRepository {
 
         return Left(ServerFailure('Unknown websocket chat event type: $type'));
       } catch (error) {
-        return Left(ServerFailure(
-            'Failed to parse incoming websocket payload: $error',),);
+        return Left(
+          ServerFailure(
+            'Failed to parse incoming websocket payload: $error',
+          ),
+        );
       }
     });
   }

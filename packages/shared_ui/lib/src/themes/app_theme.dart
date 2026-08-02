@@ -53,23 +53,37 @@ class PassengerTheme {
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(
-            color: primaryColor,
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.0,),
+          color: primaryColor,
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -1.0,
+        ),
         titleLarge: TextStyle(
-            color: primaryColor,
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,),
+          color: primaryColor,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
+        ),
         titleMedium: TextStyle(
-            color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600,),
+          color: primaryColor,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
         bodyLarge: TextStyle(
-            color: primaryColor, fontSize: 15, fontWeight: FontWeight.w500,),
+          color: primaryColor,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
         bodyMedium: TextStyle(
-            color: tertiaryColor, fontSize: 14, fontWeight: FontWeight.w400,),
+          color: tertiaryColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
         labelLarge: TextStyle(
-            color: primaryColor, fontSize: 15, fontWeight: FontWeight.w700,),
+          color: primaryColor,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -174,12 +188,21 @@ class DriverTheme {
       ),
       textTheme: const TextTheme(
         bodyLarge: TextStyle(
-            color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600,),
+          color: primaryColor,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
         bodyMedium: TextStyle(color: primaryColor, fontSize: 14),
         titleLarge: TextStyle(
-            color: primaryColor, fontSize: 22, fontWeight: FontWeight.bold,),
+          color: primaryColor,
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+        ),
         titleMedium: TextStyle(
-            color: primaryColor, fontSize: 16, fontWeight: FontWeight.w600,),
+          color: primaryColor,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       fontFamily: 'packages/shared_ui/ProductSans',
     );

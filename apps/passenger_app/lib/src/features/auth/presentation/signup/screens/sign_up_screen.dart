@@ -76,8 +76,6 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
     });
   }
 
-
-
   void _submitRegistration(BuildContext context) {
     FocusScope.of(context).unfocus();
     final name = _passengerNameController.text.trim();

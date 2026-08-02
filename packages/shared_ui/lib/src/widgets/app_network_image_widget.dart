@@ -34,8 +34,11 @@ class AppNetworkImageWidget extends StatelessWidget {
           color: AppTheme.secondaryColor,
           borderRadius: effectiveRadius,
         ),
-        child: Icon(fallbackIcon,
-            color: AppTheme.primaryColor, size: width * 0.45,),
+        child: Icon(
+          fallbackIcon,
+          color: AppTheme.primaryColor,
+          size: width * 0.45,
+        ),
       );
     }
 
@@ -71,8 +74,11 @@ class AppNetworkImageWidget extends StatelessWidget {
             color: AppTheme.secondaryColor,
             borderRadius: effectiveRadius,
           ),
-          child: Icon(fallbackIcon,
-              color: AppTheme.primaryColor, size: width * 0.45,),
+          child: Icon(
+            fallbackIcon,
+            color: AppTheme.primaryColor,
+            size: width * 0.45,
+          ),
         ),
       ),
     );
