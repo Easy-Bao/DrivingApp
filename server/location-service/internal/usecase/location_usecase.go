@@ -5,7 +5,13 @@ import (
 	"fmt"
 	"location-service/internal/domain"
 	"math"
+	"sort"
 	"time"
+)
+
+const (
+	nearbyRadiusKm = 10.0
+	nearbyPageSize = 10
 )
 
 type LocationUseCase interface {
@@ -78,11 +84,40 @@ func (uc *locationUseCase) GetNearbyPois(ctx context.Context, lat, lng float64, 
 		return nil, err
 	}
 
+	places = filterAndPageNearbyPlaces(places, page)
+
 	if uc.cache != nil && len(places) > 0 {
 		_ = uc.cache.SetNearbyCache(ctx, lat, lng, page, places)
 	}
 
 	return places, nil
+}
+
+func filterAndPageNearbyPlaces(places []domain.Place, page int) []domain.Place {
+	if page < 1 {
+		page = 1
+	}
+
+	filtered := make([]domain.Place, 0, len(places))
+	for _, place := range places {
+		if place.DistanceKm <= nearbyRadiusKm {
+			filtered = append(filtered, place)
+		}
+	}
+
+	sort.SliceStable(filtered, func(i, j int) bool {
+		return filtered[i].DistanceKm < filtered[j].DistanceKm
+	})
+
+	start := (page - 1) * nearbyPageSize
+	if start >= len(filtered) {
+		return []domain.Place{}
+	}
+	end := start + nearbyPageSize
+	if end > len(filtered) {
+		end = len(filtered)
+	}
+	return filtered[start:end]
 }
 
 func (uc *locationUseCase) GetRoute(ctx context.Context, originLat, originLng, destLat, destLng float64) (*domain.Route, error) {

@@ -101,9 +101,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
       return;
     }
 
-    if (!_isLoadingMoreNearby &&
-        _hasMoreNearbyPages &&
-        _currentNearbyPage < 3) {
+    if (!_isLoadingMoreNearby && _hasMoreNearbyPages) {
       unawaited(_fetchMoreNearbyFromApi());
     }
   }
@@ -112,38 +110,46 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     if (_userLat == null || _userLng == null || _isLoadingMoreNearby) return;
     setState(() => _isLoadingMoreNearby = true);
 
-    _currentNearbyPage++;
-    final moreResults = await MapProvider.getNearbyPOIs(
-      lat: _userLat!,
-      lng: _userLng!,
-      page: _currentNearbyPage,
-    );
+    final nextPage = _currentNearbyPage + 1;
+    try {
+      final moreResults = await MapProvider.getNearbyPOIs(
+        lat: _userLat!,
+        lng: _userLng!,
+        page: nextPage,
+      );
 
-    if (mounted) {
-      if (moreResults.isEmpty) {
-        _hasMoreNearbyPages = false;
-      } else {
-        for (final item in moreResults) {
-          final isDup = _allNearbyPlaces.any(
-            (p) =>
-                p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ==
-                item.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''),
-          );
-          if (!isDup) {
-            _allNearbyPlaces.add(item);
+      if (mounted) {
+        _currentNearbyPage = nextPage;
+        if (moreResults.isEmpty) {
+          _hasMoreNearbyPages = false;
+        } else {
+          var addedCount = 0;
+          for (final item in moreResults) {
+            final isDup = _allNearbyPlaces.any(
+              (p) =>
+                  p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ==
+                  item.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''),
+            );
+            if (!isDup) {
+              _allNearbyPlaces.add(item);
+              addedCount++;
+            }
+          }
+          _allNearbyPlaces.sort((a, b) {
+            final double distA = a.distanceKm ?? double.maxFinite;
+            final double distB = b.distanceKm ?? double.maxFinite;
+            return distA.compareTo(distB);
+          });
+          _displayedCount = _allNearbyPlaces.length;
+          if (addedCount == 0 || moreResults.length < 10) {
+            _hasMoreNearbyPages = false;
           }
         }
-        _allNearbyPlaces.sort((a, b) {
-          final double distA = a.distanceKm ?? double.maxFinite;
-          final double distB = b.distanceKm ?? double.maxFinite;
-          return distA.compareTo(distB);
-        });
-        _displayedCount = (_displayedCount + 10).clamp(
-          0,
-          _allNearbyPlaces.length,
-        );
       }
-      setState(() => _isLoadingMoreNearby = false);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMoreNearby = false);
+      }
     }
   }
 
@@ -187,7 +193,9 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
       if (mounted) {
         setState(() {
           _allNearbyPlaces = results;
-          _displayedCount = 10;
+          _displayedCount = results.length;
+          _currentNearbyPage = 1;
+          _hasMoreNearbyPages = results.length == 10;
         });
       }
     } finally {
@@ -621,7 +629,9 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                                   ),
                                                   subtitle: Text(
                                                     place.distanceKm != null
-                                                        ? '${place.distanceKm!.toStringAsFixed(1)} km away'
+                                                        ? _formatDistance(
+                                                            place.distanceKm!,
+                                                          )
                                                         : place.category ??
                                                               'Nearby POI',
                                                     style: TextStyle(
@@ -927,5 +937,12 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
         ),
       ),
     );
+  }
+
+  String _formatDistance(double distanceKm) {
+    if (distanceKm < 0.1) {
+      return '${(distanceKm * 1000).round()} m away';
+    }
+    return '${distanceKm.toStringAsFixed(1)} km away';
   }
 }

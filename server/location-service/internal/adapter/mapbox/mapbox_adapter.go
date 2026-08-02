@@ -7,6 +7,7 @@ import (
 	"io"
 	"location-service/internal/domain"
 	"location-service/internal/usecase"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,6 +18,8 @@ import (
 const (
 	searchBoxBaseURL  = "https://api.mapbox.com/search/searchbox/v1"
 	directionsBaseURL = "https://api.mapbox.com/directions/v5/mapbox/driving"
+	nearbyRadiusKm    = 10.0
+	nearbySampleKm    = 5.0
 )
 
 type mapboxAdapter struct {
@@ -93,17 +96,85 @@ func (adapter *mapboxAdapter) GetNearbyPois(
 	longitude float64,
 	page int,
 ) ([]domain.Place, error) {
-	if page < 1 {
-		page = 1
+	// Mapbox reverse search is limited to 10 results and has no page offset.
+	// Sample the surrounding area so the use case can provide real pages.
+	_ = page
+	samples := nearbySearchSamples(latitude, longitude)
+	uniquePlaces := make(map[string]domain.Place)
+
+	for _, sample := range samples {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		parameters := url.Values{
+			"longitude":    {formatCoordinate(sample.longitude)},
+			"latitude":     {formatCoordinate(sample.latitude)},
+			"access_token": {adapter.accessToken},
+			"limit":        {"10"},
+			"types":        {"poi"},
+		}
+		places, err := adapter.fetchPlaces(
+			ctx,
+			searchBoxBaseURL+"/reverse?"+parameters.Encode(),
+			latitude,
+			longitude,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, place := range places {
+			if place.DistanceKm > nearbyRadiusKm {
+				continue
+			}
+			uniquePlaces[nearbyPlaceKey(place)] = place
+		}
 	}
-	parameters := url.Values{
-		"longitude":    {formatCoordinate(longitude)},
-		"latitude":     {formatCoordinate(latitude)},
-		"access_token": {adapter.accessToken},
-		"limit":        {"10"},
-		"types":        {"poi"},
+
+	result := make([]domain.Place, 0, len(uniquePlaces))
+	for _, place := range uniquePlaces {
+		result = append(result, place)
 	}
-	return adapter.fetchPlaces(ctx, searchBoxBaseURL+"/reverse?"+parameters.Encode(), latitude, longitude)
+	return result, nil
+}
+
+type nearbySearchSample struct {
+	latitude  float64
+	longitude float64
+}
+
+func nearbySearchSamples(latitude, longitude float64) []nearbySearchSample {
+	latOffset := nearbySampleKm / 111.32
+	lngOffset := nearbySampleKm / (111.32 * cosDegrees(latitude))
+
+	return []nearbySearchSample{
+		{latitude: latitude, longitude: longitude},
+		{latitude: latitude + latOffset, longitude: longitude},
+		{latitude: latitude - latOffset, longitude: longitude},
+		{latitude: latitude, longitude: longitude + lngOffset},
+		{latitude: latitude, longitude: longitude - lngOffset},
+		{latitude: latitude + latOffset, longitude: longitude + lngOffset},
+		{latitude: latitude + latOffset, longitude: longitude - lngOffset},
+		{latitude: latitude - latOffset, longitude: longitude + lngOffset},
+		{latitude: latitude - latOffset, longitude: longitude - lngOffset},
+	}
+}
+
+func cosDegrees(value float64) float64 {
+	return math.Cos(value * math.Pi / 180)
+}
+
+func nearbyPlaceKey(place domain.Place) string {
+	if place.ID != "" {
+		return place.ID
+	}
+	return fmt.Sprintf(
+		"%s:%.5f:%.5f",
+		strings.ToLower(strings.TrimSpace(place.Name)),
+		place.Latitude,
+		place.Longitude,
+	)
 }
 
 func (adapter *mapboxAdapter) GetRoute(
