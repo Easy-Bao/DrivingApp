@@ -28,9 +28,9 @@ export const load: PageServerLoad = async ({ params, url, fetch, locals }) => {
   if (!isAdminSection(params.section)) error(404, 'Admin section not found.');
 
   const paths = {
-    overview: '/admin/v1/overview',
-    cases: queryPath('/admin/v1/cases', url),
-    audit: queryPath('/admin/v1/audits', url),
+    overview: '/admin/overview',
+    cases: queryPath('/admin/cases', url),
+    audit: queryPath('/admin/audits', url),
     reports: null,
   } as const;
   const path = paths[params.section];
@@ -74,7 +74,7 @@ export const actions: Actions = {
     try {
       await adminMutation(
         fetch,
-        '/admin/v1/cases',
+        '/admin/cases',
         locals.adminToken,
         'POST',
         payload,
@@ -100,7 +100,7 @@ export const actions: Actions = {
     try {
       await adminMutation(
         fetch,
-        `/admin/v1/cases/${encodeURIComponent(caseId)}`,
+        `/admin/cases/${encodeURIComponent(caseId)}`,
         locals.adminToken,
         'PATCH',
         payload,

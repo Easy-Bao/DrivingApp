@@ -8,11 +8,7 @@ const AdminConfigurationSchema = z.object({
 
 export type AdminConfiguration = z.infer<typeof AdminConfigurationSchema>;
 
-/**
- * Validates the isolated Admin service boundary before the server starts. The
- * service owns its database and signing secret, so no Passenger, Driver, or
- * shared authentication configuration is accepted here.
- */
+/** Validates the isolated Admin service boundary before configuration is used. */
 export function loadAdminConfiguration(
   environment: Record<string, string | undefined> = process.env,
 ): AdminConfiguration {

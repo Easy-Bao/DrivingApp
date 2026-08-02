@@ -21,7 +21,7 @@ export const actions: Actions = {
 
     let token: string | null;
     try {
-      const response = await adminApi<unknown>(fetch, '/admin/v1/auth/login', undefined, {
+      const response = await adminApi<unknown>(fetch, '/admin/auth/login', undefined, {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });

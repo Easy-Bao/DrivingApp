@@ -34,9 +34,9 @@ describe('API gateway Admin route', () => {
       return new Response(null, { status: 204 });
     }) as typeof fetch;
 
-    const response = await app.request('/admin/v1/overview');
+    const response = await app.request('/admin/overview');
 
     expect(response.status).toBe(204);
-    expect(upstreamUrl).toBe('http://admin-service:8090/admin/v1/overview');
+    expect(upstreamUrl).toBe('http://admin-service:8090/admin/overview');
   });
 });

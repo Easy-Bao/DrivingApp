@@ -20,7 +20,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals }) => {
   try {
     const csv = await adminApi<string>(
       fetch,
-      `/admin/v1/reports/${report}?${query}`,
+      `/admin/reports/${report}?${query}`,
       locals.adminToken,
       { headers: { accept: 'text/csv' } },
     );

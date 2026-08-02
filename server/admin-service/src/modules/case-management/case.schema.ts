@@ -1,12 +1,7 @@
 import { z } from 'zod';
-import { CASE_STATUSES, CASE_TARGET_TYPES } from '../../db/schema.ts';
+import { CASE_STATUSES, CASE_TARGET_TYPES } from '../../db/schema/index.ts';
 
 const OptionalDateTime = z.string().datetime({ offset: true }).optional();
-
-export const AdminLoginSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(12).max(128),
-});
 
 export const CaseListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -31,10 +26,6 @@ export const ComplaintUpdateSchema = z.object({
   reason: z.string().trim().min(1).max(500),
 });
 
-export const AuditListQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(25),
-  status: z.enum(['succeeded', 'failed']).optional(),
-  from: OptionalDateTime,
-  to: OptionalDateTime,
+export const CaseParamSchema = z.object({
+  caseId: z.string().uuid(),
 });

@@ -1,35 +1,26 @@
 import { describe, expect, test } from 'bun:test';
+import { AdminExecutor } from '../src/config/database.ts';
 import {
-  AdminExecutor,
-  AdminRepository,
   AuditInput,
-} from '../src/features/repositories/admin.repository.ts';
+  AuditService,
+  AuditStore,
+} from '../src/modules/audit-log/audit.service.ts';
 import {
-  AdminService,
-  rowsToCsv,
-} from '../src/features/services/admin.service.ts';
+  CaseService,
+  CaseStore,
+} from '../src/modules/case-management/case.service.ts';
+import { rowsToCsv } from '../src/modules/reporting/report.service.ts';
 
-class MemoryRepository {
+class MemoryAuditStore {
   readonly transaction = {} as AdminExecutor;
   readonly audits: AuditInput[] = [];
   readonly results = new Map<string, {
     requestId: string;
-    action: string;
-    targetType: string;
+    action: 'case.create' | 'case.update';
+    targetType: 'case';
     targetId: string | null;
     requestHash: string;
     response: unknown;
-  }>();
-  readonly cases = new Map<string, {
-    id: string;
-    targetType: 'ride' | 'driver' | 'passenger';
-    targetId: string;
-    rideId: string | null;
-    category: string;
-    notes: string;
-    status: 'open' | 'under_review' | 'resolved' | 'dismissed';
-    resolution: string | null;
-    createdBy: string;
   }>();
 
   async withMutationLock<T>(
@@ -45,8 +36,8 @@ class MemoryRepository {
 
   async saveMutationResult(input: {
     requestId: string;
-    action: string;
-    targetType: string;
+    action: 'case.create' | 'case.update';
+    targetType: 'case';
     targetId?: string | null;
     requestHash: string;
     response: unknown;
@@ -59,6 +50,36 @@ class MemoryRepository {
   async appendAudit(input: AuditInput) {
     this.audits.push(input);
     return input;
+  }
+
+  async listAudits() {
+    return [];
+  }
+
+  async countAudits() {
+    return this.audits.length;
+  }
+}
+
+class MemoryCaseStore {
+  readonly cases = new Map<string, {
+    id: string;
+    targetType: 'ride' | 'driver' | 'passenger';
+    targetId: string;
+    rideId: string | null;
+    category: string;
+    notes: string;
+    status: 'open' | 'under_review' | 'resolved' | 'dismissed';
+    resolution: string | null;
+    createdBy: string;
+  }>();
+
+  async listCases() {
+    return [...this.cases.values()];
+  }
+
+  async countCases() {
+    return this.cases.size;
   }
 
   async createCase(input: {
@@ -100,14 +121,16 @@ class MemoryRepository {
 }
 
 function createService() {
-  const repository = new MemoryRepository();
-  const service = new AdminService(repository as unknown as AdminRepository);
-  return { repository, service };
+  const auditStore = new MemoryAuditStore();
+  const caseStore = new MemoryCaseStore();
+  const auditService = new AuditService(auditStore as unknown as AuditStore);
+  const service = new CaseService(caseStore as unknown as CaseStore, auditService);
+  return { auditStore, caseStore, service };
 }
 
 describe('Admin-local case workflow', () => {
   test('replays a case creation only once for the same idempotency key', async () => {
-    const { repository, service } = createService();
+    const { auditStore, caseStore, service } = createService();
     const input = {
       adminId: 'owner-1',
       requestId: 'case-create-1',
@@ -120,17 +143,17 @@ describe('Admin-local case workflow', () => {
       },
     };
 
-    const first = await service.createCase(input);
-    const replay = await service.createCase(input);
+    const first = await service.create(input);
+    const replay = await service.create(input);
 
     expect(replay).toEqual(first);
-    expect(repository.cases).toHaveLength(1);
-    expect(repository.audits).toHaveLength(1);
+    expect(caseStore.cases).toHaveLength(1);
+    expect(auditStore.audits).toHaveLength(1);
   });
 
   test('requires a resolution before a case can close', async () => {
     const { service } = createService();
-    const created = await service.createCase({
+    const created = await service.create({
       adminId: 'owner-1',
       requestId: 'case-create-2',
       reason: 'support request received',
@@ -142,7 +165,7 @@ describe('Admin-local case workflow', () => {
       },
     });
 
-    await expect(service.updateCase({
+    await expect(service.update({
       adminId: 'owner-1',
       requestId: 'case-close-1',
       caseId: created.id,

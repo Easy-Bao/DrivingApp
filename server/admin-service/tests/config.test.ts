@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import { loadAdminConfiguration } from '../src/config.ts';
+import { loadAdminConfiguration } from '../src/config/env.ts';
 
 const validEnvironment = {
-  DATABASE_URL: 'postgresql://admin:password@localhost:5432/admin',
+  DATABASE_URL: 'postgresql://test:test@database.invalid:5432/test',
   ADMIN_JWT_SECRET: 'a'.repeat(32),
 };
 

@@ -8,10 +8,7 @@ export function globalErrorHandler(error: Error, context: Context) {
       : error.status === 404
         ? 'NOT_FOUND'
         : 'REQUEST_FAILED';
-    return context.json({
-      code,
-      message: error.message,
-    }, error.status);
+    return context.json({ code, message: error.message }, error.status);
   }
   console.error('[admin-service]', error);
   return context.json({

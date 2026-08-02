@@ -65,7 +65,7 @@ describe('admin session', () => {
 describe('admin session validation', () => {
   it('accepts a verified Admin token without exposing it to browser code', async () => {
     const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      expect(String(input)).toContain('/admin/v1/auth/session');
+      expect(String(input)).toContain('/admin/auth/session');
       expect(new Headers(init?.headers).get('authorization')).toBe(
         'Bearer signed-admin-token',
       );

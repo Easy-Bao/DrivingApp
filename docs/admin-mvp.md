@@ -40,8 +40,29 @@ Mapbox dependency, or internal zone-checking endpoint is included now.
 
 Zod validates login, query, and mutation inputs at the HTTP boundary. Drizzle
 defines the PostgreSQL schema and preserves literal TypeScript unions for case
-targets, case statuses, and audit outcomes. Controllers consume validated data,
-services enforce transitions, and repositories own database queries.
+targets, case statuses, audit outcomes, Admin actions, and Admin target types.
+
+The Admin service follows Xy's domain-module convention:
+
+```text
+src/
+├── common/middleware/
+├── config/
+├── db/schema/
+└── modules/
+    ├── auth/
+    ├── audit-log/
+    ├── case-management/
+    └── reporting/
+```
+
+Each module contains only its Zod schema, Hono routes, and service. Routes own
+HTTP parsing and responses; services own business invariants and Drizzle access.
+There are no separate controller or repository layers in this MVP.
+
+Admin endpoints are deliberately unversioned for now: `/admin/auth`,
+`/admin/overview`, `/admin/cases`, `/admin/audits`, and `/admin/reports`.
+Version prefixes will be introduced only with a coordinated API-version policy.
 
 ## Configuration
 
@@ -51,6 +72,10 @@ Secret values never enter Git. Required names are:
 - `ADMIN_JWT_SECRET`
 - `ADMIN_SERVICE_URL` in the gateway
 - `GATEWAY_URL`, `ORIGIN`, `HOST`, and `PORT` in the portal
+
+Committed `.env.example` files contain names only for secrets. Real URLs,
+credentials, and signing material belong only in untracked `.env` files or the
+deployment secret store.
 
 The Admin API defaults to port `8090` because the existing location service owns
 port `8089`. The portal defaults to port `5173`.

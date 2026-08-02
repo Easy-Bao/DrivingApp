@@ -4,7 +4,7 @@ import { sign } from 'hono/jwt';
 import {
   AdminVariables,
   adminAuthMiddleware,
-} from '../src/shared/middleware/auth.ts';
+} from '../src/common/middleware/auth.ts';
 
 const originalEnvironment = {
   DATABASE_URL: process.env.DATABASE_URL,
@@ -12,7 +12,7 @@ const originalEnvironment = {
 };
 
 beforeEach(() => {
-  process.env.DATABASE_URL = 'postgresql://admin:password@localhost:5432/admin';
+  process.env.DATABASE_URL = 'postgresql://test:test@database.invalid:5432/test';
   process.env.ADMIN_JWT_SECRET = 'admin-middleware-test-secret-value';
 });
 

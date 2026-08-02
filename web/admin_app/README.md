@@ -15,6 +15,9 @@ deliberately outside this pull request.
 The SvelteKit server stores the eight-hour Admin JWT in an HttpOnly, SameSite
 cookie. Browser JavaScript never receives that token.
 
+The portal calls the unversioned `/admin/*` gateway routes. API versioning is
+deferred until the backend team adopts one policy across services.
+
 ## Environment
 
 | Name | Purpose |

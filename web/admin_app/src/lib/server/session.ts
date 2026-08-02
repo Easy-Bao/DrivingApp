@@ -24,7 +24,7 @@ export async function validateAdminSession(
   try {
     const session = await adminApi<unknown>(
       fetcher,
-      '/admin/v1/auth/session',
+      '/admin/auth/session',
       token,
     );
     return (

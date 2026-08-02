@@ -4,6 +4,9 @@ The isolated Admin API owns the single owner credential, complaint cases,
 idempotency records, and append-only audit events. It does not call or modify
 Passenger, Driver, Trip, Bidding, Fare, or Auth services in this first slice.
 
+Code is organized by domain under `src/modules`. Each module uses only
+`schema`, `routes`, and `service` files; endpoints are intentionally unversioned.
+
 ## Local setup
 
 1. Copy `.env.example` to an untracked `.env`.

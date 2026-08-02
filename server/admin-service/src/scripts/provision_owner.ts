@@ -1,14 +1,8 @@
 import { stdin, stdout } from 'node:process';
 import { createInterface } from 'node:readline/promises';
-import { z } from 'zod';
-import { AuthRepository } from '../features/repositories/auth.repository.ts';
-import { AuthService } from '../features/services/auth.service.ts';
-import { postgresClient } from '../shared/drizzle.ts';
-
-const OwnerInputSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(12).max(128),
-});
+import { closeAdminDatabase } from '../config/database.ts';
+import { OwnerInputSchema } from '../modules/auth/auth.schema.ts';
+import { AuthService } from '../modules/auth/auth.service.ts';
 
 type WritableReadline = ReturnType<typeof createInterface> & {
   _writeToOutput?: (value: string) => void;
@@ -43,8 +37,7 @@ async function main(): Promise<void> {
 
     const input = OwnerInputSchema.parse({ email, password });
     const passwordHash = await Bun.password.hash(input.password, 'argon2id');
-    const result = await new AuthService(new AuthRepository())
-      .provisionOwner(input.email, passwordHash);
+    const result = await new AuthService().provisionOwner(input.email, passwordHash);
     stdout.write(
       result === 'created'
         ? 'Owner account created.\n'
@@ -52,7 +45,7 @@ async function main(): Promise<void> {
     );
   } finally {
     readline.close();
-    await postgresClient.end();
+    await closeAdminDatabase();
   }
 }
 

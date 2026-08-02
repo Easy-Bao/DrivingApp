@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-
-process.env.DATABASE_URL ??= 'postgresql://admin:password@localhost:5432/admin';
-process.env.ADMIN_JWT_SECRET ??= 'admin-service-test-secret-value-32';
-
-const { AuthService } = await import('../src/features/services/auth.service.ts');
-const { AuthRepository } = await import('../src/features/repositories/auth.repository.ts');
+import {
+  AuthService,
+  AuthStore,
+} from '../src/modules/auth/auth.service.ts';
 
 type Owner = {
   id: string;
@@ -14,7 +12,7 @@ type Owner = {
   lockedUntil: Date | null;
 };
 
-class MemoryAuthRepository {
+class MemoryAuthStore {
   owner: Owner | null = null;
 
   async withOwnerLock<T>(
@@ -67,9 +65,12 @@ class MemoryAuthRepository {
 }
 
 function createService() {
-  const repository = new MemoryAuthRepository();
-  const service = new AuthService(repository as unknown as InstanceType<typeof AuthRepository>);
-  return { repository, service };
+  const store = new MemoryAuthStore();
+  const service = new AuthService(
+    store as unknown as AuthStore,
+    'admin-service-test-secret-value-32',
+  );
+  return { store, service };
 }
 
 describe('single Admin owner authentication', () => {
