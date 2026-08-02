@@ -50,6 +50,7 @@ app.*.map.json
 # Environment variable files
 *.env
 *.env.*
+!**/.env.example
 
 #Metadata
 .metadata
@@ -72,4 +73,3 @@ app.*.map.json
 .direnv/
 
 skills-lock.json
-

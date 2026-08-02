@@ -26,3 +26,9 @@ for service_directory in "${schema_service_directories[@]}"; do
     bun run --env-file ../../.env db:push
   )
 done
+
+echo "Applying migrations for server/admin-service"
+(
+  cd server/admin-service
+  bun --env-file ../../.env run db:migrate
+)
