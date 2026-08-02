@@ -14,6 +14,11 @@ type redisAdapter struct {
 	client *redisclient.Client
 }
 
+const (
+	geocodeCacheKeyPrefix = "geocode:mapbox:v1"
+	nearbyCacheKeyPrefix  = "nearby:mapbox:v1"
+)
+
 func NewRedisAdapter(redisURL string) domain.CacheRepository {
 	if redisURL == "" {
 		return nil
@@ -29,7 +34,7 @@ func NewRedisAdapter(redisURL string) domain.CacheRepository {
 }
 
 func (r *redisAdapter) GetGeocodeCache(ctx context.Context, lat, lng float64) (*domain.Place, error) {
-	key := fmt.Sprintf("geocode:%.4f:%.4f", lat, lng)
+	key := fmt.Sprintf("%s:%.4f:%.4f", geocodeCacheKeyPrefix, lat, lng)
 	val, err := r.client.Get(ctx, key).Result()
 	if err != nil {
 		return nil, err
@@ -42,7 +47,7 @@ func (r *redisAdapter) GetGeocodeCache(ctx context.Context, lat, lng float64) (*
 }
 
 func (r *redisAdapter) SetGeocodeCache(ctx context.Context, lat, lng float64, place *domain.Place) error {
-	key := fmt.Sprintf("geocode:%.4f:%.4f", lat, lng)
+	key := fmt.Sprintf("%s:%.4f:%.4f", geocodeCacheKeyPrefix, lat, lng)
 	data, err := json.Marshal(place)
 	if err != nil {
 		return err
@@ -51,7 +56,7 @@ func (r *redisAdapter) SetGeocodeCache(ctx context.Context, lat, lng float64, pl
 }
 
 func (r *redisAdapter) GetNearbyCache(ctx context.Context, lat, lng float64, page int) ([]domain.Place, error) {
-	key := fmt.Sprintf("nearby:v2:%.3f:%.3f:%d", lat, lng, page)
+	key := fmt.Sprintf("%s:%.3f:%.3f:%d", nearbyCacheKeyPrefix, lat, lng, page)
 	val, err := r.client.Get(ctx, key).Result()
 	if err != nil {
 		return nil, err
@@ -64,7 +69,7 @@ func (r *redisAdapter) GetNearbyCache(ctx context.Context, lat, lng float64, pag
 }
 
 func (r *redisAdapter) SetNearbyCache(ctx context.Context, lat, lng float64, page int, places []domain.Place) error {
-	key := fmt.Sprintf("nearby:v2:%.3f:%.3f:%d", lat, lng, page)
+	key := fmt.Sprintf("%s:%.3f:%.3f:%d", nearbyCacheKeyPrefix, lat, lng, page)
 	data, err := json.Marshal(places)
 	if err != nil {
 		return err
