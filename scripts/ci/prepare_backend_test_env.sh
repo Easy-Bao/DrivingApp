@@ -7,7 +7,9 @@ readonly test_database_url="postgresql://driveapp:driveapp_ci_password@127.0.0.1
 readonly passenger_database_url="postgresql://driveapp:driveapp_ci_password@127.0.0.1:5432/passenger_db"
 readonly driver_database_url="${test_database_url}"
 readonly ci_jwt_secret_value="ci_jwt_secret_for_automated_test_runs_only"
+readonly ci_admin_jwt_secret_value="ci_admin_jwt_secret_for_automated_tests"
 readonly service_directories=(
+  "server/admin-service"
   "server/api-gateway"
   "server/auth-service"
   "server/bidding-service"
@@ -34,6 +36,7 @@ DATABASE_URL=${test_database_url}
 PASSENGER_DB_URL=${passenger_database_url}
 DRIVER_DB_URL=${driver_database_url}
 JWT_SECRET=${ci_jwt_secret_value}
+ADMIN_JWT_SECRET=${ci_admin_jwt_secret_value}
 SMTP_HOST=localhost
 SMTP_PORT=1025
 SMTP_USER=ci@example.test
@@ -47,6 +50,7 @@ BIDDING_SERVICE_URL=http://127.0.0.1:8084
 TELEMETRY_SERVICE_URL=http://127.0.0.1:8085
 CHAT_SERVICE_URL=http://127.0.0.1:8086
 FARE_SERVICE_URL=http://127.0.0.1:8087
+ADMIN_SERVICE_URL=http://127.0.0.1:8090
 LOCATION_SERVICE_URL=http://127.0.0.1:8089
 EOF
 
@@ -56,6 +60,7 @@ DATABASE_URL=${test_database_url}
 PASSENGER_DB_URL=${passenger_database_url}
 DRIVER_DB_URL=${driver_database_url}
 JWT_SECRET=${ci_jwt_secret_value}
+ADMIN_JWT_SECRET=${ci_admin_jwt_secret_value}
 SMTP_HOST=localhost
 SMTP_PORT=1025
 SMTP_USER=ci@example.test
@@ -69,6 +74,7 @@ BIDDING_SERVICE_URL=http://127.0.0.1:8084
 TELEMETRY_SERVICE_URL=http://127.0.0.1:8085
 CHAT_SERVICE_URL=http://127.0.0.1:8086
 FARE_SERVICE_URL=http://127.0.0.1:8087
+ADMIN_SERVICE_URL=http://127.0.0.1:8090
 LOCATION_SERVICE_URL=http://127.0.0.1:8089
 EOF
 done
