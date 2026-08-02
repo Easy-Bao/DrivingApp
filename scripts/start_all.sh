@@ -6,6 +6,7 @@ readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly repository_root="$(cd "${script_directory}/.." && pwd)"
 readonly readiness_timeout_seconds="${READINESS_TIMEOUT_SECONDS:-30}"
 readonly local_database_url="$(awk -F= '$1 == "DATABASE_URL" { print substr($0, index($0, "=") + 1); exit }' "${repository_root}/.env")"
+readonly local_mapbox_token="$(awk -F= '$1 == "MAPBOX_PUBLIC_TOKEN" { print substr($0, index($0, "=") + 1); exit }' "${repository_root}/.env")"
 
 service_pids=()
 service_names=()
@@ -156,6 +157,7 @@ start_service chat-service server/chat-service env DATABASE_URL="${local_databas
 start_service fare-service server/fare-service env DATABASE_URL="${local_database_url}" bun run dev
 start_service location-service server/location-service \
   env REDIS_URL=redis://127.0.0.1:6379 \
+  MAPBOX_PUBLIC_TOKEN="${local_mapbox_token}" \
   RABBITMQ_URL=amqp://guest:guest@127.0.0.1:5672/ \
   go run ./cmd/main.go
 
