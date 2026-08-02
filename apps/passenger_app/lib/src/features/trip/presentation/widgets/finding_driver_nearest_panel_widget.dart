@@ -289,10 +289,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                   ),
                   child: const Text(
                     'Full Profile',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

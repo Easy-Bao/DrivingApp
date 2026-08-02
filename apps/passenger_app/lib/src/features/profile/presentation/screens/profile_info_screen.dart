@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
 import 'package:shared_ui/shared_ui.dart';
-
 
 class ProfileInfoScreen extends StatefulWidget {
   const ProfileInfoScreen({super.key});
@@ -86,19 +84,24 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
       }
 
       try {
-        final updated = await Modular.get<PassengerRemoteDataSource>().updateProfile({
-          'id': _passengerId,
-          'name': name,
-          'phone': phone,
-          'email': email,
-        });
+        final updated = await Modular.get<PassengerRemoteDataSource>()
+            .updateProfile({
+              'id': _passengerId,
+              'name': name,
+              'phone': phone,
+              'email': email,
+            });
         if (updated.isNotEmpty) {
           if (!mounted) return;
           CustomToast.show(context, 'Profile updated successfully!');
         }
       } catch (error) {
         if (!mounted) return;
-        CustomToast.show(context, 'Failed to update profile: $error', isError: true);
+        CustomToast.show(
+          context,
+          'Failed to update profile: $error',
+          isError: true,
+        );
       }
     }
 
@@ -152,95 +155,101 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
-          children: [
-            Center(
-              child: Stack(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppTheme.neutralColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.borderSide, width: 2),
-                    ),
-                    child: const Icon(
-                      LucideIcons.user,
-                      size: 48,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  if (_isEditing)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primaryColor,
+              children: [
+                Center(
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: AppTheme.neutralColor,
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppTheme.borderSide,
+                            width: 2,
+                          ),
                         ),
                         child: const Icon(
-                          LucideIcons.camera,
-                          size: 16,
-                          color: Colors.white,
+                          LucideIcons.user,
+                          size: 48,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                      if (_isEditing)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              LucideIcons.camera,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildField(
+                  'Full Name',
+                  _nameController,
+                  LucideIcons.user,
+                  errorText: _nameError,
+                ),
+                const SizedBox(height: 16),
+                _buildField(
+                  'Phone Number',
+                  _phoneController,
+                  LucideIcons.phone,
+                  errorText: _phoneError,
+                ),
+                const SizedBox(height: 16),
+                _buildField(
+                  'Email',
+                  _emailController,
+                  LucideIcons.mail,
+                  errorText: _emailError,
+                ),
+                const SizedBox(height: 16),
+                _buildField('Address', _addressController, LucideIcons.map_pin),
+                const SizedBox(height: 32),
+                if (_isEditing)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _toggleEdit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            _buildField(
-              'Full Name',
-              _nameController,
-              LucideIcons.user,
-              errorText: _nameError,
-            ),
-            const SizedBox(height: 16),
-            _buildField(
-              'Phone Number',
-              _phoneController,
-              LucideIcons.phone,
-              errorText: _phoneError,
-            ),
-            const SizedBox(height: 16),
-            _buildField(
-              'Email',
-              _emailController,
-              LucideIcons.mail,
-              errorText: _emailError,
-            ),
-            const SizedBox(height: 16),
-            _buildField('Address', _addressController, LucideIcons.map_pin),
-            const SizedBox(height: 32),
-            if (_isEditing)
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _toggleEdit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
                   ),
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 
   Widget _buildField(
     String label,

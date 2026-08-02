@@ -297,10 +297,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     if (passengerId.isNotEmpty) {
       try {
-        ///TODO: Remove hardcoded fallback
         final res = await _biddingDataSource.requestRide({
           'passenger_id': passengerId,
-          'ride_type': _rideType ?? 'Bao Bao Standard',
+          'ride_type': _rideType ?? '',
           'pickup_lat': _pickupLat ?? 0.0,
           'pickup_lng': _pickupLng ?? 0.0,
           'pickup_name': _pickupName ?? 'Current Location',

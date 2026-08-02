@@ -20,10 +20,7 @@ class ResetPasswordConfirmScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<ResetPasswordConfirmBloc>(
       create: (context) => Modular.get<ResetPasswordConfirmBloc>(),
-      child: _ResetPasswordConfirmScreenContent(
-        email: email,
-        code: code,
-      ),
+      child: _ResetPasswordConfirmScreenContent(email: email, code: code),
     );
   }
 }
@@ -44,8 +41,7 @@ class _ResetPasswordConfirmScreenContent extends StatefulWidget {
 
 class _ResetPasswordConfirmScreenContentState
     extends State<_ResetPasswordConfirmScreenContent> {
-  final TextEditingController _newPasswordController =
-      TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
@@ -131,7 +127,8 @@ class _ResetPasswordConfirmScreenContentState
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height -
+                  minHeight:
+                      MediaQuery.of(context).size.height -
                       kToolbarHeight -
                       MediaQuery.of(context).padding.top,
                 ),

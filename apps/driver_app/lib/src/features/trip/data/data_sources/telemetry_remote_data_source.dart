@@ -30,8 +30,8 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
         'driver_id': driverId,
         'latitude': lat,
         'longitude': lng,
-        if (heading != null) 'heading': heading,
-        if (speed != null) 'speed': speed,
+        'heading': ?heading,
+        'speed': ?speed,
       },
     );
     return response.statusCode == 200 || response.statusCode == 201;

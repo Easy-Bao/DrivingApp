@@ -13,6 +13,9 @@ export async function handleUpdateLocation(context: Context) {
 
 export async function handleGetLocation(context: Context) {
   const driverId = context.req.param('driverId');
+  if (!driverId) {
+    return context.json({ error: 'driverId is required' }, 400);
+  }
   const loc = telemetryService.getLocation(driverId);
   return context.json(loc, 200);
 }

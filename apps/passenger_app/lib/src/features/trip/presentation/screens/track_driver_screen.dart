@@ -8,18 +8,16 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/track_driver_panel_widget.dart';
-import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:shared_ui/shared_ui.dart';
-
-
 import 'package:url_launcher/url_launcher.dart';
 
 class ActivityTrackDriverScreen extends StatefulWidget {
@@ -430,11 +428,9 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                                   widget.ride.id;
                               if (activeRideId.isNotEmpty) {
                                 final driverProfile =
-                                    await Modular.get<
-                                      BiddingRemoteDataSource
-                                    >().fetchDriverStats(activeRideId);
-                                final phone =
-                                    driverProfile['phone'] as String?;
+                                    await Modular.get<BiddingRemoteDataSource>()
+                                        .fetchDriverStats(activeRideId);
+                                final phone = driverProfile['phone'] as String?;
 
                                 if (phone != null && phone.isNotEmpty) {
                                   final uri = Uri.parse('tel:$phone');

@@ -42,21 +42,24 @@ class EnvConfig {
   }
 
   static Uri get authServiceUri {
-    final rawUrl = dotenv.env['AUTH_SERVICE_URL'] ??
+    final rawUrl =
+        dotenv.env['AUTH_SERVICE_URL'] ??
         dotenv.env['DRIVER_SERVICE_URL'] ??
         'http://localhost:8080';
     return _resolveUri(rawUrl);
   }
 
   static Uri get tripServiceUri {
-    final rawUrl = dotenv.env['TRIP_SERVICE_URL'] ??
+    final rawUrl =
+        dotenv.env['TRIP_SERVICE_URL'] ??
         dotenv.env['DRIVER_SERVICE_URL'] ??
         'http://localhost:8080';
     return _resolveUri(rawUrl);
   }
 
   static Uri get placeServiceUri {
-    final rawUrl = dotenv.env['PLACE_SERVICE_BASE_URL'] ??
+    final rawUrl =
+        dotenv.env['PLACE_SERVICE_BASE_URL'] ??
         dotenv.env['DRIVER_SERVICE_URL'] ??
         'http://localhost:8080';
     return _resolveUri(rawUrl);
@@ -78,7 +81,8 @@ class EnvConfig {
     var uri = Uri.parse(rawUrl);
     final isPhysicalDevice = dotenv.env['PHYSICAL_DEVICE'] == 'true';
     if (!isPhysicalDevice && !kIsWeb && Platform.isAndroid) {
-      final loopbackHost = dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'] ?? '10.0.2.2';
+      final loopbackHost =
+          dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'] ?? '10.0.2.2';
       if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
         uri = uri.replace(host: loopbackHost);
       }

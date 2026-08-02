@@ -52,12 +52,18 @@ export async function handleGetActiveSessions(context: Context) {
 
 export async function handleGetOffers(context: Context) {
   const sessionId = context.req.param('sessionId');
+  if (!sessionId) {
+    throw new HTTPException(400, { message: 'sessionId is required' });
+  }
   const list = await biddingService.getOffers(sessionId);
   return context.json(list, 200);
 }
 
 export async function handlePlaceOffer(context: Context) {
   const sessionId = context.req.param('sessionId');
+  if (!sessionId) {
+    throw new HTTPException(400, { message: 'sessionId is required' });
+  }
   const body = await context.req.json();
   const offer = await biddingService.placeOffer(sessionId, body);
   return context.json(offer, 201);
@@ -66,12 +72,20 @@ export async function handlePlaceOffer(context: Context) {
 export async function handleAcceptOffer(context: Context) {
   const sessionId = context.req.param('sessionId');
   const offerId = context.req.param('offerId');
+  if (!sessionId || !offerId) {
+    throw new HTTPException(400, {
+      message: 'sessionId and offerId are required',
+    });
+  }
   const result = await biddingService.acceptOffer(sessionId, offerId);
   return context.json(result, 200);
 }
 
 export async function handleCancelSession(context: Context) {
   const sessionId = context.req.param('sessionId');
+  if (!sessionId) {
+    throw new HTTPException(400, { message: 'sessionId is required' });
+  }
   const result = await biddingService.cancelSession(sessionId);
   return context.json(result, 200);
 }
@@ -79,8 +93,10 @@ export async function handleCancelSession(context: Context) {
 export async function handleCancelOffer(context: Context) {
   const sessionId = context.req.param('sessionId');
   const { driver_id } = await context.req.json();
-  if (!driver_id) {
-    throw new HTTPException(400, { message: 'driver_id is required' });
+  if (!sessionId || !driver_id) {
+    throw new HTTPException(400, {
+      message: 'sessionId and driver_id are required',
+    });
   }
   const result = await biddingService.cancelOffer(sessionId, driver_id);
   return context.json(result, 200);
@@ -88,6 +104,9 @@ export async function handleCancelOffer(context: Context) {
 
 export async function handleGetSessionDetails(context: Context) {
   const sessionId = context.req.param('sessionId');
+  if (!sessionId) {
+    throw new HTTPException(400, { message: 'sessionId is required' });
+  }
   const details = await biddingService.getSessionDetails(sessionId);
   return context.json(details, 200);
 }

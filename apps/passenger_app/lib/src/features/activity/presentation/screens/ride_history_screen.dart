@@ -1,12 +1,11 @@
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
-
 import 'package:shared_ui/shared_ui.dart';
 
 class RideHistoryScreen extends StatefulWidget {

@@ -1,12 +1,13 @@
-import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/utils/phone_number_validator.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -75,19 +76,6 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
     });
   }
 
-  ///TODO: Should be on Core or Shared lib
-  bool _validatePhPhoneNumber(String phone) {
-    final cleaned = phone.replaceAll(RegExp(r'\D'), '');
-    return cleaned.length >= 10;
-  }
-  ///TODO: Should be on Core
-  String _normalizePhPhoneNumber(String phone) {
-    final cleaned = phone.replaceAll(RegExp(r'\D'), '');
-    if (cleaned.startsWith('63')) return '+$cleaned';
-    if (cleaned.startsWith('0')) return '+63${cleaned.substring(1)}';
-    return '+63$cleaned';
-  }
-
   void _submitRegistration(BuildContext context) {
     FocusScope.of(context).unfocus();
     final name = _passengerNameController.text.trim();
@@ -99,7 +87,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       _nameError = name.isEmpty ? 'Please enter your name' : null;
       if (rawPhone.isEmpty) {
         _phoneError = 'Please enter your phone number';
-      } else if (!_validatePhPhoneNumber(rawPhone)) {
+      } else if (!PhoneNumberValidator.isValidPHNumber(rawPhone)) {
         _phoneError = 'Enter a valid number';
       } else {
         _phoneError = null;
@@ -123,7 +111,7 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
       return;
     }
 
-    final formattedPhone = _normalizePhPhoneNumber(rawPhone);
+    final formattedPhone = PhoneNumberValidator.normalizePHNumber(rawPhone);
     BlocProvider.of<SignUpBloc>(context).add(
       SignUpSubmitted(
         name: name,
@@ -177,8 +165,9 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
           },
           builder: (context, state) {
             final isLoading = state is SignUpLoading;
-            final errorMessage =
-                state is SignUpFailure ? state.errorMessage : null;
+            final errorMessage = state is SignUpFailure
+                ? state.errorMessage
+                : null;
 
             return Center(
               child: ConstrainedBox(

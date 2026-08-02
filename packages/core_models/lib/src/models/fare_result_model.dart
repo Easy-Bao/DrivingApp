@@ -37,10 +37,10 @@ class FareResult extends Equatable {
 
   @override
   List<Object?> get props => [
-        baseFare,
-        distanceCharge,
-        timeCharge,
-        surgeCharge,
-        totalFare,
-      ];
+    baseFare,
+    distanceCharge,
+    timeCharge,
+    surgeCharge,
+    totalFare,
+  ];
 }

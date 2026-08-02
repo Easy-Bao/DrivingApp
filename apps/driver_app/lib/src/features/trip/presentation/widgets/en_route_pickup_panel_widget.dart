@@ -293,9 +293,7 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.complete.withValues(
-                                  alpha: 0.3,
-                                ),
+                                color: AppTheme.complete.withValues(alpha: 0.3),
                                 blurRadius: 12,
                               ),
                             ],

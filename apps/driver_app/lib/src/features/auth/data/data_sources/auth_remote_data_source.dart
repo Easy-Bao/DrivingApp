@@ -6,9 +6,7 @@ abstract class AuthRemoteDataSource {
     required String password,
   });
 
-  Future<void> resetPassword({
-    required String email,
-  });
+  Future<void> resetPassword({required String email});
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {

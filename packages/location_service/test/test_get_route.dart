@@ -19,13 +19,10 @@ void main() {
       );
 
       expect(result.isRight(), isTrue);
-      result.fold(
-        (failure) => fail('Should not fail'),
-        (route) {
-          expect(route.polylinePoints, isNotEmpty);
-          expect(route.distanceKm, greaterThan(0));
-        },
-      );
+      result.fold((failure) => fail('Should not fail'), (route) {
+        expect(route.polylinePoints, isNotEmpty);
+        expect(route.distanceKm, greaterThan(0));
+      });
     });
   });
 }

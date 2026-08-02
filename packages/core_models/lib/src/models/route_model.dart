@@ -17,13 +17,18 @@ class RouteModel extends Equatable {
     final rawPoints = json['polylinePoints'] as List<dynamic>? ?? [];
     final points = rawPoints.map((item) {
       final list = item as List<dynamic>;
-      return [ (list[0] as num).toDouble(), (list[1] as num).toDouble() ];
+      return [(list[0] as num).toDouble(), (list[1] as num).toDouble()];
     }).toList();
 
     return RouteModel(
       polylinePoints: points,
-      distanceKm: (json['distanceKm'] as num? ?? json['distance_km'] as num? ?? 0.0).toDouble(),
-      durationSeconds: json['durationSeconds'] as int? ?? json['duration_seconds'] as int? ?? 0,
+      distanceKm:
+          (json['distanceKm'] as num? ?? json['distance_km'] as num? ?? 0.0)
+              .toDouble(),
+      durationSeconds:
+          json['durationSeconds'] as int? ??
+          json['duration_seconds'] as int? ??
+          0,
       summary: json['summary'] as String? ?? '',
     );
   }
@@ -39,11 +44,11 @@ class RouteModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        polylinePoints,
-        distanceKm,
-        durationSeconds,
-        summary,
-      ];
+    polylinePoints,
+    distanceKm,
+    durationSeconds,
+    summary,
+  ];
 }
 
 extension RouteModelExtension on RouteModel {

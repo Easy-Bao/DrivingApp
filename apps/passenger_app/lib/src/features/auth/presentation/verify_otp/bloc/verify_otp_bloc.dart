@@ -13,8 +13,7 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
   Timer? _timer;
   int _seconds = 60;
 
-  VerifyOtpBloc(this._verifyOtpUseCase)
-      : super(const VerifyOtpInitial()) {
+  VerifyOtpBloc(this._verifyOtpUseCase) : super(const VerifyOtpInitial()) {
     on<VerifyOtpTimerStarted>(_onVerifyOtpTimerStarted);
     on<VerifyOtpTimerTicked>(_onVerifyOtpTimerTicked);
     on<VerifyOtpSubmitted>(_onVerifyOtpSubmitted);
@@ -56,11 +55,7 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
     final normalizedCode = event.code.trim();
     final normalizedEmail = event.email.trim().toLowerCase();
     if (normalizedCode.length < 6) {
-      emit(
-        const VerifyOtpFailure(
-          'Please enter a 6-digit verification code.',
-        ),
-      );
+      emit(const VerifyOtpFailure('Please enter a 6-digit verification code.'));
       return;
     }
 

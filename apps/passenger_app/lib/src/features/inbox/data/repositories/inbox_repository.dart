@@ -1,10 +1,8 @@
 import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
-import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
-
-
 
 class InboxRepository implements IInboxRepository {
   final PassengerRemoteDataSource remoteDataSource;

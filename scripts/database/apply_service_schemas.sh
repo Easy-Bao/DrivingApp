@@ -23,7 +23,7 @@ for service_directory in "${schema_service_directories[@]}"; do
   echo "Applying schema for ${service_directory}"
   (
     cd "${service_directory}"
-    bun --env-file ../../.env run db:push
+    bun run --env-file ../../.env db:push
   )
 done
 

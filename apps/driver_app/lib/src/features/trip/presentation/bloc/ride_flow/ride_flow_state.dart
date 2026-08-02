@@ -73,4 +73,3 @@ class RideFlowError extends RideFlowState {
   @override
   List<Object?> get props => [message];
 }
-

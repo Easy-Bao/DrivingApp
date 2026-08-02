@@ -24,8 +24,8 @@ class VerifyOtpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<VerifyOtpBloc>(
-      create: (context) => Modular.get<VerifyOtpBloc>()
-        ..add(const VerifyOtpTimerStarted()),
+      create: (context) =>
+          Modular.get<VerifyOtpBloc>()..add(const VerifyOtpTimerStarted()),
       child: _VerifyOtpScreenContent(
         email: email,
         password: password,
@@ -82,10 +82,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
       unawaited(
         context.pushNamed(
           AuthRoutes.resetPasswordConfirm,
-          extra: {
-            'email': widget.email,
-            'code': code,
-          },
+          extra: {'email': widget.email, 'code': code},
         ),
       );
     } else {
@@ -125,10 +122,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                 unawaited(
                   context.pushNamed(
                     AuthRoutes.resetPasswordConfirm,
-                    extra: {
-                      'email': widget.email,
-                      'code': text,
-                    },
+                    extra: {'email': widget.email, 'code': text},
                   ),
                 );
               } else {
@@ -137,16 +131,20 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
             } else if (state is VerifyOtpFailure) {
               CustomToast.show(
                 context,
-                state.errorMessage.isEmpty ? 'Incorrect verification code' : state.errorMessage,
+                state.errorMessage.isEmpty
+                    ? 'Incorrect verification code'
+                    : state.errorMessage,
               );
             }
           },
           builder: (context, state) {
             final isLoading = state is VerifyOtpLoading;
-            final errorMessage =
-                state is VerifyOtpFailure ? state.errorMessage : null;
-            final secondsRemaining =
-                state is VerifyOtpTimerTicking ? state.secondsRemaining : 60;
+            final errorMessage = state is VerifyOtpFailure
+                ? state.errorMessage
+                : null;
+            final secondsRemaining = state is VerifyOtpTimerTicking
+                ? state.secondsRemaining
+                : 60;
             final isTimerExpired = state is VerifyOtpTimerExpired;
 
             return SingleChildScrollView(
@@ -259,9 +257,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                   const SizedBox(height: 24),
                   TextButton(
                     onPressed: isTimerExpired
-                        ? () => BlocProvider.of<VerifyOtpBloc>(context).add(
-                            const VerifyOtpTimerStarted(),
-                          )
+                        ? () => BlocProvider.of<VerifyOtpBloc>(
+                            context,
+                          ).add(const VerifyOtpTimerStarted())
                         : null,
                     child: Text(
                       isTimerExpired

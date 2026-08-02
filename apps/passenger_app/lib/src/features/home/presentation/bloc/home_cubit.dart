@@ -1,9 +1,9 @@
 import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
@@ -16,7 +16,9 @@ class HomeCubit extends Cubit<HomeState> {
       super(const HomeState());
 
   Future<void> loadHomeData({required double lat, required double lng}) async {
-    if (_lastLat != null && _lastLng != null && state.currentAddress.isNotEmpty) {
+    if (_lastLat != null &&
+        _lastLng != null &&
+        state.currentAddress.isNotEmpty) {
       final deltaLat = (lat - _lastLat!).abs();
       final deltaLng = (lng - _lastLng!).abs();
       if (deltaLat < 0.0005 && deltaLng < 0.0005) {

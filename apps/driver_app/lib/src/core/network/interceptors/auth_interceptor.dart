@@ -10,11 +10,10 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    ///TODO: Implement readJwtToken method
-    // final token = await _secureSessionService.readJwtToken();
-    // if (token != null && token.isNotEmpty) {
-    //   options.headers['Authorization'] = 'Bearer $token';
-    // }
+    final token = await _secureSessionService.readToken();
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
     handler.next(options);
   }
 }

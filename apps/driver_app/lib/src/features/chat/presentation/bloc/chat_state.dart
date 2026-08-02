@@ -38,12 +38,11 @@ class ChatState extends Equatable {
 
   @override
   List<Object?> get props => [
-        messages,
-        isConnecting,
-        isConnected,
-        isRoomLocked,
-        lockReasonMessage,
-        errorMessage,
-      ];
+    messages,
+    isConnecting,
+    isConnected,
+    isRoomLocked,
+    lockReasonMessage,
+    errorMessage,
+  ];
 }
-

@@ -1,6 +1,3 @@
-import 'package:passenger_app/src/core/constants/env_config.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
@@ -9,9 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
+import 'package:passenger_app/src/core/constants/env_config.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
-
-
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -21,7 +19,8 @@ class ActivityViewDetailsScreen extends StatefulWidget {
   const ActivityViewDetailsScreen({super.key, this.ride});
 
   @override
-  State<ActivityViewDetailsScreen> createState() => _ActivityViewDetailsScreenState();
+  State<ActivityViewDetailsScreen> createState() =>
+      _ActivityViewDetailsScreenState();
 }
 
 class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
@@ -42,9 +41,8 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
     final passengerId =
         await Modular.get<SecureSessionService>().readPassengerId() ?? '';
 
-    final retrievedRideData = await Modular.get<BiddingRemoteDataSource>().getRideStatus(
-      ride.id,
-    );
+    final retrievedRideData = await Modular.get<BiddingRemoteDataSource>()
+        .getRideStatus(ride.id);
     bool isWithinGracePeriodWindow = false;
     try {
       final rideCompletedTime = DateTime.parse(ride.date).toLocal();
@@ -112,7 +110,8 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
     final driverId = retrievedRideData['driver_id'] as String?;
     if (driverId == null || driverId.isEmpty) return;
     try {
-      final driverProfile = await Modular.get<BiddingRemoteDataSource>().getDriverProfile(driverId);
+      final driverProfile = await Modular.get<BiddingRemoteDataSource>()
+          .getDriverProfile(driverId);
       final phone = driverProfile['phone'] as String?;
       if (phone != null && phone.isNotEmpty) {
         final uri = Uri.parse('tel:$phone');
@@ -251,7 +250,10 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
                       top: 12,
                       right: 12,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryColor.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(12),
@@ -493,7 +495,8 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ride?.vehicleType.toLowerCase().contains('share') == true
+                        ride?.vehicleType.toLowerCase().contains('share') ==
+                                true
                             ? 'Fare, shared ride'
                             : 'Fare, solo ride',
                         style: TextStyle(
@@ -516,7 +519,9 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
                         ],

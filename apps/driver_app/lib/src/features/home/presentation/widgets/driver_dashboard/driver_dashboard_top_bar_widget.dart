@@ -43,10 +43,7 @@ class DriverDashboardTopBarWidget extends StatelessWidget {
               ),
             ],
           ),
-          _StatusPill(
-            isOnline: isOnline,
-            isLoading: isLoadingHeatmap,
-          ),
+          _StatusPill(isOnline: isOnline, isLoading: isLoadingHeatmap),
         ],
       ),
     );

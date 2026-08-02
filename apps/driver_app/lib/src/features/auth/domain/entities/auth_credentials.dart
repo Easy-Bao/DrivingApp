@@ -20,8 +20,10 @@ class AuthCredentials extends Equatable {
   factory AuthCredentials.fromJson(Map<String, dynamic> json) {
     return AuthCredentials(
       driverId: json['driverId'] as String? ?? json['id'] as String? ?? '',
-      driverName: json['driverName'] as String? ?? json['name'] as String? ?? '',
-      driverEmail: json['driverEmail'] as String? ?? json['email'] as String? ?? '',
+      driverName:
+          json['driverName'] as String? ?? json['name'] as String? ?? '',
+      driverEmail:
+          json['driverEmail'] as String? ?? json['email'] as String? ?? '',
       vehicleType: json['vehicleType'] as String? ?? 'Bao Bao',
       plateNumber: json['plateNumber'] as String? ?? 'ABC 1234',
       rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
@@ -41,11 +43,11 @@ class AuthCredentials extends Equatable {
 
   @override
   List<Object?> get props => [
-        driverId,
-        driverName,
-        driverEmail,
-        vehicleType,
-        plateNumber,
-        rating,
-      ];
+    driverId,
+    driverName,
+    driverEmail,
+    vehicleType,
+    plateNumber,
+    rating,
+  ];
 }

@@ -17,7 +17,6 @@ import 'package:driver_app/src/features/trip/data/data_sources/passenger_remote_
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-
 class WaitingPassengerScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;
@@ -78,8 +77,9 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
       final chatRepo = Modular.get<ChatRepository>();
       final result = await chatRepo.fetchRoomMessages(rideId);
       result.fold((_) => null, (List<ChatMessage> messages) {
-        final passengerChatMessagesList =
-            messages.where((m) => m.senderId != driverIdentifier).toList();
+        final passengerChatMessagesList = messages
+            .where((m) => m.senderId != driverIdentifier)
+            .toList();
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (mounted) {
@@ -225,10 +225,10 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                                       passengerId.isNotEmpty) {
                                     final passenger =
                                         await Modular.get<
-                                          PassengerRemoteDataSource
-                                        >().fetchPassengerProfile(passengerId);
-                                    final phone =
-                                        passenger['phone'] as String?;
+                                              PassengerRemoteDataSource
+                                            >()
+                                            .fetchPassengerProfile(passengerId);
+                                    final phone = passenger['phone'] as String?;
                                     if (phone != null && phone.isNotEmpty) {
                                       final uri = Uri.parse('tel:$phone');
                                       if (await canLaunchUrl(uri)) {
@@ -245,8 +245,9 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                                     context,
                                   ).activeRideId ??
                                   '';
-                              final rState =
-                                  BlocProvider.of<RideFlowCubit>(context).state;
+                              final rState = BlocProvider.of<RideFlowCubit>(
+                                context,
+                              ).state;
                               final pName = rState is RideFlowWaitingPassenger
                                   ? rState.passengerName
                                   : 'Passenger';

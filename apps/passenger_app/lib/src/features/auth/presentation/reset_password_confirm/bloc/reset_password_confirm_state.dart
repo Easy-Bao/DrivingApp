@@ -27,4 +27,3 @@ class ResetPasswordConfirmFailure extends ResetPasswordConfirmState {
   @override
   List<Object?> get props => [errorMessage];
 }
-

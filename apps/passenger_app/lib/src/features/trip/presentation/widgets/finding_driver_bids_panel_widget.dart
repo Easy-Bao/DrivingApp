@@ -21,13 +21,18 @@ class DriverOfferItem {
     required this.proposedFare,
   });
 
-  factory DriverOfferItem.fromMap(Map<String, dynamic> rawMap, double fallbackFare) {
-    final offerId = rawMap['offer_id'] as String? ?? rawMap['id'] as String? ?? '';
+  factory DriverOfferItem.fromMap(
+    Map<String, dynamic> rawMap,
+    double fallbackFare,
+  ) {
+    final offerId =
+        rawMap['offer_id'] as String? ?? rawMap['id'] as String? ?? '';
     final driverName = rawMap['driver_name'] as String? ?? 'Driver';
     final vehicle = rawMap['vehicle_type'] as String? ?? 'Bao Bao';
     final plate = rawMap['plate_number'] as String? ?? '';
     final ratingStr = rawMap['driver_rating']?.toString() ?? '5.0';
-    final proposedFare = (rawMap['proposed_fare'] as num?)?.toDouble() ?? fallbackFare;
+    final proposedFare =
+        (rawMap['proposed_fare'] as num?)?.toDouble() ?? fallbackFare;
     final driverId = rawMap['driver_id'] as String? ?? '';
 
     return DriverOfferItem(

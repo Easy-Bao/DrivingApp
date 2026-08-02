@@ -27,4 +27,3 @@ class SavedPlacesState extends Equatable {
   @override
   List<Object?> get props => [places, isLoading, errorMessage];
 }
-

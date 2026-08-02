@@ -9,12 +9,11 @@ import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
 
-  await dotenv.load(fileName: '.env');
+  await dotenv.load(fileName: '.env', isOptional: true);
 
   final nativeService = MapNativeService(
     placeServiceBaseUri: EnvConfig.placeServiceUri,

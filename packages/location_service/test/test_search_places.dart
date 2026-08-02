@@ -18,12 +18,9 @@ void main() {
       );
 
       expect(result.isRight(), isTrue);
-      result.fold(
-        (failure) => fail('Should not fail'),
-        (places) {
-          expect(places, isNotEmpty);
-        },
-      );
+      result.fold((failure) => fail('Should not fail'), (places) {
+        expect(places, isNotEmpty);
+      });
     });
   });
 }

@@ -34,4 +34,3 @@ class ProfileState extends Equatable {
   @override
   List<Object?> get props => [name, phone, email, isLoading, errorMessage];
 }
-

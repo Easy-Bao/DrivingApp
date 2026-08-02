@@ -11,7 +11,7 @@ class ResetPasswordConfirmBloc
   final ConfirmResetPasswordUseCase _confirmResetPasswordUseCase;
 
   ResetPasswordConfirmBloc(this._confirmResetPasswordUseCase)
-      : super(const ResetPasswordConfirmInitial()) {
+    : super(const ResetPasswordConfirmInitial()) {
     on<ResetPasswordConfirmSubmitted>(_onResetPasswordConfirmSubmitted);
   }
 

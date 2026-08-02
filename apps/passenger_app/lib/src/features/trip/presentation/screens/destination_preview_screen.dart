@@ -1,13 +1,12 @@
-import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DestinationPreviewScreen extends StatefulWidget {
@@ -77,7 +76,6 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         'Bao Premium': (km * 20 + 45),
       };
 
-
       setState(() {
         _distance = distanceStr;
         _duration = durationStr;
@@ -104,14 +102,10 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
           color: AppTheme.primaryColor,
           width: 5.0,
         );
-        await MapProvider.fitBounds(
-          _mapController!,
-          [
-            LatLng(_userLat!, _userLng!),
-            LatLng(widget.destination.latitude, widget.destination.longitude),
-          ],
-          padding: 80.0,
-        );
+        await MapProvider.fitBounds(_mapController!, [
+          LatLng(_userLat!, _userLng!),
+          LatLng(widget.destination.latitude, widget.destination.longitude),
+        ], padding: 80.0);
       }
     }
   }
@@ -136,10 +130,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: SizedBox(
                 height: 52,
                 child: Row(
@@ -324,10 +315,10 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                       onPressed: () {
                         final params = <String, String>{
                           'destinationName': widget.destination.name,
-                          'destinationLat':
-                              widget.destination.latitude.toString(),
-                          'destinationLng':
-                              widget.destination.longitude.toString(),
+                          'destinationLat': widget.destination.latitude
+                              .toString(),
+                          'destinationLng': widget.destination.longitude
+                              .toString(),
                           'distance': _distance,
                           'duration': _duration,
                           'distanceKm': _distanceKm.toString(),

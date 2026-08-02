@@ -12,6 +12,7 @@ export async function handleGetOnlineDrivers(context: Context) {
 
 export async function handleUpdateOnlineStatus(context: Context) {
   const id = context.req.param('id');
+  if (!id) return context.json({ message: 'Driver ID is required' }, 400);
   const body = await context.req.json();
   const updated = await driverService.updateOnlineStatus(id, body);
   return context.json(updated, 200);
@@ -19,18 +20,21 @@ export async function handleUpdateOnlineStatus(context: Context) {
 
 export async function handleGetDriverProfile(context: Context) {
   const id = context.req.param('id');
+  if (!id) return context.json({ message: 'Driver ID is required' }, 400);
   const driver = await driverService.getDriverProfile(id);
   return context.json(driver, 200);
 }
 
 export async function handleGetDriverStats(context: Context) {
   const id = context.req.param('id');
+  if (!id) return context.json({ message: 'Driver ID is required' }, 400);
   const stats = await driverService.getDriverStats(id);
   return context.json(stats, 200);
 }
 
 export async function handleGetDriverTripHistory(context: Context) {
   const id = context.req.param('id');
+  if (!id) return context.json({ message: 'Driver ID is required' }, 400);
   const trips = await driverService.getDriverTripHistory(id);
   return context.json(trips, 200);
 }
@@ -56,6 +60,7 @@ export async function handleGetActiveRideRequests(context: Context) {
 
 export async function handleAddDriverReview(context: Context) {
   const id = context.req.param('id');
+  if (!id) return context.json({ message: 'Driver ID is required' }, 400);
   const body = await context.req.json();
   const review = await driverService.addDriverReview(id, body);
   return context.json(review, 201);

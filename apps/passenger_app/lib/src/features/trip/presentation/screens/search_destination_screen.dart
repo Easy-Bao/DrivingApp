@@ -1,4 +1,3 @@
-import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';
@@ -6,11 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/features/trip/trip_routes.dart';
-
 import 'package:passenger_app/src/core/constants/env_config.dart';
+import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
-
 
 class SearchDestinationScreen extends StatefulWidget {
   final String? preselectedRideType;
@@ -95,8 +93,10 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
 
     if (_displayedCount < _allNearbyPlaces.length) {
       setState(() {
-        _displayedCount =
-            (_displayedCount + 10).clamp(0, _allNearbyPlaces.length);
+        _displayedCount = (_displayedCount + 10).clamp(
+          0,
+          _allNearbyPlaces.length,
+        );
       });
       return;
     }
@@ -138,8 +138,10 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
           final double distB = b.distanceKm ?? double.maxFinite;
           return distA.compareTo(distB);
         });
-        _displayedCount =
-            (_displayedCount + 10).clamp(0, _allNearbyPlaces.length);
+        _displayedCount = (_displayedCount + 10).clamp(
+          0,
+          _allNearbyPlaces.length,
+        );
       }
       setState(() => _isLoadingMoreNearby = false);
     }
@@ -155,8 +157,10 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
   }
 
   Future<void> _initLocation() async {
-    _userLat ??= LocationService.lastPosition?.latitude ?? EnvConfig.defaultLatitude;
-    _userLng ??= LocationService.lastPosition?.longitude ?? EnvConfig.defaultLongitude;
+    _userLat ??=
+        LocationService.lastPosition?.latitude ?? EnvConfig.defaultLatitude;
+    _userLng ??=
+        LocationService.lastPosition?.longitude ?? EnvConfig.defaultLongitude;
     unawaited(_loadNearbyPlaces());
 
     final pos = await LocationService.getCurrentPosition();
@@ -213,13 +217,19 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
-    final String normQuery =
-        query.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final String normQuery = query.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]'),
+      '',
+    );
     final List<PlaceModel> localMatches = _allNearbyPlaces.where((p) {
-      final normName =
-          p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-      final normAddr =
-          p.fullAddress.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      final normName = p.name.toLowerCase().replaceAll(
+        RegExp(r'[^a-z0-9]'),
+        '',
+      );
+      final normAddr = p.fullAddress.toLowerCase().replaceAll(
+        RegExp(r'[^a-z0-9]'),
+        '',
+      );
       return (normQuery.isNotEmpty && normName.contains(normQuery)) ||
           (normQuery.isNotEmpty && normAddr.contains(normQuery));
     }).toList();
@@ -351,17 +361,16 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
           ),
         ),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: AppTheme.primaryColor,
-          ),
+          child: CircularProgressIndicator(color: AppTheme.primaryColor),
         ),
       );
     }
     final defaultLat = _userLat!;
     final defaultLng = _userLng!;
     final hasQuery = _searchController.text.trim().isNotEmpty;
-    final displayList =
-        hasQuery ? _results : _allNearbyPlaces.take(_displayedCount).toList();
+    final displayList = hasQuery
+        ? _results
+        : _allNearbyPlaces.take(_displayedCount).toList();
     final screenSize = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
@@ -473,15 +482,15 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                       child:
                                           (_isSearching ||
                                               (_isLoadingNearby && !hasQuery))
-                                           ? SkeletonListWidget(
-                                               padding: EdgeInsets.fromLTRB(
-                                                 16,
-                                                 4,
-                                                 16,
-                                                 bottomPadding + 16,
-                                               ),
-                                               itemCount: 8,
-                                             )
+                                          ? SkeletonListWidget(
+                                              padding: EdgeInsets.fromLTRB(
+                                                16,
+                                                4,
+                                                16,
+                                                bottomPadding + 16,
+                                              ),
+                                              itemCount: 8,
+                                            )
                                           : displayList.isEmpty
                                           ? Center(
                                               child: Text(
@@ -537,13 +546,12 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                                             child: SizedBox(
                                                               width: 20,
                                                               height: 20,
-                                                              child:
-                                                                  CircularProgressIndicator(
-                                                                    strokeWidth:
-                                                                        2.0,
-                                                                    color: AppTheme
-                                                                        .primaryColor,
-                                                                  ),
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth:
+                                                                    2.0,
+                                                                color: AppTheme
+                                                                    .primaryColor,
+                                                              ),
                                                             ),
                                                           ),
                                                         ),
@@ -852,48 +860,46 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                 ),
                               ),
                             ),
-                            Positioned(
-                              right: 0,
-                              top: 3,
-                              child: Opacity(
-                                opacity: (1.0 - (t / 0.4)).clamp(0.0, 1.0),
-                                child: Transform.scale(
-                                  scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
-                                  child: GestureDetector(
-                                    onTap: _openMapPin,
-                                    child: SizedBox(
-                                      width: 46,
-                                      height: 46,
-                                      child: Hero(
-                                        tag: 'map_pin_button',
-                                        child: FittedBox(
-                                          child: Material(
-                                            color: Colors.transparent,
-                                            child: Container(
-                                              width: 46,
-                                              height: 46,
-                                              decoration: BoxDecoration(
-                                                color: AppTheme.surface,
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: AppTheme.borderSide,
-                                                ),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withValues(
-                                                      alpha: 0.08,
-                                                    ),
-                                                    blurRadius: 15,
-                                                    offset: const Offset(0, 4),
-                                                  ),
-                                                ],
+                          Positioned(
+                            right: 0,
+                            top: 3,
+                            child: Opacity(
+                              opacity: (1.0 - (t / 0.4)).clamp(0.0, 1.0),
+                              child: Transform.scale(
+                                scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
+                                child: GestureDetector(
+                                  onTap: _openMapPin,
+                                  child: SizedBox(
+                                    width: 46,
+                                    height: 46,
+                                    child: Hero(
+                                      tag: 'map_pin_button',
+                                      child: FittedBox(
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: Container(
+                                            width: 46,
+                                            height: 46,
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.surface,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: AppTheme.borderSide,
                                               ),
-                                              child: const Center(
-                                                child: Icon(
-                                                  LucideIcons.map_pin,
-                                                  color: AppTheme.primaryColor,
-                                                  size: 20,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.08),
+                                                  blurRadius: 15,
+                                                  offset: const Offset(0, 4),
                                                 ),
+                                              ],
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                LucideIcons.map_pin,
+                                                color: AppTheme.primaryColor,
+                                                size: 20,
                                               ),
                                             ),
                                           ),
@@ -904,6 +910,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                 ),
                               ),
                             ),
+                          ),
                         ],
                       ),
                     ),

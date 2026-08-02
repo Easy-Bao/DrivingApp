@@ -35,15 +35,14 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
     _fetchUpdatedData();
   }
 
-  ///TODO: Remove hardcoded fallback
   Future<void> _loadCachedProfile() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
         _name = prefs.getString('driver_name') ?? '';
-        _vehicleType = prefs.getString('vehicle_type') ?? 'Bao Bao';
-        _plateNumber = prefs.getString('plate_number') ?? 'ABC 1234';
-        _rating = prefs.getString('rating') ?? '5.0';
+        _vehicleType = prefs.getString('vehicle_type') ?? '';
+        _plateNumber = prefs.getString('plate_number') ?? '';
+        _rating = prefs.getString('rating') ?? '';
       });
     }
   }
@@ -53,8 +52,8 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
         await Modular.get<SecureSessionService>().readDriverId() ?? '';
     if (driverId.isEmpty) return;
 
-    final profileData =
-        await Modular.get<PassengerRemoteDataSource>().fetchPassengerProfile(driverId);
+    final profileData = await Modular.get<PassengerRemoteDataSource>()
+        .fetchPassengerProfile(driverId);
     if (profileData.isNotEmpty && mounted) {
       final prefs = await SharedPreferences.getInstance();
       final name = profileData['name'] as String? ?? _name;
@@ -77,7 +76,9 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
       }
     }
 
-    final stats = await Modular.get<TripRemoteDataSource>().fetchStats(driverId);
+    final stats = await Modular.get<TripRemoteDataSource>().fetchStats(
+      driverId,
+    );
     if (stats.isNotEmpty && mounted) {
       setState(() {
         _totalTrips = stats['totalTrips'] as int?;

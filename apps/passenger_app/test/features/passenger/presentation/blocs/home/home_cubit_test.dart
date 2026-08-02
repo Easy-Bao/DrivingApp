@@ -90,9 +90,7 @@ void main() {
       'emits updated address without touching other state',
       build: () => _makeCubit(repo),
       act: (cubit) => cubit.updateAddress('SM City Pagadian'),
-      expect: () => [
-        const HomeState(currentAddress: 'SM City Pagadian'),
-      ],
+      expect: () => [const HomeState(currentAddress: 'SM City Pagadian')],
     );
   });
 }

@@ -40,7 +40,9 @@ class InboxNotification extends Equatable {
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       message: json['message'] as String? ?? '',
-      timestamp: DateTime.tryParse(json['timestamp'] as String? ?? '') ?? DateTime.now(),
+      timestamp:
+          DateTime.tryParse(json['timestamp'] as String? ?? '') ??
+          DateTime.now(),
       type: json['type'] as String? ?? 'system',
       isRead: json['isRead'] as bool? ?? false,
     );

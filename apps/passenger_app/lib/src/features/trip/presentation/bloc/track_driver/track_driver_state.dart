@@ -34,15 +34,15 @@ class TrackDriverInProgress extends TrackDriverState {
 
   @override
   List<Object?> get props => [
-        driverLat,
-        driverLng,
-        progress,
-        eta,
-        driverName,
-        vehiclePlate,
-        vehicleType,
-        routePoints,
-      ];
+    driverLat,
+    driverLng,
+    progress,
+    eta,
+    driverName,
+    vehiclePlate,
+    vehicleType,
+    routePoints,
+  ];
 }
 
 class TrackDriverCompleted extends TrackDriverState {

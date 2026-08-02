@@ -43,9 +43,9 @@ class _ForgotPasswordScreenContentState
       return;
     }
 
-    BlocProvider.of<ForgotPasswordBloc>(context).add(
-      ForgotPasswordSubmitted(email: email),
-    );
+    BlocProvider.of<ForgotPasswordBloc>(
+      context,
+    ).add(ForgotPasswordSubmitted(email: email));
   }
 
   @override
@@ -78,14 +78,16 @@ class _ForgotPasswordScreenContentState
           },
           builder: (context, state) {
             final isLoading = state is ForgotPasswordLoading;
-            final errorMessage =
-                state is ForgotPasswordFailure ? state.errorMessage : null;
+            final errorMessage = state is ForgotPasswordFailure
+                ? state.errorMessage
+                : null;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height -
+                  minHeight:
+                      MediaQuery.of(context).size.height -
                       kToolbarHeight -
                       MediaQuery.of(context).padding.top,
                 ),

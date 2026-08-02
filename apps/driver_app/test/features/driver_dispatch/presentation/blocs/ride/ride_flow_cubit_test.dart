@@ -13,11 +13,10 @@ class MockSecureSessionService extends Mock implements SecureSessionService {}
 RideFlowCubit _makeCubit(
   TripRemoteDataSource tripRemoteDataSource,
   SecureSessionService sessionService,
-) =>
-    RideFlowCubit(
-      tripRemoteDataSource: tripRemoteDataSource,
-      sessionService: sessionService,
-    );
+) => RideFlowCubit(
+  tripRemoteDataSource: tripRemoteDataSource,
+  sessionService: sessionService,
+);
 
 void main() {
   late MockTripRemoteDataSource mockTripRemoteDataSource;
@@ -27,9 +26,9 @@ void main() {
     mockTripRemoteDataSource = MockTripRemoteDataSource();
     mockSessionService = MockSecureSessionService();
 
-    when(() => mockSessionService.readDriverId()).thenAnswer(
-      (_) async => 'test-driver-id',
-    );
+    when(
+      () => mockSessionService.readDriverId(),
+    ).thenAnswer((_) async => 'test-driver-id');
 
     when(
       () => mockTripRemoteDataSource.acceptRide(

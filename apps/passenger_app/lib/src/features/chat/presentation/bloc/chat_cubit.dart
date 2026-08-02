@@ -14,8 +14,8 @@ class ChatCubit extends Cubit<ChatState> {
   StreamSubscription? _chatSubscription;
 
   ChatCubit({required IChatRepository chatRepository})
-      : _chatRepository = chatRepository,
-        super(const ChatState());
+    : _chatRepository = chatRepository,
+      super(const ChatState());
 
   Future<void> connectToChatRoom({
     required String roomId,
@@ -44,12 +44,14 @@ class ChatCubit extends Cubit<ChatState> {
           _chatSubscription = _chatRepository.chatEventsStream.listen(
             (eitherEvent) {
               eitherEvent.fold(
-                (failure) => emit(state.copyWith(errorMessage: failure.message)),
+                (failure) =>
+                    emit(state.copyWith(errorMessage: failure.message)),
                 (chatEvent) {
                   if (chatEvent is ChatHistoryReceived) {
                     emit(state.copyWith(messages: chatEvent.messages));
                   } else if (chatEvent is ChatMessageReceived) {
-                    final updated = List<ChatMessage>.from(state.messages)..add(chatEvent.message);
+                    final updated = List<ChatMessage>.from(state.messages)
+                      ..add(chatEvent.message);
                     emit(state.copyWith(messages: updated));
                   } else if (chatEvent is ChatRoomLocked) {
                     emit(
@@ -63,20 +65,11 @@ class ChatCubit extends Cubit<ChatState> {
               );
             },
             onError: (error) {
-              emit(
-                state.copyWith(
-                  errorMessage: 'Chat stream error: $error',
-                ),
-              );
+              emit(state.copyWith(errorMessage: 'Chat stream error: $error'));
             },
           );
 
-          emit(
-            state.copyWith(
-              isConnecting: false,
-              isConnected: true,
-            ),
-          );
+          emit(state.copyWith(isConnecting: false, isConnected: true));
         },
       );
     } catch (error) {
@@ -105,9 +98,7 @@ class ChatCubit extends Cubit<ChatState> {
       final resolveEndpointUri = gatewayUri.replace(
         path: '/chat/rooms/$roomId/resolve',
       );
-      final response = await Dio().postUri(
-        resolveEndpointUri,
-      );
+      final response = await Dio().postUri(resolveEndpointUri);
 
       if (response.statusCode == 200) {
         await connectToChatRoom(roomId: roomId, wsUri: wsUri);

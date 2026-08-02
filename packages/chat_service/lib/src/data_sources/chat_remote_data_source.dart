@@ -28,10 +28,9 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
   @override
   Future<void> establishWebSocketConnection(Uri chatServiceUri) async {
     await terminateWebSocketConnection();
-    final socket = await WebSocket.connect(chatServiceUri.toString());
-    _chatWebSocket = socket;
+    _chatWebSocket = await WebSocket.connect(chatServiceUri.toString());
 
-    socket.listen(
+    _chatWebSocket?.listen(
       (event) {
         if (event is String) {
           _chatEventStreamController.add(event);
@@ -59,5 +58,10 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
       await _chatWebSocket!.close();
       _chatWebSocket = null;
     }
+  }
+
+  Future<void> dispose() async {
+    await terminateWebSocketConnection();
+    await _chatEventStreamController.close();
   }
 }

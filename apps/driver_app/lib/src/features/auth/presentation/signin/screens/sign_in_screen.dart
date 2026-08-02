@@ -85,9 +85,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
       return;
     }
 
-    BlocProvider.of<SignInBloc>(context).add(
-      SignInSubmitted(email: email, password: password),
-    );
+    BlocProvider.of<SignInBloc>(
+      context,
+    ).add(SignInSubmitted(email: email, password: password));
   }
 
   @override
@@ -116,8 +116,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
           },
           builder: (context, state) {
             final isLoading = state is SignInLoading;
-            final errorMessage =
-                state is SignInFailure ? state.errorMessage : null;
+            final errorMessage = state is SignInFailure
+                ? state.errorMessage
+                : null;
 
             return CustomScrollView(
               slivers: [
@@ -174,8 +175,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
                                   borderSide: BorderSide(
-                                    color: AppTheme.primaryColor
-                                        .withValues(alpha: 0.2),
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.2,
+                                    ),
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
@@ -241,8 +243,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
                                   borderSide: BorderSide(
-                                    color: AppTheme.primaryColor
-                                        .withValues(alpha: 0.2),
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.2,
+                                    ),
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(

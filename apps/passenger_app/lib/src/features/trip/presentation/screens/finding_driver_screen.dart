@@ -282,7 +282,6 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                 'createdRide': state.createdRide,
               };
               context.pushReplacementNamed('DriverMatched', extra: navExtra);
-
             } else if (state is BookingFailure) {
               CustomToast.show(context, state.message, isError: true);
               context.pop();
@@ -312,7 +311,8 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                     builder: (context, state) {
                       final showRadar =
                           state is FindingNearestDriver ||
-                          (state is BookingSearching && state.isDirect == false) ||
+                          (state is BookingSearching &&
+                              state.isDirect == false) ||
                           (state is BookingOffersReceived &&
                               state.offers.isEmpty);
                       if (showRadar) {
@@ -332,9 +332,11 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: AppTheme.primaryColor.withValues(
-                                            alpha: 0.15 * (1 - timerSeconds),
-                                          ),
+                                          color: AppTheme.primaryColor
+                                              .withValues(
+                                                alpha:
+                                                    0.15 * (1 - timerSeconds),
+                                              ),
                                           width: 2,
                                         ),
                                       ),
@@ -348,9 +350,8 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppTheme.primaryColor.withValues(
-                                            alpha: 0.3,
-                                          ),
+                                          color: AppTheme.primaryColor
+                                              .withValues(alpha: 0.3),
                                           blurRadius: 20,
                                         ),
                                       ],
@@ -394,10 +395,14 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                                   decoration: BoxDecoration(
                                     color: AppTheme.surface,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: AppTheme.borderSide),
+                                    border: Border.all(
+                                      color: AppTheme.borderSide,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.08),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.08,
+                                        ),
                                         blurRadius: 15,
                                         offset: const Offset(0, 4),
                                       ),
@@ -425,7 +430,9 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                                     final isSelected =
                                         _selectedDriver?.id == driver.id;
                                     return Padding(
-                                      padding: const EdgeInsets.only(right: 8.0),
+                                      padding: const EdgeInsets.only(
+                                        right: 8.0,
+                                      ),
                                       child: ChoiceChip(
                                         avatar: Icon(
                                           LucideIcons.map_pin,
@@ -467,7 +474,8 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                                 driver: _selectedDriver!,
                                 isNearestDriver:
                                     _nearbyDrivers.isNotEmpty &&
-                                    _selectedDriver!.id == _nearbyDrivers.first.id,
+                                    _selectedDriver!.id ==
+                                        _nearbyDrivers.first.id,
                                 onViewFullProfilePressed: () =>
                                     _showDriverProfileSheet(_selectedDriver!),
                                 onSelectDriverPressed: () =>

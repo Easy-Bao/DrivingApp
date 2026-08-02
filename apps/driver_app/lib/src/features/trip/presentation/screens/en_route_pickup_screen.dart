@@ -19,7 +19,6 @@ import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_
 import 'package:driver_app/src/features/trip/data/data_sources/passenger_remote_data_source.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-
 import 'package:url_launcher/url_launcher.dart';
 
 class EnRoutePickupScreen extends StatefulWidget {
@@ -76,9 +75,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       if (rideId == null || rideId.isEmpty) return;
 
       try {
-        final loc = await Modular.get<TelemetryRemoteDataSource>().fetchPassengerLocation(
-          rideId,
-        );
+        final loc = await Modular.get<TelemetryRemoteDataSource>()
+            .fetchPassengerLocation(rideId);
         if (loc.isNotEmpty && loc['lat'] != null && loc['lng'] != null) {
           final pLat = (loc['lat'] as num).toDouble();
           final pLng = (loc['lng'] as num).toDouble();
@@ -131,8 +129,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       final chatRepo = Modular.get<ChatRepository>();
       final result = await chatRepo.fetchRoomMessages(rideId);
       result.fold((_) => null, (List<ChatMessage> messages) {
-        final passengerChatMessagesList =
-            messages.where((m) => m.senderId != driverIdentifier).toList();
+        final passengerChatMessagesList = messages
+            .where((m) => m.senderId != driverIdentifier)
+            .toList();
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (mounted) {
@@ -266,8 +265,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                   child: LayoutBuilder(
                     builder: (ctx, constraints) {
                       final isWide = constraints.maxWidth > 600.0;
-                      final rideState =
-                          BlocProvider.of<RideFlowCubit>(context).state;
+                      final rideState = BlocProvider.of<RideFlowCubit>(
+                        context,
+                      ).state;
                       final passengerName = rideState is RideFlowEnRoutePickup
                           ? rideState.passengerName
                           : 'Passenger';
@@ -292,8 +292,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                           onSliderCompleted: () => _confirmArrival(context),
                           onCallPressed: () async {
                             try {
-                              final rideCubit =
-                                  BlocProvider.of<RideFlowCubit>(context);
+                              final rideCubit = BlocProvider.of<RideFlowCubit>(
+                                context,
+                              );
                               final rideId = rideCubit.activeRideId ?? '';
                               if (rideId.isNotEmpty) {
                                 final ride =
@@ -305,8 +306,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                                     passengerId.isNotEmpty) {
                                   final passenger =
                                       await Modular.get<
-                                        PassengerRemoteDataSource
-                                      >().fetchPassengerProfile(passengerId);
+                                            PassengerRemoteDataSource
+                                          >()
+                                          .fetchPassengerProfile(passengerId);
                                   final phone = passenger['phone'] as String?;
                                   if (phone != null && phone.isNotEmpty) {
                                     final uri = Uri.parse('tel:$phone');
@@ -324,8 +326,9 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                                   context,
                                 ).activeRideId ??
                                 '';
-                            final state =
-                                BlocProvider.of<RideFlowCubit>(context).state;
+                            final state = BlocProvider.of<RideFlowCubit>(
+                              context,
+                            ).state;
                             final pName = state is RideFlowEnRoutePickup
                                 ? state.passengerName
                                 : 'Passenger';

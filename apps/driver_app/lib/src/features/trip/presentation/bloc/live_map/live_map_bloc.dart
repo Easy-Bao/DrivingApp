@@ -47,7 +47,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           }
         });
 
-
     on<DispatchTelemetryLocationEvent>((event, emit) {
       _locationSubject.add(event);
     });

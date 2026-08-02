@@ -37,18 +37,37 @@ class RideHistoryModel extends Equatable {
     return RideHistoryModel(
       id: json['id'] as String? ?? '',
       pickup: json['pickup'] as String? ?? json['pickup_name'] as String? ?? '',
-      destination: json['destination'] as String? ?? json['dropoff_name'] as String? ?? '',
-      pickupLat: (json['pickupLat'] as num? ?? json['pickup_latitude'] as num? ?? 0.0).toDouble(),
-      pickupLng: (json['pickupLng'] as num? ?? json['pickup_longitude'] as num? ?? 0.0).toDouble(),
-      destLat: (json['destLat'] as num? ?? json['dropoff_latitude'] as num? ?? 0.0).toDouble(),
-      destLng: (json['destLng'] as num? ?? json['dropoff_longitude'] as num? ?? 0.0).toDouble(),
+      destination:
+          json['destination'] as String? ??
+          json['dropoff_name'] as String? ??
+          '',
+      pickupLat:
+          (json['pickupLat'] as num? ?? json['pickup_latitude'] as num? ?? 0.0)
+              .toDouble(),
+      pickupLng:
+          (json['pickupLng'] as num? ?? json['pickup_longitude'] as num? ?? 0.0)
+              .toDouble(),
+      destLat:
+          (json['destLat'] as num? ?? json['dropoff_latitude'] as num? ?? 0.0)
+              .toDouble(),
+      destLng:
+          (json['destLng'] as num? ?? json['dropoff_longitude'] as num? ?? 0.0)
+              .toDouble(),
       date: json['date'] as String? ?? json['created_at'] as String? ?? '',
       price: json['price'] as String? ?? json['fare']?.toString() ?? '',
       status: json['status'] as String? ?? '',
-      driverId: json['driverId'] as String? ?? json['driver_id'] as String? ?? '',
-      driverName: json['driverName'] as String? ?? json['driver_name'] as String? ?? '',
-      vehiclePlate: json['vehiclePlate'] as String? ?? json['plate_number'] as String? ?? '',
-      vehicleType: json['vehicleType'] as String? ?? json['vehicle_type'] as String? ?? '',
+      driverId:
+          json['driverId'] as String? ?? json['driver_id'] as String? ?? '',
+      driverName:
+          json['driverName'] as String? ?? json['driver_name'] as String? ?? '',
+      vehiclePlate:
+          json['vehiclePlate'] as String? ??
+          json['plate_number'] as String? ??
+          '',
+      vehicleType:
+          json['vehicleType'] as String? ??
+          json['vehicle_type'] as String? ??
+          '',
     );
   }
 
@@ -73,19 +92,19 @@ class RideHistoryModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        pickup,
-        destination,
-        pickupLat,
-        pickupLng,
-        destLat,
-        destLng,
-        date,
-        price,
-        status,
-        driverId,
-        driverName,
-        vehiclePlate,
-        vehicleType,
-      ];
+    id,
+    pickup,
+    destination,
+    pickupLat,
+    pickupLng,
+    destLat,
+    destLng,
+    date,
+    price,
+    status,
+    driverId,
+    driverName,
+    vehiclePlate,
+    vehicleType,
+  ];
 }

@@ -20,11 +20,7 @@ class HeatmapCell extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'lat': lat,
-      'lng': lng,
-      'intensity': intensity,
-    };
+    return {'lat': lat, 'lng': lng, 'intensity': intensity};
   }
 
   @override

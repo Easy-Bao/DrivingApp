@@ -42,7 +42,7 @@ export async function handleGetPassengerProfile(context: Context) {
 export async function handleUpdatePassengerProfile(context: Context) {
   const id = context.req.param('id');
   const passengerId = context.get('passengerId');
-  if (passengerId !== id) {
+  if (!id || passengerId !== id) {
     throw new HTTPException(403, { message: 'Forbidden' });
   }
 
@@ -69,7 +69,7 @@ export async function handleCreateRideRequest(context: Context) {
 export async function handleGetPassengerRideHistory(context: Context) {
   const id = context.req.param('id');
   const passengerId = context.get('passengerId');
-  if (passengerId !== id) {
+  if (!id || passengerId !== id) {
     throw new HTTPException(403, { message: 'Forbidden' });
   }
 
@@ -80,7 +80,7 @@ export async function handleGetPassengerRideHistory(context: Context) {
 export async function handleGetPassengerNotifications(context: Context) {
   const id = context.req.param('id');
   const passengerId = context.get('passengerId');
-  if (passengerId !== id) {
+  if (!id || passengerId !== id) {
     throw new HTTPException(403, { message: 'Forbidden' });
   }
 

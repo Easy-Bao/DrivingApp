@@ -112,7 +112,9 @@ class RideOptionsPanelWidget extends StatelessWidget {
                       child: Icon(
                         option.icon,
                         size: 20,
-                        color: isSelected ? Colors.white : AppTheme.primaryColor,
+                        color: isSelected
+                            ? Colors.white
+                            : AppTheme.primaryColor,
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -189,9 +191,7 @@ class RideOptionsPanelWidget extends StatelessWidget {
                           '~${option.eta}',
                           style: TextStyle(
                             fontSize: 11,
-                            color: AppTheme.primaryColor.withValues(
-                              alpha: 0.4,
-                            ),
+                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
                           ),
                         ),
                       ],

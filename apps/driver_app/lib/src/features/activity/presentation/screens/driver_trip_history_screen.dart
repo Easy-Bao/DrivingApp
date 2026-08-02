@@ -24,7 +24,8 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
       return _trips;
     }
     return _trips.where((tripRecord) {
-      final statusString = (tripRecord['status'] as String? ?? '').toUpperCase();
+      final statusString = (tripRecord['status'] as String? ?? '')
+          .toUpperCase();
       return statusString == _selectedTripStatusFilter;
     }).toList();
   }
@@ -46,9 +47,8 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
       }
       return;
     }
-    final result = await Modular.get<IDriverActivityRepository>().fetchTripHistory(
-      driverId,
-    );
+    final result = await Modular.get<IDriverActivityRepository>()
+        .fetchTripHistory(driverId);
     if (mounted) {
       result.fold(
         (failure) {
@@ -133,7 +133,10 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
                       : AppTheme.tertiaryColor,
                 ),
                 trailing: _selectedTripStatusFilter == 'ALL'
-                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    ? const Icon(
+                        LucideIcons.check,
+                        color: AppTheme.primaryColor,
+                      )
                     : null,
                 onTap: () {
                   setState(() {
@@ -151,7 +154,10 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
                       : AppTheme.tertiaryColor,
                 ),
                 trailing: _selectedTripStatusFilter == 'COMPLETED'
-                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    ? const Icon(
+                        LucideIcons.check,
+                        color: AppTheme.primaryColor,
+                      )
                     : null,
                 onTap: () {
                   setState(() {
@@ -169,7 +175,10 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
                       : AppTheme.tertiaryColor,
                 ),
                 trailing: _selectedTripStatusFilter == 'CANCELLED'
-                    ? const Icon(LucideIcons.check, color: AppTheme.primaryColor)
+                    ? const Icon(
+                        LucideIcons.check,
+                        color: AppTheme.primaryColor,
+                      )
                     : null,
                 onTap: () {
                   setState(() {
@@ -223,11 +232,9 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(
-              LucideIcons.funnel,
-              color: AppTheme.primaryColor,
-            ),
-            onPressed: () => _displayDriverTripHistoryFilterModalBottomSheet(context),
+            icon: const Icon(LucideIcons.funnel, color: AppTheme.primaryColor),
+            onPressed: () =>
+                _displayDriverTripHistoryFilterModalBottomSheet(context),
           ),
           const SizedBox(width: 8),
         ],

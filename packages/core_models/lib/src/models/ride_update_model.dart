@@ -20,9 +20,18 @@ class RideUpdate extends Equatable {
     return RideUpdate(
       status: RideStatus.fromString(json['status'] as String? ?? 'requested'),
       driverId: json['driver_id'] as String? ?? json['driverId'] as String?,
-      driverName: json['driver_name'] as String? ?? json['driverName'] as String? ?? 'Driver',
-      vehiclePlate: json['plate_number'] as String? ?? json['vehiclePlate'] as String? ?? '—',
-      vehicleType: json['vehicle_type'] as String? ?? json['vehicleType'] as String? ?? 'Bao Bao',
+      driverName:
+          json['driver_name'] as String? ??
+          json['driverName'] as String? ??
+          'Driver',
+      vehiclePlate:
+          json['plate_number'] as String? ??
+          json['vehiclePlate'] as String? ??
+          '—',
+      vehicleType:
+          json['vehicle_type'] as String? ??
+          json['vehicleType'] as String? ??
+          'Bao Bao',
     );
   }
 
@@ -38,10 +47,10 @@ class RideUpdate extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        driverId,
-        driverName,
-        vehiclePlate,
-        vehicleType,
-      ];
+    status,
+    driverId,
+    driverName,
+    vehiclePlate,
+    vehicleType,
+  ];
 }

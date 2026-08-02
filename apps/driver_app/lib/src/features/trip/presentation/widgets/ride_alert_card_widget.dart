@@ -193,10 +193,7 @@ class RideAlertCardWidget extends StatelessWidget {
                   ),
                   child: const Text(
                     'Decline',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -215,10 +212,7 @@ class RideAlertCardWidget extends StatelessWidget {
                   ),
                   child: const Text(
                     'Accept Ride',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
                   ),
                 ),
               ),

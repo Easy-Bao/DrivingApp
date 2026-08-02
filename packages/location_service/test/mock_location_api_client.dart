@@ -30,8 +30,8 @@ class MockLocationApiClient implements LocationApiClient {
           'fullAddress': '456 Commercial Ave',
           'latitude': userLat ?? 7.8242,
           'longitude': userLng ?? 123.4350,
-        }
-      ]
+        },
+      ],
     };
   }
 
@@ -49,15 +49,13 @@ class MockLocationApiClient implements LocationApiClient {
           'fullAddress': '789 Park Blvd',
           'latitude': lat,
           'longitude': lng,
-        }
-      ]
+        },
+      ],
     };
   }
 
   @override
-  Future<RouteModel> getRoute({
-    required Map<String, dynamic> body,
-  }) async {
+  Future<RouteModel> getRoute({required Map<String, dynamic> body}) async {
     return const RouteModel(
       polylinePoints: [
         [123.4350, 7.8242],

@@ -6,10 +6,10 @@ class PlaceFailure extends Failure {
 
 class PlaceNetworkError extends PlaceFailure {
   const PlaceNetworkError({String? message})
-      : super(message ?? 'Network error occurred in place service.');
+    : super(message ?? 'Network error occurred in place service.');
 }
 
 class PlaceParseError extends PlaceFailure {
   const PlaceParseError({String? message})
-      : super(message ?? 'Parsing error occurred in place service.');
+    : super(message ?? 'Parsing error occurred in place service.');
 }

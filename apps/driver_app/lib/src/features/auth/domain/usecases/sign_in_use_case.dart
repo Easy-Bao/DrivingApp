@@ -12,9 +12,6 @@ class SignInUseCase {
     required String email,
     required String password,
   }) {
-    return _authRepository.authenticateDriver(
-      email: email,
-      password: password,
-    );
+    return _authRepository.authenticateDriver(email: email, password: password);
   }
 }
