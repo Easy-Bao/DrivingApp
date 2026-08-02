@@ -125,6 +125,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   String _extractErrorMessage(DioException error) {
+    final statusCode = error.response?.statusCode;
+    if (statusCode != null && statusCode >= 500) {
+      return 'The authentication service is temporarily unavailable. Please try again.';
+    }
+
     final errorData = error.response?.data;
     if (errorData is Map) {
       final message = errorData['message'] ?? errorData['error'];

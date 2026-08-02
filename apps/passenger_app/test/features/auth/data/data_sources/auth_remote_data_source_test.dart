@@ -104,5 +104,36 @@ void main() {
         );
       },
     );
+
+    test('hides internal diagnostics from server failures', () async {
+      when(
+        () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: '/auth/passenger/login'),
+          response: Response<Object?>(
+            requestOptions: RequestOptions(path: '/auth/passenger/login'),
+            statusCode: 500,
+            data: <String, dynamic>{
+              'message': 'Failed query: select * from passengers',
+            },
+          ),
+        ),
+      );
+
+      expect(
+        () => dataSource.loginPassenger(
+          email: 'passenger@example.com',
+          password: 'secret-password',
+        ),
+        throwsA(
+          isA<ServerException>().having(
+            (exception) => exception.message,
+            'message',
+            'The authentication service is temporarily unavailable. Please try again.',
+          ),
+        ),
+      );
+    });
   });
 }

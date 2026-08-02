@@ -22,6 +22,13 @@ export class InvalidPassengerCredentialsError extends Error {
   }
 }
 
+export class PassengerAccountAlreadyExistsError extends Error {
+  constructor() {
+    super('Passenger account with this email address already exists');
+    this.name = 'PassengerAccountAlreadyExistsError';
+  }
+}
+
 export class PassengerAuthenticationService {
   static async verifyPassengerAccountState(
     passengerEmailAddress: string,
@@ -54,7 +61,7 @@ export class PassengerAuthenticationService {
       .where(eq(passengersTable.email, normalizedEmailAddress));
 
     if (existingAccount) {
-      throw new Error('Passenger account with this email address already exists');
+      throw new PassengerAccountAlreadyExistsError();
     }
 
     const passwordHash = await Bun.password.hash(passengerInput.password, {

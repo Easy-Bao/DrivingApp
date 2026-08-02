@@ -7,6 +7,7 @@ import type {
 } from '../../schemas/passenger/passenger.zod.ts';
 import {
   InvalidPassengerCredentialsError,
+  PassengerAccountAlreadyExistsError,
   PassengerAuthenticationService,
 } from '../../services/passenger/passenger.service.ts';
 
@@ -19,8 +20,13 @@ export async function handleRegisterPassengerAccount(c: Context) {
       .registerPassengerAccount(body);
     return c.json({ success: true, data: result });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Passenger registration failed';
-    throw new HTTPException(400, { message });
+    if (error instanceof PassengerAccountAlreadyExistsError) {
+      throw new HTTPException(400, { message: error.message });
+    }
+    console.error('Passenger registration service failed.', error);
+    throw new HTTPException(500, {
+      message: 'Passenger registration is temporarily unavailable',
+    });
   }
 }
 

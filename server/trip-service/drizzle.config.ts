@@ -11,6 +11,7 @@ export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle',
   dialect: 'postgresql',
+  tablesFilter: ['rides'],
   dbCredentials: {
     url: process.env.DATABASE_URL,
   },

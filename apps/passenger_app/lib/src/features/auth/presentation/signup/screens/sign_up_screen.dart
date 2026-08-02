@@ -159,8 +159,6 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                   },
                 ),
               );
-            } else if (state is SignUpFailure) {
-              CustomToast.show(context, state.errorMessage);
             }
           },
           builder: (context, state) {
