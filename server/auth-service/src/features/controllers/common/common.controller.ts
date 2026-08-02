@@ -18,10 +18,15 @@ export async function handleVerifyOneTimePassword(c: Context) {
     const isVerified = OneTimePasswordStoreService
       .verifyOneTimePasswordCode(email, code);
     if (isVerified) {
-      await Promise.all([
+      const accountVerificationResults = await Promise.allSettled([
         PassengerAuthenticationService.verifyPassengerAccountState(email),
         DriverAuthenticationService.verifyDriverAccountState(email),
       ]);
+      if (!accountVerificationResults.some(
+        (result) => result.status === 'fulfilled',
+      )) {
+        throw new Error('Unable to verify the account at this time');
+      }
     }
     return c.json({ success: true, data: { verified: true } });
   } catch (error: unknown) {

@@ -173,18 +173,23 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final lat = _userLat ?? EnvConfig.defaultLatitude;
     final lng = _userLng ?? EnvConfig.defaultLongitude;
 
-    final results = await MapProvider.getNearbyPOIs(
-      lat: lat,
-      lng: lng,
-      page: 1,
-    );
+    try {
+      final results = await MapProvider.getNearbyPOIs(
+        lat: lat,
+        lng: lng,
+        page: 1,
+      );
 
-    if (mounted) {
-      setState(() {
-        _allNearbyPlaces = results;
-        _displayedCount = 10;
-        _isLoadingNearby = false;
-      });
+      if (mounted) {
+        setState(() {
+          _allNearbyPlaces = results;
+          _displayedCount = 10;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingNearby = false);
+      }
     }
   }
 

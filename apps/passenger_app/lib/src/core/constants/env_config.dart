@@ -9,12 +9,9 @@ class EnvConfig {
 
   static const AppEnvironment currentEnvironment = AppEnvironment.development;
 
-  static String get mapboxPublicToken {
+  static String? get mapboxPublicToken {
     final token = dotenv.env['MAPBOX_PUBLIC_TOKEN'];
-    if (token == null || token.isEmpty) {
-      throw StateError('MAPBOX_PUBLIC_TOKEN environment variable is missing.');
-    }
-    return token;
+    return token == null || token.isEmpty ? null : token;
   }
 
   static double get defaultLatitude {
