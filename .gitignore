@@ -67,6 +67,9 @@ app.*.map.json
 .envrc
 .env.local
 
+.github/workflows/
+
 .direnv/
 
 skills-lock.json
+
