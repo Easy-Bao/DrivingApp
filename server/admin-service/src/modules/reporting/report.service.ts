@@ -26,6 +26,20 @@ export function rowsToCsv(rows: Array<Record<string, unknown>>): string {
   return `\uFEFF${headers.map(csvCell).join(',')}\r\n${records.join('\r\n')}\r\n`;
 }
 
+/**
+ * Admin report exporter: turns the same filtered case and audit records shown in
+ * the portal into spreadsheet-safe CSV without creating a second reporting data
+ * store or exposing credentials.
+ *
+ * The requested report type first selects its typed status vocabulary, delegates
+ * date filtering to the owning service, and retrieves a bounded snapshot before
+ * escaping every CSV cell. Case and audit exports therefore follow the same
+ * validation and UTC timestamp contracts as their list screens.
+ *
+ * Inputs contain `type`, optional status, and optional ISO-8601 date bounds; the
+ * output is a UTF-8 CSV string with a byte-order mark for spreadsheet clients.
+ * Concurrent exports are read-only and do not block Admin mutations.
+ */
 export class ReportService {
   constructor(
     private readonly caseService: CaseService = new CaseService(),

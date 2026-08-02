@@ -8,7 +8,20 @@ const AdminConfigurationSchema = z.object({
 
 export type AdminConfiguration = z.infer<typeof AdminConfigurationSchema>;
 
-/** Validates the isolated Admin service boundary before configuration is used. */
+/**
+ * Admin configuration boundary: accepts only the database URL, dedicated JWT
+ * secret, and listening port required by this service so unrelated Passenger or
+ * Driver credentials cannot become accidental Admin dependencies.
+ *
+ * Each caller supplies an environment-shaped record, Zod parses the complete
+ * contract, and startup fails before opening a database or issuing a token when
+ * any required value is missing or malformed. Failure messages contain only
+ * variable names; secret and credential values are never copied into logs.
+ *
+ * The returned object contains `DATABASE_URL`, `ADMIN_JWT_SECRET`, and `PORT` in
+ * their validated runtime forms. Tests may pass an isolated record directly,
+ * while production callers use the process environment.
+ */
 export function loadAdminConfiguration(
   environment: Record<string, string | undefined> = process.env,
 ): AdminConfiguration {

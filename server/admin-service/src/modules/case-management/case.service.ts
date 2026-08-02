@@ -126,6 +126,22 @@ function validateTransition(
   }
 }
 
+/**
+ * Complaint-case workflow: coordinates owner review state with the append-only
+ * audit and idempotency pipeline while keeping Passenger, Driver, and Trip data
+ * in their owning services.
+ *
+ * A create request records its target and notes through `AuditService.mutate`.
+ * An update first loads the current case in the shared transaction, validates
+ * the permitted state transition and required resolution, then writes the new
+ * state before the audit commits. Retries replay their saved result, and two
+ * concurrent updates carrying the same key cannot apply twice.
+ *
+ * Case records contain a target type and ID, optional ride ID, category, notes,
+ * status, resolution, reviewer identity, and UTC timestamps. Target identifiers
+ * are references only; this service does not duplicate external user or trip
+ * records in the Admin database.
+ */
 export class CaseService {
   constructor(
     private readonly store: CaseStore = postgresCaseStore,

@@ -23,6 +23,26 @@ dispatch, fares, commissions, and mobile integration need shared contracts with
 the services that own those records. They must arrive in later reviewed pull
 requests instead of being simulated or duplicated inside Admin.
 
+### Deferred Driver Management contract
+
+The later Driver Management module will compose the following operational view:
+
+```text
+Driver Management
+├── Driver Profile (User Identity, Contact, Status)
+├── Vehicles (Plate No, Model, Color, Type)
+├── Driver Documents (KYC Docs, Expiry Dates, Verification Status)
+├── Driver Credits & Wallet (Prepaid Balance, Earnings, Ledger)
+├── Driver Offenses (Violations, Fines, Suspensions)
+└── Performance Metrics (Ratings, Completion)
+```
+
+Admin will review or operate this information through contracts with the Auth,
+Driver, Trip, and future finance owners. This Admin database must not create a
+second copy of Driver identity, vehicle, wallet, ledger, or performance records.
+No Driver Management route or table is included until those contracts are
+agreed and tested with the existing mobile backend.
+
 ## Service-zone decision
 
 Barangay activation and polygon enforcement have been removed. The current

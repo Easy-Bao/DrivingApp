@@ -17,7 +17,21 @@ export type AdminExecutor = Pick<AdminDatabase, 'select' | 'insert' | 'update'>;
 
 let connection: DatabaseConnection | undefined;
 
-/** Opens the Admin database only when a database-backed operation is used. */
+/**
+ * Lazy Admin database lifecycle: postpones PostgreSQL initialization until an
+ * authenticated operation, migration helper, or provisioning command actually
+ * needs persistence.
+ *
+ * The first call validates configuration, opens one postgres-js client, binds
+ * the complete Drizzle schema, and caches both values. Later calls reuse that
+ * connection, so simultaneous Hono requests share the driver's pool instead of
+ * creating a socket pool per route. Provisioning and integration tests call
+ * `closeAdminDatabase` after their final operation, which closes the client and
+ * clears the cache so a later isolated run can create a fresh connection.
+ *
+ * Consumers receive `{ client, database }`; only infrastructure code closes the
+ * client, while domain services use `getAdminDatabase` for typed queries.
+ */
 export function getAdminConnection(): DatabaseConnection {
   connection ??= createConnection();
   return connection;

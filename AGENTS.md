@@ -37,7 +37,9 @@ implementation and verification set that proves the requested change.
 - Derive the acting identity from the verified JWT; never trust an ID supplied
   in a state-changing request body.
 - Add selective `/** ... */` documentation only for important exported APIs,
-  security or money invariants, and non-obvious failure behavior.
+  security or money invariants, and non-obvious failure behavior. Those comments
+  narrate purpose, execution order, concurrency or timing, integration
+  boundaries, and data contracts instead of paraphrasing the signature.
 
 ### Admin service structure
 
@@ -97,6 +99,11 @@ implementation and verification set that proves the requested change.
 - Authentication, money, migrations, or concurrency changes require focused
   negative and retry coverage.
 - Never claim an end-to-end flow passed unless it actually ran.
+- Run the relevant static analysis, tests, and build before staging or
+  committing; resolve every applicable compiler error and warning first.
+- Commit messages use a lowercase `<topic>: <summary>` header, one lowercase
+  narrative paragraph without lists, and one or more final
+  `changelog: <user-facing summary>` lines.
 - Record confirmed behavior and gaps in `docs/product-plan.md`, verified runtime
   facts in `docs/repo-current-state.md`, and Admin architecture/startup in
   `docs/admin-mvp.md` without duplicating long specifications.

@@ -100,7 +100,21 @@ export class AuthService {
     private readonly signingSecret?: string,
   ) {}
 
-  /** Authenticates the single owner with a serialized five-attempt lockout. */
+  /**
+   * Owner login lifecycle: normalizes the submitted email, serializes attempts
+   * for that identity with a PostgreSQL advisory transaction lock, and loads the
+   * single Admin record before performing the Argon2id password check.
+   *
+   * A failed password increments the persisted counter; the fifth failure resets
+   * that counter and stores a fifteen-minute lock timestamp. Because lookup and
+   * counter update occur under the same lock, concurrent requests cannot race
+   * past the threshold. A successful password clears prior failures and only
+   * then signs an eight-hour JWT with the Admin-only secret.
+   *
+   * The input contract is normalized `email` plus plaintext `password`; the
+   * password is never stored or returned. The output contains only
+   * `{ accessToken }`, which the SvelteKit server places in an HttpOnly cookie.
+   */
   async login(email: string, password: string): Promise<{ accessToken: string }> {
     const normalizedEmail = email.trim().toLowerCase();
     const owner = await this.store.withOwnerLock(normalizedEmail, async (executor) => {
@@ -144,7 +158,21 @@ export class AuthService {
     return { accessToken };
   }
 
-  /** Creates the first owner or rotates that same owner's password. */
+  /**
+   * Owner provisioning lifecycle: gives an interactive setup command one safe
+   * path for initial creation and later password rotation without introducing a
+   * public registration endpoint or a staff-role model.
+   *
+   * Provisioning first normalizes the email and acquires one global advisory
+   * lock. If that owner exists, the supplied Argon2id hash replaces the previous
+   * hash and clears the login lock; otherwise the service counts owners and
+   * refuses creation when any different owner already exists. Concurrent setup
+   * commands therefore cannot create a second account between count and insert.
+   *
+   * The service receives an email and an already-produced password hash, then
+   * returns either `created` or `rotated`; it never receives or records the
+   * interactive plaintext password.
+   */
   async provisionOwner(
     email: string,
     passwordHash: string,

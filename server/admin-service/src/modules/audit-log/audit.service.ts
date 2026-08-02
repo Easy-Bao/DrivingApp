@@ -192,7 +192,24 @@ function sanitizeError(error: unknown): Record<string, unknown> {
 export class AuditService {
   constructor(private readonly store: AuditStore = postgresAuditStore) {}
 
-  /** Executes and audits one Admin mutation exactly once per idempotency key. */
+  /**
+   * Audited mutation pipeline: makes a retried owner action produce one domain
+   * change, one stored result, and one successful audit event instead of
+   * repeating the operation after a timeout or double submission.
+   *
+   * The pipeline validates the idempotency key, fingerprints the normalized
+   * payload, and acquires a PostgreSQL advisory transaction lock for that key. A
+   * matching stored request immediately replays its original response; a key
+   * reused for different action, target, or payload fails. A new request loads
+   * optional before-state, runs the domain operation, stores its response, and
+   * appends the success audit inside the same transaction.
+   *
+   * Concurrent requests for one key queue on the database lock, while unrelated
+   * keys continue independently. Failed operations append a sanitized failure
+   * event after rollback, preserving stable error codes without credentials.
+   * `MutationContext` carries actor, request, action, target, reason, and payload;
+   * the callback receives the same transaction used by the idempotency record.
+   */
   async mutate<T>(
     context: MutationContext,
     operation: (transaction: AdminExecutor) => Promise<T>,

@@ -7,7 +7,21 @@ export type AdminVariables = {
   adminEmail: string;
 };
 
-/** Accepts only tokens issued by the isolated Admin service for the owner role. */
+/**
+ * Admin request boundary: prevents Passenger, Driver, and shared-service tokens
+ * from entering owner operations even when a caller reaches the Admin route
+ * through the API gateway.
+ *
+ * The middleware first extracts the bearer token, verifies its HS256 signature
+ * with the dedicated Admin secret, and then requires an Admin role plus string
+ * subject and email claims. Only after every check succeeds are `adminId` and
+ * `adminEmail` copied into the Hono request context for downstream routes.
+ *
+ * Verification is stateless, so concurrent requests do not share counters or
+ * mutable session data; token expiry is enforced by Hono before the request can
+ * continue. The SvelteKit server supplies the bearer token from its HttpOnly
+ * cookie, while browser JavaScript never receives either the token or secret.
+ */
 export async function adminAuthMiddleware(
   context: Context<{ Variables: AdminVariables }>,
   next: Next,
