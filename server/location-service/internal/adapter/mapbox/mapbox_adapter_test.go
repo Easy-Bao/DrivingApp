@@ -5,6 +5,27 @@ import (
 	"testing"
 )
 
+func TestCanonicalSearchQueryExpandsShortAcronyms(t *testing.T) {
+	tests := []struct {
+		name  string
+		query string
+		want  string
+	}{
+		{name: "compact acronym", query: "jh", want: "j.h"},
+		{name: "uppercase acronym", query: "JH", want: "J.H"},
+		{name: "punctuated acronym", query: "J.H", want: "J.H"},
+		{name: "normal word", query: "hotel", want: "hotel"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := canonicalSearchQuery(test.query); got != test.want {
+				t.Fatalf("canonicalSearchQuery(%q) = %q, want %q", test.query, got, test.want)
+			}
+		})
+	}
+}
+
 func TestSelectBestRouteSkipsInvalidAndChoosesShortestDistance(t *testing.T) {
 	invalid := mapboxRoute{}
 	longer := routeFixture(1200, 300)

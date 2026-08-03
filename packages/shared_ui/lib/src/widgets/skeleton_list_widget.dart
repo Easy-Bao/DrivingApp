@@ -20,7 +20,10 @@ class SkeletonListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     const titleWidths = [160.0, 200.0, 140.0, 180.0, 150.0, 190.0];
     final colors = Theme.of(context).colorScheme;
-    final skeletonColor = colors.surfaceContainerHighest;
+    final skeletonColor = Color.alphaBlend(
+      colors.onSurface.withValues(alpha: 0.08),
+      colors.surface,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -36,7 +39,7 @@ class SkeletonListWidget extends StatelessWidget {
           itemCount: effectiveCount,
           separatorBuilder: (_, __) => Divider(
             height: 1,
-            color: colors.outline,
+            color: colors.outlineVariant.withValues(alpha: 0.45),
           ),
           itemBuilder: (_, index) {
             return Padding(

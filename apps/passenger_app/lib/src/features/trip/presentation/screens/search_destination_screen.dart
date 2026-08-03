@@ -333,6 +333,14 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final searchableText = _normalizeSearchText(
       '${place.name} ${place.fullAddress}',
     );
+    final compactQuery = _compactSearchText(query);
+    final compactSearchableText = _compactSearchText(
+      '${place.name} ${place.fullAddress}',
+    );
+    if (compactQuery.isNotEmpty &&
+        compactSearchableText.contains(compactQuery)) {
+      return true;
+    }
     if (searchableText.contains(normalizedQuery)) return true;
 
     final queryTokens = normalizedQuery.split(' ');
@@ -346,6 +354,10 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
 
   String _normalizeSearchText(String value) {
     return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  }
+
+  String _compactSearchText(String value) {
+    return _normalizeSearchText(value).replaceAll(' ', '');
   }
 
   List<PlaceModel> _sortPlacesByDistance(List<PlaceModel> places) {

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 )
 
 const (
@@ -60,6 +61,7 @@ func (adapter *mapboxAdapter) SearchPlaces(
 	if query == "" {
 		return []domain.Place{}, nil
 	}
+	query = canonicalSearchQuery(query)
 
 	parameters := url.Values{
 		"q":            {query},
@@ -69,6 +71,19 @@ func (adapter *mapboxAdapter) SearchPlaces(
 		"proximity":    {formatCoordinate(longitude) + "," + formatCoordinate(latitude)},
 	}
 	return adapter.fetchPlaces(ctx, searchBoxBaseURL+"/forward?"+parameters.Encode(), latitude, longitude)
+}
+
+func canonicalSearchQuery(query string) string {
+	if len([]rune(query)) < 2 || len([]rune(query)) > 4 {
+		return query
+	}
+	for _, character := range query {
+		if !unicode.IsLetter(character) {
+			return query
+		}
+	}
+
+	return strings.Join(strings.Split(query, ""), ".")
 }
 
 func (adapter *mapboxAdapter) ReverseGeocode(
