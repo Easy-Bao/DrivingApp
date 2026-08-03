@@ -73,7 +73,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.driverLat,
       event.driverLng,
       isOrigin: true,
-      label: 'Driver',
+      label: 'Current location\nYou are here',
       color: const Color(0xFF222222),
     );
     if (driverManager != null) _markerManagers.add(driverManager);
@@ -82,7 +82,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       _mapController!,
       event.passengerLat,
       event.passengerLng,
-      label: 'Passenger',
+      label: 'Passenger\nPickup location',
       color: const Color(0xFF2E7D32),
     );
     if (passengerManager != null) _markerManagers.add(passengerManager);

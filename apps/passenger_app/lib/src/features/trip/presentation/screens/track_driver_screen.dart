@@ -178,6 +178,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         passengerLat,
         passengerLng,
         isOrigin: true,
+        label: 'Current location\nYou are here',
         color: const Color(0xFF222222),
       );
       _driverMarkerManager = await MapProvider.addMarker(
@@ -185,6 +186,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         driverLat,
         driverLng,
         isOrigin: false,
+        label: 'Your driver\n${widget.ride.driverName}',
         color: const Color(0xFFE53935),
       );
 

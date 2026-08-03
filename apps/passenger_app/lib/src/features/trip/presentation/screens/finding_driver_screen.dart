@@ -91,6 +91,12 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   List<DriverModel> _nearbyDrivers = [];
   bool _isLeaving = false;
 
+  String _driverMarkerLabel(DriverModel driver) {
+    final onboard = driver.hasPassengerOnboard ? 1 : 0;
+    return '${driver.name}\n★ ${driver.rating.toStringAsFixed(1)} • '
+        '${driver.distanceKm.toStringAsFixed(1)} km • $onboard/5 passengers';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -157,7 +163,12 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
       );
 
       BlocProvider.of<LiveMapBloc>(context).add(
-        AddMapMarkerEvent(lat: lat, lng: lng, label: 'Origin', isOrigin: true),
+        AddMapMarkerEvent(
+          lat: lat,
+          lng: lng,
+          label: 'Current location\nYou are here',
+          isOrigin: true,
+        ),
       );
     }
   }
@@ -281,16 +292,16 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                 AddMapMarkerEvent(
                   lat: state.driver.lat,
                   lng: state.driver.lng,
-                  label: state.driver.name,
+                  label: _driverMarkerLabel(state.driver),
                 ),
               );
-              for (final nearby in state.nearbyDrivers) {
+              for (final nearby in state.nearbyDrivers.take(10)) {
                 if (nearby.id != state.driver.id) {
                   liveMapBloc.add(
                     AddMapMarkerEvent(
                       lat: nearby.lat,
                       lng: nearby.lng,
-                      label: nearby.name,
+                      label: _driverMarkerLabel(nearby),
                     ),
                   );
                 }
