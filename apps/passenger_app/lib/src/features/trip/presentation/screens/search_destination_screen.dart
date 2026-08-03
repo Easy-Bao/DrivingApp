@@ -66,6 +66,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
   @override
   void dispose() {
     _debounce?.cancel();
+    unawaited(MapProvider.clearAnnotations(_currentLocationMarker));
     _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();
     _searchController.removeListener(_onSearchChanged);
@@ -174,6 +175,16 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
         _userLat = pos.latitude;
         _userLng = pos.longitude;
       });
+      if (_mapController != null) {
+        await MapProvider.moveCamera(
+          _mapController!,
+          pos.latitude,
+          pos.longitude,
+          zoom: 14.5,
+          animate: false,
+        );
+        unawaited(_updateCurrentLocationMarker(pos.latitude, pos.longitude));
+      }
       unawaited(_loadNearbyPlaces());
     }
   }
@@ -348,6 +359,8 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
 
   Widget? _cachedMapView;
   AppMapController? _mapController;
+  dynamic _currentLocationMarker;
+  int _locationMarkerRequestId = 0;
 
   Widget _getMapView(double lat, double lng) {
     _cachedMapView ??= MapProvider.buildMapView(
@@ -355,9 +368,37 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
       longitude: lng,
       zoom: 14.5,
       interactive: true,
-      onMapCreated: (controller) => _mapController = controller,
+      onMapCreated: (controller) {
+        _mapController = controller;
+        unawaited(_updateCurrentLocationMarker(lat, lng));
+      },
     );
     return _cachedMapView!;
+  }
+
+  Future<void> _updateCurrentLocationMarker(double lat, double lng) async {
+    final controller = _mapController;
+    if (controller == null) return;
+    final requestId = ++_locationMarkerRequestId;
+
+    final previousMarker = _currentLocationMarker;
+    _currentLocationMarker = null;
+    if (previousMarker != null) {
+      await MapProvider.clearAnnotations(previousMarker);
+    }
+
+    final marker = await MapProvider.addMarker(
+      controller,
+      lat,
+      lng,
+      isOrigin: true,
+      label: 'Current location\nYou are here',
+    );
+    if (mounted && requestId == _locationMarkerRequestId) {
+      _currentLocationMarker = marker;
+    } else {
+      await MapProvider.clearAnnotations(marker);
+    }
   }
 
   @override
