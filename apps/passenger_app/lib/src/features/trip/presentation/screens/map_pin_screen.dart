@@ -108,7 +108,13 @@ class _MapPinScreenState extends State<MapPinScreen>
   Future<void> _reverseGeocode(double lat, double lng) async {
     if (!mounted) return;
     final requestId = ++_geocodeRequestId;
-    setState(() => _isGeocoding = true);
+    setState(() {
+      _centerLat = lat;
+      _centerLng = lng;
+      _address = 'Locating...';
+      _subAddress = '';
+      _isGeocoding = true;
+    });
     final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
     if (mounted && requestId == _geocodeRequestId) {
       final full = place?.fullAddress ?? 'Unknown location';
@@ -282,22 +288,6 @@ class _MapPinScreenState extends State<MapPinScreen>
               ),
             ),
           ),
-          Positioned(
-            right: 16,
-            bottom: MediaQuery.sizeOf(context).height * 0.36,
-            child: MapZoomControlsWidget(
-              onZoomIn: () {
-                if (_mapController != null) {
-                  unawaited(MapProvider.zoomIn(_mapController!));
-                }
-              },
-              onZoomOut: () {
-                if (_mapController != null) {
-                  unawaited(MapProvider.zoomOut(_mapController!));
-                }
-              },
-            ),
-          ),
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -405,6 +395,22 @@ class _MapPinScreenState extends State<MapPinScreen>
                   ),
                 ],
               ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 270,
+            child: MapZoomControlsWidget(
+              onZoomIn: () {
+                if (_mapController != null) {
+                  unawaited(MapProvider.zoomIn(_mapController!));
+                }
+              },
+              onZoomOut: () {
+                if (_mapController != null) {
+                  unawaited(MapProvider.zoomOut(_mapController!));
+                }
+              },
             ),
           ),
         ],
