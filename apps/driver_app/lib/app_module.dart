@@ -3,6 +3,7 @@ import 'package:driver_app/driver_module.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/network/dio_client.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/core/storage/secure_storage.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
 import 'package:driver_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/auth_repository.dart';
@@ -23,6 +24,9 @@ class AppModule extends Module {
     i
       ..addSingleton<SharedPreferences>((i) => _prefs)
       ..addLazySingleton<SecureSessionService>((i) => SecureSessionService())
+      ..addLazySingleton<SecureStorage>(
+        (i) => SecureStorage(i.get<SecureSessionService>()),
+      )
       ..addLazySingleton<Dio>(
         (i) => DioClient.create(
           baseUrl: EnvConfig.driverServiceUri,

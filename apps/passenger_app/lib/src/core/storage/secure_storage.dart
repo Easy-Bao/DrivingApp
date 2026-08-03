@@ -3,6 +3,7 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 
 class SecureStorage {
   final SecureSessionService _secureSessionService;
+
   SecureStorage(this._secureSessionService);
 
   Future<void> write(String key, String value) => switch (key) {

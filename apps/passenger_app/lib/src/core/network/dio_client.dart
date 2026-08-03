@@ -1,6 +1,8 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:passenger_app/src/core/network/interceptors/auth_interceptor.dart';
+import 'package:passenger_app/src/core/network/interceptors/logging_interceptor.dart';
+import 'package:passenger_app/src/core/network/interceptors/retry_interceptor.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 
 class DioClient {
@@ -20,48 +22,11 @@ class DioClient {
     );
 
     dio.interceptors.add(AuthInterceptor(sessionService));
-    dio.interceptors.add(_RetryOnNetworkFailureInterceptor(dio: dio));
+    if (kDebugMode) {
+      dio.interceptors.add(LoggingInterceptor());
+    }
+    dio.interceptors.add(RetryInterceptor(dio));
 
     return dio;
-  }
-}
-
-class _RetryOnNetworkFailureInterceptor extends Interceptor {
-  final Dio dio;
-  final int maxRetries = 3;
-  final Duration retryDelay = const Duration(seconds: 2);
-
-  _RetryOnNetworkFailureInterceptor({required this.dio});
-
-  @override
-  Future<void> onError(
-    DioException err,
-    ErrorInterceptorHandler handler,
-  ) async {
-    final requestOptions = err.requestOptions;
-
-    final isNetworkError =
-        err.type == DioExceptionType.connectionTimeout ||
-        err.type == DioExceptionType.sendTimeout ||
-        err.type == DioExceptionType.receiveTimeout ||
-        err.type == DioExceptionType.connectionError ||
-        (err.error is SocketException);
-
-    final retryAttempt = requestOptions.extra['retryAttempt'] as int? ?? 0;
-
-    if (isNetworkError && retryAttempt < maxRetries) {
-      final nextAttempt = retryAttempt + 1;
-      requestOptions.extra['retryAttempt'] = nextAttempt;
-
-      await Future.delayed(retryDelay);
-
-      try {
-        final response = await dio.fetch(requestOptions);
-        return handler.resolve(response);
-      } catch (_) {
-        // Fall through to error handler on consecutive failure
-      }
-    }
-    super.onError(err, handler);
   }
 }

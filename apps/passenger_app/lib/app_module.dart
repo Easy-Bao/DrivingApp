@@ -4,6 +4,7 @@ import 'package:passenger_app/passenger_module.dart';
 import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/network/dio_client.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/core/storage/secure_storage.dart';
 import 'package:passenger_app/src/features/auth/auth_module.dart';
 import 'package:passenger_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
@@ -20,6 +21,9 @@ class AppModule extends Module {
     i
       ..addSingleton<SharedPreferences>((i) => _prefs)
       ..addLazySingleton<SecureSessionService>((i) => SecureSessionService())
+      ..addLazySingleton<SecureStorage>(
+        (i) => SecureStorage(i.get<SecureSessionService>()),
+      )
       ..addLazySingleton<Dio>(
         (i) => DioClient.create(
           baseUrl: EnvConfig.passengerServiceUri,
