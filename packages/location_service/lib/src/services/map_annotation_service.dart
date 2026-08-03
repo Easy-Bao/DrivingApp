@@ -29,7 +29,8 @@ class MapAnnotationService {
         geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
         image: await _createMarkerImage(Color(markerColor), label: label),
         iconAnchor: mapbox.IconAnchor.BOTTOM,
-        iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 0.5,
+        // Keep information cards legible while the map camera changes zoom.
+        iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 1.0,
         symbolSortKey: 20,
       ),
     );
