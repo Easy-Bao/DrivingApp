@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
-import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -26,10 +25,8 @@ class _MapPinScreenState extends State<MapPinScreen>
   Timer? _debounceTimer;
   int _geocodeRequestId = 0;
   late final AnimationController _pinAnimationController;
-  double? _centerLat =
-      LocationService.lastPosition?.latitude ?? EnvConfig.defaultLatitude;
-  double? _centerLng =
-      LocationService.lastPosition?.longitude ?? EnvConfig.defaultLongitude;
+  double? _centerLat = LocationService.lastPosition?.latitude;
+  double? _centerLng = LocationService.lastPosition?.longitude;
   Widget? _cachedMapView;
 
   @override
@@ -40,7 +37,9 @@ class _MapPinScreenState extends State<MapPinScreen>
       duration: const Duration(milliseconds: 180),
       reverseDuration: const Duration(milliseconds: 220),
     );
-    unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+    if (_centerLat != null && _centerLng != null) {
+      unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+    }
     unawaited(_initLocation());
   }
 
@@ -72,7 +71,9 @@ class _MapPinScreenState extends State<MapPinScreen>
         unawaited(_reverseGeocode(pos.latitude, pos.longitude));
       }
     } else if (mounted && _address == 'Move the map to select a location') {
-      unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+      if (_centerLat != null && _centerLng != null) {
+        unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+      }
     }
   }
 
@@ -87,7 +88,9 @@ class _MapPinScreenState extends State<MapPinScreen>
           zoom: 15.0,
         ),
       );
-      unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+      if (!_hasUserPannedMap) {
+        unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+      }
     }
   }
 
@@ -103,6 +106,7 @@ class _MapPinScreenState extends State<MapPinScreen>
   }
 
   Future<void> _reverseGeocode(double lat, double lng) async {
+    if (!mounted) return;
     final requestId = ++_geocodeRequestId;
     setState(() => _isGeocoding = true);
     final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
@@ -280,7 +284,7 @@ class _MapPinScreenState extends State<MapPinScreen>
           ),
           Positioned(
             right: 16,
-            bottom: 220,
+            bottom: MediaQuery.sizeOf(context).height * 0.36,
             child: MapZoomControlsWidget(
               onZoomIn: () {
                 if (_mapController != null) {

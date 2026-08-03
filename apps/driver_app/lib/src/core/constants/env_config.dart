@@ -14,22 +14,6 @@ class EnvConfig {
     return token == null || token.isEmpty ? null : token;
   }
 
-  static double get defaultLatitude {
-    final raw = dotenv.env['DEFAULT_LATITUDE'];
-    if (raw == null || raw.isEmpty) {
-      return 14.5995;
-    }
-    return double.parse(raw);
-  }
-
-  static double get defaultLongitude {
-    final raw = dotenv.env['DEFAULT_LONGITUDE'];
-    if (raw == null || raw.isEmpty) {
-      return 120.9842;
-    }
-    return double.parse(raw);
-  }
-
   static bool get offlineMode =>
       dotenv.env['OFFLINE_MODE']?.toLowerCase() == 'true';
 

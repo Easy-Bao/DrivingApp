@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/activity_detail_map_screen.dart';
@@ -157,18 +158,12 @@ class TripModule {
       'home/finding-driver',
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
-        final destination = data['destination'] is PlaceModel
-            ? data['destination'] as PlaceModel
-            : PlaceModel(
-                id: 'dest_${DateTime.now().millisecondsSinceEpoch}',
-                name:
-                    state.uri.queryParameters['destinationName'] ??
-                    'Destination',
-                fullAddress:
-                    state.uri.queryParameters['destinationAddress'] ?? '',
-                latitude: 14.5995,
-                longitude: 120.9842,
-              );
+        final destination = data['destination'];
+        if (destination is! PlaceModel) {
+          return const Scaffold(
+            body: Center(child: Text('Destination data is unavailable.')),
+          );
+        }
         return FindingDriverScreen(
           rideType: data['rideType'] as String? ?? 'Solo Ride',
           fare: (data['fare'] as num?)?.toDouble() ?? 0.0,
@@ -186,18 +181,12 @@ class TripModule {
       'home/driver-matched',
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
-        final destination = data['destination'] is PlaceModel
-            ? data['destination'] as PlaceModel
-            : PlaceModel(
-                id: 'dest_${DateTime.now().millisecondsSinceEpoch}',
-                name:
-                    state.uri.queryParameters['destinationName'] ??
-                    'Destination',
-                fullAddress:
-                    state.uri.queryParameters['destinationAddress'] ?? '',
-                latitude: 14.5995,
-                longitude: 120.9842,
-              );
+        final destination = data['destination'];
+        if (destination is! PlaceModel) {
+          return const Scaffold(
+            body: Center(child: Text('Destination data is unavailable.')),
+          );
+        }
         return DriverMatchedScreen(
           rideType: data['rideType'] as String? ?? 'Solo Ride',
           fare: (data['fare'] as num?)?.toDouble() ?? 0.0,

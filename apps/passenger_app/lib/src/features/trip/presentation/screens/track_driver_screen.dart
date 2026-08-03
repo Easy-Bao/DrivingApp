@@ -152,8 +152,10 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
     List<List<double>>? routePoints,
   ) async {
     if (_mapController == null) return;
-    final passengerLat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final passengerLng = LocationService.lastPosition?.longitude ?? 123.434343;
+    final passengerLat =
+        LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
+    final passengerLng =
+        LocationService.lastPosition?.longitude ?? widget.ride.pickupLng;
 
     try {
       if (!_routeDrawn && routePoints != null && routePoints.isNotEmpty) {
@@ -252,8 +254,10 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final passengerLat = LocationService.lastPosition?.latitude ?? 7.828282;
-    final passengerLng = LocationService.lastPosition?.longitude ?? 123.434343;
+    final passengerLat =
+        LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
+    final passengerLng =
+        LocationService.lastPosition?.longitude ?? widget.ride.pickupLng;
 
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
