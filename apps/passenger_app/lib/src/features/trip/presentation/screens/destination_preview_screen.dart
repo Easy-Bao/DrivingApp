@@ -34,8 +34,6 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   String _duration = '';
   double _distanceKm = 0.0;
   Map<String, double> _fares = {};
-  Offset? _userLabelPosition;
-  Offset? _destinationLabelPosition;
 
   @override
   void initState() {
@@ -88,8 +86,16 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
       if (_mapController != null) {
         await MapProvider.addMarker(
           _mapController!,
+          _userLat!,
+          _userLng!,
+          label: 'Current location\nYou are here',
+          isOrigin: true,
+        );
+        await MapProvider.addMarker(
+          _mapController!,
           widget.destination.latitude,
           widget.destination.longitude,
+          label: 'Your destination\n${widget.destination.name}',
           isOrigin: false,
         );
         await MapProvider.addPolyline(
@@ -111,90 +117,8 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
           padding: 80.0,
           maxZoom: 14.5,
         );
-        await _updateMapLabelPositions();
       }
     }
-  }
-
-  Future<void> _updateMapLabelPositions() async {
-    final controller = _mapController;
-    if (controller == null || _userLat == null || _userLng == null) return;
-
-    final positions = await Future.wait([
-      MapProvider.getScreenCoordinate(controller, _userLat!, _userLng!),
-      MapProvider.getScreenCoordinate(
-        controller,
-        widget.destination.latitude,
-        widget.destination.longitude,
-      ),
-    ]);
-    if (!mounted) return;
-    setState(() {
-      _userLabelPosition = positions[0];
-      _destinationLabelPosition = positions[1];
-    });
-  }
-
-  Widget _buildMapLabel({
-    required Offset position,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Positioned(
-      left: position.dx - 76,
-      top: position.dy - 72,
-      child: IgnorePointer(
-        child: Container(
-          width: 152,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 17, color: AppTheme.primaryColor),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -209,31 +133,12 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               latitude: widget.destination.latitude,
               longitude: widget.destination.longitude,
               zoom: 14.5,
-              showUserLocation: true,
-              onCameraChanged: (_) {
-                unawaited(_updateMapLabelPositions());
-              },
               onMapCreated: (controller) async {
                 _mapController = controller;
-                unawaited(_updateMapLabelPositions());
                 await _loadRoute();
               },
             ),
           ),
-          if (_userLabelPosition != null)
-            _buildMapLabel(
-              position: _userLabelPosition!,
-              icon: LucideIcons.locate_fixed,
-              title: 'Current location',
-              subtitle: 'You are here',
-            ),
-          if (_destinationLabelPosition != null)
-            _buildMapLabel(
-              position: _destinationLabelPosition!,
-              icon: LucideIcons.map_pin,
-              title: 'Your destination',
-              subtitle: widget.destination.name,
-            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

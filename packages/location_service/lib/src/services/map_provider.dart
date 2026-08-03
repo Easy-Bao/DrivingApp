@@ -190,8 +190,8 @@ class MapProvider {
           controller.location.updateSettings(
             mapbox.LocationComponentSettings(
               enabled: true,
-              pulsingEnabled: true,
-              showAccuracyRing: true,
+              pulsingEnabled: false,
+              showAccuracyRing: false,
             ),
           );
         }
