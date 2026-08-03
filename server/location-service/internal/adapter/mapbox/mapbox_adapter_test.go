@@ -1,6 +1,9 @@
 package mapbox
 
-import "testing"
+import (
+	"location-service/internal/domain"
+	"testing"
+)
 
 func TestSelectBestRouteSkipsInvalidAndChoosesShortestDistance(t *testing.T) {
 	invalid := mapboxRoute{}
@@ -26,6 +29,19 @@ func TestSelectBestRouteUsesDurationAsTieBreaker(t *testing.T) {
 	}
 	if selected.Duration != 360 {
 		t.Fatalf("expected fastest equal-distance route, got %.0f seconds", selected.Duration)
+	}
+}
+
+func TestSelectBestReversePlacePrefersNearbySpecificFeatures(t *testing.T) {
+	places := []domain.Place{
+		{Name: "Pagadian City", Category: "place", DistanceKm: 0.1},
+		{Name: "Bay Plaza Hotel", Category: "poi", DistanceKm: 0.2},
+		{Name: "J.P. Rizal Avenue", Category: "street", DistanceKm: 0.05},
+	}
+
+	selected := selectBestReversePlace(places)
+	if selected.Name != "Bay Plaza Hotel" {
+		t.Fatalf("expected nearest POI, got %q", selected.Name)
 	}
 }
 

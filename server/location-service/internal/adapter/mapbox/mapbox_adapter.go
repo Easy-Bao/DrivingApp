@@ -81,7 +81,8 @@ func (adapter *mapboxAdapter) ReverseGeocode(
 		"longitude":    {formatCoordinate(longitude)},
 		"latitude":     {formatCoordinate(latitude)},
 		"access_token": {adapter.accessToken},
-		"limit":        {"1"},
+		"limit":        {"10"},
+		"types":        {"poi,address,street,place"},
 	}
 	places, err := adapter.fetchPlaces(ctx, searchBoxBaseURL+"/reverse?"+parameters.Encode(), latitude, longitude)
 	if err != nil {
@@ -90,7 +91,33 @@ func (adapter *mapboxAdapter) ReverseGeocode(
 	if len(places) == 0 {
 		return nil, fmt.Errorf("mapbox returned no place for coordinates")
 	}
-	return &places[0], nil
+	return selectBestReversePlace(places), nil
+}
+
+func selectBestReversePlace(places []domain.Place) *domain.Place {
+	sort.SliceStable(places, func(i, j int) bool {
+		priorityI := reversePlacePriority(places[i].Category)
+		priorityJ := reversePlacePriority(places[j].Category)
+		if priorityI != priorityJ {
+			return priorityI < priorityJ
+		}
+		return places[i].DistanceKm < places[j].DistanceKm
+	})
+	return &places[0]
+}
+
+func reversePlacePriority(category string) int {
+	category = strings.ToLower(category)
+	switch {
+	case strings.Contains(category, "poi"):
+		return 0
+	case strings.Contains(category, "address"):
+		return 1
+	case strings.Contains(category, "street"):
+		return 2
+	default:
+		return 3
+	}
 }
 
 func (adapter *mapboxAdapter) GetNearbyPois(
