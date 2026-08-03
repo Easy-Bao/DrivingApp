@@ -19,6 +19,8 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
+  bool _isLoggingOut = false;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ProfileCubit>(
@@ -150,7 +152,9 @@ class _AccountScreenState extends State<AccountScreen> {
                     const SizedBox(height: 48),
 
                     InkWell(
-                      onTap: () => _handleLogout(context),
+                      onTap: _isLoggingOut
+                          ? null
+                          : () => _handleLogout(context),
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -165,15 +169,25 @@ class _AccountScreenState extends State<AccountScreen> {
                             width: 1.0,
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(
-                              LucideIcons.log_out,
-                              color: Colors.red,
-                              size: 20,
-                            ),
-                            SizedBox(width: 16),
-                            Text(
+                            if (_isLoggingOut)
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.red,
+                                ),
+                              )
+                            else
+                              const Icon(
+                                LucideIcons.log_out,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                            const SizedBox(width: 16),
+                            const Text(
                               'Log out',
                               style: TextStyle(
                                 fontSize: 16,
@@ -267,9 +281,13 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
+    if (_isLoggingOut) return;
+    setState(() => _isLoggingOut = true);
     await Modular.get<SecureSessionService>().clearSession();
     if (context.mounted) {
       context.goNamed(AuthRoutes.signin);
+    } else {
+      _isLoggingOut = false;
     }
   }
 }
