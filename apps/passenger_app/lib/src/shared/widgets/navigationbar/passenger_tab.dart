@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -17,6 +23,23 @@ class PassengerShellLayout extends StatefulWidget {
 
 class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   final List<int> _navigationHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadInboxNotifications());
+  }
+
+  Future<void> _loadInboxNotifications() async {
+    final passengerId =
+        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
+    if (passengerId.isEmpty) return;
+
+    final inboxCubit = Modular.get<InboxCubit>();
+    if (!inboxCubit.isClosed) {
+      await inboxCubit.loadNotifications(passengerId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +157,10 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: color),
+              if (index == 2)
+                _InboxTabIcon(color: color)
+              else
+                Icon(icon, size: 18, color: color),
               const SizedBox(height: 3),
               Text(
                 label,
@@ -208,5 +234,60 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   void _onItemTapped(int index, BuildContext context) {
     if (index == _calculateSelectedIndex(context)) return;
     _navigateToIndex(index);
+  }
+}
+
+class _InboxTabIcon extends StatelessWidget {
+  final Color color;
+
+  const _InboxTabIcon({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<InboxCubit, InboxState>(
+      bloc: Modular.get<InboxCubit>(),
+      builder: (context, state) {
+        final unreadCount = state is InboxLoadedState
+            ? state.notifications
+                  .where((notification) => !notification.isRead)
+                  .length
+            : 0;
+
+        return SizedBox(
+          width: 26,
+          height: 22,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Icon(LucideIcons.mail, size: 18, color: color),
+              if (unreadCount > 0)
+                Positioned(
+                  top: -8,
+                  right: -5,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 16),
+                    height: 16,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.cancel,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      unreadCount > 99 ? '99+' : '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

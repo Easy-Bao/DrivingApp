@@ -28,13 +28,10 @@ class InboxCubit extends Cubit<InboxState> {
   void addLocalNotification(InboxNotification notification) {
     _localNotifications.removeWhere((item) => item.id == notification.id);
     _localNotifications.insert(0, notification);
-    if (state is InboxLoadedState) {
-      emit(
-        InboxLoadedState(
-          _mergeLocalNotifications((state as InboxLoadedState).notifications),
-        ),
-      );
-    }
+    final currentNotifications = state is InboxLoadedState
+        ? (state as InboxLoadedState).notifications
+        : const <InboxNotification>[];
+    emit(InboxLoadedState(_mergeLocalNotifications(currentNotifications)));
   }
 
   List<InboxNotification> _mergeLocalNotifications(
