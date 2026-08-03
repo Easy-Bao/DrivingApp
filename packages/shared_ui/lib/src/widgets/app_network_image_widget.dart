@@ -56,7 +56,7 @@ class AppNetworkImageWidget extends StatelessWidget {
             color: colors.surfaceContainerHighest,
             borderRadius: effectiveRadius,
           ),
-          child: const Center(
+          child: Center(
             child: SizedBox(
               width: 18,
               height: 18,
