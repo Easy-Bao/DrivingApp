@@ -1,4 +1,4 @@
-double parseDouble(dynamic value, [double defaultValue = 0.0]) {
+double parseDouble(Object? value, [double defaultValue = 0.0]) {
   if (value == null) return defaultValue;
   if (value is double) return value;
   if (value is int) return value.toDouble();
@@ -6,7 +6,7 @@ double parseDouble(dynamic value, [double defaultValue = 0.0]) {
   return defaultValue;
 }
 
-int parseInt(dynamic value, [int defaultValue = 0]) {
+int parseInt(Object? value, [int defaultValue = 0]) {
   if (value == null) return defaultValue;
   if (value is int) return value;
   if (value is double) return value.toInt();
@@ -14,18 +14,18 @@ int parseInt(dynamic value, [int defaultValue = 0]) {
   return defaultValue;
 }
 
-String parseString(dynamic value, [String defaultValue = '']) {
+String parseString(Object? value, [String defaultValue = '']) {
   if (value == null) return defaultValue;
   return value.toString();
 }
 
 abstract class SafeParse {
-  static double toDouble(dynamic value, [double defaultValue = 0.0]) =>
+  static double toDouble(Object? value, [double defaultValue = 0.0]) =>
       parseDouble(value, defaultValue);
 
-  static int toInt(dynamic value, [int defaultValue = 0]) =>
+  static int toInt(Object? value, [int defaultValue = 0]) =>
       parseInt(value, defaultValue);
 
-  static String toStringValue(dynamic value, [String defaultValue = '']) =>
+  static String toStringValue(Object? value, [String defaultValue = '']) =>
       parseString(value, defaultValue);
 }
