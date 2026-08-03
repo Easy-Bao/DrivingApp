@@ -179,7 +179,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
           ),
           Positioned(
             right: 16,
-            bottom: 240,
+            bottom: 275,
             child: MapZoomControlsWidget(
               onZoomIn: () {
                 if (_mapController != null) {
