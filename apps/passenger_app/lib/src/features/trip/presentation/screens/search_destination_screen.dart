@@ -42,6 +42,9 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
   bool _hasMoreNearbyPages = true;
   bool _isSearching = false;
   bool _isLoadingNearby = true;
+  final Map<String, double> _drivingDistances = {};
+  final Set<String> _drivingDistanceRequests = {};
+  int _searchRequestId = 0;
   double? _userLat = LocationService.lastPosition?.latitude;
   double? _userLng = LocationService.lastPosition?.longitude;
 
@@ -220,6 +223,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
   }
 
   void _onSearchChanged() {
+    _searchRequestId++;
     _debounce?.cancel();
     if (_searchController.text.trim().isEmpty) {
       setState(() {
@@ -243,6 +247,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
   Future<void> _performSearch() async {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
+    final requestId = _searchRequestId;
 
     final localMatches = _allNearbyPlaces
         .where((place) => _matchesSearchQuery(place, query))
@@ -272,12 +277,52 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
       }
     }
 
-    if (mounted) {
+    if (mounted && requestId == _searchRequestId) {
       setState(() {
         _results = _sortPlacesByDistance(mergedResults);
         _isSearching = false;
       });
+      unawaited(_loadDrivingDistances(mergedResults, requestId));
     }
+  }
+
+  Future<void> _loadDrivingDistances(
+    List<PlaceModel> places,
+    int requestId,
+  ) async {
+    if (_userLat == null || _userLng == null) return;
+
+    for (final place in places) {
+      final key = _placeKey(place);
+      if (_drivingDistances.containsKey(key) ||
+          !_drivingDistanceRequests.add(key)) {
+        continue;
+      }
+
+      try {
+        final route = await MapProvider.getRoute(
+          _userLat!,
+          _userLng!,
+          place.latitude,
+          place.longitude,
+        );
+        if (route != null && mounted) {
+          setState(() {
+            _drivingDistances[key] = route.distanceKm;
+            if (requestId == _searchRequestId) {
+              _results = _sortPlacesByDistance(_results);
+            }
+          });
+        }
+      } catch (_) {
+      } finally {
+        _drivingDistanceRequests.remove(key);
+      }
+    }
+  }
+
+  String _placeKey(PlaceModel place) {
+    return '${place.id}:${place.latitude.toStringAsFixed(5)}:${place.longitude.toStringAsFixed(5)}';
   }
 
   bool _matchesSearchQuery(PlaceModel place, String query) {
@@ -305,11 +350,15 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
   List<PlaceModel> _sortPlacesByDistance(List<PlaceModel> places) {
     final sorted = [...places];
     sorted.sort(
-      (a, b) => (a.distanceKm ?? double.maxFinite).compareTo(
-        b.distanceKm ?? double.maxFinite,
-      ),
+      (a, b) => _distanceForSorting(a).compareTo(_distanceForSorting(b)),
     );
     return sorted;
+  }
+
+  double _distanceForSorting(PlaceModel place) {
+    return _drivingDistances[_placeKey(place)] ??
+        place.distanceKm ??
+        double.maxFinite;
   }
 
   void _onPlaceSelected(PlaceModel place) {
@@ -695,12 +744,7 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
                                                     ),
                                                   ),
                                                   subtitle: Text(
-                                                    place.distanceKm != null
-                                                        ? _formatDistance(
-                                                            place.distanceKm!,
-                                                          )
-                                                        : place.category ??
-                                                              'Nearby POI',
+                                                    _formatPlaceDistance(place),
                                                     style: TextStyle(
                                                       color: AppTheme
                                                           .primaryColor
@@ -1011,5 +1055,19 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
       return '${(distanceKm * 1000).round()} m away';
     }
     return '${distanceKm.toStringAsFixed(1)} km away';
+  }
+
+  String _formatPlaceDistance(PlaceModel place) {
+    final key = _placeKey(place);
+    final drivingDistance = _drivingDistances[key];
+    if (drivingDistance != null) {
+      return _formatDistance(drivingDistance);
+    }
+    if (_drivingDistanceRequests.contains(key)) {
+      return 'Calculating route...';
+    }
+    return place.distanceKm != null
+        ? _formatDistance(place.distanceKm!)
+        : place.category ?? 'Nearby POI';
   }
 }
