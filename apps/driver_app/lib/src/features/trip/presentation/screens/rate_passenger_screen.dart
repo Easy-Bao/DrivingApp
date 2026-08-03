@@ -1,3 +1,5 @@
+import 'package:driver_app/src/core/theme/app_theme.dart';
+
 import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';

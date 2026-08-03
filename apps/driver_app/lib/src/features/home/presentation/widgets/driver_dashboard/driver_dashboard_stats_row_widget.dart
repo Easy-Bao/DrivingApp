@@ -1,5 +1,6 @@
+import 'package:driver_app/src/core/theme/app_theme.dart';
+
 import 'package:flutter/material.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class DriverDashboardStatsRowWidget extends StatelessWidget {
   final bool isLoadingStats;

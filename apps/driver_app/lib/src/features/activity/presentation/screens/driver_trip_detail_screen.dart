@@ -1,3 +1,5 @@
+import 'package:driver_app/src/core/theme/app_theme.dart';
+
 import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';

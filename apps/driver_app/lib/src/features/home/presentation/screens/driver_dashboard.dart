@@ -1,3 +1,5 @@
+import 'package:driver_app/src/core/theme/app_theme.dart';
+
 import 'dart:async';
 
 import 'package:core_models/core_models.dart';

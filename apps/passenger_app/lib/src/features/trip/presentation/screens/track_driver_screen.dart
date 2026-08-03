@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
@@ -17,7 +18,6 @@ import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/track_driver_panel_widget.dart';
-import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActivityTrackDriverScreen extends StatefulWidget {

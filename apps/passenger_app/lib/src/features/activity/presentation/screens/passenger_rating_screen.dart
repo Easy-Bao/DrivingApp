@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerRatingScreen extends StatefulWidget {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/src/themes/app_theme.dart';
 
 class SkeletonListWidget extends StatelessWidget {
   final int? itemCount;
@@ -20,6 +19,8 @@ class SkeletonListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const titleWidths = [160.0, 200.0, 140.0, 180.0, 150.0, 190.0];
+    final colors = Theme.of(context).colorScheme;
+    final skeletonColor = colors.surfaceContainerHighest;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -33,8 +34,10 @@ class SkeletonListWidget extends StatelessWidget {
           padding: padding,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: effectiveCount,
-          separatorBuilder: (_, __) =>
-              const Divider(height: 1, color: AppTheme.borderSide),
+          separatorBuilder: (_, __) => Divider(
+            height: 1,
+            color: colors.outline,
+          ),
           itemBuilder: (_, index) {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -44,8 +47,8 @@ class SkeletonListWidget extends StatelessWidget {
                     Container(
                       width: itemHeight,
                       height: itemHeight,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.neutralColor,
+                      decoration: BoxDecoration(
+                        color: skeletonColor,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -60,7 +63,7 @@ class SkeletonListWidget extends StatelessWidget {
                           width: titleWidths[index % titleWidths.length],
                           height: 14,
                           decoration: BoxDecoration(
-                            color: AppTheme.neutralColor,
+                            color: skeletonColor,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -69,7 +72,7 @@ class SkeletonListWidget extends StatelessWidget {
                           width: 80,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: AppTheme.neutralColor,
+                            color: skeletonColor,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -81,8 +84,8 @@ class SkeletonListWidget extends StatelessWidget {
                     Container(
                       width: 18,
                       height: 18,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.neutralColor,
+                      decoration: BoxDecoration(
+                        color: skeletonColor,
                         shape: BoxShape.circle,
                       ),
                     ),

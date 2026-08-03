@@ -6,10 +6,10 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class DriverMatchedScreen extends StatefulWidget {
   final String rideType;
@@ -261,7 +261,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                             driverName: widget.driverName ?? 'Driver',
                             vehicleType: widget.vehicleType ?? 'Bao Bao',
                             plateNumber:
-                                widget.plateNumber ?? 'Vehicle plate unavailable',
+                                widget.plateNumber ??
+                                'Vehicle plate unavailable',
                             rating: widget.driverRating ?? '5.0',
                           ),
                     ),

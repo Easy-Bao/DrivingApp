@@ -1,3 +1,5 @@
+import 'package:driver_app/src/core/theme/app_theme.dart';
+
 import 'package:driver_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'dart:async';
 

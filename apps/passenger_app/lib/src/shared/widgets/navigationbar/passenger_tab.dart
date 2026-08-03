@@ -5,13 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class PassengerShellLayout extends StatefulWidget {
   final Widget child;

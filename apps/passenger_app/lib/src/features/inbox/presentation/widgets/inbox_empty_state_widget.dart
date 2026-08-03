@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 
 class InboxEmptyStateWidget extends StatelessWidget {
   const InboxEmptyStateWidget({super.key});

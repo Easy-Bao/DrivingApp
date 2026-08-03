@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -207,7 +208,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
             children: [
               Text(
                 ride.date,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.unselectedItemColor,

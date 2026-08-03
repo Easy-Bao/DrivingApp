@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_ui/src/themes/app_theme.dart';
 
 class CustomToast {
   CustomToast._();
@@ -123,8 +122,8 @@ class _ToastWidgetState extends State<_ToastWidget>
                             ? LucideIcons.circle_alert
                             : LucideIcons.circle_check_big,
                         color: widget.isError
-                            ? AppTheme.cancel
-                            : AppTheme.complete,
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.tertiary,
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -135,8 +134,8 @@ class _ToastWidgetState extends State<_ToastWidget>
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: widget.isError
-                                ? AppTheme.cancel
-                                : AppTheme.complete,
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).colorScheme.tertiary,
                           ),
                         ),
                       ),

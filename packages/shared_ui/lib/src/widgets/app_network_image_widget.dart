@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_ui/src/themes/app_theme.dart';
 
 class AppNetworkImageWidget extends StatelessWidget {
   final String? imageUrl;
@@ -23,6 +22,7 @@ class AppNetworkImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final effectiveRadius = borderRadius ?? BorderRadius.circular(16);
     final url = imageUrl?.trim() ?? '';
 
@@ -31,12 +31,12 @@ class AppNetworkImageWidget extends StatelessWidget {
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: AppTheme.secondaryColor,
+          color: colors.secondary,
           borderRadius: effectiveRadius,
         ),
         child: Icon(
           fallbackIcon,
-          color: AppTheme.primaryColor,
+          color: colors.primary,
           size: width * 0.45,
         ),
       );
@@ -53,7 +53,7 @@ class AppNetworkImageWidget extends StatelessWidget {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: AppTheme.neutralColor,
+            color: colors.surfaceContainerHighest,
             borderRadius: effectiveRadius,
           ),
           child: const Center(
@@ -62,7 +62,7 @@ class AppNetworkImageWidget extends StatelessWidget {
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppTheme.primaryColor,
+                color: colors.primary,
               ),
             ),
           ),
@@ -71,12 +71,12 @@ class AppNetworkImageWidget extends StatelessWidget {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: AppTheme.secondaryColor,
+            color: colors.secondary,
             borderRadius: effectiveRadius,
           ),
           child: Icon(
             fallbackIcon,
-            color: AppTheme.primaryColor,
+            color: colors.primary,
             size: width * 0.45,
           ),
         ),

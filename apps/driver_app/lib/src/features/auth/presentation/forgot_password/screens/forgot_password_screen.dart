@@ -1,3 +1,5 @@
+import 'package:driver_app/src/core/theme/app_theme.dart';
+
 import 'package:driver_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

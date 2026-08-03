@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class HelpCenterScreen extends StatefulWidget {

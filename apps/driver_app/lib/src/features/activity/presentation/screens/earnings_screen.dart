@@ -1,3 +1,5 @@
+import 'package:driver_app/src/core/theme/app_theme.dart';
+
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
@@ -6,7 +8,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class DriverEarningsScreen extends StatefulWidget {
   const DriverEarningsScreen({super.key});
