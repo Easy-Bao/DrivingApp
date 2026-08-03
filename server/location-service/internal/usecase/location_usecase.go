@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 )
 
 const (
@@ -87,22 +88,25 @@ func (uc *locationUseCase) ReverseGeocode(ctx context.Context, lat, lng float64)
 }
 
 func (uc *locationUseCase) SearchPlaces(ctx context.Context, query string, lat, lng float64) ([]domain.Place, error) {
-	query = strings.ToLower(strings.TrimSpace(query))
+	originalQuery := strings.TrimSpace(query)
+	query = normalizeSearchQuery(originalQuery)
 	if query == "" {
 		return []domain.Place{}, nil
 	}
 	key := fmt.Sprintf("search:%s:%.3f:%.3f", query, lat, lng)
 	if cached, ok := uc.getMemory(key); ok {
-		return cached.([]domain.Place), nil
+		return filterSearchPlaces(cached.([]domain.Place)), nil
 	}
 	if uc.cache != nil {
 		if cached, err := uc.cache.GetSearchCache(ctx, query, lat, lng); err == nil && cached != nil {
+			cached = filterSearchPlaces(cached)
 			uc.setMemory(key, cached, 10*time.Minute)
 			return cached, nil
 		}
 	}
 	result, err := uc.share(ctx, key, func(requestCtx context.Context) (interface{}, error) {
-		places, requestErr := uc.repo.SearchPlaces(requestCtx, query, lat, lng)
+		places, requestErr := uc.repo.SearchPlaces(requestCtx, originalQuery, lat, lng)
+		places = filterSearchPlaces(places)
 		if requestErr == nil && uc.cache != nil {
 			_ = uc.cache.SetSearchCache(requestCtx, query, lat, lng, places)
 		}
@@ -115,6 +119,31 @@ func (uc *locationUseCase) SearchPlaces(ctx context.Context, query string, lat, 
 		return nil, err
 	}
 	return result.([]domain.Place), nil
+}
+
+func normalizeSearchQuery(query string) string {
+	var builder strings.Builder
+	for _, character := range strings.ToLower(strings.TrimSpace(query)) {
+		if unicode.IsLetter(character) || unicode.IsDigit(character) {
+			builder.WriteRune(character)
+			continue
+		}
+		builder.WriteRune(' ')
+	}
+	return strings.Join(strings.Fields(builder.String()), " ")
+}
+
+func filterSearchPlaces(places []domain.Place) []domain.Place {
+	filtered := make([]domain.Place, 0, len(places))
+	for _, place := range places {
+		if place.DistanceKm <= nearbyRadiusKm {
+			filtered = append(filtered, place)
+		}
+	}
+	sort.SliceStable(filtered, func(i, j int) bool {
+		return filtered[i].DistanceKm < filtered[j].DistanceKm
+	})
+	return filtered
 }
 
 func (uc *locationUseCase) GetNearbyPois(ctx context.Context, lat, lng float64, page int) ([]domain.Place, error) {

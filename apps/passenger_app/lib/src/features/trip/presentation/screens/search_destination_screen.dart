@@ -244,22 +244,9 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
-    final String normQuery = query.toLowerCase().replaceAll(
-      RegExp(r'[^a-z0-9]'),
-      '',
-    );
-    final List<PlaceModel> localMatches = _allNearbyPlaces.where((p) {
-      final normName = p.name.toLowerCase().replaceAll(
-        RegExp(r'[^a-z0-9]'),
-        '',
-      );
-      final normAddr = p.fullAddress.toLowerCase().replaceAll(
-        RegExp(r'[^a-z0-9]'),
-        '',
-      );
-      return (normQuery.isNotEmpty && normName.contains(normQuery)) ||
-          (normQuery.isNotEmpty && normAddr.contains(normQuery));
-    }).toList();
+    final localMatches = _allNearbyPlaces
+        .where((place) => _matchesSearchQuery(place, query))
+        .toList();
 
     final apiResults = await MapProvider.searchPlaces(
       query,
@@ -268,7 +255,11 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
     );
 
     final mergedResults = <PlaceModel>[...localMatches];
-    for (final res in apiResults) {
+    for (final res in apiResults.where(
+      (place) =>
+          (place.distanceKm == null || place.distanceKm! <= 10.0) &&
+          _matchesSearchQuery(place, query),
+    )) {
       final isDuplicate = mergedResults.any(
         (m) =>
             m.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ==
@@ -283,10 +274,42 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
 
     if (mounted) {
       setState(() {
-        _results = mergedResults;
+        _results = _sortPlacesByDistance(mergedResults);
         _isSearching = false;
       });
     }
+  }
+
+  bool _matchesSearchQuery(PlaceModel place, String query) {
+    final normalizedQuery = _normalizeSearchText(query);
+    if (normalizedQuery.isEmpty) return false;
+
+    final searchableText = _normalizeSearchText(
+      '${place.name} ${place.fullAddress}',
+    );
+    if (searchableText.contains(normalizedQuery)) return true;
+
+    final queryTokens = normalizedQuery.split(' ');
+    final searchableTokens = searchableText.split(' ');
+    return queryTokens.every(
+      (queryToken) => searchableTokens.any(
+        (searchableToken) => searchableToken.startsWith(queryToken),
+      ),
+    );
+  }
+
+  String _normalizeSearchText(String value) {
+    return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  }
+
+  List<PlaceModel> _sortPlacesByDistance(List<PlaceModel> places) {
+    final sorted = [...places];
+    sorted.sort(
+      (a, b) => (a.distanceKm ?? double.maxFinite).compareTo(
+        b.distanceKm ?? double.maxFinite,
+      ),
+    );
+    return sorted;
   }
 
   void _onPlaceSelected(PlaceModel place) {
