@@ -10,6 +10,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -189,28 +190,24 @@ func (adapter *mapboxAdapter) GetRoute(
 		formatCoordinate(destinationLongitude) + "," + formatCoordinate(destinationLatitude),
 	}, ";")
 	parameters := url.Values{
-		"access_token": {adapter.accessToken},
-		"overview":     {"full"},
-		"geometries":   {"geojson"},
+		"access_token":      {adapter.accessToken},
+		"alternatives":      {"true"},
+		"continue_straight": {"false"},
+		"overview":          {"full"},
+		"geometries":        {"geojson"},
 	}
 
 	var response struct {
-		Routes []struct {
-			Distance float64 `json:"distance"`
-			Duration float64 `json:"duration"`
-			Geometry struct {
-				Coordinates [][]float64 `json:"coordinates"`
-			} `json:"geometry"`
-		} `json:"routes"`
+		Routes []mapboxRoute `json:"routes"`
 	}
 	if err := adapter.getJSON(ctx, directionsBaseURL+"/"+coordinates+"?"+parameters.Encode(), &response); err != nil {
 		return nil, err
 	}
-	if len(response.Routes) == 0 || len(response.Routes[0].Geometry.Coordinates) < 2 {
+	selectedRoute, ok := selectBestRoute(response.Routes)
+	if !ok {
 		return nil, fmt.Errorf("mapbox returned no route geometry")
 	}
 
-	selectedRoute := response.Routes[0]
 	return &domain.Route{
 		OriginLat:      originLatitude,
 		OriginLng:      originLongitude,
@@ -220,6 +217,34 @@ func (adapter *mapboxAdapter) GetRoute(
 		DurationMin:    selectedRoute.Duration / 60,
 		PolylinePoints: selectedRoute.Geometry.Coordinates,
 	}, nil
+}
+
+type mapboxRoute struct {
+	Distance float64 `json:"distance"`
+	Duration float64 `json:"duration"`
+	Geometry struct {
+		Coordinates [][]float64 `json:"coordinates"`
+	} `json:"geometry"`
+}
+
+func selectBestRoute(routes []mapboxRoute) (mapboxRoute, bool) {
+	validRoutes := make([]mapboxRoute, 0, len(routes))
+	for _, route := range routes {
+		if len(route.Geometry.Coordinates) >= 2 {
+			validRoutes = append(validRoutes, route)
+		}
+	}
+	if len(validRoutes) == 0 {
+		return mapboxRoute{}, false
+	}
+
+	sort.SliceStable(validRoutes, func(i, j int) bool {
+		if validRoutes[i].Distance == validRoutes[j].Distance {
+			return validRoutes[i].Duration < validRoutes[j].Duration
+		}
+		return validRoutes[i].Distance < validRoutes[j].Distance
+	})
+	return validRoutes[0], true
 }
 
 func (adapter *mapboxAdapter) fetchPlaces(
