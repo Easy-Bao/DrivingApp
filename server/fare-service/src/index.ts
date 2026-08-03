@@ -1,12 +1,10 @@
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { fareRouter } from './features/routes/fare.routes.ts';
 import { globalErrorHandler } from './shared/middleware/error.ts';
 import { createRateLimiter } from './shared/middleware/rate_limiter.ts';
 
 const app = new Hono();
 
-app.use('*', cors());
 app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 600 }));
 app.onError(globalErrorHandler);
 

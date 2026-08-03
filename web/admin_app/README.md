@@ -7,7 +7,7 @@ deliberately outside this pull request.
 
 ## Local setup
 
-1. Copy `.env.example` to an untracked `.env`.
+1. Create an untracked `.env` with `GATEWAY_URL`, `ORIGIN`, `HOST`, and `PORT`.
 2. Start the API gateway and Admin service.
 3. Run `bun install` and `bun run dev`.
 4. Open `http://localhost:5173`.

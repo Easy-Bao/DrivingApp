@@ -93,9 +93,9 @@ Secret values never enter Git. Required names are:
 - `ADMIN_SERVICE_URL` in the gateway
 - `GATEWAY_URL`, `ORIGIN`, `HOST`, and `PORT` in the portal
 
-Committed `.env.example` files contain names only for secrets. Real URLs,
-credentials, and signing material belong only in untracked `.env` files or the
-deployment secret store.
+Environment files are ignored, including `.env.example` and `.env.test`. Create
+untracked environment files locally, or use the deployment secret store; real
+URLs, credentials, and signing material must never enter Git.
 
 The Admin API defaults to port `8090` because the existing location service owns
 port `8089`. The portal defaults to port `5173`.
@@ -104,8 +104,8 @@ port `8089`. The portal defaults to port `5173`.
 
 1. Install Bun and PostgreSQL.
 2. Create an `admin_db` database.
-3. Copy the Admin service and portal `.env.example` files to untracked `.env`
-   files and provide the real values.
+3. Create untracked `.env` files for the Admin service and portal and provide
+   the required values.
 4. In `server/admin-service`, run `bun install` and `bun run db:migrate`.
 5. Run `bun run owner:provision` interactively.
 6. Start the Admin service, API gateway, and `web/admin_app`.

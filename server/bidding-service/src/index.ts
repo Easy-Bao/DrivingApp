@@ -4,7 +4,6 @@
  * than inline on read requests, keeping the hot GET /bids/active path free of DB write locks.
  */
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { biddingRouter } from './features/routes/bidding.routes.ts';
 import { globalErrorHandler } from './shared/middleware/error.ts';
 import { BiddingRepositoryImpl } from './features/repositories/bidding.repository.ts';
@@ -13,7 +12,6 @@ import { createRateLimiter } from './shared/middleware/rate_limiter.ts';
 
 const app = new Hono();
 
-app.use('*', cors());
 app.use('*', createRateLimiter({ windowMs: 60000, maxRequests: 600 }));
 app.onError(globalErrorHandler);
 

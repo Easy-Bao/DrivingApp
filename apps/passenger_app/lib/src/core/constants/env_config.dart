@@ -34,33 +34,28 @@ class EnvConfig {
       dotenv.env['OFFLINE_MODE']?.toLowerCase() == 'true';
 
   static Uri get passengerServiceUri {
-    final rawUrl =
-        dotenv.env['PASSENGER_SERVICE_URL'] ?? 'http://localhost:8080';
-    return _resolveUri(rawUrl);
+    return _configuredUri('PASSENGER_SERVICE_URL');
   }
 
   static Uri get authServiceUri {
-    final rawUrl =
-        dotenv.env['AUTH_SERVICE_URL'] ??
-        dotenv.env['PASSENGER_SERVICE_URL'] ??
-        'http://localhost:8080';
-    return _resolveUri(rawUrl);
+    return _configuredUri(
+      'AUTH_SERVICE_URL',
+      fallback: 'PASSENGER_SERVICE_URL',
+    );
   }
 
   static Uri get tripServiceUri {
-    final rawUrl =
-        dotenv.env['TRIP_SERVICE_URL'] ??
-        dotenv.env['PASSENGER_SERVICE_URL'] ??
-        'http://localhost:8080';
-    return _resolveUri(rawUrl);
+    return _configuredUri(
+      'TRIP_SERVICE_URL',
+      fallback: 'PASSENGER_SERVICE_URL',
+    );
   }
 
   static Uri get placeServiceUri {
-    final rawUrl =
-        dotenv.env['PLACE_SERVICE_BASE_URL'] ??
-        dotenv.env['PASSENGER_SERVICE_URL'] ??
-        'http://localhost:8080';
-    return _resolveUri(rawUrl);
+    return _configuredUri(
+      'PLACE_SERVICE_BASE_URL',
+      fallback: 'PASSENGER_SERVICE_URL',
+    );
   }
 
   static Uri get httpBaseUri => passengerServiceUri;
@@ -74,6 +69,15 @@ class EnvConfig {
   static String get httpBaseUrl => httpBaseUri.toString();
 
   static String get webSocketBaseUrl => webSocketBaseUri.toString();
+
+  static Uri _configuredUri(String key, {String? fallback}) {
+    final rawUrl =
+        dotenv.env[key] ?? (fallback == null ? null : dotenv.env[fallback]);
+    if (rawUrl == null || rawUrl.trim().isEmpty) {
+      throw StateError('Security Configuration Error: $key is required.');
+    }
+    return _resolveUri(rawUrl);
+  }
 
   static Uri _resolveUri(String rawUrl) {
     var uri = Uri.parse(rawUrl);

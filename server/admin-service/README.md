@@ -9,7 +9,8 @@ Code is organized by domain under `src/modules`. Each module uses only
 
 ## Local setup
 
-1. Copy `.env.example` to an untracked `.env`.
+1. Create an untracked `.env` with `DATABASE_URL`, `ADMIN_JWT_SECRET` (at least
+   32 characters), and optional `PORT`.
 2. Create the `admin_db` PostgreSQL database.
 3. Run `bun install` and `bun run db:migrate`.
 4. Run `bun run owner:provision` in an interactive terminal.

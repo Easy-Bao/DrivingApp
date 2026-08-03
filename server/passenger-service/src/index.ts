@@ -14,8 +14,6 @@ app.get('/', (c) => c.text('Passenger service active'));
 
 app.route('/', passengerRouter);
 
-console.log(`Passenger service is listening at: http://0.0.0.0:${port}`);
-
 export { app };
 
 export default {

@@ -14,7 +14,11 @@ export class AdminApiError extends Error {
 }
 
 function gatewayUrl(): string {
-  return (env.GATEWAY_URL || 'http://localhost:8080').replace(/\/+$/, '');
+  const configuredUrl = env.GATEWAY_URL?.trim();
+  if (!configuredUrl) {
+    throw new Error('Security Configuration Error: GATEWAY_URL is required.');
+  }
+  return configuredUrl.replace(/\/+$/, '');
 }
 
 function errorDetails(body: unknown, fallback: string): { message: string; code: string } {

@@ -31,7 +31,7 @@ export class EmailService {
     `;
 
     if (!smtpHost || !smtpUser || !smtpPass) {
-      console.log(`[EMAIL DISPATCH SKIPPED (Missing SMTP_HOST/SMTP_USER/SMTP_PASS in env)] To: ${toEmail} | Code: ${otpCode}`);
+      console.warn('OTP email was not sent because SMTP is not configured.');
       return false;
     }
 

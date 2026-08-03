@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import {
   RegisterDriverInput,
@@ -43,7 +44,7 @@ export class DriverAuthenticationService {
     }
 
     const passwordHash = await Bun.password.hash(driverInput.password);
-    const driverId = `drv_${Math.random().toString(36).substring(2, 11)}`;
+    const driverId = `drv_${randomUUID()}`;
 
     const [createdAccount] = await driverDb.insert(driversTable)
       .values({

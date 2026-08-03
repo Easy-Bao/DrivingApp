@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { EmailService } from './email.service.ts';
 
 export class OneTimePasswordStoreService {
@@ -9,7 +10,7 @@ export class OneTimePasswordStoreService {
     action: 'verification' | 'reset' = 'verification'
   ): Promise<string> {
     const normalizedEmailAddress = emailAddress.toLowerCase().trim();
-    const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const generatedCode = randomInt(100000, 1000000).toString();
     const expirationTimestamp = Date.now() + OneTimePasswordStoreService.ONE_TIME_PASSWORD_TTL_MILLISECONDS;
     OneTimePasswordStoreService.oneTimePasswordStore.set(normalizedEmailAddress, {
       code: generatedCode,

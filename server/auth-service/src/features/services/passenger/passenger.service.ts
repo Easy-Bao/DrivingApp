@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 
 import { passengerDb, passengersTable } from '../../../shared/drizzle.ts';
@@ -68,7 +69,7 @@ export class PassengerAuthenticationService {
       algorithm: 'bcrypt',
       cost: 10,
     });
-    const passengerId = `usr_${Math.random().toString(36).substring(2, 11)}`;
+    const passengerId = `usr_${randomUUID()}`;
 
     const [createdAccount] = await passengerDb.insert(passengersTable)
       .values({
