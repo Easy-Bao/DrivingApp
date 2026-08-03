@@ -198,7 +198,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
 
   @override
   void dispose() {
-    unawaited(_bloc.close());
     super.dispose();
   }
 
@@ -590,6 +589,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
   Future<void> _loadActivity() async {
     final passengerId =
         await Modular.get<SecureSessionService>().readPassengerId() ?? '';
+    if (!mounted || _bloc.isClosed) return;
     if (passengerId.isNotEmpty) {
       _bloc.add(LoadActivityEvent(passengerId: passengerId));
     } else {
