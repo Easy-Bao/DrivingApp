@@ -8,8 +8,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
@@ -251,17 +249,6 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   }
 
   void _handleNoDriverFound() {
-    Modular.get<InboxCubit>().addLocalNotification(
-      InboxNotification(
-        id: 'no-driver-${DateTime.now().millisecondsSinceEpoch}',
-        title: 'No driver found',
-        message:
-            'We could not find a driver for your ride. You can try again from the home screen.',
-        timestamp: DateTime.now(),
-        type: 'driver',
-        isRead: false,
-      ),
-    );
     if (mounted) {
       CustomToast.show(
         context,

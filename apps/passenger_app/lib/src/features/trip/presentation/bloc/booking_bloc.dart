@@ -5,6 +5,8 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
@@ -13,6 +15,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final IDriverRepository _driverRepository;
   final BiddingRemoteDataSource _biddingDataSource;
   final SecureSessionService _secureSessionService;
+  final InboxCubit? _inboxCubit;
 
   StreamSubscription<List<dynamic>>? _offersSubscription;
   StreamSubscription<DriverMatchResult>? _driverFoundSubscription;
@@ -21,6 +24,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   int _totalTrips = 0;
   List<Map<String, dynamic>> _reviews = [];
   bool _isLoadingReviews = false;
+  bool _nearestSearchCancelled = false;
 
   double? _pickupLat;
   double? _pickupLng;
@@ -35,9 +39,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required IDriverRepository driverRepository,
     required BiddingRemoteDataSource biddingDataSource,
     required SecureSessionService secureSessionService,
+    InboxCubit? inboxCubit,
   }) : _driverRepository = driverRepository,
        _biddingDataSource = biddingDataSource,
        _secureSessionService = secureSessionService,
+       _inboxCubit = inboxCubit,
        super(BookingInitial()) {
     on<LocateNearestDriverEvent>(_onLocateNearestDriver);
     on<StartDirectBookingEvent>(_onStartDirectBooking);
@@ -52,6 +58,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     LocateNearestDriverEvent event,
     Emitter<BookingState> emit,
   ) async {
+    _nearestSearchCancelled = false;
     emit(FindingNearestDriver());
 
     List<DriverModel> nearbyDrivers = [];
@@ -77,6 +84,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
 
     if (nearbyDrivers.isEmpty) {
+      if (!_nearestSearchCancelled) {
+        _notifyNoDriverFound();
+      }
+      if (isClosed || _nearestSearchCancelled) return;
       emit(
         BookingFailure(
           lastFailure?.message ?? 'No drivers nearby. Please try again.',
@@ -173,6 +184,22 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         totalTrips: _totalTrips,
         reviews: _reviews,
         isLoadingReviews: _isLoadingReviews,
+      ),
+    );
+  }
+
+  void _notifyNoDriverFound() {
+    final inboxCubit = _inboxCubit;
+    if (inboxCubit == null || inboxCubit.isClosed) return;
+    inboxCubit.addLocalNotification(
+      InboxNotification(
+        id: 'no-driver-${DateTime.now().millisecondsSinceEpoch}',
+        title: 'No driver found',
+        message:
+            'We could not find a driver for your ride. You can try again from the home screen.',
+        timestamp: DateTime.now(),
+        type: 'driver',
+        isRead: false,
       ),
     );
   }
@@ -290,6 +317,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     DriverMatchedEvent event,
     Emitter<BookingState> emit,
   ) async {
+    _nearestSearchCancelled = true;
     _cleanupSubscriptions();
 
     final passengerId = await _secureSessionService.readPassengerId() ?? '';
@@ -363,6 +391,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     CancelBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
+    _nearestSearchCancelled = true;
     _cleanupSubscriptions();
     try {
       await _biddingDataSource

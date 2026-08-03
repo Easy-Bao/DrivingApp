@@ -81,6 +81,7 @@ class PassengerModule extends Module {
           driverRepository: i.get<IDriverRepository>(),
           biddingDataSource: i.get<BiddingRemoteDataSource>(),
           secureSessionService: i.get<SecureSessionService>(),
+          inboxCubit: i.get<InboxCubit>(),
         ),
       )
       ..addFactory<LiveMapBloc>(
