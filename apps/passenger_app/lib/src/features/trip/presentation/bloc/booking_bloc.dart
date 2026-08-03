@@ -80,6 +80,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(
         BookingFailure(
           lastFailure?.message ?? 'No drivers nearby. Please try again.',
+          isNoDriverFound: true,
         ),
       );
       return;
@@ -363,7 +364,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     _cleanupSubscriptions();
-    await _biddingDataSource.cancelSession('current_session');
+    try {
+      await _biddingDataSource
+          .cancelSession('current_session')
+          .timeout(const Duration(seconds: 5));
+    } catch (error) {
+      dev.log('Unable to confirm booking cancellation: $error');
+    }
     emit(BookingCanceled());
   }
 

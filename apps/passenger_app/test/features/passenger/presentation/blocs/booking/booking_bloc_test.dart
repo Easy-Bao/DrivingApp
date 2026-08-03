@@ -122,5 +122,21 @@ void main() {
       act: (bloc) => bloc.add(const CancelBookingEvent()),
       expect: () => [isA<BookingCanceled>()],
     );
+
+    blocTest<BookingBloc, BookingState>(
+      'emits BookingCanceled when the remote cancellation fails',
+      build: () {
+        when(
+          () => biddingDataSource.cancelSession(any()),
+        ).thenThrow(Exception('gateway unavailable'));
+        return _makeBookingBloc(
+          driverRepo: driverRepo,
+          biddingDataSource: biddingDataSource,
+          secureSessionService: secureSessionService,
+        );
+      },
+      act: (bloc) => bloc.add(const CancelBookingEvent()),
+      expect: () => [isA<BookingCanceled>()],
+    );
   });
 }

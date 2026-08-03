@@ -5,6 +5,7 @@ import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.d
 
 class InboxCubit extends Cubit<InboxState> {
   final IInboxRepository inboxRepository;
+  final List<InboxNotification> _localNotifications = [];
 
   InboxCubit({required this.inboxRepository})
     : super(const InboxInitialState());
@@ -19,8 +20,34 @@ class InboxCubit extends Cubit<InboxState> {
 
     result.fold(
       (failure) => emit(InboxErrorState(failure.message)),
-      (notifications) => emit(InboxLoadedState(notifications)),
+      (notifications) =>
+          emit(InboxLoadedState(_mergeLocalNotifications(notifications))),
     );
+  }
+
+  void addLocalNotification(InboxNotification notification) {
+    _localNotifications.removeWhere((item) => item.id == notification.id);
+    _localNotifications.insert(0, notification);
+    if (state is InboxLoadedState) {
+      emit(
+        InboxLoadedState(
+          _mergeLocalNotifications((state as InboxLoadedState).notifications),
+        ),
+      );
+    }
+  }
+
+  List<InboxNotification> _mergeLocalNotifications(
+    List<InboxNotification> remoteNotifications,
+  ) {
+    final notifications = [
+      ..._localNotifications,
+      ...remoteNotifications.where(
+        (remote) => !_localNotifications.any((local) => local.id == remote.id),
+      ),
+    ];
+    notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return notifications;
   }
 
   void markNotificationAsRead(int index) {
@@ -41,6 +68,9 @@ class InboxCubit extends Cubit<InboxState> {
         (state as InboxLoadedState).notifications,
       );
       if (index >= 0 && index < currentList.length) {
+        _localNotifications.removeWhere(
+          (item) => item.id == currentList[index].id,
+        );
         currentList.removeAt(index);
         emit(InboxLoadedState(currentList));
       }

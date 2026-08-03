@@ -7,8 +7,10 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
-
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
@@ -18,7 +20,6 @@ import 'package:passenger_app/src/features/trip/presentation/widgets/finding_dri
 import 'package:passenger_app/src/features/trip/presentation/widgets/finding_driver_nearest_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/finding_driver_searching_panel_widget.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
-
 import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverScreen extends StatelessWidget {
@@ -88,6 +89,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   bool _initialized = false;
   DriverModel? _selectedDriver;
   List<DriverModel> _nearbyDrivers = [];
+  bool _isLeaving = false;
 
   @override
   void initState() {
@@ -227,7 +229,29 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   }
 
   void _handleCancel() {
+    if (_isLeaving) return;
+    setState(() => _isLeaving = true);
     BlocProvider.of<BookingBloc>(context).add(const CancelBookingEvent());
+  }
+
+  void _returnHome() {
+    if (!mounted) return;
+    context.goNamed(HomeRoutes.home);
+  }
+
+  void _handleNoDriverFound() {
+    Modular.get<InboxCubit>().addLocalNotification(
+      InboxNotification(
+        id: 'no-driver-${DateTime.now().millisecondsSinceEpoch}',
+        title: 'No driver found',
+        message:
+            'We could not find a driver for your ride. You can try again from the home screen.',
+        timestamp: DateTime.now(),
+        type: 'driver',
+        isRead: false,
+      ),
+    );
+    _returnHome();
   }
 
   @override
@@ -283,10 +307,14 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
               };
               context.pushReplacementNamed('DriverMatched', extra: navExtra);
             } else if (state is BookingFailure) {
-              CustomToast.show(context, state.message, isError: true);
-              context.pop();
+              if (state.isNoDriverFound) {
+                _handleNoDriverFound();
+              } else {
+                CustomToast.show(context, state.message, isError: true);
+                _returnHome();
+              }
             } else if (state is BookingCanceled) {
-              context.pop();
+              _returnHome();
             }
           },
           child: LayoutBuilder(

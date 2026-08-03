@@ -71,6 +71,7 @@ class BookingCanceled extends BookingState {}
 
 class BookingFailure extends BookingState {
   final String message;
+  final bool isNoDriverFound;
 
-  const BookingFailure(this.message);
+  const BookingFailure(this.message, {this.isNoDriverFound = false});
 }
