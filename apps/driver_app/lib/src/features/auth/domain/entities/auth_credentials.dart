@@ -24,9 +24,10 @@ class AuthCredentials extends Equatable {
           json['driverName'] as String? ?? json['name'] as String? ?? '',
       driverEmail:
           json['driverEmail'] as String? ?? json['email'] as String? ?? '',
-      vehicleType: json['vehicleType'] as String? ?? 'Bao Bao',
-      plateNumber: json['plateNumber'] as String? ?? 'ABC 1234',
-      rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
+      vehicleType: json['vehicleType'] as String? ?? 'Vehicle type unavailable',
+      plateNumber:
+          json['plateNumber'] as String? ?? 'Vehicle plate unavailable',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
     );
   }
 

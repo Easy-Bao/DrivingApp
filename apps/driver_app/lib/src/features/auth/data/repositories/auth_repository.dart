@@ -36,9 +36,11 @@ class AuthRepository implements IAuthRepository {
       final driverId = driver['id'] as String? ?? '';
       final driverName = driver['name'] as String? ?? '';
       final driverEmail = driver['email'] as String? ?? '';
-      final vehicleType = driver['vehicleType'] as String? ?? 'Bao Bao';
-      final plateNumber = driver['plateNumber'] as String? ?? 'ABC 1234';
-      final rating = (driver['rating'] as num?)?.toDouble() ?? 5.0;
+      final vehicleType =
+          driver['vehicleType'] as String? ?? 'Vehicle type unavailable';
+      final plateNumber =
+          driver['plateNumber'] as String? ?? 'Vehicle plate unavailable';
+      final rating = (driver['rating'] as num?)?.toDouble() ?? 0.0;
 
       if (token.isNotEmpty) {
         await _secureSessionService.saveToken(token);
