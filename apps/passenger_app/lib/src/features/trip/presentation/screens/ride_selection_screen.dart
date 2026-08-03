@@ -121,12 +121,14 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
           pickupLat,
           pickupLng,
           isOrigin: true,
+          label: 'Current location\nYou are here',
         );
         await MapProvider.addMarker(
           _mapController!,
           destLat,
           destLng,
           isOrigin: false,
+          label: 'Your destination\n${widget.destination.name}',
         );
         await MapProvider.addPolyline(
           _mapController!,
