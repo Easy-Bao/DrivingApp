@@ -68,9 +68,14 @@ class EnvConfig {
     final usesAdbReverse =
         dotenv.env['ANDROID_USE_ADB_REVERSE']?.toLowerCase() != 'false';
     if (!usesAdbReverse && !kIsWeb && Platform.isAndroid) {
-      final loopbackHost =
-          dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'] ?? '10.0.2.2';
       if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
+        final loopbackHost = dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'];
+        if (loopbackHost == null || loopbackHost.trim().isEmpty) {
+          throw StateError(
+            'Security Configuration Error: '
+            'ANDROID_EMULATOR_LOOPBACK_HOST is required for local Android URLs.',
+          );
+        }
         uri = uri.replace(host: loopbackHost);
       }
     }

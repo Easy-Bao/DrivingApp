@@ -15,9 +15,15 @@ void main() async {
 
   await dotenv.load(fileName: '.env', isOptional: true);
 
-  final nativeService = MapNativeService(
-    placeServiceBaseUri: EnvConfig.placeServiceUri,
-  );
+  late final MapNativeService nativeService;
+  try {
+    nativeService = MapNativeService(
+      placeServiceBaseUri: EnvConfig.placeServiceUri,
+    );
+  } on StateError catch (error) {
+    runApp(_ConfigurationErrorApp(message: error.message));
+    return;
+  }
   LocationService.initialize(nativeService);
   final mapboxToken = EnvConfig.mapboxPublicToken;
   if (mapboxToken == null) {
@@ -38,4 +44,28 @@ void main() async {
   );
 
   runApp(const AppWidget());
+}
+
+class _ConfigurationErrorApp extends StatelessWidget {
+  final String message;
+
+  const _ConfigurationErrorApp({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              '$message\n\nRun Driver with --dart-define=DRIVER_SERVICE_URL=... '
+              'and --dart-define=PLACE_SERVICE_BASE_URL=...',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
