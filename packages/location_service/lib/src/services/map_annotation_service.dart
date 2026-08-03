@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:location_service/src/services/map_camera_service.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -15,22 +18,54 @@ class MapAnnotationService {
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
     final annotationManager = await mapCtrl.annotations
-        .createCircleAnnotationManager();
+        .createPointAnnotationManager();
 
     final markerColor = color != null
         ? color.toARGB32()
         : (isOrigin ? 0xFF222222 : 0xFF607B8B);
 
     await annotationManager.create(
-      mapbox.CircleAnnotationOptions(
+      mapbox.PointAnnotationOptions(
         geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-        circleRadius: isOrigin ? 8.0 : 10.0,
-        circleColor: markerColor,
-        circleStrokeWidth: 3.0,
-        circleStrokeColor: 0xFFFFFFFF,
+        image: await _createPinImage(Color(markerColor)),
+        iconAnchor: mapbox.IconAnchor.BOTTOM,
+        iconSize: isOrigin ? 0.8 : 0.9,
+        symbolSortKey: 20,
       ),
     );
     return annotationManager;
+  }
+
+  static Future<Uint8List> _createPinImage(Color color) async {
+    const size = 64.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()..color = color;
+    final outlinePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4;
+    final pin = Path()
+      ..moveTo(size / 2, size - 2)
+      ..cubicTo(10, 39, 8, 32, 8, 24)
+      ..cubicTo(8, 11, 18, 2, size / 2, 2)
+      ..cubicTo(46, 2, 56, 11, 56, 24)
+      ..cubicTo(56, 32, 54, 39, size / 2, size - 2)
+      ..close();
+    canvas.drawPath(pin, paint);
+    canvas.drawPath(pin, outlinePaint);
+    canvas.drawCircle(
+      const Offset(size / 2, 24),
+      8,
+      Paint()..color = Colors.white,
+    );
+    final image = await recorder.endRecording().toImage(
+      size.toInt(),
+      size.toInt(),
+    );
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    return bytes!.buffer.asUint8List();
   }
 
   static Future<void> addPolyline(

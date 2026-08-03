@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 class LatLng {
@@ -66,6 +67,18 @@ class MapCameraService {
       center.coordinates.lat.toDouble(),
       center.coordinates.lng.toDouble(),
     );
+  }
+
+  static Future<Offset> getScreenCoordinate(
+    AppMapController controller,
+    double lat,
+    double lng,
+  ) async {
+    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final coordinate = await mapCtrl.pixelForCoordinate(
+      mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+    );
+    return Offset(coordinate.x, coordinate.y);
   }
 
   static Future<void> fitBounds(

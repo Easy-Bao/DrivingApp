@@ -151,6 +151,7 @@ class MapProvider {
     void Function(double lat, double lng)? onCameraIdle,
     void Function(AppMapController controller)? onCameraChanged,
     bool interactive = true,
+    bool showUserLocation = false,
     EdgeInsets? padding,
   }) {
     AppMapController? mapController;
@@ -185,6 +186,15 @@ class MapProvider {
         }
 
         mapController = AppMapController(controller);
+        if (showUserLocation) {
+          controller.location.updateSettings(
+            mapbox.LocationComponentSettings(
+              enabled: true,
+              pulsingEnabled: true,
+              showAccuracyRing: true,
+            ),
+          );
+        }
         onMapCreated?.call(mapController!);
       },
     );
@@ -206,6 +216,12 @@ class MapProvider {
 
   static Future<LatLng> getCameraCenter(AppMapController controller) =>
       MapCameraService.getCameraCenter(controller);
+
+  static Future<Offset> getScreenCoordinate(
+    AppMapController controller,
+    double lat,
+    double lng,
+  ) => MapCameraService.getScreenCoordinate(controller, lat, lng);
 
   static Future<void> fitBounds(
     AppMapController controller,
