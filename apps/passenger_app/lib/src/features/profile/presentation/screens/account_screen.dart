@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
@@ -268,7 +269,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> _handleLogout(BuildContext context) async {
     await Modular.get<SecureSessionService>().clearSession();
     if (context.mounted) {
-      context.go('/');
+      context.goNamed(AuthRoutes.signin);
     }
   }
 }
