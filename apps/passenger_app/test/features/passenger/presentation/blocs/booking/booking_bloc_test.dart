@@ -5,6 +5,10 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
+import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
@@ -17,14 +21,18 @@ class MockBiddingRemoteDataSource extends Mock
 
 class MockSecureSessionService extends Mock implements SecureSessionService {}
 
+class MockInboxRepository extends Mock implements IInboxRepository {}
+
 BookingBloc _makeBookingBloc({
   required IDriverRepository driverRepo,
   required BiddingRemoteDataSource biddingDataSource,
   required SecureSessionService secureSessionService,
+  InboxCubit? inboxCubit,
 }) => BookingBloc(
   driverRepository: driverRepo,
   biddingDataSource: biddingDataSource,
   secureSessionService: secureSessionService,
+  inboxCubit: inboxCubit,
 );
 
 void main() {
@@ -33,11 +41,13 @@ void main() {
   late MockDriverRepo driverRepo;
   late MockBiddingRemoteDataSource biddingDataSource;
   late MockSecureSessionService secureSessionService;
+  late MockInboxRepository inboxRepository;
 
   setUp(() {
     driverRepo = MockDriverRepo();
     biddingDataSource = MockBiddingRemoteDataSource();
     secureSessionService = MockSecureSessionService();
+    inboxRepository = MockInboxRepository();
     when(
       () => secureSessionService.readPassengerId(),
     ).thenAnswer((_) async => 'pass-001');
@@ -110,6 +120,65 @@ void main() {
   });
 
   group('BookingBloc — CancelBookingEvent', () {
+    test(
+      'notifies the inbox when an active driver search is canceled',
+      () async {
+        final inboxCubit = InboxCubit(inboxRepository: inboxRepository);
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          biddingDataSource: biddingDataSource,
+          secureSessionService: secureSessionService,
+          inboxCubit: inboxCubit,
+        );
+        when(
+          () => biddingDataSource.requestRide(any()),
+        ).thenAnswer((_) async => {});
+
+        const destination = PlaceModel(
+          id: 'destination-1',
+          name: 'Destination',
+          fullAddress: 'Destination address',
+          latitude: 7.83,
+          longitude: 123.44,
+        );
+        final searchState = expectLater(
+          bloc.stream,
+          emits(isA<BookingSearching>()),
+        );
+        bloc.add(
+          const StartOpenBookingEvent(
+            trip: BidSessionTrip(
+              rideType: 'Solo Ride',
+              fare: 100,
+              destination: destination,
+              distance: '2 km',
+              duration: '5 min',
+            ),
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await searchState;
+
+        final canceledState = expectLater(
+          bloc.stream,
+          emits(isA<BookingCanceled>()),
+        );
+        bloc.add(const CancelBookingEvent());
+        await canceledState;
+
+        final state = inboxCubit.state as InboxLoadedState;
+        expect(state.notifications, hasLength(1));
+        expect(state.notifications.single.title, 'No driver found');
+        expect(state.notifications.single.isRead, isFalse);
+
+        await bloc.close();
+        await inboxCubit.close();
+      },
+    );
+
     blocTest<BookingBloc, BookingState>(
       'emits BookingCanceled upon cancellation',
       build: () {

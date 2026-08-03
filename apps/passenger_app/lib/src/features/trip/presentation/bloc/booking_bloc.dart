@@ -25,6 +25,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   List<Map<String, dynamic>> _reviews = [];
   bool _isLoadingReviews = false;
   bool _nearestSearchCancelled = false;
+  bool _noDriverNotificationSent = false;
 
   double? _pickupLat;
   double? _pickupLng;
@@ -59,6 +60,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     _nearestSearchCancelled = false;
+    _noDriverNotificationSent = false;
     emit(FindingNearestDriver());
 
     List<DriverModel> nearbyDrivers = [];
@@ -190,7 +192,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   void _notifyNoDriverFound() {
     final inboxCubit = _inboxCubit;
-    if (inboxCubit == null || inboxCubit.isClosed) return;
+    if (_noDriverNotificationSent ||
+        inboxCubit == null ||
+        inboxCubit.isClosed) {
+      return;
+    }
+    _noDriverNotificationSent = true;
     inboxCubit.addLocalNotification(
       InboxNotification(
         id: 'no-driver-${DateTime.now().millisecondsSinceEpoch}',
@@ -391,7 +398,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     CancelBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
+    final wasSearchingForDriver =
+        state is FindingNearestDriver ||
+        state is BookingSearching ||
+        state is BookingOffersReceived;
     _nearestSearchCancelled = true;
+    if (wasSearchingForDriver) {
+      _notifyNoDriverFound();
+    }
     _cleanupSubscriptions();
     try {
       await _biddingDataSource
