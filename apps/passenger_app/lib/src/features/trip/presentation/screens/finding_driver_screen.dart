@@ -262,6 +262,13 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
         isRead: false,
       ),
     );
+    if (mounted) {
+      CustomToast.show(
+        context,
+        'No driver found. We added a message to your inbox.',
+        isError: true,
+      );
+    }
     _returnHome();
   }
 
