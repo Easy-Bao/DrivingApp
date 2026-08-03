@@ -147,8 +147,6 @@ class MapProvider {
     required double longitude,
     double zoom = 14.0,
     void Function(AppMapController controller)? onMapCreated,
-    void Function(double lat, double lng)? onTap,
-    void Function(double lat, double lng)? onCameraIdle,
     void Function(AppMapController controller)? onCameraChanged,
     void Function(AppMapController controller)? onMapIdle,
     bool interactive = true,
