@@ -22,7 +22,7 @@ class _MapPinScreenState extends State<MapPinScreen>
   String _subAddress = '';
   bool _isGeocoding = false;
   bool _hasUserPannedMap = false;
-  Timer? _debounceTimer;
+  bool _isProgrammaticCameraMove = false;
   int _geocodeRequestId = 0;
   late final AnimationController _pinAnimationController;
   double? _centerLat = LocationService.lastPosition?.latitude;
@@ -45,7 +45,6 @@ class _MapPinScreenState extends State<MapPinScreen>
 
   @override
   void dispose() {
-    _debounceTimer?.cancel();
     _pinAnimationController.dispose();
     super.dispose();
   }
@@ -59,12 +58,17 @@ class _MapPinScreenState extends State<MapPinScreen>
           _centerLng = pos.longitude;
         });
         if (_mapController != null) {
-          await MapProvider.moveCamera(
-            _mapController!,
-            pos.latitude,
-            pos.longitude,
-            zoom: 15.0,
-          );
+          _isProgrammaticCameraMove = true;
+          try {
+            await MapProvider.moveCamera(
+              _mapController!,
+              pos.latitude,
+              pos.longitude,
+              zoom: 15.0,
+            );
+          } finally {
+            _isProgrammaticCameraMove = false;
+          }
         }
       }
       if (!_hasUserPannedMap) {
@@ -80,13 +84,14 @@ class _MapPinScreenState extends State<MapPinScreen>
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
     if (_centerLat != null && _centerLng != null) {
+      _isProgrammaticCameraMove = true;
       unawaited(
         MapProvider.moveCamera(
           controller,
           _centerLat!,
           _centerLng!,
           zoom: 15.0,
-        ),
+        ).whenComplete(() => _isProgrammaticCameraMove = false),
       );
       if (!_hasUserPannedMap) {
         unawaited(_reverseGeocode(_centerLat!, _centerLng!));
@@ -95,14 +100,20 @@ class _MapPinScreenState extends State<MapPinScreen>
   }
 
   void _onCameraChanged(AppMapController controller) {
-    _hasUserPannedMap = true;
     unawaited(_pinAnimationController.forward());
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 350), () async {
-      if (!mounted || _mapController == null) return;
-      final center = await MapProvider.getCameraCenter(_mapController!);
-      unawaited(_reverseGeocode(center.latitude, center.longitude));
-    });
+  }
+
+  void _onMapIdle(AppMapController controller) {
+    if (_isProgrammaticCameraMove) return;
+    _hasUserPannedMap = true;
+    unawaited(_updateCenterFromCamera(controller));
+  }
+
+  Future<void> _updateCenterFromCamera(AppMapController controller) async {
+    if (!mounted) return;
+    final center = await MapProvider.getCameraCenter(controller);
+    if (!mounted || _isProgrammaticCameraMove) return;
+    unawaited(_reverseGeocode(center.latitude, center.longitude));
   }
 
   Future<void> _reverseGeocode(double lat, double lng) async {
@@ -134,12 +145,17 @@ class _MapPinScreenState extends State<MapPinScreen>
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && _mapController != null && mounted) {
       _hasUserPannedMap = false;
-      await MapProvider.moveCamera(
-        _mapController!,
-        pos.latitude,
-        pos.longitude,
-        zoom: 16.0,
-      );
+      _isProgrammaticCameraMove = true;
+      try {
+        await MapProvider.moveCamera(
+          _mapController!,
+          pos.latitude,
+          pos.longitude,
+          zoom: 16.0,
+        );
+      } finally {
+        _isProgrammaticCameraMove = false;
+      }
       unawaited(_reverseGeocode(pos.latitude, pos.longitude));
     }
   }
@@ -169,6 +185,7 @@ class _MapPinScreenState extends State<MapPinScreen>
       zoom: 15.0,
       onMapCreated: _onMapCreated,
       onCameraChanged: _onCameraChanged,
+      onMapIdle: _onMapIdle,
     );
     return _cachedMapView!;
   }

@@ -150,6 +150,7 @@ class MapProvider {
     void Function(double lat, double lng)? onTap,
     void Function(double lat, double lng)? onCameraIdle,
     void Function(AppMapController controller)? onCameraChanged,
+    void Function(AppMapController controller)? onMapIdle,
     bool interactive = true,
     bool showUserLocation = false,
     EdgeInsets? padding,
@@ -165,6 +166,11 @@ class MapProvider {
       onCameraChangeListener: (cameraChangedEventData) {
         if (mapController != null) {
           onCameraChanged?.call(mapController!);
+        }
+      },
+      onMapIdleListener: (mapIdleEventData) {
+        if (mapController != null) {
+          onMapIdle?.call(mapController!);
         }
       },
       onMapCreated: (controller) {
