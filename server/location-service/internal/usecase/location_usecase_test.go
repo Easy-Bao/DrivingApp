@@ -1,9 +1,36 @@
 package usecase
 
 import (
+	"context"
 	"location-service/internal/domain"
 	"testing"
 )
+
+type nearbyRepositoryStub struct {
+	places []domain.Place
+	calls  int
+}
+
+func (stub *nearbyRepositoryStub) SearchPlaces(context.Context, string, float64, float64) ([]domain.Place, error) {
+	return nil, nil
+}
+
+func (stub *nearbyRepositoryStub) ReverseGeocode(context.Context, float64, float64) (*domain.Place, error) {
+	return nil, nil
+}
+
+func (stub *nearbyRepositoryStub) GetNearbyPois(context.Context, float64, float64, int) ([]domain.Place, error) {
+	stub.calls++
+	return stub.places, nil
+}
+
+func (stub *nearbyRepositoryStub) GetRoute(context.Context, float64, float64, float64, float64) (*domain.Route, error) {
+	return nil, nil
+}
+
+func (stub *nearbyRepositoryStub) GetTravelMatrix(context.Context, domain.Point, []domain.Point) (*domain.MatrixResult, error) {
+	return nil, nil
+}
 
 func TestFilterAndPageNearbyPlaces(t *testing.T) {
 	places := []domain.Place{
@@ -31,7 +58,7 @@ func TestFilterAndPageNearbyPlacesUsesTenItemPages(t *testing.T) {
 	for index := range places {
 		places[index] = domain.Place{
 			Name:       "Place",
-			DistanceKm: float64(index) / 2,
+			DistanceKm: float64(index) / 4,
 		}
 	}
 
@@ -52,5 +79,33 @@ func TestSearchCacheQuerySharesAcronymVariants(t *testing.T) {
 	}
 	if got := searchCacheQuery("bay plaza"); got != "bay plaza" {
 		t.Fatalf("searchCacheQuery(normal query) = %q, want %q", got, "bay plaza")
+	}
+}
+
+func TestNearbyPagesReuseTheUnpaginatedMemoryResult(t *testing.T) {
+	places := make([]domain.Place, 20)
+	for index := range places {
+		places[index] = domain.Place{
+			Name:       "Place",
+			DistanceKm: float64(index) / 4,
+		}
+	}
+	repository := &nearbyRepositoryStub{places: places}
+	useCase := NewLocationUseCase(repository, nil, nil)
+
+	pageOne, err := useCase.GetNearbyPois(context.Background(), 7.83, 123.44, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pageTwo, err := useCase.GetNearbyPois(context.Background(), 7.83, 123.44, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(pageOne) != nearbyPageSize || len(pageTwo) != nearbyPageSize {
+		t.Fatalf("expected two complete nearby pages, got %d and %d", len(pageOne), len(pageTwo))
+	}
+	if repository.calls != 1 {
+		t.Fatalf("expected one repository request, got %d", repository.calls)
 	}
 }

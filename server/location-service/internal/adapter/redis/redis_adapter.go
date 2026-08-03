@@ -16,7 +16,7 @@ type redisAdapter struct {
 
 const (
 	geocodeCacheKeyPrefix = "geocode:mapbox:v2"
-	nearbyCacheKeyPrefix  = "nearby:mapbox:v2"
+	nearbyCacheKeyPrefix  = "nearby:mapbox:v3"
 	searchCacheKeyPrefix  = "search:mapbox:v1"
 	routeCacheKeyPrefix   = "route:mapbox:v2"
 )

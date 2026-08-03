@@ -183,14 +183,17 @@ func filterSearchPlaces(places []domain.Place) []domain.Place {
 }
 
 func (uc *locationUseCase) GetNearbyPois(ctx context.Context, lat, lng float64, page int) ([]domain.Place, error) {
-	key := fmt.Sprintf("nearby:%.3f:%.3f:%d", lat, lng, page)
+	if page < 1 {
+		page = 1
+	}
+	key := fmt.Sprintf("nearby:v3:%.3f:%.3f", lat, lng)
 	if cached, ok := uc.getMemory(key); ok {
 		return filterAndPageNearbyPlaces(cached.([]domain.Place), page), nil
 	}
 	if uc.cache != nil {
-		if cached, err := uc.cache.GetNearbyCache(ctx, lat, lng, page); err == nil && cached != nil {
+		if cached, err := uc.cache.GetNearbyCache(ctx, lat, lng, 0); err == nil && cached != nil {
 			filtered := filterAndPageNearbyPlaces(cached, page)
-			uc.setMemory(key, filtered, time.Hour)
+			uc.setMemory(key, cached, time.Hour)
 			return filtered, nil
 		}
 	}
@@ -203,14 +206,12 @@ func (uc *locationUseCase) GetNearbyPois(ctx context.Context, lat, lng float64, 
 	}
 	places := result.([]domain.Place)
 
-	places = filterAndPageNearbyPlaces(places, page)
-
 	if uc.cache != nil && len(places) > 0 {
-		_ = uc.cache.SetNearbyCache(ctx, lat, lng, page, places)
+		_ = uc.cache.SetNearbyCache(ctx, lat, lng, 0, places)
 	}
 	uc.setMemory(key, places, time.Hour)
 
-	return places, nil
+	return filterAndPageNearbyPlaces(places, page), nil
 }
 
 func filterAndPageNearbyPlaces(places []domain.Place, page int) []domain.Place {
