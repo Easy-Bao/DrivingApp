@@ -8,8 +8,8 @@ export interface Driver {
   passwordHash: string;
   rating: number;
   isOnline: boolean;
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   createdAt: Date;
 }
 

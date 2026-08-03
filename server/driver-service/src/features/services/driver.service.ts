@@ -27,7 +27,9 @@ export class DriverService {
 
   async getOnlineDrivers(): Promise<SafeDriver[]> {
     const onlineDrivers = await this.repository.findOnlineDrivers();
-    return onlineDrivers.map((driver) => this.sanitizeDriver(driver));
+    return onlineDrivers
+      .filter((driver) => driver.lat !== null && driver.lng !== null)
+      .map((driver) => this.sanitizeDriver(driver));
   }
 
   async updateOnlineStatus(driverId: string, payload: UpdateOnlineStatusRequest): Promise<SafeDriver> {
