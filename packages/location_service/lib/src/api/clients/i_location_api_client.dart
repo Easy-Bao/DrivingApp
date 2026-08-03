@@ -16,4 +16,8 @@ abstract class ILocationApiClient {
   });
 
   Future<RouteModel> getRoute({required Map<String, dynamic> body});
+
+  Future<Map<String, dynamic>> getTravelMatrix({
+    required Map<String, dynamic> body,
+  });
 }

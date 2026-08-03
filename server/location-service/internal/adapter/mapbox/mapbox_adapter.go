@@ -7,7 +7,6 @@ import (
 	"io"
 	"location-service/internal/domain"
 	"location-service/internal/usecase"
-	"math"
 	"net/http"
 	"net/url"
 	"sort"
@@ -20,8 +19,8 @@ import (
 const (
 	searchBoxBaseURL  = "https://api.mapbox.com/search/searchbox/v1"
 	directionsBaseURL = "https://api.mapbox.com/directions/v5/mapbox/driving"
+	matrixBaseURL     = "https://api.mapbox.com/directions-matrix/v1/mapbox/driving"
 	nearbyRadiusKm    = 5.0
-	nearbySampleKm    = 5.0
 	upstreamTimeout   = 5 * time.Second
 )
 
@@ -126,38 +125,34 @@ func (adapter *mapboxAdapter) GetNearbyPois(
 	longitude float64,
 	page int,
 ) ([]domain.Place, error) {
-	// Mapbox reverse search is limited to 10 results and has no page offset.
-	// Sample the surrounding area so the use case can provide real pages.
 	_ = page
-	samples := nearbySearchSamples(latitude, longitude)
+	categories := []string{"restaurant", "hotel", "hospital", "school", "pharmacy", "bank", "gas_station"}
 	requestCtx, cancel := context.WithTimeout(ctx, upstreamTimeout)
 	defer cancel()
 	type sampleResult struct {
 		places []domain.Place
 		err    error
 	}
-	results := make(chan sampleResult, len(samples))
+	results := make(chan sampleResult, len(categories))
 	var waitGroup sync.WaitGroup
 
-	for _, sample := range samples {
+	for _, category := range categories {
 		waitGroup.Add(1)
-		go func(sample nearbySearchSample) {
+		go func(category string) {
 			defer waitGroup.Done()
 			parameters := url.Values{
-				"longitude":    {formatCoordinate(sample.longitude)},
-				"latitude":     {formatCoordinate(sample.latitude)},
+				"proximity":    {formatCoordinate(longitude) + "," + formatCoordinate(latitude)},
 				"access_token": {adapter.accessToken},
 				"limit":        {"10"},
-				"types":        {"poi"},
 			}
 			places, err := adapter.fetchPlaces(
 				requestCtx,
-				searchBoxBaseURL+"/reverse?"+parameters.Encode(),
+				searchBoxBaseURL+"/category/"+url.PathEscape(category)+"?"+parameters.Encode(),
 				latitude,
 				longitude,
 			)
 			results <- sampleResult{places: places, err: err}
-		}(sample)
+		}(category)
 	}
 	waitGroup.Wait()
 	close(results)
@@ -184,32 +179,6 @@ func (adapter *mapboxAdapter) GetNearbyPois(
 		result = append(result, place)
 	}
 	return result, nil
-}
-
-type nearbySearchSample struct {
-	latitude  float64
-	longitude float64
-}
-
-func nearbySearchSamples(latitude, longitude float64) []nearbySearchSample {
-	latOffset := nearbySampleKm / 111.32
-	lngOffset := nearbySampleKm / (111.32 * cosDegrees(latitude))
-
-	return []nearbySearchSample{
-		{latitude: latitude, longitude: longitude},
-		{latitude: latitude + latOffset, longitude: longitude},
-		{latitude: latitude - latOffset, longitude: longitude},
-		{latitude: latitude, longitude: longitude + lngOffset},
-		{latitude: latitude, longitude: longitude - lngOffset},
-		{latitude: latitude + latOffset, longitude: longitude + lngOffset},
-		{latitude: latitude + latOffset, longitude: longitude - lngOffset},
-		{latitude: latitude - latOffset, longitude: longitude + lngOffset},
-		{latitude: latitude - latOffset, longitude: longitude - lngOffset},
-	}
-}
-
-func cosDegrees(value float64) float64 {
-	return math.Cos(value * math.Pi / 180)
 }
 
 func nearbyPlaceKey(place domain.Place) string {
@@ -263,6 +232,67 @@ func (adapter *mapboxAdapter) GetRoute(
 		DurationMin:    selectedRoute.Duration / 60,
 		PolylinePoints: selectedRoute.Geometry.Coordinates,
 	}, nil
+}
+
+func (adapter *mapboxAdapter) GetTravelMatrix(
+	ctx context.Context,
+	origin domain.Point,
+	destinations []domain.Point,
+) (*domain.MatrixResult, error) {
+	coordinates := make([]string, 0, len(destinations)+1)
+	coordinates = append(coordinates, formatCoordinate(origin.Longitude)+","+formatCoordinate(origin.Latitude))
+	for _, destination := range destinations {
+		coordinates = append(coordinates, formatCoordinate(destination.Longitude)+","+formatCoordinate(destination.Latitude))
+	}
+	parameters := url.Values{
+		"access_token": {adapter.accessToken},
+		"sources":      {"0"},
+		"annotations":  {"distance,duration"},
+	}
+	parameters.Set("destinations", matrixDestinationIndexes(len(destinations)))
+
+	var response struct {
+		Distances [][]float64 `json:"distances"`
+		Durations [][]float64 `json:"durations"`
+	}
+	if err := adapter.getJSON(ctx, matrixBaseURL+"/"+strings.Join(coordinates, ";")+"?"+parameters.Encode(), &response); err != nil {
+		return nil, err
+	}
+	return &domain.MatrixResult{
+		DistancesKm:  metersToKilometers(firstMatrixRow(response.Distances)),
+		DurationsMin: secondsToMinutes(firstMatrixRow(response.Durations)),
+	}, nil
+}
+
+func firstMatrixRow(matrix [][]float64) []float64 {
+	if len(matrix) == 0 {
+		return nil
+	}
+	return matrix[0]
+}
+
+func matrixDestinationIndexes(count int) string {
+	indexes := make([]string, count)
+	for index := range indexes {
+		indexes[index] = strconv.Itoa(index + 1)
+	}
+	return strings.Join(indexes, ";")
+}
+
+func metersToKilometers(values []float64) []float64 {
+	converted := make([]float64, len(values))
+	for index, value := range values {
+		converted[index] = value / 1000
+	}
+	return converted
+}
+
+func secondsToMinutes(values []float64) []float64 {
+	converted := make([]float64, len(values))
+	for index, value := range values {
+		converted[index] = value / 60
+	}
+	return converted
 }
 
 type mapboxRoute struct {

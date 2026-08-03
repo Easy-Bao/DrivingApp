@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"location-service/internal/domain"
 	"location-service/internal/usecase"
 	"net"
 	"net/http"
@@ -23,6 +24,7 @@ func (h *HTTPHandler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /places/reverse", h.ReverseGeocode)
 	router.HandleFunc("GET /places/nearby", h.GetNearbyPois)
 	router.HandleFunc("POST /places/route", h.GetRoute)
+	router.HandleFunc("POST /places/matrix", h.GetTravelMatrix)
 }
 
 func (h *HTTPHandler) SearchPlaces(writer http.ResponseWriter, request *http.Request) {
@@ -105,6 +107,41 @@ func (h *HTTPHandler) GetRoute(writer http.ResponseWriter, request *http.Request
 	}
 
 	writeJSON(writer, http.StatusOK, route)
+}
+
+type MatrixRequest struct {
+	Origin       PointRequest   `json:"origin"`
+	Destinations []PointRequest `json:"destinations"`
+}
+
+type PointRequest struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
+
+func (h *HTTPHandler) GetTravelMatrix(writer http.ResponseWriter, request *http.Request) {
+	var req MatrixRequest
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 16<<10))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil || len(req.Destinations) == 0 {
+		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "Invalid matrix payload"})
+		return
+	}
+
+	destinations := make([]domain.Point, len(req.Destinations))
+	for index, destination := range req.Destinations {
+		destinations[index] = domain.Point{Latitude: destination.Lat, Longitude: destination.Lng}
+	}
+	result, err := h.useCase.GetTravelMatrix(
+		request.Context(),
+		domain.Point{Latitude: req.Origin.Lat, Longitude: req.Origin.Lng},
+		destinations,
+	)
+	if err != nil {
+		writeLocationError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, result)
 }
 
 func writeLocationError(writer http.ResponseWriter, err error) {

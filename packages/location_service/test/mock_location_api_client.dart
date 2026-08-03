@@ -66,4 +66,15 @@ class MockLocationApiClient implements LocationApiClient {
       summary: 'Fastest route',
     );
   }
+
+  @override
+  Future<Map<String, dynamic>> getTravelMatrix({
+    required Map<String, dynamic> body,
+  }) async {
+    final destinations = body['destinations'] as List<dynamic>? ?? [];
+    return {
+      'distancesKm': List<double>.filled(destinations.length, 1.0),
+      'durationsMin': List<double>.filled(destinations.length, 3.0),
+    };
+  }
 }

@@ -23,6 +23,7 @@ type LocationUseCase interface {
 	SearchPlaces(ctx context.Context, query string, lat, lng float64) ([]domain.Place, error)
 	GetNearbyPois(ctx context.Context, lat, lng float64, page int) ([]domain.Place, error)
 	GetRoute(ctx context.Context, originLat, originLng, destLat, destLng float64) (*domain.Route, error)
+	GetTravelMatrix(ctx context.Context, origin domain.Point, destinations []domain.Point) (*domain.MatrixResult, error)
 }
 
 type locationUseCase struct {
@@ -230,6 +231,16 @@ func (uc *locationUseCase) GetRoute(ctx context.Context, originLat, originLng, d
 		return nil, err
 	}
 	return result.(*domain.Route), nil
+}
+
+func (uc *locationUseCase) GetTravelMatrix(ctx context.Context, origin domain.Point, destinations []domain.Point) (*domain.MatrixResult, error) {
+	if len(destinations) == 0 {
+		return &domain.MatrixResult{}, nil
+	}
+	if len(destinations) > 24 {
+		destinations = destinations[:24]
+	}
+	return uc.repo.GetTravelMatrix(ctx, origin, destinations)
 }
 
 func (uc *locationUseCase) getMemory(key string) (interface{}, bool) {

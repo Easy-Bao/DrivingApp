@@ -38,7 +38,23 @@ class DriverRepository implements IDriverRepository {
   }) async {
     try {
       final rawList = await _biddingDataSource.fetchOnlineDrivers();
-      return Right(_processNearbyDrivers(rawList, lat, lng));
+      final candidates = rawList
+          .whereType<Map<String, dynamic>>()
+          .map((driver) {
+            final driverLat = (driver['lat'] as num?)?.toDouble();
+            final driverLng = (driver['lng'] as num?)?.toDouble();
+            if (driverLat == null || driverLng == null) return null;
+            return (lat: driverLat, lng: driverLng);
+          })
+          .whereType<({double lat, double lng})>()
+          .take(24)
+          .toList();
+      final matrixDistances = await MapProvider.getDrivingDistances(
+        originLat: lat,
+        originLng: lng,
+        destinations: candidates,
+      );
+      return Right(_processNearbyDrivers(rawList, lat, lng, matrixDistances));
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }
@@ -48,39 +64,33 @@ class DriverRepository implements IDriverRepository {
     List<dynamic> rawDrivers,
     double userLat,
     double userLng,
+    List<double>? matrixDistances,
   ) {
     final List<DriverModel> drivers = [];
-    double currentMaxRadius = 5.0;
+    var matrixIndex = 0;
+    for (final d in rawDrivers) {
+      if (d is! Map<String, dynamic>) continue;
+      final driverLat = (d['lat'] as num?)?.toDouble();
+      final driverLng = (d['lng'] as num?)?.toDouble();
+      if (driverLat == null || driverLng == null) continue;
 
-    for (int pass = 0; pass < 2; pass++) {
-      drivers.clear();
-      for (final d in rawDrivers) {
-        if (d is! Map<String, dynamic>) continue;
-        final driverLat = (d['lat'] as num?)?.toDouble() ?? 0.0;
-        final driverLng = (d['lng'] as num?)?.toDouble() ?? 0.0;
+      final fallbackDistance = _calculateDistance(
+        userLat,
+        userLng,
+        driverLat,
+        driverLng,
+      );
+      final distanceKm = matrixIndex < (matrixDistances?.length ?? 0)
+          ? matrixDistances![matrixIndex]
+          : fallbackDistance;
+      matrixIndex++;
+      if (distanceKm > 5.0) continue;
 
-        final double distanceKm;
-        if (driverLat == 0.0 && driverLng == 0.0) {
-          distanceKm = 1.5;
-        } else {
-          distanceKm = _calculateDistance(
-            userLat,
-            userLng,
-            driverLat,
-            driverLng,
-          );
-        }
+      final etaMinutes = _calculateEta(distanceKm);
+      final rating = (d['rating'] as num?)?.toDouble() ?? 5.0;
+      final score = _calculateMatchingScore(distanceKm, rating, etaMinutes);
 
-        if (distanceKm > currentMaxRadius) continue;
-
-        final etaMinutes = _calculateEta(distanceKm);
-        final rating = (d['rating'] as num?)?.toDouble() ?? 5.0;
-        final score = _calculateMatchingScore(distanceKm, rating, etaMinutes);
-
-        drivers.add(_mapToDriverModel(d, distanceKm, etaMinutes, score));
-      }
-      if (drivers.isNotEmpty) break;
-      currentMaxRadius = 25.0;
+      drivers.add(_mapToDriverModel(d, distanceKm, etaMinutes, score));
     }
 
     drivers.sort((a, b) => a.score.compareTo(b.score));

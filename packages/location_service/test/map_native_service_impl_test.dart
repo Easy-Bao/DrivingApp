@@ -113,6 +113,40 @@ void main() {
         expect(failure, isA<PlaceNetworkError>());
       }, (_) => fail('Expected Left but got Right'));
     });
+
+    test('getDrivingDistances parses Matrix API distances', () async {
+      dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+        if (options.uri.path == '/places/matrix') {
+          return ResponseBody.fromString(
+            jsonEncode({
+              'distancesKm': [1.25, 3.5],
+              'durationsMin': [4.0, 9.0],
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        }
+        return ResponseBody.fromString('Not Found', 404);
+      });
+
+      final result = await service.getDrivingDistances(
+        originLat: 7.8282,
+        originLng: 123.4361,
+        destinations: const [
+          (lat: 7.83, lng: 123.44),
+          (lat: 7.84, lng: 123.45),
+        ],
+      );
+
+      expect(result.isRight(), isTrue);
+      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
+        distances,
+      ) {
+        expect(distances, equals([1.25, 3.5]));
+      });
+    });
   });
 }
 

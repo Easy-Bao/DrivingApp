@@ -118,6 +118,33 @@ class MapProvider {
     }
   }
 
+  static Future<List<double>?> getDrivingDistances({
+    required double originLat,
+    required double originLng,
+    required List<({double lat, double lng})> destinations,
+  }) async {
+    final nativeService = _nativeService;
+    if (nativeService == null) {
+      throw StateError('MapProvider not initialized.');
+    }
+    if (destinations.isEmpty) return const [];
+
+    try {
+      final either = await nativeService.getDrivingDistances(
+        originLat: originLat,
+        originLng: originLng,
+        destinations: destinations,
+      );
+      return either.fold((failure) {
+        debugPrint('MapProvider.getDrivingDistances failure: $failure');
+        return null;
+      }, (distances) => distances);
+    } catch (error) {
+      debugPrint('MapProvider.getDrivingDistances error: $error');
+      return null;
+    }
+  }
+
   static Future<List<PlaceModel>> getNearbyPOIs({
     required double lat,
     required double lng,

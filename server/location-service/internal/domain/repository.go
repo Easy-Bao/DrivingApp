@@ -7,6 +7,7 @@ type LocationRepository interface {
 	ReverseGeocode(ctx context.Context, lat, lng float64) (*Place, error)
 	GetNearbyPois(ctx context.Context, lat, lng float64, page int) ([]Place, error)
 	GetRoute(ctx context.Context, originLat, originLng, destLat, destLng float64) (*Route, error)
+	GetTravelMatrix(ctx context.Context, origin Point, destinations []Point) (*MatrixResult, error)
 }
 
 type CacheRepository interface {

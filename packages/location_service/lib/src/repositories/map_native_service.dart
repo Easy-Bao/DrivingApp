@@ -147,6 +147,46 @@ class MapNativeService {
     }
   }
 
+  Future<Either<PlaceFailure, List<double>>> getDrivingDistances({
+    required double originLat,
+    required double originLng,
+    required List<({double lat, double lng})> destinations,
+  }) async {
+    try {
+      final response = await _apiClient.getTravelMatrix(
+        body: {
+          'origin': {'lat': originLat, 'lng': originLng},
+          'destinations': destinations
+              .map((point) => {'lat': point.lat, 'lng': point.lng})
+              .toList(),
+        },
+      );
+      final values = response['distancesKm'];
+      if (values is! List) {
+        return left(
+          const PlaceParseError(message: 'Invalid travel matrix response.'),
+        );
+      }
+      return right(
+        values.whereType<num>().map((value) => value.toDouble()).toList(),
+      );
+    } on DioException catch (e) {
+      dev.log(
+        'getDrivingDistances network failure',
+        name: 'MapNativeService',
+        error: e,
+      );
+      return left(PlaceNetworkError(message: e.message));
+    } catch (e) {
+      dev.log(
+        'getDrivingDistances parse error',
+        name: 'MapNativeService',
+        error: e,
+      );
+      return left(PlaceParseError(message: e.toString()));
+    }
+  }
+
   Future<Either<PlaceFailure, List<PlaceModel>>> getNearbyPois({
     required double lat,
     required double lng,

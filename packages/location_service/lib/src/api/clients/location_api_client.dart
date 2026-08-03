@@ -57,4 +57,15 @@ class LocationApiClient implements ILocationApiClient {
     );
     return RouteModel.fromJson(response.data ?? {});
   }
+
+  @override
+  Future<Map<String, dynamic>> getTravelMatrix({
+    required Map<String, dynamic> body,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/places/matrix',
+      data: body,
+    );
+    return response.data ?? {};
+  }
 }

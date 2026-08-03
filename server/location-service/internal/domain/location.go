@@ -34,6 +34,11 @@ type Route struct {
 	PolylinePoints [][]float64 `json:"polylinePoints"`
 }
 
+type MatrixResult struct {
+	DistancesKm  []float64 `json:"distancesKm"`
+	DurationsMin []float64 `json:"durationsMin"`
+}
+
 type LocationUpdateEvent struct {
 	ID        string    `json:"id"`
 	DriverID  string    `json:"driver_id"`
