@@ -228,15 +228,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       destLng: SafeParse.toDouble(trip['dropoff_longitude']),
     );
 
-    ///TODO: Remove hardcoded data below when modular routing is implemented properly
     context.pushNamed(
       routeName,
       extra: {
         'pickup': trip['pickup_name'] ?? 'Pickup',
         'dropoff': trip['dropoff_name'] ?? 'Dropoff',
-        'distance': 3.2,
+        'distance': SafeParse.toDouble(trip['distance_km']),
         'fare': SafeParse.toDouble(trip['fare']),
-        'duration': '8 min',
+        'duration': '${SafeParse.toDouble(trip['duration_minutes'])} min',
       },
     );
   }
@@ -256,7 +255,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       destLng: SafeParse.toDouble(trip['dropoff_longitude']),
     );
 
-    await cubit.endRide(distanceKm: 3.2, durationMinutes: 10);
+    await cubit.endRide(
+      distanceKm: SafeParse.toDouble(trip['distance_km']),
+      durationMinutes: SafeParse.toDouble(trip['duration_minutes']),
+    );
 
     if (mounted) {
       context.pushNamed(
@@ -264,9 +266,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         extra: {
           'pickup': trip['pickup_name'] ?? 'Pickup',
           'dropoff': trip['dropoff_name'] ?? 'Dropoff',
-          'distance': 3.2,
+          'distance': SafeParse.toDouble(trip['distance_km']),
           'fare': SafeParse.toDouble(trip['fare']),
-          'duration': '10 min',
+          'duration': '${SafeParse.toDouble(trip['duration_minutes'])} min',
         },
       );
     }
@@ -732,8 +734,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildPoolBidCard(Map<String, dynamic> bid) {
-    final pickup = bid['pickup_name'] ?? 'Guiwan, Zamboanga City';
-    final dropoff = bid['dropoff_name'] ?? 'KCC Mall, Zamboanga City';
+    final pickup = bid['pickup_name'] ?? 'Pickup location unavailable';
+    final dropoff = bid['dropoff_name'] ?? 'Destination unavailable';
     final fare = SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']);
     final distance = (bid['distance'] as num?)?.toDouble() ?? 2.4;
 
