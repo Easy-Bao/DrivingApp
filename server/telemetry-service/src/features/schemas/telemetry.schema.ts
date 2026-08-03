@@ -5,3 +5,8 @@ export const LocationUpdateSchema = z.object({
   lat: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
   lng: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
 });
+
+export const PassengerLocationUpdateSchema = z.object({
+  lat: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
+  lng: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
+});

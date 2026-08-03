@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_activity_screen.dart';
+import 'package:passenger_app/src/features/activity/presentation/screens/passenger_payment_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/passenger_rating_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_all_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_details_screen.dart';
@@ -60,6 +61,22 @@ class ActivityModule {
           driverId: driverId,
           driverName: driverName,
         );
+      },
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
+    ),
+    ChildRoute(
+      name: ActivityRoutes.passengerPayment,
+      'activity/payment',
+      child: (context, GoRouterState state) {
+        final ride = state.extra is RideHistoryModel
+            ? state.extra as RideHistoryModel
+            : null;
+        return ride == null
+            ? const Scaffold(
+                body: Center(child: Text('Payment data unavailable.')),
+              )
+            : PassengerPaymentScreen(ride: ride);
       },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,

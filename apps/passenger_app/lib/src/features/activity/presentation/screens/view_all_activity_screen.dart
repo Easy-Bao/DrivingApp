@@ -312,11 +312,7 @@ class _PassengerViewAllActivityScreenState
         1.3;
     final estimatedDurationInMinutes = (estimatedDistanceInKm * 2.5).round();
 
-    final totalTripPrice = double.tryParse(ride.price) ?? 0.0;
-    final calculatedDriverTip = totalTripPrice > 200
-        ? 40.0
-        : (totalTripPrice > 100 ? 20.0 : 0.0);
-    final calculatedBaseFare = totalTripPrice - calculatedDriverTip;
+    final totalTripPrice = _priceValue(ride.price);
 
     final driverInitials = _formattedDriverInitials(ride.driverName);
     final driverRating = _formattedDriverRating(ride.driverId);
@@ -541,7 +537,7 @@ class _PassengerViewAllActivityScreenState
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'fare ₱${calculatedBaseFare.toStringAsFixed(0)} + tip ₱${calculatedDriverTip.toStringAsFixed(0)}',
+                        'Fare',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -603,10 +599,15 @@ class _PassengerViewAllActivityScreenState
     double dailySum = 0.0;
     for (final ride in ridesForDate) {
       if (ride.status == 'completed') {
-        dailySum += double.tryParse(ride.price) ?? 0.0;
+        dailySum += _priceValue(ride.price);
       }
     }
     return dailySum;
+  }
+
+  double _priceValue(String price) {
+    final normalized = price.replaceAll(RegExp(r'[^0-9.\-]'), '');
+    return double.tryParse(normalized) ?? 0.0;
   }
 
   Future<void> _fetchActivityHistoryData() async {

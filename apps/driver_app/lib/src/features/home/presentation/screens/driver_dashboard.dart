@@ -38,6 +38,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   List<Map<String, dynamic>> _activeBids = [];
   List<Map<String, dynamic>> _activeTrips = [];
   LiveMapBloc? _liveMapBloc;
+  bool _isTogglingOnline = false;
 
   @override
   void initState() {
@@ -113,6 +114,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             .toList();
 
         if (mounted) {
+          trips.sort((a, b) {
+            const statusPriority = {
+              'in_transit': 0,
+              'arrived': 1,
+              'accepted': 2,
+            };
+            final aPriority = statusPriority[a['status']] ?? 3;
+            final bPriority = statusPriority[b['status']] ?? 3;
+            if (aPriority != bPriority) return aPriority.compareTo(bPriority);
+            return (a['created_at'] as String? ?? '').compareTo(
+              b['created_at'] as String? ?? '',
+            );
+          });
           setState(() {
             _activeTrips = trips;
             _activeBids = bids;
@@ -137,22 +151,30 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     }
   }
 
-  void _toggleOnline(BuildContext context, bool currentOnline) {
-    final pos = LocationService.lastPosition;
-    if (pos != null) {
-      BlocProvider.of<DashboardCubit>(
+  Future<void> _toggleOnline(BuildContext context) async {
+    if (_isTogglingOnline) return;
+    setState(() => _isTogglingOnline = true);
+
+    try {
+      var position = LocationService.lastPosition;
+      position ??= await LocationService.getCurrentPosition();
+
+      if (!context.mounted) return;
+
+      if (position == null) {
+        CustomToast.show(
+          context,
+          'Turn on location permission and GPS to go online.',
+          isError: true,
+        );
+        return;
+      }
+
+      await BlocProvider.of<DashboardCubit>(
         context,
-      ).toggleOnline(lat: pos.latitude, lng: pos.longitude);
-    } else {
-      unawaited(
-        LocationService.getCurrentPosition().then((p) {
-          if (p != null && context.mounted) {
-            BlocProvider.of<DashboardCubit>(
-              context,
-            ).toggleOnline(lat: p.latitude, lng: p.longitude);
-          }
-        }),
-      );
+      ).toggleOnline(lat: position.latitude, lng: position.longitude);
+    } finally {
+      if (mounted) setState(() => _isTogglingOnline = false);
     }
   }
 
@@ -279,8 +301,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return BlocListener<DashboardCubit, DashboardState>(
-      listenWhen: (previous, current) => previous.isOnline != current.isOnline,
+      listenWhen: (previous, current) =>
+          previous.isOnline != current.isOnline ||
+          previous.errorMessage != current.errorMessage,
       listener: (context, state) {
+        final errorMessage = state.errorMessage;
+        if (errorMessage != null) {
+          CustomToast.show(context, errorMessage, isError: true);
+        }
         if (state.isOnline) {
           _startPolling();
         } else {
@@ -314,7 +342,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                               'Your active rides (${_activeTrips.length}/5)',
                             ),
                             const SizedBox(height: 10),
-                            ..._activeTrips.map(_buildActiveTripCard),
+                            ..._activeTrips.asMap().entries.map(
+                              (entry) =>
+                                  _buildActiveTripCard(entry.value, entry.key),
+                            ),
                             const SizedBox(height: 24),
                           ],
                           if (_activeBids.isNotEmpty) ...[
@@ -448,19 +479,26 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 ),
               ],
             ),
-            Transform.scale(
-              scale: 1.1,
-              child: Switch(
-                value: isOnline,
-                activeThumbColor: Colors.white,
-                activeTrackColor: Colors.white.withValues(alpha: 0.3),
-                inactiveThumbColor: AppTheme.primaryColor.withValues(
-                  alpha: 0.4,
+            if (_isTogglingOnline)
+              const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              Transform.scale(
+                scale: 1.1,
+                child: Switch(
+                  value: isOnline,
+                  activeThumbColor: Colors.white,
+                  activeTrackColor: Colors.white.withValues(alpha: 0.3),
+                  inactiveThumbColor: AppTheme.primaryColor.withValues(
+                    alpha: 0.4,
+                  ),
+                  inactiveTrackColor: AppTheme.borderSide,
+                  onChanged: (_) => _toggleOnline(context),
                 ),
-                inactiveTrackColor: AppTheme.borderSide,
-                onChanged: (_) => _toggleOnline(context, isOnline),
               ),
-            ),
           ],
         ),
       ),
@@ -552,7 +590,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     );
   }
 
-  Widget _buildActiveTripCard(Map<String, dynamic> trip) {
+  Widget _buildActiveTripCard(Map<String, dynamic> trip, int queueIndex) {
     final status = trip['status'] as String? ?? 'accepted';
     String statusLabel = 'En Route';
     Color statusColor = AppTheme.inProgress;
@@ -563,6 +601,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       statusLabel = 'In Transit';
       statusColor = AppTheme.complete;
     }
+    final hasCurrentTransitRide = _activeTrips.any(
+      (activeTrip) => activeTrip['status'] == 'in_transit',
+    );
+    final isQueued = hasCurrentTransitRide && status != 'in_transit';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -616,6 +658,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
             ],
           ),
+          if (isQueued) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Queued passenger ${queueIndex + 1} • Start after the current trip',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -715,7 +771,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               width: double.infinity,
               height: 44,
               child: ElevatedButton(
-                onPressed: () => _resumeTrip(trip),
+                onPressed: isQueued ? null : () => _resumeTrip(trip),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,

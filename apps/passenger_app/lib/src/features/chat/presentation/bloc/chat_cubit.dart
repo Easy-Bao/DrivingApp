@@ -83,13 +83,12 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
-  void sendMessage(String text) {
-    if (state.isRoomLocked) return;
-    if (text.trim().isEmpty) return;
+  Future<bool> sendMessage(String text) async {
+    if (state.isRoomLocked || text.trim().isEmpty) return false;
 
-    if (_chatRepository.isSessionConnected) {
-      unawaited(_chatRepository.sendChatMessage(text));
-    }
+    if (!_chatRepository.isSessionConnected) return false;
+    final result = await _chatRepository.sendChatMessage(text);
+    return result.isRight();
   }
 
   Future<void> resolveChatRoom(String roomId, String userId, Uri wsUri) async {

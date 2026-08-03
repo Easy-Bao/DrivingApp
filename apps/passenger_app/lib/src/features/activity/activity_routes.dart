@@ -5,6 +5,7 @@ abstract final class ActivityRoutes {
   static const String activityTrackDriver = 'ActivityTrackDriver';
   static const String rating = 'Rating';
   static const String passengerRating = 'PassengerRating';
+  static const String passengerPayment = 'PassengerPayment';
   static const String activity = 'Activity';
   static const String rideHistory = 'RideHistory';
 }

@@ -132,6 +132,14 @@ export class DriverService {
   }
 
   async addDriverReview(driverId: string, payload: { passengerName: string; rating: number; comment: string }) {
+    const driver = await this.repository.findDriverById(driverId);
+    if (!driver) {
+      throw new HTTPException(404, { message: 'Driver not found' });
+    }
+    if (!Number.isFinite(payload.rating) || payload.rating < 1 || payload.rating > 5) {
+      throw new HTTPException(422, { message: 'Rating must be between 1 and 5' });
+    }
+
     const review = await this.repository.addDriverReview({
       driverId,
       passengerName: payload.passengerName,

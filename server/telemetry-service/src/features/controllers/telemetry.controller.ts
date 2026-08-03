@@ -19,3 +19,22 @@ export async function handleGetLocation(context: Context) {
   const loc = telemetryService.getLocation(driverId);
   return context.json(loc, 200);
 }
+
+export async function handleUpdatePassengerLocation(context: Context) {
+  const rideId = context.req.param('rideId');
+  if (!rideId) {
+    return context.json({ error: 'rideId is required' }, 400);
+  }
+  const { lat, lng } = await context.req.json();
+  telemetryService.updatePassengerLocation(rideId, lat, lng);
+  return context.json({ success: true }, 200);
+}
+
+export async function handleGetPassengerLocation(context: Context) {
+  const rideId = context.req.param('rideId');
+  if (!rideId) {
+    return context.json({ error: 'rideId is required' }, 400);
+  }
+  const loc = telemetryService.getPassengerLocation(rideId);
+  return context.json(loc, 200);
+}

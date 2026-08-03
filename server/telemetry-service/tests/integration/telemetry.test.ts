@@ -27,6 +27,24 @@ describe('Telemetry Service Integration Tests', () => {
     expect(data.updatedAt).toBeDefined();
   });
 
+  test('POST and GET /telemetry/passenger/:rideId - tracks passenger coordinates', async () => {
+    const rideId = 'ride-passenger-123';
+    const update = await app.request(`/telemetry/passenger/${rideId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lat: 7.830985, lng: 123.44794 }),
+    });
+
+    expect(update.status).toBe(200);
+
+    const read = await app.request(`/telemetry/passenger/${rideId}`);
+    expect(read.status).toBe(200);
+    const data: any = await read.json();
+    expect(data.lat).toBe(7.830985);
+    expect(data.lng).toBe(123.44794);
+    expect(data.updatedAt).toBeDefined();
+  });
+
   test('POST /telemetry/location - rejects GPS spoofing with 400', async () => {
     await app.request('/telemetry/location', {
       method: 'POST',

@@ -2,6 +2,8 @@ import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart
 import 'package:equatable/equatable.dart';
 
 class DashboardState extends Equatable {
+  static const _unset = Object();
+
   final bool isOnline;
   final bool isLoadingStats;
   final bool isLoadingHeatmap;
@@ -30,7 +32,7 @@ class DashboardState extends Equatable {
     int? todayTrips,
     double? hoursOnline,
     List<HeatmapCell>? surgeCells,
-    String? errorMessage,
+    Object? errorMessage = _unset,
   }) {
     return DashboardState(
       isOnline: isOnline ?? this.isOnline,
@@ -40,7 +42,9 @@ class DashboardState extends Equatable {
       todayTrips: todayTrips ?? this.todayTrips,
       hoursOnline: hoursOnline ?? this.hoursOnline,
       surgeCells: surgeCells ?? this.surgeCells,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: identical(errorMessage, _unset)
+          ? this.errorMessage
+          : errorMessage as String?,
     );
   }
 

@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/constants/api_endpoints.dart';
+import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/chat/presentation/bloc/chat_cubit.dart';
@@ -112,7 +113,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       chatRepository: ChatRepository(
         remoteDataSource: WebSocketChatRemoteDataSource(),
         currentUserId: currentUserId,
-        clientDio: Dio(),
+        clientDio: Dio(BaseOptions(baseUrl: EnvConfig.httpBaseUrl)),
       ),
     );
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
@@ -134,11 +135,14 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     super.dispose();
   }
 
-  void _send(String text) {
+  Future<void> _send(String text) async {
     if (text.trim().isEmpty) return;
-    _chatCubit.sendMessage(text);
-    _msgCtrl.clear();
-    _scrollDown();
+    final sent = await _chatCubit.sendMessage(text);
+    if (!mounted) return;
+    if (sent) {
+      _msgCtrl.clear();
+      _scrollDown();
+    }
   }
 
   void _scrollDown() {
@@ -346,7 +350,8 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                                   vertical: 12,
                                 ),
                               ),
-                              onSubmitted: (_) => _send(_msgCtrl.text),
+                              onSubmitted: (_) =>
+                                  unawaited(_send(_msgCtrl.text)),
                             ),
                           ),
                         ),
@@ -362,7 +367,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                               color: Colors.white,
                               size: 20,
                             ),
-                            onPressed: () => _send(_msgCtrl.text),
+                            onPressed: () => unawaited(_send(_msgCtrl.text)),
                           ),
                         ),
                       ],

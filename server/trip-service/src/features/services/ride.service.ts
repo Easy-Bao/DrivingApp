@@ -67,6 +67,36 @@ export class RideService {
   }
 
   async updateRideStatus(id: string, status: string) {
+    const ride = await this.repository.findRideById(id);
+    if (!ride) {
+      throw new HTTPException(404, { message: 'Ride request not found' });
+    }
+
+    const allowedTransitions: Record<string, string[]> = {
+      requested: ['accepted', 'cancelled', 'canceled'],
+      accepted: ['arrived', 'cancelled', 'canceled'],
+      arrived: ['in_transit', 'cancelled', 'canceled'],
+      in_transit: ['completed', 'cancelled', 'canceled'],
+    };
+    const nextStatuses = allowedTransitions[ride.status] ?? [];
+    if (!nextStatuses.includes(status)) {
+      throw new HTTPException(400, {
+        message: `Invalid ride transition: ${ride.status} -> ${status}`,
+      });
+    }
+
+    if (status === 'in_transit' && ride.driverId) {
+      const driverRides = await this.repository.findRidesByDriverId(ride.driverId);
+      const hasAnotherPassengerInTransit = driverRides.some(
+        (driverRide) => driverRide.id !== id && driverRide.status === 'in_transit'
+      );
+      if (hasAnotherPassengerInTransit) {
+        throw new HTTPException(409, {
+          message: 'Another passenger is already in transit',
+        });
+      }
+    }
+
     const isTerminalStatus =
       status === 'completed' || status === 'canceled' || status === 'cancelled';
     try {

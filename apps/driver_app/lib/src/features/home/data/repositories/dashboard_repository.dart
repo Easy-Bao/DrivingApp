@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/home/data/data_sources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
@@ -7,12 +8,15 @@ import 'package:fpdart/fpdart.dart';
 
 class DashboardRepository implements IDashboardRepository {
   final TripRemoteDataSource _remoteDataSource;
+  final DriverRemoteDataSource _driverRemoteDataSource;
   final SecureSessionService _sessionService;
 
   DashboardRepository({
     required TripRemoteDataSource remoteDataSource,
+    required DriverRemoteDataSource driverRemoteDataSource,
     required SecureSessionService sessionService,
   }) : _remoteDataSource = remoteDataSource,
+       _driverRemoteDataSource = driverRemoteDataSource,
        _sessionService = sessionService;
 
   Failure _mapExceptionToFailure(Object error) {
@@ -43,6 +47,30 @@ class DashboardRepository implements IDashboardRepository {
       throw CacheException(
         message: 'Failed to access secure storage session: $error',
       );
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateOnlineStatus({
+    required bool isOnline,
+    required double lat,
+    required double lng,
+  }) async {
+    try {
+      final driverId = await _getDriverId();
+      if (driverId.isEmpty) {
+        return const Left(CacheFailure('Driver ID is not registered.'));
+      }
+
+      await _driverRemoteDataSource.updateOnlineStatus(
+        driverId: driverId,
+        isOnline: isOnline,
+        lat: lat,
+        lng: lng,
+      );
+      return const Right(null);
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
     }
   }
 

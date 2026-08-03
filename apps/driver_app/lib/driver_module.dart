@@ -7,6 +7,7 @@ import 'package:driver_app/src/features/activity/domain/repositories/i_driver_ac
 import 'package:driver_app/src/features/chat/chat_module.dart';
 import 'package:driver_app/src/features/home/home_module.dart';
 import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
+import 'package:driver_app/src/features/home/data/data_sources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/presentation/widgets/driver_tab.dart';
@@ -28,6 +29,7 @@ class DriverModule extends Module {
       ..addLazySingleton<IDashboardRepository>(
         (i) => DashboardRepository(
           remoteDataSource: i.get<TripRemoteDataSource>(),
+          driverRemoteDataSource: i.get<DriverRemoteDataSource>(),
           sessionService: i.get<SecureSessionService>(),
         ),
       )

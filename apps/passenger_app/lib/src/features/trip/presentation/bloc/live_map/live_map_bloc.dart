@@ -30,10 +30,16 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
-        .listen((event) {
-          dev.log(
-            'Telemetry dispatch (${_biddingDataSource.runtimeType}): ${event.lat}, ${event.lng}',
-          );
+        .listen((event) async {
+          try {
+            await _biddingDataSource.sendPassengerLocation(
+              rideId: event.rideId,
+              lat: event.lat,
+              lng: event.lng,
+            );
+          } catch (error) {
+            dev.log('Passenger telemetry update failed: $error');
+          }
         });
 
     on<DispatchTelemetryLocationEvent>((event, emit) {

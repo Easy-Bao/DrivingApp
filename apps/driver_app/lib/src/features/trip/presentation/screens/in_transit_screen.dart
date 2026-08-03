@@ -12,6 +12,7 @@ import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_
 import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_meta_row_widget.dart';
 import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
 import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_status_badge_widget.dart';
+import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -42,6 +43,8 @@ class _InTransitScreenState extends State<InTransitScreen> {
   bool _isLoading = true;
   double _destLat = 0.0;
   double _destLng = 0.0;
+  double _passengerLat = 0.0;
+  double _passengerLng = 0.0;
   Timer? _trackingTimer;
 
   @override
@@ -62,6 +65,15 @@ class _InTransitScreenState extends State<InTransitScreen> {
     _trackingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (!mounted) return;
       try {
+        final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId;
+        if (rideId != null && rideId.isNotEmpty) {
+          final location = await Modular.get<TelemetryRemoteDataSource>()
+              .fetchPassengerLocation(rideId);
+          if (location['lat'] != null && location['lng'] != null) {
+            _passengerLat = (location['lat'] as num).toDouble();
+            _passengerLng = (location['lng'] as num).toDouble();
+          }
+        }
         final pos =
             await LocationService.getCurrentPosition() ??
             LocationService.lastPosition;
@@ -79,8 +91,10 @@ class _InTransitScreenState extends State<InTransitScreen> {
               UpdateLocationsAndDrawRouteEvent(
                 driverLat: pos.latitude,
                 driverLng: pos.longitude,
-                passengerLat: _destLat,
-                passengerLng: _destLng,
+                passengerLat: _passengerLat,
+                passengerLng: _passengerLng,
+                routeTargetLat: _destLat,
+                routeTargetLng: _destLng,
               ),
             );
           }
@@ -109,6 +123,12 @@ class _InTransitScreenState extends State<InTransitScreen> {
         _destLng = places.first.longitude;
       }
     }
+    _passengerLat = _destLat;
+    _passengerLng = _destLng;
+    if (rideState is RideFlowInTransit) {
+      _passengerLat = rideState.passengerLat;
+      _passengerLng = rideState.passengerLng;
+    }
 
     if (mounted) {
       setState(() {
@@ -124,8 +144,10 @@ class _InTransitScreenState extends State<InTransitScreen> {
       UpdateLocationsAndDrawRouteEvent(
         driverLat: dLat,
         driverLng: dLng,
-        passengerLat: _destLat,
-        passengerLng: _destLng,
+        passengerLat: _passengerLat,
+        passengerLng: _passengerLng,
+        routeTargetLat: _destLat,
+        routeTargetLng: _destLng,
       ),
     );
   }
@@ -149,7 +171,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   Future<void> _completeTrip(BuildContext context) async {
-    await BlocProvider.of<RideFlowCubit>(
+    final finalFare = await BlocProvider.of<RideFlowCubit>(
       context,
     ).endRide(distanceKm: widget.distance, durationMinutes: 10);
     if (context.mounted) {
@@ -159,7 +181,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
           'pickup': widget.pickup,
           'dropoff': widget.dropoff,
           'distance': widget.distance,
-          'fare': widget.fare,
+          'fare': finalFare,
           'duration': widget.duration,
         },
       );
@@ -168,8 +190,8 @@ class _InTransitScreenState extends State<InTransitScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<LiveMapBloc>(
-      create: (_) => Modular.get<LiveMapBloc>(),
+    return BlocProvider<LiveMapBloc>.value(
+      value: Modular.get<LiveMapBloc>(),
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;

@@ -95,11 +95,11 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           final res = await Modular.get<BiddingRemoteDataSource>().requestRide({
             'passenger_id': passengerId,
             'ride_type': widget.rideType,
-            'pickup_lat': pickupLat,
-            'pickup_lng': pickupLng,
+            'pickup_latitude': pickupLat,
+            'pickup_longitude': pickupLng,
             'pickup_name': pickupName,
-            'dropoff_lat': widget.destination.latitude,
-            'dropoff_lng': widget.destination.longitude,
+            'dropoff_latitude': widget.destination.latitude,
+            'dropoff_longitude': widget.destination.longitude,
             'dropoff_name': widget.destination.name,
             'fare': widget.fare,
           });

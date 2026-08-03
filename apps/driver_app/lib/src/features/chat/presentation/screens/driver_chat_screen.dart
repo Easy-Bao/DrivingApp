@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:chat_service/chat_service.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
+import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/features/chat/presentation/bloc/chat_cubit.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
 
@@ -104,7 +105,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       chatRepository: ChatRepository(
         remoteDataSource: WebSocketChatRemoteDataSource(),
         currentUserId: currentUserId,
-        clientDio: Dio(),
+        clientDio: Dio(BaseOptions(baseUrl: EnvConfig.httpBaseUrl)),
       ),
     );
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
@@ -126,11 +127,14 @@ class _DriverChatScreenState extends State<DriverChatScreen>
     super.dispose();
   }
 
-  void _send(String text) {
+  Future<void> _send(String text) async {
     if (text.trim().isEmpty) return;
-    _chatCubit.sendMessage(text);
-    _msgCtrl.clear();
-    _scrollDown();
+    final sent = await _chatCubit.sendMessage(text);
+    if (!mounted) return;
+    if (sent) {
+      _msgCtrl.clear();
+      _scrollDown();
+    }
   }
 
   void _scrollDown() {
@@ -338,7 +342,8 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                                   vertical: 12,
                                 ),
                               ),
-                              onSubmitted: (_) => _send(_msgCtrl.text),
+                              onSubmitted: (_) =>
+                                  unawaited(_send(_msgCtrl.text)),
                             ),
                           ),
                         ),
@@ -354,7 +359,7 @@ class _DriverChatScreenState extends State<DriverChatScreen>
                               color: Colors.white,
                               size: 20,
                             ),
-                            onPressed: () => _send(_msgCtrl.text),
+                            onPressed: () => unawaited(_send(_msgCtrl.text)),
                           ),
                         ),
                       ],

@@ -3,6 +3,12 @@ import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart
 import 'package:fpdart/fpdart.dart';
 
 abstract class IDashboardRepository {
+  Future<Either<Failure, void>> updateOnlineStatus({
+    required bool isOnline,
+    required double lat,
+    required double lng,
+  });
+
   Future<Either<Failure, double>> getTodayEarnings();
 
   Future<Either<Failure, int>> getTodayTrips();

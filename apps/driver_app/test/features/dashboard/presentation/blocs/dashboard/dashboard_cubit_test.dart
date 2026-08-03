@@ -33,6 +33,13 @@ void main() {
       'emits [loading=true, loaded with values] on success',
       build: () {
         when(
+          () => repo.updateOnlineStatus(
+            isOnline: any(named: 'isOnline'),
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right(null));
+        when(
           () => repo.getTodayEarnings(),
         ).thenAnswer((_) async => const Right(385.50));
         when(
@@ -58,6 +65,13 @@ void main() {
     blocTest<DashboardCubit, DashboardState>(
       'emits [loading=true, loading=false] on repository error',
       build: () {
+        when(
+          () => repo.updateOnlineStatus(
+            isOnline: any(named: 'isOnline'),
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right(null));
         when(
           () => repo.getTodayEarnings(),
         ).thenAnswer((_) async => const Left(ServerFailure('network')));
@@ -88,6 +102,13 @@ void main() {
       'going online fetches heatmap and emits [online+loading, online+cells]',
       build: () {
         when(
+          () => repo.updateOnlineStatus(
+            isOnline: any(named: 'isOnline'),
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right(null));
+        when(
           () => repo.getSurgeHeatmap(
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
@@ -110,6 +131,13 @@ void main() {
       'going online with heatmap failure still stays online with empty cells',
       build: () {
         when(
+          () => repo.updateOnlineStatus(
+            isOnline: any(named: 'isOnline'),
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right(null));
+        when(
           () => repo.getSurgeHeatmap(
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
@@ -130,7 +158,16 @@ void main() {
 
     blocTest<DashboardCubit, DashboardState>(
       'going offline clears online flag and surge cells',
-      build: () => _makeCubit(repo),
+      build: () {
+        when(
+          () => repo.updateOnlineStatus(
+            isOnline: any(named: 'isOnline'),
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right(null));
+        return _makeCubit(repo);
+      },
       seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [const DashboardState(isOnline: false)],

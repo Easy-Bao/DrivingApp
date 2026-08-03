@@ -30,6 +30,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     required String driverName,
     required String vehiclePlate,
     required String vehicleType,
+    double destinationLat = 0,
+    double destinationLng = 0,
   }) async {
     _ticker?.cancel();
 
@@ -39,7 +41,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     }
     final activeRideId = await session.readActiveRideId() ?? '';
 
-    final routePoints = await _repository.getRoutePolyline(
+    var routePoints = await _repository.getRoutePolyline(
       startLat: startLat,
       startLng: startLng,
       endLat: endLat,
@@ -47,6 +49,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     );
 
     double progress = 0.0;
+    var destinationRouteActive = false;
 
     _ticker = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (isClosed) return;
@@ -114,6 +117,18 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               driverLng = pos.lng;
             }
 
+            if (rideUpdate.status == RideStatus.inTransit &&
+                !destinationRouteActive) {
+              routePoints = await _repository.getRoutePolyline(
+                startLat: driverLat,
+                startLng: driverLng,
+                endLat: destinationLat,
+                endLng: destinationLng,
+              );
+              progress = 0;
+              destinationRouteActive = true;
+            }
+
             final eta = _getEtaLabel(rideUpdate.status);
 
             emit(
@@ -123,6 +138,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 progress: progress,
                 eta: eta,
                 routePoints: routePoints,
+                status: rideUpdate.status,
                 driverName: rideUpdate.driverName,
                 vehiclePlate: rideUpdate.vehiclePlate,
                 vehicleType: rideUpdate.vehicleType,
@@ -160,6 +176,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               driverName: driverName,
               vehiclePlate: vehiclePlate,
               vehicleType: vehicleType,
+              status: RideStatus.accepted,
             ),
           );
         }

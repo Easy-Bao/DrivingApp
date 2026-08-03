@@ -11,6 +11,7 @@ import 'package:driver_app/src/features/trip/data/data_sources/bidding_remote_da
 import 'package:driver_app/src/features/trip/data/data_sources/passenger_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/data_sources/driver_remote_data_source.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -47,6 +48,9 @@ class AppModule extends Module {
       )
       ..addLazySingleton<PassengerRemoteDataSource>(
         (i) => PassengerRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<DriverRemoteDataSource>(
+        (i) => DriverRemoteDataSourceImpl(i.get<Dio>()),
       )
       ..addLazySingleton<AuthRepository>(
         (i) => AuthRepository(

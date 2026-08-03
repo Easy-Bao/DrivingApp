@@ -27,8 +27,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     required String rideId,
     required String status,
     required String passengerName,
-    required double pickupLat,
-    required double pickupLng,
+    double pickupLat = 0,
+    double pickupLng = 0,
     required double destLat,
     required double destLng,
   }) {
@@ -38,6 +38,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         RideFlowWaitingPassenger(
           passengerName: passengerName,
           waitTimeSeconds: 0,
+          pickupLat: pickupLat,
+          pickupLng: pickupLng,
         ),
       );
     } else if (status == 'in_transit') {
@@ -47,6 +49,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           destLat: destLat,
           destLng: destLng,
           distanceKm: 3.2,
+          passengerLat: pickupLat,
+          passengerLng: pickupLng,
         ),
       );
     } else {
@@ -70,7 +74,11 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     final driverId = await _sessionService.readDriverId();
     if (driverId == null || driverId.isEmpty) {
-      emit(const RideFlowError('Driver session is unavailable. Please sign in again.'));
+      emit(
+        const RideFlowError(
+          'Driver session is unavailable. Please sign in again.',
+        ),
+      );
       return;
     }
 
@@ -98,7 +106,11 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
   }
 
-  Future<void> arriveAtPickup(String passengerName) async {
+  Future<void> arriveAtPickup(
+    String passengerName, {
+    double pickupLat = 0,
+    double pickupLng = 0,
+  }) async {
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
 
@@ -117,6 +129,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       RideFlowWaitingPassenger(
         passengerName: passengerName,
         waitTimeSeconds: 0,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
       ),
     );
     _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -126,27 +140,41 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         RideFlowWaitingPassenger(
           passengerName: passengerName,
           waitTimeSeconds: _elapsedWaitTime,
+          pickupLat: pickupLat,
+          pickupLng: pickupLng,
         ),
       );
     });
   }
 
-  Future<void> startRide({
+  Future<bool> startRide({
     required String passengerName,
     required double destLat,
     required double destLng,
     required double distanceKm,
+    double passengerLat = 0,
+    double passengerLng = 0,
   }) async {
     _waitTimer?.cancel();
 
     if (_activeRideId != null) {
       try {
-        await _tripRemoteDataSource.updateRideStatus(
+        final updated = await _tripRemoteDataSource.updateRideStatus(
           tripId: _activeRideId!,
           status: 'in_transit',
         );
+        if (!updated) {
+          emit(
+            const RideFlowError(
+              'Another passenger is already in transit. Complete that trip first.',
+            ),
+          );
+          return false;
+        }
       } catch (error) {
         dev.log('Error updating status to in_transit: $error');
+        emit(const RideFlowError('Unable to start this trip right now.'));
+        return false;
       }
     }
 
@@ -156,18 +184,27 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         destLat: destLat,
         destLng: destLng,
         distanceKm: distanceKm,
+        passengerLat: passengerLat,
+        passengerLng: passengerLng,
       ),
     );
+    return true;
   }
 
-  Future<void> endRide({
+  Future<double> endRide({
     required double distanceKm,
     required double durationMinutes,
   }) async {
     _waitTimer?.cancel();
 
+    var finalFare = distanceKm * 15 + 30;
     if (_activeRideId != null) {
       try {
+        final ride = await _tripRemoteDataSource.getRideStatus(_activeRideId!);
+        final serverFare = double.tryParse('${ride['fare']}');
+        if (serverFare != null && serverFare > 0) {
+          finalFare = serverFare;
+        }
         await _tripRemoteDataSource.updateRideStatus(
           tripId: _activeRideId!,
           status: 'completed',
@@ -177,8 +214,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       }
     }
 
-    final fare = distanceKm * 15 + 30;
-    emit(RideFlowComplete(fare: fare));
+    emit(RideFlowComplete(fare: finalFare));
+    return finalFare;
   }
 
   void reset() {

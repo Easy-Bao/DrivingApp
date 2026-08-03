@@ -358,7 +358,12 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
 
   Widget _buildLogoutButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.goNamed(AuthRoutes.signin),
+      onTap: () async {
+        await Modular.get<SecureSessionService>().clearSession();
+        if (context.mounted) {
+          context.goNamed(AuthRoutes.signin);
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(

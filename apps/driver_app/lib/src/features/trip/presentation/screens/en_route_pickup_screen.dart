@@ -215,7 +215,16 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
     final passengerName = state is RideFlowEnRoutePickup
         ? state.passengerName
         : 'Passenger';
-    BlocProvider.of<RideFlowCubit>(context).arriveAtPickup(passengerName);
+    final pickupState = state is RideFlowEnRoutePickup ? state : null;
+    BlocProvider.of<RideFlowCubit>(context).arriveAtPickup(
+      passengerName,
+      pickupLat:
+          pickupState?.pickupLat ?? LocationService.lastPosition?.latitude ?? 0,
+      pickupLng:
+          pickupState?.pickupLng ??
+          LocationService.lastPosition?.longitude ??
+          0,
+    );
     context.pushReplacementNamed(
       TripRoutes.waitingPassenger,
       extra: {
@@ -230,8 +239,8 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<LiveMapBloc>(
-      create: (_) => Modular.get<LiveMapBloc>(),
+    return BlocProvider<LiveMapBloc>.value(
+      value: Modular.get<LiveMapBloc>(),
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;

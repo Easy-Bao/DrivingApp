@@ -13,6 +13,7 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
@@ -34,8 +35,10 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   AppMapController? _mapController;
   bool _initialized = false;
   bool _routeDrawn = false;
+  RideStatus? _lastMapStatus;
   dynamic _passengerMarkerManager;
   dynamic _driverMarkerManager;
+  dynamic _destinationMarkerManager;
   StreamSubscription<Position>? _locationSubscription;
   LiveMapBloc? _liveMapBloc;
 
@@ -57,9 +60,6 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       unawaited(_locationSubscription!.cancel());
     }
     _chatMessagesPollTimer?.cancel();
-    if (_liveMapBloc != null) {
-      unawaited(_liveMapBloc!.close());
-    }
     super.dispose();
   }
 
@@ -141,6 +141,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           driverName: widget.ride.driverName,
           vehiclePlate: widget.ride.vehiclePlate,
           vehicleType: widget.ride.vehicleType,
+          destinationLat: widget.ride.destLat,
+          destinationLng: widget.ride.destLng,
         ),
       );
     }
@@ -150,6 +152,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
     double driverLat,
     double driverLng,
     List<List<double>>? routePoints,
+    RideStatus status,
   ) async {
     if (_mapController == null) return;
     final passengerLat =
@@ -174,13 +177,21 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       if (_driverMarkerManager != null) {
         await MapProvider.clearAnnotations(_driverMarkerManager);
       }
+      if (_destinationMarkerManager != null) {
+        await MapProvider.clearAnnotations(_destinationMarkerManager);
+      }
 
+      final isInTransit = status == RideStatus.inTransit;
+      final primaryLat = isInTransit ? widget.ride.destLat : passengerLat;
+      final primaryLng = isInTransit ? widget.ride.destLng : passengerLng;
       _passengerMarkerManager = await MapProvider.addMarker(
         _mapController!,
-        passengerLat,
-        passengerLng,
+        primaryLat,
+        primaryLng,
         isOrigin: true,
-        label: 'Current location\nYou are here',
+        label: isInTransit
+            ? 'Destination\n${widget.ride.destination}'
+            : 'Current location\nYou are here',
         color: const Color(0xFF222222),
       );
       _driverMarkerManager = await MapProvider.addMarker(
@@ -191,10 +202,20 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
         label: 'Your driver\n${widget.ride.driverName}',
         color: const Color(0xFFE53935),
       );
+      if (isInTransit) {
+        _destinationMarkerManager = await MapProvider.addMarker(
+          _mapController!,
+          passengerLat,
+          passengerLng,
+          label: 'Passenger\nCurrent location',
+          color: AppTheme.secondaryColor,
+        );
+      }
 
       await MapProvider.fitBounds(_mapController!, [
-        LatLng(passengerLat, passengerLng),
+        LatLng(primaryLat, primaryLng),
         LatLng(driverLat, driverLng),
+        if (isInTransit) LatLng(passengerLat, passengerLng),
       ], padding: 80.0);
     } catch (error) {
       debugPrint('Error updating track map: $error');
@@ -262,26 +283,28 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
         if (state is TrackDriverInProgress) {
+          if (_lastMapStatus != state.status) {
+            _routeDrawn = false;
+            _lastMapStatus = state.status;
+          }
           unawaited(
             _updateMapElements(
               state.driverLat,
               state.driverLng,
               state.routePoints,
+              state.status,
             ),
           );
         } else if (state is TrackDriverCompleted) {
           unawaited(
             context.pushNamed(
-              ActivityRoutes.rating,
-              queryParameters: {
-                'driverId': state.driverId,
-                'driverName': state.driverName,
-              },
+              ActivityRoutes.passengerPayment,
+              extra: widget.ride,
             ),
           );
         } else if (state is TrackDriverCanceled) {
           if (mounted) {
-            Navigator.of(context).pop();
+            context.goNamed(HomeRoutes.home);
           }
         }
       },
@@ -315,7 +338,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.of(context).pop();
+                        context.goNamed(HomeRoutes.home);
                       },
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -370,7 +393,10 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'ARRIVING IN',
+                                state is TrackDriverInProgress &&
+                                        state.status == RideStatus.inTransit
+                                    ? 'TRIP TO'
+                                    : 'ARRIVING IN',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -403,10 +429,24 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
               alignment: Alignment.bottomCenter,
               child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
                 builder: (context, state) {
-                  final statusTitle = state is TrackDriverInProgress
+                  final isInTransit =
+                      state is TrackDriverInProgress &&
+                      state.status == RideStatus.inTransit;
+                  final hasArrived =
+                      state is TrackDriverInProgress &&
+                      state.status == RideStatus.arrived;
+                  final statusTitle = isInTransit
+                      ? 'You are on the trip'
+                      : hasArrived
+                      ? 'Driver has arrived'
+                      : state is TrackDriverInProgress
                       ? 'Driver En Route'
                       : 'Driver Assigned';
-                  final statusSubtitle = state is TrackDriverInProgress
+                  final statusSubtitle = isInTransit
+                      ? 'Heading to ${widget.ride.destination}'
+                      : hasArrived
+                      ? 'Please meet your driver at pickup'
+                      : state is TrackDriverInProgress
                       ? 'Heading towards pickup location'
                       : 'Preparing to head to pickup';
                   final etaText = state is TrackDriverInProgress

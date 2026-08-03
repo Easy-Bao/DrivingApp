@@ -7,6 +7,10 @@ class RideUpdate extends Equatable {
   final String driverName;
   final String vehiclePlate;
   final String vehicleType;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? destinationLat;
+  final double? destinationLng;
 
   const RideUpdate({
     required this.status,
@@ -14,6 +18,10 @@ class RideUpdate extends Equatable {
     this.driverName = 'Driver',
     this.vehiclePlate = '—',
     this.vehicleType = 'Bao Bao',
+    this.pickupLat,
+    this.pickupLng,
+    this.destinationLat,
+    this.destinationLng,
   });
 
   factory RideUpdate.fromJson(Map<String, dynamic> json) {
@@ -32,6 +40,10 @@ class RideUpdate extends Equatable {
           json['vehicle_type'] as String? ??
           json['vehicleType'] as String? ??
           'Bao Bao',
+      pickupLat: (json['pickup_latitude'] as num?)?.toDouble(),
+      pickupLng: (json['pickup_longitude'] as num?)?.toDouble(),
+      destinationLat: (json['dropoff_latitude'] as num?)?.toDouble(),
+      destinationLng: (json['dropoff_longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -52,5 +64,9 @@ class RideUpdate extends Equatable {
     driverName,
     vehiclePlate,
     vehicleType,
+    pickupLat,
+    pickupLng,
+    destinationLat,
+    destinationLng,
   ];
 }

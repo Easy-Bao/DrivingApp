@@ -1,3 +1,4 @@
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
@@ -10,6 +11,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
   final VoidCallback onBookDirectPressed;
   final VoidCallback onSearchAllDriversPressed;
   final VoidCallback onCancelRidePressed;
+  final bool compact;
 
   const FindingDriverNearestPanelWidget({
     super.key,
@@ -19,11 +21,16 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
     required this.onBookDirectPressed,
     required this.onSearchAllDriversPressed,
     required this.onCancelRidePressed,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final driver = state.driver;
+    if (compact) {
+      return _buildCompactPanel(driver);
+    }
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       decoration: BoxDecoration(
@@ -306,12 +313,9 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(32),
                     ),
                   ),
-                  child: Text(
-                    'Book ${driver.name.split(' ').first}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: const Text(
+                    'Book',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -349,6 +353,130 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactPanel(DriverModel driver) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 24,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.borderSide,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  LucideIcons.user,
+                  color: AppTheme.primaryColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      driver.name,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${driver.vehicleType} • ${driver.plateNumber} • '
+                      '${driver.distanceKm.toStringAsFixed(1)} km away',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '₱${fare.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onViewFullProfilePressed,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                    side: const BorderSide(color: AppTheme.primaryColor),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
+                  child: const Text('View Profile'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: onBookDirectPressed,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
+                  child: const Text('Book'),
+                ),
+              ),
+            ],
+          ),
+          TextButton(
+            onPressed: onCancelRidePressed,
+            child: const Text(
+              'Cancel Ride',
+              style: TextStyle(color: AppTheme.cancel),
+            ),
           ),
         ],
       ),

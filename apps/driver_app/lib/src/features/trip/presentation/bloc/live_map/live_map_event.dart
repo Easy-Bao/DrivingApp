@@ -21,12 +21,16 @@ class UpdateLocationsAndDrawRouteEvent extends LiveMapEvent {
   final double driverLng;
   final double passengerLat;
   final double passengerLng;
+  final double? routeTargetLat;
+  final double? routeTargetLng;
 
   const UpdateLocationsAndDrawRouteEvent({
     required this.driverLat,
     required this.driverLng,
     required this.passengerLat,
     required this.passengerLng,
+    this.routeTargetLat,
+    this.routeTargetLng,
   });
 }
 

@@ -10,6 +10,7 @@ export const drivers = pgTable('drivers', {
   passwordHash: text('password_hash').notNull(),
   rating: doublePrecision('rating').default(5.0).notNull(),
   isOnline: boolean('is_online').default(false).notNull(),
+  isVerified: boolean('is_verified').default(false).notNull(),
   lat: doublePrecision('lat'),
   lng: doublePrecision('lng'),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),

@@ -86,11 +86,12 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
 
     try {
       final datasource = Modular.get<BiddingRemoteDataSource>();
-      final res = await datasource.requestRide({
-        'distance_km': distanceKm,
-        'duration_minutes': durationMins,
-      });
-      final totalFare = (res['estimated_fare'] as num?)?.toDouble();
+      final res = await datasource.fetchFareEstimate(
+        distanceKm: distanceKm,
+        durationMinutes: durationMins,
+        rideType: 'Solo Ride',
+      );
+      final totalFare = (res['total_fare'] as num?)?.toDouble();
       if (totalFare != null && mounted) {
         setState(() {
           initializeRideOptionsData({'Solo Ride': totalFare});

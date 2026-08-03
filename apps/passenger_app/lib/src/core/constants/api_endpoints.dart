@@ -10,7 +10,7 @@ class ApiEndpoints {
   static const String resetPassword = '/auth/reset-password';
   static const String refreshToken = '/auth/refresh';
   static const String fareEstimate = '/bids/fare';
-  static const String createBooking = '/bids/session';
+  static const String createBooking = '/bids';
   static const String searchPlaces = '/places/search';
 
   static Uri buildChatWebSocketUri({

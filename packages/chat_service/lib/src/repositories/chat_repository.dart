@@ -124,7 +124,7 @@ class ChatRepository implements IChatRepository {
           );
         }
 
-        if (type == 'room_locked') {
+        if (type == 'room_locked' || type == 'locked') {
           final reason = decoded['reason'] as String? ?? 'Trip completed';
           return Right(ChatRoomLocked(reason));
         }

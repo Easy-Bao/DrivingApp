@@ -89,14 +89,17 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
     await MapProvider.fitBounds(_mapController!, [
       LatLng(event.driverLat, event.driverLng),
-      LatLng(event.passengerLat, event.passengerLng),
+      LatLng(
+        event.routeTargetLat ?? event.passengerLat,
+        event.routeTargetLng ?? event.passengerLng,
+      ),
     ]);
 
     final route = await MapProvider.getRoute(
       event.driverLat,
       event.driverLng,
-      event.passengerLat,
-      event.passengerLng,
+      event.routeTargetLat ?? event.passengerLat,
+      event.routeTargetLng ?? event.passengerLng,
     );
     if (route != null && route.polylinePoints.isNotEmpty) {
       await MapProvider.addPolyline(

@@ -53,4 +53,16 @@ export class TelemetryService {
     }
     return loc;
   }
+
+  updatePassengerLocation(rideId: string, lat: number, lng: number) {
+    this.repository.updatePassengerLocation(rideId, lat, lng, new Date().toISOString());
+  }
+
+  getPassengerLocation(rideId: string) {
+    const loc = this.repository.getPassengerLocation(rideId);
+    if (!loc) {
+      throw new HTTPException(404, { message: 'No passenger location telemetry found' });
+    }
+    return loc;
+  }
 }

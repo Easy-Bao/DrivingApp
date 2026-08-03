@@ -28,11 +28,13 @@ class AuthRepository implements IAuthRepository {
         password: password,
       );
 
-      final token = responseData['token'] as String? ?? '';
+      final authenticationData =
+          (responseData['data'] as Map<String, dynamic>?) ?? responseData;
+      final token = authenticationData['token'] as String? ?? '';
       final driver =
-          (responseData['driver'] as Map<String, dynamic>?) ??
-          (responseData['user'] as Map<String, dynamic>?) ??
-          responseData;
+          (authenticationData['driver'] as Map<String, dynamic>?) ??
+          (authenticationData['user'] as Map<String, dynamic>?) ??
+          authenticationData;
       final driverId = driver['id'] as String? ?? '';
       final driverName = driver['name'] as String? ?? '';
       final driverEmail = driver['email'] as String? ?? '';
@@ -42,9 +44,11 @@ class AuthRepository implements IAuthRepository {
           driver['plateNumber'] as String? ?? 'Vehicle plate unavailable';
       final rating = (driver['rating'] as num?)?.toDouble() ?? 0.0;
 
-      if (token.isNotEmpty) {
-        await _secureSessionService.saveToken(token);
+      if (token.isEmpty || driverId.isEmpty) {
+        throw const FormatException('Authentication response is incomplete');
       }
+
+      await _secureSessionService.saveToken(token);
       await _secureSessionService.saveDriverId(driverId);
 
       final prefs = await SharedPreferences.getInstance();

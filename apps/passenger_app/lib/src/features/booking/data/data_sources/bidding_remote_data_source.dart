@@ -1,9 +1,15 @@
 import 'package:dio/dio.dart';
 
 abstract class BiddingRemoteDataSource {
+  Future<Map<String, dynamic>> fetchFareEstimate({
+    required double distanceKm,
+    required double durationMinutes,
+    required String rideType,
+  });
+
   Future<Map<String, dynamic>> requestRide(Map<String, dynamic> body);
   Future<List<dynamic>> fetchOffers(String sessionId);
-  Future<bool> acceptOffer({
+  Future<Map<String, dynamic>> acceptOffer({
     required String sessionId,
     required String offerId,
   });
@@ -17,6 +23,11 @@ abstract class BiddingRemoteDataSource {
   Future<List<dynamic>> fetchOnlineDrivers();
   Future<Map<String, dynamic>?> getRideStatus(String rideId);
   Future<Map<String, dynamic>?> fetchDriverLocation(String driverId);
+  Future<bool> sendPassengerLocation({
+    required String rideId,
+    required double lat,
+    required double lng,
+  });
   Future<bool> updateRideStatus(String rideId, String status);
   Future<bool> submitDriverReview({
     required String driverId,
@@ -33,38 +44,50 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   BiddingRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<Map<String, dynamic>> requestRide(Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> fetchFareEstimate({
+    required double distanceKm,
+    required double durationMinutes,
+    required String rideType,
+  }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/session',
-      data: body,
+      '/bids/fare',
+      data: {
+        'ride_type': rideType,
+        'distance_km': distanceKm,
+        'duration_minutes': durationMinutes,
+      },
     );
     return response.data ?? {};
   }
 
   @override
+  Future<Map<String, dynamic>> requestRide(Map<String, dynamic> body) async {
+    final response = await _dio.post<Map<String, dynamic>>('/bids', data: body);
+    return response.data ?? {};
+  }
+
+  @override
   Future<List<dynamic>> fetchOffers(String sessionId) async {
-    final response = await _dio.get<List<dynamic>>(
-      '/bids/session/$sessionId/offers',
-    );
+    final response = await _dio.get<List<dynamic>>('/bids/$sessionId/offers');
     return response.data ?? [];
   }
 
   @override
-  Future<bool> acceptOffer({
+  Future<Map<String, dynamic>> acceptOffer({
     required String sessionId,
     required String offerId,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/session/$sessionId/accept',
+      '/bids/$sessionId/offers/$offerId/accept',
       data: {'offer_id': offerId},
     );
-    return response.statusCode == 200;
+    return response.data ?? {};
   }
 
   @override
   Future<bool> cancelSession(String sessionId) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/session/$sessionId/cancel',
+      '/bids/$sessionId/cancel',
     );
     return response.statusCode == 200;
   }
@@ -98,24 +121,35 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/bids/rides/$rideId/status',
-    );
+    final response = await _dio.get<Map<String, dynamic>>('/rides/$rideId');
     return response.data;
   }
 
   @override
   Future<Map<String, dynamic>?> fetchDriverLocation(String driverId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/telemetry/driver/$driverId/location',
+      '/telemetry/location/$driverId',
     );
     return response.data;
   }
 
   @override
+  Future<bool> sendPassengerLocation({
+    required String rideId,
+    required double lat,
+    required double lng,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/telemetry/passenger/$rideId',
+      data: {'lat': lat, 'lng': lng},
+    );
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  @override
   Future<bool> updateRideStatus(String rideId, String status) async {
-    final response = await _dio.patch<Map<String, dynamic>>(
-      '/bids/rides/$rideId/status',
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/rides/$rideId/status',
       data: {'status': status},
     );
     return response.statusCode == 200;
@@ -141,9 +175,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> getDriverProfile(String driverId) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/drivers/$driverId/profile',
-    );
+    final response = await _dio.get<Map<String, dynamic>>('/drivers/$driverId');
     return response.data ?? {};
   }
 }

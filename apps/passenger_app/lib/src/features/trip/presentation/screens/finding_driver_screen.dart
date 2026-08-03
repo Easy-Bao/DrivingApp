@@ -44,7 +44,7 @@ class FindingDriverScreen extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<BookingBloc>.value(value: Modular.get<BookingBloc>()),
-        BlocProvider<LiveMapBloc>(create: (_) => Modular.get<LiveMapBloc>()),
+        BlocProvider<LiveMapBloc>.value(value: Modular.get<LiveMapBloc>()),
       ],
       child: FindingDriverScreenContent(
         rideType: rideType,
@@ -287,7 +287,9 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
             if (state is NearestDriverFound) {
               setState(() {
                 _nearbyDrivers = state.nearbyDrivers;
-                _selectedDriver ??= state.driver;
+                _selectedDriver = state.nearbyDrivers.length > 1
+                    ? (_selectedDriver ?? state.driver)
+                    : null;
               });
               final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
               liveMapBloc.add(
@@ -311,8 +313,14 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
             } else if (state is BookingDriverMatched) {
               final match = state.matchResult;
               final navExtra = <String, dynamic>{
+                'rideType': widget.rideType,
+                'destination': widget.destination,
+                'distance': widget.distance,
+                'duration': widget.duration,
+                'pickupAddress': widget.pickupAddress,
                 'driverId': match.driverId,
                 'driverName': match.driverName,
+                'driverRating': '5.0',
                 'vehicleType': match.vehicleType,
                 'plateNumber': match.plateNumber,
                 'fare': match.proposedFare,
@@ -560,6 +568,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                                   _startDirectBooking(state.driver),
                               onSearchAllDriversPressed: _startOpenBooking,
                               onCancelRidePressed: _handleCancel,
+                              compact: state.nearbyDrivers.length <= 1,
                             );
                           } else if (state is BookingSearching) {
                             return FindingDriverSearchingPanelWidget(

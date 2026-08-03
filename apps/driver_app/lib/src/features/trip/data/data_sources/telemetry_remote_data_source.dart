@@ -27,9 +27,9 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
     final response = await _dio.post<Map<String, dynamic>>(
       '/telemetry/location',
       data: {
-        'driver_id': driverId,
-        'latitude': lat,
-        'longitude': lng,
+        'driverId': driverId,
+        'lat': lat,
+        'lng': lng,
         'heading': ?heading,
         'speed': ?speed,
       },

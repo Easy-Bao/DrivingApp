@@ -1,3 +1,4 @@
+import 'package:core_models/core_models.dart';
 import 'package:equatable/equatable.dart';
 
 sealed class TrackDriverState extends Equatable {
@@ -20,6 +21,7 @@ class TrackDriverInProgress extends TrackDriverState {
   final String vehiclePlate;
   final String vehicleType;
   final List<List<double>>? routePoints;
+  final RideStatus status;
 
   const TrackDriverInProgress({
     required this.driverLat,
@@ -30,6 +32,7 @@ class TrackDriverInProgress extends TrackDriverState {
     required this.vehiclePlate,
     required this.vehicleType,
     this.routePoints,
+    this.status = RideStatus.accepted,
   });
 
   @override
@@ -42,6 +45,7 @@ class TrackDriverInProgress extends TrackDriverState {
     vehiclePlate,
     vehicleType,
     routePoints,
+    status,
   ];
 }
 

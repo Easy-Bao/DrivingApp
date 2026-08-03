@@ -112,8 +112,6 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
           listener: (context, state) {
             if (state is SignInSuccess) {
               context.goNamed(HomeRoutes.dashboard);
-            } else if (state is SignInFailure) {
-              CustomToast.show(context, state.errorMessage);
             }
           },
           builder: (context, state) {

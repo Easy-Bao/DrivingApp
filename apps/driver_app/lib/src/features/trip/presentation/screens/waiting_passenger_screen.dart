@@ -114,8 +114,9 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
         ? state.passengerName
         : 'Passenger';
 
-    final pickupLat = LocationService.lastPosition?.latitude ?? _defaultLat;
-    final pickupLng = LocationService.lastPosition?.longitude ?? _defaultLng;
+    final waitingState = state is RideFlowWaitingPassenger ? state : null;
+    final pickupLat = waitingState?.pickupLat ?? _defaultLat;
+    final pickupLng = waitingState?.pickupLng ?? _defaultLng;
 
     double destLat = pickupLat + 0.03;
     double destLng = pickupLng + 0.03;
@@ -130,14 +131,16 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
 
     if (!mounted) return;
 
-    await BlocProvider.of<RideFlowCubit>(context).startRide(
+    final started = await BlocProvider.of<RideFlowCubit>(context).startRide(
       passengerName: passengerName,
       destLat: destLat,
       destLng: destLng,
       distanceKm: widget.distance,
+      passengerLat: pickupLat,
+      passengerLng: pickupLng,
     );
 
-    if (mounted) {
+    if (mounted && started) {
       context.pushReplacementNamed(
         TripRoutes.inTransit,
         extra: {

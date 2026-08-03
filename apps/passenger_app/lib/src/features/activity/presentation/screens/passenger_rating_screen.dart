@@ -59,7 +59,11 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
       }
     } catch (error) {
       if (mounted) {
-        CustomToast.show(context, 'Failed to submit review: $error');
+        CustomToast.show(
+          context,
+          'Unable to submit your review right now. Please try again.',
+          isError: true,
+        );
       }
     } finally {
       if (mounted) {
@@ -127,7 +131,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
     );
 
     if (confirmFinishRatingSession == true && mounted) {
-      _finishRating();
+      context.goNamed(HomeRoutes.home);
     }
   }
 

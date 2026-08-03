@@ -212,7 +212,10 @@ export class BiddingService {
       dropoff_latitude: session.dropoffLatitude,
       dropoff_longitude: session.dropoffLongitude,
       dropoff_name: session.dropoffName,
-      fare: winningOffer.proposedFare,
+      // The passenger-facing fare is the canonical quote from the session. A
+      // driver's offer selects the driver; it must not silently change the
+      // amount shown in the passenger receipt or driver's trip history.
+      fare: session.offeredFare,
     });
 
     if (!trip) {
