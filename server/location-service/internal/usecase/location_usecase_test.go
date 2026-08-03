@@ -42,3 +42,15 @@ func TestFilterAndPageNearbyPlacesUsesTenItemPages(t *testing.T) {
 		t.Fatalf("expected 10 results on page one and none on page two, got %d and %d", len(pageOne), len(pageTwo))
 	}
 }
+
+func TestSearchCacheQuerySharesAcronymVariants(t *testing.T) {
+	queries := []string{"jh", "J.H", "j h"}
+	for _, query := range queries {
+		if got := searchCacheQuery(query); got != "jh" {
+			t.Fatalf("searchCacheQuery(%q) = %q, want %q", query, got, "jh")
+		}
+	}
+	if got := searchCacheQuery("bay plaza"); got != "bay plaza" {
+		t.Fatalf("searchCacheQuery(normal query) = %q, want %q", got, "bay plaza")
+	}
+}

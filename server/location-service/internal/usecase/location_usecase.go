@@ -13,9 +13,11 @@ import (
 )
 
 const (
-	nearbyRadiusKm = 5.0
-	searchRadiusKm = 10.0
-	nearbyPageSize = 10
+	nearbyRadiusKm   = 5.0
+	searchRadiusKm   = 10.0
+	nearbyPageSize   = 10
+	reverseMemoryTTL = 24 * time.Hour
+	matrixMemoryTTL  = 15 * time.Second
 )
 
 type LocationUseCase interface {
@@ -61,37 +63,51 @@ func NewLocationUseCase(
 }
 
 func (uc *locationUseCase) ReverseGeocode(ctx context.Context, lat, lng float64) (*domain.Place, error) {
+	key := fmt.Sprintf("reverse:v2:%.4f:%.4f", lat, lng)
+	if cached, ok := uc.getMemory(key); ok {
+		return cached.(*domain.Place), nil
+	}
 	if uc.cache != nil {
 		if cached, err := uc.cache.GetGeocodeCache(ctx, lat, lng); err == nil && cached != nil {
+			uc.setMemory(key, cached, reverseMemoryTTL)
 			return cached, nil
 		}
 	}
 
-	place, err := uc.repo.ReverseGeocode(ctx, lat, lng)
+	result, err := uc.share(ctx, key, func(requestCtx context.Context) (interface{}, error) {
+		place, requestErr := uc.repo.ReverseGeocode(requestCtx, lat, lng)
+		if requestErr != nil || place == nil {
+			return place, requestErr
+		}
+
+		if uc.cache != nil {
+			_ = uc.cache.SetGeocodeCache(requestCtx, lat, lng, place)
+		}
+		uc.setMemory(key, place, reverseMemoryTTL)
+		if uc.queue != nil {
+			_ = uc.queue.PublishLocationEvent(requestCtx, &domain.LocationUpdateEvent{
+				ID:        fmt.Sprintf("loc-%d", time.Now().UnixNano()),
+				DriverID:  "system",
+				Latitude:  lat,
+				Longitude: lng,
+				Timestamp: time.Now(),
+			})
+		}
+		return place, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	if uc.cache != nil && place != nil {
-		_ = uc.cache.SetGeocodeCache(ctx, lat, lng, place)
+	place, ok := result.(*domain.Place)
+	if !ok || place == nil {
+		return nil, nil
 	}
-
-	if uc.queue != nil && place != nil {
-		_ = uc.queue.PublishLocationEvent(ctx, &domain.LocationUpdateEvent{
-			ID:        fmt.Sprintf("loc-%d", time.Now().UnixNano()),
-			DriverID:  "system",
-			Latitude:  lat,
-			Longitude: lng,
-			Timestamp: time.Now(),
-		})
-	}
-
 	return place, nil
 }
 
 func (uc *locationUseCase) SearchPlaces(ctx context.Context, query string, lat, lng float64) ([]domain.Place, error) {
 	originalQuery := strings.TrimSpace(query)
-	query = normalizeSearchQuery(originalQuery)
+	query = searchCacheQuery(originalQuery)
 	if query == "" {
 		return []domain.Place{}, nil
 	}
@@ -133,6 +149,24 @@ func normalizeSearchQuery(query string) string {
 		builder.WriteRune(' ')
 	}
 	return strings.Join(strings.Fields(builder.String()), " ")
+}
+
+func searchCacheQuery(query string) string {
+	normalized := normalizeSearchQuery(query)
+	compact := strings.ReplaceAll(normalized, " ", "")
+	if len([]rune(compact)) >= 2 && len([]rune(compact)) <= 4 && isLettersOnly(compact) {
+		return compact
+	}
+	return normalized
+}
+
+func isLettersOnly(value string) bool {
+	for _, character := range value {
+		if !unicode.IsLetter(character) {
+			return false
+		}
+	}
+	return true
 }
 
 func filterSearchPlaces(places []domain.Place) []domain.Place {
@@ -240,7 +274,33 @@ func (uc *locationUseCase) GetTravelMatrix(ctx context.Context, origin domain.Po
 	if len(destinations) > 24 {
 		destinations = destinations[:24]
 	}
-	return uc.repo.GetTravelMatrix(ctx, origin, destinations)
+	key := matrixCacheKey(origin, destinations)
+	if cached, ok := uc.getMemory(key); ok {
+		return cached.(*domain.MatrixResult), nil
+	}
+	result, err := uc.share(ctx, key, func(requestCtx context.Context) (interface{}, error) {
+		matrix, requestErr := uc.repo.GetTravelMatrix(requestCtx, origin, destinations)
+		if requestErr == nil && matrix != nil {
+			uc.setMemory(key, matrix, matrixMemoryTTL)
+		}
+		return matrix, requestErr
+	})
+	if err != nil {
+		return nil, err
+	}
+	matrix, ok := result.(*domain.MatrixResult)
+	if !ok || matrix == nil {
+		return nil, nil
+	}
+	return matrix, nil
+}
+
+func matrixCacheKey(origin domain.Point, destinations []domain.Point) string {
+	key := fmt.Sprintf("matrix:v1:%.5f:%.5f", origin.Latitude, origin.Longitude)
+	for _, destination := range destinations {
+		key += fmt.Sprintf(":%.5f:%.5f", destination.Latitude, destination.Longitude)
+	}
+	return key
 }
 
 func (uc *locationUseCase) getMemory(key string) (interface{}, bool) {
