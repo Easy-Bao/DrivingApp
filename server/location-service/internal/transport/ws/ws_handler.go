@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
@@ -23,12 +22,12 @@ func NewWSHandler(uc usecase.LocationUseCase) *WSHandler {
 	return &WSHandler{useCase: uc}
 }
 
-func (h *WSHandler) RegisterRoutes(router *gin.Engine) {
-	router.GET("/location/ws", h.HandleWebSocket)
+func (h *WSHandler) RegisterRoutes(router *http.ServeMux) {
+	router.HandleFunc("GET /location/ws", h.HandleWebSocket)
 }
 
-func (h *WSHandler) HandleWebSocket(c *gin.Context) {
-	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+func (h *WSHandler) HandleWebSocket(writer http.ResponseWriter, request *http.Request) {
+	ws, err := upgrader.Upgrade(writer, request, nil)
 	if err != nil {
 		log.Printf("Failed to upgrade websocket: %v", err)
 		return

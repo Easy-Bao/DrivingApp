@@ -9,9 +9,9 @@ import (
 	wstransport "location-service/internal/transport/ws"
 	"location-service/internal/usecase"
 	"log"
+	"net/http"
 	"os"
-
-	"github.com/gin-gonic/gin"
+	"time"
 )
 
 func main() {
@@ -37,7 +37,7 @@ func main() {
 		queueAdapter,
 	)
 
-	router := gin.Default()
+	router := http.NewServeMux()
 
 	httpHandler := httptransport.NewHTTPHandler(locationUseCase)
 	httpHandler.RegisterRoutes(router)
@@ -45,12 +45,21 @@ func main() {
 	wsHandler := wstransport.NewWSHandler(locationUseCase)
 	wsHandler.RegisterRoutes(router)
 
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "Location Service OK"})
+	router.HandleFunc("GET /health", func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"status":"Location Service OK"}`))
 	})
 
 	log.Printf("Starting Location Service on port %s...", port)
-	if err := router.Run(fmt.Sprintf(":%s", port)); err != nil {
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%s", port),
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to run server: %v", err)
 	}
 }
