@@ -35,6 +35,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   int _selectedIdx = 0;
   late List<RideOptionData> _options;
   AppMapController? _mapController;
+  Widget? _cachedMapView;
 
   @override
   void initState() {
@@ -155,6 +156,19 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
     }
   }
 
+  Widget _buildMapView(double latitude, double longitude) {
+    return _cachedMapView ??= MapProvider.buildMapView(
+      latitude: latitude,
+      longitude: longitude,
+      zoom: 13.5,
+      interactive: true,
+      onMapCreated: (controller) {
+        _mapController = controller;
+        unawaited(_drawRoute());
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final defaultLat =
@@ -170,16 +184,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
             child: Container(
               color: AppTheme.neutralColor,
               child: SizedBox.expand(
-                child: MapProvider.buildMapView(
-                  latitude: defaultLat,
-                  longitude: defaultLng,
-                  zoom: 13.5,
-                  interactive: true,
-                  onMapCreated: (controller) {
-                    _mapController = controller;
-                    unawaited(_drawRoute());
-                  },
-                ),
+                child: _buildMapView(defaultLat, defaultLng),
               ),
             ),
           ),
