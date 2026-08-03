@@ -31,16 +31,16 @@ class _RideAlertScreenState extends State<RideAlertScreen>
   void initState() {
     super.initState();
 
-    _rideId = widget.rideData?['id'] as String? ?? 'mock_id';
-    _pickup =
-        widget.rideData?['pickup_name'] as String? ??
-        'SM City Dipolog, Rizal Ave';
-    _dropoff =
-        widget.rideData?['dropoff_name'] as String? ??
-        'Dipolog Public Market, Quezon St';
-    _distance = (widget.rideData?['distance'] ?? 3.2) as double;
-    _fare = (widget.rideData?['fare'] ?? 52.00) as double;
-    _duration = widget.rideData?['duration'] as String? ?? '8 min';
+    final rideData = widget.rideData;
+    if (rideData == null || rideData['id'] is! String) {
+      throw ArgumentError('Ride alert data must include a ride id.');
+    }
+    _rideId = rideData['id'] as String;
+    _pickup = rideData['pickup_name'] as String? ?? 'Pickup location unavailable';
+    _dropoff = rideData['dropoff_name'] as String? ?? 'Destination unavailable';
+    _distance = (rideData['distance'] as num?)?.toDouble() ?? 0.0;
+    _fare = (rideData['fare'] as num?)?.toDouble() ?? 0.0;
+    _duration = rideData['duration'] as String? ?? 'Duration unavailable';
 
     _timerCtrl = AnimationController(
       vsync: this,
@@ -64,9 +64,13 @@ class _RideAlertScreenState extends State<RideAlertScreen>
   Future<void> _accept() async {
     _autoDecline?.cancel();
 
-    final driverId =
-        await Modular.get<SecureSessionService>().readDriverId() ??
-        'driver_demo';
+    final driverId = await Modular.get<SecureSessionService>().readDriverId();
+    if (driverId == null || driverId.isEmpty) {
+      if (mounted) {
+        CustomToast.show(context, 'Driver session is unavailable.', isError: true);
+      }
+      return;
+    }
 
     final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: _rideId,

@@ -85,7 +85,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
           widget.destination.longitude;
       var pickupName = widget.pickupAddress ?? 'Current Location';
       var driverName = widget.driverName ?? 'Driver';
-      var vehiclePlate = widget.plateNumber ?? 'ABC 1234';
+      var vehiclePlate = widget.plateNumber ?? 'Vehicle plate unavailable';
       var driverId = widget.driverId ?? '';
       var vehicleType = widget.vehicleType ?? '';
 
@@ -257,10 +257,11 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                       backgroundColor: Colors.transparent,
                       builder: (BuildContext sheetContext) =>
                           DriverProfileDetailsSheet(
-                            driverId: widget.driverId ?? 'driver-id-xyz',
+                            driverId: widget.driverId ?? '',
                             driverName: widget.driverName ?? 'Driver',
                             vehicleType: widget.vehicleType ?? 'Bao Bao',
-                            plateNumber: widget.plateNumber ?? 'ABC 1234',
+                            plateNumber:
+                                widget.plateNumber ?? 'Vehicle plate unavailable',
                             rating: widget.driverRating ?? '5.0',
                           ),
                     ),
@@ -350,7 +351,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                           ),
                           _infoChip(
                             LucideIcons.hash,
-                            widget.plateNumber ?? 'ABC 1234',
+                            widget.plateNumber ?? 'Vehicle plate unavailable',
                           ),
                           _infoChip(LucideIcons.palette, 'Black'),
                         ],

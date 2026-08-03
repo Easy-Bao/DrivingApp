@@ -68,7 +68,11 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   }) async {
     _activeRideId = rideId;
 
-    final driverId = await _sessionService.readDriverId() ?? 'driver_demo';
+    final driverId = await _sessionService.readDriverId();
+    if (driverId == null || driverId.isEmpty) {
+      emit(const RideFlowError('Driver session is unavailable. Please sign in again.'));
+      return;
+    }
 
     try {
       final success = await _tripRemoteDataSource.acceptRide(
