@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -21,6 +22,7 @@ const (
 	directionsBaseURL = "https://api.mapbox.com/directions/v5/mapbox/driving"
 	nearbyRadiusKm    = 10.0
 	nearbySampleKm    = 5.0
+	upstreamTimeout   = 5 * time.Second
 )
 
 type mapboxAdapter struct {
@@ -32,7 +34,7 @@ func NewMapboxAdapter(accessToken string) domain.LocationRepository {
 	return &mapboxAdapter{
 		accessToken: accessToken,
 		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: upstreamTimeout,
 		},
 	}
 }
@@ -101,36 +103,53 @@ func (adapter *mapboxAdapter) GetNearbyPois(
 	// Sample the surrounding area so the use case can provide real pages.
 	_ = page
 	samples := nearbySearchSamples(latitude, longitude)
-	uniquePlaces := make(map[string]domain.Place)
+	requestCtx, cancel := context.WithTimeout(ctx, upstreamTimeout)
+	defer cancel()
+	type sampleResult struct {
+		places []domain.Place
+		err    error
+	}
+	results := make(chan sampleResult, len(samples))
+	var waitGroup sync.WaitGroup
 
 	for _, sample := range samples {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-
-		parameters := url.Values{
-			"longitude":    {formatCoordinate(sample.longitude)},
-			"latitude":     {formatCoordinate(sample.latitude)},
-			"access_token": {adapter.accessToken},
-			"limit":        {"10"},
-			"types":        {"poi"},
-		}
-		places, err := adapter.fetchPlaces(
-			ctx,
-			searchBoxBaseURL+"/reverse?"+parameters.Encode(),
-			latitude,
-			longitude,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, place := range places {
-			if place.DistanceKm > nearbyRadiusKm {
-				continue
+		waitGroup.Add(1)
+		go func(sample nearbySearchSample) {
+			defer waitGroup.Done()
+			parameters := url.Values{
+				"longitude":    {formatCoordinate(sample.longitude)},
+				"latitude":     {formatCoordinate(sample.latitude)},
+				"access_token": {adapter.accessToken},
+				"limit":        {"10"},
+				"types":        {"poi"},
 			}
-			uniquePlaces[nearbyPlaceKey(place)] = place
+			places, err := adapter.fetchPlaces(
+				requestCtx,
+				searchBoxBaseURL+"/reverse?"+parameters.Encode(),
+				latitude,
+				longitude,
+			)
+			results <- sampleResult{places: places, err: err}
+		}(sample)
+	}
+	waitGroup.Wait()
+	close(results)
+
+	uniquePlaces := make(map[string]domain.Place)
+	var lastError error
+	for result := range results {
+		if result.err != nil {
+			lastError = result.err
+			continue
 		}
+		for _, place := range result.places {
+			if place.DistanceKm <= nearbyRadiusKm {
+				uniquePlaces[nearbyPlaceKey(place)] = place
+			}
+		}
+	}
+	if len(uniquePlaces) == 0 && lastError != nil {
+		return nil, lastError
 	}
 
 	result := make([]domain.Place, 0, len(uniquePlaces))

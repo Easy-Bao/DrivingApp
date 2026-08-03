@@ -10,6 +10,8 @@ import 'package:location_service/src/errors/place_failure.dart';
 class MapNativeService {
   final LocationApiClient _apiClient;
 
+  static const _requestTimeout = Duration(seconds: 6);
+
   MapNativeService({
     required Uri placeServiceBaseUri,
     Dio? dio,
@@ -17,7 +19,15 @@ class MapNativeService {
   }) : _apiClient =
            apiClient ??
            LocationApiClient(
-             dio ?? Dio(BaseOptions(baseUrl: placeServiceBaseUri.toString())),
+             dio ??
+                 Dio(
+                   BaseOptions(
+                     baseUrl: placeServiceBaseUri.toString(),
+                     connectTimeout: _requestTimeout,
+                     sendTimeout: _requestTimeout,
+                     receiveTimeout: _requestTimeout,
+                   ),
+                 ),
            );
 
   static double _toRadians(double degree) => degree * math.pi / 180.0;

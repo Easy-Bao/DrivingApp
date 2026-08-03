@@ -1,7 +1,10 @@
 package http
 
 import (
+	"context"
+	"errors"
 	"location-service/internal/usecase"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -33,7 +36,7 @@ func (h *HTTPHandler) SearchPlaces(c *gin.Context) {
 
 	places, err := h.useCase.SearchPlaces(c.Request.Context(), query, userLat, userLng)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeLocationError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -52,7 +55,7 @@ func (h *HTTPHandler) ReverseGeocode(c *gin.Context) {
 
 	place, err := h.useCase.ReverseGeocode(c.Request.Context(), lat, lng)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeLocationError(c, err)
 		return
 	}
 
@@ -70,7 +73,7 @@ func (h *HTTPHandler) GetNearbyPois(c *gin.Context) {
 
 	places, err := h.useCase.GetNearbyPois(c.Request.Context(), lat, lng, page)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeLocationError(c, err)
 		return
 	}
 
@@ -96,9 +99,18 @@ func (h *HTTPHandler) GetRoute(c *gin.Context) {
 
 	route, err := h.useCase.GetRoute(c.Request.Context(), req.OriginLat, req.OriginLng, req.DestLat, req.DestLng)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeLocationError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, route)
+}
+
+func writeLocationError(c *gin.Context, err error) {
+	status := http.StatusInternalServerError
+	var networkError net.Error
+	if errors.Is(err, context.DeadlineExceeded) || errors.As(err, &networkError) && networkError.Timeout() {
+		status = http.StatusGatewayTimeout
+	}
+	c.JSON(status, gin.H{"error": "Location provider is temporarily unavailable"})
 }

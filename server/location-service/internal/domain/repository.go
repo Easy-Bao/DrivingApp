@@ -14,6 +14,10 @@ type CacheRepository interface {
 	SetGeocodeCache(ctx context.Context, lat, lng float64, place *Place) error
 	GetNearbyCache(ctx context.Context, lat, lng float64, page int) ([]Place, error)
 	SetNearbyCache(ctx context.Context, lat, lng float64, page int, places []Place) error
+	GetSearchCache(ctx context.Context, query string, lat, lng float64) ([]Place, error)
+	SetSearchCache(ctx context.Context, query string, lat, lng float64, places []Place) error
+	GetRouteCache(ctx context.Context, originLat, originLng, destLat, destLng float64) (*Route, error)
+	SetRouteCache(ctx context.Context, route *Route) error
 }
 
 type QueuePublisher interface {

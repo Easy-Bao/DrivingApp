@@ -6,6 +6,8 @@ import (
 	"location-service/internal/domain"
 	"math"
 	"sort"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -22,9 +24,23 @@ type LocationUseCase interface {
 }
 
 type locationUseCase struct {
-	repo  domain.LocationRepository
-	cache domain.CacheRepository
-	queue domain.QueuePublisher
+	repo      domain.LocationRepository
+	cache     domain.CacheRepository
+	queue     domain.QueuePublisher
+	requestMu sync.Mutex
+	inFlight  map[string]*sharedRequest
+	memory    map[string]memoryEntry
+}
+
+type sharedRequest struct {
+	done  chan struct{}
+	value interface{}
+	err   error
+}
+
+type memoryEntry struct {
+	value     interface{}
+	expiresAt time.Time
 }
 
 func NewLocationUseCase(
@@ -33,9 +49,11 @@ func NewLocationUseCase(
 	queue domain.QueuePublisher,
 ) LocationUseCase {
 	return &locationUseCase{
-		repo:  repo,
-		cache: cache,
-		queue: queue,
+		repo:     repo,
+		cache:    cache,
+		queue:    queue,
+		inFlight: make(map[string]*sharedRequest),
+		memory:   make(map[string]memoryEntry),
 	}
 }
 
@@ -69,26 +87,62 @@ func (uc *locationUseCase) ReverseGeocode(ctx context.Context, lat, lng float64)
 }
 
 func (uc *locationUseCase) SearchPlaces(ctx context.Context, query string, lat, lng float64) ([]domain.Place, error) {
-	return uc.repo.SearchPlaces(ctx, query, lat, lng)
+	query = strings.ToLower(strings.TrimSpace(query))
+	if query == "" {
+		return []domain.Place{}, nil
+	}
+	key := fmt.Sprintf("search:%s:%.3f:%.3f", query, lat, lng)
+	if cached, ok := uc.getMemory(key); ok {
+		return cached.([]domain.Place), nil
+	}
+	if uc.cache != nil {
+		if cached, err := uc.cache.GetSearchCache(ctx, query, lat, lng); err == nil && cached != nil {
+			uc.setMemory(key, cached, 10*time.Minute)
+			return cached, nil
+		}
+	}
+	result, err := uc.share(ctx, key, func(requestCtx context.Context) (interface{}, error) {
+		places, requestErr := uc.repo.SearchPlaces(requestCtx, query, lat, lng)
+		if requestErr == nil && uc.cache != nil {
+			_ = uc.cache.SetSearchCache(requestCtx, query, lat, lng, places)
+		}
+		if requestErr == nil {
+			uc.setMemory(key, places, 10*time.Minute)
+		}
+		return places, requestErr
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.([]domain.Place), nil
 }
 
 func (uc *locationUseCase) GetNearbyPois(ctx context.Context, lat, lng float64, page int) ([]domain.Place, error) {
+	key := fmt.Sprintf("nearby:%.3f:%.3f:%d", lat, lng, page)
+	if cached, ok := uc.getMemory(key); ok {
+		return cached.([]domain.Place), nil
+	}
 	if uc.cache != nil {
-		if cached, err := uc.cache.GetNearbyCache(ctx, lat, lng, page); err == nil && len(cached) > 0 {
+		if cached, err := uc.cache.GetNearbyCache(ctx, lat, lng, page); err == nil && cached != nil {
+			uc.setMemory(key, cached, time.Hour)
 			return cached, nil
 		}
 	}
 
-	places, err := uc.repo.GetNearbyPois(ctx, lat, lng, page)
+	result, err := uc.share(ctx, key, func(requestCtx context.Context) (interface{}, error) {
+		return uc.repo.GetNearbyPois(requestCtx, lat, lng, page)
+	})
 	if err != nil {
 		return nil, err
 	}
+	places := result.([]domain.Place)
 
 	places = filterAndPageNearbyPlaces(places, page)
 
 	if uc.cache != nil && len(places) > 0 {
 		_ = uc.cache.SetNearbyCache(ctx, lat, lng, page, places)
 	}
+	uc.setMemory(key, places, time.Hour)
 
 	return places, nil
 }
@@ -121,7 +175,75 @@ func filterAndPageNearbyPlaces(places []domain.Place, page int) []domain.Place {
 }
 
 func (uc *locationUseCase) GetRoute(ctx context.Context, originLat, originLng, destLat, destLng float64) (*domain.Route, error) {
-	return uc.repo.GetRoute(ctx, originLat, originLng, destLat, destLng)
+	key := fmt.Sprintf("route:%.5f:%.5f:%.5f:%.5f", originLat, originLng, destLat, destLng)
+	if cached, ok := uc.getMemory(key); ok {
+		return cached.(*domain.Route), nil
+	}
+	if uc.cache != nil {
+		if cached, err := uc.cache.GetRouteCache(ctx, originLat, originLng, destLat, destLng); err == nil && cached != nil {
+			uc.setMemory(key, cached, 30*time.Minute)
+			return cached, nil
+		}
+	}
+	result, err := uc.share(ctx, key, func(requestCtx context.Context) (interface{}, error) {
+		route, requestErr := uc.repo.GetRoute(requestCtx, originLat, originLng, destLat, destLng)
+		if requestErr == nil && route != nil && uc.cache != nil {
+			_ = uc.cache.SetRouteCache(requestCtx, route)
+		}
+		if requestErr == nil && route != nil {
+			uc.setMemory(key, route, 30*time.Minute)
+		}
+		return route, requestErr
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*domain.Route), nil
+}
+
+func (uc *locationUseCase) getMemory(key string) (interface{}, bool) {
+	uc.requestMu.Lock()
+	defer uc.requestMu.Unlock()
+	entry, ok := uc.memory[key]
+	if !ok {
+		return nil, false
+	}
+	if time.Now().After(entry.expiresAt) {
+		delete(uc.memory, key)
+		return nil, false
+	}
+	return entry.value, true
+}
+
+func (uc *locationUseCase) setMemory(key string, value interface{}, ttl time.Duration) {
+	uc.requestMu.Lock()
+	defer uc.requestMu.Unlock()
+	uc.memory[key] = memoryEntry{value: value, expiresAt: time.Now().Add(ttl)}
+}
+
+func (uc *locationUseCase) share(ctx context.Context, key string, request func(context.Context) (interface{}, error)) (interface{}, error) {
+	uc.requestMu.Lock()
+	if existing, ok := uc.inFlight[key]; ok {
+		uc.requestMu.Unlock()
+		select {
+		case <-existing.done:
+			return existing.value, existing.err
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	current := &sharedRequest{done: make(chan struct{})}
+	uc.inFlight[key] = current
+	uc.requestMu.Unlock()
+
+	value, err := request(ctx)
+	uc.requestMu.Lock()
+	current.value = value
+	current.err = err
+	delete(uc.inFlight, key)
+	close(current.done)
+	uc.requestMu.Unlock()
+	return value, err
 }
 
 func CalculateHaversine(lat1, lng1, lat2, lng2 float64) float64 {
