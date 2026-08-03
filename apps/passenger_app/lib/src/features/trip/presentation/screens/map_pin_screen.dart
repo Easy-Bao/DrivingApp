@@ -24,6 +24,7 @@ class _MapPinScreenState extends State<MapPinScreen>
   bool _isGeocoding = false;
   bool _hasUserPannedMap = false;
   Timer? _debounceTimer;
+  int _geocodeRequestId = 0;
   late final AnimationController _pinAnimationController;
   double? _centerLat =
       LocationService.lastPosition?.latitude ?? EnvConfig.defaultLatitude;
@@ -67,7 +68,9 @@ class _MapPinScreenState extends State<MapPinScreen>
           );
         }
       }
-      unawaited(_reverseGeocode(pos.latitude, pos.longitude));
+      if (!_hasUserPannedMap) {
+        unawaited(_reverseGeocode(pos.latitude, pos.longitude));
+      }
     } else if (mounted && _address == 'Move the map to select a location') {
       unawaited(_reverseGeocode(_centerLat!, _centerLng!));
     }
@@ -100,9 +103,10 @@ class _MapPinScreenState extends State<MapPinScreen>
   }
 
   Future<void> _reverseGeocode(double lat, double lng) async {
+    final requestId = ++_geocodeRequestId;
     setState(() => _isGeocoding = true);
     final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
-    if (mounted) {
+    if (mounted && requestId == _geocodeRequestId) {
       final full = place?.fullAddress ?? 'Unknown location';
       final parts = full.split(',');
       setState(() {
