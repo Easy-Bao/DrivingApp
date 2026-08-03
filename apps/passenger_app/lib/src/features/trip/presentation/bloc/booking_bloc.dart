@@ -55,13 +55,26 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<DriverMatchedEvent>(_onDriverMatched);
   }
 
+  bool get hasActiveDriverSearch =>
+      state is FindingNearestDriver ||
+      state is NearestDriverFound ||
+      state is BookingSearching ||
+      state is BookingOffersReceived;
+
   Future<void> _onLocateNearestDriver(
     LocateNearestDriverEvent event,
     Emitter<BookingState> emit,
   ) async {
+    if (hasActiveDriverSearch) return;
     _nearestSearchCancelled = false;
     _noDriverNotificationSent = false;
-    emit(FindingNearestDriver());
+    emit(
+      FindingNearestDriver(
+        trip: event.trip,
+        pickupLat: event.pickupLat,
+        pickupLng: event.pickupLng,
+      ),
+    );
 
     List<DriverModel> nearbyDrivers = [];
     Failure? lastFailure;
@@ -128,6 +141,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           totalTrips: _totalTrips,
           reviews: const [],
           isLoadingReviews: true,
+          trip: event.trip,
+          pickupLat: event.pickupLat,
+          pickupLng: event.pickupLng,
         ),
       );
 
@@ -186,6 +202,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         totalTrips: _totalTrips,
         reviews: _reviews,
         isLoadingReviews: _isLoadingReviews,
+        trip: event.trip,
+        pickupLat: event.pickupLat,
+        pickupLng: event.pickupLng,
       ),
     );
   }
@@ -398,14 +417,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     CancelBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
-    final wasSearchingForDriver =
-        state is FindingNearestDriver ||
-        state is BookingSearching ||
-        state is BookingOffersReceived;
     _nearestSearchCancelled = true;
-    if (wasSearchingForDriver) {
-      _notifyNoDriverFound();
-    }
     _cleanupSubscriptions();
     try {
       await _biddingDataSource

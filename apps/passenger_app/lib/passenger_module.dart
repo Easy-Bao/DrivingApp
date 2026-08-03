@@ -76,7 +76,7 @@ class PassengerModule extends Module {
       ..addLazySingleton<HomeCubit>(
         (i) => HomeCubit(repository: i.get<IPassengerHomeRepository>()),
       )
-      ..addFactory<BookingBloc>(
+      ..addLazySingleton<BookingBloc>(
         (i) => BookingBloc(
           driverRepository: i.get<IDriverRepository>(),
           biddingDataSource: i.get<BiddingRemoteDataSource>(),

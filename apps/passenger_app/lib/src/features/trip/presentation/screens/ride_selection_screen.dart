@@ -7,7 +7,9 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/ride_options_panel_widget.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class RideSelectionScreen extends StatefulWidget {
   final PlaceModel destination;
@@ -241,6 +243,14 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                       });
                     },
                     onBookPressed: () {
+                      if (Modular.get<BookingBloc>().hasActiveDriverSearch) {
+                        CustomToast.show(
+                          context,
+                          'A driver search is already in progress.',
+                          isError: true,
+                        );
+                        return;
+                      }
                       unawaited(
                         context.pushNamed(
                           'FindingDriver',

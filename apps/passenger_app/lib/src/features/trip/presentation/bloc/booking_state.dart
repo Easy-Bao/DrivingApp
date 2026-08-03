@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
 
 abstract class BookingState {
   const BookingState();
@@ -6,7 +7,17 @@ abstract class BookingState {
 
 class BookingInitial extends BookingState {}
 
-class FindingNearestDriver extends BookingState {}
+class FindingNearestDriver extends BookingState {
+  final BidSessionTrip trip;
+  final double pickupLat;
+  final double pickupLng;
+
+  const FindingNearestDriver({
+    required this.trip,
+    required this.pickupLat,
+    required this.pickupLng,
+  });
+}
 
 class NearestDriverFound extends BookingState {
   final DriverModel driver;
@@ -14,6 +25,9 @@ class NearestDriverFound extends BookingState {
   final int totalTrips;
   final List<Map<String, dynamic>> reviews;
   final bool isLoadingReviews;
+  final BidSessionTrip trip;
+  final double pickupLat;
+  final double pickupLng;
 
   const NearestDriverFound({
     required this.driver,
@@ -21,6 +35,9 @@ class NearestDriverFound extends BookingState {
     required this.totalTrips,
     required this.reviews,
     required this.isLoadingReviews,
+    required this.trip,
+    required this.pickupLat,
+    required this.pickupLng,
   });
 }
 

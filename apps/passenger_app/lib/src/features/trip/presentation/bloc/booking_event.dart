@@ -8,10 +8,12 @@ abstract class BookingEvent {
 class LocateNearestDriverEvent extends BookingEvent {
   final double pickupLat;
   final double pickupLng;
+  final BidSessionTrip trip;
 
   const LocateNearestDriverEvent({
     required this.pickupLat,
     required this.pickupLng,
+    required this.trip,
   });
 }
 

@@ -15,6 +15,8 @@ import 'package:passenger_app/src/features/saved_places/domain/entities/saved_pl
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/saved_place_screen.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -27,36 +29,41 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _locationSubscription;
+  late final BookingBloc _bookingBloc;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
-                      const SizedBox(height: 12),
-                      _buildLocationRow(),
-                      const SizedBox(height: 24),
-                      _buildSearchBar(),
-                      const SizedBox(height: 16),
-                      _buildChipRow(),
-                      const SizedBox(height: 24),
-                      _buildRecentActivityHeader(),
-                      Expanded(child: _buildRecentActivityList()),
-                    ],
+    return BlocListener<BookingBloc, BookingState>(
+      bloc: _bookingBloc,
+      listener: (_, state) => _handleBookingState(state),
+      child: Scaffold(
+        backgroundColor: AppTheme.surface,
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 12),
+                        _buildLocationRow(),
+                        const SizedBox(height: 24),
+                        _buildSearchBar(),
+                        const SizedBox(height: 16),
+                        _buildChipRow(),
+                        const SizedBox(height: 24),
+                        _buildRecentActivityHeader(),
+                        Expanded(child: _buildRecentActivityList()),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -75,11 +82,40 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _bookingBloc = Modular.get<BookingBloc>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _handleBookingState(_bookingBloc.state);
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
     });
+  }
+
+  void _handleBookingState(BookingState state) {
+    if (!mounted) return;
+    if (state is BookingFailure && state.isNoDriverFound) {
+      CustomToast.show(
+        context,
+        'No driver found. We added a message to your inbox.',
+        isError: true,
+      );
+      return;
+    }
+    if (state is NearestDriverFound) {
+      unawaited(
+        context.pushNamed(
+          TripRoutes.findingDriver,
+          extra: {
+            'rideType': state.trip.rideType,
+            'fare': state.trip.fare,
+            'destination': state.trip.destination,
+            'distance': state.trip.distance,
+            'duration': state.trip.duration,
+            'pickupAddress': state.trip.pickupAddress,
+          },
+        ),
+      );
+    }
   }
 
   Widget _buildChipRow() {
@@ -451,6 +487,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSearchBar() {
     return GestureDetector(
       onTap: () {
+        if (_bookingBloc.hasActiveDriverSearch) {
+          CustomToast.show(
+            context,
+            'A driver search is already in progress.',
+            isError: true,
+          );
+          return;
+        }
         final address = BlocProvider.of<HomeCubit>(
           context,
         ).state.currentAddress;

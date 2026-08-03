@@ -69,6 +69,20 @@ void main() {
     score: 95,
   );
 
+  const testTrip = BidSessionTrip(
+    rideType: 'Solo Ride',
+    fare: 100,
+    destination: PlaceModel(
+      id: 'destination-1',
+      name: 'Destination',
+      fullAddress: 'Destination address',
+      latitude: 7.83,
+      longitude: 123.44,
+    ),
+    distance: '2 km',
+    duration: '5 min',
+  );
+
   group('BookingBloc — Initial State', () {
     test('starts as BookingInitial', () async {
       final bloc = _makeBookingBloc(
@@ -105,7 +119,11 @@ void main() {
         );
       },
       act: (bloc) => bloc.add(
-        const LocateNearestDriverEvent(pickupLat: 7.828, pickupLng: 123.434),
+        const LocateNearestDriverEvent(
+          pickupLat: 7.828,
+          pickupLng: 123.434,
+          trip: testTrip,
+        ),
       ),
       expect: () => [
         isA<FindingNearestDriver>(),
@@ -121,7 +139,7 @@ void main() {
 
   group('BookingBloc — CancelBookingEvent', () {
     test(
-      'notifies the inbox when an active driver search is canceled',
+      'does not report a deliberate cancellation as no driver found',
       () async {
         final inboxCubit = InboxCubit(inboxRepository: inboxRepository);
         final bloc = _makeBookingBloc(
@@ -134,26 +152,13 @@ void main() {
           () => biddingDataSource.requestRide(any()),
         ).thenAnswer((_) async => {});
 
-        const destination = PlaceModel(
-          id: 'destination-1',
-          name: 'Destination',
-          fullAddress: 'Destination address',
-          latitude: 7.83,
-          longitude: 123.44,
-        );
         final searchState = expectLater(
           bloc.stream,
           emits(isA<BookingSearching>()),
         );
         bloc.add(
           const StartOpenBookingEvent(
-            trip: BidSessionTrip(
-              rideType: 'Solo Ride',
-              fare: 100,
-              destination: destination,
-              distance: '2 km',
-              duration: '5 min',
-            ),
+            trip: testTrip,
             pickupLat: 7.82,
             pickupLng: 123.43,
             distanceKm: 2,
@@ -169,10 +174,7 @@ void main() {
         bloc.add(const CancelBookingEvent());
         await canceledState;
 
-        final state = inboxCubit.state as InboxLoadedState;
-        expect(state.notifications, hasLength(1));
-        expect(state.notifications.single.title, 'No driver found');
-        expect(state.notifications.single.isRead, isFalse);
+        expect(inboxCubit.state, isA<InboxInitialState>());
 
         await bloc.close();
         await inboxCubit.close();

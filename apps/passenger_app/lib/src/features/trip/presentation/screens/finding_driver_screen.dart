@@ -43,7 +43,7 @@ class FindingDriverScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<BookingBloc>(create: (_) => Modular.get<BookingBloc>()),
+        BlocProvider<BookingBloc>.value(value: Modular.get<BookingBloc>()),
         BlocProvider<LiveMapBloc>(create: (_) => Modular.get<LiveMapBloc>()),
       ],
       child: FindingDriverScreenContent(
@@ -115,9 +115,23 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
     final lng =
         LocationService.lastPosition?.longitude ?? widget.destination.longitude;
 
-    BlocProvider.of<BookingBloc>(
-      context,
-    ).add(LocateNearestDriverEvent(pickupLat: lat, pickupLng: lng));
+    final bookingBloc = BlocProvider.of<BookingBloc>(context);
+    if (!bookingBloc.hasActiveDriverSearch) {
+      bookingBloc.add(
+        LocateNearestDriverEvent(
+          pickupLat: lat,
+          pickupLng: lng,
+          trip: BidSessionTrip(
+            rideType: widget.rideType,
+            fare: widget.fare,
+            destination: widget.destination,
+            distance: widget.distance,
+            duration: widget.duration,
+            pickupAddress: widget.pickupAddress,
+          ),
+        ),
+      );
+    }
   }
 
   void _showDriverProfileSheet(DriverModel driver) {
@@ -250,13 +264,6 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   }
 
   void _handleNoDriverFound() {
-    if (mounted) {
-      CustomToast.show(
-        context,
-        'No driver found. We added a message to your inbox.',
-        isError: true,
-      );
-    }
     _returnHome();
   }
 
@@ -271,7 +278,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        _handleCancel();
+        _returnHome();
       },
       child: Scaffold(
         backgroundColor: AppTheme.surface,
