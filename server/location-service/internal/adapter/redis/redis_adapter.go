@@ -16,9 +16,9 @@ type redisAdapter struct {
 
 const (
 	geocodeCacheKeyPrefix = "geocode:mapbox:v2"
-	nearbyCacheKeyPrefix  = "nearby:mapbox:v1"
+	nearbyCacheKeyPrefix  = "nearby:mapbox:v2"
 	searchCacheKeyPrefix  = "search:mapbox:v1"
-	routeCacheKeyPrefix   = "route:mapbox:v1"
+	routeCacheKeyPrefix   = "route:mapbox:v2"
 )
 
 func NewRedisAdapter(redisURL string) domain.CacheRepository {

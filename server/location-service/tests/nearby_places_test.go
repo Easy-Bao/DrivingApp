@@ -19,7 +19,7 @@ func TestGetNearbyPlaces(t *testing.T) {
 	}
 
 	for _, p := range places {
-		if p.DistanceKm > 10.0 {
+		if p.DistanceKm > 5.0 {
 			t.Errorf("nearby result %q is %.2f km away", p.Name, p.DistanceKm)
 		}
 	}

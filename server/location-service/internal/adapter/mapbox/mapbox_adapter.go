@@ -20,7 +20,7 @@ import (
 const (
 	searchBoxBaseURL  = "https://api.mapbox.com/search/searchbox/v1"
 	directionsBaseURL = "https://api.mapbox.com/directions/v5/mapbox/driving"
-	nearbyRadiusKm    = 10.0
+	nearbyRadiusKm    = 5.0
 	nearbySampleKm    = 5.0
 	upstreamTimeout   = 5 * time.Second
 )

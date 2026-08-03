@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	nearbyRadiusKm = 10.0
+	nearbyRadiusKm = 5.0
+	searchRadiusKm = 10.0
 	nearbyPageSize = 10
 )
 
@@ -136,7 +137,7 @@ func normalizeSearchQuery(query string) string {
 func filterSearchPlaces(places []domain.Place) []domain.Place {
 	filtered := make([]domain.Place, 0, len(places))
 	for _, place := range places {
-		if place.DistanceKm <= nearbyRadiusKm {
+		if place.DistanceKm <= searchRadiusKm {
 			filtered = append(filtered, place)
 		}
 	}
@@ -149,12 +150,13 @@ func filterSearchPlaces(places []domain.Place) []domain.Place {
 func (uc *locationUseCase) GetNearbyPois(ctx context.Context, lat, lng float64, page int) ([]domain.Place, error) {
 	key := fmt.Sprintf("nearby:%.3f:%.3f:%d", lat, lng, page)
 	if cached, ok := uc.getMemory(key); ok {
-		return cached.([]domain.Place), nil
+		return filterAndPageNearbyPlaces(cached.([]domain.Place), page), nil
 	}
 	if uc.cache != nil {
 		if cached, err := uc.cache.GetNearbyCache(ctx, lat, lng, page); err == nil && cached != nil {
-			uc.setMemory(key, cached, time.Hour)
-			return cached, nil
+			filtered := filterAndPageNearbyPlaces(cached, page)
+			uc.setMemory(key, filtered, time.Hour)
+			return filtered, nil
 		}
 	}
 
@@ -204,7 +206,7 @@ func filterAndPageNearbyPlaces(places []domain.Place, page int) []domain.Place {
 }
 
 func (uc *locationUseCase) GetRoute(ctx context.Context, originLat, originLng, destLat, destLng float64) (*domain.Route, error) {
-	key := fmt.Sprintf("route:%.5f:%.5f:%.5f:%.5f", originLat, originLng, destLat, destLng)
+	key := fmt.Sprintf("route:v2:%.5f:%.5f:%.5f:%.5f", originLat, originLng, destLat, destLng)
 	if cached, ok := uc.getMemory(key); ok {
 		return cached.(*domain.Route), nil
 	}

@@ -12,6 +12,8 @@ export 'package:location_service/src/services/map_camera_service.dart';
 class MapProvider {
   MapProvider._();
 
+  static const double nearbyRadiusKm = 5.0;
+
   static bool _initialized = false;
   static MapNativeService? _nativeService;
 
@@ -132,10 +134,16 @@ class MapProvider {
         lng: lng,
         page: page,
       );
-      return either.fold((failure) {
-        debugPrint('MapProvider.getNearbyPOIs failure: $failure');
-        return <PlaceModel>[];
-      }, (pois) => pois);
+      return either.fold(
+        (failure) {
+          debugPrint('MapProvider.getNearbyPOIs failure: $failure');
+          return <PlaceModel>[];
+        },
+        (pois) => pois.where((place) {
+          final distance = place.distanceKm;
+          return distance != null && distance <= nearbyRadiusKm;
+        }).toList(),
+      );
     } catch (error) {
       debugPrint('MapProvider.getNearbyPOIs error: $error');
       return [];
