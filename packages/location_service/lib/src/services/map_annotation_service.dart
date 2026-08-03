@@ -15,6 +15,7 @@ class MapAnnotationService {
     String? label,
     bool isOrigin = false,
     Color? color,
+    VoidCallback? onTap,
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
     final annotationManager = await mapCtrl.annotations
@@ -34,6 +35,9 @@ class MapAnnotationService {
         symbolSortKey: 20,
       ),
     );
+    if (onTap != null) {
+      annotationManager.tapEvents(onTap: (_) => onTap());
+    }
     return annotationManager;
   }
 
@@ -154,7 +158,7 @@ class MapAnnotationService {
     return bytes!.buffer.asUint8List();
   }
 
-  static Future<void> addPolyline(
+  static Future<dynamic> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
     Color color = const Color(0xFF222222),
@@ -174,6 +178,7 @@ class MapAnnotationService {
         lineJoin: mapbox.LineJoin.ROUND,
       ),
     );
+    return annotationManager;
   }
 
   static Future<dynamic> addAnimatedPolylineSegment(

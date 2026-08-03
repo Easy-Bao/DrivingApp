@@ -18,6 +18,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
   AppMapController? _mapController;
   final List<dynamic> _markerManagers = [];
+  final List<dynamic> _polylineManagers = [];
+  UpdateLocationsAndDrawRouteEvent? _pendingRouteUpdate;
 
   final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
       PublishSubject<DispatchTelemetryLocationEvent>();
@@ -58,13 +60,21 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   ) async {
     _mapController = event.controller;
     emit(LiveMapReady(event.defaultLat, event.defaultLng));
+    final pendingRouteUpdate = _pendingRouteUpdate;
+    _pendingRouteUpdate = null;
+    if (pendingRouteUpdate != null) {
+      add(pendingRouteUpdate);
+    }
   }
 
   Future<void> _onUpdateLocationsAndDrawRoute(
     UpdateLocationsAndDrawRouteEvent event,
     Emitter<LiveMapState> emit,
   ) async {
-    if (_mapController == null) return;
+    if (_mapController == null) {
+      _pendingRouteUpdate = event;
+      return;
+    }
 
     await _clearAllMarkers();
 
@@ -101,13 +111,23 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.routeTargetLat ?? event.passengerLat,
       event.routeTargetLng ?? event.passengerLng,
     );
-    if (route != null && route.polylinePoints.isNotEmpty) {
-      await MapProvider.addPolyline(
+    final routePoints = route?.polylinePoints.isNotEmpty == true
+        ? route!.polylinePoints
+        : [
+            [event.driverLng, event.driverLat],
+            [
+              event.routeTargetLng ?? event.passengerLng,
+              event.routeTargetLat ?? event.passengerLat,
+            ],
+          ];
+    if (routePoints.length >= 2) {
+      final polylineManager = await MapProvider.addPolyline(
         _mapController!,
-        route.polylinePoints,
+        routePoints,
         color: const Color(0xFF222222),
         width: 5.0,
       );
+      if (polylineManager != null) _polylineManagers.add(polylineManager);
     }
 
     emit(
@@ -136,6 +156,14 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       }
     }
     _markerManagers.clear();
+    for (final manager in _polylineManagers) {
+      try {
+        await MapProvider.clearAnnotations(manager);
+      } catch (error) {
+        dev.log('Error clearing driver route: $error');
+      }
+    }
+    _polylineManagers.clear();
   }
 
   @override

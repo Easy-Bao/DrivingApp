@@ -3,6 +3,7 @@ import 'dart:developer' as dev;
 
 import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
@@ -37,6 +38,29 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   String? _dropoffName;
   double? _fare;
   String? _rideType;
+
+  Future<String> _resolvePickupName() async {
+    final providedName = _pickupName?.trim();
+    if (providedName != null &&
+        providedName.isNotEmpty &&
+        providedName != 'Current Location') {
+      return providedName;
+    }
+
+    final lat = _pickupLat;
+    final lng = _pickupLng;
+    if (lat == null || lng == null) return providedName ?? 'Current Location';
+
+    try {
+      final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
+      final resolvedName = place?.fullAddress.trim();
+      return resolvedName == null || resolvedName.isEmpty
+          ? providedName ?? 'Current Location'
+          : resolvedName;
+    } catch (_) {
+      return providedName ?? 'Current Location';
+    }
+  }
 
   BookingBloc({
     required IDriverRepository driverRepository,
@@ -250,6 +274,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
     _pickupName = event.trip.pickupAddress ?? 'Current Location';
+    _pickupName = await _resolvePickupName();
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
@@ -296,6 +321,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
     _pickupName = event.trip.pickupAddress ?? 'Current Location';
+    _pickupName = await _resolvePickupName();
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;

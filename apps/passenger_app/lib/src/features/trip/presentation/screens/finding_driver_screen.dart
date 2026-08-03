@@ -88,12 +88,23 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   bool _initialized = false;
   DriverModel? _selectedDriver;
   List<DriverModel> _nearbyDrivers = [];
+  bool _showNearestDriverDetails = false;
   bool _isLeaving = false;
 
   String _driverMarkerLabel(DriverModel driver) {
     final onboard = driver.hasPassengerOnboard ? 1 : 0;
     return '${driver.name}\n★ ${driver.rating.toStringAsFixed(1)} • '
         '${driver.distanceKm.toStringAsFixed(1)} km • $onboard/5 passengers';
+  }
+
+  List<DriverModel> _uniqueNearbyDrivers(NearestDriverFound state) {
+    final byId = <String, DriverModel>{state.driver.id: state.driver};
+    for (final driver in state.nearbyDrivers) {
+      byId[driver.id] = driver;
+    }
+    final drivers = byId.values.toList()
+      ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
+    return drivers;
   }
 
   @override
@@ -285,27 +296,43 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
         body: BlocListener<BookingBloc, BookingState>(
           listener: (context, state) {
             if (state is NearestDriverFound) {
+              final nearbyDrivers = _uniqueNearbyDrivers(state);
               setState(() {
-                _nearbyDrivers = state.nearbyDrivers;
-                _selectedDriver = state.nearbyDrivers.length > 1
+                _nearbyDrivers = nearbyDrivers;
+                _selectedDriver = nearbyDrivers.length > 1
                     ? (_selectedDriver ?? state.driver)
                     : null;
               });
               final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
+              liveMapBloc.add(const ClearMapAnnotationsEvent());
               liveMapBloc.add(
                 AddMapMarkerEvent(
                   lat: state.driver.lat,
                   lng: state.driver.lng,
                   label: _driverMarkerLabel(state.driver),
+                  onTap: () {
+                    if (!mounted) return;
+                    setState(() {
+                      _selectedDriver = state.driver;
+                      _showNearestDriverDetails = true;
+                    });
+                  },
                 ),
               );
-              for (final nearby in state.nearbyDrivers.take(10)) {
+              for (final nearby in nearbyDrivers.take(10)) {
                 if (nearby.id != state.driver.id) {
                   liveMapBloc.add(
                     AddMapMarkerEvent(
                       lat: nearby.lat,
                       lng: nearby.lng,
                       label: _driverMarkerLabel(nearby),
+                      onTap: () {
+                        if (!mounted) return;
+                        setState(() {
+                          _selectedDriver = nearby;
+                          _showNearestDriverDetails = true;
+                        });
+                      },
                     ),
                   );
                 }
@@ -559,6 +586,10 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                               onCancelPressed: _handleCancel,
                             );
                           } else if (state is NearestDriverFound) {
+                            if (_nearbyDrivers.length <= 1 &&
+                                !_showNearestDriverDetails) {
+                              return const SizedBox.shrink();
+                            }
                             return FindingDriverNearestPanelWidget(
                               state: state,
                               fare: widget.fare,
@@ -568,7 +599,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                                   _startDirectBooking(state.driver),
                               onSearchAllDriversPressed: _startOpenBooking,
                               onCancelRidePressed: _handleCancel,
-                              compact: state.nearbyDrivers.length <= 1,
+                              compact: false,
                             );
                           } else if (state is BookingSearching) {
                             return FindingDriverSearchingPanelWidget(

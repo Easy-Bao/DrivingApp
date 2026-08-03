@@ -62,6 +62,10 @@ export async function handleAddDriverReview(context: Context) {
   const id = context.req.param('id');
   if (!id) return context.json({ message: 'Driver ID is required' }, 400);
   const body = await context.req.json();
-  const review = await driverService.addDriverReview(id, body);
+  const review = await driverService.addDriverReview(id, {
+    passengerName: body.passengerName ?? body.passenger_name ?? 'Passenger',
+    rating: Number(body.rating),
+    comment: body.comment ?? '',
+  });
   return context.json(review, 201);
 }

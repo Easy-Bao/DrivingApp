@@ -35,12 +35,14 @@ class AddMapMarkerEvent extends LiveMapEvent {
   final double lng;
   final String label;
   final bool isOrigin;
+  final void Function()? onTap;
 
   const AddMapMarkerEvent({
     required this.lat,
     required this.lng,
     required this.label,
     this.isOrigin = false,
+    this.onTap,
   });
 }
 

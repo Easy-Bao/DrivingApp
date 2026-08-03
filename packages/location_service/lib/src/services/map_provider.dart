@@ -287,6 +287,7 @@ class MapProvider {
     String? label,
     bool isOrigin = false,
     Color? color,
+    VoidCallback? onTap,
   }) => MapAnnotationService.addMarker(
     controller,
     lat,
@@ -294,9 +295,10 @@ class MapProvider {
     label: label,
     isOrigin: isOrigin,
     color: color,
+    onTap: onTap,
   );
 
-  static Future<void> addPolyline(
+  static Future<dynamic> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
     Color color = const Color(0xFF222222),

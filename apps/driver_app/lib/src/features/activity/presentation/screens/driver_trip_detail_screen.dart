@@ -56,8 +56,11 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
       }
     } catch (error) {
       setState(() {
+        _passenger = {
+          'name': widget.trip['passenger_name'] as String? ?? 'Passenger',
+        };
         _isLoading = false;
-        _errorMessage = 'Failed to load passenger profile.';
+        _errorMessage = null;
       });
     }
   }
