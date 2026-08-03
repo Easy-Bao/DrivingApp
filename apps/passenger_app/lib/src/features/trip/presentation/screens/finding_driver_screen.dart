@@ -337,6 +337,17 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                   );
                 }
               }
+              liveMapBloc.add(
+                FitMapToCoordinatesEvent(
+                  coordinates: [
+                    LatLng(state.pickupLat, state.pickupLng),
+                    ...nearbyDrivers
+                        .take(10)
+                        .map((driver) => LatLng(driver.lat, driver.lng)),
+                  ],
+                  maxZoom: 14.5,
+                ),
+              );
             } else if (state is BookingDriverMatched) {
               final match = state.matchResult;
               final navExtra = <String, dynamic>{

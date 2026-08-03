@@ -16,6 +16,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final List<dynamic> _markerManagers = [];
   final List<AddMapMarkerEvent> _pendingMarkers = [];
   DrawDriverToRiderRouteEvent? _pendingRoute;
+  FitMapToCoordinatesEvent? _pendingCameraFit;
 
   final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
       PublishSubject<DispatchTelemetryLocationEvent>();
@@ -29,6 +30,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     on<DrawDriverToRiderRouteEvent>(_onDrawDriverToRiderRoute);
     on<AddMapMarkerEvent>(_onAddMapMarker);
     on<ClearMapAnnotationsEvent>(_onClearMapAnnotations);
+    on<FitMapToCoordinatesEvent>(_onFitMapToCoordinates);
 
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
@@ -63,6 +65,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     final pendingRoute = _pendingRoute;
     _pendingRoute = null;
     if (pendingRoute != null) add(pendingRoute);
+    final pendingCameraFit = _pendingCameraFit;
+    _pendingCameraFit = null;
+    if (pendingCameraFit != null) add(pendingCameraFit);
   }
 
   Future<void> _onDrawDriverToRiderRoute(
@@ -165,6 +170,21 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       }
     }
     _markerManagers.clear();
+  }
+
+  Future<void> _onFitMapToCoordinates(
+    FitMapToCoordinatesEvent event,
+    Emitter<LiveMapState> emit,
+  ) async {
+    if (_mapController == null) {
+      _pendingCameraFit = event;
+      return;
+    }
+    await MapProvider.fitBounds(
+      _mapController!,
+      event.coordinates,
+      maxZoom: event.maxZoom,
+    );
   }
 
   @override

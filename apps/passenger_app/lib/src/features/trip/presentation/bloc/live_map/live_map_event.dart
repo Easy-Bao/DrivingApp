@@ -50,6 +50,13 @@ class ClearMapAnnotationsEvent extends LiveMapEvent {
   const ClearMapAnnotationsEvent();
 }
 
+class FitMapToCoordinatesEvent extends LiveMapEvent {
+  final List<LatLng> coordinates;
+  final double? maxZoom;
+
+  const FitMapToCoordinatesEvent({required this.coordinates, this.maxZoom});
+}
+
 class DispatchTelemetryLocationEvent extends LiveMapEvent {
   final double lat;
   final double lng;

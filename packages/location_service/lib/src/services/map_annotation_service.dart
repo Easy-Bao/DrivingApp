@@ -32,7 +32,8 @@ class MapAnnotationService {
         iconAnchor: mapbox.IconAnchor.BOTTOM,
         // Keep information cards legible while the map camera changes zoom.
         iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 1.0,
-        symbolSortKey: 20,
+        // Keep driver labels above the passenger origin when coordinates overlap.
+        symbolSortKey: isOrigin ? 10 : 20,
       ),
     );
     if (onTap != null) {
