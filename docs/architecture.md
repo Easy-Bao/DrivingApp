@@ -5,6 +5,11 @@ and backend. It is a migration target, not a description of the current
 checkout. The current backend is still split across Bun, Hono, and Drizzle
 services.
 
+The first implementation slice now lives under `server/`: the root Go module,
+Ent generation setup, location REST contracts, authenticated realtime event
+transport, and their focused tests. The legacy services remain active until
+their replacements have equivalent behavior and deployment coverage.
+
 ## Architecture Decision
 
 Use a modular core monolith with a separate realtime process:
@@ -66,7 +71,7 @@ server
         get_me.go
         update_profile.go
         update_driver_profile.go
-    driver-docs
+    driver_doc
       adapter
         object_storage
         postgres
@@ -198,7 +203,7 @@ both mobile apps. It does not contain Driver document verification.
 data. A driver is a user with a driver profile, not a second authentication
 system.
 
-`internal/driver-docs` - Driver document submission and verification as a
+`internal/driver_doc` - Driver document submission and verification as a
 separate business domain. Driver and Admin transports call the same use cases.
 
 `internal/rides` - Fare estimation, ride requests, bidding, and ride state
