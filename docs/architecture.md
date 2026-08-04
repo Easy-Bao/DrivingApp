@@ -48,7 +48,7 @@ server/
 
 Each `internal/<module>` owns its domain, use cases, adapters, DTOs, HTTP
 handlers, routes, and Ent schema declarations. Handlers only translate HTTP;
-use cases own business rules; adapters own Ent, Redis, RabbitMQ, SMTP, Mapbox,
+use cases own business rules; adapters own Ent, Redis, RabbitMQ, go-mail, Mapbox,
 and document persistence. The generated client is shared because cross-module
 transactions need one Ent graph, but `server/internal/platform/ent/schema` is
 generated metadata only. Business schemas remain in their owning modules and
@@ -59,7 +59,7 @@ verification, rides, fare calculation, bid sessions and offers, location
 search/routing, and Admin statistics. Passenger registration and login, driver
 registration and login, password hashing, profile provisioning, and JWT issue
 are explicit auth use cases. Passenger OTP verification and password recovery
-use Redis-backed one-time codes and an SMTP adapter; driver accounts do not use
+use Redis-backed one-time codes and a go-mail adapter; driver accounts do not use
 the passenger verification route.
 
 `realtime-service` owns the authenticated WebSocket hub, Redis GEO driver
@@ -80,8 +80,10 @@ just start-all
 `start-all` starts PostgreSQL, Redis, and RabbitMQ, runs the one Ent migration
 stream, starts the three Go applications, and waits on the gateway health
 endpoint. `scripts/database/migrate.sh` makes local PostgreSQL connections use
-`sslmode=disable` without changing remote database URLs. `.env` is ignored;
-`.env.example` documents the required variables without credentials.
+`sslmode=disable` without changing remote database URLs. Every `.env` file is
+ignored, including examples and test variants. Configure mail delivery with
+`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`,
+`MAIL_FROM_NAME`, `MAIL_SUBJECT`, `MAIL_SECURITY`, and `MAIL_TIMEOUT`.
 
 No Drizzle command, legacy service directory, or `server/database` directory
 is part of the runtime.

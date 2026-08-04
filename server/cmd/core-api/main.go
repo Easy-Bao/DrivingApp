@@ -104,7 +104,7 @@ func main() {
 			otpService = authusecase.NewOTPService(
 				authRepository,
 				authredis.NewOTPStore(redisClient),
-				email.NewSMTPGatewayFromEnv(),
+				email.NewGoMailGatewayFromEnv(),
 				verifier,
 			)
 		}

@@ -6,7 +6,7 @@ The backend cutover is complete: the old Bun/Drizzle service fleet and
 private upstream processes.
 
 The core modules have domain-owned schemas and ports/adapters for PostgreSQL,
-Redis, RabbitMQ, Mapbox, SMTP, and document persistence. Auth includes explicit
+Redis, RabbitMQ, Mapbox, go-mail, and document persistence. Auth includes explicit
 passenger/driver registration and authentication use cases, passenger-only OTP
 verification, password reset, JWT issuance, and profile provisioning. Rides
 contains fare calculation, persisted bid sessions/offers, transactional offer
