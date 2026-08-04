@@ -185,6 +185,11 @@ func (_u *DriverProfileUpdate) check() error {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "DriverProfile.user_id": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Rating(); ok {
+		if err := driverprofile.RatingValidator(v); err != nil {
+			return &ValidationError{Name: "rating", err: fmt.Errorf(`ent: validator failed for field "DriverProfile.rating": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.WalletBalanceCentavos(); ok {
 		if err := driverprofile.WalletBalanceCentavosValidator(v); err != nil {
 			return &ValidationError{Name: "wallet_balance_centavos", err: fmt.Errorf(`ent: validator failed for field "DriverProfile.wallet_balance_centavos": %w`, err)}
@@ -424,6 +429,11 @@ func (_u *DriverProfileUpdateOne) check() error {
 	if v, ok := _u.mutation.UserID(); ok {
 		if err := driverprofile.UserIDValidator(v); err != nil {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "DriverProfile.user_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Rating(); ok {
+		if err := driverprofile.RatingValidator(v); err != nil {
+			return &ValidationError{Name: "rating", err: fmt.Errorf(`ent: validator failed for field "DriverProfile.rating": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.WalletBalanceCentavos(); ok {

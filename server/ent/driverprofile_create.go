@@ -156,6 +156,11 @@ func (_c *DriverProfileCreate) check() error {
 	if _, ok := _c.mutation.Rating(); !ok {
 		return &ValidationError{Name: "rating", err: errors.New(`ent: missing required field "DriverProfile.rating"`)}
 	}
+	if v, ok := _c.mutation.Rating(); ok {
+		if err := driverprofile.RatingValidator(v); err != nil {
+			return &ValidationError{Name: "rating", err: fmt.Errorf(`ent: validator failed for field "DriverProfile.rating": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.IsOnline(); !ok {
 		return &ValidationError{Name: "is_online", err: errors.New(`ent: missing required field "DriverProfile.is_online"`)}
 	}
