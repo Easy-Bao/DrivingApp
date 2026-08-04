@@ -1,5 +1,5 @@
 name: shared_ui
-description: Shared design system — AppTheme, CustomToast, and page transitions used by both passenger_app and driver_app.
+description: Shared UI primitives, components, and transitions used by both apps.
 version: 0.1.0
 publish_to: none
 
