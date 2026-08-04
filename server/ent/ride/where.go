@@ -3,6 +3,8 @@
 package ride
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent/predicate"
 )
@@ -70,6 +72,76 @@ func Status(v string) predicate.Ride {
 // FareCentavos applies equality check predicate on the "fare_centavos" field. It's identical to FareCentavosEQ.
 func FareCentavos(v int64) predicate.Ride {
 	return predicate.Ride(sql.FieldEQ(FieldFareCentavos, v))
+}
+
+// RideType applies equality check predicate on the "ride_type" field. It's identical to RideTypeEQ.
+func RideType(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldRideType, v))
+}
+
+// PickupLatitude applies equality check predicate on the "pickup_latitude" field. It's identical to PickupLatitudeEQ.
+func PickupLatitude(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPickupLatitude, v))
+}
+
+// PickupLongitude applies equality check predicate on the "pickup_longitude" field. It's identical to PickupLongitudeEQ.
+func PickupLongitude(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPickupLongitude, v))
+}
+
+// PickupName applies equality check predicate on the "pickup_name" field. It's identical to PickupNameEQ.
+func PickupName(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPickupName, v))
+}
+
+// DropoffLatitude applies equality check predicate on the "dropoff_latitude" field. It's identical to DropoffLatitudeEQ.
+func DropoffLatitude(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDropoffLatitude, v))
+}
+
+// DropoffLongitude applies equality check predicate on the "dropoff_longitude" field. It's identical to DropoffLongitudeEQ.
+func DropoffLongitude(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDropoffLongitude, v))
+}
+
+// DropoffName applies equality check predicate on the "dropoff_name" field. It's identical to DropoffNameEQ.
+func DropoffName(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDropoffName, v))
+}
+
+// DistanceKm applies equality check predicate on the "distance_km" field. It's identical to DistanceKmEQ.
+func DistanceKm(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDistanceKm, v))
+}
+
+// DurationMinutes applies equality check predicate on the "duration_minutes" field. It's identical to DurationMinutesEQ.
+func DurationMinutes(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDurationMinutes, v))
+}
+
+// DriverName applies equality check predicate on the "driver_name" field. It's identical to DriverNameEQ.
+func DriverName(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDriverName, v))
+}
+
+// VehicleType applies equality check predicate on the "vehicle_type" field. It's identical to VehicleTypeEQ.
+func VehicleType(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldVehicleType, v))
+}
+
+// PlateNumber applies equality check predicate on the "plate_number" field. It's identical to PlateNumberEQ.
+func PlateNumber(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPlateNumber, v))
+}
+
+// DriverRating applies equality check predicate on the "driver_rating" field. It's identical to DriverRatingEQ.
+func DriverRating(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDriverRating, v))
+}
+
+// CompletedAt applies equality check predicate on the "completed_at" field. It's identical to CompletedAtEQ.
+func CompletedAt(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldCompletedAt, v))
 }
 
 // PassengerIDEQ applies the EQ predicate on the "passenger_id" field.
@@ -265,6 +337,846 @@ func FareCentavosLT(v int64) predicate.Ride {
 // FareCentavosLTE applies the LTE predicate on the "fare_centavos" field.
 func FareCentavosLTE(v int64) predicate.Ride {
 	return predicate.Ride(sql.FieldLTE(FieldFareCentavos, v))
+}
+
+// RideTypeEQ applies the EQ predicate on the "ride_type" field.
+func RideTypeEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldRideType, v))
+}
+
+// RideTypeNEQ applies the NEQ predicate on the "ride_type" field.
+func RideTypeNEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldRideType, v))
+}
+
+// RideTypeIn applies the In predicate on the "ride_type" field.
+func RideTypeIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldRideType, vs...))
+}
+
+// RideTypeNotIn applies the NotIn predicate on the "ride_type" field.
+func RideTypeNotIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldRideType, vs...))
+}
+
+// RideTypeGT applies the GT predicate on the "ride_type" field.
+func RideTypeGT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldRideType, v))
+}
+
+// RideTypeGTE applies the GTE predicate on the "ride_type" field.
+func RideTypeGTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldRideType, v))
+}
+
+// RideTypeLT applies the LT predicate on the "ride_type" field.
+func RideTypeLT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldRideType, v))
+}
+
+// RideTypeLTE applies the LTE predicate on the "ride_type" field.
+func RideTypeLTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldRideType, v))
+}
+
+// RideTypeContains applies the Contains predicate on the "ride_type" field.
+func RideTypeContains(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContains(FieldRideType, v))
+}
+
+// RideTypeHasPrefix applies the HasPrefix predicate on the "ride_type" field.
+func RideTypeHasPrefix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasPrefix(FieldRideType, v))
+}
+
+// RideTypeHasSuffix applies the HasSuffix predicate on the "ride_type" field.
+func RideTypeHasSuffix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasSuffix(FieldRideType, v))
+}
+
+// RideTypeEqualFold applies the EqualFold predicate on the "ride_type" field.
+func RideTypeEqualFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEqualFold(FieldRideType, v))
+}
+
+// RideTypeContainsFold applies the ContainsFold predicate on the "ride_type" field.
+func RideTypeContainsFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContainsFold(FieldRideType, v))
+}
+
+// PickupLatitudeEQ applies the EQ predicate on the "pickup_latitude" field.
+func PickupLatitudeEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPickupLatitude, v))
+}
+
+// PickupLatitudeNEQ applies the NEQ predicate on the "pickup_latitude" field.
+func PickupLatitudeNEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldPickupLatitude, v))
+}
+
+// PickupLatitudeIn applies the In predicate on the "pickup_latitude" field.
+func PickupLatitudeIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldPickupLatitude, vs...))
+}
+
+// PickupLatitudeNotIn applies the NotIn predicate on the "pickup_latitude" field.
+func PickupLatitudeNotIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldPickupLatitude, vs...))
+}
+
+// PickupLatitudeGT applies the GT predicate on the "pickup_latitude" field.
+func PickupLatitudeGT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldPickupLatitude, v))
+}
+
+// PickupLatitudeGTE applies the GTE predicate on the "pickup_latitude" field.
+func PickupLatitudeGTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldPickupLatitude, v))
+}
+
+// PickupLatitudeLT applies the LT predicate on the "pickup_latitude" field.
+func PickupLatitudeLT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldPickupLatitude, v))
+}
+
+// PickupLatitudeLTE applies the LTE predicate on the "pickup_latitude" field.
+func PickupLatitudeLTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldPickupLatitude, v))
+}
+
+// PickupLatitudeIsNil applies the IsNil predicate on the "pickup_latitude" field.
+func PickupLatitudeIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldPickupLatitude))
+}
+
+// PickupLatitudeNotNil applies the NotNil predicate on the "pickup_latitude" field.
+func PickupLatitudeNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldPickupLatitude))
+}
+
+// PickupLongitudeEQ applies the EQ predicate on the "pickup_longitude" field.
+func PickupLongitudeEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPickupLongitude, v))
+}
+
+// PickupLongitudeNEQ applies the NEQ predicate on the "pickup_longitude" field.
+func PickupLongitudeNEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldPickupLongitude, v))
+}
+
+// PickupLongitudeIn applies the In predicate on the "pickup_longitude" field.
+func PickupLongitudeIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldPickupLongitude, vs...))
+}
+
+// PickupLongitudeNotIn applies the NotIn predicate on the "pickup_longitude" field.
+func PickupLongitudeNotIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldPickupLongitude, vs...))
+}
+
+// PickupLongitudeGT applies the GT predicate on the "pickup_longitude" field.
+func PickupLongitudeGT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldPickupLongitude, v))
+}
+
+// PickupLongitudeGTE applies the GTE predicate on the "pickup_longitude" field.
+func PickupLongitudeGTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldPickupLongitude, v))
+}
+
+// PickupLongitudeLT applies the LT predicate on the "pickup_longitude" field.
+func PickupLongitudeLT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldPickupLongitude, v))
+}
+
+// PickupLongitudeLTE applies the LTE predicate on the "pickup_longitude" field.
+func PickupLongitudeLTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldPickupLongitude, v))
+}
+
+// PickupLongitudeIsNil applies the IsNil predicate on the "pickup_longitude" field.
+func PickupLongitudeIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldPickupLongitude))
+}
+
+// PickupLongitudeNotNil applies the NotNil predicate on the "pickup_longitude" field.
+func PickupLongitudeNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldPickupLongitude))
+}
+
+// PickupNameEQ applies the EQ predicate on the "pickup_name" field.
+func PickupNameEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPickupName, v))
+}
+
+// PickupNameNEQ applies the NEQ predicate on the "pickup_name" field.
+func PickupNameNEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldPickupName, v))
+}
+
+// PickupNameIn applies the In predicate on the "pickup_name" field.
+func PickupNameIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldPickupName, vs...))
+}
+
+// PickupNameNotIn applies the NotIn predicate on the "pickup_name" field.
+func PickupNameNotIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldPickupName, vs...))
+}
+
+// PickupNameGT applies the GT predicate on the "pickup_name" field.
+func PickupNameGT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldPickupName, v))
+}
+
+// PickupNameGTE applies the GTE predicate on the "pickup_name" field.
+func PickupNameGTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldPickupName, v))
+}
+
+// PickupNameLT applies the LT predicate on the "pickup_name" field.
+func PickupNameLT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldPickupName, v))
+}
+
+// PickupNameLTE applies the LTE predicate on the "pickup_name" field.
+func PickupNameLTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldPickupName, v))
+}
+
+// PickupNameContains applies the Contains predicate on the "pickup_name" field.
+func PickupNameContains(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContains(FieldPickupName, v))
+}
+
+// PickupNameHasPrefix applies the HasPrefix predicate on the "pickup_name" field.
+func PickupNameHasPrefix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasPrefix(FieldPickupName, v))
+}
+
+// PickupNameHasSuffix applies the HasSuffix predicate on the "pickup_name" field.
+func PickupNameHasSuffix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasSuffix(FieldPickupName, v))
+}
+
+// PickupNameIsNil applies the IsNil predicate on the "pickup_name" field.
+func PickupNameIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldPickupName))
+}
+
+// PickupNameNotNil applies the NotNil predicate on the "pickup_name" field.
+func PickupNameNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldPickupName))
+}
+
+// PickupNameEqualFold applies the EqualFold predicate on the "pickup_name" field.
+func PickupNameEqualFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEqualFold(FieldPickupName, v))
+}
+
+// PickupNameContainsFold applies the ContainsFold predicate on the "pickup_name" field.
+func PickupNameContainsFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContainsFold(FieldPickupName, v))
+}
+
+// DropoffLatitudeEQ applies the EQ predicate on the "dropoff_latitude" field.
+func DropoffLatitudeEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDropoffLatitude, v))
+}
+
+// DropoffLatitudeNEQ applies the NEQ predicate on the "dropoff_latitude" field.
+func DropoffLatitudeNEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldDropoffLatitude, v))
+}
+
+// DropoffLatitudeIn applies the In predicate on the "dropoff_latitude" field.
+func DropoffLatitudeIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldDropoffLatitude, vs...))
+}
+
+// DropoffLatitudeNotIn applies the NotIn predicate on the "dropoff_latitude" field.
+func DropoffLatitudeNotIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldDropoffLatitude, vs...))
+}
+
+// DropoffLatitudeGT applies the GT predicate on the "dropoff_latitude" field.
+func DropoffLatitudeGT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldDropoffLatitude, v))
+}
+
+// DropoffLatitudeGTE applies the GTE predicate on the "dropoff_latitude" field.
+func DropoffLatitudeGTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldDropoffLatitude, v))
+}
+
+// DropoffLatitudeLT applies the LT predicate on the "dropoff_latitude" field.
+func DropoffLatitudeLT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldDropoffLatitude, v))
+}
+
+// DropoffLatitudeLTE applies the LTE predicate on the "dropoff_latitude" field.
+func DropoffLatitudeLTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldDropoffLatitude, v))
+}
+
+// DropoffLatitudeIsNil applies the IsNil predicate on the "dropoff_latitude" field.
+func DropoffLatitudeIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldDropoffLatitude))
+}
+
+// DropoffLatitudeNotNil applies the NotNil predicate on the "dropoff_latitude" field.
+func DropoffLatitudeNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldDropoffLatitude))
+}
+
+// DropoffLongitudeEQ applies the EQ predicate on the "dropoff_longitude" field.
+func DropoffLongitudeEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDropoffLongitude, v))
+}
+
+// DropoffLongitudeNEQ applies the NEQ predicate on the "dropoff_longitude" field.
+func DropoffLongitudeNEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldDropoffLongitude, v))
+}
+
+// DropoffLongitudeIn applies the In predicate on the "dropoff_longitude" field.
+func DropoffLongitudeIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldDropoffLongitude, vs...))
+}
+
+// DropoffLongitudeNotIn applies the NotIn predicate on the "dropoff_longitude" field.
+func DropoffLongitudeNotIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldDropoffLongitude, vs...))
+}
+
+// DropoffLongitudeGT applies the GT predicate on the "dropoff_longitude" field.
+func DropoffLongitudeGT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldDropoffLongitude, v))
+}
+
+// DropoffLongitudeGTE applies the GTE predicate on the "dropoff_longitude" field.
+func DropoffLongitudeGTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldDropoffLongitude, v))
+}
+
+// DropoffLongitudeLT applies the LT predicate on the "dropoff_longitude" field.
+func DropoffLongitudeLT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldDropoffLongitude, v))
+}
+
+// DropoffLongitudeLTE applies the LTE predicate on the "dropoff_longitude" field.
+func DropoffLongitudeLTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldDropoffLongitude, v))
+}
+
+// DropoffLongitudeIsNil applies the IsNil predicate on the "dropoff_longitude" field.
+func DropoffLongitudeIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldDropoffLongitude))
+}
+
+// DropoffLongitudeNotNil applies the NotNil predicate on the "dropoff_longitude" field.
+func DropoffLongitudeNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldDropoffLongitude))
+}
+
+// DropoffNameEQ applies the EQ predicate on the "dropoff_name" field.
+func DropoffNameEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDropoffName, v))
+}
+
+// DropoffNameNEQ applies the NEQ predicate on the "dropoff_name" field.
+func DropoffNameNEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldDropoffName, v))
+}
+
+// DropoffNameIn applies the In predicate on the "dropoff_name" field.
+func DropoffNameIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldDropoffName, vs...))
+}
+
+// DropoffNameNotIn applies the NotIn predicate on the "dropoff_name" field.
+func DropoffNameNotIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldDropoffName, vs...))
+}
+
+// DropoffNameGT applies the GT predicate on the "dropoff_name" field.
+func DropoffNameGT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldDropoffName, v))
+}
+
+// DropoffNameGTE applies the GTE predicate on the "dropoff_name" field.
+func DropoffNameGTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldDropoffName, v))
+}
+
+// DropoffNameLT applies the LT predicate on the "dropoff_name" field.
+func DropoffNameLT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldDropoffName, v))
+}
+
+// DropoffNameLTE applies the LTE predicate on the "dropoff_name" field.
+func DropoffNameLTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldDropoffName, v))
+}
+
+// DropoffNameContains applies the Contains predicate on the "dropoff_name" field.
+func DropoffNameContains(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContains(FieldDropoffName, v))
+}
+
+// DropoffNameHasPrefix applies the HasPrefix predicate on the "dropoff_name" field.
+func DropoffNameHasPrefix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasPrefix(FieldDropoffName, v))
+}
+
+// DropoffNameHasSuffix applies the HasSuffix predicate on the "dropoff_name" field.
+func DropoffNameHasSuffix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasSuffix(FieldDropoffName, v))
+}
+
+// DropoffNameIsNil applies the IsNil predicate on the "dropoff_name" field.
+func DropoffNameIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldDropoffName))
+}
+
+// DropoffNameNotNil applies the NotNil predicate on the "dropoff_name" field.
+func DropoffNameNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldDropoffName))
+}
+
+// DropoffNameEqualFold applies the EqualFold predicate on the "dropoff_name" field.
+func DropoffNameEqualFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEqualFold(FieldDropoffName, v))
+}
+
+// DropoffNameContainsFold applies the ContainsFold predicate on the "dropoff_name" field.
+func DropoffNameContainsFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContainsFold(FieldDropoffName, v))
+}
+
+// DistanceKmEQ applies the EQ predicate on the "distance_km" field.
+func DistanceKmEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDistanceKm, v))
+}
+
+// DistanceKmNEQ applies the NEQ predicate on the "distance_km" field.
+func DistanceKmNEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldDistanceKm, v))
+}
+
+// DistanceKmIn applies the In predicate on the "distance_km" field.
+func DistanceKmIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldDistanceKm, vs...))
+}
+
+// DistanceKmNotIn applies the NotIn predicate on the "distance_km" field.
+func DistanceKmNotIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldDistanceKm, vs...))
+}
+
+// DistanceKmGT applies the GT predicate on the "distance_km" field.
+func DistanceKmGT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldDistanceKm, v))
+}
+
+// DistanceKmGTE applies the GTE predicate on the "distance_km" field.
+func DistanceKmGTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldDistanceKm, v))
+}
+
+// DistanceKmLT applies the LT predicate on the "distance_km" field.
+func DistanceKmLT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldDistanceKm, v))
+}
+
+// DistanceKmLTE applies the LTE predicate on the "distance_km" field.
+func DistanceKmLTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldDistanceKm, v))
+}
+
+// DistanceKmIsNil applies the IsNil predicate on the "distance_km" field.
+func DistanceKmIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldDistanceKm))
+}
+
+// DistanceKmNotNil applies the NotNil predicate on the "distance_km" field.
+func DistanceKmNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldDistanceKm))
+}
+
+// DurationMinutesEQ applies the EQ predicate on the "duration_minutes" field.
+func DurationMinutesEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDurationMinutes, v))
+}
+
+// DurationMinutesNEQ applies the NEQ predicate on the "duration_minutes" field.
+func DurationMinutesNEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldDurationMinutes, v))
+}
+
+// DurationMinutesIn applies the In predicate on the "duration_minutes" field.
+func DurationMinutesIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldDurationMinutes, vs...))
+}
+
+// DurationMinutesNotIn applies the NotIn predicate on the "duration_minutes" field.
+func DurationMinutesNotIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldDurationMinutes, vs...))
+}
+
+// DurationMinutesGT applies the GT predicate on the "duration_minutes" field.
+func DurationMinutesGT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldDurationMinutes, v))
+}
+
+// DurationMinutesGTE applies the GTE predicate on the "duration_minutes" field.
+func DurationMinutesGTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldDurationMinutes, v))
+}
+
+// DurationMinutesLT applies the LT predicate on the "duration_minutes" field.
+func DurationMinutesLT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldDurationMinutes, v))
+}
+
+// DurationMinutesLTE applies the LTE predicate on the "duration_minutes" field.
+func DurationMinutesLTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldDurationMinutes, v))
+}
+
+// DurationMinutesIsNil applies the IsNil predicate on the "duration_minutes" field.
+func DurationMinutesIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldDurationMinutes))
+}
+
+// DurationMinutesNotNil applies the NotNil predicate on the "duration_minutes" field.
+func DurationMinutesNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldDurationMinutes))
+}
+
+// DriverNameEQ applies the EQ predicate on the "driver_name" field.
+func DriverNameEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDriverName, v))
+}
+
+// DriverNameNEQ applies the NEQ predicate on the "driver_name" field.
+func DriverNameNEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldDriverName, v))
+}
+
+// DriverNameIn applies the In predicate on the "driver_name" field.
+func DriverNameIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldDriverName, vs...))
+}
+
+// DriverNameNotIn applies the NotIn predicate on the "driver_name" field.
+func DriverNameNotIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldDriverName, vs...))
+}
+
+// DriverNameGT applies the GT predicate on the "driver_name" field.
+func DriverNameGT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldDriverName, v))
+}
+
+// DriverNameGTE applies the GTE predicate on the "driver_name" field.
+func DriverNameGTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldDriverName, v))
+}
+
+// DriverNameLT applies the LT predicate on the "driver_name" field.
+func DriverNameLT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldDriverName, v))
+}
+
+// DriverNameLTE applies the LTE predicate on the "driver_name" field.
+func DriverNameLTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldDriverName, v))
+}
+
+// DriverNameContains applies the Contains predicate on the "driver_name" field.
+func DriverNameContains(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContains(FieldDriverName, v))
+}
+
+// DriverNameHasPrefix applies the HasPrefix predicate on the "driver_name" field.
+func DriverNameHasPrefix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasPrefix(FieldDriverName, v))
+}
+
+// DriverNameHasSuffix applies the HasSuffix predicate on the "driver_name" field.
+func DriverNameHasSuffix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasSuffix(FieldDriverName, v))
+}
+
+// DriverNameIsNil applies the IsNil predicate on the "driver_name" field.
+func DriverNameIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldDriverName))
+}
+
+// DriverNameNotNil applies the NotNil predicate on the "driver_name" field.
+func DriverNameNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldDriverName))
+}
+
+// DriverNameEqualFold applies the EqualFold predicate on the "driver_name" field.
+func DriverNameEqualFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEqualFold(FieldDriverName, v))
+}
+
+// DriverNameContainsFold applies the ContainsFold predicate on the "driver_name" field.
+func DriverNameContainsFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContainsFold(FieldDriverName, v))
+}
+
+// VehicleTypeEQ applies the EQ predicate on the "vehicle_type" field.
+func VehicleTypeEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldVehicleType, v))
+}
+
+// VehicleTypeNEQ applies the NEQ predicate on the "vehicle_type" field.
+func VehicleTypeNEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldVehicleType, v))
+}
+
+// VehicleTypeIn applies the In predicate on the "vehicle_type" field.
+func VehicleTypeIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldVehicleType, vs...))
+}
+
+// VehicleTypeNotIn applies the NotIn predicate on the "vehicle_type" field.
+func VehicleTypeNotIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldVehicleType, vs...))
+}
+
+// VehicleTypeGT applies the GT predicate on the "vehicle_type" field.
+func VehicleTypeGT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldVehicleType, v))
+}
+
+// VehicleTypeGTE applies the GTE predicate on the "vehicle_type" field.
+func VehicleTypeGTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldVehicleType, v))
+}
+
+// VehicleTypeLT applies the LT predicate on the "vehicle_type" field.
+func VehicleTypeLT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldVehicleType, v))
+}
+
+// VehicleTypeLTE applies the LTE predicate on the "vehicle_type" field.
+func VehicleTypeLTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldVehicleType, v))
+}
+
+// VehicleTypeContains applies the Contains predicate on the "vehicle_type" field.
+func VehicleTypeContains(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContains(FieldVehicleType, v))
+}
+
+// VehicleTypeHasPrefix applies the HasPrefix predicate on the "vehicle_type" field.
+func VehicleTypeHasPrefix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasPrefix(FieldVehicleType, v))
+}
+
+// VehicleTypeHasSuffix applies the HasSuffix predicate on the "vehicle_type" field.
+func VehicleTypeHasSuffix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasSuffix(FieldVehicleType, v))
+}
+
+// VehicleTypeIsNil applies the IsNil predicate on the "vehicle_type" field.
+func VehicleTypeIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldVehicleType))
+}
+
+// VehicleTypeNotNil applies the NotNil predicate on the "vehicle_type" field.
+func VehicleTypeNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldVehicleType))
+}
+
+// VehicleTypeEqualFold applies the EqualFold predicate on the "vehicle_type" field.
+func VehicleTypeEqualFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEqualFold(FieldVehicleType, v))
+}
+
+// VehicleTypeContainsFold applies the ContainsFold predicate on the "vehicle_type" field.
+func VehicleTypeContainsFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContainsFold(FieldVehicleType, v))
+}
+
+// PlateNumberEQ applies the EQ predicate on the "plate_number" field.
+func PlateNumberEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPlateNumber, v))
+}
+
+// PlateNumberNEQ applies the NEQ predicate on the "plate_number" field.
+func PlateNumberNEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldPlateNumber, v))
+}
+
+// PlateNumberIn applies the In predicate on the "plate_number" field.
+func PlateNumberIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldPlateNumber, vs...))
+}
+
+// PlateNumberNotIn applies the NotIn predicate on the "plate_number" field.
+func PlateNumberNotIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldPlateNumber, vs...))
+}
+
+// PlateNumberGT applies the GT predicate on the "plate_number" field.
+func PlateNumberGT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldPlateNumber, v))
+}
+
+// PlateNumberGTE applies the GTE predicate on the "plate_number" field.
+func PlateNumberGTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldPlateNumber, v))
+}
+
+// PlateNumberLT applies the LT predicate on the "plate_number" field.
+func PlateNumberLT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldPlateNumber, v))
+}
+
+// PlateNumberLTE applies the LTE predicate on the "plate_number" field.
+func PlateNumberLTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldPlateNumber, v))
+}
+
+// PlateNumberContains applies the Contains predicate on the "plate_number" field.
+func PlateNumberContains(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContains(FieldPlateNumber, v))
+}
+
+// PlateNumberHasPrefix applies the HasPrefix predicate on the "plate_number" field.
+func PlateNumberHasPrefix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasPrefix(FieldPlateNumber, v))
+}
+
+// PlateNumberHasSuffix applies the HasSuffix predicate on the "plate_number" field.
+func PlateNumberHasSuffix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasSuffix(FieldPlateNumber, v))
+}
+
+// PlateNumberIsNil applies the IsNil predicate on the "plate_number" field.
+func PlateNumberIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldPlateNumber))
+}
+
+// PlateNumberNotNil applies the NotNil predicate on the "plate_number" field.
+func PlateNumberNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldPlateNumber))
+}
+
+// PlateNumberEqualFold applies the EqualFold predicate on the "plate_number" field.
+func PlateNumberEqualFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEqualFold(FieldPlateNumber, v))
+}
+
+// PlateNumberContainsFold applies the ContainsFold predicate on the "plate_number" field.
+func PlateNumberContainsFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContainsFold(FieldPlateNumber, v))
+}
+
+// DriverRatingEQ applies the EQ predicate on the "driver_rating" field.
+func DriverRatingEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDriverRating, v))
+}
+
+// DriverRatingNEQ applies the NEQ predicate on the "driver_rating" field.
+func DriverRatingNEQ(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldDriverRating, v))
+}
+
+// DriverRatingIn applies the In predicate on the "driver_rating" field.
+func DriverRatingIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldDriverRating, vs...))
+}
+
+// DriverRatingNotIn applies the NotIn predicate on the "driver_rating" field.
+func DriverRatingNotIn(vs ...float64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldDriverRating, vs...))
+}
+
+// DriverRatingGT applies the GT predicate on the "driver_rating" field.
+func DriverRatingGT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldDriverRating, v))
+}
+
+// DriverRatingGTE applies the GTE predicate on the "driver_rating" field.
+func DriverRatingGTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldDriverRating, v))
+}
+
+// DriverRatingLT applies the LT predicate on the "driver_rating" field.
+func DriverRatingLT(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldDriverRating, v))
+}
+
+// DriverRatingLTE applies the LTE predicate on the "driver_rating" field.
+func DriverRatingLTE(v float64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldDriverRating, v))
+}
+
+// DriverRatingIsNil applies the IsNil predicate on the "driver_rating" field.
+func DriverRatingIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldDriverRating))
+}
+
+// DriverRatingNotNil applies the NotNil predicate on the "driver_rating" field.
+func DriverRatingNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldDriverRating))
+}
+
+// CompletedAtEQ applies the EQ predicate on the "completed_at" field.
+func CompletedAtEQ(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldCompletedAt, v))
+}
+
+// CompletedAtNEQ applies the NEQ predicate on the "completed_at" field.
+func CompletedAtNEQ(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldCompletedAt, v))
+}
+
+// CompletedAtIn applies the In predicate on the "completed_at" field.
+func CompletedAtIn(vs ...time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldCompletedAt, vs...))
+}
+
+// CompletedAtNotIn applies the NotIn predicate on the "completed_at" field.
+func CompletedAtNotIn(vs ...time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldCompletedAt, vs...))
+}
+
+// CompletedAtGT applies the GT predicate on the "completed_at" field.
+func CompletedAtGT(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldCompletedAt, v))
+}
+
+// CompletedAtGTE applies the GTE predicate on the "completed_at" field.
+func CompletedAtGTE(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldCompletedAt, v))
+}
+
+// CompletedAtLT applies the LT predicate on the "completed_at" field.
+func CompletedAtLT(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldCompletedAt, v))
+}
+
+// CompletedAtLTE applies the LTE predicate on the "completed_at" field.
+func CompletedAtLTE(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldCompletedAt, v))
+}
+
+// CompletedAtIsNil applies the IsNil predicate on the "completed_at" field.
+func CompletedAtIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldCompletedAt))
+}
+
+// CompletedAtNotNil applies the NotNil predicate on the "completed_at" field.
+func CompletedAtNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldCompletedAt))
 }
 
 // And groups predicates with the AND operator between them.

@@ -16,12 +16,20 @@ type Tx struct {
 	AuditEvent *AuditEventClient
 	// Bid is the client for interacting with the Bid builders.
 	Bid *BidClient
+	// BidOffer is the client for interacting with the BidOffer builders.
+	BidOffer *BidOfferClient
+	// BidSession is the client for interacting with the BidSession builders.
+	BidSession *BidSessionClient
 	// DriverDocument is the client for interacting with the DriverDocument builders.
 	DriverDocument *DriverDocumentClient
 	// DriverProfile is the client for interacting with the DriverProfile builders.
 	DriverProfile *DriverProfileClient
+	// Notification is the client for interacting with the Notification builders.
+	Notification *NotificationClient
 	// PassengerProfile is the client for interacting with the PassengerProfile builders.
 	PassengerProfile *PassengerProfileClient
+	// Review is the client for interacting with the Review builders.
+	Review *ReviewClient
 	// Ride is the client for interacting with the Ride builders.
 	Ride *RideClient
 	// User is the client for interacting with the User builders.
@@ -159,9 +167,13 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.AuditEvent = NewAuditEventClient(tx.config)
 	tx.Bid = NewBidClient(tx.config)
+	tx.BidOffer = NewBidOfferClient(tx.config)
+	tx.BidSession = NewBidSessionClient(tx.config)
 	tx.DriverDocument = NewDriverDocumentClient(tx.config)
 	tx.DriverProfile = NewDriverProfileClient(tx.config)
+	tx.Notification = NewNotificationClient(tx.config)
 	tx.PassengerProfile = NewPassengerProfileClient(tx.config)
+	tx.Review = NewReviewClient(tx.config)
 	tx.Ride = NewRideClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }

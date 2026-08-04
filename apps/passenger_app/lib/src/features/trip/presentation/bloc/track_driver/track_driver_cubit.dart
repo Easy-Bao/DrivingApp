@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:shared_core/shared_core.dart';
 
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final ITrackRepository _repository;

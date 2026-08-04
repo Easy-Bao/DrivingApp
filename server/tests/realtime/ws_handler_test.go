@@ -2,8 +2,8 @@ package realtime_test
 
 import (
 	"errors"
-	"testing"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
+	"testing"
 )
 
 type authenticatorStub struct{}
@@ -29,5 +29,7 @@ func TestInvalidEvent(t *testing.T) {
 	for _, message := range []string{`{}`, `{"type":"UNKNOWN"}`, `not-json`} {
 		_ = message
 	}
-	if ws.NewHub() == nil { t.Fatal("expected realtime hub") }
+	if ws.NewHub() == nil {
+		t.Fatal("expected realtime hub")
+	}
 }

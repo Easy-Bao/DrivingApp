@@ -3,14 +3,20 @@
 package ent
 
 import (
+	"time"
+
 	"github.com/Easy-Bao/DrivingApp/server/ent/auditevent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/bid"
+	"github.com/Easy-Bao/DrivingApp/server/ent/bidoffer"
+	"github.com/Easy-Bao/DrivingApp/server/ent/bidsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverdocument"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ent/schema"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/ent/schema"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -41,6 +47,50 @@ func init() {
 	bidDescStatus := bidFields[3].Descriptor()
 	// bid.DefaultStatus holds the default value on creation for the status field.
 	bid.DefaultStatus = bidDescStatus.Default.(string)
+	bidofferFields := schema.BidOffer{}.Fields()
+	_ = bidofferFields
+	// bidofferDescSessionID is the schema descriptor for session_id field.
+	bidofferDescSessionID := bidofferFields[0].Descriptor()
+	// bidoffer.SessionIDValidator is a validator for the "session_id" field. It is called by the builders before save.
+	bidoffer.SessionIDValidator = bidofferDescSessionID.Validators[0].(func(int) error)
+	// bidofferDescDriverID is the schema descriptor for driver_id field.
+	bidofferDescDriverID := bidofferFields[1].Descriptor()
+	// bidoffer.DriverIDValidator is a validator for the "driver_id" field. It is called by the builders before save.
+	bidoffer.DriverIDValidator = bidofferDescDriverID.Validators[0].(func(int) error)
+	// bidofferDescProposedFareCentavos is the schema descriptor for proposed_fare_centavos field.
+	bidofferDescProposedFareCentavos := bidofferFields[5].Descriptor()
+	// bidoffer.ProposedFareCentavosValidator is a validator for the "proposed_fare_centavos" field. It is called by the builders before save.
+	bidoffer.ProposedFareCentavosValidator = bidofferDescProposedFareCentavos.Validators[0].(func(int64) error)
+	// bidofferDescStatus is the schema descriptor for status field.
+	bidofferDescStatus := bidofferFields[6].Descriptor()
+	// bidoffer.DefaultStatus holds the default value on creation for the status field.
+	bidoffer.DefaultStatus = bidofferDescStatus.Default.(string)
+	// bidofferDescCreatedAt is the schema descriptor for created_at field.
+	bidofferDescCreatedAt := bidofferFields[7].Descriptor()
+	// bidoffer.DefaultCreatedAt holds the default value on creation for the created_at field.
+	bidoffer.DefaultCreatedAt = bidofferDescCreatedAt.Default.(func() time.Time)
+	bidsessionFields := schema.BidSession{}.Fields()
+	_ = bidsessionFields
+	// bidsessionDescPassengerID is the schema descriptor for passenger_id field.
+	bidsessionDescPassengerID := bidsessionFields[0].Descriptor()
+	// bidsession.PassengerIDValidator is a validator for the "passenger_id" field. It is called by the builders before save.
+	bidsession.PassengerIDValidator = bidsessionDescPassengerID.Validators[0].(func(int) error)
+	// bidsessionDescRideType is the schema descriptor for ride_type field.
+	bidsessionDescRideType := bidsessionFields[1].Descriptor()
+	// bidsession.DefaultRideType holds the default value on creation for the ride_type field.
+	bidsession.DefaultRideType = bidsessionDescRideType.Default.(string)
+	// bidsessionDescOfferedFareCentavos is the schema descriptor for offered_fare_centavos field.
+	bidsessionDescOfferedFareCentavos := bidsessionFields[10].Descriptor()
+	// bidsession.OfferedFareCentavosValidator is a validator for the "offered_fare_centavos" field. It is called by the builders before save.
+	bidsession.OfferedFareCentavosValidator = bidsessionDescOfferedFareCentavos.Validators[0].(func(int64) error)
+	// bidsessionDescStatus is the schema descriptor for status field.
+	bidsessionDescStatus := bidsessionFields[11].Descriptor()
+	// bidsession.DefaultStatus holds the default value on creation for the status field.
+	bidsession.DefaultStatus = bidsessionDescStatus.Default.(string)
+	// bidsessionDescCreatedAt is the schema descriptor for created_at field.
+	bidsessionDescCreatedAt := bidsessionFields[15].Descriptor()
+	// bidsession.DefaultCreatedAt holds the default value on creation for the created_at field.
+	bidsession.DefaultCreatedAt = bidsessionDescCreatedAt.Default.(func() time.Time)
 	driverdocumentFields := schema.DriverDocument{}.Fields()
 	_ = driverdocumentFields
 	// driverdocumentDescDriverID is the schema descriptor for driver_id field.
@@ -65,12 +115,48 @@ func init() {
 	driverprofileDescIsOnline := driverprofileFields[5].Descriptor()
 	// driverprofile.DefaultIsOnline holds the default value on creation for the is_online field.
 	driverprofile.DefaultIsOnline = driverprofileDescIsOnline.Default.(bool)
+	notificationFields := schema.Notification{}.Fields()
+	_ = notificationFields
+	// notificationDescUserID is the schema descriptor for user_id field.
+	notificationDescUserID := notificationFields[0].Descriptor()
+	// notification.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	notification.UserIDValidator = notificationDescUserID.Validators[0].(func(int) error)
+	// notificationDescType is the schema descriptor for type field.
+	notificationDescType := notificationFields[1].Descriptor()
+	// notification.DefaultType holds the default value on creation for the type field.
+	notification.DefaultType = notificationDescType.Default.(string)
+	// notificationDescIsRead is the schema descriptor for is_read field.
+	notificationDescIsRead := notificationFields[4].Descriptor()
+	// notification.DefaultIsRead holds the default value on creation for the is_read field.
+	notification.DefaultIsRead = notificationDescIsRead.Default.(bool)
+	// notificationDescCreatedAt is the schema descriptor for created_at field.
+	notificationDescCreatedAt := notificationFields[5].Descriptor()
+	// notification.DefaultCreatedAt holds the default value on creation for the created_at field.
+	notification.DefaultCreatedAt = notificationDescCreatedAt.Default.(func() time.Time)
 	passengerprofileFields := schema.PassengerProfile{}.Fields()
 	_ = passengerprofileFields
 	// passengerprofileDescUserID is the schema descriptor for user_id field.
 	passengerprofileDescUserID := passengerprofileFields[0].Descriptor()
 	// passengerprofile.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	passengerprofile.UserIDValidator = passengerprofileDescUserID.Validators[0].(func(int) error)
+	reviewFields := schema.Review{}.Fields()
+	_ = reviewFields
+	// reviewDescDriverID is the schema descriptor for driver_id field.
+	reviewDescDriverID := reviewFields[0].Descriptor()
+	// review.DriverIDValidator is a validator for the "driver_id" field. It is called by the builders before save.
+	review.DriverIDValidator = reviewDescDriverID.Validators[0].(func(int) error)
+	// reviewDescPassengerID is the schema descriptor for passenger_id field.
+	reviewDescPassengerID := reviewFields[1].Descriptor()
+	// review.PassengerIDValidator is a validator for the "passenger_id" field. It is called by the builders before save.
+	review.PassengerIDValidator = reviewDescPassengerID.Validators[0].(func(int) error)
+	// reviewDescRating is the schema descriptor for rating field.
+	reviewDescRating := reviewFields[3].Descriptor()
+	// review.RatingValidator is a validator for the "rating" field. It is called by the builders before save.
+	review.RatingValidator = reviewDescRating.Validators[0].(func(float64) error)
+	// reviewDescCreatedAt is the schema descriptor for created_at field.
+	reviewDescCreatedAt := reviewFields[5].Descriptor()
+	// review.DefaultCreatedAt holds the default value on creation for the created_at field.
+	review.DefaultCreatedAt = reviewDescCreatedAt.Default.(func() time.Time)
 	rideFields := schema.Ride{}.Fields()
 	_ = rideFields
 	// rideDescPassengerID is the schema descriptor for passenger_id field.
@@ -85,10 +171,18 @@ func init() {
 	rideDescFareCentavos := rideFields[3].Descriptor()
 	// ride.FareCentavosValidator is a validator for the "fare_centavos" field. It is called by the builders before save.
 	ride.FareCentavosValidator = rideDescFareCentavos.Validators[0].(func(int64) error)
+	// rideDescRideType is the schema descriptor for ride_type field.
+	rideDescRideType := rideFields[4].Descriptor()
+	// ride.DefaultRideType holds the default value on creation for the ride_type field.
+	ride.DefaultRideType = rideDescRideType.Default.(string)
 	userFields := schema.User{}.Fields()
 	_ = userFields
+	// userDescName is the schema descriptor for name field.
+	userDescName := userFields[0].Descriptor()
+	// user.DefaultName holds the default value on creation for the name field.
+	user.DefaultName = userDescName.Default.(string)
 	// userDescIsVerified is the schema descriptor for is_verified field.
-	userDescIsVerified := userFields[4].Descriptor()
+	userDescIsVerified := userFields[5].Descriptor()
 	// user.DefaultIsVerified holds the default value on creation for the is_verified field.
 	user.DefaultIsVerified = userDescIsVerified.Default.(bool)
 }

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -10,6 +9,7 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:shared_core/shared_core.dart';
 
 class PassengerActivityScreen extends StatefulWidget {
   const PassengerActivityScreen({super.key});

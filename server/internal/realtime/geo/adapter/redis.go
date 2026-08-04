@@ -49,3 +49,31 @@ func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitu
 	}
 	return result, nil
 }
+
+func (repository *RedisRepository) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {
+	return repository.get(ctx, "driver:location:"+driverID)
+}
+
+func (repository *RedisRepository) UpsertPassenger(ctx context.Context, rideID string, point domain.DriverPoint) error {
+	payload, err := json.Marshal(point)
+	if err != nil {
+		return err
+	}
+	return repository.client.Set(ctx, "passenger:location:"+rideID, payload, 0).Err()
+}
+
+func (repository *RedisRepository) GetPassenger(ctx context.Context, rideID string) (domain.DriverPoint, error) {
+	return repository.get(ctx, "passenger:location:"+rideID)
+}
+
+func (repository *RedisRepository) get(ctx context.Context, key string) (domain.DriverPoint, error) {
+	payload, err := repository.client.Get(ctx, key).Bytes()
+	if err != nil {
+		return domain.DriverPoint{}, err
+	}
+	var point domain.DriverPoint
+	if err := json.Unmarshal(payload, &point); err != nil {
+		return domain.DriverPoint{}, err
+	}
+	return point, nil
+}

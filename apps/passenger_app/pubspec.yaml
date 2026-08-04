@@ -37,18 +37,11 @@ dependencies:
   map_launcher: ^3.4.0
   flutter_polyline_points: ^2.1.0
   permission_handler: ^11.4.0
-  location_service:
-    path: ../../packages/location_service
-
-  core_models:
-    path: ../../packages/core_models
+  shared_core:
+    path: ../../packages/shared_core
 
   shared_ui:
     path: ../../packages/shared_ui
-
-  chat_service:
-    path: ../../packages/chat_service
-
 
   fpdart: ^1.2.0
   dio: ^5.10.0

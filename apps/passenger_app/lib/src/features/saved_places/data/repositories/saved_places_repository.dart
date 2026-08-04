@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:core_models/core_models.dart';
+
 import 'package:passenger_app/src/features/saved_places/data/models/saved_place_model.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
-
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SavedPlacesRepository implements ISavedPlacesRepository {

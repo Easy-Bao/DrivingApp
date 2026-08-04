@@ -1,4 +1,3 @@
-import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
@@ -8,6 +7,7 @@ import 'package:passenger_app/src/features/activity/presentation/screens/passeng
 import 'package:passenger_app/src/features/activity/presentation/screens/view_all_activity_screen.dart';
 import 'package:passenger_app/src/features/activity/presentation/screens/view_details_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/track_driver_screen.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ActivityModule {

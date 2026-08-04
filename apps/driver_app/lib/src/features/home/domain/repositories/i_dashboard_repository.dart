@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
 import 'package:fpdart/fpdart.dart';
 

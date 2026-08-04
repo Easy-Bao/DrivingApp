@@ -14,3 +14,11 @@ func (service *Service) Get(ctx context.Context, userID int) (domain.Profile, er
 func (service *Service) Update(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
 	return service.repository.Save(ctx, profile)
 }
+
+func (service *Service) Notifications(ctx context.Context, userID int) ([]domain.Notification, error) {
+	repository, ok := service.repository.(domain.NotificationRepository)
+	if !ok {
+		return []domain.Notification{}, nil
+	}
+	return repository.Notifications(ctx, userID)
+}

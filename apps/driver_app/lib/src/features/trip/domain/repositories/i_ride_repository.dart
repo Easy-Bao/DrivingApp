@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:fpdart/fpdart.dart';
 
 abstract class IRideRepository {

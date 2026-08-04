@@ -1,6 +1,5 @@
-import 'package:core_models/core_models.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:location_service/location_service.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_ride_repository.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/bidding_remote_data_source.dart';
 

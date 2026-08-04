@@ -19,6 +19,34 @@ const (
 	FieldStatus = "status"
 	// FieldFareCentavos holds the string denoting the fare_centavos field in the database.
 	FieldFareCentavos = "fare_centavos"
+	// FieldRideType holds the string denoting the ride_type field in the database.
+	FieldRideType = "ride_type"
+	// FieldPickupLatitude holds the string denoting the pickup_latitude field in the database.
+	FieldPickupLatitude = "pickup_latitude"
+	// FieldPickupLongitude holds the string denoting the pickup_longitude field in the database.
+	FieldPickupLongitude = "pickup_longitude"
+	// FieldPickupName holds the string denoting the pickup_name field in the database.
+	FieldPickupName = "pickup_name"
+	// FieldDropoffLatitude holds the string denoting the dropoff_latitude field in the database.
+	FieldDropoffLatitude = "dropoff_latitude"
+	// FieldDropoffLongitude holds the string denoting the dropoff_longitude field in the database.
+	FieldDropoffLongitude = "dropoff_longitude"
+	// FieldDropoffName holds the string denoting the dropoff_name field in the database.
+	FieldDropoffName = "dropoff_name"
+	// FieldDistanceKm holds the string denoting the distance_km field in the database.
+	FieldDistanceKm = "distance_km"
+	// FieldDurationMinutes holds the string denoting the duration_minutes field in the database.
+	FieldDurationMinutes = "duration_minutes"
+	// FieldDriverName holds the string denoting the driver_name field in the database.
+	FieldDriverName = "driver_name"
+	// FieldVehicleType holds the string denoting the vehicle_type field in the database.
+	FieldVehicleType = "vehicle_type"
+	// FieldPlateNumber holds the string denoting the plate_number field in the database.
+	FieldPlateNumber = "plate_number"
+	// FieldDriverRating holds the string denoting the driver_rating field in the database.
+	FieldDriverRating = "driver_rating"
+	// FieldCompletedAt holds the string denoting the completed_at field in the database.
+	FieldCompletedAt = "completed_at"
 	// Table holds the table name of the ride in the database.
 	Table = "rides"
 )
@@ -30,6 +58,20 @@ var Columns = []string{
 	FieldDriverID,
 	FieldStatus,
 	FieldFareCentavos,
+	FieldRideType,
+	FieldPickupLatitude,
+	FieldPickupLongitude,
+	FieldPickupName,
+	FieldDropoffLatitude,
+	FieldDropoffLongitude,
+	FieldDropoffName,
+	FieldDistanceKm,
+	FieldDurationMinutes,
+	FieldDriverName,
+	FieldVehicleType,
+	FieldPlateNumber,
+	FieldDriverRating,
+	FieldCompletedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -49,6 +91,8 @@ var (
 	DefaultStatus string
 	// FareCentavosValidator is a validator for the "fare_centavos" field. It is called by the builders before save.
 	FareCentavosValidator func(int64) error
+	// DefaultRideType holds the default value on creation for the "ride_type" field.
+	DefaultRideType string
 )
 
 // OrderOption defines the ordering options for the Ride queries.
@@ -77,4 +121,74 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 // ByFareCentavos orders the results by the fare_centavos field.
 func ByFareCentavos(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFareCentavos, opts...).ToFunc()
+}
+
+// ByRideType orders the results by the ride_type field.
+func ByRideType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRideType, opts...).ToFunc()
+}
+
+// ByPickupLatitude orders the results by the pickup_latitude field.
+func ByPickupLatitude(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPickupLatitude, opts...).ToFunc()
+}
+
+// ByPickupLongitude orders the results by the pickup_longitude field.
+func ByPickupLongitude(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPickupLongitude, opts...).ToFunc()
+}
+
+// ByPickupName orders the results by the pickup_name field.
+func ByPickupName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPickupName, opts...).ToFunc()
+}
+
+// ByDropoffLatitude orders the results by the dropoff_latitude field.
+func ByDropoffLatitude(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDropoffLatitude, opts...).ToFunc()
+}
+
+// ByDropoffLongitude orders the results by the dropoff_longitude field.
+func ByDropoffLongitude(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDropoffLongitude, opts...).ToFunc()
+}
+
+// ByDropoffName orders the results by the dropoff_name field.
+func ByDropoffName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDropoffName, opts...).ToFunc()
+}
+
+// ByDistanceKm orders the results by the distance_km field.
+func ByDistanceKm(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDistanceKm, opts...).ToFunc()
+}
+
+// ByDurationMinutes orders the results by the duration_minutes field.
+func ByDurationMinutes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDurationMinutes, opts...).ToFunc()
+}
+
+// ByDriverName orders the results by the driver_name field.
+func ByDriverName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDriverName, opts...).ToFunc()
+}
+
+// ByVehicleType orders the results by the vehicle_type field.
+func ByVehicleType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVehicleType, opts...).ToFunc()
+}
+
+// ByPlateNumber orders the results by the plate_number field.
+func ByPlateNumber(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPlateNumber, opts...).ToFunc()
+}
+
+// ByDriverRating orders the results by the driver_rating field.
+func ByDriverRating(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDriverRating, opts...).ToFunc()
+}
+
+// ByCompletedAt orders the results by the completed_at field.
+func ByCompletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCompletedAt, opts...).ToFunc()
 }

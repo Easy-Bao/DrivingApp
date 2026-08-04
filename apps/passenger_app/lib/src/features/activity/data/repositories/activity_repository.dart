@@ -1,7 +1,7 @@
-import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
+import 'package:shared_core/shared_core.dart';
 
 const List<String> _monthAbbreviations = <String>[
   'JAN',

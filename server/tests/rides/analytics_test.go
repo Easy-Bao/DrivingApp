@@ -1,0 +1,63 @@
+package rides_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
+)
+
+type analyticsRepository struct{}
+
+func (analyticsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
+	return domain.Ride{}, nil
+}
+func (analyticsRepository) CreateBid(context.Context, domain.Bid) (domain.Bid, error) {
+	return domain.Bid{}, nil
+}
+func (analyticsRepository) AcceptBid(context.Context, int, int) (domain.Bid, domain.Ride, error) {
+	return domain.Bid{}, domain.Ride{}, nil
+}
+func (analyticsRepository) Get(context.Context, int) (domain.Ride, error) {
+	return domain.Ride{}, nil
+}
+func (analyticsRepository) DriverStats(context.Context, int) (domain.DriverStats, error) {
+	return domain.DriverStats{DriverID: 7, TotalTrips: 3, CompletedTrips: 2}, nil
+}
+func (analyticsRepository) DriverTrips(context.Context, int) ([]domain.Ride, error) {
+	return []domain.Ride{{ID: 3}}, nil
+}
+func (analyticsRepository) PassengerRides(context.Context, int) ([]domain.Ride, error) {
+	return []domain.Ride{{ID: 2}}, nil
+}
+func (analyticsRepository) DriverReviews(context.Context, int, int, int) ([]domain.Review, error) {
+	return []domain.Review{{Rating: 5}}, nil
+}
+func (analyticsRepository) CreateReview(_ context.Context, review domain.Review) (domain.Review, error) {
+	review.ID = 1
+	return review, nil
+}
+func (analyticsRepository) OnlineDrivers(context.Context) ([]domain.OnlineDriver, error) {
+	return []domain.OnlineDriver{{ID: 7}}, nil
+}
+
+func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
+	service := usecase.NewService(analyticsRepository{})
+
+	stats, err := service.DriverStats(context.Background(), 7)
+	if err != nil || stats.TotalTrips != 3 {
+		t.Fatalf("driver stats = %#v, %v", stats, err)
+	}
+	trips, err := service.PassengerRides(context.Background(), 8)
+	if err != nil || len(trips) != 1 || trips[0].ID != 2 {
+		t.Fatalf("passenger rides = %#v, %v", trips, err)
+	}
+	review, err := service.CreateReview(context.Background(), domain.Review{DriverID: 7, Rating: 5})
+	if err != nil || review.ID != 1 {
+		t.Fatalf("review = %#v, %v", review, err)
+	}
+	if _, err := service.CreateReview(context.Background(), domain.Review{DriverID: 7, Rating: 6}); err == nil {
+		t.Fatal("expected out-of-range rating to be rejected")
+	}
+}

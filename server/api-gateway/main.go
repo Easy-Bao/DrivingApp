@@ -17,7 +17,12 @@ func main() {
 	router := http.NewServeMux()
 	router.Handle("/ws", realtimeProxy)
 	router.Handle("/api/v1/telemetry/", realtimeProxy)
-	router.Handle("/api/", coreProxy)
+	router.Handle("/telemetry/", realtimeProxy)
+	router.Handle("/chat/", realtimeProxy)
+	router.Handle("/api/v1/chat/", realtimeProxy)
+	// The gateway is the sole public HTTP endpoint. Domain routing happens
+	// behind it, so clients never need a URL for an individual module.
+	router.Handle("/", coreProxy)
 	router.HandleFunc("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"api-gateway"}`))

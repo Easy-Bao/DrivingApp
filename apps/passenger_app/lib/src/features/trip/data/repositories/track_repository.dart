@@ -1,9 +1,8 @@
-import 'package:core_models/core_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 class TrackRepository implements ITrackRepository {
   final BiddingRemoteDataSource _biddingDataSource;

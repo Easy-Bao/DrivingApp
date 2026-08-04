@@ -1,6 +1,6 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 
-import 'package:core_models/core_models.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:flutter/material.dart';

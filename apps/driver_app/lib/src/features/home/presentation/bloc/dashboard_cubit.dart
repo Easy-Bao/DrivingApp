@@ -1,6 +1,6 @@
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

@@ -1,6 +1,6 @@
-import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
 import 'package:passenger_app/src/core/constants/api_endpoints.dart';
+import 'package:shared_core/shared_core.dart';
 
 abstract class AuthRemoteDataSource {
   Future<Map<String, dynamic>> loginPassenger({

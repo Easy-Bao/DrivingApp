@@ -8,12 +8,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/migrate"
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
 	adminusecase "github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
+	authredis "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/redis"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
 	authusecase "github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
@@ -34,6 +35,10 @@ import (
 	userspostgres "github.com/Easy-Bao/DrivingApp/server/internal/users/adapter/postgres"
 	usershttp "github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http"
 	usersusecase "github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/database"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/logger"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	_ "github.com/lib/pq"
 	redisclient "github.com/redis/go-redis/v9"
 )
@@ -45,32 +50,68 @@ func main() {
 	var documentRouter *documenthttp.Router
 	var ridesRouter *rideshttp.Router
 	var adminRouter *adminhttp.Router
+	var documentRepository *documentpostgres.Repository
+	var registerService *authusecase.RegisterService
+	var authenticateService *authusecase.AuthenticateService
+	var verifier *security.TokenManager
+	var authRepository *authpostgres.UserRepository
 	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
-		client, err := ent.Open("postgres", databaseURL)
+		client, err := database.OpenPostgres(databaseURL)
 		if err != nil {
 			log.Fatal(err)
 		}
-		database, err := sql.Open("postgres", databaseURL)
+		databaseConnection, err := sql.Open("postgres", database.NormalizePostgresURL(databaseURL))
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err := platformmigration.PreserveLegacyTables(context.Background(), database); err != nil {
+		if err := platformmigration.PreserveLegacyTables(context.Background(), databaseConnection); err != nil {
 			log.Fatal(err)
 		}
-		defer database.Close()
+		defer databaseConnection.Close()
 		if err := client.Schema.Create(context.Background(), migrate.WithForeignKeys(true)); err != nil {
 			log.Fatal(err)
 		}
 		defer client.Close()
-		authRepository := authpostgres.NewUserRepository(client)
-		authRouter = authhttp.NewRouter(authusecase.NewRegisterService(authRepository, token.NewIssuer(os.Getenv("JWT_SECRET"))), authusecase.NewAuthenticateService(authRepository, token.NewIssuer(os.Getenv("JWT_SECRET"))))
-		verifier := token.NewVerifier(os.Getenv("JWT_SECRET"))
+		authRepository = authpostgres.NewUserRepository(client)
+		tokenManager := token.NewIssuer(os.Getenv("JWT_SECRET"))
+		registerService = authusecase.NewRegisterService(authRepository, tokenManager, authRepository)
+		authenticateService = authusecase.NewAuthenticateService(authRepository, tokenManager)
+		verifier = token.NewVerifier(os.Getenv("JWT_SECRET"))
 		usersRouter = usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(client)), verifier)
-		documentRouter = documenthttp.NewRouter(documentusecase.NewService(documentpostgres.NewRepository(client), documentstorage.LocalStorage{}), verifier)
+		documentRepository = documentpostgres.NewRepository(client)
 		ridesRouter = rideshttp.NewRouter(ridesusecase.NewService(ridespostgres.NewRepository(client)), verifier)
 		adminRouter = adminhttp.NewRouter(adminusecase.NewService(adminpostgres.NewRepository(client)), verifier)
 	} else {
 		log.Fatal("DATABASE_URL is required")
+	}
+	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
+	var cache locationdomain.Cache
+	var publisher locationdomain.EventPublisher
+	var redisClient *redisclient.Client
+	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
+		var err error
+		redisClient, err = database.OpenRedis(redisURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		cache = locationredis.NewCache(redisClient)
+	} else {
+		log.Fatal("REDIS_URL is required")
+	}
+	if registerService != nil && authenticateService != nil && verifier != nil {
+		var otpService *authusecase.OTPService
+		if redisClient != nil && authRepository != nil {
+			otpService = authusecase.NewOTPService(
+				authRepository,
+				authredis.NewOTPStore(redisClient),
+				email.NewSMTPGatewayFromEnv(),
+				verifier,
+			)
+		}
+		authRouter = authhttp.NewRouter(registerService, authenticateService, otpService)
+	}
+	if documentRepository != nil && redisClient != nil && verifier != nil {
+		documentRouter = documenthttp.NewRouter(documentusecase.NewService(documentRepository, documentstorage.NewRedisStorage(redisClient)), verifier)
 	}
 	if authRouter != nil {
 		authRouter.RegisterRoutes(router)
@@ -86,18 +127,6 @@ func main() {
 	}
 	if adminRouter != nil {
 		adminRouter.RegisterRoutes(router)
-	}
-	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
-	var cache locationdomain.Cache
-	var publisher locationdomain.EventPublisher
-	var redisClient *redisclient.Client
-	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
-		options, err := redisclient.ParseURL(redisURL)
-		if err != nil {
-			log.Fatal(err)
-		}
-		redisClient = redisclient.NewClient(options)
-		cache = locationredis.NewCache(redisClient)
 	}
 	if rabbitURL := os.Getenv("RABBITMQ_URL"); rabbitURL != "" {
 		queuePublisher, err := locationqueue.NewPublisher(rabbitURL)
@@ -119,7 +148,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + port("CORE_API_PORT", "8080"),
-		Handler:           router,
+		Handler:           middleware.Logging(logger.New("core-api"))(router),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      15 * time.Second,

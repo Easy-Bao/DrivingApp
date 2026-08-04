@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:fpdart/fpdart.dart';
 

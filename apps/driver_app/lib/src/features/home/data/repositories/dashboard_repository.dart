@@ -1,4 +1,4 @@
-import 'package:core_models/core_models.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/home/data/data_sources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';

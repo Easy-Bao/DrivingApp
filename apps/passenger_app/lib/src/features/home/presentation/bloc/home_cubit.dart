@@ -1,10 +1,10 @@
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dart';
+import 'package:shared_core/shared_core.dart';
 
 class HomeCubit extends Cubit<HomeState> {
   final IPassengerHomeRepository _repository;

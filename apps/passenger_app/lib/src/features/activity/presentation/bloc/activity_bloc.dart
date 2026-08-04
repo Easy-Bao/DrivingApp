@@ -1,6 +1,6 @@
-import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 part 'activity_event.dart';
 part 'activity_state.dart';

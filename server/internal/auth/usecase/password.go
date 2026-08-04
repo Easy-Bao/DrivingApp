@@ -1,13 +1,10 @@
 package usecase
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"strconv"
+
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 )
 
-func HashPassword(password string) string {
-	digest := sha256.Sum256([]byte(password))
-	return hex.EncodeToString(digest[:])
-}
-func intSubject(id int) string { return strconv.Itoa(id) }
+func HashPassword(password string) string { return security.HashPassword(password) }
+func intSubject(id int) string            { return strconv.Itoa(id) }

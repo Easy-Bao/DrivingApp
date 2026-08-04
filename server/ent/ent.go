@@ -14,9 +14,13 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/Easy-Bao/DrivingApp/server/ent/auditevent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/bid"
+	"github.com/Easy-Bao/DrivingApp/server/ent/bidoffer"
+	"github.com/Easy-Bao/DrivingApp/server/ent/bidsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverdocument"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
 )
@@ -81,9 +85,13 @@ func checkColumn(t, c string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			auditevent.Table:       auditevent.ValidColumn,
 			bid.Table:              bid.ValidColumn,
+			bidoffer.Table:         bidoffer.ValidColumn,
+			bidsession.Table:       bidsession.ValidColumn,
 			driverdocument.Table:   driverdocument.ValidColumn,
 			driverprofile.Table:    driverprofile.ValidColumn,
+			notification.Table:     notification.ValidColumn,
 			passengerprofile.Table: passengerprofile.ValidColumn,
+			review.Table:           review.ValidColumn,
 			ride.Table:             ride.ValidColumn,
 			user.Table:             user.ValidColumn,
 		})

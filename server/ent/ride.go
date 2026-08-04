@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -24,6 +25,34 @@ type Ride struct {
 	Status string `json:"status,omitempty"`
 	// FareCentavos holds the value of the "fare_centavos" field.
 	FareCentavos int64 `json:"fare_centavos,omitempty"`
+	// RideType holds the value of the "ride_type" field.
+	RideType string `json:"ride_type,omitempty"`
+	// PickupLatitude holds the value of the "pickup_latitude" field.
+	PickupLatitude float64 `json:"pickup_latitude,omitempty"`
+	// PickupLongitude holds the value of the "pickup_longitude" field.
+	PickupLongitude float64 `json:"pickup_longitude,omitempty"`
+	// PickupName holds the value of the "pickup_name" field.
+	PickupName string `json:"pickup_name,omitempty"`
+	// DropoffLatitude holds the value of the "dropoff_latitude" field.
+	DropoffLatitude float64 `json:"dropoff_latitude,omitempty"`
+	// DropoffLongitude holds the value of the "dropoff_longitude" field.
+	DropoffLongitude float64 `json:"dropoff_longitude,omitempty"`
+	// DropoffName holds the value of the "dropoff_name" field.
+	DropoffName string `json:"dropoff_name,omitempty"`
+	// DistanceKm holds the value of the "distance_km" field.
+	DistanceKm float64 `json:"distance_km,omitempty"`
+	// DurationMinutes holds the value of the "duration_minutes" field.
+	DurationMinutes float64 `json:"duration_minutes,omitempty"`
+	// DriverName holds the value of the "driver_name" field.
+	DriverName string `json:"driver_name,omitempty"`
+	// VehicleType holds the value of the "vehicle_type" field.
+	VehicleType string `json:"vehicle_type,omitempty"`
+	// PlateNumber holds the value of the "plate_number" field.
+	PlateNumber string `json:"plate_number,omitempty"`
+	// DriverRating holds the value of the "driver_rating" field.
+	DriverRating float64 `json:"driver_rating,omitempty"`
+	// CompletedAt holds the value of the "completed_at" field.
+	CompletedAt  time.Time `json:"completed_at,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -32,10 +61,14 @@ func (*Ride) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case ride.FieldPickupLatitude, ride.FieldPickupLongitude, ride.FieldDropoffLatitude, ride.FieldDropoffLongitude, ride.FieldDistanceKm, ride.FieldDurationMinutes, ride.FieldDriverRating:
+			values[i] = new(sql.NullFloat64)
 		case ride.FieldID, ride.FieldPassengerID, ride.FieldDriverID, ride.FieldFareCentavos:
 			values[i] = new(sql.NullInt64)
-		case ride.FieldStatus:
+		case ride.FieldStatus, ride.FieldRideType, ride.FieldPickupName, ride.FieldDropoffName, ride.FieldDriverName, ride.FieldVehicleType, ride.FieldPlateNumber:
 			values[i] = new(sql.NullString)
+		case ride.FieldCompletedAt:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -80,6 +113,90 @@ func (_m *Ride) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field fare_centavos", values[i])
 			} else if value.Valid {
 				_m.FareCentavos = value.Int64
+			}
+		case ride.FieldRideType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ride_type", values[i])
+			} else if value.Valid {
+				_m.RideType = value.String
+			}
+		case ride.FieldPickupLatitude:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field pickup_latitude", values[i])
+			} else if value.Valid {
+				_m.PickupLatitude = value.Float64
+			}
+		case ride.FieldPickupLongitude:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field pickup_longitude", values[i])
+			} else if value.Valid {
+				_m.PickupLongitude = value.Float64
+			}
+		case ride.FieldPickupName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field pickup_name", values[i])
+			} else if value.Valid {
+				_m.PickupName = value.String
+			}
+		case ride.FieldDropoffLatitude:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field dropoff_latitude", values[i])
+			} else if value.Valid {
+				_m.DropoffLatitude = value.Float64
+			}
+		case ride.FieldDropoffLongitude:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field dropoff_longitude", values[i])
+			} else if value.Valid {
+				_m.DropoffLongitude = value.Float64
+			}
+		case ride.FieldDropoffName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field dropoff_name", values[i])
+			} else if value.Valid {
+				_m.DropoffName = value.String
+			}
+		case ride.FieldDistanceKm:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field distance_km", values[i])
+			} else if value.Valid {
+				_m.DistanceKm = value.Float64
+			}
+		case ride.FieldDurationMinutes:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field duration_minutes", values[i])
+			} else if value.Valid {
+				_m.DurationMinutes = value.Float64
+			}
+		case ride.FieldDriverName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field driver_name", values[i])
+			} else if value.Valid {
+				_m.DriverName = value.String
+			}
+		case ride.FieldVehicleType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field vehicle_type", values[i])
+			} else if value.Valid {
+				_m.VehicleType = value.String
+			}
+		case ride.FieldPlateNumber:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field plate_number", values[i])
+			} else if value.Valid {
+				_m.PlateNumber = value.String
+			}
+		case ride.FieldDriverRating:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field driver_rating", values[i])
+			} else if value.Valid {
+				_m.DriverRating = value.Float64
+			}
+		case ride.FieldCompletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field completed_at", values[i])
+			} else if value.Valid {
+				_m.CompletedAt = value.Time
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -128,6 +245,48 @@ func (_m *Ride) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("fare_centavos=")
 	builder.WriteString(fmt.Sprintf("%v", _m.FareCentavos))
+	builder.WriteString(", ")
+	builder.WriteString("ride_type=")
+	builder.WriteString(_m.RideType)
+	builder.WriteString(", ")
+	builder.WriteString("pickup_latitude=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PickupLatitude))
+	builder.WriteString(", ")
+	builder.WriteString("pickup_longitude=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PickupLongitude))
+	builder.WriteString(", ")
+	builder.WriteString("pickup_name=")
+	builder.WriteString(_m.PickupName)
+	builder.WriteString(", ")
+	builder.WriteString("dropoff_latitude=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DropoffLatitude))
+	builder.WriteString(", ")
+	builder.WriteString("dropoff_longitude=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DropoffLongitude))
+	builder.WriteString(", ")
+	builder.WriteString("dropoff_name=")
+	builder.WriteString(_m.DropoffName)
+	builder.WriteString(", ")
+	builder.WriteString("distance_km=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DistanceKm))
+	builder.WriteString(", ")
+	builder.WriteString("duration_minutes=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DurationMinutes))
+	builder.WriteString(", ")
+	builder.WriteString("driver_name=")
+	builder.WriteString(_m.DriverName)
+	builder.WriteString(", ")
+	builder.WriteString("vehicle_type=")
+	builder.WriteString(_m.VehicleType)
+	builder.WriteString(", ")
+	builder.WriteString("plate_number=")
+	builder.WriteString(_m.PlateNumber)
+	builder.WriteString(", ")
+	builder.WriteString("driver_rating=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DriverRating))
+	builder.WriteString(", ")
+	builder.WriteString("completed_at=")
+	builder.WriteString(_m.CompletedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

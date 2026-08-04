@@ -9,7 +9,7 @@ import (
 // Preserve incompatible legacy tables under an explicit namespace so Ent can
 // create the new modular schema without destructive drops or type coercion.
 func PreserveLegacyTables(ctx context.Context, database *sql.DB) error {
-	for _, table := range []string{"rides"} {
+	for _, table := range []string{"rides", "bid_sessions", "reviews", "notifications"} {
 		var dataType string
 		err := database.QueryRowContext(ctx, `
 			SELECT data_type

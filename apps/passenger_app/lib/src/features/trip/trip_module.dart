@@ -1,7 +1,5 @@
-import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/activity_detail_map_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/destination_preview_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/driver_matched_screen.dart';
@@ -10,6 +8,7 @@ import 'package:passenger_app/src/features/trip/presentation/screens/map_pin_scr
 import 'package:passenger_app/src/features/trip/presentation/screens/ride_selection_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/search_destination_screen.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class TripModule {

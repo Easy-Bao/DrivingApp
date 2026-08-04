@@ -5,7 +5,7 @@ import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
+import 'package:shared_core/shared_core.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,7 +24,7 @@ void main() async {
     runApp(_ConfigurationErrorApp(message: error.message));
     return;
   }
-  LocationService.initialize(nativeService);
+  LocationService.nativeService = nativeService;
   final mapboxToken = EnvConfig.mapboxPublicToken;
   if (mapboxToken == null) {
     debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');

@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_state.dart';
 
-import 'package:location_service/location_service.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:driver_app/src/core/services/secure_session_service.dart';
@@ -86,7 +86,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       label: 'Current location\nYou are here',
       color: const Color(0xFF222222),
     );
-    if (driverManager != null) _markerManagers.add(driverManager);
+    _markerManagers.add(driverManager);
 
     final passengerManager = await MapProvider.addMarker(
       _mapController!,
@@ -95,7 +95,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       label: 'Passenger\nPickup location',
       color: const Color(0xFF2E7D32),
     );
-    if (passengerManager != null) _markerManagers.add(passengerManager);
+    _markerManagers.add(passengerManager);
 
     await MapProvider.fitBounds(_mapController!, [
       LatLng(event.driverLat, event.driverLng),
@@ -127,7 +127,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         color: const Color(0xFF222222),
         width: 5.0,
       );
-      if (polylineManager != null) _polylineManagers.add(polylineManager);
+      _polylineManagers.add(polylineManager);
     }
 
     emit(

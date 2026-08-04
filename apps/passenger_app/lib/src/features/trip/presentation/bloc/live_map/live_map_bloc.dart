@@ -3,11 +3,11 @@ import 'dart:developer' as dev;
 import 'dart:ui' show Color;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_state.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_core/shared_core.dart';
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final BiddingRemoteDataSource _biddingDataSource;
@@ -88,7 +88,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       isOrigin: true,
       label: 'You',
     );
-    if (riderManager != null) _markerManagers.add(riderManager);
+    _markerManagers.add(riderManager);
 
     final driverManager = await MapProvider.addMarker(
       _mapController!,
@@ -97,7 +97,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       label: 'Driver',
       color: const Color(0xFF1565C0),
     );
-    if (driverManager != null) _markerManagers.add(driverManager);
+    _markerManagers.add(driverManager);
 
     await MapProvider.fitBounds(_mapController!, [
       LatLng(event.riderLat, event.riderLng),
@@ -147,9 +147,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       color: event.isOrigin ? null : const Color(0xFF1565C0),
       onTap: event.onTap,
     );
-    if (manager != null) {
-      _markerManagers.add(manager);
-    }
+    _markerManagers.add(manager);
   }
 
   Future<void> _onClearMapAnnotations(

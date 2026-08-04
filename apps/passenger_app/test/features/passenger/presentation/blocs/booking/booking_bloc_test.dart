@@ -1,5 +1,4 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:core_models/core_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -13,6 +12,7 @@ import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_rep
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
+import 'package:shared_core/shared_core.dart';
 
 class MockDriverRepo extends Mock implements IDriverRepository {}
 

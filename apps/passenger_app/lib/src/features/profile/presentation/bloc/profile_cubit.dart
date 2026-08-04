@@ -1,10 +1,10 @@
 import 'dart:developer' as dev;
 
-import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile_state.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 export 'package:passenger_app/src/features/profile/presentation/bloc/profile_state.dart';

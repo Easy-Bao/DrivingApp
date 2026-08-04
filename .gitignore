@@ -59,6 +59,9 @@ app.*.map.json
 .agent
 .agents/
 .skills/
+!.agents/
+.agents/*
+!.agents/AGENTS.md
 .clinerules
 .cursorrules
 

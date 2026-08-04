@@ -12,8 +12,9 @@ import (
 )
 
 // The Ent graph is generated from schemas owned by their business modules.
-// The temporary aggregate is never committed and avoids a second global schema
-// ownership directory while preserving one typed client and migration stream.
+// The platform aggregate is generated metadata only; no business code should
+// add schemas there. Keeping it stable is required because Ent's generated
+// runtime references schema descriptors for field validators.
 func main() {
 	workingDirectory, err := os.Getwd()
 	if err != nil {
@@ -23,11 +24,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	workspace := filepath.Join(root, "internal", "ent", "schema")
-	if err := os.MkdirAll(workspace, 0o755); err != nil {
-		panic(err)
-	}
-	aggregate := workspace
+	aggregate := filepath.Join(root, "internal", "platform", "ent", "schema")
 	if err := os.RemoveAll(aggregate); err != nil {
 		panic(err)
 	}

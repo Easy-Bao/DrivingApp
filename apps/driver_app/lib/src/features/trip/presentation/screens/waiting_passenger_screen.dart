@@ -2,7 +2,7 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
 
-import 'package:chat_service/chat_service.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/passenger_remote_data_source.dart';

@@ -1,5 +1,5 @@
-import 'package:chat_service/chat_service.dart';
 import 'package:equatable/equatable.dart';
+import 'package:shared_core/shared_core.dart';
 
 class ChatState extends Equatable {
   final List<ChatMessage> messages;

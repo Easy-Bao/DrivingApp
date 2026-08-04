@@ -68,10 +68,15 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			_ = connection.WriteJSON(map[string]string{"error": "invalid event"})
 			continue
 		}
-		if handler.sink != nil {
-			_ = handler.sink.Handle(message)
+		eventMessage := message
+		if eventMessage = enrichChatEvent(eventMessage, request.URL.Query().Get("roomId"), clientID); eventMessage == nil {
+			_ = connection.WriteJSON(map[string]string{"error": "invalid chat event"})
+			continue
 		}
-		handler.hub.Broadcast(message)
+		if handler.sink != nil {
+			_ = handler.sink.Handle(eventMessage)
+		}
+		handler.hub.Broadcast(eventMessage)
 	}
 }
 
@@ -83,9 +88,33 @@ func validEvent(message []byte) bool {
 		return false
 	}
 	switch event.Type {
-	case "LOCATION_UPDATE", "CHAT_MESSAGE", "BID_CREATED":
+	case "LOCATION_UPDATE", "CHAT_MESSAGE", "BID_CREATED", "message":
 		return true
 	default:
 		return false
 	}
+}
+
+func enrichChatEvent(message []byte, roomID, clientID string) []byte {
+	var event map[string]any
+	if json.Unmarshal(message, &event) != nil {
+		return nil
+	}
+	if event["type"] != "CHAT_MESSAGE" && event["type"] != "message" {
+		return message
+	}
+	if roomID == "" || clientID == "" {
+		return nil
+	}
+	event["room_id"] = roomID
+	event["sender_id"] = clientID
+	return marshalEvent(event)
+}
+
+func marshalEvent(event map[string]any) []byte {
+	message, err := json.Marshal(event)
+	if err != nil {
+		return nil
+	}
+	return message
 }

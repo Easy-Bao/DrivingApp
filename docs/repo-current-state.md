@@ -1,15 +1,25 @@
-# Backend cutover status
+# Repository current state
 
-The backend runtime is represented by the Go `core-api`, `realtime-service`,
-and `api-gateway` applications. Legacy Bun services and the old location
-service are no longer present. Ent schemas are declared by
-`server/internal/*/schema` and composed into the generated client by
-`server/cmd/entgenerate`.
+The backend cutover is complete: the old Bun/Drizzle service fleet and
+`server/database` tree are gone. The backend now contains `core-api`,
+`realtime-service`, and `api-gateway`, with one public gateway endpoint and
+private upstream processes.
 
-The core process is composed from domain-owned routers. Auth registration and
-login, users, driver documents, rides/bids, and Admin stats have explicit
-use-case and Ent adapter boundaries. Location remains a Mapbox module with nearby
-POI search, reverse-geocode/route operations, Redis result caching, and optional
-RabbitMQ events; realtime geo is Redis-backed and chat is a realtime hub. Full legacy parity for OTP mail
-delivery, richer Admin case/audit/report operations, and persistent chat history
-remain follow-up implementation work rather than hidden compatibility logic.
+The core modules have domain-owned schemas and ports/adapters for PostgreSQL,
+Redis, RabbitMQ, Mapbox, SMTP, and document persistence. Auth includes explicit
+passenger/driver registration and authentication use cases, passenger-only OTP
+verification, password reset, JWT issuance, and profile provisioning. Rides
+contains fare calculation, persisted bid sessions/offers, transactional offer
+acceptance, the ride state machine, passenger history, driver
+activity/reviews, and online-driver discovery. Realtime contains Redis-backed
+GEO and telemetry plus Redis-backed WebSocket chat relay and room history.
+
+The generated Ent client and platform schema aggregate are checked in because
+they are required at runtime; module schemas are the only business-schema
+source files. `scripts/database/migrate.sh`, `justfile`, Compose, and CI all
+use the same migration command.
+
+The Flutter workspace has exactly `shared_core` and `shared_ui`; the former
+contains the consolidated models and network/location/fare/realtime utilities,
+while the latter contains reusable presentation components. App themes remain
+in the two client applications.

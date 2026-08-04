@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 )
@@ -36,4 +37,17 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		return domain.Profile{}, err
 	}
 	return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "passenger", Name: updated.Name, PreferredRideType: updated.PreferredRideType}, nil
+}
+
+func (repository *ProfileRepository) Notifications(ctx context.Context, userID int) ([]domain.Notification, error) {
+	items, err := repository.client.Notification.Query().Where(notification.UserIDEQ(userID)).Order(notification.ByID()).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.Notification, 0, len(items))
+	for index := len(items) - 1; index >= 0; index-- {
+		item := items[index]
+		result = append(result, domain.Notification{ID: item.ID, UserID: item.UserID, Type: item.Type, Title: item.Title, Body: item.Body, IsRead: item.IsRead, CreatedAt: item.CreatedAt.UTC().Format("2006-01-02T15:04:05Z07:00")})
+	}
+	return result, nil
 }

@@ -1,9 +1,9 @@
-import 'package:core_models/core_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/saved_places/data/models/saved_place_model.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
+import 'package:shared_core/shared_core.dart';
 
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   final ISavedPlacesRepository _repository;

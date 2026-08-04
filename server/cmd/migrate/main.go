@@ -9,6 +9,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/migrate"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/database"
 	_ "github.com/lib/pq"
 )
 
@@ -17,6 +18,7 @@ func main() {
 	if url == "" {
 		log.Fatal("DATABASE_URL is required")
 	}
+	url = database.NormalizePostgresURL(url)
 	client, err := ent.Open("postgres", url)
 	if err != nil {
 		log.Fatal(err)

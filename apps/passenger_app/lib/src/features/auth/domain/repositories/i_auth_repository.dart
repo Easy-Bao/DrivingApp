@@ -1,6 +1,6 @@
-import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:shared_core/shared_core.dart';
 
 abstract class IAuthRepository {
   Future<Either<Failure, AuthCredentials>> authenticatePassenger({

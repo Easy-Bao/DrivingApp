@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -110,6 +111,329 @@ func (_u *RideUpdate) AddFareCentavos(v int64) *RideUpdate {
 	return _u
 }
 
+// SetRideType sets the "ride_type" field.
+func (_u *RideUpdate) SetRideType(v string) *RideUpdate {
+	_u.mutation.SetRideType(v)
+	return _u
+}
+
+// SetNillableRideType sets the "ride_type" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableRideType(v *string) *RideUpdate {
+	if v != nil {
+		_u.SetRideType(*v)
+	}
+	return _u
+}
+
+// SetPickupLatitude sets the "pickup_latitude" field.
+func (_u *RideUpdate) SetPickupLatitude(v float64) *RideUpdate {
+	_u.mutation.ResetPickupLatitude()
+	_u.mutation.SetPickupLatitude(v)
+	return _u
+}
+
+// SetNillablePickupLatitude sets the "pickup_latitude" field if the given value is not nil.
+func (_u *RideUpdate) SetNillablePickupLatitude(v *float64) *RideUpdate {
+	if v != nil {
+		_u.SetPickupLatitude(*v)
+	}
+	return _u
+}
+
+// AddPickupLatitude adds value to the "pickup_latitude" field.
+func (_u *RideUpdate) AddPickupLatitude(v float64) *RideUpdate {
+	_u.mutation.AddPickupLatitude(v)
+	return _u
+}
+
+// ClearPickupLatitude clears the value of the "pickup_latitude" field.
+func (_u *RideUpdate) ClearPickupLatitude() *RideUpdate {
+	_u.mutation.ClearPickupLatitude()
+	return _u
+}
+
+// SetPickupLongitude sets the "pickup_longitude" field.
+func (_u *RideUpdate) SetPickupLongitude(v float64) *RideUpdate {
+	_u.mutation.ResetPickupLongitude()
+	_u.mutation.SetPickupLongitude(v)
+	return _u
+}
+
+// SetNillablePickupLongitude sets the "pickup_longitude" field if the given value is not nil.
+func (_u *RideUpdate) SetNillablePickupLongitude(v *float64) *RideUpdate {
+	if v != nil {
+		_u.SetPickupLongitude(*v)
+	}
+	return _u
+}
+
+// AddPickupLongitude adds value to the "pickup_longitude" field.
+func (_u *RideUpdate) AddPickupLongitude(v float64) *RideUpdate {
+	_u.mutation.AddPickupLongitude(v)
+	return _u
+}
+
+// ClearPickupLongitude clears the value of the "pickup_longitude" field.
+func (_u *RideUpdate) ClearPickupLongitude() *RideUpdate {
+	_u.mutation.ClearPickupLongitude()
+	return _u
+}
+
+// SetPickupName sets the "pickup_name" field.
+func (_u *RideUpdate) SetPickupName(v string) *RideUpdate {
+	_u.mutation.SetPickupName(v)
+	return _u
+}
+
+// SetNillablePickupName sets the "pickup_name" field if the given value is not nil.
+func (_u *RideUpdate) SetNillablePickupName(v *string) *RideUpdate {
+	if v != nil {
+		_u.SetPickupName(*v)
+	}
+	return _u
+}
+
+// ClearPickupName clears the value of the "pickup_name" field.
+func (_u *RideUpdate) ClearPickupName() *RideUpdate {
+	_u.mutation.ClearPickupName()
+	return _u
+}
+
+// SetDropoffLatitude sets the "dropoff_latitude" field.
+func (_u *RideUpdate) SetDropoffLatitude(v float64) *RideUpdate {
+	_u.mutation.ResetDropoffLatitude()
+	_u.mutation.SetDropoffLatitude(v)
+	return _u
+}
+
+// SetNillableDropoffLatitude sets the "dropoff_latitude" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableDropoffLatitude(v *float64) *RideUpdate {
+	if v != nil {
+		_u.SetDropoffLatitude(*v)
+	}
+	return _u
+}
+
+// AddDropoffLatitude adds value to the "dropoff_latitude" field.
+func (_u *RideUpdate) AddDropoffLatitude(v float64) *RideUpdate {
+	_u.mutation.AddDropoffLatitude(v)
+	return _u
+}
+
+// ClearDropoffLatitude clears the value of the "dropoff_latitude" field.
+func (_u *RideUpdate) ClearDropoffLatitude() *RideUpdate {
+	_u.mutation.ClearDropoffLatitude()
+	return _u
+}
+
+// SetDropoffLongitude sets the "dropoff_longitude" field.
+func (_u *RideUpdate) SetDropoffLongitude(v float64) *RideUpdate {
+	_u.mutation.ResetDropoffLongitude()
+	_u.mutation.SetDropoffLongitude(v)
+	return _u
+}
+
+// SetNillableDropoffLongitude sets the "dropoff_longitude" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableDropoffLongitude(v *float64) *RideUpdate {
+	if v != nil {
+		_u.SetDropoffLongitude(*v)
+	}
+	return _u
+}
+
+// AddDropoffLongitude adds value to the "dropoff_longitude" field.
+func (_u *RideUpdate) AddDropoffLongitude(v float64) *RideUpdate {
+	_u.mutation.AddDropoffLongitude(v)
+	return _u
+}
+
+// ClearDropoffLongitude clears the value of the "dropoff_longitude" field.
+func (_u *RideUpdate) ClearDropoffLongitude() *RideUpdate {
+	_u.mutation.ClearDropoffLongitude()
+	return _u
+}
+
+// SetDropoffName sets the "dropoff_name" field.
+func (_u *RideUpdate) SetDropoffName(v string) *RideUpdate {
+	_u.mutation.SetDropoffName(v)
+	return _u
+}
+
+// SetNillableDropoffName sets the "dropoff_name" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableDropoffName(v *string) *RideUpdate {
+	if v != nil {
+		_u.SetDropoffName(*v)
+	}
+	return _u
+}
+
+// ClearDropoffName clears the value of the "dropoff_name" field.
+func (_u *RideUpdate) ClearDropoffName() *RideUpdate {
+	_u.mutation.ClearDropoffName()
+	return _u
+}
+
+// SetDistanceKm sets the "distance_km" field.
+func (_u *RideUpdate) SetDistanceKm(v float64) *RideUpdate {
+	_u.mutation.ResetDistanceKm()
+	_u.mutation.SetDistanceKm(v)
+	return _u
+}
+
+// SetNillableDistanceKm sets the "distance_km" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableDistanceKm(v *float64) *RideUpdate {
+	if v != nil {
+		_u.SetDistanceKm(*v)
+	}
+	return _u
+}
+
+// AddDistanceKm adds value to the "distance_km" field.
+func (_u *RideUpdate) AddDistanceKm(v float64) *RideUpdate {
+	_u.mutation.AddDistanceKm(v)
+	return _u
+}
+
+// ClearDistanceKm clears the value of the "distance_km" field.
+func (_u *RideUpdate) ClearDistanceKm() *RideUpdate {
+	_u.mutation.ClearDistanceKm()
+	return _u
+}
+
+// SetDurationMinutes sets the "duration_minutes" field.
+func (_u *RideUpdate) SetDurationMinutes(v float64) *RideUpdate {
+	_u.mutation.ResetDurationMinutes()
+	_u.mutation.SetDurationMinutes(v)
+	return _u
+}
+
+// SetNillableDurationMinutes sets the "duration_minutes" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableDurationMinutes(v *float64) *RideUpdate {
+	if v != nil {
+		_u.SetDurationMinutes(*v)
+	}
+	return _u
+}
+
+// AddDurationMinutes adds value to the "duration_minutes" field.
+func (_u *RideUpdate) AddDurationMinutes(v float64) *RideUpdate {
+	_u.mutation.AddDurationMinutes(v)
+	return _u
+}
+
+// ClearDurationMinutes clears the value of the "duration_minutes" field.
+func (_u *RideUpdate) ClearDurationMinutes() *RideUpdate {
+	_u.mutation.ClearDurationMinutes()
+	return _u
+}
+
+// SetDriverName sets the "driver_name" field.
+func (_u *RideUpdate) SetDriverName(v string) *RideUpdate {
+	_u.mutation.SetDriverName(v)
+	return _u
+}
+
+// SetNillableDriverName sets the "driver_name" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableDriverName(v *string) *RideUpdate {
+	if v != nil {
+		_u.SetDriverName(*v)
+	}
+	return _u
+}
+
+// ClearDriverName clears the value of the "driver_name" field.
+func (_u *RideUpdate) ClearDriverName() *RideUpdate {
+	_u.mutation.ClearDriverName()
+	return _u
+}
+
+// SetVehicleType sets the "vehicle_type" field.
+func (_u *RideUpdate) SetVehicleType(v string) *RideUpdate {
+	_u.mutation.SetVehicleType(v)
+	return _u
+}
+
+// SetNillableVehicleType sets the "vehicle_type" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableVehicleType(v *string) *RideUpdate {
+	if v != nil {
+		_u.SetVehicleType(*v)
+	}
+	return _u
+}
+
+// ClearVehicleType clears the value of the "vehicle_type" field.
+func (_u *RideUpdate) ClearVehicleType() *RideUpdate {
+	_u.mutation.ClearVehicleType()
+	return _u
+}
+
+// SetPlateNumber sets the "plate_number" field.
+func (_u *RideUpdate) SetPlateNumber(v string) *RideUpdate {
+	_u.mutation.SetPlateNumber(v)
+	return _u
+}
+
+// SetNillablePlateNumber sets the "plate_number" field if the given value is not nil.
+func (_u *RideUpdate) SetNillablePlateNumber(v *string) *RideUpdate {
+	if v != nil {
+		_u.SetPlateNumber(*v)
+	}
+	return _u
+}
+
+// ClearPlateNumber clears the value of the "plate_number" field.
+func (_u *RideUpdate) ClearPlateNumber() *RideUpdate {
+	_u.mutation.ClearPlateNumber()
+	return _u
+}
+
+// SetDriverRating sets the "driver_rating" field.
+func (_u *RideUpdate) SetDriverRating(v float64) *RideUpdate {
+	_u.mutation.ResetDriverRating()
+	_u.mutation.SetDriverRating(v)
+	return _u
+}
+
+// SetNillableDriverRating sets the "driver_rating" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableDriverRating(v *float64) *RideUpdate {
+	if v != nil {
+		_u.SetDriverRating(*v)
+	}
+	return _u
+}
+
+// AddDriverRating adds value to the "driver_rating" field.
+func (_u *RideUpdate) AddDriverRating(v float64) *RideUpdate {
+	_u.mutation.AddDriverRating(v)
+	return _u
+}
+
+// ClearDriverRating clears the value of the "driver_rating" field.
+func (_u *RideUpdate) ClearDriverRating() *RideUpdate {
+	_u.mutation.ClearDriverRating()
+	return _u
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (_u *RideUpdate) SetCompletedAt(v time.Time) *RideUpdate {
+	_u.mutation.SetCompletedAt(v)
+	return _u
+}
+
+// SetNillableCompletedAt sets the "completed_at" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableCompletedAt(v *time.Time) *RideUpdate {
+	if v != nil {
+		_u.SetCompletedAt(*v)
+	}
+	return _u
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (_u *RideUpdate) ClearCompletedAt() *RideUpdate {
+	_u.mutation.ClearCompletedAt()
+	return _u
+}
+
 // Mutation returns the RideMutation object of the builder.
 func (_u *RideUpdate) Mutation() *RideMutation {
 	return _u.mutation
@@ -192,6 +516,108 @@ func (_u *RideUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedFareCentavos(); ok {
 		_spec.AddField(ride.FieldFareCentavos, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.RideType(); ok {
+		_spec.SetField(ride.FieldRideType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.PickupLatitude(); ok {
+		_spec.SetField(ride.FieldPickupLatitude, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedPickupLatitude(); ok {
+		_spec.AddField(ride.FieldPickupLatitude, field.TypeFloat64, value)
+	}
+	if _u.mutation.PickupLatitudeCleared() {
+		_spec.ClearField(ride.FieldPickupLatitude, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.PickupLongitude(); ok {
+		_spec.SetField(ride.FieldPickupLongitude, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedPickupLongitude(); ok {
+		_spec.AddField(ride.FieldPickupLongitude, field.TypeFloat64, value)
+	}
+	if _u.mutation.PickupLongitudeCleared() {
+		_spec.ClearField(ride.FieldPickupLongitude, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.PickupName(); ok {
+		_spec.SetField(ride.FieldPickupName, field.TypeString, value)
+	}
+	if _u.mutation.PickupNameCleared() {
+		_spec.ClearField(ride.FieldPickupName, field.TypeString)
+	}
+	if value, ok := _u.mutation.DropoffLatitude(); ok {
+		_spec.SetField(ride.FieldDropoffLatitude, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDropoffLatitude(); ok {
+		_spec.AddField(ride.FieldDropoffLatitude, field.TypeFloat64, value)
+	}
+	if _u.mutation.DropoffLatitudeCleared() {
+		_spec.ClearField(ride.FieldDropoffLatitude, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.DropoffLongitude(); ok {
+		_spec.SetField(ride.FieldDropoffLongitude, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDropoffLongitude(); ok {
+		_spec.AddField(ride.FieldDropoffLongitude, field.TypeFloat64, value)
+	}
+	if _u.mutation.DropoffLongitudeCleared() {
+		_spec.ClearField(ride.FieldDropoffLongitude, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.DropoffName(); ok {
+		_spec.SetField(ride.FieldDropoffName, field.TypeString, value)
+	}
+	if _u.mutation.DropoffNameCleared() {
+		_spec.ClearField(ride.FieldDropoffName, field.TypeString)
+	}
+	if value, ok := _u.mutation.DistanceKm(); ok {
+		_spec.SetField(ride.FieldDistanceKm, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDistanceKm(); ok {
+		_spec.AddField(ride.FieldDistanceKm, field.TypeFloat64, value)
+	}
+	if _u.mutation.DistanceKmCleared() {
+		_spec.ClearField(ride.FieldDistanceKm, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.DurationMinutes(); ok {
+		_spec.SetField(ride.FieldDurationMinutes, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDurationMinutes(); ok {
+		_spec.AddField(ride.FieldDurationMinutes, field.TypeFloat64, value)
+	}
+	if _u.mutation.DurationMinutesCleared() {
+		_spec.ClearField(ride.FieldDurationMinutes, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.DriverName(); ok {
+		_spec.SetField(ride.FieldDriverName, field.TypeString, value)
+	}
+	if _u.mutation.DriverNameCleared() {
+		_spec.ClearField(ride.FieldDriverName, field.TypeString)
+	}
+	if value, ok := _u.mutation.VehicleType(); ok {
+		_spec.SetField(ride.FieldVehicleType, field.TypeString, value)
+	}
+	if _u.mutation.VehicleTypeCleared() {
+		_spec.ClearField(ride.FieldVehicleType, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlateNumber(); ok {
+		_spec.SetField(ride.FieldPlateNumber, field.TypeString, value)
+	}
+	if _u.mutation.PlateNumberCleared() {
+		_spec.ClearField(ride.FieldPlateNumber, field.TypeString)
+	}
+	if value, ok := _u.mutation.DriverRating(); ok {
+		_spec.SetField(ride.FieldDriverRating, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDriverRating(); ok {
+		_spec.AddField(ride.FieldDriverRating, field.TypeFloat64, value)
+	}
+	if _u.mutation.DriverRatingCleared() {
+		_spec.ClearField(ride.FieldDriverRating, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.CompletedAt(); ok {
+		_spec.SetField(ride.FieldCompletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.CompletedAtCleared() {
+		_spec.ClearField(ride.FieldCompletedAt, field.TypeTime)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -293,6 +719,329 @@ func (_u *RideUpdateOne) SetNillableFareCentavos(v *int64) *RideUpdateOne {
 // AddFareCentavos adds value to the "fare_centavos" field.
 func (_u *RideUpdateOne) AddFareCentavos(v int64) *RideUpdateOne {
 	_u.mutation.AddFareCentavos(v)
+	return _u
+}
+
+// SetRideType sets the "ride_type" field.
+func (_u *RideUpdateOne) SetRideType(v string) *RideUpdateOne {
+	_u.mutation.SetRideType(v)
+	return _u
+}
+
+// SetNillableRideType sets the "ride_type" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableRideType(v *string) *RideUpdateOne {
+	if v != nil {
+		_u.SetRideType(*v)
+	}
+	return _u
+}
+
+// SetPickupLatitude sets the "pickup_latitude" field.
+func (_u *RideUpdateOne) SetPickupLatitude(v float64) *RideUpdateOne {
+	_u.mutation.ResetPickupLatitude()
+	_u.mutation.SetPickupLatitude(v)
+	return _u
+}
+
+// SetNillablePickupLatitude sets the "pickup_latitude" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillablePickupLatitude(v *float64) *RideUpdateOne {
+	if v != nil {
+		_u.SetPickupLatitude(*v)
+	}
+	return _u
+}
+
+// AddPickupLatitude adds value to the "pickup_latitude" field.
+func (_u *RideUpdateOne) AddPickupLatitude(v float64) *RideUpdateOne {
+	_u.mutation.AddPickupLatitude(v)
+	return _u
+}
+
+// ClearPickupLatitude clears the value of the "pickup_latitude" field.
+func (_u *RideUpdateOne) ClearPickupLatitude() *RideUpdateOne {
+	_u.mutation.ClearPickupLatitude()
+	return _u
+}
+
+// SetPickupLongitude sets the "pickup_longitude" field.
+func (_u *RideUpdateOne) SetPickupLongitude(v float64) *RideUpdateOne {
+	_u.mutation.ResetPickupLongitude()
+	_u.mutation.SetPickupLongitude(v)
+	return _u
+}
+
+// SetNillablePickupLongitude sets the "pickup_longitude" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillablePickupLongitude(v *float64) *RideUpdateOne {
+	if v != nil {
+		_u.SetPickupLongitude(*v)
+	}
+	return _u
+}
+
+// AddPickupLongitude adds value to the "pickup_longitude" field.
+func (_u *RideUpdateOne) AddPickupLongitude(v float64) *RideUpdateOne {
+	_u.mutation.AddPickupLongitude(v)
+	return _u
+}
+
+// ClearPickupLongitude clears the value of the "pickup_longitude" field.
+func (_u *RideUpdateOne) ClearPickupLongitude() *RideUpdateOne {
+	_u.mutation.ClearPickupLongitude()
+	return _u
+}
+
+// SetPickupName sets the "pickup_name" field.
+func (_u *RideUpdateOne) SetPickupName(v string) *RideUpdateOne {
+	_u.mutation.SetPickupName(v)
+	return _u
+}
+
+// SetNillablePickupName sets the "pickup_name" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillablePickupName(v *string) *RideUpdateOne {
+	if v != nil {
+		_u.SetPickupName(*v)
+	}
+	return _u
+}
+
+// ClearPickupName clears the value of the "pickup_name" field.
+func (_u *RideUpdateOne) ClearPickupName() *RideUpdateOne {
+	_u.mutation.ClearPickupName()
+	return _u
+}
+
+// SetDropoffLatitude sets the "dropoff_latitude" field.
+func (_u *RideUpdateOne) SetDropoffLatitude(v float64) *RideUpdateOne {
+	_u.mutation.ResetDropoffLatitude()
+	_u.mutation.SetDropoffLatitude(v)
+	return _u
+}
+
+// SetNillableDropoffLatitude sets the "dropoff_latitude" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableDropoffLatitude(v *float64) *RideUpdateOne {
+	if v != nil {
+		_u.SetDropoffLatitude(*v)
+	}
+	return _u
+}
+
+// AddDropoffLatitude adds value to the "dropoff_latitude" field.
+func (_u *RideUpdateOne) AddDropoffLatitude(v float64) *RideUpdateOne {
+	_u.mutation.AddDropoffLatitude(v)
+	return _u
+}
+
+// ClearDropoffLatitude clears the value of the "dropoff_latitude" field.
+func (_u *RideUpdateOne) ClearDropoffLatitude() *RideUpdateOne {
+	_u.mutation.ClearDropoffLatitude()
+	return _u
+}
+
+// SetDropoffLongitude sets the "dropoff_longitude" field.
+func (_u *RideUpdateOne) SetDropoffLongitude(v float64) *RideUpdateOne {
+	_u.mutation.ResetDropoffLongitude()
+	_u.mutation.SetDropoffLongitude(v)
+	return _u
+}
+
+// SetNillableDropoffLongitude sets the "dropoff_longitude" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableDropoffLongitude(v *float64) *RideUpdateOne {
+	if v != nil {
+		_u.SetDropoffLongitude(*v)
+	}
+	return _u
+}
+
+// AddDropoffLongitude adds value to the "dropoff_longitude" field.
+func (_u *RideUpdateOne) AddDropoffLongitude(v float64) *RideUpdateOne {
+	_u.mutation.AddDropoffLongitude(v)
+	return _u
+}
+
+// ClearDropoffLongitude clears the value of the "dropoff_longitude" field.
+func (_u *RideUpdateOne) ClearDropoffLongitude() *RideUpdateOne {
+	_u.mutation.ClearDropoffLongitude()
+	return _u
+}
+
+// SetDropoffName sets the "dropoff_name" field.
+func (_u *RideUpdateOne) SetDropoffName(v string) *RideUpdateOne {
+	_u.mutation.SetDropoffName(v)
+	return _u
+}
+
+// SetNillableDropoffName sets the "dropoff_name" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableDropoffName(v *string) *RideUpdateOne {
+	if v != nil {
+		_u.SetDropoffName(*v)
+	}
+	return _u
+}
+
+// ClearDropoffName clears the value of the "dropoff_name" field.
+func (_u *RideUpdateOne) ClearDropoffName() *RideUpdateOne {
+	_u.mutation.ClearDropoffName()
+	return _u
+}
+
+// SetDistanceKm sets the "distance_km" field.
+func (_u *RideUpdateOne) SetDistanceKm(v float64) *RideUpdateOne {
+	_u.mutation.ResetDistanceKm()
+	_u.mutation.SetDistanceKm(v)
+	return _u
+}
+
+// SetNillableDistanceKm sets the "distance_km" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableDistanceKm(v *float64) *RideUpdateOne {
+	if v != nil {
+		_u.SetDistanceKm(*v)
+	}
+	return _u
+}
+
+// AddDistanceKm adds value to the "distance_km" field.
+func (_u *RideUpdateOne) AddDistanceKm(v float64) *RideUpdateOne {
+	_u.mutation.AddDistanceKm(v)
+	return _u
+}
+
+// ClearDistanceKm clears the value of the "distance_km" field.
+func (_u *RideUpdateOne) ClearDistanceKm() *RideUpdateOne {
+	_u.mutation.ClearDistanceKm()
+	return _u
+}
+
+// SetDurationMinutes sets the "duration_minutes" field.
+func (_u *RideUpdateOne) SetDurationMinutes(v float64) *RideUpdateOne {
+	_u.mutation.ResetDurationMinutes()
+	_u.mutation.SetDurationMinutes(v)
+	return _u
+}
+
+// SetNillableDurationMinutes sets the "duration_minutes" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableDurationMinutes(v *float64) *RideUpdateOne {
+	if v != nil {
+		_u.SetDurationMinutes(*v)
+	}
+	return _u
+}
+
+// AddDurationMinutes adds value to the "duration_minutes" field.
+func (_u *RideUpdateOne) AddDurationMinutes(v float64) *RideUpdateOne {
+	_u.mutation.AddDurationMinutes(v)
+	return _u
+}
+
+// ClearDurationMinutes clears the value of the "duration_minutes" field.
+func (_u *RideUpdateOne) ClearDurationMinutes() *RideUpdateOne {
+	_u.mutation.ClearDurationMinutes()
+	return _u
+}
+
+// SetDriverName sets the "driver_name" field.
+func (_u *RideUpdateOne) SetDriverName(v string) *RideUpdateOne {
+	_u.mutation.SetDriverName(v)
+	return _u
+}
+
+// SetNillableDriverName sets the "driver_name" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableDriverName(v *string) *RideUpdateOne {
+	if v != nil {
+		_u.SetDriverName(*v)
+	}
+	return _u
+}
+
+// ClearDriverName clears the value of the "driver_name" field.
+func (_u *RideUpdateOne) ClearDriverName() *RideUpdateOne {
+	_u.mutation.ClearDriverName()
+	return _u
+}
+
+// SetVehicleType sets the "vehicle_type" field.
+func (_u *RideUpdateOne) SetVehicleType(v string) *RideUpdateOne {
+	_u.mutation.SetVehicleType(v)
+	return _u
+}
+
+// SetNillableVehicleType sets the "vehicle_type" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableVehicleType(v *string) *RideUpdateOne {
+	if v != nil {
+		_u.SetVehicleType(*v)
+	}
+	return _u
+}
+
+// ClearVehicleType clears the value of the "vehicle_type" field.
+func (_u *RideUpdateOne) ClearVehicleType() *RideUpdateOne {
+	_u.mutation.ClearVehicleType()
+	return _u
+}
+
+// SetPlateNumber sets the "plate_number" field.
+func (_u *RideUpdateOne) SetPlateNumber(v string) *RideUpdateOne {
+	_u.mutation.SetPlateNumber(v)
+	return _u
+}
+
+// SetNillablePlateNumber sets the "plate_number" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillablePlateNumber(v *string) *RideUpdateOne {
+	if v != nil {
+		_u.SetPlateNumber(*v)
+	}
+	return _u
+}
+
+// ClearPlateNumber clears the value of the "plate_number" field.
+func (_u *RideUpdateOne) ClearPlateNumber() *RideUpdateOne {
+	_u.mutation.ClearPlateNumber()
+	return _u
+}
+
+// SetDriverRating sets the "driver_rating" field.
+func (_u *RideUpdateOne) SetDriverRating(v float64) *RideUpdateOne {
+	_u.mutation.ResetDriverRating()
+	_u.mutation.SetDriverRating(v)
+	return _u
+}
+
+// SetNillableDriverRating sets the "driver_rating" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableDriverRating(v *float64) *RideUpdateOne {
+	if v != nil {
+		_u.SetDriverRating(*v)
+	}
+	return _u
+}
+
+// AddDriverRating adds value to the "driver_rating" field.
+func (_u *RideUpdateOne) AddDriverRating(v float64) *RideUpdateOne {
+	_u.mutation.AddDriverRating(v)
+	return _u
+}
+
+// ClearDriverRating clears the value of the "driver_rating" field.
+func (_u *RideUpdateOne) ClearDriverRating() *RideUpdateOne {
+	_u.mutation.ClearDriverRating()
+	return _u
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (_u *RideUpdateOne) SetCompletedAt(v time.Time) *RideUpdateOne {
+	_u.mutation.SetCompletedAt(v)
+	return _u
+}
+
+// SetNillableCompletedAt sets the "completed_at" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableCompletedAt(v *time.Time) *RideUpdateOne {
+	if v != nil {
+		_u.SetCompletedAt(*v)
+	}
+	return _u
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (_u *RideUpdateOne) ClearCompletedAt() *RideUpdateOne {
+	_u.mutation.ClearCompletedAt()
 	return _u
 }
 
@@ -408,6 +1157,108 @@ func (_u *RideUpdateOne) sqlSave(ctx context.Context) (_node *Ride, err error) {
 	}
 	if value, ok := _u.mutation.AddedFareCentavos(); ok {
 		_spec.AddField(ride.FieldFareCentavos, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.RideType(); ok {
+		_spec.SetField(ride.FieldRideType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.PickupLatitude(); ok {
+		_spec.SetField(ride.FieldPickupLatitude, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedPickupLatitude(); ok {
+		_spec.AddField(ride.FieldPickupLatitude, field.TypeFloat64, value)
+	}
+	if _u.mutation.PickupLatitudeCleared() {
+		_spec.ClearField(ride.FieldPickupLatitude, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.PickupLongitude(); ok {
+		_spec.SetField(ride.FieldPickupLongitude, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedPickupLongitude(); ok {
+		_spec.AddField(ride.FieldPickupLongitude, field.TypeFloat64, value)
+	}
+	if _u.mutation.PickupLongitudeCleared() {
+		_spec.ClearField(ride.FieldPickupLongitude, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.PickupName(); ok {
+		_spec.SetField(ride.FieldPickupName, field.TypeString, value)
+	}
+	if _u.mutation.PickupNameCleared() {
+		_spec.ClearField(ride.FieldPickupName, field.TypeString)
+	}
+	if value, ok := _u.mutation.DropoffLatitude(); ok {
+		_spec.SetField(ride.FieldDropoffLatitude, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDropoffLatitude(); ok {
+		_spec.AddField(ride.FieldDropoffLatitude, field.TypeFloat64, value)
+	}
+	if _u.mutation.DropoffLatitudeCleared() {
+		_spec.ClearField(ride.FieldDropoffLatitude, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.DropoffLongitude(); ok {
+		_spec.SetField(ride.FieldDropoffLongitude, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDropoffLongitude(); ok {
+		_spec.AddField(ride.FieldDropoffLongitude, field.TypeFloat64, value)
+	}
+	if _u.mutation.DropoffLongitudeCleared() {
+		_spec.ClearField(ride.FieldDropoffLongitude, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.DropoffName(); ok {
+		_spec.SetField(ride.FieldDropoffName, field.TypeString, value)
+	}
+	if _u.mutation.DropoffNameCleared() {
+		_spec.ClearField(ride.FieldDropoffName, field.TypeString)
+	}
+	if value, ok := _u.mutation.DistanceKm(); ok {
+		_spec.SetField(ride.FieldDistanceKm, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDistanceKm(); ok {
+		_spec.AddField(ride.FieldDistanceKm, field.TypeFloat64, value)
+	}
+	if _u.mutation.DistanceKmCleared() {
+		_spec.ClearField(ride.FieldDistanceKm, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.DurationMinutes(); ok {
+		_spec.SetField(ride.FieldDurationMinutes, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDurationMinutes(); ok {
+		_spec.AddField(ride.FieldDurationMinutes, field.TypeFloat64, value)
+	}
+	if _u.mutation.DurationMinutesCleared() {
+		_spec.ClearField(ride.FieldDurationMinutes, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.DriverName(); ok {
+		_spec.SetField(ride.FieldDriverName, field.TypeString, value)
+	}
+	if _u.mutation.DriverNameCleared() {
+		_spec.ClearField(ride.FieldDriverName, field.TypeString)
+	}
+	if value, ok := _u.mutation.VehicleType(); ok {
+		_spec.SetField(ride.FieldVehicleType, field.TypeString, value)
+	}
+	if _u.mutation.VehicleTypeCleared() {
+		_spec.ClearField(ride.FieldVehicleType, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlateNumber(); ok {
+		_spec.SetField(ride.FieldPlateNumber, field.TypeString, value)
+	}
+	if _u.mutation.PlateNumberCleared() {
+		_spec.ClearField(ride.FieldPlateNumber, field.TypeString)
+	}
+	if value, ok := _u.mutation.DriverRating(); ok {
+		_spec.SetField(ride.FieldDriverRating, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDriverRating(); ok {
+		_spec.AddField(ride.FieldDriverRating, field.TypeFloat64, value)
+	}
+	if _u.mutation.DriverRatingCleared() {
+		_spec.ClearField(ride.FieldDriverRating, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.CompletedAt(); ok {
+		_spec.SetField(ride.FieldCompletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.CompletedAtCleared() {
+		_spec.ClearField(ride.FieldCompletedAt, field.TypeTime)
 	}
 	_node = &Ride{config: _u.config}
 	_spec.Assign = _node.assignValues

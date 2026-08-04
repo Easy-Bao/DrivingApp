@@ -38,6 +38,50 @@ var (
 		Columns:    BidsColumns,
 		PrimaryKey: []*schema.Column{BidsColumns[0]},
 	}
+	// BidOffersColumns holds the columns for the "bid_offers" table.
+	BidOffersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "session_id", Type: field.TypeInt},
+		{Name: "driver_id", Type: field.TypeInt},
+		{Name: "driver_name", Type: field.TypeString, Nullable: true},
+		{Name: "plate_number", Type: field.TypeString, Nullable: true},
+		{Name: "vehicle_type", Type: field.TypeString, Nullable: true},
+		{Name: "proposed_fare_centavos", Type: field.TypeInt64},
+		{Name: "status", Type: field.TypeString, Default: "pending"},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// BidOffersTable holds the schema information for the "bid_offers" table.
+	BidOffersTable = &schema.Table{
+		Name:       "bid_offers",
+		Columns:    BidOffersColumns,
+		PrimaryKey: []*schema.Column{BidOffersColumns[0]},
+	}
+	// BidSessionsColumns holds the columns for the "bid_sessions" table.
+	BidSessionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "passenger_id", Type: field.TypeInt},
+		{Name: "ride_type", Type: field.TypeString, Default: "Solo Ride"},
+		{Name: "pickup_latitude", Type: field.TypeFloat64},
+		{Name: "pickup_longitude", Type: field.TypeFloat64},
+		{Name: "pickup_name", Type: field.TypeString},
+		{Name: "dropoff_latitude", Type: field.TypeFloat64},
+		{Name: "dropoff_longitude", Type: field.TypeFloat64},
+		{Name: "dropoff_name", Type: field.TypeString},
+		{Name: "distance_km", Type: field.TypeFloat64},
+		{Name: "duration_minutes", Type: field.TypeFloat64},
+		{Name: "offered_fare_centavos", Type: field.TypeInt64},
+		{Name: "status", Type: field.TypeString, Default: "open"},
+		{Name: "target_driver_id", Type: field.TypeInt, Nullable: true},
+		{Name: "accepted_driver_id", Type: field.TypeInt, Nullable: true},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// BidSessionsTable holds the schema information for the "bid_sessions" table.
+	BidSessionsTable = &schema.Table{
+		Name:       "bid_sessions",
+		Columns:    BidSessionsColumns,
+		PrimaryKey: []*schema.Column{BidSessionsColumns[0]},
+	}
 	// DriverDocumentsColumns holds the columns for the "driver_documents" table.
 	DriverDocumentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -68,6 +112,22 @@ var (
 		Columns:    DriverProfilesColumns,
 		PrimaryKey: []*schema.Column{DriverProfilesColumns[0]},
 	}
+	// NotificationsColumns holds the columns for the "notifications" table.
+	NotificationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "type", Type: field.TypeString, Default: "general"},
+		{Name: "title", Type: field.TypeString},
+		{Name: "body", Type: field.TypeString},
+		{Name: "is_read", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// NotificationsTable holds the schema information for the "notifications" table.
+	NotificationsTable = &schema.Table{
+		Name:       "notifications",
+		Columns:    NotificationsColumns,
+		PrimaryKey: []*schema.Column{NotificationsColumns[0]},
+	}
 	// PassengerProfilesColumns holds the columns for the "passenger_profiles" table.
 	PassengerProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -81,6 +141,22 @@ var (
 		Columns:    PassengerProfilesColumns,
 		PrimaryKey: []*schema.Column{PassengerProfilesColumns[0]},
 	}
+	// ReviewsColumns holds the columns for the "reviews" table.
+	ReviewsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "driver_id", Type: field.TypeInt},
+		{Name: "passenger_id", Type: field.TypeInt},
+		{Name: "passenger_name", Type: field.TypeString, Nullable: true},
+		{Name: "rating", Type: field.TypeFloat64},
+		{Name: "comment", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// ReviewsTable holds the schema information for the "reviews" table.
+	ReviewsTable = &schema.Table{
+		Name:       "reviews",
+		Columns:    ReviewsColumns,
+		PrimaryKey: []*schema.Column{ReviewsColumns[0]},
+	}
 	// RidesColumns holds the columns for the "rides" table.
 	RidesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -88,6 +164,20 @@ var (
 		{Name: "driver_id", Type: field.TypeInt, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "requested"},
 		{Name: "fare_centavos", Type: field.TypeInt64},
+		{Name: "ride_type", Type: field.TypeString, Default: "Solo Ride"},
+		{Name: "pickup_latitude", Type: field.TypeFloat64, Nullable: true},
+		{Name: "pickup_longitude", Type: field.TypeFloat64, Nullable: true},
+		{Name: "pickup_name", Type: field.TypeString, Nullable: true},
+		{Name: "dropoff_latitude", Type: field.TypeFloat64, Nullable: true},
+		{Name: "dropoff_longitude", Type: field.TypeFloat64, Nullable: true},
+		{Name: "dropoff_name", Type: field.TypeString, Nullable: true},
+		{Name: "distance_km", Type: field.TypeFloat64, Nullable: true},
+		{Name: "duration_minutes", Type: field.TypeFloat64, Nullable: true},
+		{Name: "driver_name", Type: field.TypeString, Nullable: true},
+		{Name: "vehicle_type", Type: field.TypeString, Nullable: true},
+		{Name: "plate_number", Type: field.TypeString, Nullable: true},
+		{Name: "driver_rating", Type: field.TypeFloat64, Nullable: true},
+		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 	}
 	// RidesTable holds the schema information for the "rides" table.
 	RidesTable = &schema.Table{
@@ -98,6 +188,7 @@ var (
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Nullable: true, Default: ""},
 		{Name: "phone", Type: field.TypeString, Unique: true},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "password_hash", Type: field.TypeString},
@@ -114,9 +205,13 @@ var (
 	Tables = []*schema.Table{
 		AuditEventsTable,
 		BidsTable,
+		BidOffersTable,
+		BidSessionsTable,
 		DriverDocumentsTable,
 		DriverProfilesTable,
+		NotificationsTable,
 		PassengerProfilesTable,
+		ReviewsTable,
 		RidesTable,
 		UsersTable,
 	}

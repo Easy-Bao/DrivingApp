@@ -12,14 +12,26 @@ type AuditEvent func(*sql.Selector)
 // Bid is the predicate function for bid builders.
 type Bid func(*sql.Selector)
 
+// BidOffer is the predicate function for bidoffer builders.
+type BidOffer func(*sql.Selector)
+
+// BidSession is the predicate function for bidsession builders.
+type BidSession func(*sql.Selector)
+
 // DriverDocument is the predicate function for driverdocument builders.
 type DriverDocument func(*sql.Selector)
 
 // DriverProfile is the predicate function for driverprofile builders.
 type DriverProfile func(*sql.Selector)
 
+// Notification is the predicate function for notification builders.
+type Notification func(*sql.Selector)
+
 // PassengerProfile is the predicate function for passengerprofile builders.
 type PassengerProfile func(*sql.Selector)
+
+// Review is the predicate function for review builders.
+type Review func(*sql.Selector)
 
 // Ride is the predicate function for ride builders.
 type Ride func(*sql.Selector)

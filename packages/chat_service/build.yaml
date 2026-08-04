@@ -1,7 +1,0 @@
-targets:
-  $default:
-    builders:
-      source_gen|combining_builder:
-        options:
-          build_extensions:
-            '^lib/src/Models/{{}}.dart': 'lib/src/Models/Generated/{{}}.g.dart'

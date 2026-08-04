@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -19,6 +17,7 @@ import 'package:passenger_app/src/features/trip/presentation/widgets/finding_dri
 import 'package:passenger_app/src/features/trip/presentation/widgets/finding_driver_nearest_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/finding_driver_searching_panel_widget.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverScreen extends StatelessWidget {

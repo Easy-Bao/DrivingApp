@@ -161,13 +161,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
-  chat_service:
-    dependency: "direct main"
-    description:
-      path: "../../packages/chat_service"
-      relative: true
-    source: path
-    version: "0.0.1"
   checked_yaml:
     dependency: transitive
     description:
@@ -224,13 +217,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
-  core_models:
-    dependency: "direct main"
-    description:
-      path: "../../packages/core_models"
-      relative: true
-    source: path
-    version: "1.0.0"
   coverage:
     dependency: transitive
     description:
@@ -757,13 +743,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
-  location_service:
-    dependency: "direct main"
-    description:
-      path: "../../packages/location_service"
-      relative: true
-    source: path
-    version: "0.0.1"
   logging:
     dependency: transitive
     description:
@@ -1068,6 +1047,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.28.0"
+  shared_core:
+    dependency: "direct main"
+    description:
+      path: "../../packages/shared_core"
+      relative: true
+    source: path
+    version: "1.0.0"
   shared_preferences:
     dependency: "direct main"
     description:

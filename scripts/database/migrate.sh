@@ -17,10 +17,19 @@ if [[ -z "${DATABASE_URL}" ]]; then
   exit 1
 fi
 
-# Local Compose Postgres does not expose SSL. Keep production URLs untouched,
-# while making the development migration explicit and repeatable.
-if [[ "${DATABASE_URL}" == *"127.0.0.1"* || "${DATABASE_URL}" == *"localhost"* ]] && [[ "${DATABASE_URL}" != *"sslmode="* ]]; then
-  DATABASE_URL="${DATABASE_URL}?sslmode=disable"
+# Local Compose Postgres does not expose SSL. Keep remote URLs untouched,
+# while making every local migration explicit and repeatable, including URLs
+# that were copied with an old sslmode=require query parameter.
+if [[ "${DATABASE_URL}" == *"127.0.0.1"* || "${DATABASE_URL}" == *"localhost"* || "${DATABASE_URL}" == *"postgres-db"* ]]; then
+	if [[ "${DATABASE_URL}" == *"sslmode="* ]]; then
+		DATABASE_URL="$(printf '%s' "${DATABASE_URL}" | sed -E 's/(^|[?&])sslmode=[^&]*/\1sslmode=disable/')"
+	else
+		separator="?"
+		if [[ "${DATABASE_URL}" == *"?"* ]]; then
+			separator="&"
+		fi
+		DATABASE_URL="${DATABASE_URL}${separator}sslmode=disable"
+	fi
 fi
 
 cd "${repository_root}/server"

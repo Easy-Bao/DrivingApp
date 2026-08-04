@@ -1,16 +1,15 @@
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
 import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActivityViewDetailsScreen extends StatefulWidget {

@@ -1,6 +1,6 @@
-import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/i_auth_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 class ConfirmResetPasswordUseCase {
   final IAuthRepository _authRepository;

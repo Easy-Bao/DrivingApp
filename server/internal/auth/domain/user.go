@@ -8,11 +8,14 @@ const (
 )
 
 type User struct {
-	ID           int
-	Email        string
-	Phone        string
-	Name         string
-	Role         Role
-	PasswordHash string
-	IsVerified   bool
+	ID                int    `json:"id"`
+	Email             string `json:"email"`
+	Phone             string `json:"phone"`
+	Name              string `json:"name"`
+	Role              Role   `json:"role"`
+	PasswordHash      string `json:"-"`
+	IsVerified        bool   `json:"isVerified"`
+	VehicleType       string `json:"vehicleType,omitempty"`
+	PlateNumber       string `json:"plateNumber,omitempty"`
+	PreferredRideType string `json:"preferred_ride_type,omitempty"`
 }

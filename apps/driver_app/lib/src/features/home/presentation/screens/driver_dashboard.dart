@@ -2,7 +2,7 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
 
-import 'package:core_models/core_models.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard_state.dart';
 import 'package:driver_app/src/features/home/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
@@ -11,7 +11,6 @@ import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:location_service/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:chat_service/chat_service.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/features/chat/presentation/bloc/chat_state.dart';
@@ -20,6 +20,7 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> connectToChatRoom({
     required String roomId,
     required Uri wsUri,
+    String? token,
   }) async {
     emit(state.copyWith(isConnecting: true, errorMessage: null));
 
@@ -27,6 +28,7 @@ class ChatCubit extends Cubit<ChatState> {
       final connResult = await _chatRepository.establishChatConnection(
         roomId: roomId,
         chatUri: wsUri,
+        token: token,
       );
 
       connResult.fold(
@@ -91,7 +93,12 @@ class ChatCubit extends Cubit<ChatState> {
     return result.isRight();
   }
 
-  Future<void> resolveChatRoom(String roomId, String userId, Uri wsUri) async {
+  Future<void> resolveChatRoom(
+    String roomId,
+    String userId,
+    Uri wsUri, {
+    String? token,
+  }) async {
     try {
       final gatewayUri = EnvConfig.httpBaseUri;
       final resolveEndpointUri = gatewayUri.replace(
@@ -100,7 +107,7 @@ class ChatCubit extends Cubit<ChatState> {
       final response = await Dio().postUri(resolveEndpointUri);
 
       if (response.statusCode == 200) {
-        await connectToChatRoom(roomId: roomId, wsUri: wsUri);
+        await connectToChatRoom(roomId: roomId, wsUri: wsUri, token: token);
       }
     } catch (error, stackTrace) {
       dev.log('Error resolving chat room in cubit: $error\n$stackTrace');

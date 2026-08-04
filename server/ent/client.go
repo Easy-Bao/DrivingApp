@@ -16,9 +16,13 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent/auditevent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/bid"
+	"github.com/Easy-Bao/DrivingApp/server/ent/bidoffer"
+	"github.com/Easy-Bao/DrivingApp/server/ent/bidsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverdocument"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
 )
@@ -32,12 +36,20 @@ type Client struct {
 	AuditEvent *AuditEventClient
 	// Bid is the client for interacting with the Bid builders.
 	Bid *BidClient
+	// BidOffer is the client for interacting with the BidOffer builders.
+	BidOffer *BidOfferClient
+	// BidSession is the client for interacting with the BidSession builders.
+	BidSession *BidSessionClient
 	// DriverDocument is the client for interacting with the DriverDocument builders.
 	DriverDocument *DriverDocumentClient
 	// DriverProfile is the client for interacting with the DriverProfile builders.
 	DriverProfile *DriverProfileClient
+	// Notification is the client for interacting with the Notification builders.
+	Notification *NotificationClient
 	// PassengerProfile is the client for interacting with the PassengerProfile builders.
 	PassengerProfile *PassengerProfileClient
+	// Review is the client for interacting with the Review builders.
+	Review *ReviewClient
 	// Ride is the client for interacting with the Ride builders.
 	Ride *RideClient
 	// User is the client for interacting with the User builders.
@@ -55,9 +67,13 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.AuditEvent = NewAuditEventClient(c.config)
 	c.Bid = NewBidClient(c.config)
+	c.BidOffer = NewBidOfferClient(c.config)
+	c.BidSession = NewBidSessionClient(c.config)
 	c.DriverDocument = NewDriverDocumentClient(c.config)
 	c.DriverProfile = NewDriverProfileClient(c.config)
+	c.Notification = NewNotificationClient(c.config)
 	c.PassengerProfile = NewPassengerProfileClient(c.config)
+	c.Review = NewReviewClient(c.config)
 	c.Ride = NewRideClient(c.config)
 	c.User = NewUserClient(c.config)
 }
@@ -154,9 +170,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:           cfg,
 		AuditEvent:       NewAuditEventClient(cfg),
 		Bid:              NewBidClient(cfg),
+		BidOffer:         NewBidOfferClient(cfg),
+		BidSession:       NewBidSessionClient(cfg),
 		DriverDocument:   NewDriverDocumentClient(cfg),
 		DriverProfile:    NewDriverProfileClient(cfg),
+		Notification:     NewNotificationClient(cfg),
 		PassengerProfile: NewPassengerProfileClient(cfg),
+		Review:           NewReviewClient(cfg),
 		Ride:             NewRideClient(cfg),
 		User:             NewUserClient(cfg),
 	}, nil
@@ -180,9 +200,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:           cfg,
 		AuditEvent:       NewAuditEventClient(cfg),
 		Bid:              NewBidClient(cfg),
+		BidOffer:         NewBidOfferClient(cfg),
+		BidSession:       NewBidSessionClient(cfg),
 		DriverDocument:   NewDriverDocumentClient(cfg),
 		DriverProfile:    NewDriverProfileClient(cfg),
+		Notification:     NewNotificationClient(cfg),
 		PassengerProfile: NewPassengerProfileClient(cfg),
+		Review:           NewReviewClient(cfg),
 		Ride:             NewRideClient(cfg),
 		User:             NewUserClient(cfg),
 	}, nil
@@ -214,8 +238,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.AuditEvent, c.Bid, c.DriverDocument, c.DriverProfile, c.PassengerProfile,
-		c.Ride, c.User,
+		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
+		c.DriverProfile, c.Notification, c.PassengerProfile, c.Review, c.Ride, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -225,8 +249,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.AuditEvent, c.Bid, c.DriverDocument, c.DriverProfile, c.PassengerProfile,
-		c.Ride, c.User,
+		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
+		c.DriverProfile, c.Notification, c.PassengerProfile, c.Review, c.Ride, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -239,12 +263,20 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.AuditEvent.mutate(ctx, m)
 	case *BidMutation:
 		return c.Bid.mutate(ctx, m)
+	case *BidOfferMutation:
+		return c.BidOffer.mutate(ctx, m)
+	case *BidSessionMutation:
+		return c.BidSession.mutate(ctx, m)
 	case *DriverDocumentMutation:
 		return c.DriverDocument.mutate(ctx, m)
 	case *DriverProfileMutation:
 		return c.DriverProfile.mutate(ctx, m)
+	case *NotificationMutation:
+		return c.Notification.mutate(ctx, m)
 	case *PassengerProfileMutation:
 		return c.PassengerProfile.mutate(ctx, m)
+	case *ReviewMutation:
+		return c.Review.mutate(ctx, m)
 	case *RideMutation:
 		return c.Ride.mutate(ctx, m)
 	case *UserMutation:
@@ -520,6 +552,272 @@ func (c *BidClient) mutate(ctx context.Context, m *BidMutation) (Value, error) {
 	}
 }
 
+// BidOfferClient is a client for the BidOffer schema.
+type BidOfferClient struct {
+	config
+}
+
+// NewBidOfferClient returns a client for the BidOffer from the given config.
+func NewBidOfferClient(c config) *BidOfferClient {
+	return &BidOfferClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `bidoffer.Hooks(f(g(h())))`.
+func (c *BidOfferClient) Use(hooks ...Hook) {
+	c.hooks.BidOffer = append(c.hooks.BidOffer, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `bidoffer.Intercept(f(g(h())))`.
+func (c *BidOfferClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BidOffer = append(c.inters.BidOffer, interceptors...)
+}
+
+// Create returns a builder for creating a BidOffer entity.
+func (c *BidOfferClient) Create() *BidOfferCreate {
+	mutation := newBidOfferMutation(c.config, OpCreate)
+	return &BidOfferCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BidOffer entities.
+func (c *BidOfferClient) CreateBulk(builders ...*BidOfferCreate) *BidOfferCreateBulk {
+	return &BidOfferCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BidOfferClient) MapCreateBulk(slice any, setFunc func(*BidOfferCreate, int)) *BidOfferCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BidOfferCreateBulk{err: fmt.Errorf("calling to BidOfferClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BidOfferCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BidOfferCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BidOffer.
+func (c *BidOfferClient) Update() *BidOfferUpdate {
+	mutation := newBidOfferMutation(c.config, OpUpdate)
+	return &BidOfferUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BidOfferClient) UpdateOne(_m *BidOffer) *BidOfferUpdateOne {
+	mutation := newBidOfferMutation(c.config, OpUpdateOne, withBidOffer(_m))
+	return &BidOfferUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BidOfferClient) UpdateOneID(id int) *BidOfferUpdateOne {
+	mutation := newBidOfferMutation(c.config, OpUpdateOne, withBidOfferID(id))
+	return &BidOfferUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BidOffer.
+func (c *BidOfferClient) Delete() *BidOfferDelete {
+	mutation := newBidOfferMutation(c.config, OpDelete)
+	return &BidOfferDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BidOfferClient) DeleteOne(_m *BidOffer) *BidOfferDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BidOfferClient) DeleteOneID(id int) *BidOfferDeleteOne {
+	builder := c.Delete().Where(bidoffer.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BidOfferDeleteOne{builder}
+}
+
+// Query returns a query builder for BidOffer.
+func (c *BidOfferClient) Query() *BidOfferQuery {
+	return &BidOfferQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBidOffer},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BidOffer entity by its id.
+func (c *BidOfferClient) Get(ctx context.Context, id int) (*BidOffer, error) {
+	return c.Query().Where(bidoffer.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BidOfferClient) GetX(ctx context.Context, id int) *BidOffer {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *BidOfferClient) Hooks() []Hook {
+	return c.hooks.BidOffer
+}
+
+// Interceptors returns the client interceptors.
+func (c *BidOfferClient) Interceptors() []Interceptor {
+	return c.inters.BidOffer
+}
+
+func (c *BidOfferClient) mutate(ctx context.Context, m *BidOfferMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BidOfferCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BidOfferUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BidOfferUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BidOfferDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BidOffer mutation op: %q", m.Op())
+	}
+}
+
+// BidSessionClient is a client for the BidSession schema.
+type BidSessionClient struct {
+	config
+}
+
+// NewBidSessionClient returns a client for the BidSession from the given config.
+func NewBidSessionClient(c config) *BidSessionClient {
+	return &BidSessionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `bidsession.Hooks(f(g(h())))`.
+func (c *BidSessionClient) Use(hooks ...Hook) {
+	c.hooks.BidSession = append(c.hooks.BidSession, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `bidsession.Intercept(f(g(h())))`.
+func (c *BidSessionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BidSession = append(c.inters.BidSession, interceptors...)
+}
+
+// Create returns a builder for creating a BidSession entity.
+func (c *BidSessionClient) Create() *BidSessionCreate {
+	mutation := newBidSessionMutation(c.config, OpCreate)
+	return &BidSessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BidSession entities.
+func (c *BidSessionClient) CreateBulk(builders ...*BidSessionCreate) *BidSessionCreateBulk {
+	return &BidSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BidSessionClient) MapCreateBulk(slice any, setFunc func(*BidSessionCreate, int)) *BidSessionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BidSessionCreateBulk{err: fmt.Errorf("calling to BidSessionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BidSessionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BidSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BidSession.
+func (c *BidSessionClient) Update() *BidSessionUpdate {
+	mutation := newBidSessionMutation(c.config, OpUpdate)
+	return &BidSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BidSessionClient) UpdateOne(_m *BidSession) *BidSessionUpdateOne {
+	mutation := newBidSessionMutation(c.config, OpUpdateOne, withBidSession(_m))
+	return &BidSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BidSessionClient) UpdateOneID(id int) *BidSessionUpdateOne {
+	mutation := newBidSessionMutation(c.config, OpUpdateOne, withBidSessionID(id))
+	return &BidSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BidSession.
+func (c *BidSessionClient) Delete() *BidSessionDelete {
+	mutation := newBidSessionMutation(c.config, OpDelete)
+	return &BidSessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BidSessionClient) DeleteOne(_m *BidSession) *BidSessionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BidSessionClient) DeleteOneID(id int) *BidSessionDeleteOne {
+	builder := c.Delete().Where(bidsession.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BidSessionDeleteOne{builder}
+}
+
+// Query returns a query builder for BidSession.
+func (c *BidSessionClient) Query() *BidSessionQuery {
+	return &BidSessionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBidSession},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BidSession entity by its id.
+func (c *BidSessionClient) Get(ctx context.Context, id int) (*BidSession, error) {
+	return c.Query().Where(bidsession.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BidSessionClient) GetX(ctx context.Context, id int) *BidSession {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *BidSessionClient) Hooks() []Hook {
+	return c.hooks.BidSession
+}
+
+// Interceptors returns the client interceptors.
+func (c *BidSessionClient) Interceptors() []Interceptor {
+	return c.inters.BidSession
+}
+
+func (c *BidSessionClient) mutate(ctx context.Context, m *BidSessionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BidSessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BidSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BidSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BidSessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BidSession mutation op: %q", m.Op())
+	}
+}
+
 // DriverDocumentClient is a client for the DriverDocument schema.
 type DriverDocumentClient struct {
 	config
@@ -786,6 +1084,139 @@ func (c *DriverProfileClient) mutate(ctx context.Context, m *DriverProfileMutati
 	}
 }
 
+// NotificationClient is a client for the Notification schema.
+type NotificationClient struct {
+	config
+}
+
+// NewNotificationClient returns a client for the Notification from the given config.
+func NewNotificationClient(c config) *NotificationClient {
+	return &NotificationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `notification.Hooks(f(g(h())))`.
+func (c *NotificationClient) Use(hooks ...Hook) {
+	c.hooks.Notification = append(c.hooks.Notification, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `notification.Intercept(f(g(h())))`.
+func (c *NotificationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Notification = append(c.inters.Notification, interceptors...)
+}
+
+// Create returns a builder for creating a Notification entity.
+func (c *NotificationClient) Create() *NotificationCreate {
+	mutation := newNotificationMutation(c.config, OpCreate)
+	return &NotificationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Notification entities.
+func (c *NotificationClient) CreateBulk(builders ...*NotificationCreate) *NotificationCreateBulk {
+	return &NotificationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *NotificationClient) MapCreateBulk(slice any, setFunc func(*NotificationCreate, int)) *NotificationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &NotificationCreateBulk{err: fmt.Errorf("calling to NotificationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*NotificationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &NotificationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Notification.
+func (c *NotificationClient) Update() *NotificationUpdate {
+	mutation := newNotificationMutation(c.config, OpUpdate)
+	return &NotificationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *NotificationClient) UpdateOne(_m *Notification) *NotificationUpdateOne {
+	mutation := newNotificationMutation(c.config, OpUpdateOne, withNotification(_m))
+	return &NotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *NotificationClient) UpdateOneID(id int) *NotificationUpdateOne {
+	mutation := newNotificationMutation(c.config, OpUpdateOne, withNotificationID(id))
+	return &NotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Notification.
+func (c *NotificationClient) Delete() *NotificationDelete {
+	mutation := newNotificationMutation(c.config, OpDelete)
+	return &NotificationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *NotificationClient) DeleteOne(_m *Notification) *NotificationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *NotificationClient) DeleteOneID(id int) *NotificationDeleteOne {
+	builder := c.Delete().Where(notification.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &NotificationDeleteOne{builder}
+}
+
+// Query returns a query builder for Notification.
+func (c *NotificationClient) Query() *NotificationQuery {
+	return &NotificationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeNotification},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Notification entity by its id.
+func (c *NotificationClient) Get(ctx context.Context, id int) (*Notification, error) {
+	return c.Query().Where(notification.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *NotificationClient) GetX(ctx context.Context, id int) *Notification {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *NotificationClient) Hooks() []Hook {
+	return c.hooks.Notification
+}
+
+// Interceptors returns the client interceptors.
+func (c *NotificationClient) Interceptors() []Interceptor {
+	return c.inters.Notification
+}
+
+func (c *NotificationClient) mutate(ctx context.Context, m *NotificationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&NotificationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&NotificationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&NotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&NotificationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Notification mutation op: %q", m.Op())
+	}
+}
+
 // PassengerProfileClient is a client for the PassengerProfile schema.
 type PassengerProfileClient struct {
 	config
@@ -916,6 +1347,139 @@ func (c *PassengerProfileClient) mutate(ctx context.Context, m *PassengerProfile
 		return (&PassengerProfileDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown PassengerProfile mutation op: %q", m.Op())
+	}
+}
+
+// ReviewClient is a client for the Review schema.
+type ReviewClient struct {
+	config
+}
+
+// NewReviewClient returns a client for the Review from the given config.
+func NewReviewClient(c config) *ReviewClient {
+	return &ReviewClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `review.Hooks(f(g(h())))`.
+func (c *ReviewClient) Use(hooks ...Hook) {
+	c.hooks.Review = append(c.hooks.Review, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `review.Intercept(f(g(h())))`.
+func (c *ReviewClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Review = append(c.inters.Review, interceptors...)
+}
+
+// Create returns a builder for creating a Review entity.
+func (c *ReviewClient) Create() *ReviewCreate {
+	mutation := newReviewMutation(c.config, OpCreate)
+	return &ReviewCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Review entities.
+func (c *ReviewClient) CreateBulk(builders ...*ReviewCreate) *ReviewCreateBulk {
+	return &ReviewCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ReviewClient) MapCreateBulk(slice any, setFunc func(*ReviewCreate, int)) *ReviewCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ReviewCreateBulk{err: fmt.Errorf("calling to ReviewClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ReviewCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ReviewCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Review.
+func (c *ReviewClient) Update() *ReviewUpdate {
+	mutation := newReviewMutation(c.config, OpUpdate)
+	return &ReviewUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReviewClient) UpdateOne(_m *Review) *ReviewUpdateOne {
+	mutation := newReviewMutation(c.config, OpUpdateOne, withReview(_m))
+	return &ReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReviewClient) UpdateOneID(id int) *ReviewUpdateOne {
+	mutation := newReviewMutation(c.config, OpUpdateOne, withReviewID(id))
+	return &ReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Review.
+func (c *ReviewClient) Delete() *ReviewDelete {
+	mutation := newReviewMutation(c.config, OpDelete)
+	return &ReviewDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ReviewClient) DeleteOne(_m *Review) *ReviewDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ReviewClient) DeleteOneID(id int) *ReviewDeleteOne {
+	builder := c.Delete().Where(review.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReviewDeleteOne{builder}
+}
+
+// Query returns a query builder for Review.
+func (c *ReviewClient) Query() *ReviewQuery {
+	return &ReviewQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeReview},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Review entity by its id.
+func (c *ReviewClient) Get(ctx context.Context, id int) (*Review, error) {
+	return c.Query().Where(review.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReviewClient) GetX(ctx context.Context, id int) *Review {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ReviewClient) Hooks() []Hook {
+	return c.hooks.Review
+}
+
+// Interceptors returns the client interceptors.
+func (c *ReviewClient) Interceptors() []Interceptor {
+	return c.inters.Review
+}
+
+func (c *ReviewClient) mutate(ctx context.Context, m *ReviewMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ReviewCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ReviewUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ReviewDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Review mutation op: %q", m.Op())
 	}
 }
 
@@ -1188,11 +1752,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		AuditEvent, Bid, DriverDocument, DriverProfile, PassengerProfile, Ride,
-		User []ent.Hook
+		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
+		Notification, PassengerProfile, Review, Ride, User []ent.Hook
 	}
 	inters struct {
-		AuditEvent, Bid, DriverDocument, DriverProfile, PassengerProfile, Ride,
-		User []ent.Interceptor
+		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
+		Notification, PassengerProfile, Review, Ride, User []ent.Interceptor
 	}
 )

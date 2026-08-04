@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
+	chath "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http"
 	chatws "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/ws"
 	chatusecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	geo "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/adapter"
@@ -14,7 +14,10 @@ import (
 	geows "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/ws"
 	geousecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
-	redis "github.com/redis/go-redis/v9"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/database"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/logger"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 )
 
 func main() {
@@ -23,25 +26,36 @@ func main() {
 	if redisURL == "" {
 		log.Fatal("REDIS_URL is required")
 	}
-	redisOptions, err := redis.ParseURL(redisURL)
+	redisClient, err := database.OpenRedis(redisURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	redisClient := redis.NewClient(redisOptions)
+	defer redisClient.Close()
+	tokenManager := security.NewTokenManager(os.Getenv("JWT_SECRET"))
 	geoService := geousecase.NewService(geo.NewRedisRepository(redisClient))
-	chatService := chatusecase.NewService(chatadapter.NewHub())
+	chatHistory := chatadapter.NewRedisRepository(redisClient)
+	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory)
 	events := ws.NewEventRouter()
 	events.Register("LOCATION_UPDATE", geows.NewEventHandler(geoService))
 	events.Register("CHAT_MESSAGE", chatws.NewEventHandler(chatService))
-	router.Handle("/ws", ws.NewHandlerWithSink(ws.NewHub(), token.NewVerifier(os.Getenv("JWT_SECRET")), events))
-	geoh.NewRouter(geoService).RegisterRoutes(router)
+	router.Handle("/ws", ws.NewHandlerWithSink(ws.NewHub(), tokenManager, events))
+	geoh.NewRouter(geoService, tokenManager).RegisterRoutes(router)
+	chath.NewRouter(chatService).RegisterRoutes(router)
 	router.HandleFunc("GET /health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"realtime-service"}`))
 	})
 
-	log.Println("realtime-service listening on :8081")
-	if err := http.ListenAndServe(":8081", router); err != nil {
+	address := ":" + port("REALTIME_SERVICE_PORT", "8081")
+	log.Println("realtime-service listening on " + address)
+	if err := http.ListenAndServe(address, middleware.Logging(logger.New("realtime-service"))(router)); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func port(name, fallback string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
+	}
+	return fallback
 }

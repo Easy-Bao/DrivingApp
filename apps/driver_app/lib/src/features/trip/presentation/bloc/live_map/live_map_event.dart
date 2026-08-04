@@ -1,4 +1,4 @@
-import 'package:location_service/location_service.dart';
+import 'package:shared_core/shared_core.dart';
 
 abstract class LiveMapEvent {
   const LiveMapEvent();

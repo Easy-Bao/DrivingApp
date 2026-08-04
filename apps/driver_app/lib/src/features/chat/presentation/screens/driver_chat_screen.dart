@@ -2,10 +2,11 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
 
-import 'package:chat_service/chat_service.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/chat/presentation/bloc/chat_cubit.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
 
@@ -64,11 +65,17 @@ class _DriverChatScreenState extends State<DriverChatScreen>
         currentUserId.isEmpty) {
       return;
     }
+    final token = await Modular.get<SecureSessionService>().readToken();
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
       roomId: chatRoomId,
       userId: currentUserId,
     );
-    await _chatCubit.resolveChatRoom(chatRoomId, currentUserId, wsUri);
+    await _chatCubit.resolveChatRoom(
+      chatRoomId,
+      currentUserId,
+      wsUri,
+      token: token,
+    );
   }
 
   final _quickReplies = [
@@ -108,14 +115,21 @@ class _DriverChatScreenState extends State<DriverChatScreen>
         clientDio: Dio(BaseOptions(baseUrl: EnvConfig.httpBaseUrl)),
       ),
     );
-    final wsUri = ApiEndpoints.buildChatWebSocketUri(
-      roomId: currentRoomId,
-      userId: currentUserId,
-    );
-    unawaited(
-      _chatCubit.connectToChatRoom(roomId: currentRoomId, wsUri: wsUri),
-    );
+    unawaited(_connectChat(currentRoomId, currentUserId));
     unawaited(_checkTripStatus());
+  }
+
+  Future<void> _connectChat(String roomId, String userId) async {
+    final token = await Modular.get<SecureSessionService>().readToken();
+    final wsUri = ApiEndpoints.buildChatWebSocketUri(
+      roomId: roomId,
+      userId: userId,
+    );
+    await _chatCubit.connectToChatRoom(
+      roomId: roomId,
+      wsUri: wsUri,
+      token: token,
+    );
   }
 
   @override

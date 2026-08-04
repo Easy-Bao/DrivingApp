@@ -1,8 +1,7 @@
-import 'package:core_models/core_models.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/settings/domain/entities/user_settings.dart';
 import 'package:passenger_app/src/features/settings/domain/repositories/i_settings_repository.dart';
-
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsRepository implements ISettingsRepository {
