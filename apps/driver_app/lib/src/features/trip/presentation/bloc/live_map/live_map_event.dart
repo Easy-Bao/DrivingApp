@@ -1,4 +1,4 @@
-import 'package:shared_core/shared_core.dart';
+import 'package:driver_app/src/core/location/location.dart';
 
 abstract class LiveMapEvent {
   const LiveMapEvent();

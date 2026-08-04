@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/core/location/location.dart';
+import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
@@ -15,6 +17,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final IDriverRepository _driverRepository;
   final BiddingRemoteDataSource _biddingDataSource;
   final SecureSessionService _secureSessionService;
+  final BackgroundTelemetryService? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
 
   StreamSubscription<List<dynamic>>? _offersSubscription;
@@ -66,10 +69,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required BiddingRemoteDataSource biddingDataSource,
     required SecureSessionService secureSessionService,
     InboxCubit? inboxCubit,
+    BackgroundTelemetryService? backgroundTelemetryService,
   }) : _driverRepository = driverRepository,
        _biddingDataSource = biddingDataSource,
        _secureSessionService = secureSessionService,
        _inboxCubit = inboxCubit,
+       _backgroundTelemetryService = backgroundTelemetryService,
        super(BookingInitial()) {
     on<LocateNearestDriverEvent>(_onLocateNearestDriver);
     on<StartDirectBookingEvent>(_onStartDirectBooking);
@@ -449,6 +454,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         if (res['id'] != null) {
           final activeRideId = res['id']?.toString() ?? '';
           await _secureSessionService.saveActiveRideId(activeRideId);
+          await _startBackgroundTelemetry();
 
           createdRide = RideHistoryModel(
             id: activeRideId,
@@ -507,6 +513,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       }
 
       await _secureSessionService.saveActiveRideId(rideId);
+      await _startBackgroundTelemetry();
       _cleanupSubscriptions();
       emit(
         BookingDriverMatched(
@@ -547,6 +554,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
+    await _stopBackgroundTelemetry();
     final sessionId = _activeBidSessionId;
     try {
       if (sessionId != null && sessionId.isNotEmpty) {
@@ -567,9 +575,30 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _driverFoundSubscription = null;
   }
 
+  Future<void> _startBackgroundTelemetry() async {
+    final service = _backgroundTelemetryService;
+    if (service == null) return;
+    try {
+      await service.start();
+    } catch (error) {
+      dev.log('Unable to start passenger background telemetry: $error');
+    }
+  }
+
+  Future<void> _stopBackgroundTelemetry() async {
+    final service = _backgroundTelemetryService;
+    if (service == null) return;
+    try {
+      await service.stop();
+    } catch (error) {
+      dev.log('Unable to stop passenger background telemetry: $error');
+    }
+  }
+
   @override
   Future<void> close() {
     _cleanupSubscriptions();
+    unawaited(_stopBackgroundTelemetry());
     return super.close();
   }
 }

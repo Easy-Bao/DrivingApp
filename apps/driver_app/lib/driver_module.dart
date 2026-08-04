@@ -17,6 +17,7 @@ import 'package:driver_app/src/features/trip/domain/repositories/i_ride_reposito
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/features/trip/trip_module.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/bidding_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
@@ -31,6 +32,7 @@ class DriverModule extends Module {
           remoteDataSource: i.get<TripRemoteDataSource>(),
           driverRemoteDataSource: i.get<DriverRemoteDataSource>(),
           sessionService: i.get<SecureSessionService>(),
+          backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
         ),
       )
       ..addLazySingleton<IRideRepository>(

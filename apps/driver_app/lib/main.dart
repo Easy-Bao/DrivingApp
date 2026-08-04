@@ -1,3 +1,4 @@
+import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
@@ -5,7 +6,6 @@ import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -592,7 +592,7 @@ class _PassengerViewAllActivityScreenState
                   (endLongitude - startLongitude) * degreesToRadiansMultiplier,
                 )) /
             2;
-    return 12742 * asin(sqrt(haversineInterimValue)); // 2 * R; R = 6371 km
+    return 12742 * asin(sqrt(haversineInterimValue));
   }
 
   double _calculateDailyCompletedTotalSum(List<RideHistoryModel> ridesForDate) {

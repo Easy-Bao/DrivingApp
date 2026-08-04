@@ -1,5 +1,8 @@
+import 'dart:developer' as dev;
+
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/features/home/data/data_sources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
@@ -10,14 +13,17 @@ class DashboardRepository implements IDashboardRepository {
   final TripRemoteDataSource _remoteDataSource;
   final DriverRemoteDataSource _driverRemoteDataSource;
   final SecureSessionService _sessionService;
+  final BackgroundTelemetryService? _backgroundTelemetryService;
 
   DashboardRepository({
     required TripRemoteDataSource remoteDataSource,
     required DriverRemoteDataSource driverRemoteDataSource,
     required SecureSessionService sessionService,
+    BackgroundTelemetryService? backgroundTelemetryService,
   }) : _remoteDataSource = remoteDataSource,
        _driverRemoteDataSource = driverRemoteDataSource,
-       _sessionService = sessionService;
+       _sessionService = sessionService,
+       _backgroundTelemetryService = backgroundTelemetryService;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {
@@ -68,6 +74,18 @@ class DashboardRepository implements IDashboardRepository {
         lat: lat,
         lng: lng,
       );
+      final backgroundTelemetryService = _backgroundTelemetryService;
+      if (backgroundTelemetryService != null) {
+        try {
+          if (isOnline) {
+            await backgroundTelemetryService.start();
+          } else {
+            await backgroundTelemetryService.stop();
+          }
+        } catch (error) {
+          dev.log('Unable to update background telemetry state: $error');
+        }
+      }
       return const Right(null);
     } catch (error) {
       return Left(_mapExceptionToFailure(error));

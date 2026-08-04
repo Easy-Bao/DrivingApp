@@ -91,7 +91,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                   return CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
-                      // Screen Header
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(
                           24.0,
@@ -126,7 +125,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                         ),
                       ),
 
-                      // ON THE WAY active ride card section
                       if (activeRides.isNotEmpty)
                         SliverPadding(
                           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -138,7 +136,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                           ),
                         ),
 
-                      // PAST RIDES section header
                       if (pastRides.isNotEmpty)
                         SliverPadding(
                           padding: const EdgeInsets.fromLTRB(
@@ -164,7 +161,6 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
                           ),
                         ),
 
-                      // PAST RIDES list items
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 24.0),
                         sliver: SliverList(
@@ -228,10 +224,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                width: 4,
-                color: const Color(0xFFD25D38), // Orange/red stripe on left
-              ),
+              Container(width: 4, color: const Color(0xFFD25D38)),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),

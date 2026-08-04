@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'package:shared_core/src/location/services/map_camera_service.dart';
+import 'package:passenger_app/src/core/location/services/map_camera_service.dart';
 
 class MapAnnotationService {
   MapAnnotationService._();
@@ -30,9 +30,7 @@ class MapAnnotationService {
         geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
         image: await _createMarkerImage(Color(markerColor), label: label),
         iconAnchor: mapbox.IconAnchor.BOTTOM,
-        // Keep information cards legible while the map camera changes zoom.
         iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 1.0,
-        // Keep driver labels above the passenger origin when coordinates overlap.
         symbolSortKey: isOrigin ? 10 : 20,
       ),
     );

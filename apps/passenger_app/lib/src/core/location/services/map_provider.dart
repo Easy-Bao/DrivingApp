@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
+import 'package:passenger_app/src/core/location/services/device_location_service.dart';
+import 'package:passenger_app/src/core/location/services/map_annotation_service.dart';
+import 'package:passenger_app/src/core/location/services/map_camera_service.dart';
 import 'package:shared_core/shared_core.dart';
 
-export 'package:shared_core/src/location/services/map_annotation_service.dart';
-export 'package:shared_core/src/location/services/map_camera_service.dart';
+export 'package:passenger_app/src/core/location/services/map_annotation_service.dart';
+export 'package:passenger_app/src/core/location/services/map_camera_service.dart';
 
 class MapProvider {
   MapProvider._();

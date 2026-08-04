@@ -13,6 +13,5 @@ class SavedPlace {
     this.longitude,
   });
 
-  /// Returns true if coordinates are present to skip the lookup flow.
   bool get hasLocation => latitude != null && longitude != null;
 }

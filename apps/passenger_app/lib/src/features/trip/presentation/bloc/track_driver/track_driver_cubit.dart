@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
@@ -10,14 +11,17 @@ import 'package:shared_core/shared_core.dart';
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final ITrackRepository _repository;
   final SecureSessionService _sessionService;
+  final BackgroundTelemetryService? _backgroundTelemetryService;
   Timer? _ticker;
   bool _isSyncing = false;
 
   TrackDriverCubit({
     required ITrackRepository repository,
     required SecureSessionService sessionService,
+    BackgroundTelemetryService? backgroundTelemetryService,
   }) : _repository = repository,
        _sessionService = sessionService,
+       _backgroundTelemetryService = backgroundTelemetryService,
        super(const TrackDriverInitial());
 
   Future<void> startTracking({
@@ -77,6 +81,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 ),
               );
               await session.saveActiveRideId('');
+              await _stopBackgroundTelemetry();
               _isSyncing = false;
               return;
             }
@@ -153,6 +158,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         progress += 0.1;
         if (progress >= 1.0) {
           timer.cancel();
+          await _sessionService.saveActiveRideId('');
+          await _stopBackgroundTelemetry();
           emit(
             TrackDriverCompleted(driverId: driverId, driverName: driverName),
           );
@@ -194,6 +201,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         await _repository.updateRideStatus(rideId, RideStatus.cancelled);
         await _sessionService.saveActiveRideId('');
       }
+      await _stopBackgroundTelemetry();
     } catch (error) {
       dev.log('Error canceling trip in track cubit: $error');
     }
@@ -216,7 +224,18 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   @override
   Future<void> close() {
     _ticker?.cancel();
+    unawaited(_stopBackgroundTelemetry());
     return super.close();
+  }
+
+  Future<void> _stopBackgroundTelemetry() async {
+    final service = _backgroundTelemetryService;
+    if (service == null) return;
+    try {
+      await service.stop();
+    } catch (error) {
+      dev.log('Unable to stop passenger background telemetry: $error');
+    }
   }
 
   ({double lat, double lng}) _interpolate({

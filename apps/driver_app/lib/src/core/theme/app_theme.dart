@@ -3,19 +3,13 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color primaryColor = Color(0xFF1A1D20); // Dark Obsidian Charcoal
-  static const Color secondaryColor = Color(
-    0xFFE3E2C3,
-  ); // Healing Springs Sand Accent
-  static const Color tertiaryColor = Color(0xFF6C757D); // Slate Grey Subtitle
-  static const Color neutralColor = Color(0xFFF1F3F5); // Soft Tint Neutral
-  static const Color surface = Color(
-    0xFFFFFFFF,
-  ); // Pure White Card/Input Surface
-  static const Color background = Color(
-    0xFFF8F9FA,
-  ); // Soft Off-White Scaffold Background
-  static const Color borderSide = Color(0xFFDEE2E6); // Clean Subtle Border
+  static const Color primaryColor = Color(0xFF1A1D20);
+  static const Color secondaryColor = Color(0xFFE3E2C3);
+  static const Color tertiaryColor = Color(0xFF6C757D);
+  static const Color neutralColor = Color(0xFFF1F3F5);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFFF8F9FA);
+  static const Color borderSide = Color(0xFFDEE2E6);
 
   static const Color accent = primaryColor;
   static const Color mutedSand = secondaryColor;

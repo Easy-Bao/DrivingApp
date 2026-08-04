@@ -31,9 +31,7 @@ class RetryInterceptor extends Interceptor {
       try {
         final response = await dio.fetch(requestOptions);
         return handler.resolve(response);
-      } catch (_) {
-        // Preserve the original error after the retry budget is exhausted.
-      }
+      } catch (_) {}
     }
     super.onError(err, handler);
   }

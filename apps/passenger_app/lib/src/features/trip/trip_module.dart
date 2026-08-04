@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/activity_detail_map_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/destination_preview_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/driver_matched_screen.dart';

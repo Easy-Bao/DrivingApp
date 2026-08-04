@@ -217,7 +217,6 @@ class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
                       );
                     }
 
-                    // Extract special categories "Home" and "Work"
                     SavedPlace? homePlace;
                     SavedPlace? workPlace;
                     final List<SavedPlace> customPlaces = [];
@@ -232,7 +231,6 @@ class _SavedPlaceScreenState extends State<SavedPlaceScreen> {
                       }
                     }
 
-                    // Find actual indexes in state.places
                     int indexForPlace(SavedPlace? p) {
                       if (p == null) return -1;
                       return state.places.indexOf(p);

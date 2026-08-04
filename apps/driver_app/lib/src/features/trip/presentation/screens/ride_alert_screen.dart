@@ -36,7 +36,8 @@ class _RideAlertScreenState extends State<RideAlertScreen>
       throw ArgumentError('Ride alert data must include a ride id.');
     }
     _rideId = rideData['id'] as String;
-    _pickup = rideData['pickup_name'] as String? ?? 'Pickup location unavailable';
+    _pickup =
+        rideData['pickup_name'] as String? ?? 'Pickup location unavailable';
     _dropoff = rideData['dropoff_name'] as String? ?? 'Destination unavailable';
     _distance = (rideData['distance'] as num?)?.toDouble() ?? 0.0;
     _fare = (rideData['fare'] as num?)?.toDouble() ?? 0.0;
@@ -67,7 +68,11 @@ class _RideAlertScreenState extends State<RideAlertScreen>
     final driverId = await Modular.get<SecureSessionService>().readDriverId();
     if (driverId == null || driverId.isEmpty) {
       if (mounted) {
-        CustomToast.show(context, 'Driver session is unavailable.', isError: true);
+        CustomToast.show(
+          context,
+          'Driver session is unavailable.',
+          isError: true,
+        );
       }
       return;
     }

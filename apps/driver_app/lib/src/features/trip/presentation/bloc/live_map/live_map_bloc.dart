@@ -1,3 +1,4 @@
+import 'package:driver_app/src/core/location/location.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 import 'dart:ui' show Color;
@@ -6,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_state.dart';
 
-import 'package:shared_core/shared_core.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:driver_app/src/core/services/secure_session_service.dart';

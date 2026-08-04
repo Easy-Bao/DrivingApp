@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/activity/activity_module.dart';
 import 'package:passenger_app/src/features/activity/data/repositories/activity_repository.dart';
@@ -82,6 +83,7 @@ class PassengerModule extends Module {
           biddingDataSource: i.get<BiddingRemoteDataSource>(),
           secureSessionService: i.get<SecureSessionService>(),
           inboxCubit: i.get<InboxCubit>(),
+          backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
         ),
       )
       ..addFactory<LiveMapBloc>(
@@ -97,6 +99,7 @@ class PassengerModule extends Module {
         (i) => TrackDriverCubit(
           repository: i.get<ITrackRepository>(),
           sessionService: i.get<SecureSessionService>(),
+          backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
         ),
       );
   }

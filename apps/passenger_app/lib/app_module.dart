@@ -3,6 +3,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/passenger_module.dart';
 import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/network/dio_client.dart';
+import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/storage/secure_storage.dart';
 import 'package:passenger_app/src/features/auth/auth_module.dart';
@@ -21,6 +22,9 @@ class AppModule extends Module {
     i
       ..addSingleton<SharedPreferences>((i) => _prefs)
       ..addLazySingleton<SecureSessionService>((i) => SecureSessionService())
+      ..addLazySingleton<BackgroundTelemetryService>(
+        (i) => BackgroundTelemetryService(apiBaseUri: EnvConfig.apiBaseUri),
+      )
       ..addLazySingleton<SecureStorage>(
         (i) => SecureStorage(i.get<SecureSessionService>()),
       )

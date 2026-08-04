@@ -1,3 +1,4 @@
+import 'package:driver_app/src/core/location/location.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_ride_repository.dart';

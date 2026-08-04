@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:shared_core/src/fare/config/rating_pricing_config.dart';
 
-/// Server-driven fare service configuration model.
 class FareServiceModel extends Equatable {
   final String id;
   final String serviceName;

@@ -16,7 +16,6 @@ class SavedPlacesRepository implements ISavedPlacesRepository {
       final raw = prefs.getString(_storageKey);
 
       final decoded = jsonDecode(raw ?? '') as List<dynamic>;
-      //Return empty if there's no saved place set
       return decoded.cast<Map<String, dynamic>>().toList();
     } catch (error) {
       throw const CacheFailure('Failed to load saved places from cache.');

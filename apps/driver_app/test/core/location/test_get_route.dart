@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:driver_app/src/core/location/location.dart';
 
 import 'mock_location_api_client.dart';
 
