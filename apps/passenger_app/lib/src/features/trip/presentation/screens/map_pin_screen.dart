@@ -224,64 +224,11 @@ class _MapPinScreenState extends State<MapPinScreen>
                   _pinAnimationController.value,
                 );
                 return Transform.translate(
-                  offset: Offset(0, -10 * lift),
+                  offset: Offset(0, -34 - (8 * lift)),
                   child: child,
                 );
               },
-              child: SizedBox(
-                width: 48,
-                height: 64,
-                child: Hero(
-                  tag: 'map_pin_button',
-                  child: FittedBox(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.3,
-                                  ),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                LucideIcons.map_pin,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 3,
-                            height: 12,
-                            color: AppTheme.primaryColor,
-                          ),
-                          Container(
-                            width: 8,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              child: const Hero(tag: 'map_pin_button', child: _CenterPin()),
             ),
           ),
           SafeArea(
@@ -466,4 +413,40 @@ class _TopButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CenterPin extends StatelessWidget {
+  const _CenterPin();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 52,
+      height: 68,
+      child: CustomPaint(painter: _CenterPinPainter()),
+    );
+  }
+}
+
+class _CenterPinPainter extends CustomPainter {
+  const _CenterPinPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, 23);
+    final pinPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: 22))
+      ..moveTo(center.dx - 10, 38)
+      ..lineTo(center.dx, size.height)
+      ..lineTo(center.dx + 10, 38)
+      ..close();
+
+    canvas.drawShadow(pinPath, Colors.black.withValues(alpha: 0.28), 5, true);
+    canvas.drawPath(pinPath, Paint()..color = AppTheme.primaryColor);
+    canvas.drawCircle(center, 9, Paint()..color = Colors.white);
+    canvas.drawCircle(center, 4, Paint()..color = AppTheme.primaryColor);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CenterPinPainter oldDelegate) => false;
 }

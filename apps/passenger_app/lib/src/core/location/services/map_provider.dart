@@ -168,10 +168,30 @@ class MapProvider {
           debugPrint('MapProvider.getNearbyPOIs failure: $failure');
           return <PlaceModel>[];
         },
-        (pois) => pois.where((place) {
-          final distance = place.distanceKm;
-          return distance != null && distance <= nearbyRadiusKm;
-        }).toList(),
+        (pois) => pois
+            .map((place) {
+              final distance =
+                  place.distanceKm ??
+                  MapNativeService.calculateHaversine(
+                    lat,
+                    lng,
+                    place.latitude,
+                    place.longitude,
+                  );
+              if (distance > nearbyRadiusKm) return null;
+              if (place.distanceKm != null) return place;
+              return PlaceModel(
+                id: place.id,
+                name: place.name,
+                fullAddress: place.fullAddress,
+                latitude: place.latitude,
+                longitude: place.longitude,
+                category: place.category,
+                distanceKm: distance,
+              );
+            })
+            .whereType<PlaceModel>()
+            .toList(),
       );
     } catch (error) {
       debugPrint('MapProvider.getNearbyPOIs error: $error');

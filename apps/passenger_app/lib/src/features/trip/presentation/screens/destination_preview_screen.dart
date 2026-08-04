@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
@@ -34,11 +35,25 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   String _duration = '';
   double _distanceKm = 0.0;
   Map<String, double> _fares = {};
+  RouteModel? _route;
+  bool _isLoadingRoute = false;
+  bool _routeRendered = false;
+  mapbox.PointAnnotationManager? _pickupMarker;
+  mapbox.PointAnnotationManager? _destinationMarker;
+  mapbox.PolylineAnnotationManager? _routeLine;
 
   @override
   void initState() {
     super.initState();
     unawaited(_initLocation());
+  }
+
+  @override
+  void dispose() {
+    unawaited(MapProvider.clearAnnotations(_pickupMarker));
+    unawaited(MapProvider.clearAnnotations(_destinationMarker));
+    unawaited(MapProvider.clearAnnotations(_routeLine));
+    super.dispose();
   }
 
   Future<void> _initLocation() async {
@@ -56,68 +71,82 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
 
   Future<void> _loadRoute() async {
     if (_userLat == null || _userLng == null) return;
+    if (_isLoadingRoute) return;
+    _isLoadingRoute = true;
 
-    final route = await MapProvider.getRoute(
-      _userLat!,
-      _userLng!,
-      widget.destination.latitude,
-      widget.destination.longitude,
-    );
+    try {
+      final route = await MapProvider.getRoute(
+        _userLat!,
+        _userLng!,
+        widget.destination.latitude,
+        widget.destination.longitude,
+      );
 
-    if (mounted && route != null) {
+      if (!mounted || route == null) return;
+
       final km = route.distanceKm;
       final mins = (route.durationSeconds / 60.0).ceil();
-      final distanceStr = '${km.toStringAsFixed(1)} km';
-      final durationStr = '$mins min';
-
-      final Map<String, double> calculatedFares = {
-        'Solo Ride': (km * 15 + 30),
-        'Share-Bao': (km * 10 + 20),
-        'Bao Premium': (km * 20 + 45),
-      };
-
       setState(() {
-        _distance = distanceStr;
-        _duration = durationStr;
+        _route = route;
+        _distance = '${km.toStringAsFixed(1)} km';
+        _duration = '$mins min';
         _distanceKm = km;
-        _fares = calculatedFares;
+        _fares = {
+          'Solo Ride': (km * 15 + 30),
+          'Share-Bao': (km * 10 + 20),
+          'Bao Premium': (km * 20 + 45),
+        };
       });
+      await _renderRoute();
+    } finally {
+      _isLoadingRoute = false;
+    }
+  }
 
-      if (_mapController != null) {
-        await MapProvider.addMarker(
-          _mapController!,
-          _userLat!,
-          _userLng!,
-          label: 'Current location\nYou are here',
-          isOrigin: true,
-        );
-        await MapProvider.addMarker(
-          _mapController!,
-          widget.destination.latitude,
-          widget.destination.longitude,
-          label: 'Your destination\n${widget.destination.name}',
-          isOrigin: false,
-        );
-        await MapProvider.addPolyline(
-          _mapController!,
-          route.polylinePoints,
-          color: AppTheme.primaryColor,
-          width: 5.0,
-        );
-        final routePoints = route.polylinePoints
-            .where((point) => point.length >= 2)
-            .map((point) => LatLng(point[1], point[0]));
-        await MapProvider.fitBounds(
-          _mapController!,
-          [
-            LatLng(_userLat!, _userLng!),
-            LatLng(widget.destination.latitude, widget.destination.longitude),
-            ...routePoints,
-          ],
-          padding: 80.0,
-          maxZoom: 14.5,
-        );
-      }
+  Future<void> _renderRoute() async {
+    final controller = _mapController;
+    final route = _route;
+    if (controller == null || route == null || _routeRendered) return;
+    if (route.polylinePoints.length < 2) return;
+
+    _routeRendered = true;
+    try {
+      _pickupMarker = await MapProvider.addMarker(
+        controller,
+        _userLat!,
+        _userLng!,
+        label: 'Current location\nYou are here',
+        isOrigin: true,
+      );
+      _destinationMarker = await MapProvider.addMarker(
+        controller,
+        widget.destination.latitude,
+        widget.destination.longitude,
+        label: 'Your destination\n${widget.destination.name}',
+        isOrigin: false,
+      );
+      _routeLine = await MapProvider.addPolyline(
+        controller,
+        route.polylinePoints,
+        color: AppTheme.primaryColor,
+        width: 5.0,
+      );
+      final routePoints = route.polylinePoints
+          .where((point) => point.length >= 2)
+          .map((point) => LatLng(point[1], point[0]));
+      await MapProvider.fitBounds(
+        controller,
+        [
+          LatLng(_userLat!, _userLng!),
+          LatLng(widget.destination.latitude, widget.destination.longitude),
+          ...routePoints,
+        ],
+        padding: 80.0,
+        maxZoom: 14.5,
+      );
+    } catch (error) {
+      _routeRendered = false;
+      debugPrint('Error rendering route preview: $error');
     }
   }
 
@@ -135,7 +164,11 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
               zoom: 14.5,
               onMapCreated: (controller) async {
                 _mapController = controller;
-                await _loadRoute();
+                if (_route == null) {
+                  await _loadRoute();
+                } else {
+                  await _renderRoute();
+                }
               },
             ),
           ),

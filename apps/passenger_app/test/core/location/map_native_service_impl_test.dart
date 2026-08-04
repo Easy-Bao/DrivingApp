@@ -149,6 +149,46 @@ void main() {
         expect(distances, equals([1.25, 3.5]));
       });
     });
+
+    test(
+      'getRoute sends nested coordinates and parses backend route fields',
+      () async {
+        dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+          expect(options.data, {
+            'origin': {'lat': 7.8242, 'lng': 123.435},
+            'destination': {'lat': 7.83, 'lng': 123.44},
+          });
+          return ResponseBody.fromString(
+            jsonEncode({
+              'distance_km': 1.8,
+              'duration_min': 6.5,
+              'polyline': [
+                [123.435, 7.8242],
+                [123.44, 7.83],
+              ],
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        });
+
+        final result = await service.getRoute(
+          originLat: 7.8242,
+          originLng: 123.435,
+          destLat: 7.83,
+          destLng: 123.44,
+        );
+
+        expect(result.isRight(), isTrue);
+        result.fold((failure) => fail('Expected a route: $failure'), (route) {
+          expect(route.polylinePoints, hasLength(2));
+          expect(route.distanceKm, equals(1.8));
+          expect(route.durationSeconds, equals(390));
+        });
+      },
+    );
   });
 }
 

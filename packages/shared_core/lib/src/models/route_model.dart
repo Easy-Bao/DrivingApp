@@ -16,6 +16,7 @@ class RouteModel extends Equatable {
   factory RouteModel.fromJson(Map<String, dynamic> json) {
     final rawPoints =
         (json['polylinePoints'] as List<dynamic>?) ??
+        (json['polyline'] as List<dynamic>?) ??
         (json['waypoints'] as List<dynamic>?) ??
         <dynamic>[];
     final points = rawPoints
@@ -31,7 +32,8 @@ class RouteModel extends Equatable {
 
     final durationSeconds =
         json['durationSeconds'] as num? ?? json['duration_seconds'] as num?;
-    final durationMinutes = json['durationMin'] as num?;
+    final durationMinutes =
+        json['durationMin'] as num? ?? json['duration_min'] as num?;
 
     return RouteModel(
       polylinePoints: points,
@@ -39,7 +41,7 @@ class RouteModel extends Equatable {
           (json['distanceKm'] as num? ?? json['distance_km'] as num? ?? 0.0)
               .toDouble(),
       durationSeconds:
-          durationSeconds?.toInt() ?? (durationMinutes?.round() ?? 0) * 60,
+          durationSeconds?.toInt() ?? ((durationMinutes ?? 0) * 60).round(),
       summary: json['summary'] as String? ?? '',
     );
   }

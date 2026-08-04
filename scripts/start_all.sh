@@ -48,7 +48,7 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   exit 1
 fi
 
-for variable in GATEWAY_PORT CORE_API_URL REALTIME_SERVICE_URL REDIS_URL JWT_SECRET; do
+for variable in GATEWAY_PORT CORE_API_URL REALTIME_SERVICE_URL REDIS_URL JWT_SECRET MAPBOX_ACCESS_TOKEN; do
   if [[ -z "${!variable:-}" ]]; then
     echo "${variable} is required in .env." >&2
     exit 1

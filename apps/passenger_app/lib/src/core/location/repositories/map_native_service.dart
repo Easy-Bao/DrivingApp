@@ -78,15 +78,7 @@ class MapNativeService {
         userLng: userLng ?? proximityLng,
       );
 
-      final List<dynamic> dataList =
-          (responseData['places'] ?? responseData['results'] ?? [])
-              as List<dynamic>;
-
-      final places = dataList
-          .map((item) => PlaceModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-
-      return right(places);
+      return right(_parsePlaces(responseData));
     } on DioException catch (e) {
       dev.log(
         'searchPlaces network failure',
@@ -129,10 +121,8 @@ class MapNativeService {
     try {
       final route = await _apiClient.getRoute(
         body: {
-          'originLat': originLat,
-          'originLng': originLng,
-          'destLat': destLat,
-          'destLng': destLng,
+          'origin': {'lat': originLat, 'lng': originLng},
+          'destination': {'lat': destLat, 'lng': destLng},
         },
       );
       return right(route);
@@ -197,15 +187,7 @@ class MapNativeService {
         page: page,
       );
 
-      final List<dynamic> dataList =
-          (responseData['places'] ?? responseData['results'] ?? [])
-              as List<dynamic>;
-
-      final places = dataList
-          .map((item) => PlaceModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-
-      return right(places);
+      return right(_parsePlaces(responseData));
     } on DioException catch (e) {
       dev.log(
         'getNearbyPois network failure',
@@ -217,5 +199,16 @@ class MapNativeService {
       dev.log('error', name: 'MapNativeService', error: e);
       return left(PlaceParseError(message: e.toString()));
     }
+  }
+
+  static List<PlaceModel> _parsePlaces(Map<String, dynamic> responseData) {
+    final rawPlaces = responseData['places'] ?? responseData['results'] ?? [];
+    if (rawPlaces is! List) {
+      throw const FormatException('Invalid places response.');
+    }
+    return rawPlaces
+        .whereType<Map>()
+        .map((item) => PlaceModel.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
   }
 }

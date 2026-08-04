@@ -21,18 +21,18 @@ class PlaceModel extends Equatable {
 
   factory PlaceModel.fromJson(Map<String, dynamic> json) {
     return PlaceModel(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
       fullAddress:
-          json['fullAddress'] as String? ??
-          json['full_address'] as String? ??
-          json['address'] as String? ??
+          json['fullAddress']?.toString() ??
+          json['full_address']?.toString() ??
+          json['address']?.toString() ??
           '',
       latitude: (json['latitude'] as num? ?? json['lat'] as num? ?? 0.0)
           .toDouble(),
       longitude: (json['longitude'] as num? ?? json['lng'] as num? ?? 0.0)
           .toDouble(),
-      category: json['category'] as String?,
+      category: json['category']?.toString(),
       distanceKm: (json['distanceKm'] as num? ?? json['distance_km'] as num?)
           ?.toDouble(),
     );
