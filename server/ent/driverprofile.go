@@ -27,8 +27,10 @@ type DriverProfile struct {
 	// Rating holds the value of the "rating" field.
 	Rating float64 `json:"rating,omitempty"`
 	// IsOnline holds the value of the "is_online" field.
-	IsOnline     bool `json:"is_online,omitempty"`
-	selectValues sql.SelectValues
+	IsOnline bool `json:"is_online,omitempty"`
+	// WalletBalanceCentavos holds the value of the "wallet_balance_centavos" field.
+	WalletBalanceCentavos int64 `json:"wallet_balance_centavos,omitempty"`
+	selectValues          sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -40,7 +42,7 @@ func (*DriverProfile) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case driverprofile.FieldRating:
 			values[i] = new(sql.NullFloat64)
-		case driverprofile.FieldID, driverprofile.FieldUserID:
+		case driverprofile.FieldID, driverprofile.FieldUserID, driverprofile.FieldWalletBalanceCentavos:
 			values[i] = new(sql.NullInt64)
 		case driverprofile.FieldName, driverprofile.FieldVehicleType, driverprofile.FieldPlateNumber:
 			values[i] = new(sql.NullString)
@@ -101,6 +103,12 @@ func (_m *DriverProfile) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.IsOnline = value.Bool
 			}
+		case driverprofile.FieldWalletBalanceCentavos:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field wallet_balance_centavos", values[i])
+			} else if value.Valid {
+				_m.WalletBalanceCentavos = value.Int64
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -154,6 +162,9 @@ func (_m *DriverProfile) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_online=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsOnline))
+	builder.WriteString(", ")
+	builder.WriteString("wallet_balance_centavos=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WalletBalanceCentavos))
 	builder.WriteByte(')')
 	return builder.String()
 }

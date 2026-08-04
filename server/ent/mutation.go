@@ -23,6 +23,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
+	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 )
 
 const (
@@ -45,6 +46,7 @@ const (
 	TypeReview           = "Review"
 	TypeRide             = "Ride"
 	TypeUser             = "User"
+	TypeWalletLedger     = "WalletLedger"
 )
 
 // AuditEventMutation represents an operation that mutates the AuditEvent nodes in the graph.
@@ -4196,21 +4198,23 @@ func (m *DriverDocumentMutation) ResetEdge(name string) error {
 // DriverProfileMutation represents an operation that mutates the DriverProfile nodes in the graph.
 type DriverProfileMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	user_id       *int
-	adduser_id    *int
-	name          *string
-	vehicle_type  *string
-	plate_number  *string
-	rating        *float64
-	addrating     *float64
-	is_online     *bool
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*DriverProfile, error)
-	predicates    []predicate.DriverProfile
+	op                         Op
+	typ                        string
+	id                         *int
+	user_id                    *int
+	adduser_id                 *int
+	name                       *string
+	vehicle_type               *string
+	plate_number               *string
+	rating                     *float64
+	addrating                  *float64
+	is_online                  *bool
+	wallet_balance_centavos    *int64
+	addwallet_balance_centavos *int64
+	clearedFields              map[string]struct{}
+	done                       bool
+	oldValue                   func(context.Context) (*DriverProfile, error)
+	predicates                 []predicate.DriverProfile
 }
 
 var _ ent.Mutation = (*DriverProfileMutation)(nil)
@@ -4567,6 +4571,62 @@ func (m *DriverProfileMutation) ResetIsOnline() {
 	m.is_online = nil
 }
 
+// SetWalletBalanceCentavos sets the "wallet_balance_centavos" field.
+func (m *DriverProfileMutation) SetWalletBalanceCentavos(i int64) {
+	m.wallet_balance_centavos = &i
+	m.addwallet_balance_centavos = nil
+}
+
+// WalletBalanceCentavos returns the value of the "wallet_balance_centavos" field in the mutation.
+func (m *DriverProfileMutation) WalletBalanceCentavos() (r int64, exists bool) {
+	v := m.wallet_balance_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWalletBalanceCentavos returns the old "wallet_balance_centavos" field's value of the DriverProfile entity.
+// If the DriverProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DriverProfileMutation) OldWalletBalanceCentavos(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWalletBalanceCentavos is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWalletBalanceCentavos requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWalletBalanceCentavos: %w", err)
+	}
+	return oldValue.WalletBalanceCentavos, nil
+}
+
+// AddWalletBalanceCentavos adds i to the "wallet_balance_centavos" field.
+func (m *DriverProfileMutation) AddWalletBalanceCentavos(i int64) {
+	if m.addwallet_balance_centavos != nil {
+		*m.addwallet_balance_centavos += i
+	} else {
+		m.addwallet_balance_centavos = &i
+	}
+}
+
+// AddedWalletBalanceCentavos returns the value that was added to the "wallet_balance_centavos" field in this mutation.
+func (m *DriverProfileMutation) AddedWalletBalanceCentavos() (r int64, exists bool) {
+	v := m.addwallet_balance_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetWalletBalanceCentavos resets all changes to the "wallet_balance_centavos" field.
+func (m *DriverProfileMutation) ResetWalletBalanceCentavos() {
+	m.wallet_balance_centavos = nil
+	m.addwallet_balance_centavos = nil
+}
+
 // Where appends a list predicates to the DriverProfileMutation builder.
 func (m *DriverProfileMutation) Where(ps ...predicate.DriverProfile) {
 	m.predicates = append(m.predicates, ps...)
@@ -4601,7 +4661,7 @@ func (m *DriverProfileMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DriverProfileMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.user_id != nil {
 		fields = append(fields, driverprofile.FieldUserID)
 	}
@@ -4619,6 +4679,9 @@ func (m *DriverProfileMutation) Fields() []string {
 	}
 	if m.is_online != nil {
 		fields = append(fields, driverprofile.FieldIsOnline)
+	}
+	if m.wallet_balance_centavos != nil {
+		fields = append(fields, driverprofile.FieldWalletBalanceCentavos)
 	}
 	return fields
 }
@@ -4640,6 +4703,8 @@ func (m *DriverProfileMutation) Field(name string) (ent.Value, bool) {
 		return m.Rating()
 	case driverprofile.FieldIsOnline:
 		return m.IsOnline()
+	case driverprofile.FieldWalletBalanceCentavos:
+		return m.WalletBalanceCentavos()
 	}
 	return nil, false
 }
@@ -4661,6 +4726,8 @@ func (m *DriverProfileMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldRating(ctx)
 	case driverprofile.FieldIsOnline:
 		return m.OldIsOnline(ctx)
+	case driverprofile.FieldWalletBalanceCentavos:
+		return m.OldWalletBalanceCentavos(ctx)
 	}
 	return nil, fmt.Errorf("unknown DriverProfile field %s", name)
 }
@@ -4712,6 +4779,13 @@ func (m *DriverProfileMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetIsOnline(v)
 		return nil
+	case driverprofile.FieldWalletBalanceCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWalletBalanceCentavos(v)
+		return nil
 	}
 	return fmt.Errorf("unknown DriverProfile field %s", name)
 }
@@ -4726,6 +4800,9 @@ func (m *DriverProfileMutation) AddedFields() []string {
 	if m.addrating != nil {
 		fields = append(fields, driverprofile.FieldRating)
 	}
+	if m.addwallet_balance_centavos != nil {
+		fields = append(fields, driverprofile.FieldWalletBalanceCentavos)
+	}
 	return fields
 }
 
@@ -4738,6 +4815,8 @@ func (m *DriverProfileMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedUserID()
 	case driverprofile.FieldRating:
 		return m.AddedRating()
+	case driverprofile.FieldWalletBalanceCentavos:
+		return m.AddedWalletBalanceCentavos()
 	}
 	return nil, false
 }
@@ -4760,6 +4839,13 @@ func (m *DriverProfileMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddRating(v)
+		return nil
+	case driverprofile.FieldWalletBalanceCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddWalletBalanceCentavos(v)
 		return nil
 	}
 	return fmt.Errorf("unknown DriverProfile numeric field %s", name)
@@ -4805,6 +4891,9 @@ func (m *DriverProfileMutation) ResetField(name string) error {
 		return nil
 	case driverprofile.FieldIsOnline:
 		m.ResetIsOnline()
+		return nil
+	case driverprofile.FieldWalletBalanceCentavos:
+		m.ResetWalletBalanceCentavos()
 		return nil
 	}
 	return fmt.Errorf("unknown DriverProfile field %s", name)
@@ -6724,41 +6813,47 @@ func (m *ReviewMutation) ResetEdge(name string) error {
 // RideMutation represents an operation that mutates the Ride nodes in the graph.
 type RideMutation struct {
 	config
-	op                   Op
-	typ                  string
-	id                   *int
-	passenger_id         *int
-	addpassenger_id      *int
-	driver_id            *int
-	adddriver_id         *int
-	status               *string
-	fare_centavos        *int64
-	addfare_centavos     *int64
-	ride_type            *string
-	pickup_latitude      *float64
-	addpickup_latitude   *float64
-	pickup_longitude     *float64
-	addpickup_longitude  *float64
-	pickup_name          *string
-	dropoff_latitude     *float64
-	adddropoff_latitude  *float64
-	dropoff_longitude    *float64
-	adddropoff_longitude *float64
-	dropoff_name         *string
-	distance_km          *float64
-	adddistance_km       *float64
-	duration_minutes     *float64
-	addduration_minutes  *float64
-	driver_name          *string
-	vehicle_type         *string
-	plate_number         *string
-	driver_rating        *float64
-	adddriver_rating     *float64
-	completed_at         *time.Time
-	clearedFields        map[string]struct{}
-	done                 bool
-	oldValue             func(context.Context) (*Ride, error)
-	predicates           []predicate.Ride
+	op                        Op
+	typ                       string
+	id                        *int
+	passenger_id              *int
+	addpassenger_id           *int
+	driver_id                 *int
+	adddriver_id              *int
+	status                    *string
+	fare_centavos             *int64
+	addfare_centavos          *int64
+	ride_type                 *string
+	pickup_latitude           *float64
+	addpickup_latitude        *float64
+	pickup_longitude          *float64
+	addpickup_longitude       *float64
+	pickup_name               *string
+	dropoff_latitude          *float64
+	adddropoff_latitude       *float64
+	dropoff_longitude         *float64
+	adddropoff_longitude      *float64
+	dropoff_name              *string
+	distance_km               *float64
+	adddistance_km            *float64
+	duration_minutes          *float64
+	addduration_minutes       *float64
+	driver_name               *string
+	vehicle_type              *string
+	plate_number              *string
+	driver_rating             *float64
+	adddriver_rating          *float64
+	completed_at              *time.Time
+	payment_status            *string
+	cash_received_at          *time.Time
+	commission_centavos       *int64
+	addcommission_centavos    *int64
+	driver_payout_centavos    *int64
+	adddriver_payout_centavos *int64
+	clearedFields             map[string]struct{}
+	done                      bool
+	oldValue                  func(context.Context) (*Ride, error)
+	predicates                []predicate.Ride
 }
 
 var _ ent.Mutation = (*RideMutation)(nil)
@@ -7897,6 +7992,203 @@ func (m *RideMutation) ResetCompletedAt() {
 	delete(m.clearedFields, ride.FieldCompletedAt)
 }
 
+// SetPaymentStatus sets the "payment_status" field.
+func (m *RideMutation) SetPaymentStatus(s string) {
+	m.payment_status = &s
+}
+
+// PaymentStatus returns the value of the "payment_status" field in the mutation.
+func (m *RideMutation) PaymentStatus() (r string, exists bool) {
+	v := m.payment_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPaymentStatus returns the old "payment_status" field's value of the Ride entity.
+// If the Ride object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RideMutation) OldPaymentStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPaymentStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPaymentStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPaymentStatus: %w", err)
+	}
+	return oldValue.PaymentStatus, nil
+}
+
+// ResetPaymentStatus resets all changes to the "payment_status" field.
+func (m *RideMutation) ResetPaymentStatus() {
+	m.payment_status = nil
+}
+
+// SetCashReceivedAt sets the "cash_received_at" field.
+func (m *RideMutation) SetCashReceivedAt(t time.Time) {
+	m.cash_received_at = &t
+}
+
+// CashReceivedAt returns the value of the "cash_received_at" field in the mutation.
+func (m *RideMutation) CashReceivedAt() (r time.Time, exists bool) {
+	v := m.cash_received_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCashReceivedAt returns the old "cash_received_at" field's value of the Ride entity.
+// If the Ride object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RideMutation) OldCashReceivedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCashReceivedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCashReceivedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCashReceivedAt: %w", err)
+	}
+	return oldValue.CashReceivedAt, nil
+}
+
+// ClearCashReceivedAt clears the value of the "cash_received_at" field.
+func (m *RideMutation) ClearCashReceivedAt() {
+	m.cash_received_at = nil
+	m.clearedFields[ride.FieldCashReceivedAt] = struct{}{}
+}
+
+// CashReceivedAtCleared returns if the "cash_received_at" field was cleared in this mutation.
+func (m *RideMutation) CashReceivedAtCleared() bool {
+	_, ok := m.clearedFields[ride.FieldCashReceivedAt]
+	return ok
+}
+
+// ResetCashReceivedAt resets all changes to the "cash_received_at" field.
+func (m *RideMutation) ResetCashReceivedAt() {
+	m.cash_received_at = nil
+	delete(m.clearedFields, ride.FieldCashReceivedAt)
+}
+
+// SetCommissionCentavos sets the "commission_centavos" field.
+func (m *RideMutation) SetCommissionCentavos(i int64) {
+	m.commission_centavos = &i
+	m.addcommission_centavos = nil
+}
+
+// CommissionCentavos returns the value of the "commission_centavos" field in the mutation.
+func (m *RideMutation) CommissionCentavos() (r int64, exists bool) {
+	v := m.commission_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommissionCentavos returns the old "commission_centavos" field's value of the Ride entity.
+// If the Ride object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RideMutation) OldCommissionCentavos(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommissionCentavos is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommissionCentavos requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommissionCentavos: %w", err)
+	}
+	return oldValue.CommissionCentavos, nil
+}
+
+// AddCommissionCentavos adds i to the "commission_centavos" field.
+func (m *RideMutation) AddCommissionCentavos(i int64) {
+	if m.addcommission_centavos != nil {
+		*m.addcommission_centavos += i
+	} else {
+		m.addcommission_centavos = &i
+	}
+}
+
+// AddedCommissionCentavos returns the value that was added to the "commission_centavos" field in this mutation.
+func (m *RideMutation) AddedCommissionCentavos() (r int64, exists bool) {
+	v := m.addcommission_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCommissionCentavos resets all changes to the "commission_centavos" field.
+func (m *RideMutation) ResetCommissionCentavos() {
+	m.commission_centavos = nil
+	m.addcommission_centavos = nil
+}
+
+// SetDriverPayoutCentavos sets the "driver_payout_centavos" field.
+func (m *RideMutation) SetDriverPayoutCentavos(i int64) {
+	m.driver_payout_centavos = &i
+	m.adddriver_payout_centavos = nil
+}
+
+// DriverPayoutCentavos returns the value of the "driver_payout_centavos" field in the mutation.
+func (m *RideMutation) DriverPayoutCentavos() (r int64, exists bool) {
+	v := m.driver_payout_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDriverPayoutCentavos returns the old "driver_payout_centavos" field's value of the Ride entity.
+// If the Ride object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RideMutation) OldDriverPayoutCentavos(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDriverPayoutCentavos is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDriverPayoutCentavos requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDriverPayoutCentavos: %w", err)
+	}
+	return oldValue.DriverPayoutCentavos, nil
+}
+
+// AddDriverPayoutCentavos adds i to the "driver_payout_centavos" field.
+func (m *RideMutation) AddDriverPayoutCentavos(i int64) {
+	if m.adddriver_payout_centavos != nil {
+		*m.adddriver_payout_centavos += i
+	} else {
+		m.adddriver_payout_centavos = &i
+	}
+}
+
+// AddedDriverPayoutCentavos returns the value that was added to the "driver_payout_centavos" field in this mutation.
+func (m *RideMutation) AddedDriverPayoutCentavos() (r int64, exists bool) {
+	v := m.adddriver_payout_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDriverPayoutCentavos resets all changes to the "driver_payout_centavos" field.
+func (m *RideMutation) ResetDriverPayoutCentavos() {
+	m.driver_payout_centavos = nil
+	m.adddriver_payout_centavos = nil
+}
+
 // Where appends a list predicates to the RideMutation builder.
 func (m *RideMutation) Where(ps ...predicate.Ride) {
 	m.predicates = append(m.predicates, ps...)
@@ -7931,7 +8223,7 @@ func (m *RideMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RideMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 22)
 	if m.passenger_id != nil {
 		fields = append(fields, ride.FieldPassengerID)
 	}
@@ -7986,6 +8278,18 @@ func (m *RideMutation) Fields() []string {
 	if m.completed_at != nil {
 		fields = append(fields, ride.FieldCompletedAt)
 	}
+	if m.payment_status != nil {
+		fields = append(fields, ride.FieldPaymentStatus)
+	}
+	if m.cash_received_at != nil {
+		fields = append(fields, ride.FieldCashReceivedAt)
+	}
+	if m.commission_centavos != nil {
+		fields = append(fields, ride.FieldCommissionCentavos)
+	}
+	if m.driver_payout_centavos != nil {
+		fields = append(fields, ride.FieldDriverPayoutCentavos)
+	}
 	return fields
 }
 
@@ -8030,6 +8334,14 @@ func (m *RideMutation) Field(name string) (ent.Value, bool) {
 		return m.DriverRating()
 	case ride.FieldCompletedAt:
 		return m.CompletedAt()
+	case ride.FieldPaymentStatus:
+		return m.PaymentStatus()
+	case ride.FieldCashReceivedAt:
+		return m.CashReceivedAt()
+	case ride.FieldCommissionCentavos:
+		return m.CommissionCentavos()
+	case ride.FieldDriverPayoutCentavos:
+		return m.DriverPayoutCentavos()
 	}
 	return nil, false
 }
@@ -8075,6 +8387,14 @@ func (m *RideMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldDriverRating(ctx)
 	case ride.FieldCompletedAt:
 		return m.OldCompletedAt(ctx)
+	case ride.FieldPaymentStatus:
+		return m.OldPaymentStatus(ctx)
+	case ride.FieldCashReceivedAt:
+		return m.OldCashReceivedAt(ctx)
+	case ride.FieldCommissionCentavos:
+		return m.OldCommissionCentavos(ctx)
+	case ride.FieldDriverPayoutCentavos:
+		return m.OldDriverPayoutCentavos(ctx)
 	}
 	return nil, fmt.Errorf("unknown Ride field %s", name)
 }
@@ -8210,6 +8530,34 @@ func (m *RideMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCompletedAt(v)
 		return nil
+	case ride.FieldPaymentStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPaymentStatus(v)
+		return nil
+	case ride.FieldCashReceivedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCashReceivedAt(v)
+		return nil
+	case ride.FieldCommissionCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommissionCentavos(v)
+		return nil
+	case ride.FieldDriverPayoutCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDriverPayoutCentavos(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Ride field %s", name)
 }
@@ -8248,6 +8596,12 @@ func (m *RideMutation) AddedFields() []string {
 	if m.adddriver_rating != nil {
 		fields = append(fields, ride.FieldDriverRating)
 	}
+	if m.addcommission_centavos != nil {
+		fields = append(fields, ride.FieldCommissionCentavos)
+	}
+	if m.adddriver_payout_centavos != nil {
+		fields = append(fields, ride.FieldDriverPayoutCentavos)
+	}
 	return fields
 }
 
@@ -8276,6 +8630,10 @@ func (m *RideMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedDurationMinutes()
 	case ride.FieldDriverRating:
 		return m.AddedDriverRating()
+	case ride.FieldCommissionCentavos:
+		return m.AddedCommissionCentavos()
+	case ride.FieldDriverPayoutCentavos:
+		return m.AddedDriverPayoutCentavos()
 	}
 	return nil, false
 }
@@ -8355,6 +8713,20 @@ func (m *RideMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddDriverRating(v)
 		return nil
+	case ride.FieldCommissionCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCommissionCentavos(v)
+		return nil
+	case ride.FieldDriverPayoutCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDriverPayoutCentavos(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Ride numeric field %s", name)
 }
@@ -8404,6 +8776,9 @@ func (m *RideMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(ride.FieldCompletedAt) {
 		fields = append(fields, ride.FieldCompletedAt)
+	}
+	if m.FieldCleared(ride.FieldCashReceivedAt) {
+		fields = append(fields, ride.FieldCashReceivedAt)
 	}
 	return fields
 }
@@ -8460,6 +8835,9 @@ func (m *RideMutation) ClearField(name string) error {
 		return nil
 	case ride.FieldCompletedAt:
 		m.ClearCompletedAt()
+		return nil
+	case ride.FieldCashReceivedAt:
+		m.ClearCashReceivedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Ride nullable field %s", name)
@@ -8522,6 +8900,18 @@ func (m *RideMutation) ResetField(name string) error {
 		return nil
 	case ride.FieldCompletedAt:
 		m.ResetCompletedAt()
+		return nil
+	case ride.FieldPaymentStatus:
+		m.ResetPaymentStatus()
+		return nil
+	case ride.FieldCashReceivedAt:
+		m.ResetCashReceivedAt()
+		return nil
+	case ride.FieldCommissionCentavos:
+		m.ResetCommissionCentavos()
+		return nil
+	case ride.FieldDriverPayoutCentavos:
+		m.ResetDriverPayoutCentavos()
 		return nil
 	}
 	return fmt.Errorf("unknown Ride field %s", name)
@@ -9191,4 +9581,735 @@ func (m *UserMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *UserMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// WalletLedgerMutation represents an operation that mutates the WalletLedger nodes in the graph.
+type WalletLedgerMutation struct {
+	config
+	op                     Op
+	typ                    string
+	id                     *int
+	driver_id              *int
+	adddriver_id           *int
+	ride_id                *int
+	addride_id             *int
+	amount_centavos        *int64
+	addamount_centavos     *int64
+	commission_centavos    *int64
+	addcommission_centavos *int64
+	kind                   *string
+	created_at             *time.Time
+	clearedFields          map[string]struct{}
+	done                   bool
+	oldValue               func(context.Context) (*WalletLedger, error)
+	predicates             []predicate.WalletLedger
+}
+
+var _ ent.Mutation = (*WalletLedgerMutation)(nil)
+
+// walletledgerOption allows management of the mutation configuration using functional options.
+type walletledgerOption func(*WalletLedgerMutation)
+
+// newWalletLedgerMutation creates new mutation for the WalletLedger entity.
+func newWalletLedgerMutation(c config, op Op, opts ...walletledgerOption) *WalletLedgerMutation {
+	m := &WalletLedgerMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWalletLedger,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWalletLedgerID sets the ID field of the mutation.
+func withWalletLedgerID(id int) walletledgerOption {
+	return func(m *WalletLedgerMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *WalletLedger
+		)
+		m.oldValue = func(ctx context.Context) (*WalletLedger, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().WalletLedger.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWalletLedger sets the old WalletLedger of the mutation.
+func withWalletLedger(node *WalletLedger) walletledgerOption {
+	return func(m *WalletLedgerMutation) {
+		m.oldValue = func(context.Context) (*WalletLedger, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WalletLedgerMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WalletLedgerMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WalletLedgerMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WalletLedgerMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().WalletLedger.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetDriverID sets the "driver_id" field.
+func (m *WalletLedgerMutation) SetDriverID(i int) {
+	m.driver_id = &i
+	m.adddriver_id = nil
+}
+
+// DriverID returns the value of the "driver_id" field in the mutation.
+func (m *WalletLedgerMutation) DriverID() (r int, exists bool) {
+	v := m.driver_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDriverID returns the old "driver_id" field's value of the WalletLedger entity.
+// If the WalletLedger object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WalletLedgerMutation) OldDriverID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDriverID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDriverID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDriverID: %w", err)
+	}
+	return oldValue.DriverID, nil
+}
+
+// AddDriverID adds i to the "driver_id" field.
+func (m *WalletLedgerMutation) AddDriverID(i int) {
+	if m.adddriver_id != nil {
+		*m.adddriver_id += i
+	} else {
+		m.adddriver_id = &i
+	}
+}
+
+// AddedDriverID returns the value that was added to the "driver_id" field in this mutation.
+func (m *WalletLedgerMutation) AddedDriverID() (r int, exists bool) {
+	v := m.adddriver_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDriverID resets all changes to the "driver_id" field.
+func (m *WalletLedgerMutation) ResetDriverID() {
+	m.driver_id = nil
+	m.adddriver_id = nil
+}
+
+// SetRideID sets the "ride_id" field.
+func (m *WalletLedgerMutation) SetRideID(i int) {
+	m.ride_id = &i
+	m.addride_id = nil
+}
+
+// RideID returns the value of the "ride_id" field in the mutation.
+func (m *WalletLedgerMutation) RideID() (r int, exists bool) {
+	v := m.ride_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRideID returns the old "ride_id" field's value of the WalletLedger entity.
+// If the WalletLedger object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WalletLedgerMutation) OldRideID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRideID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRideID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRideID: %w", err)
+	}
+	return oldValue.RideID, nil
+}
+
+// AddRideID adds i to the "ride_id" field.
+func (m *WalletLedgerMutation) AddRideID(i int) {
+	if m.addride_id != nil {
+		*m.addride_id += i
+	} else {
+		m.addride_id = &i
+	}
+}
+
+// AddedRideID returns the value that was added to the "ride_id" field in this mutation.
+func (m *WalletLedgerMutation) AddedRideID() (r int, exists bool) {
+	v := m.addride_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRideID resets all changes to the "ride_id" field.
+func (m *WalletLedgerMutation) ResetRideID() {
+	m.ride_id = nil
+	m.addride_id = nil
+}
+
+// SetAmountCentavos sets the "amount_centavos" field.
+func (m *WalletLedgerMutation) SetAmountCentavos(i int64) {
+	m.amount_centavos = &i
+	m.addamount_centavos = nil
+}
+
+// AmountCentavos returns the value of the "amount_centavos" field in the mutation.
+func (m *WalletLedgerMutation) AmountCentavos() (r int64, exists bool) {
+	v := m.amount_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAmountCentavos returns the old "amount_centavos" field's value of the WalletLedger entity.
+// If the WalletLedger object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WalletLedgerMutation) OldAmountCentavos(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAmountCentavos is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAmountCentavos requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAmountCentavos: %w", err)
+	}
+	return oldValue.AmountCentavos, nil
+}
+
+// AddAmountCentavos adds i to the "amount_centavos" field.
+func (m *WalletLedgerMutation) AddAmountCentavos(i int64) {
+	if m.addamount_centavos != nil {
+		*m.addamount_centavos += i
+	} else {
+		m.addamount_centavos = &i
+	}
+}
+
+// AddedAmountCentavos returns the value that was added to the "amount_centavos" field in this mutation.
+func (m *WalletLedgerMutation) AddedAmountCentavos() (r int64, exists bool) {
+	v := m.addamount_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAmountCentavos resets all changes to the "amount_centavos" field.
+func (m *WalletLedgerMutation) ResetAmountCentavos() {
+	m.amount_centavos = nil
+	m.addamount_centavos = nil
+}
+
+// SetCommissionCentavos sets the "commission_centavos" field.
+func (m *WalletLedgerMutation) SetCommissionCentavos(i int64) {
+	m.commission_centavos = &i
+	m.addcommission_centavos = nil
+}
+
+// CommissionCentavos returns the value of the "commission_centavos" field in the mutation.
+func (m *WalletLedgerMutation) CommissionCentavos() (r int64, exists bool) {
+	v := m.commission_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommissionCentavos returns the old "commission_centavos" field's value of the WalletLedger entity.
+// If the WalletLedger object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WalletLedgerMutation) OldCommissionCentavos(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommissionCentavos is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommissionCentavos requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommissionCentavos: %w", err)
+	}
+	return oldValue.CommissionCentavos, nil
+}
+
+// AddCommissionCentavos adds i to the "commission_centavos" field.
+func (m *WalletLedgerMutation) AddCommissionCentavos(i int64) {
+	if m.addcommission_centavos != nil {
+		*m.addcommission_centavos += i
+	} else {
+		m.addcommission_centavos = &i
+	}
+}
+
+// AddedCommissionCentavos returns the value that was added to the "commission_centavos" field in this mutation.
+func (m *WalletLedgerMutation) AddedCommissionCentavos() (r int64, exists bool) {
+	v := m.addcommission_centavos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCommissionCentavos resets all changes to the "commission_centavos" field.
+func (m *WalletLedgerMutation) ResetCommissionCentavos() {
+	m.commission_centavos = nil
+	m.addcommission_centavos = nil
+}
+
+// SetKind sets the "kind" field.
+func (m *WalletLedgerMutation) SetKind(s string) {
+	m.kind = &s
+}
+
+// Kind returns the value of the "kind" field in the mutation.
+func (m *WalletLedgerMutation) Kind() (r string, exists bool) {
+	v := m.kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKind returns the old "kind" field's value of the WalletLedger entity.
+// If the WalletLedger object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WalletLedgerMutation) OldKind(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKind: %w", err)
+	}
+	return oldValue.Kind, nil
+}
+
+// ResetKind resets all changes to the "kind" field.
+func (m *WalletLedgerMutation) ResetKind() {
+	m.kind = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WalletLedgerMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WalletLedgerMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the WalletLedger entity.
+// If the WalletLedger object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WalletLedgerMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WalletLedgerMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// Where appends a list predicates to the WalletLedgerMutation builder.
+func (m *WalletLedgerMutation) Where(ps ...predicate.WalletLedger) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WalletLedgerMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WalletLedgerMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WalletLedger, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WalletLedgerMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WalletLedgerMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WalletLedger).
+func (m *WalletLedgerMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WalletLedgerMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.driver_id != nil {
+		fields = append(fields, walletledger.FieldDriverID)
+	}
+	if m.ride_id != nil {
+		fields = append(fields, walletledger.FieldRideID)
+	}
+	if m.amount_centavos != nil {
+		fields = append(fields, walletledger.FieldAmountCentavos)
+	}
+	if m.commission_centavos != nil {
+		fields = append(fields, walletledger.FieldCommissionCentavos)
+	}
+	if m.kind != nil {
+		fields = append(fields, walletledger.FieldKind)
+	}
+	if m.created_at != nil {
+		fields = append(fields, walletledger.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WalletLedgerMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case walletledger.FieldDriverID:
+		return m.DriverID()
+	case walletledger.FieldRideID:
+		return m.RideID()
+	case walletledger.FieldAmountCentavos:
+		return m.AmountCentavos()
+	case walletledger.FieldCommissionCentavos:
+		return m.CommissionCentavos()
+	case walletledger.FieldKind:
+		return m.Kind()
+	case walletledger.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WalletLedgerMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case walletledger.FieldDriverID:
+		return m.OldDriverID(ctx)
+	case walletledger.FieldRideID:
+		return m.OldRideID(ctx)
+	case walletledger.FieldAmountCentavos:
+		return m.OldAmountCentavos(ctx)
+	case walletledger.FieldCommissionCentavos:
+		return m.OldCommissionCentavos(ctx)
+	case walletledger.FieldKind:
+		return m.OldKind(ctx)
+	case walletledger.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown WalletLedger field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WalletLedgerMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case walletledger.FieldDriverID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDriverID(v)
+		return nil
+	case walletledger.FieldRideID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRideID(v)
+		return nil
+	case walletledger.FieldAmountCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAmountCentavos(v)
+		return nil
+	case walletledger.FieldCommissionCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommissionCentavos(v)
+		return nil
+	case walletledger.FieldKind:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKind(v)
+		return nil
+	case walletledger.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WalletLedger field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WalletLedgerMutation) AddedFields() []string {
+	var fields []string
+	if m.adddriver_id != nil {
+		fields = append(fields, walletledger.FieldDriverID)
+	}
+	if m.addride_id != nil {
+		fields = append(fields, walletledger.FieldRideID)
+	}
+	if m.addamount_centavos != nil {
+		fields = append(fields, walletledger.FieldAmountCentavos)
+	}
+	if m.addcommission_centavos != nil {
+		fields = append(fields, walletledger.FieldCommissionCentavos)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WalletLedgerMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case walletledger.FieldDriverID:
+		return m.AddedDriverID()
+	case walletledger.FieldRideID:
+		return m.AddedRideID()
+	case walletledger.FieldAmountCentavos:
+		return m.AddedAmountCentavos()
+	case walletledger.FieldCommissionCentavos:
+		return m.AddedCommissionCentavos()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WalletLedgerMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case walletledger.FieldDriverID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDriverID(v)
+		return nil
+	case walletledger.FieldRideID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRideID(v)
+		return nil
+	case walletledger.FieldAmountCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAmountCentavos(v)
+		return nil
+	case walletledger.FieldCommissionCentavos:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCommissionCentavos(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WalletLedger numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WalletLedgerMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WalletLedgerMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WalletLedgerMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown WalletLedger nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WalletLedgerMutation) ResetField(name string) error {
+	switch name {
+	case walletledger.FieldDriverID:
+		m.ResetDriverID()
+		return nil
+	case walletledger.FieldRideID:
+		m.ResetRideID()
+		return nil
+	case walletledger.FieldAmountCentavos:
+		m.ResetAmountCentavos()
+		return nil
+	case walletledger.FieldCommissionCentavos:
+		m.ResetCommissionCentavos()
+		return nil
+	case walletledger.FieldKind:
+		m.ResetKind()
+		return nil
+	case walletledger.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WalletLedger field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WalletLedgerMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WalletLedgerMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WalletLedgerMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WalletLedgerMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WalletLedgerMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WalletLedgerMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WalletLedgerMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown WalletLedger unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WalletLedgerMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown WalletLedger edge %s", name)
 }

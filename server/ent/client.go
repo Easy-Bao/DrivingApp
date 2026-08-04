@@ -25,6 +25,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
+	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 )
 
 // Client is the client that holds all ent builders.
@@ -54,6 +55,8 @@ type Client struct {
 	Ride *RideClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// WalletLedger is the client for interacting with the WalletLedger builders.
+	WalletLedger *WalletLedgerClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -76,6 +79,7 @@ func (c *Client) init() {
 	c.Review = NewReviewClient(c.config)
 	c.Ride = NewRideClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.WalletLedger = NewWalletLedgerClient(c.config)
 }
 
 type (
@@ -179,6 +183,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Review:           NewReviewClient(cfg),
 		Ride:             NewRideClient(cfg),
 		User:             NewUserClient(cfg),
+		WalletLedger:     NewWalletLedgerClient(cfg),
 	}, nil
 }
 
@@ -209,6 +214,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Review:           NewReviewClient(cfg),
 		Ride:             NewRideClient(cfg),
 		User:             NewUserClient(cfg),
+		WalletLedger:     NewWalletLedgerClient(cfg),
 	}, nil
 }
 
@@ -240,6 +246,7 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
 		c.DriverProfile, c.Notification, c.PassengerProfile, c.Review, c.Ride, c.User,
+		c.WalletLedger,
 	} {
 		n.Use(hooks...)
 	}
@@ -251,6 +258,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
 		c.DriverProfile, c.Notification, c.PassengerProfile, c.Review, c.Ride, c.User,
+		c.WalletLedger,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -281,6 +289,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Ride.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *WalletLedgerMutation:
+		return c.WalletLedger.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -1749,14 +1759,148 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// WalletLedgerClient is a client for the WalletLedger schema.
+type WalletLedgerClient struct {
+	config
+}
+
+// NewWalletLedgerClient returns a client for the WalletLedger from the given config.
+func NewWalletLedgerClient(c config) *WalletLedgerClient {
+	return &WalletLedgerClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `walletledger.Hooks(f(g(h())))`.
+func (c *WalletLedgerClient) Use(hooks ...Hook) {
+	c.hooks.WalletLedger = append(c.hooks.WalletLedger, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `walletledger.Intercept(f(g(h())))`.
+func (c *WalletLedgerClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WalletLedger = append(c.inters.WalletLedger, interceptors...)
+}
+
+// Create returns a builder for creating a WalletLedger entity.
+func (c *WalletLedgerClient) Create() *WalletLedgerCreate {
+	mutation := newWalletLedgerMutation(c.config, OpCreate)
+	return &WalletLedgerCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WalletLedger entities.
+func (c *WalletLedgerClient) CreateBulk(builders ...*WalletLedgerCreate) *WalletLedgerCreateBulk {
+	return &WalletLedgerCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WalletLedgerClient) MapCreateBulk(slice any, setFunc func(*WalletLedgerCreate, int)) *WalletLedgerCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WalletLedgerCreateBulk{err: fmt.Errorf("calling to WalletLedgerClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WalletLedgerCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WalletLedgerCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WalletLedger.
+func (c *WalletLedgerClient) Update() *WalletLedgerUpdate {
+	mutation := newWalletLedgerMutation(c.config, OpUpdate)
+	return &WalletLedgerUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WalletLedgerClient) UpdateOne(_m *WalletLedger) *WalletLedgerUpdateOne {
+	mutation := newWalletLedgerMutation(c.config, OpUpdateOne, withWalletLedger(_m))
+	return &WalletLedgerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WalletLedgerClient) UpdateOneID(id int) *WalletLedgerUpdateOne {
+	mutation := newWalletLedgerMutation(c.config, OpUpdateOne, withWalletLedgerID(id))
+	return &WalletLedgerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WalletLedger.
+func (c *WalletLedgerClient) Delete() *WalletLedgerDelete {
+	mutation := newWalletLedgerMutation(c.config, OpDelete)
+	return &WalletLedgerDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WalletLedgerClient) DeleteOne(_m *WalletLedger) *WalletLedgerDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WalletLedgerClient) DeleteOneID(id int) *WalletLedgerDeleteOne {
+	builder := c.Delete().Where(walletledger.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WalletLedgerDeleteOne{builder}
+}
+
+// Query returns a query builder for WalletLedger.
+func (c *WalletLedgerClient) Query() *WalletLedgerQuery {
+	return &WalletLedgerQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWalletLedger},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WalletLedger entity by its id.
+func (c *WalletLedgerClient) Get(ctx context.Context, id int) (*WalletLedger, error) {
+	return c.Query().Where(walletledger.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WalletLedgerClient) GetX(ctx context.Context, id int) *WalletLedger {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *WalletLedgerClient) Hooks() []Hook {
+	return c.hooks.WalletLedger
+}
+
+// Interceptors returns the client interceptors.
+func (c *WalletLedgerClient) Interceptors() []Interceptor {
+	return c.inters.WalletLedger
+}
+
+func (c *WalletLedgerClient) mutate(ctx context.Context, m *WalletLedgerMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WalletLedgerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WalletLedgerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WalletLedgerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WalletLedgerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WalletLedger mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
-		Notification, PassengerProfile, Review, Ride, User []ent.Hook
+		Notification, PassengerProfile, Review, Ride, User, WalletLedger []ent.Hook
 	}
 	inters struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
-		Notification, PassengerProfile, Review, Ride, User []ent.Interceptor
+		Notification, PassengerProfile, Review, Ride, User,
+		WalletLedger []ent.Interceptor
 	}
 )

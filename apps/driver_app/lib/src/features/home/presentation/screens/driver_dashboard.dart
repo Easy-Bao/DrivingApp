@@ -279,19 +279,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       destLng: SafeParse.toDouble(trip['dropoff_longitude']),
     );
 
-    await cubit.endRide(
-      distanceKm: SafeParse.toDouble(trip['distance_km']),
-      durationMinutes: SafeParse.toDouble(trip['duration_minutes']),
-    );
+    final finalFare = await cubit.completeRide();
+    if (finalFare == null) return;
 
     if (mounted) {
       context.pushNamed(
-        TripRoutes.completeTrip,
+        TripRoutes.fareSummary,
         extra: {
           'pickup': trip['pickup_name'] ?? 'Pickup',
           'dropoff': trip['dropoff_name'] ?? 'Dropoff',
           'distance': SafeParse.toDouble(trip['distance_km']),
-          'fare': SafeParse.toDouble(trip['fare']),
+          'fare': finalFare,
           'duration': '${SafeParse.toDouble(trip['duration_minutes'])} min',
         },
       );

@@ -1,11 +1,12 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'package:driver_app/src/features/home/home_routes.dart';
+import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-class FareSummaryScreen extends StatelessWidget {
+class FareSummaryScreen extends StatefulWidget {
   final String pickup;
   final String dropoff;
   final String duration;
@@ -22,11 +23,39 @@ class FareSummaryScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final baseFare = fare * 0.4;
-    final distCharge = fare * 0.6;
-    final surgePlus = 0.0;
+  State<FareSummaryScreen> createState() => _FareSummaryScreenState();
+}
 
+class _FareSummaryScreenState extends State<FareSummaryScreen> {
+  bool _isSubmitting = false;
+  String? _error;
+
+  Future<void> _confirmCashPayment() async {
+    if (_isSubmitting) return;
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
+
+    final fare = await BlocProvider.of<RideFlowCubit>(
+      context,
+    ).confirmCashPayment();
+    if (!mounted) return;
+
+    if (fare == null) {
+      setState(() {
+        _isSubmitting = false;
+        _error =
+            'Unable to confirm payment. Check your connection and try again.';
+      });
+      return;
+    }
+
+    context.goNamed(HomeRoutes.dashboard);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
@@ -39,11 +68,22 @@ class FareSummaryScreen extends StatelessWidget {
               const SizedBox(height: 28),
               _buildFareHero(),
               const SizedBox(height: 20),
-              _buildBreakdown(baseFare, distCharge, surgePlus),
+              _buildSummaryCard(),
               const SizedBox(height: 12),
               _buildPaymentMethod(),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.cancel,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
               const Spacer(),
-              _buildConfirmButton(context),
+              _buildConfirmButton(),
               const SizedBox(height: 32),
             ],
           ),
@@ -86,17 +126,17 @@ class FareSummaryScreen extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'TOTAL FARE',
+            'SERVER-CALCULATED FARE',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Colors.white.withValues(alpha: 0.55),
-              letterSpacing: 1.5,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            '₱${fare.toStringAsFixed(2)}',
+            '₱${widget.fare.toStringAsFixed(2)}',
             style: const TextStyle(
               fontSize: 52,
               fontWeight: FontWeight.w900,
@@ -135,7 +175,7 @@ class FareSummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBreakdown(double base, double dist, double surge) {
+  Widget _buildSummaryCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -145,21 +185,21 @@ class FareSummaryScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _line('Base Fare', '₱${base.toStringAsFixed(2)}'),
+          _line('Pickup', widget.pickup),
           const SizedBox(height: 12),
-          _line(
-            'Distance (${distance.toStringAsFixed(1)} km × ₱10)',
-            '₱${dist.toStringAsFixed(2)}',
-          ),
-          if (surge > 0) ...[
-            const SizedBox(height: 12),
-            _line('Time / Surge', '₱${surge.toStringAsFixed(2)}'),
-          ],
+          _line('Drop-off', widget.dropoff),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: AppTheme.borderSide),
           ),
-          _line('Total', '₱${fare.toStringAsFixed(2)}', isBold: true),
+          _line('Distance', '${widget.distance.toStringAsFixed(1)} km'),
+          const SizedBox(height: 12),
+          _line('Duration', widget.duration),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: AppTheme.borderSide),
+          ),
+          _line('Total', '₱${widget.fare.toStringAsFixed(2)}', isBold: true),
         ],
       ),
     );
@@ -189,40 +229,55 @@ class FareSummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildConfirmButton(BuildContext context) {
+  Widget _buildConfirmButton() {
+    final active = !_isSubmitting;
     return GestureDetector(
-      onTap: () => context.goNamed(HomeRoutes.dashboard),
-      child: Container(
+      onTap: active ? _confirmCashPayment : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         width: double.infinity,
         height: 68,
         decoration: BoxDecoration(
-          color: AppTheme.complete,
+          color: active
+              ? AppTheme.complete
+              : AppTheme.complete.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.complete.withValues(alpha: 0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 7),
-            ),
-          ],
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: AppTheme.complete.withValues(alpha: 0.28),
+                    blurRadius: 18,
+                    offset: const Offset(0, 7),
+                  ),
+                ]
+              : null,
         ),
-        child: const Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(LucideIcons.hand_coins, color: Colors.white, size: 22),
-              SizedBox(width: 10),
-              Text(
-                'Confirm Cash Collected',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 0.3,
+        child: Center(
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(LucideIcons.hand_coins, color: Colors.white, size: 22),
+                    SizedBox(width: 10),
+                    Text(
+                      'Confirm Cash Collected',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -232,20 +287,25 @@ class FareSummaryScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
-            color: AppTheme.primaryColor,
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
+              color: AppTheme.primaryColor,
+            ),
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: isBold ? 18 : 14,
-            fontWeight: isBold ? FontWeight.w900 : FontWeight.w600,
-            color: AppTheme.primaryColor,
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontSize: isBold ? 18 : 14,
+              fontWeight: isBold ? FontWeight.w900 : FontWeight.w600,
+              color: AppTheme.primaryColor,
+            ),
           ),
         ),
       ],

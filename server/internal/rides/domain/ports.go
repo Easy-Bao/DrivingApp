@@ -15,6 +15,10 @@ type LifecycleRepository interface {
 	UpdateStatus(ctx context.Context, rideID, actorID int, currentStatus, nextStatus string) (Ride, error)
 }
 
+type PaymentRepository interface {
+	SettleCash(ctx context.Context, rideID, driverID int) (Ride, error)
+}
+
 type BiddingRepository interface {
 	Repository
 	CreateSession(ctx context.Context, session BidSession) (BidSession, error)

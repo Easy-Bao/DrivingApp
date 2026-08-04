@@ -71,6 +71,20 @@ func (_c *DriverProfileCreate) SetNillableIsOnline(v *bool) *DriverProfileCreate
 	return _c
 }
 
+// SetWalletBalanceCentavos sets the "wallet_balance_centavos" field.
+func (_c *DriverProfileCreate) SetWalletBalanceCentavos(v int64) *DriverProfileCreate {
+	_c.mutation.SetWalletBalanceCentavos(v)
+	return _c
+}
+
+// SetNillableWalletBalanceCentavos sets the "wallet_balance_centavos" field if the given value is not nil.
+func (_c *DriverProfileCreate) SetNillableWalletBalanceCentavos(v *int64) *DriverProfileCreate {
+	if v != nil {
+		_c.SetWalletBalanceCentavos(*v)
+	}
+	return _c
+}
+
 // Mutation returns the DriverProfileMutation object of the builder.
 func (_c *DriverProfileCreate) Mutation() *DriverProfileMutation {
 	return _c.mutation
@@ -114,6 +128,10 @@ func (_c *DriverProfileCreate) defaults() {
 		v := driverprofile.DefaultIsOnline
 		_c.mutation.SetIsOnline(v)
 	}
+	if _, ok := _c.mutation.WalletBalanceCentavos(); !ok {
+		v := driverprofile.DefaultWalletBalanceCentavos
+		_c.mutation.SetWalletBalanceCentavos(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -140,6 +158,14 @@ func (_c *DriverProfileCreate) check() error {
 	}
 	if _, ok := _c.mutation.IsOnline(); !ok {
 		return &ValidationError{Name: "is_online", err: errors.New(`ent: missing required field "DriverProfile.is_online"`)}
+	}
+	if _, ok := _c.mutation.WalletBalanceCentavos(); !ok {
+		return &ValidationError{Name: "wallet_balance_centavos", err: errors.New(`ent: missing required field "DriverProfile.wallet_balance_centavos"`)}
+	}
+	if v, ok := _c.mutation.WalletBalanceCentavos(); ok {
+		if err := driverprofile.WalletBalanceCentavosValidator(v); err != nil {
+			return &ValidationError{Name: "wallet_balance_centavos", err: fmt.Errorf(`ent: validator failed for field "DriverProfile.wallet_balance_centavos": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -190,6 +216,10 @@ func (_c *DriverProfileCreate) createSpec() (*DriverProfile, *sqlgraph.CreateSpe
 	if value, ok := _c.mutation.IsOnline(); ok {
 		_spec.SetField(driverprofile.FieldIsOnline, field.TypeBool, value)
 		_node.IsOnline = value
+	}
+	if value, ok := _c.mutation.WalletBalanceCentavos(); ok {
+		_spec.SetField(driverprofile.FieldWalletBalanceCentavos, field.TypeInt64, value)
+		_node.WalletBalanceCentavos = value
 	}
 	return _node, _spec
 }

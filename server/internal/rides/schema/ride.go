@@ -30,6 +30,10 @@ func (Ride) Fields() []ent.Field {
 		field.String("plate_number").Optional(),
 		field.Float("driver_rating").Optional(),
 		field.Time("completed_at").Optional(),
+		field.String("payment_status").Default("unpaid"),
+		field.Time("cash_received_at").Optional(),
+		field.Int64("commission_centavos").NonNegative().Default(0),
+		field.Int64("driver_payout_centavos").NonNegative().Default(0),
 	}
 }
 

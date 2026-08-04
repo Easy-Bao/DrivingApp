@@ -46,6 +46,17 @@ func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (d
 	return repository.AcceptRide(ctx, rideID, driverID)
 }
 
+func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+	repository, ok := service.repository.(domain.PaymentRepository)
+	if !ok {
+		return domain.Ride{}, errors.New("cash settlement persistence is unavailable")
+	}
+	if driverID <= 0 {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	return repository.SettleCash(ctx, rideID, driverID)
+}
+
 func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
 	repository, ok := service.repository.(domain.LifecycleRepository)
 	if !ok {

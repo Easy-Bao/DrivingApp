@@ -47,6 +47,14 @@ const (
 	FieldDriverRating = "driver_rating"
 	// FieldCompletedAt holds the string denoting the completed_at field in the database.
 	FieldCompletedAt = "completed_at"
+	// FieldPaymentStatus holds the string denoting the payment_status field in the database.
+	FieldPaymentStatus = "payment_status"
+	// FieldCashReceivedAt holds the string denoting the cash_received_at field in the database.
+	FieldCashReceivedAt = "cash_received_at"
+	// FieldCommissionCentavos holds the string denoting the commission_centavos field in the database.
+	FieldCommissionCentavos = "commission_centavos"
+	// FieldDriverPayoutCentavos holds the string denoting the driver_payout_centavos field in the database.
+	FieldDriverPayoutCentavos = "driver_payout_centavos"
 	// Table holds the table name of the ride in the database.
 	Table = "rides"
 )
@@ -72,6 +80,10 @@ var Columns = []string{
 	FieldPlateNumber,
 	FieldDriverRating,
 	FieldCompletedAt,
+	FieldPaymentStatus,
+	FieldCashReceivedAt,
+	FieldCommissionCentavos,
+	FieldDriverPayoutCentavos,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -93,6 +105,16 @@ var (
 	FareCentavosValidator func(int64) error
 	// DefaultRideType holds the default value on creation for the "ride_type" field.
 	DefaultRideType string
+	// DefaultPaymentStatus holds the default value on creation for the "payment_status" field.
+	DefaultPaymentStatus string
+	// DefaultCommissionCentavos holds the default value on creation for the "commission_centavos" field.
+	DefaultCommissionCentavos int64
+	// CommissionCentavosValidator is a validator for the "commission_centavos" field. It is called by the builders before save.
+	CommissionCentavosValidator func(int64) error
+	// DefaultDriverPayoutCentavos holds the default value on creation for the "driver_payout_centavos" field.
+	DefaultDriverPayoutCentavos int64
+	// DriverPayoutCentavosValidator is a validator for the "driver_payout_centavos" field. It is called by the builders before save.
+	DriverPayoutCentavosValidator func(int64) error
 )
 
 // OrderOption defines the ordering options for the Ride queries.
@@ -191,4 +213,24 @@ func ByDriverRating(opts ...sql.OrderTermOption) OrderOption {
 // ByCompletedAt orders the results by the completed_at field.
 func ByCompletedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCompletedAt, opts...).ToFunc()
+}
+
+// ByPaymentStatus orders the results by the payment_status field.
+func ByPaymentStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPaymentStatus, opts...).ToFunc()
+}
+
+// ByCashReceivedAt orders the results by the cash_received_at field.
+func ByCashReceivedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCashReceivedAt, opts...).ToFunc()
+}
+
+// ByCommissionCentavos orders the results by the commission_centavos field.
+func ByCommissionCentavos(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCommissionCentavos, opts...).ToFunc()
+}
+
+// ByDriverPayoutCentavos orders the results by the driver_payout_centavos field.
+func ByDriverPayoutCentavos(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDriverPayoutCentavos, opts...).ToFunc()
 }

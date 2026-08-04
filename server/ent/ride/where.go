@@ -144,6 +144,26 @@ func CompletedAt(v time.Time) predicate.Ride {
 	return predicate.Ride(sql.FieldEQ(FieldCompletedAt, v))
 }
 
+// PaymentStatus applies equality check predicate on the "payment_status" field. It's identical to PaymentStatusEQ.
+func PaymentStatus(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPaymentStatus, v))
+}
+
+// CashReceivedAt applies equality check predicate on the "cash_received_at" field. It's identical to CashReceivedAtEQ.
+func CashReceivedAt(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldCashReceivedAt, v))
+}
+
+// CommissionCentavos applies equality check predicate on the "commission_centavos" field. It's identical to CommissionCentavosEQ.
+func CommissionCentavos(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldCommissionCentavos, v))
+}
+
+// DriverPayoutCentavos applies equality check predicate on the "driver_payout_centavos" field. It's identical to DriverPayoutCentavosEQ.
+func DriverPayoutCentavos(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDriverPayoutCentavos, v))
+}
+
 // PassengerIDEQ applies the EQ predicate on the "passenger_id" field.
 func PassengerIDEQ(v int) predicate.Ride {
 	return predicate.Ride(sql.FieldEQ(FieldPassengerID, v))
@@ -1177,6 +1197,201 @@ func CompletedAtIsNil() predicate.Ride {
 // CompletedAtNotNil applies the NotNil predicate on the "completed_at" field.
 func CompletedAtNotNil() predicate.Ride {
 	return predicate.Ride(sql.FieldNotNull(FieldCompletedAt))
+}
+
+// PaymentStatusEQ applies the EQ predicate on the "payment_status" field.
+func PaymentStatusEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldPaymentStatus, v))
+}
+
+// PaymentStatusNEQ applies the NEQ predicate on the "payment_status" field.
+func PaymentStatusNEQ(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldPaymentStatus, v))
+}
+
+// PaymentStatusIn applies the In predicate on the "payment_status" field.
+func PaymentStatusIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldPaymentStatus, vs...))
+}
+
+// PaymentStatusNotIn applies the NotIn predicate on the "payment_status" field.
+func PaymentStatusNotIn(vs ...string) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldPaymentStatus, vs...))
+}
+
+// PaymentStatusGT applies the GT predicate on the "payment_status" field.
+func PaymentStatusGT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldPaymentStatus, v))
+}
+
+// PaymentStatusGTE applies the GTE predicate on the "payment_status" field.
+func PaymentStatusGTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldPaymentStatus, v))
+}
+
+// PaymentStatusLT applies the LT predicate on the "payment_status" field.
+func PaymentStatusLT(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldPaymentStatus, v))
+}
+
+// PaymentStatusLTE applies the LTE predicate on the "payment_status" field.
+func PaymentStatusLTE(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldPaymentStatus, v))
+}
+
+// PaymentStatusContains applies the Contains predicate on the "payment_status" field.
+func PaymentStatusContains(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContains(FieldPaymentStatus, v))
+}
+
+// PaymentStatusHasPrefix applies the HasPrefix predicate on the "payment_status" field.
+func PaymentStatusHasPrefix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasPrefix(FieldPaymentStatus, v))
+}
+
+// PaymentStatusHasSuffix applies the HasSuffix predicate on the "payment_status" field.
+func PaymentStatusHasSuffix(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldHasSuffix(FieldPaymentStatus, v))
+}
+
+// PaymentStatusEqualFold applies the EqualFold predicate on the "payment_status" field.
+func PaymentStatusEqualFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldEqualFold(FieldPaymentStatus, v))
+}
+
+// PaymentStatusContainsFold applies the ContainsFold predicate on the "payment_status" field.
+func PaymentStatusContainsFold(v string) predicate.Ride {
+	return predicate.Ride(sql.FieldContainsFold(FieldPaymentStatus, v))
+}
+
+// CashReceivedAtEQ applies the EQ predicate on the "cash_received_at" field.
+func CashReceivedAtEQ(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldCashReceivedAt, v))
+}
+
+// CashReceivedAtNEQ applies the NEQ predicate on the "cash_received_at" field.
+func CashReceivedAtNEQ(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldCashReceivedAt, v))
+}
+
+// CashReceivedAtIn applies the In predicate on the "cash_received_at" field.
+func CashReceivedAtIn(vs ...time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldCashReceivedAt, vs...))
+}
+
+// CashReceivedAtNotIn applies the NotIn predicate on the "cash_received_at" field.
+func CashReceivedAtNotIn(vs ...time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldCashReceivedAt, vs...))
+}
+
+// CashReceivedAtGT applies the GT predicate on the "cash_received_at" field.
+func CashReceivedAtGT(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldCashReceivedAt, v))
+}
+
+// CashReceivedAtGTE applies the GTE predicate on the "cash_received_at" field.
+func CashReceivedAtGTE(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldCashReceivedAt, v))
+}
+
+// CashReceivedAtLT applies the LT predicate on the "cash_received_at" field.
+func CashReceivedAtLT(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldCashReceivedAt, v))
+}
+
+// CashReceivedAtLTE applies the LTE predicate on the "cash_received_at" field.
+func CashReceivedAtLTE(v time.Time) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldCashReceivedAt, v))
+}
+
+// CashReceivedAtIsNil applies the IsNil predicate on the "cash_received_at" field.
+func CashReceivedAtIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldCashReceivedAt))
+}
+
+// CashReceivedAtNotNil applies the NotNil predicate on the "cash_received_at" field.
+func CashReceivedAtNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldCashReceivedAt))
+}
+
+// CommissionCentavosEQ applies the EQ predicate on the "commission_centavos" field.
+func CommissionCentavosEQ(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldCommissionCentavos, v))
+}
+
+// CommissionCentavosNEQ applies the NEQ predicate on the "commission_centavos" field.
+func CommissionCentavosNEQ(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldCommissionCentavos, v))
+}
+
+// CommissionCentavosIn applies the In predicate on the "commission_centavos" field.
+func CommissionCentavosIn(vs ...int64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldCommissionCentavos, vs...))
+}
+
+// CommissionCentavosNotIn applies the NotIn predicate on the "commission_centavos" field.
+func CommissionCentavosNotIn(vs ...int64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldCommissionCentavos, vs...))
+}
+
+// CommissionCentavosGT applies the GT predicate on the "commission_centavos" field.
+func CommissionCentavosGT(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldCommissionCentavos, v))
+}
+
+// CommissionCentavosGTE applies the GTE predicate on the "commission_centavos" field.
+func CommissionCentavosGTE(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldCommissionCentavos, v))
+}
+
+// CommissionCentavosLT applies the LT predicate on the "commission_centavos" field.
+func CommissionCentavosLT(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldCommissionCentavos, v))
+}
+
+// CommissionCentavosLTE applies the LTE predicate on the "commission_centavos" field.
+func CommissionCentavosLTE(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldCommissionCentavos, v))
+}
+
+// DriverPayoutCentavosEQ applies the EQ predicate on the "driver_payout_centavos" field.
+func DriverPayoutCentavosEQ(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldDriverPayoutCentavos, v))
+}
+
+// DriverPayoutCentavosNEQ applies the NEQ predicate on the "driver_payout_centavos" field.
+func DriverPayoutCentavosNEQ(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldDriverPayoutCentavos, v))
+}
+
+// DriverPayoutCentavosIn applies the In predicate on the "driver_payout_centavos" field.
+func DriverPayoutCentavosIn(vs ...int64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldDriverPayoutCentavos, vs...))
+}
+
+// DriverPayoutCentavosNotIn applies the NotIn predicate on the "driver_payout_centavos" field.
+func DriverPayoutCentavosNotIn(vs ...int64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldDriverPayoutCentavos, vs...))
+}
+
+// DriverPayoutCentavosGT applies the GT predicate on the "driver_payout_centavos" field.
+func DriverPayoutCentavosGT(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldDriverPayoutCentavos, v))
+}
+
+// DriverPayoutCentavosGTE applies the GTE predicate on the "driver_payout_centavos" field.
+func DriverPayoutCentavosGTE(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldDriverPayoutCentavos, v))
+}
+
+// DriverPayoutCentavosLT applies the LT predicate on the "driver_payout_centavos" field.
+func DriverPayoutCentavosLT(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldDriverPayoutCentavos, v))
+}
+
+// DriverPayoutCentavosLTE applies the LTE predicate on the "driver_payout_centavos" field.
+func DriverPayoutCentavosLTE(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldDriverPayoutCentavos, v))
 }
 
 // And groups predicates with the AND operator between them.

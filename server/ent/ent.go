@@ -23,6 +23,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
+	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -94,6 +95,7 @@ func checkColumn(t, c string) error {
 			review.Table:           review.ValidColumn,
 			ride.Table:             ride.ValidColumn,
 			user.Table:             user.ValidColumn,
+			walletledger.Table:     walletledger.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

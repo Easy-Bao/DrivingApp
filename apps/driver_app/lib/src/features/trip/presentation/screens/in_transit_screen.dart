@@ -173,10 +173,11 @@ class _InTransitScreenState extends State<InTransitScreen> {
   Future<void> _completeTrip(BuildContext context) async {
     final finalFare = await BlocProvider.of<RideFlowCubit>(
       context,
-    ).endRide(distanceKm: widget.distance, durationMinutes: 10);
+    ).completeRide();
+    if (finalFare == null) return;
     if (context.mounted) {
       context.pushReplacementNamed(
-        TripRoutes.completeTrip,
+        TripRoutes.fareSummary,
         extra: {
           'pickup': widget.pickup,
           'dropoff': widget.dropoff,

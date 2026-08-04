@@ -3,25 +3,28 @@ package domain
 import "time"
 
 type Ride struct {
-	ID               int     `json:"id"`
-	PassengerID      int     `json:"passenger_id"`
-	DriverID         *int    `json:"driver_id,omitempty"`
-	Status           string  `json:"status"`
-	FareCentavos     int64   `json:"fare_centavos"`
-	RideType         string  `json:"ride_type,omitempty"`
-	PickupLatitude   float64 `json:"pickup_latitude,omitempty"`
-	PickupLongitude  float64 `json:"pickup_longitude,omitempty"`
-	PickupName       string  `json:"pickup_name,omitempty"`
-	DropoffLatitude  float64 `json:"dropoff_latitude,omitempty"`
-	DropoffLongitude float64 `json:"dropoff_longitude,omitempty"`
-	DropoffName      string  `json:"dropoff_name,omitempty"`
-	DistanceKm       float64 `json:"distance_km,omitempty"`
-	DurationMinutes  float64 `json:"duration_minutes,omitempty"`
-	DriverName       string  `json:"driver_name,omitempty"`
-	VehicleType      string  `json:"vehicle_type,omitempty"`
-	PlateNumber      string  `json:"plate_number,omitempty"`
-	DriverRating     float64 `json:"driver_rating,omitempty"`
-	CompletedAt      *string `json:"completed_at,omitempty"`
+	ID                   int     `json:"id"`
+	PassengerID          int     `json:"passenger_id"`
+	DriverID             *int    `json:"driver_id,omitempty"`
+	Status               string  `json:"status"`
+	FareCentavos         int64   `json:"fare_centavos"`
+	RideType             string  `json:"ride_type,omitempty"`
+	PickupLatitude       float64 `json:"pickup_latitude,omitempty"`
+	PickupLongitude      float64 `json:"pickup_longitude,omitempty"`
+	PickupName           string  `json:"pickup_name,omitempty"`
+	DropoffLatitude      float64 `json:"dropoff_latitude,omitempty"`
+	DropoffLongitude     float64 `json:"dropoff_longitude,omitempty"`
+	DropoffName          string  `json:"dropoff_name,omitempty"`
+	DistanceKm           float64 `json:"distance_km,omitempty"`
+	DurationMinutes      float64 `json:"duration_minutes,omitempty"`
+	DriverName           string  `json:"driver_name,omitempty"`
+	VehicleType          string  `json:"vehicle_type,omitempty"`
+	PlateNumber          string  `json:"plate_number,omitempty"`
+	DriverRating         float64 `json:"driver_rating,omitempty"`
+	CompletedAt          *string `json:"completed_at,omitempty"`
+	PaymentStatus        string  `json:"payment_status"`
+	CommissionCentavos   int64   `json:"commission_centavos"`
+	DriverPayoutCentavos int64   `json:"driver_payout_centavos"`
 }
 type Bid struct {
 	ID           int    `json:"id"`

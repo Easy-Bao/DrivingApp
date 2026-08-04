@@ -16,6 +16,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
+	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/ent/schema"
 )
 
@@ -115,6 +116,12 @@ func init() {
 	driverprofileDescIsOnline := driverprofileFields[5].Descriptor()
 	// driverprofile.DefaultIsOnline holds the default value on creation for the is_online field.
 	driverprofile.DefaultIsOnline = driverprofileDescIsOnline.Default.(bool)
+	// driverprofileDescWalletBalanceCentavos is the schema descriptor for wallet_balance_centavos field.
+	driverprofileDescWalletBalanceCentavos := driverprofileFields[6].Descriptor()
+	// driverprofile.DefaultWalletBalanceCentavos holds the default value on creation for the wallet_balance_centavos field.
+	driverprofile.DefaultWalletBalanceCentavos = driverprofileDescWalletBalanceCentavos.Default.(int64)
+	// driverprofile.WalletBalanceCentavosValidator is a validator for the "wallet_balance_centavos" field. It is called by the builders before save.
+	driverprofile.WalletBalanceCentavosValidator = driverprofileDescWalletBalanceCentavos.Validators[0].(func(int64) error)
 	notificationFields := schema.Notification{}.Fields()
 	_ = notificationFields
 	// notificationDescUserID is the schema descriptor for user_id field.
@@ -175,6 +182,22 @@ func init() {
 	rideDescRideType := rideFields[4].Descriptor()
 	// ride.DefaultRideType holds the default value on creation for the ride_type field.
 	ride.DefaultRideType = rideDescRideType.Default.(string)
+	// rideDescPaymentStatus is the schema descriptor for payment_status field.
+	rideDescPaymentStatus := rideFields[18].Descriptor()
+	// ride.DefaultPaymentStatus holds the default value on creation for the payment_status field.
+	ride.DefaultPaymentStatus = rideDescPaymentStatus.Default.(string)
+	// rideDescCommissionCentavos is the schema descriptor for commission_centavos field.
+	rideDescCommissionCentavos := rideFields[20].Descriptor()
+	// ride.DefaultCommissionCentavos holds the default value on creation for the commission_centavos field.
+	ride.DefaultCommissionCentavos = rideDescCommissionCentavos.Default.(int64)
+	// ride.CommissionCentavosValidator is a validator for the "commission_centavos" field. It is called by the builders before save.
+	ride.CommissionCentavosValidator = rideDescCommissionCentavos.Validators[0].(func(int64) error)
+	// rideDescDriverPayoutCentavos is the schema descriptor for driver_payout_centavos field.
+	rideDescDriverPayoutCentavos := rideFields[21].Descriptor()
+	// ride.DefaultDriverPayoutCentavos holds the default value on creation for the driver_payout_centavos field.
+	ride.DefaultDriverPayoutCentavos = rideDescDriverPayoutCentavos.Default.(int64)
+	// ride.DriverPayoutCentavosValidator is a validator for the "driver_payout_centavos" field. It is called by the builders before save.
+	ride.DriverPayoutCentavosValidator = rideDescDriverPayoutCentavos.Validators[0].(func(int64) error)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.
@@ -185,4 +208,30 @@ func init() {
 	userDescIsVerified := userFields[5].Descriptor()
 	// user.DefaultIsVerified holds the default value on creation for the is_verified field.
 	user.DefaultIsVerified = userDescIsVerified.Default.(bool)
+	walletledgerFields := schema.WalletLedger{}.Fields()
+	_ = walletledgerFields
+	// walletledgerDescDriverID is the schema descriptor for driver_id field.
+	walletledgerDescDriverID := walletledgerFields[0].Descriptor()
+	// walletledger.DriverIDValidator is a validator for the "driver_id" field. It is called by the builders before save.
+	walletledger.DriverIDValidator = walletledgerDescDriverID.Validators[0].(func(int) error)
+	// walletledgerDescRideID is the schema descriptor for ride_id field.
+	walletledgerDescRideID := walletledgerFields[1].Descriptor()
+	// walletledger.RideIDValidator is a validator for the "ride_id" field. It is called by the builders before save.
+	walletledger.RideIDValidator = walletledgerDescRideID.Validators[0].(func(int) error)
+	// walletledgerDescAmountCentavos is the schema descriptor for amount_centavos field.
+	walletledgerDescAmountCentavos := walletledgerFields[2].Descriptor()
+	// walletledger.AmountCentavosValidator is a validator for the "amount_centavos" field. It is called by the builders before save.
+	walletledger.AmountCentavosValidator = walletledgerDescAmountCentavos.Validators[0].(func(int64) error)
+	// walletledgerDescCommissionCentavos is the schema descriptor for commission_centavos field.
+	walletledgerDescCommissionCentavos := walletledgerFields[3].Descriptor()
+	// walletledger.CommissionCentavosValidator is a validator for the "commission_centavos" field. It is called by the builders before save.
+	walletledger.CommissionCentavosValidator = walletledgerDescCommissionCentavos.Validators[0].(func(int64) error)
+	// walletledgerDescKind is the schema descriptor for kind field.
+	walletledgerDescKind := walletledgerFields[4].Descriptor()
+	// walletledger.DefaultKind holds the default value on creation for the kind field.
+	walletledger.DefaultKind = walletledgerDescKind.Default.(string)
+	// walletledgerDescCreatedAt is the schema descriptor for created_at field.
+	walletledgerDescCreatedAt := walletledgerFields[5].Descriptor()
+	// walletledger.DefaultCreatedAt holds the default value on creation for the created_at field.
+	walletledger.DefaultCreatedAt = walletledgerDescCreatedAt.Default.(func() time.Time)
 }

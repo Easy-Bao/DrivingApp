@@ -34,6 +34,8 @@ type Tx struct {
 	Ride *RideClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// WalletLedger is the client for interacting with the WalletLedger builders.
+	WalletLedger *WalletLedgerClient
 
 	// lazily loaded.
 	client     *Client
@@ -176,6 +178,7 @@ func (tx *Tx) init() {
 	tx.Review = NewReviewClient(tx.config)
 	tx.Ride = NewRideClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.WalletLedger = NewWalletLedgerClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

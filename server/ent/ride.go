@@ -52,8 +52,16 @@ type Ride struct {
 	// DriverRating holds the value of the "driver_rating" field.
 	DriverRating float64 `json:"driver_rating,omitempty"`
 	// CompletedAt holds the value of the "completed_at" field.
-	CompletedAt  time.Time `json:"completed_at,omitempty"`
-	selectValues sql.SelectValues
+	CompletedAt time.Time `json:"completed_at,omitempty"`
+	// PaymentStatus holds the value of the "payment_status" field.
+	PaymentStatus string `json:"payment_status,omitempty"`
+	// CashReceivedAt holds the value of the "cash_received_at" field.
+	CashReceivedAt time.Time `json:"cash_received_at,omitempty"`
+	// CommissionCentavos holds the value of the "commission_centavos" field.
+	CommissionCentavos int64 `json:"commission_centavos,omitempty"`
+	// DriverPayoutCentavos holds the value of the "driver_payout_centavos" field.
+	DriverPayoutCentavos int64 `json:"driver_payout_centavos,omitempty"`
+	selectValues         sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -63,11 +71,11 @@ func (*Ride) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case ride.FieldPickupLatitude, ride.FieldPickupLongitude, ride.FieldDropoffLatitude, ride.FieldDropoffLongitude, ride.FieldDistanceKm, ride.FieldDurationMinutes, ride.FieldDriverRating:
 			values[i] = new(sql.NullFloat64)
-		case ride.FieldID, ride.FieldPassengerID, ride.FieldDriverID, ride.FieldFareCentavos:
+		case ride.FieldID, ride.FieldPassengerID, ride.FieldDriverID, ride.FieldFareCentavos, ride.FieldCommissionCentavos, ride.FieldDriverPayoutCentavos:
 			values[i] = new(sql.NullInt64)
-		case ride.FieldStatus, ride.FieldRideType, ride.FieldPickupName, ride.FieldDropoffName, ride.FieldDriverName, ride.FieldVehicleType, ride.FieldPlateNumber:
+		case ride.FieldStatus, ride.FieldRideType, ride.FieldPickupName, ride.FieldDropoffName, ride.FieldDriverName, ride.FieldVehicleType, ride.FieldPlateNumber, ride.FieldPaymentStatus:
 			values[i] = new(sql.NullString)
-		case ride.FieldCompletedAt:
+		case ride.FieldCompletedAt, ride.FieldCashReceivedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -198,6 +206,30 @@ func (_m *Ride) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.CompletedAt = value.Time
 			}
+		case ride.FieldPaymentStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field payment_status", values[i])
+			} else if value.Valid {
+				_m.PaymentStatus = value.String
+			}
+		case ride.FieldCashReceivedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field cash_received_at", values[i])
+			} else if value.Valid {
+				_m.CashReceivedAt = value.Time
+			}
+		case ride.FieldCommissionCentavos:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field commission_centavos", values[i])
+			} else if value.Valid {
+				_m.CommissionCentavos = value.Int64
+			}
+		case ride.FieldDriverPayoutCentavos:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field driver_payout_centavos", values[i])
+			} else if value.Valid {
+				_m.DriverPayoutCentavos = value.Int64
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -287,6 +319,18 @@ func (_m *Ride) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("completed_at=")
 	builder.WriteString(_m.CompletedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("payment_status=")
+	builder.WriteString(_m.PaymentStatus)
+	builder.WriteString(", ")
+	builder.WriteString("cash_received_at=")
+	builder.WriteString(_m.CashReceivedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("commission_centavos=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CommissionCentavos))
+	builder.WriteString(", ")
+	builder.WriteString("driver_payout_centavos=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DriverPayoutCentavos))
 	builder.WriteByte(')')
 	return builder.String()
 }

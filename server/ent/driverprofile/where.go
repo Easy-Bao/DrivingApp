@@ -82,6 +82,11 @@ func IsOnline(v bool) predicate.DriverProfile {
 	return predicate.DriverProfile(sql.FieldEQ(FieldIsOnline, v))
 }
 
+// WalletBalanceCentavos applies equality check predicate on the "wallet_balance_centavos" field. It's identical to WalletBalanceCentavosEQ.
+func WalletBalanceCentavos(v int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldEQ(FieldWalletBalanceCentavos, v))
+}
+
 // UserIDEQ applies the EQ predicate on the "user_id" field.
 func UserIDEQ(v int) predicate.DriverProfile {
 	return predicate.DriverProfile(sql.FieldEQ(FieldUserID, v))
@@ -365,6 +370,46 @@ func IsOnlineEQ(v bool) predicate.DriverProfile {
 // IsOnlineNEQ applies the NEQ predicate on the "is_online" field.
 func IsOnlineNEQ(v bool) predicate.DriverProfile {
 	return predicate.DriverProfile(sql.FieldNEQ(FieldIsOnline, v))
+}
+
+// WalletBalanceCentavosEQ applies the EQ predicate on the "wallet_balance_centavos" field.
+func WalletBalanceCentavosEQ(v int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldEQ(FieldWalletBalanceCentavos, v))
+}
+
+// WalletBalanceCentavosNEQ applies the NEQ predicate on the "wallet_balance_centavos" field.
+func WalletBalanceCentavosNEQ(v int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldNEQ(FieldWalletBalanceCentavos, v))
+}
+
+// WalletBalanceCentavosIn applies the In predicate on the "wallet_balance_centavos" field.
+func WalletBalanceCentavosIn(vs ...int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldIn(FieldWalletBalanceCentavos, vs...))
+}
+
+// WalletBalanceCentavosNotIn applies the NotIn predicate on the "wallet_balance_centavos" field.
+func WalletBalanceCentavosNotIn(vs ...int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldNotIn(FieldWalletBalanceCentavos, vs...))
+}
+
+// WalletBalanceCentavosGT applies the GT predicate on the "wallet_balance_centavos" field.
+func WalletBalanceCentavosGT(v int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldGT(FieldWalletBalanceCentavos, v))
+}
+
+// WalletBalanceCentavosGTE applies the GTE predicate on the "wallet_balance_centavos" field.
+func WalletBalanceCentavosGTE(v int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldGTE(FieldWalletBalanceCentavos, v))
+}
+
+// WalletBalanceCentavosLT applies the LT predicate on the "wallet_balance_centavos" field.
+func WalletBalanceCentavosLT(v int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldLT(FieldWalletBalanceCentavos, v))
+}
+
+// WalletBalanceCentavosLTE applies the LTE predicate on the "wallet_balance_centavos" field.
+func WalletBalanceCentavosLTE(v int64) predicate.DriverProfile {
+	return predicate.DriverProfile(sql.FieldLTE(FieldWalletBalanceCentavos, v))
 }
 
 // And groups predicates with the AND operator between them.

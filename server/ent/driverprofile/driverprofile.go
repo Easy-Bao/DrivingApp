@@ -23,6 +23,8 @@ const (
 	FieldRating = "rating"
 	// FieldIsOnline holds the string denoting the is_online field in the database.
 	FieldIsOnline = "is_online"
+	// FieldWalletBalanceCentavos holds the string denoting the wallet_balance_centavos field in the database.
+	FieldWalletBalanceCentavos = "wallet_balance_centavos"
 	// Table holds the table name of the driverprofile in the database.
 	Table = "driver_profiles"
 )
@@ -36,6 +38,7 @@ var Columns = []string{
 	FieldPlateNumber,
 	FieldRating,
 	FieldIsOnline,
+	FieldWalletBalanceCentavos,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -55,6 +58,10 @@ var (
 	DefaultRating float64
 	// DefaultIsOnline holds the default value on creation for the "is_online" field.
 	DefaultIsOnline bool
+	// DefaultWalletBalanceCentavos holds the default value on creation for the "wallet_balance_centavos" field.
+	DefaultWalletBalanceCentavos int64
+	// WalletBalanceCentavosValidator is a validator for the "wallet_balance_centavos" field. It is called by the builders before save.
+	WalletBalanceCentavosValidator func(int64) error
 )
 
 // OrderOption defines the ordering options for the DriverProfile queries.
@@ -93,4 +100,9 @@ func ByRating(opts ...sql.OrderTermOption) OrderOption {
 // ByIsOnline orders the results by the is_online field.
 func ByIsOnline(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsOnline, opts...).ToFunc()
+}
+
+// ByWalletBalanceCentavos orders the results by the wallet_balance_centavos field.
+func ByWalletBalanceCentavos(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWalletBalanceCentavos, opts...).ToFunc()
 }

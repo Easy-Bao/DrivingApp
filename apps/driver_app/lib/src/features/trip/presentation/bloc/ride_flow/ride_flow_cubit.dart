@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:shared_core/shared_core.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
   final TripRemoteDataSource _tripRemoteDataSource;
@@ -102,7 +103,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       );
     } catch (error) {
       dev.log('Error accepting ride on backend: $error');
-      emit(RideFlowError(error.toString()));
+      emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
     }
   }
 
@@ -116,12 +117,20 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        await _tripRemoteDataSource.updateRideStatus(
+        final updated = await _tripRemoteDataSource.updateRideStatus(
           tripId: _activeRideId!,
           status: 'arrived',
         );
+        if (!updated) {
+          emit(
+            const RideFlowError('Unable to confirm arrival with the server.'),
+          );
+          return;
+        }
       } catch (error) {
         dev.log('Error updating status to arrived: $error');
+        emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+        return;
       }
     }
 
@@ -191,31 +200,78 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     return true;
   }
 
-  Future<double> endRide({
-    required double distanceKm,
-    required double durationMinutes,
-  }) async {
+  Future<Map<String, dynamic>?> _loadCompletedRide() async {
     _waitTimer?.cancel();
 
-    var finalFare = distanceKm * 15 + 30;
-    if (_activeRideId != null) {
-      try {
-        final ride = await _tripRemoteDataSource.getRideStatus(_activeRideId!);
-        final serverFare = double.tryParse('${ride['fare']}');
-        if (serverFare != null && serverFare > 0) {
-          finalFare = serverFare;
-        }
-        await _tripRemoteDataSource.updateRideStatus(
-          tripId: _activeRideId!,
-          status: 'completed',
-        );
-      } catch (error) {
-        dev.log('Error updating status to completed: $error');
-      }
+    final rideId = _activeRideId;
+    if (rideId == null || rideId.isEmpty) {
+      emit(const RideFlowError('This trip is no longer active.'));
+      return null;
     }
 
-    emit(RideFlowComplete(fare: finalFare));
-    return finalFare;
+    try {
+      final ride = await _tripRemoteDataSource.getRideStatus(rideId);
+      final status = ride['status']?.toString();
+      if (status != 'completed') {
+        final updated = await _tripRemoteDataSource.updateRideStatus(
+          tripId: rideId,
+          status: 'completed',
+        );
+        if (!updated) {
+          emit(
+            const RideFlowError('Unable to complete this trip on the server.'),
+          );
+          return null;
+        }
+      }
+      return ride;
+    } catch (error) {
+      dev.log('Error completing ride on backend: $error');
+      emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+      return null;
+    }
+  }
+
+  Future<double?> completeRide() async {
+    final ride = await _loadCompletedRide();
+    if (ride == null) return null;
+
+    final fareCentavos = (ride['fare_centavos'] as num?)?.toDouble();
+    if (fareCentavos == null || fareCentavos <= 0) {
+      emit(const RideFlowError('The server did not return a payable fare.'));
+      return null;
+    }
+    return fareCentavos / 100;
+  }
+
+  Future<double?> confirmCashPayment() async {
+    final rideId = _activeRideId;
+    if (rideId == null || rideId.isEmpty) {
+      emit(const RideFlowError('This trip is no longer active.'));
+      return null;
+    }
+
+    try {
+      final settled = await _tripRemoteDataSource.settleCash(rideId);
+      final fareCentavos = (settled['fare_centavos'] as num?)?.toDouble();
+      if (fareCentavos == null || fareCentavos <= 0) {
+        emit(const RideFlowError('The server did not return a payable fare.'));
+        return null;
+      }
+      final finalFare = fareCentavos / 100;
+      emit(RideFlowComplete(fare: finalFare));
+      return finalFare;
+    } catch (error) {
+      dev.log('Error settling cash trip: $error');
+      emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+      return null;
+    }
+  }
+
+  Future<double?> endRide() async {
+    final completedFare = await completeRide();
+    if (completedFare == null) return null;
+    return confirmCashPayment();
   }
 
   void reset() {

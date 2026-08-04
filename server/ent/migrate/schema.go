@@ -105,6 +105,7 @@ var (
 		{Name: "plate_number", Type: field.TypeString},
 		{Name: "rating", Type: field.TypeFloat64, Default: 5},
 		{Name: "is_online", Type: field.TypeBool, Default: false},
+		{Name: "wallet_balance_centavos", Type: field.TypeInt64, Default: 0},
 	}
 	// DriverProfilesTable holds the schema information for the "driver_profiles" table.
 	DriverProfilesTable = &schema.Table{
@@ -178,6 +179,10 @@ var (
 		{Name: "plate_number", Type: field.TypeString, Nullable: true},
 		{Name: "driver_rating", Type: field.TypeFloat64, Nullable: true},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "payment_status", Type: field.TypeString, Default: "unpaid"},
+		{Name: "cash_received_at", Type: field.TypeTime, Nullable: true},
+		{Name: "commission_centavos", Type: field.TypeInt64, Default: 0},
+		{Name: "driver_payout_centavos", Type: field.TypeInt64, Default: 0},
 	}
 	// RidesTable holds the schema information for the "rides" table.
 	RidesTable = &schema.Table{
@@ -201,6 +206,29 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// WalletLedgersColumns holds the columns for the "wallet_ledgers" table.
+	WalletLedgersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "driver_id", Type: field.TypeInt},
+		{Name: "ride_id", Type: field.TypeInt},
+		{Name: "amount_centavos", Type: field.TypeInt64},
+		{Name: "commission_centavos", Type: field.TypeInt64},
+		{Name: "kind", Type: field.TypeString, Default: "cash_trip"},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// WalletLedgersTable holds the schema information for the "wallet_ledgers" table.
+	WalletLedgersTable = &schema.Table{
+		Name:       "wallet_ledgers",
+		Columns:    WalletLedgersColumns,
+		PrimaryKey: []*schema.Column{WalletLedgersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "walletledger_ride_id",
+				Unique:  true,
+				Columns: []*schema.Column{WalletLedgersColumns[2]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AuditEventsTable,
@@ -214,6 +242,7 @@ var (
 		ReviewsTable,
 		RidesTable,
 		UsersTable,
+		WalletLedgersTable,
 	}
 )
 

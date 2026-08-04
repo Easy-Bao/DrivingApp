@@ -434,6 +434,82 @@ func (_u *RideUpdate) ClearCompletedAt() *RideUpdate {
 	return _u
 }
 
+// SetPaymentStatus sets the "payment_status" field.
+func (_u *RideUpdate) SetPaymentStatus(v string) *RideUpdate {
+	_u.mutation.SetPaymentStatus(v)
+	return _u
+}
+
+// SetNillablePaymentStatus sets the "payment_status" field if the given value is not nil.
+func (_u *RideUpdate) SetNillablePaymentStatus(v *string) *RideUpdate {
+	if v != nil {
+		_u.SetPaymentStatus(*v)
+	}
+	return _u
+}
+
+// SetCashReceivedAt sets the "cash_received_at" field.
+func (_u *RideUpdate) SetCashReceivedAt(v time.Time) *RideUpdate {
+	_u.mutation.SetCashReceivedAt(v)
+	return _u
+}
+
+// SetNillableCashReceivedAt sets the "cash_received_at" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableCashReceivedAt(v *time.Time) *RideUpdate {
+	if v != nil {
+		_u.SetCashReceivedAt(*v)
+	}
+	return _u
+}
+
+// ClearCashReceivedAt clears the value of the "cash_received_at" field.
+func (_u *RideUpdate) ClearCashReceivedAt() *RideUpdate {
+	_u.mutation.ClearCashReceivedAt()
+	return _u
+}
+
+// SetCommissionCentavos sets the "commission_centavos" field.
+func (_u *RideUpdate) SetCommissionCentavos(v int64) *RideUpdate {
+	_u.mutation.ResetCommissionCentavos()
+	_u.mutation.SetCommissionCentavos(v)
+	return _u
+}
+
+// SetNillableCommissionCentavos sets the "commission_centavos" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableCommissionCentavos(v *int64) *RideUpdate {
+	if v != nil {
+		_u.SetCommissionCentavos(*v)
+	}
+	return _u
+}
+
+// AddCommissionCentavos adds value to the "commission_centavos" field.
+func (_u *RideUpdate) AddCommissionCentavos(v int64) *RideUpdate {
+	_u.mutation.AddCommissionCentavos(v)
+	return _u
+}
+
+// SetDriverPayoutCentavos sets the "driver_payout_centavos" field.
+func (_u *RideUpdate) SetDriverPayoutCentavos(v int64) *RideUpdate {
+	_u.mutation.ResetDriverPayoutCentavos()
+	_u.mutation.SetDriverPayoutCentavos(v)
+	return _u
+}
+
+// SetNillableDriverPayoutCentavos sets the "driver_payout_centavos" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableDriverPayoutCentavos(v *int64) *RideUpdate {
+	if v != nil {
+		_u.SetDriverPayoutCentavos(*v)
+	}
+	return _u
+}
+
+// AddDriverPayoutCentavos adds value to the "driver_payout_centavos" field.
+func (_u *RideUpdate) AddDriverPayoutCentavos(v int64) *RideUpdate {
+	_u.mutation.AddDriverPayoutCentavos(v)
+	return _u
+}
+
 // Mutation returns the RideMutation object of the builder.
 func (_u *RideUpdate) Mutation() *RideMutation {
 	return _u.mutation
@@ -476,6 +552,16 @@ func (_u *RideUpdate) check() error {
 	if v, ok := _u.mutation.FareCentavos(); ok {
 		if err := ride.FareCentavosValidator(v); err != nil {
 			return &ValidationError{Name: "fare_centavos", err: fmt.Errorf(`ent: validator failed for field "Ride.fare_centavos": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.CommissionCentavos(); ok {
+		if err := ride.CommissionCentavosValidator(v); err != nil {
+			return &ValidationError{Name: "commission_centavos", err: fmt.Errorf(`ent: validator failed for field "Ride.commission_centavos": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.DriverPayoutCentavos(); ok {
+		if err := ride.DriverPayoutCentavosValidator(v); err != nil {
+			return &ValidationError{Name: "driver_payout_centavos", err: fmt.Errorf(`ent: validator failed for field "Ride.driver_payout_centavos": %w`, err)}
 		}
 	}
 	return nil
@@ -618,6 +704,27 @@ func (_u *RideUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.CompletedAtCleared() {
 		_spec.ClearField(ride.FieldCompletedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PaymentStatus(); ok {
+		_spec.SetField(ride.FieldPaymentStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CashReceivedAt(); ok {
+		_spec.SetField(ride.FieldCashReceivedAt, field.TypeTime, value)
+	}
+	if _u.mutation.CashReceivedAtCleared() {
+		_spec.ClearField(ride.FieldCashReceivedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.CommissionCentavos(); ok {
+		_spec.SetField(ride.FieldCommissionCentavos, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCommissionCentavos(); ok {
+		_spec.AddField(ride.FieldCommissionCentavos, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.DriverPayoutCentavos(); ok {
+		_spec.SetField(ride.FieldDriverPayoutCentavos, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedDriverPayoutCentavos(); ok {
+		_spec.AddField(ride.FieldDriverPayoutCentavos, field.TypeInt64, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -1045,6 +1152,82 @@ func (_u *RideUpdateOne) ClearCompletedAt() *RideUpdateOne {
 	return _u
 }
 
+// SetPaymentStatus sets the "payment_status" field.
+func (_u *RideUpdateOne) SetPaymentStatus(v string) *RideUpdateOne {
+	_u.mutation.SetPaymentStatus(v)
+	return _u
+}
+
+// SetNillablePaymentStatus sets the "payment_status" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillablePaymentStatus(v *string) *RideUpdateOne {
+	if v != nil {
+		_u.SetPaymentStatus(*v)
+	}
+	return _u
+}
+
+// SetCashReceivedAt sets the "cash_received_at" field.
+func (_u *RideUpdateOne) SetCashReceivedAt(v time.Time) *RideUpdateOne {
+	_u.mutation.SetCashReceivedAt(v)
+	return _u
+}
+
+// SetNillableCashReceivedAt sets the "cash_received_at" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableCashReceivedAt(v *time.Time) *RideUpdateOne {
+	if v != nil {
+		_u.SetCashReceivedAt(*v)
+	}
+	return _u
+}
+
+// ClearCashReceivedAt clears the value of the "cash_received_at" field.
+func (_u *RideUpdateOne) ClearCashReceivedAt() *RideUpdateOne {
+	_u.mutation.ClearCashReceivedAt()
+	return _u
+}
+
+// SetCommissionCentavos sets the "commission_centavos" field.
+func (_u *RideUpdateOne) SetCommissionCentavos(v int64) *RideUpdateOne {
+	_u.mutation.ResetCommissionCentavos()
+	_u.mutation.SetCommissionCentavos(v)
+	return _u
+}
+
+// SetNillableCommissionCentavos sets the "commission_centavos" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableCommissionCentavos(v *int64) *RideUpdateOne {
+	if v != nil {
+		_u.SetCommissionCentavos(*v)
+	}
+	return _u
+}
+
+// AddCommissionCentavos adds value to the "commission_centavos" field.
+func (_u *RideUpdateOne) AddCommissionCentavos(v int64) *RideUpdateOne {
+	_u.mutation.AddCommissionCentavos(v)
+	return _u
+}
+
+// SetDriverPayoutCentavos sets the "driver_payout_centavos" field.
+func (_u *RideUpdateOne) SetDriverPayoutCentavos(v int64) *RideUpdateOne {
+	_u.mutation.ResetDriverPayoutCentavos()
+	_u.mutation.SetDriverPayoutCentavos(v)
+	return _u
+}
+
+// SetNillableDriverPayoutCentavos sets the "driver_payout_centavos" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableDriverPayoutCentavos(v *int64) *RideUpdateOne {
+	if v != nil {
+		_u.SetDriverPayoutCentavos(*v)
+	}
+	return _u
+}
+
+// AddDriverPayoutCentavos adds value to the "driver_payout_centavos" field.
+func (_u *RideUpdateOne) AddDriverPayoutCentavos(v int64) *RideUpdateOne {
+	_u.mutation.AddDriverPayoutCentavos(v)
+	return _u
+}
+
 // Mutation returns the RideMutation object of the builder.
 func (_u *RideUpdateOne) Mutation() *RideMutation {
 	return _u.mutation
@@ -1100,6 +1283,16 @@ func (_u *RideUpdateOne) check() error {
 	if v, ok := _u.mutation.FareCentavos(); ok {
 		if err := ride.FareCentavosValidator(v); err != nil {
 			return &ValidationError{Name: "fare_centavos", err: fmt.Errorf(`ent: validator failed for field "Ride.fare_centavos": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.CommissionCentavos(); ok {
+		if err := ride.CommissionCentavosValidator(v); err != nil {
+			return &ValidationError{Name: "commission_centavos", err: fmt.Errorf(`ent: validator failed for field "Ride.commission_centavos": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.DriverPayoutCentavos(); ok {
+		if err := ride.DriverPayoutCentavosValidator(v); err != nil {
+			return &ValidationError{Name: "driver_payout_centavos", err: fmt.Errorf(`ent: validator failed for field "Ride.driver_payout_centavos": %w`, err)}
 		}
 	}
 	return nil
@@ -1259,6 +1452,27 @@ func (_u *RideUpdateOne) sqlSave(ctx context.Context) (_node *Ride, err error) {
 	}
 	if _u.mutation.CompletedAtCleared() {
 		_spec.ClearField(ride.FieldCompletedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PaymentStatus(); ok {
+		_spec.SetField(ride.FieldPaymentStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CashReceivedAt(); ok {
+		_spec.SetField(ride.FieldCashReceivedAt, field.TypeTime, value)
+	}
+	if _u.mutation.CashReceivedAtCleared() {
+		_spec.ClearField(ride.FieldCashReceivedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.CommissionCentavos(); ok {
+		_spec.SetField(ride.FieldCommissionCentavos, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCommissionCentavos(); ok {
+		_spec.AddField(ride.FieldCommissionCentavos, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.DriverPayoutCentavos(); ok {
+		_spec.SetField(ride.FieldDriverPayoutCentavos, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedDriverPayoutCentavos(); ok {
+		_spec.AddField(ride.FieldDriverPayoutCentavos, field.TypeInt64, value)
 	}
 	_node = &Ride{config: _u.config}
 	_spec.Assign = _node.assignValues

@@ -26,6 +26,7 @@ func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/rides", handler.createRide)
 	mux.HandleFunc("POST /api/v1/rides/{id}/accept", handler.acceptRide)
 	mux.HandleFunc("POST /api/v1/rides/{id}/status", handler.updateStatus)
+	mux.HandleFunc("POST /api/v1/rides/{id}/cash-settle", handler.settleCash)
 	mux.HandleFunc("POST /api/v1/rides/{id}/bids", handler.submitBid)
 	mux.HandleFunc("POST /api/v1/bids/{id}/accept", handler.acceptBid)
 	mux.HandleFunc("GET /api/v1/rides/{id}", handler.getRide)
@@ -51,6 +52,7 @@ func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /rides", handler.createRide)
 	mux.HandleFunc("POST /rides/{id}/accept", handler.acceptRide)
 	mux.HandleFunc("POST /rides/{id}/status", handler.updateStatus)
+	mux.HandleFunc("POST /rides/{id}/cash-settle", handler.settleCash)
 	mux.HandleFunc("GET /rides/{id}", handler.getRide)
 	mux.HandleFunc("GET /passengers/{id}/rides", handler.passengerRides)
 	mux.HandleFunc("GET /drivers/online", handler.onlineDrivers)
@@ -138,6 +140,25 @@ func (handler *Handler) updateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonJSON(w, 200, item)
+}
+
+func (handler *Handler) settleCash(w http.ResponseWriter, r *http.Request) {
+	driverID, ok := handler.identity(r)
+	if !ok {
+		errorJSON(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		errorJSON(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	ride, err := handler.service.SettleCash(r.Context(), rideID, driverID)
+	if err != nil {
+		errorJSON(w, rideErrorStatus(err), err.Error())
+		return
+	}
+	jsonJSON(w, http.StatusOK, ride)
 }
 func (handler *Handler) submitBid(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
