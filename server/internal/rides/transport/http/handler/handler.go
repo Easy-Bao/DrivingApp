@@ -12,6 +12,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -22,56 +23,56 @@ type Handler struct {
 func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
-func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/v1/rides", handler.createRide)
-	mux.HandleFunc("POST /api/v1/rides/{id}/accept", handler.acceptRide)
-	mux.HandleFunc("POST /api/v1/rides/{id}/status", handler.updateStatus)
-	mux.HandleFunc("POST /api/v1/rides/{id}/cash-settle", handler.settleCash)
-	mux.HandleFunc("POST /api/v1/rides/{id}/bids", handler.submitBid)
-	mux.HandleFunc("POST /api/v1/bids/{id}/accept", handler.acceptBid)
-	mux.HandleFunc("GET /api/v1/rides/{id}", handler.getRide)
-	mux.HandleFunc("GET /api/v1/passengers/{id}/rides", handler.passengerRides)
-	mux.HandleFunc("GET /api/v1/drivers/online", handler.onlineDrivers)
-	mux.HandleFunc("GET /api/v1/drivers/{id}/stats", handler.driverStats)
-	mux.HandleFunc("GET /api/v1/drivers/{id}/trips", handler.driverTrips)
-	mux.HandleFunc("GET /api/v1/drivers/{id}/reviews", handler.driverReviews)
-	mux.HandleFunc("POST /api/v1/drivers/{id}/reviews", handler.createReview)
-	mux.HandleFunc("POST /api/v1/passengers/{id}/reviews", handler.createPassengerReview)
-	mux.HandleFunc("POST /api/v1/fares/estimate", handler.estimate)
-	mux.HandleFunc("GET /api/v1/fares/configs", handler.fareConfigs)
-	mux.HandleFunc("GET /api/v1/fares/rating-config", handler.ratingConfig)
-	mux.HandleFunc("POST /api/v1/fares/calculate-final", handler.calculateFinal)
-	mux.HandleFunc("POST /api/v1/bids/fare", handler.estimate)
-	mux.HandleFunc("POST /api/v1/bids", handler.createSession)
-	mux.HandleFunc("GET /api/v1/bids/active", handler.activeSessions)
-	mux.HandleFunc("GET /api/v1/bids/{sessionID}", handler.session)
-	mux.HandleFunc("GET /api/v1/bids/{sessionID}/offers", handler.offers)
-	mux.HandleFunc("POST /api/v1/bids/{sessionID}/offer", handler.placeOffer)
-	mux.HandleFunc("POST /api/v1/bids/{sessionID}/offers/{offerID}/accept", handler.acceptOffer)
-	mux.HandleFunc("POST /api/v1/bids/{sessionID}/cancel", handler.cancelSession)
-	mux.HandleFunc("POST /api/v1/bids/{sessionID}/cancel-offer", handler.cancelOffer)
-	mux.HandleFunc("POST /rides", handler.createRide)
-	mux.HandleFunc("POST /rides/{id}/accept", handler.acceptRide)
-	mux.HandleFunc("POST /rides/{id}/status", handler.updateStatus)
-	mux.HandleFunc("POST /rides/{id}/cash-settle", handler.settleCash)
-	mux.HandleFunc("GET /rides/{id}", handler.getRide)
-	mux.HandleFunc("GET /passengers/{id}/rides", handler.passengerRides)
-	mux.HandleFunc("GET /drivers/online", handler.onlineDrivers)
-	mux.HandleFunc("GET /drivers/{id}/stats", handler.driverStats)
-	mux.HandleFunc("GET /drivers/{id}/trips", handler.driverTrips)
-	mux.HandleFunc("GET /drivers/{id}/reviews", handler.driverReviews)
-	mux.HandleFunc("POST /drivers/{id}/reviews", handler.createReview)
-	mux.HandleFunc("POST /passengers/{id}/reviews", handler.createPassengerReview)
-	mux.HandleFunc("POST /bids/fare", handler.estimate)
-	mux.HandleFunc("POST /bids", handler.createSession)
-	mux.HandleFunc("GET /bids/active", handler.activeSessions)
-	mux.HandleFunc("GET /bids/{sessionID}", handler.session)
-	mux.HandleFunc("GET /bids/{sessionID}/offers", handler.offers)
-	mux.HandleFunc("POST /bids/{sessionID}/offer", handler.placeOffer)
-	mux.HandleFunc("POST /bids/{sessionID}/offers/{offerID}/accept", handler.acceptOffer)
-	mux.HandleFunc("POST /bids/{sessionID}/cancel", handler.cancelSession)
-	mux.HandleFunc("POST /bids/{sessionID}/cancel-offer", handler.cancelOffer)
-	mux.HandleFunc("POST /fares/estimate", handler.estimate)
+func (handler *Handler) RegisterRoutes(router chi.Router) {
+	router.Post("/api/v1/rides", handler.createRide)
+	router.Post("/api/v1/rides/{id}/accept", handler.acceptRide)
+	router.Post("/api/v1/rides/{id}/status", handler.updateStatus)
+	router.Post("/api/v1/rides/{id}/cash-settle", handler.settleCash)
+	router.Post("/api/v1/rides/{id}/bids", handler.submitBid)
+	router.Post("/api/v1/bids/{id}/accept", handler.acceptBid)
+	router.Get("/api/v1/rides/{id}", handler.getRide)
+	router.Get("/api/v1/passengers/{id}/rides", handler.passengerRides)
+	router.Get("/api/v1/drivers/online", handler.onlineDrivers)
+	router.Get("/api/v1/drivers/{id}/stats", handler.driverStats)
+	router.Get("/api/v1/drivers/{id}/trips", handler.driverTrips)
+	router.Get("/api/v1/drivers/{id}/reviews", handler.driverReviews)
+	router.Post("/api/v1/drivers/{id}/reviews", handler.createReview)
+	router.Post("/api/v1/passengers/{id}/reviews", handler.createPassengerReview)
+	router.Post("/api/v1/fares/estimate", handler.estimate)
+	router.Get("/api/v1/fares/configs", handler.fareConfigs)
+	router.Get("/api/v1/fares/rating-config", handler.ratingConfig)
+	router.Post("/api/v1/fares/calculate-final", handler.calculateFinal)
+	router.Post("/api/v1/bids/fare", handler.estimate)
+	router.Post("/api/v1/bids", handler.createSession)
+	router.Get("/api/v1/bids/active", handler.activeSessions)
+	router.Get("/api/v1/bids/{sessionID}", handler.session)
+	router.Get("/api/v1/bids/{sessionID}/offers", handler.offers)
+	router.Post("/api/v1/bids/{sessionID}/offer", handler.placeOffer)
+	router.Post("/api/v1/bids/{sessionID}/offers/{offerID}/accept", handler.acceptOffer)
+	router.Post("/api/v1/bids/{sessionID}/cancel", handler.cancelSession)
+	router.Post("/api/v1/bids/{sessionID}/cancel-offer", handler.cancelOffer)
+	router.Post("/rides", handler.createRide)
+	router.Post("/rides/{id}/accept", handler.acceptRide)
+	router.Post("/rides/{id}/status", handler.updateStatus)
+	router.Post("/rides/{id}/cash-settle", handler.settleCash)
+	router.Get("/rides/{id}", handler.getRide)
+	router.Get("/passengers/{id}/rides", handler.passengerRides)
+	router.Get("/drivers/online", handler.onlineDrivers)
+	router.Get("/drivers/{id}/stats", handler.driverStats)
+	router.Get("/drivers/{id}/trips", handler.driverTrips)
+	router.Get("/drivers/{id}/reviews", handler.driverReviews)
+	router.Post("/drivers/{id}/reviews", handler.createReview)
+	router.Post("/passengers/{id}/reviews", handler.createPassengerReview)
+	router.Post("/bids/fare", handler.estimate)
+	router.Post("/bids", handler.createSession)
+	router.Get("/bids/active", handler.activeSessions)
+	router.Get("/bids/{sessionID}", handler.session)
+	router.Get("/bids/{sessionID}/offers", handler.offers)
+	router.Post("/bids/{sessionID}/offer", handler.placeOffer)
+	router.Post("/bids/{sessionID}/offers/{offerID}/accept", handler.acceptOffer)
+	router.Post("/bids/{sessionID}/cancel", handler.cancelSession)
+	router.Post("/bids/{sessionID}/cancel-offer", handler.cancelOffer)
+	router.Post("/fares/estimate", handler.estimate)
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	raw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
@@ -107,7 +108,7 @@ func (handler *Handler) acceptRide(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(r.PathValue("id"))
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid ride id")
 		return
@@ -126,7 +127,7 @@ func (handler *Handler) updateStatus(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(r.PathValue("id"))
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid ride id")
 		return
@@ -150,7 +151,7 @@ func (handler *Handler) settleCash(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(r.PathValue("id"))
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, http.StatusBadRequest, "invalid ride id")
 		return
@@ -168,7 +169,7 @@ func (handler *Handler) submitBid(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(r.PathValue("id"))
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid ride id")
 		return
@@ -191,7 +192,7 @@ func (handler *Handler) acceptBid(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	bidID, err := strconv.Atoi(r.PathValue("id"))
+	bidID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid bid id")
 		return
@@ -209,7 +210,7 @@ func (handler *Handler) getRide(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(r.PathValue("id"))
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid ride id")
 		return
@@ -232,7 +233,7 @@ func (handler *Handler) passengerRides(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	targetID, err := strconv.Atoi(r.PathValue("id"))
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || targetID != actorID {
 		errorJSON(w, 403, "forbidden")
 		return
@@ -250,7 +251,7 @@ func (handler *Handler) driverStats(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	driverID, err := strconv.Atoi(r.PathValue("id"))
+	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid driver id")
 		return
@@ -269,7 +270,7 @@ func (handler *Handler) driverTrips(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	driverID, err := strconv.Atoi(r.PathValue("id"))
+	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid driver id")
 		return
@@ -287,7 +288,7 @@ func (handler *Handler) driverReviews(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	driverID, err := strconv.Atoi(r.PathValue("id"))
+	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid driver id")
 		return
@@ -310,7 +311,7 @@ func (handler *Handler) createReview(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	driverID, err := strconv.Atoi(r.PathValue("id"))
+	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid driver id")
 		return
@@ -334,7 +335,7 @@ func (handler *Handler) createPassengerReview(w http.ResponseWriter, r *http.Req
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	passengerID, err := strconv.Atoi(r.PathValue("id"))
+	passengerID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid passenger id")
 		return
@@ -449,7 +450,7 @@ func (handler *Handler) session(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(r.PathValue("sessionID"))
+	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
 	if err != nil {
 		errorJSON(w, 400, "invalid session id")
 		return
@@ -472,7 +473,7 @@ func (handler *Handler) offers(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(r.PathValue("sessionID"))
+	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
 	if err != nil {
 		errorJSON(w, 400, "invalid session id")
 		return
@@ -496,7 +497,7 @@ func (handler *Handler) placeOffer(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	sessionID, err := strconv.Atoi(r.PathValue("sessionID"))
+	sessionID, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
 	if err != nil {
 		errorJSON(w, 400, "invalid session id")
 		return
@@ -524,8 +525,8 @@ func (handler *Handler) acceptOffer(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	sessionID, sessionErr := strconv.Atoi(r.PathValue("sessionID"))
-	offerID, offerErr := strconv.Atoi(r.PathValue("offerID"))
+	sessionID, sessionErr := strconv.Atoi(chi.URLParam(r, "sessionID"))
+	offerID, offerErr := strconv.Atoi(chi.URLParam(r, "offerID"))
 	if sessionErr != nil || offerErr != nil {
 		errorJSON(w, 400, "invalid bid id")
 		return
@@ -544,7 +545,7 @@ func (handler *Handler) cancelSession(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(r.PathValue("sessionID"))
+	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
 	if err != nil {
 		errorJSON(w, 400, "invalid session id")
 		return
@@ -563,7 +564,7 @@ func (handler *Handler) cancelOffer(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(r.PathValue("sessionID"))
+	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
 	if err != nil {
 		errorJSON(w, 400, "invalid session id")
 		return

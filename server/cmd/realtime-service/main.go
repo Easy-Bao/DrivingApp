@@ -19,10 +19,11 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/logger"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	router := http.NewServeMux()
+	router := chi.NewRouter()
 	redisURL := os.Getenv("REDIS_URL")
 	if redisURL == "" {
 		log.Fatal("REDIS_URL is required")
@@ -42,7 +43,7 @@ func main() {
 	router.Handle("/ws", ws.NewHandlerWithSink(ws.NewHub(), tokenManager, events))
 	geoh.NewRouter(geoService, tokenManager).RegisterRoutes(router)
 	chath.NewRouter(chatService).RegisterRoutes(router)
-	router.HandleFunc("GET /health", func(writer http.ResponseWriter, _ *http.Request) {
+	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"realtime-service"}`))
 	})

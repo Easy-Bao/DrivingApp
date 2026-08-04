@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
+	"github.com/go-chi/chi/v5"
 )
 
 func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 	router := rideshttp.NewRouter(nil, nil)
-	mux := http.NewServeMux()
+	mux := chi.NewRouter()
 	router.RegisterRoutes(mux)
 
 	test := httptest.NewRecorder()

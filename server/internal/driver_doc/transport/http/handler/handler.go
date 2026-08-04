@@ -5,6 +5,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
 	"strconv"
@@ -18,10 +19,10 @@ type Handler struct {
 func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
-func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/v1/driver/documents", handler.upload)
-	mux.HandleFunc("GET /api/v1/driver/documents/status", handler.status)
-	mux.HandleFunc("PATCH /api/v1/admin/documents/{id}/review", handler.review)
+func (handler *Handler) RegisterRoutes(router chi.Router) {
+	router.Post("/api/v1/driver/documents", handler.upload)
+	router.Get("/api/v1/driver/documents/status", handler.status)
+	router.Patch("/api/v1/admin/documents/{id}/review", handler.review)
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	raw := r.Header.Get("Authorization")
@@ -72,7 +73,7 @@ func (handler *Handler) review(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(r.PathValue("id"))
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		writeError(w, 400, "invalid document id")
 		return

@@ -1,10 +1,9 @@
 package http
 
 import (
-	"net/http"
-
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
+	"github.com/go-chi/chi/v5"
 )
 
 type Router struct{ handler *handler.Handler }
@@ -17,4 +16,4 @@ func NewRouter(register *usecase.RegisterService, authenticate *usecase.Authenti
 	return &Router{handler: handler.NewHandler(register, authenticate, service)}
 }
 
-func (router *Router) RegisterRoutes(mux *http.ServeMux) { router.handler.RegisterRoutes(mux) }
+func (router *Router) RegisterRoutes(mux chi.Router) { router.handler.RegisterRoutes(mux) }

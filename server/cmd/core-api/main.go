@@ -39,12 +39,13 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/logger"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+	"github.com/go-chi/chi/v5"
 	_ "github.com/lib/pq"
 	redisclient "github.com/redis/go-redis/v9"
 )
 
 func main() {
-	router := http.NewServeMux()
+	router := chi.NewRouter()
 	var authRouter *authhttp.Router
 	var usersRouter *usershttp.Router
 	var documentRouter *documenthttp.Router
@@ -150,7 +151,7 @@ func main() {
 		defer redisClient.Close()
 	}
 	locationhttp.NewHandler(usecase.NewServiceWithInfrastructure(provider, cache, publisher)).RegisterRoutes(router)
-	router.HandleFunc("GET /health", func(writer http.ResponseWriter, _ *http.Request) {
+	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"core-api"}`))
 	})

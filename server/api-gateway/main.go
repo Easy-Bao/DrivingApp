@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -17,19 +18,19 @@ func main() {
 	realtime := mustURL(requiredEnv("REALTIME_SERVICE_URL"))
 	coreProxy := httputil.NewSingleHostReverseProxy(core)
 	realtimeProxy := httputil.NewSingleHostReverseProxy(realtime)
-	router := http.NewServeMux()
+	router := chi.NewRouter()
 	router.Handle("/ws", realtimeProxy)
-	router.Handle("/api/v1/telemetry/", realtimeProxy)
-	router.Handle("/telemetry/", realtimeProxy)
-	router.Handle("/chat/", realtimeProxy)
-	router.Handle("/api/v1/chat/", realtimeProxy)
+	router.Handle("/api/v1/telemetry/*", realtimeProxy)
+	router.Handle("/telemetry/*", realtimeProxy)
+	router.Handle("/chat/*", realtimeProxy)
+	router.Handle("/api/v1/chat/*", realtimeProxy)
 	// The gateway is the sole public HTTP endpoint. Domain routing happens
 	// behind it, so clients never need a URL for an individual module.
-	router.Handle("/", coreProxy)
-	router.HandleFunc("/health", func(writer http.ResponseWriter, _ *http.Request) {
+	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"api-gateway"}`))
 	})
+	router.Handle("/*", coreProxy)
 	port := requiredEnv("GATEWAY_PORT")
 	log.Println("api-gateway listening on :" + port)
 	securedRouter := middleware.SecureHTTP(router, middleware.SecurityConfigFromEnv(), nil)

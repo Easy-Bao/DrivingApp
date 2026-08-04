@@ -9,6 +9,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -20,30 +21,30 @@ type Handler struct {
 func NewHandler(register *usecase.RegisterService, authenticate *usecase.AuthenticateService, otp *usecase.OTPService) *Handler {
 	return &Handler{register: register, authenticate: authenticate, otp: otp}
 }
-func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/v1/auth/register", handler.genericRegister)
-	mux.HandleFunc("POST /api/v1/auth/login", handler.login)
-	mux.HandleFunc("POST /api/v1/auth/passenger/register", handler.passengerRegister)
-	mux.HandleFunc("POST /api/v1/auth/driver/register", handler.driverRegister)
-	mux.HandleFunc("POST /api/v1/auth/passenger/login", handler.login)
-	mux.HandleFunc("POST /api/v1/auth/driver/login", handler.login)
-	mux.HandleFunc("POST /api/v1/auth/passenger/otp", handler.requestOTP)
-	mux.HandleFunc("POST /api/v1/auth/passenger/verify-otp", handler.verifyOTP)
-	mux.HandleFunc("POST /api/v1/auth/passenger/forgot-password", handler.forgotPassword)
-	mux.HandleFunc("POST /api/v1/auth/passenger/reset-password", handler.resetPassword)
+func (handler *Handler) RegisterRoutes(router chi.Router) {
+	router.Post("/api/v1/auth/register", handler.genericRegister)
+	router.Post("/api/v1/auth/login", handler.login)
+	router.Post("/api/v1/auth/passenger/register", handler.passengerRegister)
+	router.Post("/api/v1/auth/driver/register", handler.driverRegister)
+	router.Post("/api/v1/auth/passenger/login", handler.login)
+	router.Post("/api/v1/auth/driver/login", handler.login)
+	router.Post("/api/v1/auth/passenger/otp", handler.requestOTP)
+	router.Post("/api/v1/auth/passenger/verify-otp", handler.verifyOTP)
+	router.Post("/api/v1/auth/passenger/forgot-password", handler.forgotPassword)
+	router.Post("/api/v1/auth/passenger/reset-password", handler.resetPassword)
 	// These aliases keep the public gateway contract stable for the clients
 	// while the application remains the only externally reachable process.
-	mux.HandleFunc("POST /auth/passenger/register", handler.passengerRegister)
-	mux.HandleFunc("POST /auth/register", handler.genericRegister)
-	mux.HandleFunc("POST /auth/driver/register", handler.driverRegister)
-	mux.HandleFunc("POST /auth/passenger/login", handler.login)
-	mux.HandleFunc("POST /auth/login", handler.login)
-	mux.HandleFunc("POST /auth/driver/login", handler.login)
-	mux.HandleFunc("POST /auth/passenger/otp", handler.requestOTP)
-	mux.HandleFunc("POST /auth/passenger/verify-otp", handler.verifyOTP)
-	mux.HandleFunc("POST /auth/verify-otp", handler.verifyOTP)
-	mux.HandleFunc("POST /auth/forgot-password", handler.forgotPassword)
-	mux.HandleFunc("POST /auth/reset-password", handler.resetPassword)
+	router.Post("/auth/passenger/register", handler.passengerRegister)
+	router.Post("/auth/register", handler.genericRegister)
+	router.Post("/auth/driver/register", handler.driverRegister)
+	router.Post("/auth/passenger/login", handler.login)
+	router.Post("/auth/login", handler.login)
+	router.Post("/auth/driver/login", handler.login)
+	router.Post("/auth/passenger/otp", handler.requestOTP)
+	router.Post("/auth/passenger/verify-otp", handler.verifyOTP)
+	router.Post("/auth/verify-otp", handler.verifyOTP)
+	router.Post("/auth/forgot-password", handler.forgotPassword)
+	router.Post("/auth/reset-password", handler.resetPassword)
 }
 
 func (handler *Handler) passengerRegister(w http.ResponseWriter, r *http.Request) {

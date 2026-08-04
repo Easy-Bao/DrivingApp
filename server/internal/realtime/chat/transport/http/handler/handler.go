@@ -6,19 +6,20 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct{ service *usecase.Service }
 
 func NewHandler(service *usecase.Service) *Handler { return &Handler{service: service} }
 
-func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /chat/rooms", handler.createRoom)
-	mux.HandleFunc("GET /chat/rooms/{roomID}/messages", handler.messages)
-	mux.HandleFunc("POST /chat/rooms/{roomID}/resolve", handler.resolve)
-	mux.HandleFunc("POST /api/v1/chat/rooms", handler.createRoom)
-	mux.HandleFunc("GET /api/v1/chat/rooms/{roomID}/messages", handler.messages)
-	mux.HandleFunc("POST /api/v1/chat/rooms/{roomID}/resolve", handler.resolve)
+func (handler *Handler) RegisterRoutes(router chi.Router) {
+	router.Post("/chat/rooms", handler.createRoom)
+	router.Get("/chat/rooms/{roomID}/messages", handler.messages)
+	router.Post("/chat/rooms/{roomID}/resolve", handler.resolve)
+	router.Post("/api/v1/chat/rooms", handler.createRoom)
+	router.Get("/api/v1/chat/rooms/{roomID}/messages", handler.messages)
+	router.Post("/api/v1/chat/rooms/{roomID}/resolve", handler.resolve)
 }
 
 func (handler *Handler) createRoom(writer http.ResponseWriter, request *http.Request) {
@@ -47,7 +48,7 @@ func (handler *Handler) createRoom(writer http.ResponseWriter, request *http.Req
 }
 
 func (handler *Handler) messages(writer http.ResponseWriter, request *http.Request) {
-	items, err := handler.service.Messages(request.Context(), request.PathValue("roomID"))
+	items, err := handler.service.Messages(request.Context(), chi.URLParam(request, "roomID"))
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "could not load chat messages")
 		return
@@ -60,11 +61,11 @@ func (handler *Handler) messages(writer http.ResponseWriter, request *http.Reque
 }
 
 func (handler *Handler) resolve(writer http.ResponseWriter, request *http.Request) {
-	if err := handler.service.Resolve(request.Context(), request.PathValue("roomID")); err != nil {
+	if err := handler.service.Resolve(request.Context(), chi.URLParam(request, "roomID")); err != nil {
 		writeError(writer, http.StatusInternalServerError, "could not resolve chat room")
 		return
 	}
-	writeJSON(writer, http.StatusOK, map[string]any{"room_id": request.PathValue("roomID"), "status": "resolved"})
+	writeJSON(writer, http.StatusOK, map[string]any{"room_id": chi.URLParam(request, "roomID"), "status": "resolved"})
 }
 
 func writeJSON(writer http.ResponseWriter, status int, value any) {

@@ -6,6 +6,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 )
@@ -18,19 +19,19 @@ type Handler struct {
 func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
-func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/v1/users/me", handler.me)
-	mux.HandleFunc("PATCH /api/v1/users/me", handler.update)
-	mux.HandleFunc("GET /api/v1/passengers/{id}", handler.profile)
-	mux.HandleFunc("PUT /api/v1/passengers/{id}", handler.profileUpdate)
-	mux.HandleFunc("GET /api/v1/drivers/{id}", handler.profile)
-	mux.HandleFunc("POST /api/v1/drivers/{id}/online", handler.online)
-	mux.HandleFunc("GET /api/v1/passengers/{id}/notifications", handler.notifications)
-	mux.HandleFunc("GET /passengers/{id}", handler.profile)
-	mux.HandleFunc("PUT /passengers/{id}", handler.profileUpdate)
-	mux.HandleFunc("GET /drivers/{id}", handler.profile)
-	mux.HandleFunc("POST /drivers/{id}/online", handler.online)
-	mux.HandleFunc("GET /passengers/{id}/notifications", handler.notifications)
+func (handler *Handler) RegisterRoutes(router chi.Router) {
+	router.Get("/api/v1/users/me", handler.me)
+	router.Patch("/api/v1/users/me", handler.update)
+	router.Get("/api/v1/passengers/{id}", handler.profile)
+	router.Put("/api/v1/passengers/{id}", handler.profileUpdate)
+	router.Get("/api/v1/drivers/{id}", handler.profile)
+	router.Post("/api/v1/drivers/{id}/online", handler.online)
+	router.Get("/api/v1/passengers/{id}/notifications", handler.notifications)
+	router.Get("/passengers/{id}", handler.profile)
+	router.Put("/passengers/{id}", handler.profileUpdate)
+	router.Get("/drivers/{id}", handler.profile)
+	router.Post("/drivers/{id}/online", handler.online)
+	router.Get("/passengers/{id}/notifications", handler.notifications)
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	raw := r.Header.Get("Authorization")
@@ -91,7 +92,7 @@ func (handler *Handler) profile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(r.PathValue("id"))
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id != actorID {
 		writeError(w, 403, "forbidden")
 		return
@@ -106,7 +107,7 @@ func (handler *Handler) profile(w http.ResponseWriter, r *http.Request) {
 
 func (handler *Handler) profileUpdate(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
-	targetID, err := strconv.Atoi(r.PathValue("id"))
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if !ok {
 		writeError(w, 401, "unauthorized")
 		return
@@ -124,7 +125,7 @@ func (handler *Handler) notifications(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "unauthorized")
 		return
 	}
-	targetID, err := strconv.Atoi(r.PathValue("id"))
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || targetID != actorID {
 		writeError(w, 403, "forbidden")
 		return
@@ -143,7 +144,7 @@ func (handler *Handler) online(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "unauthorized")
 		return
 	}
-	targetID, err := strconv.Atoi(r.PathValue("id"))
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || targetID != actorID {
 		writeError(w, 403, "forbidden")
 		return

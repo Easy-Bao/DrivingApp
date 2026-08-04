@@ -10,6 +10,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -20,16 +21,16 @@ func NewHandler(service *usecase.Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (handler *Handler) RegisterRoutes(router *http.ServeMux) {
-	router.HandleFunc("GET /api/v1/location/search", handler.search)
-	router.HandleFunc("GET /api/v1/location/nearby", handler.nearby)
-	router.HandleFunc("GET /api/v1/location/reverse", handler.reverse)
-	router.HandleFunc("POST /api/v1/location/route", handler.route)
+func (handler *Handler) RegisterRoutes(router chi.Router) {
+	router.Get("/api/v1/location/search", handler.search)
+	router.Get("/api/v1/location/nearby", handler.nearby)
+	router.Get("/api/v1/location/reverse", handler.reverse)
+	router.Post("/api/v1/location/route", handler.route)
 	for _, prefix := range []string{"/location", "/places"} {
-		router.HandleFunc("GET "+prefix+"/search", handler.search)
-		router.HandleFunc("GET "+prefix+"/nearby", handler.nearby)
-		router.HandleFunc("GET "+prefix+"/reverse", handler.reverse)
-		router.HandleFunc("POST "+prefix+"/route", handler.route)
+		router.Get(prefix+"/search", handler.search)
+		router.Get(prefix+"/nearby", handler.nearby)
+		router.Get(prefix+"/reverse", handler.reverse)
+		router.Post(prefix+"/route", handler.route)
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -25,16 +26,16 @@ func NewHandler(service *usecase.Service, auth ...*security.TokenManager) *Handl
 	return &Handler{service: service, auth: tokenManager}
 }
 
-func (router *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/v1/telemetry/location", router.update)
-	mux.HandleFunc("GET /api/v1/telemetry/location/nearby", router.nearby)
-	mux.HandleFunc("GET /api/v1/telemetry/location/{driverID}", router.get)
-	mux.HandleFunc("POST /api/v1/telemetry/passenger/{rideID}", router.updatePassenger)
-	mux.HandleFunc("GET /api/v1/telemetry/passenger/{rideID}", router.getPassenger)
-	mux.HandleFunc("POST /telemetry/location", router.update)
-	mux.HandleFunc("GET /telemetry/location/{driverID}", router.get)
-	mux.HandleFunc("POST /telemetry/passenger/{rideID}", router.updatePassenger)
-	mux.HandleFunc("GET /telemetry/passenger/{rideID}", router.getPassenger)
+func (router *Handler) RegisterRoutes(r chi.Router) {
+	r.Post("/api/v1/telemetry/location", router.update)
+	r.Get("/api/v1/telemetry/location/nearby", router.nearby)
+	r.Get("/api/v1/telemetry/location/{driverID}", router.get)
+	r.Post("/api/v1/telemetry/passenger/{rideID}", router.updatePassenger)
+	r.Get("/api/v1/telemetry/passenger/{rideID}", router.getPassenger)
+	r.Post("/telemetry/location", router.update)
+	r.Get("/telemetry/location/{driverID}", router.get)
+	r.Post("/telemetry/passenger/{rideID}", router.updatePassenger)
+	r.Get("/telemetry/passenger/{rideID}", router.getPassenger)
 }
 
 func (router *Handler) update(writer http.ResponseWriter, request *http.Request) {
@@ -72,7 +73,7 @@ func (router *Handler) update(writer http.ResponseWriter, request *http.Request)
 }
 
 func (router *Handler) get(writer http.ResponseWriter, request *http.Request) {
-	point, err := router.service.Get(request.Context(), request.PathValue("driverID"))
+	point, err := router.service.Get(request.Context(), chi.URLParam(request, "driverID"))
 	if err != nil {
 		writeError(writer, http.StatusNotFound, "location not found")
 		return
@@ -99,7 +100,7 @@ func (router *Handler) updatePassenger(writer http.ResponseWriter, request *http
 		input.Longitude = input.Lng
 	}
 	point := domain.DriverPoint{Latitude: input.Latitude, Longitude: input.Longitude}
-	if err := router.service.UpdatePassenger(request.Context(), request.PathValue("rideID"), point); err != nil {
+	if err := router.service.UpdatePassenger(request.Context(), chi.URLParam(request, "rideID"), point); err != nil {
 		writeError(writer, http.StatusInternalServerError, "could not save location")
 		return
 	}
@@ -107,7 +108,7 @@ func (router *Handler) updatePassenger(writer http.ResponseWriter, request *http
 }
 
 func (router *Handler) getPassenger(writer http.ResponseWriter, request *http.Request) {
-	point, err := router.service.GetPassenger(request.Context(), request.PathValue("rideID"))
+	point, err := router.service.GetPassenger(request.Context(), chi.URLParam(request, "rideID"))
 	if err != nil {
 		writeError(writer, http.StatusNotFound, "location not found")
 		return
