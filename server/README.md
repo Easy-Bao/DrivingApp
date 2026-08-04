@@ -1,7 +1,7 @@
 # Go backend
 
-This directory contains the Go backend described in `docs/architecture.md`.
-`core-api`, `realtime-service`, and `api-gateway` are the three Go applications.
+This directory contains the Go backend. `core-api`, `realtime-service`, and
+`api-gateway` are the three Go applications.
 Domain-owned schemas under `internal/*/schema` are composed into one generated
 Ent client.
 

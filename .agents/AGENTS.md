@@ -104,7 +104,6 @@ implementation and verification set that proves the requested change.
 - Commit messages use a lowercase `<topic>: <summary>` header, one lowercase
   narrative paragraph without lists, and one or more final
   `changelog: <user-facing summary>` lines.
-- Record confirmed behavior and gaps in `docs/product-plan.md`, verified runtime
-  facts in `docs/repo-current-state.md`, and Admin architecture/startup in
-  `docs/admin-mvp.md` without duplicating long specifications.
+- Keep implementation notes close to the owning module or service instead of
+  maintaining a separate repository-wide documentation folder.
 - Report outcome first, then changed areas, checks, risks, and incomplete work.
