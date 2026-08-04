@@ -1,0 +1,13 @@
+package domain
+
+type Profile struct {
+	ID                int     `json:"id"`
+	UserID            int     `json:"user_id"`
+	Role              string  `json:"role"`
+	Name              string  `json:"name"`
+	PreferredRideType string  `json:"preferred_ride_type,omitempty"`
+	VehicleType       string  `json:"vehicle_type,omitempty"`
+	PlateNumber       string  `json:"plate_number,omitempty"`
+	Rating            float64 `json:"rating,omitempty"`
+	IsOnline          bool    `json:"is_online,omitempty"`
+}

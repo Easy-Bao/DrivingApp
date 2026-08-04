@@ -53,7 +53,9 @@ cd "${repository_root}"
 
 (cd server && go run ./cmd/core-api) & service_pids+=("$!")
 (cd server && go run ./cmd/realtime-service) & service_pids+=("$!")
+(cd server && go run ./api-gateway) & service_pids+=("$!")
 
 wait_for_http_service "http://127.0.0.1:${CORE_API_PORT:-8080}/health"
-echo "core-api and realtime-service are ready. Press Ctrl-C to stop them."
+wait_for_http_service "http://127.0.0.1:${GATEWAY_PORT:-8000}/health"
+echo "core-api, realtime-service, and api-gateway are ready. Press Ctrl-C to stop them."
 wait -n "${service_pids[@]}"

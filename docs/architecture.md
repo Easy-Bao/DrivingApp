@@ -1,18 +1,19 @@
 # EasyRide backend architecture
 
-EasyRide uses one Go core process for transactional REST operations and one Go
-realtime process for WebSockets and ephemeral location. The API gateway and the
-old Bun services are retired; mobile and Admin traffic reaches `core-api`
-directly through deployment routing.
+EasyRide uses three Go applications: `core-api` for transactional REST,
+`realtime-service` for WebSockets and ephemeral location/chat, and
+`api-gateway` for routing and edge infrastructure. The old Bun microservice
+fleet is retired.
 
 ## Runtime layout
 
 ```text
 server
   cmd/core-api
+  cmd/realtime-service
   cmd/entgenerate
   cmd/migrate
-  cmd/realtime-service
+  api-gateway
   internal
     auth/schema       # identity Ent declarations owned by auth
     users/schema
@@ -22,19 +23,21 @@ server
     admin/schema
     realtime
     platform
+  tests                 # module contract and integration tests
   ent                 # generated client and migration API only
 ```
 
 `core-api` owns authentication, users, driver documents, rides, bidding, fare,
 location search, and Admin operations. `realtime-service` owns the WebSocket
-connection lifecycle, chat relay, presence, and high-frequency driver location.
-It does not own transactional ride state.
+connection lifecycle, Redis-backed presence/geo, and live chat relay. It does
+not own transactional ride state. `api-gateway` contains no business logic.
 
 Each `server/internal/<domain>` package is private and owns its domain models,
-use cases, adapters, transports, tests, and Ent schema declarations. Domain
-packages do not import HTTP, Redis, Mapbox, or Ent into invariants. Adapters
-translate external systems, transports validate requests and map responses, and
-use cases define authorization and transaction boundaries.
+use cases, adapters, transports, and module tests. Domain packages do not import
+HTTP, Redis, Mapbox, or Ent into invariants. Adapters translate external
+systems, transports validate requests and map responses, and use cases define
+authorization and transaction boundaries. `cmd` packages only perform DI and
+process startup.
 
 Schemas are intentionally not stored in a global `server/ent/schema` directory.
 The module-owned files under `internal/*/schema` are composed into one temporary
@@ -61,11 +64,11 @@ The generated files under `server/ent` are checked in and must not be edited by
 hand. Schema changes are reviewed with the generated migration contract before
 deployment. The application does not run destructive drop options.
 
-The deployment exposes one REST process and one realtime process:
+The deployment exposes three applications:
 
 ```text
-REST /api/*  -> core-api:8080
-WS   /ws     -> realtime-service:8081
+REST /api/*  -> api-gateway -> core-api:8080
+WS   /ws     -> api-gateway -> realtime-service:8081
 ```
 
 Core endpoint groups are `/auth`, `/users`, `/driver/documents`, `/rides`,

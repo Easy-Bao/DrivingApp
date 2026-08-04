@@ -1,9 +1,9 @@
 # Go backend
 
 This directory contains the Go backend described in `docs/architecture.md`.
-`core-api` is the single transactional REST process and `realtime-service` is
-the separate WebSocket process. Domain-owned schemas under `internal/*/schema`
-are composed into one generated Ent client.
+`core-api`, `realtime-service`, and `api-gateway` are the three Go applications.
+Domain-owned schemas under `internal/*/schema` are composed into one generated
+Ent client.
 
 ## Run
 
@@ -11,6 +11,7 @@ are composed into one generated Ent client.
 cd server
 go run ./cmd/core-api
 go run ./cmd/realtime-service
+go run ./api-gateway
 ```
 
 `core-api` uses `CORE_API_PORT` and `MAPBOX_ACCESS_TOKEN`. The realtime process

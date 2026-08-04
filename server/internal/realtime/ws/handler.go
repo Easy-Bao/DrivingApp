@@ -11,12 +11,15 @@ import (
 type Handler struct {
 	hub          *Hub
 	authenticate Authenticator
+	sink         EventSink
 	upgrader     websocket.Upgrader
 }
 
 type Authenticator interface {
 	Verify(token string) (string, error)
 }
+
+type EventSink interface{ Handle(message []byte) error }
 
 func NewHandler(hub *Hub, authenticate Authenticator) *Handler {
 	return &Handler{
@@ -26,6 +29,12 @@ func NewHandler(hub *Hub, authenticate Authenticator) *Handler {
 			CheckOrigin: func(*http.Request) bool { return false },
 		},
 	}
+}
+
+func NewHandlerWithSink(hub *Hub, authenticate Authenticator, sink EventSink) *Handler {
+	handler := NewHandler(hub, authenticate)
+	handler.sink = sink
+	return handler
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -58,6 +67,9 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		if messageType != websocket.TextMessage || !validEvent(message) {
 			_ = connection.WriteJSON(map[string]string{"error": "invalid event"})
 			continue
+		}
+		if handler.sink != nil {
+			_ = handler.sink.Handle(message)
 		}
 		handler.hub.Broadcast(message)
 	}
