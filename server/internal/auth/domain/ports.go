@@ -33,3 +33,9 @@ type OTPStore interface {
 	Put(ctx context.Context, purpose, email, code string, ttl time.Duration) error
 	Consume(ctx context.Context, purpose, email, code string) error
 }
+
+type PendingRegistrationStore interface {
+	Put(ctx context.Context, registration PendingRegistration, ttl time.Duration) error
+	Get(ctx context.Context, email string) (PendingRegistration, error)
+	Delete(ctx context.Context, email string) error
+}

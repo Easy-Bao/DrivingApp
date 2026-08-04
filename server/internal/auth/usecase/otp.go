@@ -14,34 +14,106 @@ import (
 const otpLifetime = 10 * time.Minute
 
 type OTPService struct {
-	users   domain.VerifiedUserRepository
-	store   domain.OTPStore
-	gateway domain.OTPGateway
-	tokens  domain.TokenIssuer
+	users         domain.VerifiedUserRepository
+	store         domain.OTPStore
+	gateway       domain.OTPGateway
+	tokens        domain.TokenIssuer
+	pending       domain.PendingRegistrationStore
+	registrations *RegisterService
 }
 
 func NewOTPService(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer) *OTPService {
 	return &OTPService{users: users, store: store, gateway: gateway, tokens: tokens}
 }
 
+func NewOTPServiceWithPending(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer, pending domain.PendingRegistrationStore, registrations *RegisterService) *OTPService {
+	return &OTPService{
+		users:         users,
+		store:         store,
+		gateway:       gateway,
+		tokens:        tokens,
+		pending:       pending,
+		registrations: registrations,
+	}
+}
+
+func (service *OTPService) RegisterPassenger(ctx context.Context, input RegisterInput) (domain.PendingRegistration, error) {
+	if service.pending == nil || service.registrations == nil {
+		return domain.PendingRegistration{}, domain.ErrOTPUnavailable
+	}
+	email := strings.ToLower(strings.TrimSpace(input.Email))
+	if account, err := service.users.FindByEmail(ctx, email); err == nil && account.ID != 0 {
+		if account.Role != domain.Passenger || account.IsVerified {
+			return domain.PendingRegistration{}, domain.ErrEmailTaken
+		}
+		if err := service.requestCode(ctx, "verification", account.Email); err != nil {
+			return domain.PendingRegistration{}, err
+		}
+		return domain.PendingRegistration{Email: account.Email, Role: domain.Passenger}, nil
+	}
+
+	registration, err := service.registrations.PreparePassenger(ctx, input)
+	if err != nil {
+		return domain.PendingRegistration{}, err
+	}
+	if err := service.pending.Put(ctx, registration, otpLifetime); err != nil {
+		return domain.PendingRegistration{}, err
+	}
+	if err := service.requestCode(ctx, "verification", registration.Email); err != nil {
+		_ = service.pending.Delete(ctx, registration.Email)
+		return domain.PendingRegistration{}, err
+	}
+	return registration, nil
+}
+
 func (service *OTPService) RequestVerification(ctx context.Context, email string) error {
-	return service.request(ctx, "verification", email)
+	email = strings.ToLower(strings.TrimSpace(email))
+	if account, err := service.users.FindByEmail(ctx, email); err == nil && account.ID != 0 {
+		if account.Role != domain.Passenger {
+			return domain.ErrInvalidCredentials
+		}
+		return service.requestCode(ctx, "verification", account.Email)
+	}
+	if service.pending != nil {
+		registration, err := service.pending.Get(ctx, email)
+		if err == nil && registration.Role == domain.Passenger {
+			return service.requestCode(ctx, "verification", registration.Email)
+		}
+	}
+	return domain.ErrInvalidCredentials
 }
 
 func (service *OTPService) VerifyPassenger(ctx context.Context, email, code string) (domain.User, string, error) {
-	account, err := service.account(ctx, email)
-	if err != nil || account.Role != domain.Passenger {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if err := service.store.Consume(ctx, "verification", email, strings.TrimSpace(code)); err != nil {
 		return domain.User{}, "", domain.ErrInvalidOTP
 	}
-	if err := service.store.Consume(ctx, "verification", account.Email, strings.TrimSpace(code)); err != nil {
+	if account, err := service.users.FindByEmail(ctx, email); err == nil && account.ID != 0 {
+		if account.Role != domain.Passenger {
+			return domain.User{}, "", domain.ErrInvalidOTP
+		}
+		if err := service.users.MarkVerified(ctx, account.ID); err != nil {
+			return domain.User{}, "", err
+		}
+		account.IsVerified = true
+		token, err := service.tokens.Issue(strconv.Itoa(account.ID))
+		return account, token, err
+	}
+	if service.pending == nil || service.registrations == nil {
 		return domain.User{}, "", domain.ErrInvalidOTP
 	}
-	if err := service.users.MarkVerified(ctx, account.ID); err != nil {
+	registration, err := service.pending.Get(ctx, email)
+	if err != nil || registration.Role != domain.Passenger {
+		return domain.User{}, "", domain.ErrInvalidOTP
+	}
+	account, token, err := service.registrations.CommitPendingPassenger(ctx, registration)
+	if err != nil {
 		return domain.User{}, "", err
 	}
-	account.IsVerified = true
-	token, err := service.tokens.Issue(strconv.Itoa(account.ID))
-	return account, token, err
+	if err := service.pending.Delete(ctx, registration.Email); err != nil {
+		return domain.User{}, "", err
+	}
+	return account, token, nil
 }
 
 func (service *OTPService) RequestPasswordReset(ctx context.Context, email string) error {
@@ -67,14 +139,18 @@ func (service *OTPService) request(ctx context.Context, purpose, email string) e
 	if err != nil {
 		return domain.ErrInvalidCredentials
 	}
+	return service.requestCode(ctx, purpose, account.Email)
+}
+
+func (service *OTPService) requestCode(ctx context.Context, purpose, email string) error {
 	code, err := generateOTP()
 	if err != nil {
 		return err
 	}
-	if err := service.store.Put(ctx, purpose, account.Email, code, otpLifetime); err != nil {
+	if err := service.store.Put(ctx, purpose, email, code, otpLifetime); err != nil {
 		return err
 	}
-	if err := service.gateway.Send(ctx, account.Email, code); err != nil {
+	if err := service.gateway.Send(ctx, email, code); err != nil {
 		return domain.ErrOTPUnavailable
 	}
 	return nil

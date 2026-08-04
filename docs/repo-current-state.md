@@ -7,8 +7,9 @@ private upstream processes.
 
 The core modules have domain-owned schemas and ports/adapters for PostgreSQL,
 Redis, RabbitMQ, Mapbox, go-mail, and document persistence. Auth includes explicit
-passenger/driver registration and authentication use cases, passenger-only OTP
-verification, password reset, JWT issuance, and profile provisioning. Rides
+passenger/driver registration and authentication use cases, Redis-backed
+pending passenger registration, passenger-only OTP verification, password
+reset, JWT issuance, and profile provisioning. Rides
 contains fare calculation, persisted bid sessions/offers, transactional offer
 acceptance, the ride state machine, passenger history, driver
 activity/reviews, and online-driver discovery. Realtime contains Redis-backed

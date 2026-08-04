@@ -58,9 +58,11 @@ must not be edited in the platform aggregate.
 verification, rides, fare calculation, bid sessions and offers, location
 search/routing, and Admin statistics. Passenger registration and login, driver
 registration and login, password hashing, profile provisioning, and JWT issue
-are explicit auth use cases. Passenger OTP verification and password recovery
-use Redis-backed one-time codes and a go-mail adapter; driver accounts do not use
-the passenger verification route.
+are explicit auth use cases. Passenger registration is held in Redis until OTP
+verification succeeds, then the PostgreSQL user and profile are created.
+Passenger OTP verification and password recovery use Redis-backed one-time
+codes and a go-mail adapter; driver accounts do not use the passenger
+verification route.
 
 `realtime-service` owns the authenticated WebSocket hub, Redis GEO driver
 locations, passenger/driver telemetry lookup, Redis-backed chat history, and

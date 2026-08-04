@@ -73,16 +73,37 @@ func (handler *Handler) genericRegister(w http.ResponseWriter, r *http.Request) 
 }
 
 func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, input dto.Credentials, driver bool) {
+	if !driver {
+		if handler.otp == nil {
+			writeError(w, http.StatusServiceUnavailable, "passenger verification is unavailable")
+			return
+		}
+		pending, err := handler.otp.RegisterPassenger(r.Context(), toRegisterInput(input))
+		if err != nil {
+			status := http.StatusBadRequest
+			if errors.Is(err, domain.ErrEmailTaken) {
+				status = http.StatusConflict
+			}
+			if errors.Is(err, domain.ErrOTPUnavailable) {
+				status = http.StatusServiceUnavailable
+			}
+			writeError(w, status, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusAccepted, map[string]any{
+			"success": true,
+			"data": map[string]any{
+				"email":             pending.Email,
+				"needsVerification": true,
+			},
+		})
+		return
+	}
 	var account domain.User
 	var token string
 	var err error
 	if driver {
 		account, token, err = handler.register.Driver(r.Context(), toRegisterInput(input))
-	} else {
-		account, token, err = handler.register.Passenger(r.Context(), toRegisterInput(input))
-		if err == nil && handler.otp != nil {
-			_ = handler.otp.RequestVerification(r.Context(), account.Email)
-		}
 	}
 	if err != nil {
 		status := http.StatusBadRequest

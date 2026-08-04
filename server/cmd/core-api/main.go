@@ -101,11 +101,13 @@ func main() {
 	if registerService != nil && authenticateService != nil && verifier != nil {
 		var otpService *authusecase.OTPService
 		if redisClient != nil && authRepository != nil {
-			otpService = authusecase.NewOTPService(
+			otpService = authusecase.NewOTPServiceWithPending(
 				authRepository,
 				authredis.NewOTPStore(redisClient),
 				email.NewGoMailGatewayFromEnv(),
 				verifier,
+				authredis.NewPendingRegistrationStore(redisClient),
+				registerService,
 			)
 		}
 		authRouter = authhttp.NewRouter(registerService, authenticateService, otpService)

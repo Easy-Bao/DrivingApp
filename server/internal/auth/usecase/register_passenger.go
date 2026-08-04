@@ -38,31 +38,103 @@ func (service *RegisterService) Driver(ctx context.Context, input RegisterInput)
 	return service.register(ctx, input, domain.Driver)
 }
 
-func (service *RegisterService) register(ctx context.Context, input RegisterInput, role domain.Role) (domain.User, string, error) {
-	if strings.TrimSpace(input.Email) == "" || input.Password == "" {
+func (service *RegisterService) PreparePassenger(ctx context.Context, input RegisterInput) (domain.PendingRegistration, error) {
+	normalized, err := normalizeInput(input, domain.Passenger)
+	if err != nil {
+		return domain.PendingRegistration{}, err
+	}
+	if existing, err := service.repository.FindByEmail(ctx, normalized.Email); err == nil && existing.ID != 0 {
+		return domain.PendingRegistration{}, domain.ErrEmailTaken
+	}
+	return domain.PendingRegistration{
+		Email:             normalized.Email,
+		Phone:             normalized.Phone,
+		Name:              normalized.Name,
+		PasswordHash:      normalized.PasswordHash,
+		Role:              normalized.Role,
+		VehicleType:       normalized.VehicleType,
+		PlateNumber:       normalized.PlateNumber,
+		PreferredRideType: normalized.PreferredRideType,
+	}, nil
+}
+
+func (service *RegisterService) CommitPendingPassenger(ctx context.Context, pending domain.PendingRegistration) (domain.User, string, error) {
+	if pending.Role != domain.Passenger || pending.Email == "" || pending.PasswordHash == "" {
 		return domain.User{}, "", domain.ErrInvalidCredentials
 	}
-	if existing, err := service.repository.FindByEmail(ctx, strings.ToLower(strings.TrimSpace(input.Email))); err == nil && existing.ID != 0 {
+	if existing, err := service.repository.FindByEmail(ctx, pending.Email); err == nil && existing.ID != 0 {
 		return domain.User{}, "", domain.ErrEmailTaken
 	}
-	account, err := service.repository.Create(ctx, domain.User{
+	return service.create(ctx, domain.User{
+		Email:             pending.Email,
+		Phone:             pending.Phone,
+		Name:              pending.Name,
+		Role:              pending.Role,
+		PasswordHash:      pending.PasswordHash,
+		IsVerified:        true,
+		VehicleType:       pending.VehicleType,
+		PlateNumber:       pending.PlateNumber,
+		PreferredRideType: pending.PreferredRideType,
+	})
+}
+
+func (service *RegisterService) register(ctx context.Context, input RegisterInput, role domain.Role) (domain.User, string, error) {
+	normalized, err := normalizeInput(input, role)
+	if err != nil {
+		return domain.User{}, "", err
+	}
+	if existing, err := service.repository.FindByEmail(ctx, normalized.Email); err == nil && existing.ID != 0 {
+		return domain.User{}, "", domain.ErrEmailTaken
+	}
+	return service.create(ctx, domain.User{
+		Email:             normalized.Email,
+		Phone:             normalized.Phone,
+		Name:              normalized.Name,
+		Role:              normalized.Role,
+		PasswordHash:      normalized.PasswordHash,
+		VehicleType:       normalized.VehicleType,
+		PlateNumber:       normalized.PlateNumber,
+		PreferredRideType: normalized.PreferredRideType,
+	})
+}
+
+type normalizedRegistration struct {
+	Email             string
+	Phone             string
+	Name              string
+	PasswordHash      string
+	Role              domain.Role
+	VehicleType       string
+	PlateNumber       string
+	PreferredRideType string
+}
+
+func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistration, error) {
+	if strings.TrimSpace(input.Email) == "" || input.Password == "" {
+		return normalizedRegistration{}, domain.ErrInvalidCredentials
+	}
+	return normalizedRegistration{
 		Email:             strings.ToLower(strings.TrimSpace(input.Email)),
 		Phone:             strings.TrimSpace(input.Phone),
 		Name:              strings.TrimSpace(input.Name),
-		Role:              role,
 		PasswordHash:      HashPassword(input.Password),
+		Role:              role,
 		VehicleType:       strings.TrimSpace(input.VehicleType),
 		PlateNumber:       strings.TrimSpace(input.PlateNumber),
 		PreferredRideType: "solo-ride",
-	})
+	}, nil
+}
+
+func (service *RegisterService) create(ctx context.Context, account domain.User) (domain.User, string, error) {
+	created, err := service.repository.Create(ctx, account)
 	if err != nil {
 		return domain.User{}, "", err
 	}
 	if service.provisioner != nil {
-		if err := service.provisioner.Provision(ctx, account); err != nil {
+		if err := service.provisioner.Provision(ctx, created); err != nil {
 			return domain.User{}, "", err
 		}
 	}
-	token, err := service.tokens.Issue(intSubject(account.ID))
-	return account, token, err
+	token, err := service.tokens.Issue(intSubject(created.ID))
+	return created, token, err
 }
