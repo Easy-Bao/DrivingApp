@@ -16,21 +16,19 @@ if (( ${#connected_device_ids[@]} == 0 )); then
   exit 1
 fi
 
-readonly service_ports=(8080 8081)
+readonly gateway_port=8000
 failed_mapping_count=0
 
 echo "Reversing ports for all connected Android devices..."
 for device_id in "${connected_device_ids[@]}"; do
   echo "Device: ${device_id}"
-  for service_port in "${service_ports[@]}"; do
-    if adb -s "${device_id}" reverse \
-      "tcp:${service_port}" "tcp:${service_port}" >/dev/null; then
-      echo "   tcp:${service_port} -> tcp:${service_port}"
-    else
-      echo "   Failed to reverse tcp:${service_port} for ${device_id}." >&2
-      failed_mapping_count=$((failed_mapping_count + 1))
-    fi
-  done
+  if adb -s "${device_id}" reverse \
+    "tcp:${gateway_port}" "tcp:${gateway_port}" >/dev/null; then
+    echo "   tcp:${gateway_port} -> tcp:${gateway_port}"
+  else
+    echo "   Failed to reverse tcp:${gateway_port} for ${device_id}." >&2
+    failed_mapping_count=$((failed_mapping_count + 1))
+  fi
 done
 
 if (( failed_mapping_count > 0 )); then
