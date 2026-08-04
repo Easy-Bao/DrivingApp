@@ -129,10 +129,8 @@ class MapNativeService {
     try {
       final route = await _apiClient.getRoute(
         body: {
-          'originLat': originLat,
-          'originLng': originLng,
-          'destLat': destLat,
-          'destLng': destLng,
+          'origin': {'lat': originLat, 'lng': originLng},
+          'destination': {'lat': destLat, 'lng': destLng},
         },
       );
       return right(route);

@@ -55,6 +55,14 @@ func main() {
 	var authenticateService *authusecase.AuthenticateService
 	var verifier *security.TokenManager
 	var authRepository *authpostgres.UserRepository
+	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
+	routeCalculator := ridesusecase.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (ridesusecase.RouteMetrics, error) {
+		route, err := provider.Route(ctx, locationdomain.Coordinates{Latitude: originLat, Longitude: originLng}, locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng})
+		if err != nil {
+			return ridesusecase.RouteMetrics{}, err
+		}
+		return ridesusecase.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
+	})
 	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
 		client, err := database.OpenPostgres(databaseURL)
 		if err != nil {
@@ -79,12 +87,11 @@ func main() {
 		verifier = token.NewVerifier(os.Getenv("JWT_SECRET"))
 		usersRouter = usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(client)), verifier)
 		documentRepository = documentpostgres.NewRepository(client)
-		ridesRouter = rideshttp.NewRouter(ridesusecase.NewService(ridespostgres.NewRepository(client)), verifier)
+		ridesRouter = rideshttp.NewRouter(ridesusecase.NewServiceWithRouteCalculator(ridespostgres.NewRepository(client), routeCalculator), verifier)
 		adminRouter = adminhttp.NewRouter(adminusecase.NewService(adminpostgres.NewRepository(client)), verifier)
 	} else {
 		log.Fatal("DATABASE_URL is required")
 	}
-	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
 	var cache locationdomain.Cache
 	var publisher locationdomain.EventPublisher
 	var redisClient *redisclient.Client

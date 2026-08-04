@@ -45,8 +45,8 @@ class EnRoutePickupScreen extends StatefulWidget {
 class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   double _sliderVal = 0;
   bool _isLoading = true;
-  double _passengerLat = 0.0;
-  double _passengerLng = 0.0;
+  double? _passengerLat;
+  double? _passengerLng;
   Timer? _trackingTimer;
 
   int _unreadChatMessagesCount = 0;
@@ -103,13 +103,13 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
               ),
             );
           }
-          if (mounted) {
+          if (mounted && _passengerLat != null && _passengerLng != null) {
             mapBloc.add(
               UpdateLocationsAndDrawRouteEvent(
                 driverLat: pos.latitude,
                 driverLng: pos.longitude,
-                passengerLat: _passengerLat,
-                passengerLng: _passengerLng,
+                passengerLat: _passengerLat!,
+                passengerLng: _passengerLng!,
               ),
             );
           }
@@ -167,9 +167,6 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       if (places.isNotEmpty) {
         _passengerLat = places.first.latitude;
         _passengerLng = places.first.longitude;
-      } else {
-        _passengerLat = pos.latitude;
-        _passengerLng = pos.longitude;
       }
     }
 
@@ -182,12 +179,15 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   }
 
   void _triggerDrawRoute(BuildContext context, double dLat, double dLng) {
+    final passengerLat = _passengerLat;
+    final passengerLng = _passengerLng;
+    if (passengerLat == null || passengerLng == null) return;
     BlocProvider.of<LiveMapBloc>(context).add(
       UpdateLocationsAndDrawRouteEvent(
         driverLat: dLat,
         driverLng: dLng,
-        passengerLat: _passengerLat,
-        passengerLng: _passengerLng,
+        passengerLat: passengerLat,
+        passengerLng: passengerLng,
       ),
     );
   }
@@ -196,6 +196,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
     final pos = LocationService.lastPosition;
     final defaultLat = pos?.latitude ?? _passengerLat;
     final defaultLng = pos?.longitude ?? _passengerLng;
+    if (defaultLat == null || defaultLng == null) return;
 
     BlocProvider.of<LiveMapBloc>(context).add(
       InitializeMapEvent(
@@ -216,15 +217,12 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
         ? state.passengerName
         : 'Passenger';
     final pickupState = state is RideFlowEnRoutePickup ? state : null;
-    BlocProvider.of<RideFlowCubit>(context).arriveAtPickup(
-      passengerName,
-      pickupLat:
-          pickupState?.pickupLat ?? LocationService.lastPosition?.latitude ?? 0,
-      pickupLng:
-          pickupState?.pickupLng ??
-          LocationService.lastPosition?.longitude ??
-          0,
-    );
+    final pickupLat = pickupState?.pickupLat ?? _passengerLat;
+    final pickupLng = pickupState?.pickupLng ?? _passengerLng;
+    if (pickupLat == null || pickupLng == null) return;
+    BlocProvider.of<RideFlowCubit>(
+      context,
+    ).arriveAtPickup(passengerName, pickupLat: pickupLat, pickupLng: pickupLng);
     context.pushReplacementNamed(
       TripRoutes.waitingPassenger,
       extra: {
@@ -244,16 +242,17 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
-          final defaultLat =
-              LocationService.lastPosition?.latitude ??
-              (rideCubitState is RideFlowEnRoutePickup
-                  ? rideCubitState.pickupLat
-                  : 0.0);
-          final defaultLng =
-              LocationService.lastPosition?.longitude ??
-              (rideCubitState is RideFlowEnRoutePickup
-                  ? rideCubitState.pickupLng
-                  : 0.0);
+          final position = LocationService.lastPosition;
+          final pickupState = rideCubitState is RideFlowEnRoutePickup
+              ? rideCubitState
+              : null;
+          final defaultLat = position?.latitude ?? pickupState?.pickupLat;
+          final defaultLng = position?.longitude ?? pickupState?.pickupLng;
+          if (defaultLat == null || defaultLng == null) {
+            return const Scaffold(
+              body: Center(child: Text('Pickup location is unavailable.')),
+            );
+          }
 
           return Scaffold(
             backgroundColor: AppTheme.surface,

@@ -38,6 +38,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
   dynamic _passengerMarkerManager;
   dynamic _driverMarkerManager;
   dynamic _destinationMarkerManager;
+  dynamic _routeLineManager;
   StreamSubscription<Position>? _locationSubscription;
   LiveMapBloc? _liveMapBloc;
 
@@ -58,6 +59,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
     if (_locationSubscription != null) {
       unawaited(_locationSubscription!.cancel());
     }
+    unawaited(MapProvider.clearAnnotations(_routeLineManager));
     _chatMessagesPollTimer?.cancel();
     super.dispose();
   }
@@ -111,9 +113,6 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
       final passengerLng =
           LocationService.lastPosition?.longitude ?? widget.ride.pickupLng;
 
-      final driverStartLat = passengerLat + 0.006;
-      final driverStartLng = passengerLng - 0.005;
-
       if (_locationSubscription != null) {
         unawaited(_locationSubscription!.cancel());
       }
@@ -131,8 +130,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
 
       unawaited(
         BlocProvider.of<TrackDriverCubit>(context).startTracking(
-          startLat: driverStartLat,
-          startLng: driverStartLng,
+          startLat: passengerLat,
+          startLng: passengerLng,
           endLat: passengerLat,
           endLng: passengerLng,
           rideId: widget.ride.id,
@@ -162,7 +161,7 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
     try {
       if (!_routeDrawn && routePoints != null && routePoints.isNotEmpty) {
         _routeDrawn = true;
-        await MapProvider.addPolyline(
+        _routeLineManager = await MapProvider.addAnimatedPolyline(
           _mapController!,
           routePoints,
           color: AppTheme.primaryColor.withValues(alpha: 0.6),
@@ -285,6 +284,8 @@ class _ActivityTrackDriverScreenState extends State<ActivityTrackDriverScreen> {
           if (_lastMapStatus != state.status) {
             _routeDrawn = false;
             _lastMapStatus = state.status;
+            unawaited(MapProvider.clearAnnotations(_routeLineManager));
+            _routeLineManager = null;
           }
           unawaited(
             _updateMapElements(

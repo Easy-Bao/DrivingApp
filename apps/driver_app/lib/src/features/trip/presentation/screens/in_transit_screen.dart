@@ -41,10 +41,10 @@ class InTransitScreen extends StatefulWidget {
 
 class _InTransitScreenState extends State<InTransitScreen> {
   bool _isLoading = true;
-  double _destLat = 0.0;
-  double _destLng = 0.0;
-  double _passengerLat = 0.0;
-  double _passengerLng = 0.0;
+  double? _destLat;
+  double? _destLng;
+  double? _passengerLat;
+  double? _passengerLng;
   Timer? _trackingTimer;
 
   @override
@@ -104,6 +104,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   Future<void> _loadRoute() async {
+    final rideCubit = BlocProvider.of<RideFlowCubit>(context);
     final pos =
         await LocationService.getCurrentPosition() ??
         LocationService.lastPosition;
@@ -112,7 +113,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
     final dLat = pos.latitude;
     final dLng = pos.longitude;
 
-    final rideState = BlocProvider.of<RideFlowCubit>(context).state;
+    final rideState = rideCubit.state;
     if (rideState is RideFlowInTransit) {
       _destLat = rideState.destLat;
       _destLng = rideState.destLng;
@@ -123,11 +124,21 @@ class _InTransitScreenState extends State<InTransitScreen> {
         _destLng = places.first.longitude;
       }
     }
-    _passengerLat = _destLat;
-    _passengerLng = _destLng;
     if (rideState is RideFlowInTransit) {
       _passengerLat = rideState.passengerLat;
       _passengerLng = rideState.passengerLng;
+    }
+
+    final rideId = rideCubit.activeRideId;
+    if (_passengerLat == null && rideId != null && rideId.isNotEmpty) {
+      try {
+        final location = await Modular.get<TelemetryRemoteDataSource>()
+            .fetchPassengerLocation(rideId);
+        if (location['lat'] is num && location['lng'] is num) {
+          _passengerLat = (location['lat'] as num).toDouble();
+          _passengerLng = (location['lng'] as num).toDouble();
+        }
+      } catch (_) {}
     }
 
     if (mounted) {
@@ -140,14 +151,17 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   void _triggerDrawRoute(BuildContext context, double dLat, double dLng) {
+    final destinationLat = _destLat;
+    final destinationLng = _destLng;
+    if (destinationLat == null || destinationLng == null) return;
     BlocProvider.of<LiveMapBloc>(context).add(
       UpdateLocationsAndDrawRouteEvent(
         driverLat: dLat,
         driverLng: dLng,
         passengerLat: _passengerLat,
         passengerLng: _passengerLng,
-        routeTargetLat: _destLat,
-        routeTargetLng: _destLng,
+        routeTargetLat: destinationLat,
+        routeTargetLng: destinationLng,
       ),
     );
   }
@@ -156,6 +170,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
     final pos = LocationService.lastPosition;
     final defaultLat = pos?.latitude ?? _destLat;
     final defaultLng = pos?.longitude ?? _destLng;
+    if (defaultLat == null || defaultLng == null) return;
 
     BlocProvider.of<LiveMapBloc>(context).add(
       InitializeMapEvent(
@@ -196,16 +211,17 @@ class _InTransitScreenState extends State<InTransitScreen> {
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
-          final defaultLat =
-              LocationService.lastPosition?.latitude ??
-              (rideCubitState is RideFlowInTransit
-                  ? rideCubitState.destLat
-                  : 0.0);
-          final defaultLng =
-              LocationService.lastPosition?.longitude ??
-              (rideCubitState is RideFlowInTransit
-                  ? rideCubitState.destLng
-                  : 0.0);
+          final position = LocationService.lastPosition;
+          final transitState = rideCubitState is RideFlowInTransit
+              ? rideCubitState
+              : null;
+          final defaultLat = position?.latitude ?? transitState?.destLat;
+          final defaultLng = position?.longitude ?? transitState?.destLng;
+          if (defaultLat == null || defaultLng == null) {
+            return const Scaffold(
+              body: Center(child: Text('Destination location is unavailable.')),
+            );
+          }
 
           return Scaffold(
             backgroundColor: AppTheme.surface,

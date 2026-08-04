@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
@@ -28,10 +27,9 @@ class TrackRepository implements ITrackRepository {
       if (route != null && route.polylinePoints.isNotEmpty) {
         return route.polylinePoints;
       }
-      return _linearInterpolation(startLat, startLng, endLat, endLng);
+      return null;
     } catch (error) {
-      debugPrint('TrackRepository.getRoutePolyline failed: $error');
-      return _linearInterpolation(startLat, startLng, endLat, endLng);
+      return null;
     }
   }
 
@@ -91,23 +89,5 @@ class TrackRepository implements ITrackRepository {
     } catch (error) {
       return Left(ServerFailure(error.toString()));
     }
-  }
-
-  List<List<double>> _linearInterpolation(
-    double startLat,
-    double startLng,
-    double endLat,
-    double endLng, {
-    int steps = 5,
-  }) {
-    final points = <List<double>>[];
-    for (var index = 0; index <= steps; index++) {
-      final t = index / steps;
-      points.add([
-        startLat + (endLat - startLat) * t,
-        startLng + (endLng - startLng) * t,
-      ]);
-    }
-    return points;
   }
 }

@@ -3,11 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
-import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -65,89 +62,10 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
   }
 
   Future<void> _saveRideAndStartTimer() async {
-    if (widget.createdRide != null) {
-      if (mounted) {
-        setState(() {
-          _createdRide = widget.createdRide;
-        });
-        _autoNav = Timer(const Duration(seconds: 4), _goToTracking);
-      }
-      return;
-    }
-
-    try {
-      final secureSession = Modular.get<SecureSessionService>();
-      var activeRideId = await secureSession.readActiveRideId() ?? '';
-      final currentPosition = LocationService.lastPosition;
-      if (currentPosition == null) return;
-      var pickupLat = currentPosition.latitude;
-      var pickupLng = currentPosition.longitude;
-      var pickupName = widget.pickupAddress ?? 'Current Location';
-      var driverName = widget.driverName ?? 'Driver';
-      var vehiclePlate = widget.plateNumber ?? 'Vehicle plate unavailable';
-      var driverId = widget.driverId ?? '';
-      var vehicleType = widget.vehicleType ?? '';
-
-      if (activeRideId.isEmpty) {
-        final passengerId = await secureSession.readPassengerId() ?? '';
-        if (passengerId.isNotEmpty) {
-          final res = await Modular.get<BiddingRemoteDataSource>().requestRide({
-            'passenger_id': passengerId,
-            'ride_type': widget.rideType,
-            'pickup_latitude': pickupLat,
-            'pickup_longitude': pickupLng,
-            'pickup_name': pickupName,
-            'dropoff_latitude': widget.destination.latitude,
-            'dropoff_longitude': widget.destination.longitude,
-            'dropoff_name': widget.destination.name,
-            'fare': widget.fare,
-          });
-          if (res['id'] != null) {
-            activeRideId = res['id']?.toString() ?? '';
-            await secureSession.saveActiveRideId(activeRideId);
-
-            pickupLat = SafeParse.toDouble(res['pickup_latitude']);
-            pickupLng = SafeParse.toDouble(res['pickup_longitude']);
-            pickupName = res['pickup_name'] as String? ?? pickupName;
-            driverName = res['driver_name'] as String? ?? driverName;
-            vehiclePlate = res['plate_number'] as String? ?? vehiclePlate;
-            driverId = res['driver_id'] as String? ?? driverId;
-            vehicleType = res['vehicle_type'] as String? ?? vehicleType;
-          }
-        }
-      } else {
-        final res = await Modular.get<BiddingRemoteDataSource>()
-            .fetchDriverStats(activeRideId);
-        if (res.isNotEmpty) {
-          pickupLat = SafeParse.toDouble(res['pickup_latitude']);
-          pickupLng = SafeParse.toDouble(res['pickup_longitude']);
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _createdRide = RideHistoryModel(
-            id: activeRideId,
-            pickup: pickupName,
-            destination: widget.destination.name,
-            pickupLat: pickupLat,
-            pickupLng: pickupLng,
-            destLat: widget.destination.latitude,
-            destLng: widget.destination.longitude,
-            date: DateTime.now().toLocal().toString(),
-            price: '₱${widget.fare.toStringAsFixed(2)}',
-            status: 'accepted',
-            driverId: driverId,
-            driverName: driverName,
-            vehiclePlate: vehiclePlate,
-            vehicleType: vehicleType,
-          );
-        });
-      }
-    } catch (error) {
-      debugPrint('Error creating ride request in DB: $error');
-    }
+    final ride = widget.createdRide;
+    if (ride == null || ride.id.isEmpty) return;
     if (mounted) {
+      setState(() => _createdRide = ride);
       _autoNav = Timer(const Duration(seconds: 4), _goToTracking);
     }
   }
@@ -237,11 +155,9 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                       builder: (BuildContext sheetContext) =>
                           DriverProfileDetailsSheet(
                             driverId: widget.driverId ?? '',
-                            driverName: widget.driverName ?? 'Driver',
-                            vehicleType: widget.vehicleType ?? 'Bao Bao',
-                            plateNumber:
-                                widget.plateNumber ??
-                                'Vehicle plate unavailable',
+                            driverName: widget.driverName ?? '—',
+                            vehicleType: widget.vehicleType ?? '—',
+                            plateNumber: widget.plateNumber ?? '—',
                             rating: widget.driverRating ?? '—',
                           ),
                     ),
@@ -277,7 +193,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  widget.driverName ?? 'Driver',
+                                  widget.driverName ?? '—',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
@@ -302,7 +218,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                                       ),
                                     ),
                                     Text(
-                                      '  •  Local Match',
+                                      '  •  Server match',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: AppTheme.primaryColor.withValues(
@@ -327,13 +243,12 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                         children: [
                           _infoChip(
                             LucideIcons.bike,
-                            widget.vehicleType ?? 'Bao Bao',
+                            widget.vehicleType ?? '—',
                           ),
                           _infoChip(
                             LucideIcons.hash,
-                            widget.plateNumber ?? 'Vehicle plate unavailable',
+                            widget.plateNumber ?? '—',
                           ),
-                          _infoChip(LucideIcons.palette, 'Black'),
                         ],
                       ),
                     ],

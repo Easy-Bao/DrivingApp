@@ -15,6 +15,7 @@ class RideHistoryModel extends Equatable {
   final String driverName;
   final String vehiclePlate;
   final String vehicleType;
+  final double? driverRating;
 
   const RideHistoryModel({
     required this.id,
@@ -31,6 +32,7 @@ class RideHistoryModel extends Equatable {
     required this.driverName,
     required this.vehiclePlate,
     required this.vehicleType,
+    this.driverRating,
   });
 
   factory RideHistoryModel.fromJson(Map<String, dynamic> json) {
@@ -68,6 +70,9 @@ class RideHistoryModel extends Equatable {
           json['vehicleType'] as String? ??
           json['vehicle_type'] as String? ??
           '',
+      driverRating:
+          (json['driver_rating'] as num?)?.toDouble() ??
+          (json['driverRating'] as num?)?.toDouble(),
     );
   }
 
@@ -87,6 +92,7 @@ class RideHistoryModel extends Equatable {
       'driverName': driverName,
       'vehiclePlate': vehiclePlate,
       'vehicleType': vehicleType,
+      'driverRating': driverRating,
     };
   }
 
@@ -106,5 +112,6 @@ class RideHistoryModel extends Equatable {
     driverName,
     vehiclePlate,
     vehicleType,
+    driverRating,
   ];
 }

@@ -112,8 +112,8 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
   Future<void> _startTrip() async {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
     if (state is! RideFlowWaitingPassenger ||
-        state.pickupLat == 0 ||
-        state.pickupLng == 0) {
+        state.pickupLat == null ||
+        state.pickupLng == null) {
       _showError('Passenger pickup coordinates are unavailable.');
       return;
     }

@@ -86,9 +86,23 @@ void main() {
             [123.436, 7.830],
           ],
         );
+        when(() => repo.getRideStatusUpdate(any())).thenAnswer(
+          (_) async => const Right(
+            RideUpdate(
+              status: RideStatus.accepted,
+              driverId: 'drv-1',
+              driverName: 'Driver',
+              vehiclePlate: 'ABC-123',
+              vehicleType: 'Sedan',
+            ),
+          ),
+        );
         when(
-          () => repo.getRideStatusUpdate(any()),
-        ).thenAnswer((_) async => const Left(ServerFailure('error')));
+          () => repo.fetchDriverLocation('drv-1'),
+        ).thenAnswer((_) async => const Right((7.828, 123.434)));
+        when(
+          () => session.readActiveRideId(),
+        ).thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
       },
       act: (cubit) async {
@@ -110,7 +124,7 @@ void main() {
     );
 
     blocTest<TrackDriverCubit, TrackDriverState>(
-      'emits TrackDriverInProgress using linear interpolation when polyline is null',
+      'emits TrackDriverInProgress with the server location when route is unavailable',
       build: () {
         when(
           () => repo.getRoutePolyline(
@@ -120,9 +134,23 @@ void main() {
             endLng: any(named: 'endLng'),
           ),
         ).thenAnswer((_) async => null);
+        when(() => repo.getRideStatusUpdate(any())).thenAnswer(
+          (_) async => const Right(
+            RideUpdate(
+              status: RideStatus.accepted,
+              driverId: 'drv-1',
+              driverName: 'driverName',
+              vehiclePlate: 'ABC-123',
+              vehicleType: 'Sedan',
+            ),
+          ),
+        );
         when(
-          () => repo.getRideStatusUpdate(any()),
-        ).thenAnswer((_) async => const Left(ServerFailure('error')));
+          () => repo.fetchDriverLocation('drv-1'),
+        ).thenAnswer((_) async => const Right((7.828, 123.434)));
+        when(
+          () => session.readActiveRideId(),
+        ).thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
       },
       act: (cubit) async {

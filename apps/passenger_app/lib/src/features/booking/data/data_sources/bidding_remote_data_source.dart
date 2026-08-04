@@ -5,6 +5,10 @@ abstract class BiddingRemoteDataSource {
     required double distanceKm,
     required double durationMinutes,
     required String rideType,
+    required double originLatitude,
+    required double originLongitude,
+    required double destinationLatitude,
+    required double destinationLongitude,
   });
 
   Future<Map<String, dynamic>> requestRide(Map<String, dynamic> body);
@@ -53,6 +57,10 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     required double distanceKm,
     required double durationMinutes,
     required String rideType,
+    required double originLatitude,
+    required double originLongitude,
+    required double destinationLatitude,
+    required double destinationLongitude,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/bids/fare',
@@ -60,6 +68,10 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
         'ride_type': rideType,
         'distance_km': distanceKm,
         'duration_minutes': durationMinutes,
+        'origin_latitude': originLatitude,
+        'origin_longitude': originLongitude,
+        'destination_latitude': destinationLatitude,
+        'destination_longitude': destinationLongitude,
       },
     );
     return response.data ?? {};
@@ -94,7 +106,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     final response = await _dio.post<Map<String, dynamic>>(
       '/bids/$sessionId/cancel',
     );
-    return response.statusCode == 200;
+    return response.statusCode == 201 || response.statusCode == 200;
   }
 
   @override

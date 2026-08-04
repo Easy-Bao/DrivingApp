@@ -15,13 +15,16 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	if !ok {
 		return domain.BidSession{}, ErrBiddingPersistenceUnavailable
 	}
-	if err := validateTrip(session.PickupLatitude, session.PickupLongitude, session.DropoffLatitude, session.DropoffLongitude, session.DistanceKm, session.DurationMinutes); err != nil {
+	metrics, err := service.authoritativeRoute(ctx, session.PickupLatitude, session.PickupLongitude, session.DropoffLatitude, session.DropoffLongitude, session.DistanceKm, session.DurationMinutes)
+	if err != nil {
 		return domain.BidSession{}, err
 	}
+	session.DistanceKm = metrics.DistanceKm
+	session.DurationMinutes = metrics.DurationMinutes
 	if session.RideType == "" {
 		session.RideType = "solo"
 	}
-	minimumFare := CalculateFare(session.DistanceKm, session.DurationMinutes)
+	minimumFare := CalculateFare(metrics.DistanceKm, metrics.DurationMinutes)
 	if minimumFare <= 0 {
 		return domain.BidSession{}, domain.ErrInvalidTrip
 	}
@@ -78,15 +81,15 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 	return repository.PlaceOffer(ctx, offer)
 }
 
-func (service *Service) AcceptOffer(ctx context.Context, sessionID, offerID, driverID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+func (service *Service) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, ErrBiddingPersistenceUnavailable
 	}
-	if driverID <= 0 {
+	if passengerID <= 0 {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
 	}
-	return repository.AcceptOffer(ctx, sessionID, offerID, driverID)
+	return repository.AcceptOffer(ctx, sessionID, offerID, passengerID)
 }
 
 func (service *Service) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {

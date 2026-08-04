@@ -27,6 +27,12 @@ abstract class SafeParse {
   static double toDouble(Object? value, [double defaultValue = 0.0]) =>
       parseDouble(value, defaultValue);
 
+  static double? toNullableDouble(Object? value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
   static int toInt(Object? value, [int defaultValue = 0]) =>
       parseInt(value, defaultValue);
 

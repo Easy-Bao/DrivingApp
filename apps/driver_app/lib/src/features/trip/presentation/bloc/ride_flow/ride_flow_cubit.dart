@@ -34,10 +34,10 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     required String passengerName,
     String? passengerId,
     double? distanceKm,
-    double pickupLat = 0,
-    double pickupLng = 0,
-    required double destLat,
-    required double destLng,
+    double? pickupLat,
+    double? pickupLng,
+    double? destLat,
+    double? destLng,
   }) {
     _activeRideId = rideId;
     _activePassengerId = passengerId;
@@ -118,8 +118,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
   Future<void> arriveAtPickup(
     String passengerName, {
-    double pickupLat = 0,
-    double pickupLng = 0,
+    double? pickupLat,
+    double? pickupLng,
   }) async {
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
@@ -167,13 +167,18 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
   Future<bool> startRide({
     required String passengerName,
-    required double destLat,
-    required double destLng,
+    required double? destLat,
+    required double? destLng,
     required double distanceKm,
-    double passengerLat = 0,
-    double passengerLng = 0,
+    double? passengerLat,
+    double? passengerLng,
   }) async {
     _waitTimer?.cancel();
+
+    if (destLat == null || destLng == null) {
+      emit(const RideFlowError('The destination coordinates are unavailable.'));
+      return false;
+    }
 
     if (_activeRideId != null) {
       try {

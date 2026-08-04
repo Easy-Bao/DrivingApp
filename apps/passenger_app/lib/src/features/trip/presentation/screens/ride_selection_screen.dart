@@ -48,19 +48,17 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   }
 
   void initializeRideOptionsData() {
-    _options = [
-      const RideOptionData(
-        name: 'Solo',
-        subtitle: 'Private ride with a server-calculated minimum fare',
-        icon: LucideIcons.bike,
-        fare: 0,
-        eta: 'Server calculated',
-        badge: null,
-      ),
-    ];
+    _options = const [];
   }
 
   Future<void> fetchServerFareQuotes() async {
+    final position = LocationService.lastPosition;
+    if (position == null) {
+      if (mounted) {
+        setState(() => _fareError = 'Your pickup location is unavailable.');
+      }
+      return;
+    }
     final distanceKm = widget.distanceKm;
     final durationMins = double.tryParse(
       widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''),
@@ -78,6 +76,10 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
         distanceKm: distanceKm,
         durationMinutes: durationMins,
         rideType: 'solo',
+        originLatitude: position.latitude,
+        originLongitude: position.longitude,
+        destinationLatitude: widget.destination.latitude,
+        destinationLongitude: widget.destination.longitude,
       );
       final totalFare =
           (res['total_fare'] as num?)?.toDouble() ??
@@ -201,10 +203,14 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final defaultLat =
-        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final defaultLng =
-        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final position = LocationService.lastPosition;
+    if (position == null) {
+      return const Scaffold(
+        body: Center(child: Text('Your location is unavailable.')),
+      );
+    }
+    final defaultLat = position.latitude;
+    final defaultLng = position.longitude;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,

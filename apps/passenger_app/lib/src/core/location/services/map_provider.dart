@@ -352,6 +352,20 @@ class MapProvider {
     width: width,
   );
 
+  static Future<mapbox.PolylineAnnotationManager> addAnimatedPolyline(
+    AppMapController controller,
+    List<List<double>> points, {
+    Color color = const Color(0xFF222222),
+    double width = 5.0,
+    Duration step = const Duration(milliseconds: 45),
+  }) => MapAnnotationService.addAnimatedPolyline(
+    controller,
+    points,
+    color: color,
+    width: width,
+    step: step,
+  );
+
   static Future<void> clearAnnotations(mapbox.BaseAnnotationManager? manager) =>
       MapAnnotationService.clearAnnotations(manager);
 }

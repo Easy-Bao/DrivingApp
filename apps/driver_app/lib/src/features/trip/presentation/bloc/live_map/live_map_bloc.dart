@@ -88,40 +88,35 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     );
     _markerManagers.add(driverManager);
 
-    final passengerManager = await MapProvider.addMarker(
-      _mapController!,
-      event.passengerLat,
-      event.passengerLng,
-      label: 'Passenger\nPickup location',
-      color: const Color(0xFF2E7D32),
-    );
-    _markerManagers.add(passengerManager);
+    if (event.passengerLat != null && event.passengerLng != null) {
+      final passengerManager = await MapProvider.addMarker(
+        _mapController!,
+        event.passengerLat!,
+        event.passengerLng!,
+        label: 'Passenger\nPickup location',
+        color: const Color(0xFF2E7D32),
+      );
+      _markerManagers.add(passengerManager);
+    }
+
+    final targetLat = event.routeTargetLat ?? event.passengerLat;
+    final targetLng = event.routeTargetLng ?? event.passengerLng;
+    if (targetLat == null || targetLng == null) return;
 
     await MapProvider.fitBounds(_mapController!, [
       LatLng(event.driverLat, event.driverLng),
-      LatLng(
-        event.routeTargetLat ?? event.passengerLat,
-        event.routeTargetLng ?? event.passengerLng,
-      ),
+      LatLng(targetLat, targetLng),
     ]);
 
     final route = await MapProvider.getRoute(
       event.driverLat,
       event.driverLng,
-      event.routeTargetLat ?? event.passengerLat,
-      event.routeTargetLng ?? event.passengerLng,
+      targetLat,
+      targetLng,
     );
-    final routePoints = route?.polylinePoints.isNotEmpty == true
-        ? route!.polylinePoints
-        : [
-            [event.driverLng, event.driverLat],
-            [
-              event.routeTargetLng ?? event.passengerLng,
-              event.routeTargetLat ?? event.passengerLat,
-            ],
-          ];
-    if (routePoints.length >= 2) {
-      final polylineManager = await MapProvider.addPolyline(
+    final routePoints = route?.polylinePoints;
+    if (routePoints != null && routePoints.length >= 2) {
+      final polylineManager = await MapProvider.addAnimatedPolyline(
         _mapController!,
         routePoints,
         color: const Color(0xFF222222),

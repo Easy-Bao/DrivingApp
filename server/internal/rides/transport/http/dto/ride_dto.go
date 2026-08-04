@@ -16,13 +16,21 @@ type SubmitBidRequest struct {
 	FareCentavos int64 `json:"fare_centavos"`
 }
 type FareEstimateRequest struct {
-	DistanceKm      float64 `json:"distance_km"`
-	DurationMinutes float64 `json:"duration_minutes"`
+	DistanceKm           float64  `json:"distance_km"`
+	DurationMinutes      float64  `json:"duration_minutes"`
+	OriginLatitude       *float64 `json:"origin_latitude"`
+	OriginLongitude      *float64 `json:"origin_longitude"`
+	DestinationLatitude  *float64 `json:"destination_latitude"`
+	DestinationLongitude *float64 `json:"destination_longitude"`
 }
 type FinalFareRequest struct {
-	DistanceKm      float64 `json:"distance_km"`
-	DurationMinutes float64 `json:"duration_minutes"`
-	CommissionBPS   int64   `json:"commission_bps"`
+	DistanceKm           float64  `json:"distance_km"`
+	DurationMinutes      float64  `json:"duration_minutes"`
+	CommissionBPS        int64    `json:"commission_bps"`
+	OriginLatitude       *float64 `json:"origin_latitude"`
+	OriginLongitude      *float64 `json:"origin_longitude"`
+	DestinationLatitude  *float64 `json:"destination_latitude"`
+	DestinationLongitude *float64 `json:"destination_longitude"`
 }
 
 type StatusRequest struct {

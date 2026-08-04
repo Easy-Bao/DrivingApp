@@ -126,7 +126,7 @@ func (router *Handler) nearby(writer http.ResponseWriter, request *http.Request)
 	latitude, latErr := strconv.ParseFloat(query.Get("latitude"), 64)
 	longitude, lonErr := strconv.ParseFloat(query.Get("longitude"), 64)
 	radius, radiusErr := strconv.ParseFloat(query.Get("radius_km"), 64)
-	if latErr != nil || lonErr != nil || radiusErr != nil || radius < 0 {
+	if latErr != nil || lonErr != nil || radiusErr != nil || radius <= 0 || radius > 50 || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180 {
 		writeError(writer, http.StatusBadRequest, "invalid nearby query")
 		return
 	}

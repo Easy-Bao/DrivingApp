@@ -33,6 +33,16 @@ Mapbox and go-mail calls use circuit breakers. Request logs include status,
 request ID, client IP, user agent, and selected security-event classifications
 without request bodies or credentials.
 
+Ride creation, bid sessions, fare estimates, and final-fare responses now use
+the server's Mapbox route metrics in production; client distance and duration
+are treated as untrusted hints. Passenger offer acceptance is authorized as a
+passenger action and binds the selected driver transactionally. Redis GEO
+telemetry rejects invalid coordinates and unbounded search radii. Both Flutter
+clients animate only server-returned route geometry, and driver trip maps leave
+missing coordinates unrouted instead of rendering a fabricated `(0,0)` point.
+Cash settlement, capacity, active-booking, review-participant, and duplicate
+bid checks remain server-authoritative.
+
 The API deliberately does not use SQLi/XSS keyword blacklists or mobile-app
 HMAC signatures: Ent parameterization, strict DTO validation, JSON encoding,
 TLS, and JWTs provide the meaningful controls, while an embedded mobile secret

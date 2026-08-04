@@ -19,8 +19,8 @@ class InitializeMapEvent extends LiveMapEvent {
 class UpdateLocationsAndDrawRouteEvent extends LiveMapEvent {
   final double driverLat;
   final double driverLng;
-  final double passengerLat;
-  final double passengerLng;
+  final double? passengerLat;
+  final double? passengerLng;
   final double? routeTargetLat;
   final double? routeTargetLng;
 

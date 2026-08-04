@@ -95,7 +95,7 @@ func (handler *Handler) createRide(w http.ResponseWriter, r *http.Request) {
 	}
 	ride, err := handler.service.CreateRideWithDetails(r.Context(), domainRide(passengerID, input))
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	jsonJSON(w, 201, ride)
@@ -174,13 +174,13 @@ func (handler *Handler) submitBid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.SubmitBidRequest
-	if json.NewDecoder(r.Body).Decode(&input) != nil || input.FareCentavos < 0 {
+	if json.NewDecoder(r.Body).Decode(&input) != nil || input.FareCentavos <= 0 {
 		errorJSON(w, 400, "invalid fare")
 		return
 	}
 	bid, err := handler.service.SubmitBid(r.Context(), rideID, driverID, input.FareCentavos)
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, rideErrorStatus(err), err.Error())
 		return
 	}
 	jsonJSON(w, 201, bid)
@@ -378,14 +378,14 @@ func (handler *Handler) estimate(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 400, "invalid fare input")
 		return
 	}
-	if input.DistanceKm < 0 || input.DurationMinutes < 0 {
-		errorJSON(w, 400, "invalid fare input")
+	metrics, total, err := handler.service.Fare(r.Context(), input.OriginLatitude, input.OriginLongitude, input.DestinationLatitude, input.DestinationLongitude, input.DistanceKm, input.DurationMinutes)
+	if err != nil {
+		errorJSON(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	base := int64(2500)
-	distanceCharge := int64(input.DistanceKm * 100)
-	timeCharge := int64(input.DurationMinutes * 50)
-	total := usecase.CalculateFare(input.DistanceKm, input.DurationMinutes)
+	distanceCharge := int64(metrics.DistanceKm * 100)
+	timeCharge := int64(metrics.DurationMinutes * 50)
 	jsonJSON(w, 200, map[string]any{"base_fare": float64(base) / 100, "distance_charge": float64(distanceCharge) / 100, "time_charge": float64(timeCharge) / 100, "surge_charge": float64(0), "fare_centavos": total, "total_fare": float64(total) / 100})
 }
 func (handler *Handler) fareConfigs(w http.ResponseWriter, _ *http.Request) {
@@ -400,10 +400,14 @@ func (handler *Handler) calculateFinal(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 400, "invalid final fare input")
 		return
 	}
-	fare := usecase.CalculateFare(input.DistanceKm, input.DurationMinutes)
+	metrics, fare, err := handler.service.Fare(r.Context(), input.OriginLatitude, input.OriginLongitude, input.DestinationLatitude, input.DestinationLongitude, input.DistanceKm, input.DurationMinutes)
+	if err != nil {
+		errorJSON(w, rideErrorStatus(err), safeRideError(err))
+		return
+	}
 	commissionBPS := int64(1500)
 	commission := fare * commissionBPS / 10000
-	jsonJSON(w, 200, map[string]any{"fare_centavos": fare, "commission_centavos": commission, "driver_payout_centavos": fare - commission})
+	jsonJSON(w, 200, map[string]any{"fare_centavos": fare, "distance_km": metrics.DistanceKm, "duration_minutes": metrics.DurationMinutes, "commission_centavos": commission, "driver_payout_centavos": fare - commission})
 }
 
 func (handler *Handler) createSession(w http.ResponseWriter, r *http.Request) {
@@ -515,7 +519,7 @@ func (handler *Handler) placeOffer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) acceptOffer(w http.ResponseWriter, r *http.Request) {
-	driverID, ok := handler.identity(r)
+	passengerID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
@@ -526,7 +530,7 @@ func (handler *Handler) acceptOffer(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 400, "invalid bid id")
 		return
 	}
-	session, offer, ride, err := handler.service.AcceptOffer(r.Context(), sessionID, offerID, driverID)
+	session, offer, ride, err := handler.service.AcceptOffer(r.Context(), sessionID, offerID, passengerID)
 	if err != nil {
 		errorJSON(w, 409, "offer cannot be accepted")
 		return
@@ -607,12 +611,29 @@ func rideErrorStatus(err error) int {
 	switch {
 	case errors.Is(err, domain.ErrInvalidTrip), errors.Is(err, domain.ErrInvalidFareOffer):
 		return 400
+	case errors.Is(err, domain.ErrRouteUnavailable):
+		return 503
 	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
 		return 403
 	case errors.Is(err, domain.ErrActiveBooking), errors.Is(err, domain.ErrDriverAtCapacity), errors.Is(err, domain.ErrDriverUnavailable):
 		return 409
+	case errors.Is(err, domain.ErrDuplicateBid):
+		return 409
 	default:
 		return 500
+	}
+}
+
+func safeRideError(err error) string {
+	switch {
+	case errors.Is(err, domain.ErrInvalidTrip):
+		return "The route details are invalid."
+	case errors.Is(err, domain.ErrInvalidFareOffer):
+		return "The custom offer cannot be lower than the calculated minimum fare."
+	case errors.Is(err, domain.ErrRouteUnavailable):
+		return "The route service is temporarily unavailable."
+	default:
+		return "The ride request could not be completed."
 	}
 }
 

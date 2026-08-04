@@ -13,13 +13,13 @@ class RideFlowInitial extends RideFlowState {
 
 class RideFlowEnRoutePickup extends RideFlowState {
   final String passengerName;
-  final double pickupLat;
-  final double pickupLng;
+  final double? pickupLat;
+  final double? pickupLng;
 
   const RideFlowEnRoutePickup({
     required this.passengerName,
-    this.pickupLat = 0,
-    this.pickupLng = 0,
+    this.pickupLat,
+    this.pickupLng,
   });
 
   @override
@@ -29,14 +29,14 @@ class RideFlowEnRoutePickup extends RideFlowState {
 class RideFlowWaitingPassenger extends RideFlowState {
   final String passengerName;
   final int waitTimeSeconds;
-  final double pickupLat;
-  final double pickupLng;
+  final double? pickupLat;
+  final double? pickupLng;
 
   const RideFlowWaitingPassenger({
     required this.passengerName,
     required this.waitTimeSeconds,
-    this.pickupLat = 0,
-    this.pickupLng = 0,
+    this.pickupLat,
+    this.pickupLng,
   });
 
   @override
@@ -50,19 +50,19 @@ class RideFlowWaitingPassenger extends RideFlowState {
 
 class RideFlowInTransit extends RideFlowState {
   final String passengerName;
-  final double destLat;
-  final double destLng;
+  final double? destLat;
+  final double? destLng;
   final double? distanceKm;
-  final double passengerLat;
-  final double passengerLng;
+  final double? passengerLat;
+  final double? passengerLng;
 
   const RideFlowInTransit({
     required this.passengerName,
-    required this.destLat,
-    required this.destLng,
+    this.destLat,
+    this.destLng,
     this.distanceKm,
-    this.passengerLat = 0,
-    this.passengerLng = 0,
+    this.passengerLat,
+    this.passengerLng,
   });
 
   @override

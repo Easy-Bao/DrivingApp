@@ -43,7 +43,9 @@ class RideOptionsPanelWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedOption = options[selectedIndex];
+    final selectedOption = options.isEmpty
+        ? null
+        : options[selectedIndex < options.length ? selectedIndex : 0];
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -86,6 +88,11 @@ class RideOptionsPanelWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          if (options.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text('Calculating your server fare...')),
+            ),
           ...List.generate(options.length, (index) {
             final option = options[index];
             final isSelected = index == selectedIndex;
@@ -230,7 +237,9 @@ class RideOptionsPanelWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           ElevatedButton(
-            onPressed: minimumFare == null || customFareError != null
+            onPressed: minimumFare == null ||
+                    customFareError != null ||
+                    selectedOption == null
                 ? null
                 : onBookPressed,
             style: ElevatedButton.styleFrom(
@@ -243,7 +252,9 @@ class RideOptionsPanelWidget extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Book ${selectedOption.name}',
+              selectedOption == null
+                  ? 'Calculating...'
+                  : 'Book ${selectedOption.name}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
           ),

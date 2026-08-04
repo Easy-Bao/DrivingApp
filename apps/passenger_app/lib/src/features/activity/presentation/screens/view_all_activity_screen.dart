@@ -315,7 +315,7 @@ class _PassengerViewAllActivityScreenState
     final totalTripPrice = _priceValue(ride.price);
 
     final driverInitials = _formattedDriverInitials(ride.driverName);
-    final driverRating = _formattedDriverRating(ride.driverId);
+    final driverRating = _formattedDriverRating(ride);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -666,11 +666,9 @@ class _PassengerViewAllActivityScreenState
     return nameParts[0][0].toUpperCase();
   }
 
-  String _formattedDriverRating(String driverId) {
-    if (driverId.isEmpty) return '4.9';
-    final hashCodeValue = driverId.hashCode.abs();
-    final calculatedRating = 4.5 + (hashCodeValue % 6) * 0.1;
-    return calculatedRating.toStringAsFixed(1);
+  String _formattedDriverRating(RideHistoryModel ride) {
+    final rating = ride.driverRating;
+    return rating == null || rating <= 0 ? '—' : rating.toStringAsFixed(1);
   }
 
   String _getGroupingDateKey(RideHistoryModel ride) {

@@ -25,7 +25,7 @@ type BiddingRepository interface {
 	ActiveSessions(ctx context.Context, driverID *int) ([]BidSession, error)
 	Offers(ctx context.Context, sessionID int) ([]BidOffer, error)
 	PlaceOffer(ctx context.Context, offer BidOffer) (BidOffer, error)
-	AcceptOffer(ctx context.Context, sessionID, offerID, driverID int) (BidSession, BidOffer, Ride, error)
+	AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (BidSession, BidOffer, Ride, error)
 	CancelSession(ctx context.Context, sessionID, passengerID int) (BidSession, error)
 	CancelOffer(ctx context.Context, sessionID, driverID int) (BidOffer, error)
 	Session(ctx context.Context, sessionID int) (BidSession, error)

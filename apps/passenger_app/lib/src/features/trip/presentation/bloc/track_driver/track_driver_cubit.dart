@@ -45,14 +45,10 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     }
     final activeRideId = await session.readActiveRideId() ?? '';
 
-    var routePoints = await _repository.getRoutePolyline(
-      startLat: startLat,
-      startLng: startLng,
-      endLat: endLat,
-      endLng: endLng,
-    );
+    List<List<double>>? routePoints;
 
     double progress = 0.0;
+    var pickupRouteRequested = false;
     var destinationRouteActive = false;
 
     _ticker = Timer.periodic(const Duration(seconds: 2), (timer) async {
@@ -60,8 +56,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
       if (_isSyncing) return;
 
       _isSyncing = true;
-      bool handled = false;
-
       if (activeRideId.isNotEmpty) {
         final result = await _repository.getRideStatusUpdate(activeRideId);
         await result.fold(
@@ -71,7 +65,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
           (rideUpdate) async {
             if (rideUpdate.status == RideStatus.completed) {
               timer.cancel();
-              handled = true;
               emit(
                 TrackDriverCompleted(
                   driverId: rideUpdate.driverId ?? '',
@@ -86,8 +79,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               return;
             }
 
-            double driverLat = startLat;
-            double driverLng = startLng;
+            double? driverLat;
+            double? driverLng;
             bool locationFetched = false;
 
             final driverId = rideUpdate.driverId;
@@ -108,27 +101,35 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             }
 
             if (!locationFetched) {
-              progress += 0.05;
-              if (progress >= 1.0) progress = 0.99;
-              final pos = _interpolate(
-                progress: progress,
-                routePoints: routePoints,
-                startLat: startLat,
-                startLng: startLng,
+              _isSyncing = false;
+              return;
+            }
+
+            final targetLat =
+                rideUpdate.destinationLat ??
+                (destinationLat == 0 ? null : destinationLat);
+            final targetLng =
+                rideUpdate.destinationLng ??
+                (destinationLng == 0 ? null : destinationLng);
+            if (rideUpdate.status != RideStatus.inTransit &&
+                !pickupRouteRequested) {
+              routePoints = await _repository.getRoutePolyline(
+                startLat: driverLat!,
+                startLng: driverLng!,
                 endLat: endLat,
                 endLng: endLng,
               );
-              driverLat = pos.lat;
-              driverLng = pos.lng;
+              pickupRouteRequested = true;
             }
-
             if (rideUpdate.status == RideStatus.inTransit &&
-                !destinationRouteActive) {
+                !destinationRouteActive &&
+                targetLat != null &&
+                targetLng != null) {
               routePoints = await _repository.getRoutePolyline(
-                startLat: driverLat,
-                startLng: driverLng,
-                endLat: destinationLat,
-                endLng: destinationLng,
+                startLat: driverLat!,
+                startLng: driverLng!,
+                endLat: targetLat,
+                endLng: targetLng,
               );
               progress = 0;
               destinationRouteActive = true;
@@ -138,8 +139,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
             emit(
               TrackDriverInProgress(
-                driverLat: driverLat,
-                driverLng: driverLng,
+                driverLat: driverLat!,
+                driverLng: driverLng!,
                 progress: progress,
                 eta: eta,
                 routePoints: routePoints,
@@ -149,44 +150,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 vehicleType: rideUpdate.vehicleType,
               ),
             );
-            handled = true;
           },
         );
-      }
-
-      if (!handled && !isClosed) {
-        progress += 0.1;
-        if (progress >= 1.0) {
-          timer.cancel();
-          await _sessionService.saveActiveRideId('');
-          await _stopBackgroundTelemetry();
-          emit(
-            TrackDriverCompleted(driverId: driverId, driverName: driverName),
-          );
-        } else {
-          final pos = _interpolate(
-            progress: progress,
-            routePoints: routePoints,
-            startLat: startLat,
-            startLng: startLng,
-            endLat: endLat,
-            endLng: endLng,
-          );
-          final etaMinutes = ((1.0 - progress) * 10).ceil();
-          emit(
-            TrackDriverInProgress(
-              driverLat: pos.lat,
-              driverLng: pos.lng,
-              progress: progress,
-              eta: etaMinutes == 1 ? '1 min' : '$etaMinutes mins',
-              routePoints: routePoints,
-              driverName: driverName,
-              vehiclePlate: vehiclePlate,
-              vehicleType: vehicleType,
-              status: RideStatus.accepted,
-            ),
-          );
-        }
       }
 
       _isSyncing = false;
@@ -236,31 +201,5 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     } catch (error) {
       dev.log('Unable to stop passenger background telemetry: $error');
     }
-  }
-
-  ({double lat, double lng}) _interpolate({
-    required double progress,
-    required List<List<double>>? routePoints,
-    required double startLat,
-    required double startLng,
-    required double endLat,
-    required double endLng,
-  }) {
-    if (routePoints != null && routePoints.isNotEmpty) {
-      final fractionalIndex = progress * (routePoints.length - 1);
-      final index = fractionalIndex.floor();
-      final nextIndex = (index + 1).clamp(0, routePoints.length - 1);
-      final t = fractionalIndex - index;
-      final p1 = routePoints[index];
-      final p2 = routePoints[nextIndex];
-      return (
-        lat: p1[1] + (p2[1] - p1[1]) * t,
-        lng: p1[0] + (p2[0] - p1[0]) * t,
-      );
-    }
-    return (
-      lat: startLat + (endLat - startLat) * progress,
-      lng: startLng + (endLng - startLng) * progress,
-    );
   }
 }

@@ -387,7 +387,10 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
       );
     }
 
-    final rating = _passenger?['rating'] ?? '4.8';
+    final passengerRating = _passenger?['rating'];
+    final rating = passengerRating is num && passengerRating > 0
+        ? passengerRating.toStringAsFixed(1)
+        : '—';
 
     return Column(
       children: [

@@ -100,8 +100,8 @@ class DashboardCubit extends Cubit<DashboardState> {
         lng: lng,
         gridSize: 10,
         cellSize: 0.003,
-        requestLats: [lat + 0.002, lat - 0.001, lat + 0.005],
-        requestLngs: [lng - 0.002, lng + 0.003, lng + 0.001],
+        requestLats: const [],
+        requestLngs: const [],
       );
 
       heatmapResult.fold(

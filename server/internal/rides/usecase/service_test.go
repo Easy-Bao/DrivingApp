@@ -100,6 +100,50 @@ func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 	}
 }
 
+func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
+	stub := &ridesRepositoryStub{}
+	service := NewServiceWithRouteCalculator(stub, RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
+		return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
+	}))
+	custom := int64(4000)
+	session, err := service.CreateSession(context.Background(), domain.BidSession{
+		PassengerID:        7,
+		PickupLatitude:     6.7,
+		PickupLongitude:    122.1,
+		DropoffLatitude:    6.71,
+		DropoffLongitude:   122.11,
+		DistanceKm:         0.01,
+		DurationMinutes:    0.01,
+		CustomFareCentavos: &custom,
+	})
+	if err != nil {
+		t.Fatalf("CreateSession returned error: %v", err)
+	}
+	if session.DistanceKm != 4 || session.DurationMinutes != 20 {
+		t.Fatalf("expected server route metrics, got %.2f km and %.2f minutes", session.DistanceKm, session.DurationMinutes)
+	}
+	if session.OfferedFareCentavos != custom {
+		t.Fatalf("expected custom fare %d, got %d", custom, session.OfferedFareCentavos)
+	}
+}
+
+func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
+	stub := &ridesRepositoryStub{}
+	service := NewServiceWithRouteCalculator(stub, RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
+		return RouteMetrics{}, errors.New("mapbox timeout")
+	}))
+	_, err := service.CreateSession(context.Background(), domain.BidSession{
+		PassengerID:      7,
+		PickupLatitude:   6.7,
+		PickupLongitude:  122.1,
+		DropoffLatitude:  6.71,
+		DropoffLongitude: 122.11,
+	})
+	if !errors.Is(err, domain.ErrRouteUnavailable) {
+		t.Fatalf("expected ErrRouteUnavailable, got %v", err)
+	}
+}
+
 func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 	stub := &ridesRepositoryStub{}
 	service := NewService(stub)

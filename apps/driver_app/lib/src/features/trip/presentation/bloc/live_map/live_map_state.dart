@@ -14,8 +14,8 @@ class LiveMapReady extends LiveMapState {
 class LiveMapRouteUpdated extends LiveMapState {
   final double driverLat;
   final double driverLng;
-  final double passengerLat;
-  final double passengerLng;
+  final double? passengerLat;
+  final double? passengerLng;
 
   const LiveMapRouteUpdated({
     required this.driverLat,

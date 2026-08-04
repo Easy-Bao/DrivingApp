@@ -143,24 +143,8 @@ class DashboardRepository implements IDashboardRepository {
     required List<double> requestLats,
     required List<double> requestLngs,
   }) async {
-    try {
-      const surgeOffsets = [
-        {'latOffset': 0.002, 'lngOffset': -0.002, 'intensity': 2.5},
-        {'latOffset': -0.001, 'lngOffset': 0.003, 'intensity': 1.8},
-        {'latOffset': 0.005, 'lngOffset': 0.001, 'intensity': 3.1},
-      ];
-      final cells = surgeOffsets
-          .map(
-            (o) => HeatmapCell(
-              lat: lat + (o['latOffset'] ?? 0.0),
-              lng: lng + (o['lngOffset'] ?? 0.0),
-              intensity: o['intensity'] ?? 0.0,
-            ),
-          )
-          .toList();
-      return Right(cells);
-    } catch (error) {
-      return Left(_mapExceptionToFailure(error));
-    }
+    // Surge cells must come from a server pricing/dispatch response. Until
+    // that endpoint exists, an empty layer is safer than fabricated demand.
+    return const Right(<HeatmapCell>[]);
   }
 }

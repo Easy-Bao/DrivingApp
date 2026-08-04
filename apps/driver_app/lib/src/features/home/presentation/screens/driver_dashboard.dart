@@ -269,10 +269,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       status: trip['status'] ?? 'accepted',
       passengerName: trip['passenger_name'] ?? 'Passenger',
       distanceKm: (trip['distance_km'] as num?)?.toDouble(),
-      pickupLat: SafeParse.toDouble(trip['pickup_latitude']),
-      pickupLng: SafeParse.toDouble(trip['pickup_longitude']),
-      destLat: SafeParse.toDouble(trip['dropoff_latitude']),
-      destLng: SafeParse.toDouble(trip['dropoff_longitude']),
+      pickupLat: SafeParse.toNullableDouble(trip['pickup_latitude']),
+      pickupLng: SafeParse.toNullableDouble(trip['pickup_longitude']),
+      destLat: SafeParse.toNullableDouble(trip['dropoff_latitude']),
+      destLng: SafeParse.toNullableDouble(trip['dropoff_longitude']),
     );
 
     context.pushNamed(
@@ -301,10 +301,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       status: trip['status'] ?? 'accepted',
       passengerName: trip['passenger_name'] ?? 'Passenger',
       distanceKm: (trip['distance_km'] as num?)?.toDouble(),
-      pickupLat: SafeParse.toDouble(trip['pickup_latitude']),
-      pickupLng: SafeParse.toDouble(trip['pickup_longitude']),
-      destLat: SafeParse.toDouble(trip['dropoff_latitude']),
-      destLng: SafeParse.toDouble(trip['dropoff_longitude']),
+      pickupLat: SafeParse.toNullableDouble(trip['pickup_latitude']),
+      pickupLng: SafeParse.toNullableDouble(trip['pickup_longitude']),
+      destLat: SafeParse.toNullableDouble(trip['dropoff_latitude']),
+      destLng: SafeParse.toNullableDouble(trip['dropoff_longitude']),
     );
 
     final finalFare = await cubit.completeRide();
