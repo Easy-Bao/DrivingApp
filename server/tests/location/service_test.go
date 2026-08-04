@@ -13,6 +13,32 @@ type providerStub struct{}
 func (providerStub) Search(context.Context, string, domain.Coordinates) ([]domain.Place, error) {
 	return []domain.Place{{Name: "Pagadian City"}}, nil
 }
+func (providerStub) Nearby(context.Context, domain.Coordinates, int) ([]domain.Place, error) {
+	return []domain.Place{{Name: "Nearby Place"}}, nil
+}
+
+type cacheStub struct{ values map[string]any }
+
+func (cache *cacheStub) Get(_ context.Context, key string, target any) error {
+	value, ok := cache.values[key]
+	if !ok {
+		return context.Canceled
+	}
+	if places, ok := target.(*[]domain.Place); ok {
+		*places = value.([]domain.Place)
+		return nil
+	}
+	if place, ok := target.(*domain.Place); ok {
+		*place = *value.(*domain.Place)
+		return nil
+	}
+	return context.Canceled
+}
+
+func (cache *cacheStub) Set(_ context.Context, key string, value any) error {
+	cache.values[key] = value
+	return nil
+}
 
 func (providerStub) ReverseGeocode(context.Context, domain.Coordinates) (*domain.Place, error) {
 	return &domain.Place{Name: "Pagadian City"}, nil
@@ -38,5 +64,18 @@ func TestServiceDelegatesSearch(t *testing.T) {
 	}
 	if len(places) != 1 || places[0].Name != "Pagadian City" {
 		t.Fatalf("unexpected places: %#v", places)
+	}
+}
+
+func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
+	cache := &cacheStub{values: map[string]any{}}
+	service := usecase.NewServiceWithInfrastructure(providerStub{}, cache, nil)
+	places, err := service.Nearby(context.Background(), domain.Coordinates{Latitude: 7.8, Longitude: 123.4}, 1)
+	if err != nil || len(places) != 1 || places[0].Name != "Nearby Place" {
+		t.Fatalf("nearby places = %#v, %v", places, err)
+	}
+	places, err = service.Nearby(context.Background(), domain.Coordinates{Latitude: 7.8, Longitude: 123.4}, 1)
+	if err != nil || len(places) != 1 {
+		t.Fatalf("cached nearby places = %#v, %v", places, err)
 	}
 }

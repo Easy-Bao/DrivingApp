@@ -20,8 +20,31 @@ func NewHandler(service *usecase.Service) *Handler {
 
 func (handler *Handler) RegisterRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /api/v1/location/search", handler.search)
+	router.HandleFunc("GET /api/v1/location/nearby", handler.nearby)
 	router.HandleFunc("GET /api/v1/location/reverse", handler.reverse)
 	router.HandleFunc("POST /api/v1/location/route", handler.route)
+}
+
+func (handler *Handler) nearby(writer http.ResponseWriter, request *http.Request) {
+	coordinates, err := coordinatesFromQuery(request)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
+		return
+	}
+	page := 1
+	if rawPage := request.URL.Query().Get("page"); rawPage != "" {
+		page, err = strconv.Atoi(rawPage)
+		if err != nil || page < 1 {
+			writeError(writer, http.StatusBadRequest, "invalid page")
+			return
+		}
+	}
+	places, err := handler.service.Nearby(request.Context(), coordinates, page)
+	if err != nil {
+		writeError(writer, http.StatusBadGateway, "location provider unavailable")
+		return
+	}
+	writeJSON(writer, http.StatusOK, map[string]any{"places": places, "page": page})
 }
 
 func (handler *Handler) search(writer http.ResponseWriter, request *http.Request) {

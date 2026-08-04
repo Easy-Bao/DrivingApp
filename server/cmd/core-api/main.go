@@ -21,6 +21,9 @@ import (
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/transport/http"
 	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
+	locationqueue "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/queue"
+	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
+	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	ridespostgres "github.com/Easy-Bao/DrivingApp/server/internal/rides/adapter/postgres"
@@ -30,6 +33,7 @@ import (
 	usershttp "github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http"
 	usersusecase "github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	_ "github.com/lib/pq"
+	redisclient "github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -74,7 +78,30 @@ func main() {
 		adminRouter.RegisterRoutes(router)
 	}
 	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
-	locationhttp.NewHandler(usecase.NewService(provider)).RegisterRoutes(router)
+	var cache locationdomain.Cache
+	var publisher locationdomain.EventPublisher
+	var redisClient *redisclient.Client
+	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
+		options, err := redisclient.ParseURL(redisURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		redisClient = redisclient.NewClient(options)
+		cache = locationredis.NewCache(redisClient)
+	}
+	if rabbitURL := os.Getenv("RABBITMQ_URL"); rabbitURL != "" {
+		queuePublisher, err := locationqueue.NewPublisher(rabbitURL)
+		if err != nil {
+			log.Printf("location event publisher disabled: %v", err)
+		} else {
+			publisher = queuePublisher
+			defer queuePublisher.Close()
+		}
+	}
+	if redisClient != nil {
+		defer redisClient.Close()
+	}
+	locationhttp.NewHandler(usecase.NewServiceWithInfrastructure(provider, cache, publisher)).RegisterRoutes(router)
 	router.HandleFunc("GET /health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"core-api"}`))

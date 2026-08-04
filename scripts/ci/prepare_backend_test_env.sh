@@ -24,6 +24,7 @@ CORE_API_INTERNAL_URL=http://core-api:8080
 REALTIME_SERVICE_INTERNAL_URL=http://realtime-service:8081
 GATEWAY_PORT=8000
 REDIS_URL=redis://127.0.0.1:6379
+RABBITMQ_URL=amqp://127.0.0.1:5672
 EOF
 
 echo "Backend CI environment files are ready."

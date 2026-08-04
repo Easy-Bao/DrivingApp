@@ -1,7 +1,7 @@
 # EasyRide backend architecture
 
 EasyRide uses three Go applications: `core-api` for transactional REST,
-`realtime-service` for WebSockets and ephemeral location/chat, and
+`realtime-service` for WebSockets and ephemeral driver location/chat, and
 `api-gateway` for routing and edge infrastructure. The old Bun microservice
 fleet is retired.
 
@@ -28,7 +28,7 @@ server
 ```
 
 `core-api` owns authentication, users, driver documents, rides, bidding, fare,
-location search, and Admin operations. `realtime-service` owns the WebSocket
+location search, nearby POIs, reverse geocoding, routing, and Admin operations. `realtime-service` owns the WebSocket
 connection lifecycle, Redis-backed presence/geo, and live chat relay. It does
 not own transactional ride state. `api-gateway` contains no business logic.
 
@@ -45,7 +45,8 @@ generation package by `cmd/entgenerate`. Ent still produces one typed client and
 one PostgreSQL migration stream, which keeps cross-domain transactions possible
 without recreating the old service split.
 
-PostgreSQL is the source of truth. Redis is for ephemeral realtime state. Money
+PostgreSQL is the source of truth. Redis is for ephemeral realtime state and
+location-result caching; RabbitMQ carries optional location-domain events. Money
 is stored as integer centavos and all assignment or money mutations must be
 idempotent. `server/cmd/migrate` runs Ent's additive schema migration; local and
 CI entry points call `scripts/database/migrate.sh`. No Drizzle command or

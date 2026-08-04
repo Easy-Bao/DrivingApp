@@ -75,6 +75,35 @@ func (provider *Provider) Search(ctx context.Context, query string, origin domai
 	return places, nil
 }
 
+func (provider *Provider) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
+	if page < 1 {
+		page = 1
+	}
+	queryParams := url.Values{
+		"access_token": {provider.token},
+		"limit":        {"20"},
+		"types":        {"poi,address,place"},
+		"proximity":    {coordinate(origin.Longitude) + "," + coordinate(origin.Latitude)},
+		"page":         {strconv.Itoa(page)},
+	}
+	var response featureResponse
+	if err := provider.getJSON(ctx, searchURL+"/forward?"+queryParams.Encode(), &response); err != nil {
+		return nil, err
+	}
+	places := make([]domain.Place, 0, len(response.Features))
+	for _, feature := range response.Features {
+		if len(feature.Geometry.Coordinates) < 2 {
+			continue
+		}
+		places = append(places, domain.Place{
+			ID: feature.ID, Name: feature.Properties.Name, Address: feature.Properties.Address,
+			Category: feature.Properties.Category, Longitude: feature.Geometry.Coordinates[0],
+			Latitude: feature.Geometry.Coordinates[1], DistanceKm: haversine(origin.Latitude, origin.Longitude, feature.Geometry.Coordinates[1], feature.Geometry.Coordinates[0]),
+		})
+	}
+	return places, nil
+}
+
 func (provider *Provider) ReverseGeocode(ctx context.Context, coordinates domain.Coordinates) (*domain.Place, error) {
 	queryParams := url.Values{
 		"longitude":    {coordinate(coordinates.Longitude)},
