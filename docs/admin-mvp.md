@@ -5,7 +5,7 @@
 This first Admin pull request is deliberately isolated from the existing mobile
 and backend services. It adds:
 
-- one privately provisioned owner account inside `server/admin-service`;
+- one privately provisioned owner account inside the Go `core-api` Admin module;
 - an eight-hour Admin JWT signed with a dedicated `ADMIN_JWT_SECRET`;
 - complaint-case intake and reviewed status transitions;
 - idempotent Admin mutations and append-only audit events;
@@ -97,8 +97,8 @@ Environment files are ignored, including `.env.example` and `.env.test`. Create
 untracked environment files locally, or use the deployment secret store; real
 URLs, credentials, and signing material must never enter Git.
 
-The Admin API defaults to port `8090` because the existing location service owns
-port `8089`. The portal defaults to port `5173`.
+The Admin API is served by `core-api` on port `8080`. The portal defaults to
+port `5173`.
 
 ## Local startup without Docker
 
@@ -106,7 +106,7 @@ port `8089`. The portal defaults to port `5173`.
 2. Create an `admin_db` database.
 3. Create untracked `.env` files for the Admin service and portal and provide
    the required values.
-4. In `server/admin-service`, run `bun install` and `bun run db:migrate`.
+4. From the repository root, run `./scripts/database/migrate.sh`.
 5. Run `bun run owner:provision` interactively.
 6. Start the Admin service, API gateway, and `web/admin_app`.
 7. Open `http://localhost:5173`.
@@ -119,7 +119,7 @@ existing volumes require creating that database deliberately before migration.
 Run:
 
 ```sh
-cd server/admin-service
+cd server
 bun run typecheck
 bun test
 bun run db:check

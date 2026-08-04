@@ -9,6 +9,78 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 )
 
+// The AuditEventFunc type is an adapter to allow the use of ordinary
+// function as AuditEvent mutator.
+type AuditEventFunc func(context.Context, *ent.AuditEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AuditEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AuditEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AuditEventMutation", m)
+}
+
+// The BidFunc type is an adapter to allow the use of ordinary
+// function as Bid mutator.
+type BidFunc func(context.Context, *ent.BidMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BidFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BidMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BidMutation", m)
+}
+
+// The DriverDocumentFunc type is an adapter to allow the use of ordinary
+// function as DriverDocument mutator.
+type DriverDocumentFunc func(context.Context, *ent.DriverDocumentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DriverDocumentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DriverDocumentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DriverDocumentMutation", m)
+}
+
+// The DriverProfileFunc type is an adapter to allow the use of ordinary
+// function as DriverProfile mutator.
+type DriverProfileFunc func(context.Context, *ent.DriverProfileMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DriverProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DriverProfileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DriverProfileMutation", m)
+}
+
+// The PassengerProfileFunc type is an adapter to allow the use of ordinary
+// function as PassengerProfile mutator.
+type PassengerProfileFunc func(context.Context, *ent.PassengerProfileMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PassengerProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PassengerProfileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PassengerProfileMutation", m)
+}
+
+// The RideFunc type is an adapter to allow the use of ordinary
+// function as Ride mutator.
+type RideFunc func(context.Context, *ent.RideMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RideFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RideMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RideMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

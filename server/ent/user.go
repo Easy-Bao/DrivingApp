@@ -18,8 +18,14 @@ type User struct {
 	ID int `json:"id,omitempty"`
 	// Phone holds the value of the "phone" field.
 	Phone string `json:"phone,omitempty"`
+	// Email holds the value of the "email" field.
+	Email string `json:"email,omitempty"`
+	// PasswordHash holds the value of the "password_hash" field.
+	PasswordHash string `json:"password_hash,omitempty"`
 	// Role holds the value of the "role" field.
-	Role         string `json:"role,omitempty"`
+	Role string `json:"role,omitempty"`
+	// IsVerified holds the value of the "is_verified" field.
+	IsVerified   bool `json:"is_verified,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -28,9 +34,11 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case user.FieldIsVerified:
+			values[i] = new(sql.NullBool)
 		case user.FieldID:
 			values[i] = new(sql.NullInt64)
-		case user.FieldPhone, user.FieldRole:
+		case user.FieldPhone, user.FieldEmail, user.FieldPasswordHash, user.FieldRole:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -59,11 +67,29 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Phone = value.String
 			}
+		case user.FieldEmail:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field email", values[i])
+			} else if value.Valid {
+				_m.Email = value.String
+			}
+		case user.FieldPasswordHash:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field password_hash", values[i])
+			} else if value.Valid {
+				_m.PasswordHash = value.String
+			}
 		case user.FieldRole:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field role", values[i])
 			} else if value.Valid {
 				_m.Role = value.String
+			}
+		case user.FieldIsVerified:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_verified", values[i])
+			} else if value.Valid {
+				_m.IsVerified = value.Bool
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -104,8 +130,17 @@ func (_m *User) String() string {
 	builder.WriteString("phone=")
 	builder.WriteString(_m.Phone)
 	builder.WriteString(", ")
+	builder.WriteString("email=")
+	builder.WriteString(_m.Email)
+	builder.WriteString(", ")
+	builder.WriteString("password_hash=")
+	builder.WriteString(_m.PasswordHash)
+	builder.WriteString(", ")
 	builder.WriteString("role=")
 	builder.WriteString(_m.Role)
+	builder.WriteString(", ")
+	builder.WriteString("is_verified=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsVerified))
 	builder.WriteByte(')')
 	return builder.String()
 }

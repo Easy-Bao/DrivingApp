@@ -8,11 +8,101 @@ import (
 )
 
 var (
+	// AuditEventsColumns holds the columns for the "audit_events" table.
+	AuditEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "actor_id", Type: field.TypeInt},
+		{Name: "action", Type: field.TypeString},
+		{Name: "target_type", Type: field.TypeString},
+		{Name: "target_id", Type: field.TypeString, Nullable: true},
+		{Name: "outcome", Type: field.TypeString},
+		{Name: "request_id", Type: field.TypeString, Unique: true},
+	}
+	// AuditEventsTable holds the schema information for the "audit_events" table.
+	AuditEventsTable = &schema.Table{
+		Name:       "audit_events",
+		Columns:    AuditEventsColumns,
+		PrimaryKey: []*schema.Column{AuditEventsColumns[0]},
+	}
+	// BidsColumns holds the columns for the "bids" table.
+	BidsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "ride_id", Type: field.TypeInt},
+		{Name: "driver_id", Type: field.TypeInt},
+		{Name: "offered_fare_centavos", Type: field.TypeInt64},
+		{Name: "status", Type: field.TypeString, Default: "pending"},
+	}
+	// BidsTable holds the schema information for the "bids" table.
+	BidsTable = &schema.Table{
+		Name:       "bids",
+		Columns:    BidsColumns,
+		PrimaryKey: []*schema.Column{BidsColumns[0]},
+	}
+	// DriverDocumentsColumns holds the columns for the "driver_documents" table.
+	DriverDocumentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "driver_id", Type: field.TypeInt},
+		{Name: "document_type", Type: field.TypeString},
+		{Name: "storage_key", Type: field.TypeString},
+		{Name: "status", Type: field.TypeString, Default: "pending"},
+	}
+	// DriverDocumentsTable holds the schema information for the "driver_documents" table.
+	DriverDocumentsTable = &schema.Table{
+		Name:       "driver_documents",
+		Columns:    DriverDocumentsColumns,
+		PrimaryKey: []*schema.Column{DriverDocumentsColumns[0]},
+	}
+	// DriverProfilesColumns holds the columns for the "driver_profiles" table.
+	DriverProfilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "name", Type: field.TypeString},
+		{Name: "vehicle_type", Type: field.TypeString},
+		{Name: "plate_number", Type: field.TypeString},
+		{Name: "rating", Type: field.TypeFloat64, Default: 5},
+		{Name: "is_online", Type: field.TypeBool, Default: false},
+	}
+	// DriverProfilesTable holds the schema information for the "driver_profiles" table.
+	DriverProfilesTable = &schema.Table{
+		Name:       "driver_profiles",
+		Columns:    DriverProfilesColumns,
+		PrimaryKey: []*schema.Column{DriverProfilesColumns[0]},
+	}
+	// PassengerProfilesColumns holds the columns for the "passenger_profiles" table.
+	PassengerProfilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "name", Type: field.TypeString},
+		{Name: "preferred_ride_type", Type: field.TypeString, Nullable: true},
+	}
+	// PassengerProfilesTable holds the schema information for the "passenger_profiles" table.
+	PassengerProfilesTable = &schema.Table{
+		Name:       "passenger_profiles",
+		Columns:    PassengerProfilesColumns,
+		PrimaryKey: []*schema.Column{PassengerProfilesColumns[0]},
+	}
+	// RidesColumns holds the columns for the "rides" table.
+	RidesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "passenger_id", Type: field.TypeInt},
+		{Name: "driver_id", Type: field.TypeInt, Nullable: true},
+		{Name: "status", Type: field.TypeString, Default: "requested"},
+		{Name: "fare_centavos", Type: field.TypeInt64},
+	}
+	// RidesTable holds the schema information for the "rides" table.
+	RidesTable = &schema.Table{
+		Name:       "rides",
+		Columns:    RidesColumns,
+		PrimaryKey: []*schema.Column{RidesColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "phone", Type: field.TypeString, Unique: true},
+		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "password_hash", Type: field.TypeString},
 		{Name: "role", Type: field.TypeString},
+		{Name: "is_verified", Type: field.TypeBool, Default: false},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -22,6 +112,12 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AuditEventsTable,
+		BidsTable,
+		DriverDocumentsTable,
+		DriverProfilesTable,
+		PassengerProfilesTable,
+		RidesTable,
 		UsersTable,
 	}
 )

@@ -2,200 +2,58 @@
 
 set -Eeuo pipefail
 
-readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly repository_root="$(cd "${script_directory}/.." && pwd)"
+readonly repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly readiness_timeout_seconds="${READINESS_TIMEOUT_SECONDS:-30}"
-readonly local_database_url="$(awk -F= '$1 == "DATABASE_URL" { print substr($0, index($0, "=") + 1); exit }' "${repository_root}/.env")"
-readonly local_mapbox_token="$(awk -F= '$1 == "MAPBOX_PUBLIC_TOKEN" { print substr($0, index($0, "=") + 1); exit }' "${repository_root}/.env")"
-local_admin_jwt_secret="${ADMIN_JWT_SECRET:-}"
-
 service_pids=()
-service_names=()
 
 cleanup() {
-  local pid
-
   trap - EXIT INT TERM
-  for pid in "${service_pids[@]}"; do
-    kill "${pid}" 2>/dev/null || true
-  done
-  for pid in "${service_pids[@]}"; do
-    wait "${pid}" 2>/dev/null || true
-  done
-}
-
-handle_signal() {
-  local exit_code="$1"
-  exit "${exit_code}"
+  for pid in "${service_pids[@]}"; do kill "${pid}" 2>/dev/null || true; done
+  for pid in "${service_pids[@]}"; do wait "${pid}" 2>/dev/null || true; done
 }
 
 require_command() {
-  local command_name="$1"
-  if ! command -v "${command_name}" >/dev/null 2>&1; then
-    echo "Required command '${command_name}' was not found." >&2
-    exit 1
-  fi
-}
-
-assert_valid_timeout() {
-  if [[ ! "${readiness_timeout_seconds}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "READINESS_TIMEOUT_SECONDS must be a positive integer." >&2
-    exit 1
-  fi
-}
-
-assert_port_available() {
-  local port="$1"
-  if (echo > "/dev/tcp/127.0.0.1/${port}") >/dev/null 2>&1; then
-    echo "Port ${port} is already in use. Stop the existing process before running 'just start-all'." >&2
-    exit 1
-  fi
-}
-
-start_service() {
-  local service_name="$1"
-  local service_directory="$2"
-  shift 2
-
-  echo "Starting ${service_name}..."
-  (
-    cd "${repository_root}/${service_directory}"
-    exec "$@"
-  ) &
-  service_pids+=("$!")
-  service_names+=("${service_name}")
-}
-
-assert_services_running() {
-  local index
-  local exit_code
-
-  for index in "${!service_pids[@]}"; do
-    if ! kill -0 "${service_pids[index]}" 2>/dev/null; then
-      exit_code=0
-      wait "${service_pids[index]}" || exit_code="$?"
-      echo "${service_names[index]} exited before startup completed (status ${exit_code})." >&2
-      return 1
-    fi
-  done
+  command -v "$1" >/dev/null 2>&1 || { echo "Required command '$1' was not found." >&2; exit 1; }
 }
 
 wait_for_http_service() {
-  local service_name="$1"
-  local url="$2"
+  local url="$1"
   local deadline=$((SECONDS + readiness_timeout_seconds))
-
   until curl --fail --silent --show-error --max-time 2 "${url}" >/dev/null 2>&1; do
-    assert_services_running
     if (( SECONDS >= deadline )); then
-      echo "${service_name} did not become ready at ${url} within ${readiness_timeout_seconds}s." >&2
-      return 1
-    fi
-    sleep 1
-  done
-
-  echo "${service_name} is ready at ${url}."
-}
-
-wait_for_gateway_auth_proxy() {
-  local url='http://127.0.0.1:8080/auth/passenger/login'
-  local deadline=$((SECONDS + readiness_timeout_seconds))
-  local status_code
-
-  while true; do
-    status_code="$(
-      curl --silent --output /dev/null --write-out '%{http_code}' \
-        --max-time 2 \
-        --request POST \
-        --header 'Content-Type: application/json' \
-        --data '{}' \
-        "${url}" || true
-    )"
-    if [[ "${status_code}" == '400' ]]; then
-      echo "Gateway can reach the authentication service."
-      return 0
-    fi
-
-    assert_services_running
-    if (( SECONDS >= deadline )); then
-      echo "Gateway authentication proxy was not ready within ${readiness_timeout_seconds}s (last HTTP status: ${status_code:-none})." >&2
+      echo "Service did not become ready at ${url}." >&2
       return 1
     fi
     sleep 1
   done
 }
 
-trap cleanup EXIT
-trap 'handle_signal 130' INT
-trap 'handle_signal 143' TERM
-
-require_command bun
-require_command curl
+trap cleanup EXIT INT TERM
 require_command go
+require_command curl
 require_command openssl
-assert_valid_timeout
 
-if [[ -z "${local_database_url}" ]]; then
-  echo "DATABASE_URL is required in the root .env for local services." >&2
+if [[ ! -f "${repository_root}/.env" ]]; then
+  echo "Create .env with DATABASE_URL before starting the backend." >&2
   exit 1
 fi
 
-if [[ -z "${local_admin_jwt_secret}" ]]; then
-  local_admin_jwt_secret="$(openssl rand -hex 32)"
+set -a
+# shellcheck disable=SC1091
+source "${repository_root}/.env"
+set +a
+
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  echo "DATABASE_URL is required in .env." >&2
+  exit 1
 fi
 
-for port in {8080..8090}; do
-  assert_port_available "${port}"
-done
+cd "${repository_root}"
+./scripts/database/migrate.sh
 
-start_service admin-service server/admin-service \
-  env DATABASE_URL="${local_database_url%/*}/admin_db" \
-  ADMIN_JWT_SECRET="${local_admin_jwt_secret}" \
-  PORT=8090 \
-  bun run dev
-start_service api-gateway server/api-gateway \
-  env AUTH_SERVICE_URL=http://127.0.0.1:8088 \
-  PASSENGER_SERVICE_URL=http://127.0.0.1:8081 \
-  DRIVER_SERVICE_URL=http://127.0.0.1:8082 \
-  TRIP_SERVICE_URL=http://127.0.0.1:8083 \
-  BIDDING_SERVICE_URL=http://127.0.0.1:8084 \
-  TELEMETRY_SERVICE_URL=http://127.0.0.1:8085 \
-  CHAT_SERVICE_URL=http://127.0.0.1:8086 \
-  FARE_SERVICE_URL=http://127.0.0.1:8087 \
-  ADMIN_SERVICE_URL=http://127.0.0.1:8090 \
-  LOCATION_SERVICE_URL=http://127.0.0.1:8089 \
-  bun run dev
-start_service auth-service server/auth-service \
-  env DATABASE_URL="${local_database_url}" \
-  PASSENGER_DB_URL="${local_database_url}" \
-  DRIVER_DB_URL="${local_database_url}" \
-  bun run dev
-start_service passenger-service server/passenger-service env DATABASE_URL="${local_database_url}" bun run dev
-start_service driver-service server/driver-service env DATABASE_URL="${local_database_url}" bun run dev
-start_service trip-service server/trip-service env DATABASE_URL="${local_database_url}" bun run dev
-start_service bidding-service server/bidding-service env DATABASE_URL="${local_database_url}" bun run dev
-start_service telemetry-service server/telemetry-service bun run dev
-start_service chat-service server/chat-service env DATABASE_URL="${local_database_url}" bun run dev
-start_service fare-service server/fare-service env DATABASE_URL="${local_database_url}" bun run dev
-start_service location-service server/location-service \
-  env REDIS_URL=redis://127.0.0.1:6379 \
-  MAPBOX_PUBLIC_TOKEN="${local_mapbox_token}" \
-  RABBITMQ_URL=amqp://guest:guest@127.0.0.1:5672/ \
-  go run ./cmd/main.go
+(cd server && go run ./cmd/core-api) & service_pids+=("$!")
+(cd server && go run ./cmd/realtime-service) & service_pids+=("$!")
 
-wait_for_http_service auth-service http://127.0.0.1:8088/
-wait_for_http_service api-gateway http://127.0.0.1:8080/
-wait_for_gateway_auth_proxy
-
-echo "All local services started. Press Ctrl-C to stop application processes."
-
-set +e
+wait_for_http_service "http://127.0.0.1:${CORE_API_PORT:-8080}/health"
+echo "core-api and realtime-service are ready. Press Ctrl-C to stop them."
 wait -n "${service_pids[@]}"
-service_exit_code="$?"
-set -e
-
-if (( service_exit_code == 0 )); then
-  service_exit_code=1
-fi
-echo "A local service exited unexpectedly (status ${service_exit_code}); stopping the remaining services." >&2
-exit "${service_exit_code}"

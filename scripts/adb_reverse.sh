@@ -16,7 +16,7 @@ if (( ${#connected_device_ids[@]} == 0 )); then
   exit 1
 fi
 
-readonly service_ports=(8080 8081 8082 8083 8084 8085 8086 8087 8088 8089)
+readonly service_ports=(8080 8081)
 failed_mapping_count=0
 
 echo "Reversing ports for all connected Android devices..."

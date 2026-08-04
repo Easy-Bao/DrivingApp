@@ -1,0 +1,33 @@
+package schema
+
+import (
+	"entgo.io/ent"
+	"entgo.io/ent/schema/field"
+)
+
+type PassengerProfile struct {
+	ent.Schema
+}
+
+func (PassengerProfile) Fields() []ent.Field {
+	return []ent.Field{
+		field.Int("user_id").Positive(),
+		field.String("name"),
+		field.String("preferred_ride_type").Optional(),
+	}
+}
+
+type DriverProfile struct {
+	ent.Schema
+}
+
+func (DriverProfile) Fields() []ent.Field {
+	return []ent.Field{
+		field.Int("user_id").Positive(),
+		field.String("name"),
+		field.String("vehicle_type"),
+		field.String("plate_number"),
+		field.Float("rating").Default(5),
+		field.Bool("is_online").Default(false),
+	}
+}

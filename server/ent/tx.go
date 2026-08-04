@@ -12,6 +12,18 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// AuditEvent is the client for interacting with the AuditEvent builders.
+	AuditEvent *AuditEventClient
+	// Bid is the client for interacting with the Bid builders.
+	Bid *BidClient
+	// DriverDocument is the client for interacting with the DriverDocument builders.
+	DriverDocument *DriverDocumentClient
+	// DriverProfile is the client for interacting with the DriverProfile builders.
+	DriverProfile *DriverProfileClient
+	// PassengerProfile is the client for interacting with the PassengerProfile builders.
+	PassengerProfile *PassengerProfileClient
+	// Ride is the client for interacting with the Ride builders.
+	Ride *RideClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -145,6 +157,12 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.AuditEvent = NewAuditEventClient(tx.config)
+	tx.Bid = NewBidClient(tx.config)
+	tx.DriverDocument = NewDriverDocumentClient(tx.config)
+	tx.DriverProfile = NewDriverProfileClient(tx.config)
+	tx.PassengerProfile = NewPassengerProfileClient(tx.config)
+	tx.Ride = NewRideClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
@@ -155,7 +173,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: User.QueryXXX(), the query will be executed
+// applies a query, for example: AuditEvent.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

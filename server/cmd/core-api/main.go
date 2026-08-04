@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/coreapi"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
@@ -13,6 +14,7 @@ import (
 
 func main() {
 	router := http.NewServeMux()
+	router.Handle("/", coreapi.NewHandler(os.Getenv("JWT_SECRET")))
 	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
 	locationhttp.NewHandler(usecase.NewService(provider)).RegisterRoutes(router)
 	router.HandleFunc("GET /health", func(writer http.ResponseWriter, _ *http.Request) {

@@ -1,416 +1,80 @@
-# EasyRide Backend and App Architecture
+# EasyRide backend architecture
 
-This is the target architecture for the Passenger app, Driver app, Admin portal,
-and backend. It is a migration target, not a description of the current
-checkout. The current backend is still split across Bun, Hono, and Drizzle
-services.
+EasyRide uses one Go core process for transactional REST operations and one Go
+realtime process for WebSockets and ephemeral location. The API gateway and the
+old Bun services are retired; mobile and Admin traffic reaches `core-api`
+directly through deployment routing.
 
-The first implementation slice now lives under `server/`: the root Go module,
-Ent generation setup, location REST contracts, authenticated realtime event
-transport, and their focused tests. The legacy services remain active until
-their replacements have equivalent behavior and deployment coverage.
-
-## Architecture Decision
-
-Use a modular core monolith with a separate realtime process:
-
-- `core-api` owns transactional business operations and the public REST API.
-- `realtime-service` owns long-lived WebSocket connections and fast location
-  updates.
-- Both processes live in one Go repository and use explicit package boundaries.
-- The API gateway is deployment infrastructure. It is not another business
-  service.
-- PostgreSQL remains the source of truth. Redis is used for ephemeral location,
-  presence, and socket coordination data.
-
-This is not a microservice architecture. The realtime process is separate only
-because persistent connections and high-frequency GPS traffic have different
-runtime characteristics from ride and account transactions.
-
-## Server Layout
+## Runtime layout
 
 ```text
 server
-  go.mod
-  cmd
-    core-api
-      main.go
-    realtime-service
-      main.go
+  cmd/core-api
+  cmd/entgenerate
+  cmd/migrate
+  cmd/realtime-service
   internal
-    auth
-      adapter
-        postgres
-        sms
-        token
-      domain
-        errors.go
-        identity.go
-        ports.go
-      transport
-        http
-          routes.go
-          handler.go
-      usecase
-        request_otp.go
-        verify_otp.go
-        refresh_session.go
-    users
-      adapter
-        postgres
-      domain
-        user.go
-        driver_profile.go
-        passenger_profile.go
-        ports.go
-      transport
-        http
-          routes.go
-          handler.go
-      usecase
-        get_me.go
-        update_profile.go
-        update_driver_profile.go
-    driver_doc
-      adapter
-        object_storage
-        postgres
-      domain
-        document.go
-        verification.go
-        ports.go
-      transport
-        http_driver
-          routes.go
-          handler.go
-        http_admin
-          routes.go
-          handler.go
-      usecase
-        submit_document.go
-        get_status.go
-        review_document.go
-    rides
-      adapter
-        postgres
-      domain
-        ride.go
-        bid.go
-        fare.go
-        state.go
-        ports.go
-      transport
-        http
-          routes.go
-          handler.go
-      usecase
-        estimate_fare.go
-        request_ride.go
-        submit_bid.go
-        accept_bid.go
-        start_ride.go
-        complete_ride.go
-        cancel_ride.go
+    auth/schema       # identity Ent declarations owned by auth
+    users/schema
+    driver_doc/schema
+    rides/schema
     location
-      adapter
-        mapbox
-        postgres
-      domain
-        place.go
-        coordinates.go
-        ports.go
-      transport
-        http
-          routes.go
-          handler.go
-      usecase
-        search_places.go
-        reverse_geocode.go
-    admin
-      adapter
-        postgres
-      domain
-        audit_event.go
-        ports.go
-      transport
-        http
-          routes.go
-          handler.go
-      usecase
-        get_overview.go
-        record_audit_event.go
+    admin/schema
     realtime
-      chat
-        domain
-          message.go
-        usecase
-          relay_message.go
-      geo
-        adapter
-          redis.go
-        domain
-          driver_point.go
-        usecase
-          ingest_location.go
-          find_nearby_drivers.go
-      ws
-        handler.go
-        hub.go
     platform
-      config
-      http
-        auth_middleware.go
-        error_response.go
-      postgres
-      redis
-      storage
-      clock
-  ent
-    schema
-      user.go
-      driver_profile.go
-      driver_document.go
-      ride.go
-      bid.go
-      audit_event.go
-    ent.go
-    generate.go
-    migrate
-      migrations
-  api-gateway
-    README.md
+  ent                 # generated client and migration API only
 ```
 
-## Folder Responsibilities
+`core-api` owns authentication, users, driver documents, rides, bidding, fare,
+location search, and Admin operations. `realtime-service` owns the WebSocket
+connection lifecycle, chat relay, presence, and high-frequency driver location.
+It does not own transactional ride state.
 
-`server` - Go backend repository and module boundary.
+Each `server/internal/<domain>` package is private and owns its domain models,
+use cases, adapters, transports, tests, and Ent schema declarations. Domain
+packages do not import HTTP, Redis, Mapbox, or Ent into invariants. Adapters
+translate external systems, transports validate requests and map responses, and
+use cases define authorization and transaction boundaries.
 
-`server/cmd` - Executable entry points. These files only load configuration,
-construct adapters, wire use cases, register routes, and start a process.
+Schemas are intentionally not stored in a global `server/ent/schema` directory.
+The module-owned files under `internal/*/schema` are composed into one temporary
+generation package by `cmd/entgenerate`. Ent still produces one typed client and
+one PostgreSQL migration stream, which keeps cross-domain transactions possible
+without recreating the old service split.
 
-`server/cmd/core-api` - Starts the REST API and wires the transactional modules.
+PostgreSQL is the source of truth. Redis is for ephemeral realtime state. Money
+is stored as integer centavos and all assignment or money mutations must be
+idempotent. `server/cmd/migrate` runs Ent's additive schema migration; local and
+CI entry points call `scripts/database/migrate.sh`. No Drizzle command or
+`db:push` remains.
 
-`server/cmd/realtime-service` - Starts the WebSocket server and wires Redis,
-geo, chat, and connection management.
+Generate and verify the graph with:
 
-`server/internal` - Private application code. Packages below this directory
-cannot be imported by external Go modules.
+```sh
+cd server
+go generate ./ent/generate.go
+go test ./...
+go vet ./...
+```
 
-`internal/auth` - Shared identity, OTP, session, refresh, and token rules for
-both mobile apps. It does not contain Driver document verification.
+The generated files under `server/ent` are checked in and must not be edited by
+hand. Schema changes are reviewed with the generated migration contract before
+deployment. The application does not run destructive drop options.
 
-`internal/users` - User identity and role-specific passenger or driver profile
-data. A driver is a user with a driver profile, not a second authentication
-system.
-
-`internal/driver_doc` - Driver document submission and verification as a
-separate business domain. Driver and Admin transports call the same use cases.
-
-`internal/rides` - Fare estimation, ride requests, bidding, and ride state
-transitions. Acceptance and assignment must run in one PostgreSQL transaction.
-
-`internal/location` - Low-frequency place search, reverse geocoding, and route
-lookup used by REST flows. It does not own live driver GPS streams.
-
-`internal/admin` - Admin-specific reports, audit actions, and operational
-queries. It may call a Driver Document use case, but does not copy document or
-driver tables.
-
-`internal/realtime` - Code used only by the realtime process. It is not a
-second ride service and must not become a place for transactional ride rules.
-
-`internal/realtime/geo` - Ephemeral driver presence and coordinates in Redis.
-It should publish validated events or call a narrow core API port when a live
-event needs a transactional side effect.
-
-`internal/realtime/chat` - Live message validation and routing. Message history
-and authorization-sensitive persistence belong behind an explicit port rather
-than in the WebSocket hub.
-
-`internal/realtime/ws` - WebSocket protocol and connection lifecycle. It owns
-transport concerns, not business decisions.
-
-`internal/platform` - Infrastructure shared by the two processes: config,
-logging, PostgreSQL, Redis, object storage, clock, and HTTP middleware. It is
-not a place for domain models or cross-module business services.
-
-`server/ent/schema` - Ent schema declarations for the single PostgreSQL graph.
-Each domain owns its schema files, but all files are compiled into one Ent
-client and one migration stream. A separate Ent client per module would make
-cross-domain transactions harder and recreate the old service split.
-
-`server/ent/migrate/migrations` - Reviewed, additive production migrations. Ent
-schema changes are generated and reviewed here; never use `db:push` against
-shared environments.
-
-`server/api-gateway` - Reverse-proxy configuration and deployment notes. It
-routes `/api/*` to `core-api` and `/ws/*` to `realtime-service`; it contains no
-ride, auth, or user logic.
-
-## Hexagonal Rules
-
-Every business module follows the same four areas without adding layers that do
-not have a job:
-
-`domain` - Entities, value objects, invariants, domain errors, and outbound port
-interfaces. This package does not import Ent, Hono, HTTP, Redis, or Mapbox.
-
-`usecase` - Application operations. It coordinates domain rules and ports,
-handles authorization decisions that belong to the operation, and defines
-transaction boundaries.
-
-`adapter` - Outbound implementations such as Ent repositories, Redis, SMS,
-Mapbox, and object storage. Adapters translate external data into domain types.
-
-`transport` - Inbound adapters such as HTTP handlers and WebSocket handlers.
-Transport validates input, derives identity from verified credentials, calls a
-use case, and maps the result to a protocol response.
-
-Do not create interfaces for every function. Add a port when the dependency is
-external, replaceable, transaction-sensitive, or needed for focused tests.
-
-## Ent and Multiple Schemas
-
-The Go dependency is `entgo.io/ent`. Ent is a suitable replacement for the
-current Drizzle layer during the Go migration, but it does not mean creating one
-database client per old service.
-
-- Use one Ent graph and one migration stream for the core PostgreSQL database.
-- Keep schema declarations near their owning domain in `ent/schema`.
-- Generate one typed client used by adapter packages.
-- Keep repositories behind module-owned ports so modules do not query each
-  other's tables directly.
-- Use explicit Ent transactions for ride creation, bid acceptance, assignment,
-  and other state-changing operations.
-- Keep realtime location data in Redis; do not write every GPS ping to Ent.
-- If a future domain genuinely needs a separate database, give it a separate
-  Ent graph and deployment boundary then, rather than designing for that now.
-
-The migration should be incremental: freeze new Drizzle features, define the
-Go contracts, migrate one vertical slice, verify it against PostgreSQL, then
-retire the corresponding TypeScript service. Do not run two writers against the
-same tables without an explicit cutover plan.
-
-## Flutter Package Boundaries
+The deployment exposes one REST process and one realtime process:
 
 ```text
-packages
-  shared_core
-    pubspec.yaml
-    lib
-      shared_core.dart
-      src
-        api
-        models
-        realtime
-        storage
-        constants
-  shared_ui
-    pubspec.yaml
-    lib
-      shared_ui.dart
-      src
-        components
-        maps
-        tokens
-        accessibility
-apps
-  passenger_app
-    lib
-      src
-        core
-          theme
-          config
-        features
-  driver_app
-    lib
-      src
-        core
-          theme
-          config
-        features
+REST /api/*  -> core-api:8080
+WS   /ws     -> realtime-service:8081
 ```
 
-`packages/shared_core` - Shared API models, HTTP client contracts, WebSocket
-protocol types, secure token storage abstractions, and transport utilities.
-It must not contain Passenger screens, Driver onboarding rules, or app-specific
-navigation.
+Core endpoint groups are `/auth`, `/users`, `/driver/documents`, `/rides`,
+`/location`, and `/admin`. Health is `GET /health`. Realtime clients use one
+authenticated WebSocket connection for location, presence, bid notifications,
+and chat events.
 
-`packages/shared_ui` - Reusable controls, map primitives, spacing, typography
-roles, accessibility helpers, and visual tokens. It must not expose one global
-`AppTheme` for both products.
-
-`apps/passenger_app/lib/src/core/theme` - Passenger theme composition. It maps
-shared tokens to Passenger colors, navigation styling, and passenger-specific
-component themes.
-
-`apps/driver_app/lib/src/core/theme` - Driver theme composition. It can use the
-same typography and component contracts while choosing independent colors,
-density, navigation, and operational states.
-
-The two apps may share a token name such as `surfacePrimary` without sharing
-the value. Shared UI components should consume `ThemeData` or explicit theme
-extensions supplied by the app, not import Passenger or Driver theme files.
-
-## Public Entry Points
-
-```text
-REST  https://api.easybao.com/api/v1
-WS    wss://realtime.easybao.com/ws
-```
-
-Core REST routes are grouped by business capability:
-
-```text
-POST   /auth/otp
-POST   /auth/verify
-GET    /users/me
-PATCH  /users/me
-POST   /driver/documents
-GET    /driver/documents/status
-PATCH  /admin/documents/{id}/review
-GET    /location/search
-GET    /location/reverse
-POST   /rides/estimate
-POST   /rides
-POST   /rides/{id}/bids
-POST   /bids/{id}/accept
-```
-
-The WebSocket protocol carries location, presence, bid notifications, and live
-chat events over one authenticated connection. REST remains the authority for
-state-changing ride and document operations.
-
-## Migration Order
-
-1. Define the public contracts and common error format.
-2. Create the Go module, platform packages, Ent graph, and additive migration
-   workflow without changing production writers.
-3. Migrate auth and users as one identity slice.
-4. Migrate driver documents and expose separate Driver and Admin transports.
-5. Migrate location search, then move live location ingestion to Redis and the
-   realtime process.
-6. Migrate rides, fare, and bidding together so transactional invariants remain
-   in one use case and database transaction.
-7. Move chat history and live relay behind explicit ports.
-8. Switch the gateway and clients, observe the new path, then retire old
-   services and Drizzle writers one slice at a time.
-
-Until these steps are complete, the existing Hono services and Drizzle schemas
-remain active and should not be described as migrated.
-
-## Deletion Gate
-
-Remove a legacy service only after its replacement has all of the following:
-
-- equivalent endpoint and error-contract tests;
-- persistence tests against the same PostgreSQL tables;
-- authentication and authorization negative tests;
-- retry and idempotency coverage for state-changing operations;
-- gateway and mobile client traffic switched to the replacement;
-- a rollback window with no legacy writer still active.
-
-The legacy `server/database/init` directory is part of the current Docker
-bootstrap and must remain until every service using those tables has moved to
-the Go migration path. Once Ent owns startup migrations, remove that directory
-and its Compose mount in the same verified cutover commit, not earlier.
+The legacy service trees and `server/database` are removed only in the cutover
+that changes Compose, startup, CI, and migration scripts together. This checkout
+completes the structural cutover and Ent migration substrate; endpoint-by-
+endpoint business parity remains the next implementation slice for the
+currently skeletal Go modules.

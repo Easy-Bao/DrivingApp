@@ -29,8 +29,7 @@ ci-backend-test:
     @./scripts/ci/test_backend_services.sh
 
 ci-backend: ci-backend-install ci-backend-typecheck ci-backend-test
-    cd server/location-service && go vet ./...
-    cd server/location-service && go test ./...
+    cd server && go generate ./ent/generate.go
 
 ci-flutter:
     flutter pub global run melos bootstrap
@@ -53,29 +52,14 @@ db-down:
 
 # Start shared local infrastructure and wait for its health checks
 infra-up:
-    ADMIN_JWT_SECRET="$$(openssl rand -hex 32)" docker compose up -d --wait --wait-timeout 60 postgres-db redis rabbitmq
+    docker compose up -d --wait --wait-timeout 60 postgres-db redis
 
-# Idempotently initialize databases and tables required by local authentication
+# Idempotently apply the single Ent migration stream
 db-migrate: infra-up
-    @./scripts/database/apply_service_schemas.sh
+    @./scripts/database/migrate.sh
 
 test-services:
-    @echo "=== Auth Service ==="
-    cd server/auth-service && bun test
-    @echo "=== Passenger Service ==="
-    cd server/passenger-service && bun test
-    @echo "=== Driver Service ==="
-    cd server/driver-service && bun test
-    @echo "=== Trip Service ==="
-    cd server/trip-service && bun test
-    @echo "=== Telemetry Service ==="
-    cd server/telemetry-service && bun test
-    @echo "=== Chat Service ==="
-    cd server/chat-service && bun test
-    @echo "=== Fare Service ==="
-    cd server/fare-service && bun test
-    @echo "=== Location Service ==="
-    cd server/location-service && go test ./...
+    cd server && go test ./...
 
 start-all: db-migrate
     @./scripts/start_all.sh
@@ -106,34 +90,5 @@ docker-build:
 docker-logs:
     docker compose logs -f
 
-# Run prisma generate for all server services
-prisma-generate:
-    cd server/bidding-service && bunx prisma generate
-    cd server/chat-service && bunx prisma generate
-    cd server/driver-service && bunx prisma generate
-    cd server/passenger-service && bunx prisma generate
-    cd server/trip-service && bunx prisma generate
-
-# Run prisma db push to apply schema changes directly
-prisma-push:
-    cd server/bidding-service && bunx prisma db push
-    cd server/chat-service && bunx prisma db push
-    cd server/driver-service && bunx prisma db push
-    cd server/passenger-service && bunx prisma db push
-    cd server/trip-service && bunx prisma db push
-
-# Create or deploy prisma migrations
-prisma-migrate name:
-    cd server/bidding-service && bunx prisma migrate dev --name {{name}}
-    cd server/chat-service && bunx prisma migrate dev --name {{name}}
-    cd server/driver-service && bunx prisma migrate dev --name {{name}}
-    cd server/passenger-service && bunx prisma migrate dev --name {{name}}
-    cd server/trip-service && bunx prisma migrate dev --name {{name}}
-
-# Deploy existing prisma migrations in production
-prisma-deploy:
-    cd server/bidding-service && bunx prisma migrate deploy
-    cd server/chat-service && bunx prisma migrate deploy
-    cd server/driver-service && bunx prisma migrate deploy
-    cd server/passenger-service && bunx prisma migrate deploy
-    cd server/trip-service && bunx prisma migrate deploy
+generate-ent:
+    cd server && go generate ./ent/generate.go

@@ -6,5 +6,23 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// AuditEvent is the predicate function for auditevent builders.
+type AuditEvent func(*sql.Selector)
+
+// Bid is the predicate function for bid builders.
+type Bid func(*sql.Selector)
+
+// DriverDocument is the predicate function for driverdocument builders.
+type DriverDocument func(*sql.Selector)
+
+// DriverProfile is the predicate function for driverprofile builders.
+type DriverProfile func(*sql.Selector)
+
+// PassengerProfile is the predicate function for passengerprofile builders.
+type PassengerProfile func(*sql.Selector)
+
+// Ride is the predicate function for ride builders.
+type Ride func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

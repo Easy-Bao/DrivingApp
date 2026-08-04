@@ -12,6 +12,12 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/Easy-Bao/DrivingApp/server/ent/auditevent"
+	"github.com/Easy-Bao/DrivingApp/server/ent/bid"
+	"github.com/Easy-Bao/DrivingApp/server/ent/driverdocument"
+	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
 )
 
@@ -73,7 +79,13 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			user.Table: user.ValidColumn,
+			auditevent.Table:       auditevent.ValidColumn,
+			bid.Table:              bid.ValidColumn,
+			driverdocument.Table:   driverdocument.ValidColumn,
+			driverprofile.Table:    driverprofile.ValidColumn,
+			passengerprofile.Table: passengerprofile.ValidColumn,
+			ride.Table:             ride.ValidColumn,
+			user.Table:             user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

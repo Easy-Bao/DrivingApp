@@ -1,17 +1,9 @@
 # Go backend
 
-This directory is the migration target for the backend. It currently contains
-the first Go slice of the modular architecture:
-
-- `cmd/core-api` exposes location REST routes and a health endpoint.
-- `cmd/realtime-service` exposes authenticated WebSocket event transport.
-- `ent/schema` is the source for the shared PostgreSQL Ent graph.
-- `internal` contains domain code behind transport and adapter boundaries.
-
-The existing Bun services and `location-service` remain in the repository while
-their behavior is migrated and verified. Do not remove or point production
-traffic at a replacement slice without completing its contract and cutover
-checks.
+This directory contains the Go backend described in `docs/architecture.md`.
+`core-api` is the single transactional REST process and `realtime-service` is
+the separate WebSocket process. Domain-owned schemas under `internal/*/schema`
+are composed into one generated Ent client.
 
 ## Run
 
