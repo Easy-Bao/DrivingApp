@@ -15,7 +15,7 @@ set -a
 source "$environment_file"
 set +a
 
-required_variables=(DRIVER_SERVICE_URL PLACE_SERVICE_BASE_URL)
+required_variables=(API_BASE_URL)
 for variable_name in "${required_variables[@]}"; do
   if [[ -z "${!variable_name:-}" ]]; then
     printf '%s is required in %s\n' "$variable_name" "$environment_file" >&2
@@ -24,14 +24,11 @@ for variable_name in "${required_variables[@]}"; do
 done
 
 dart_defines=(
-  "--dart-define=DRIVER_SERVICE_URL=${DRIVER_SERVICE_URL}"
-  "--dart-define=PLACE_SERVICE_BASE_URL=${PLACE_SERVICE_BASE_URL}"
+  "--dart-define=API_BASE_URL=${API_BASE_URL}"
 )
 
 optional_variables=(
   MAPBOX_PUBLIC_TOKEN
-  AUTH_SERVICE_URL
-  TRIP_SERVICE_URL
   OFFLINE_MODE
   PHYSICAL_DEVICE
   ANDROID_EMULATOR_LOOPBACK_HOST

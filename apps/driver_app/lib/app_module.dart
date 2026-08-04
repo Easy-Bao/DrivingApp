@@ -30,7 +30,7 @@ class AppModule extends Module {
       )
       ..addLazySingleton<Dio>(
         (i) => DioClient.create(
-          baseUrl: EnvConfig.driverServiceUri,
+          baseUrl: EnvConfig.apiBaseUri,
           sessionService: i.get<SecureSessionService>(),
         ),
       )

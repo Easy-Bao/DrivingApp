@@ -52,7 +52,7 @@ db-down:
 
 # Start shared local infrastructure and wait for its health checks
 infra-up:
-    docker compose up -d --wait --wait-timeout 60 postgres-db redis
+    docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis rabbitmq
 
 # Idempotently apply the single Ent migration stream
 db-migrate: infra-up
@@ -76,7 +76,7 @@ adb-reverse:
 
 # Start all docker compose containers in background
 docker-up:
-    docker compose up -d
+    docker compose up -d --remove-orphans
 
 # Stop all compose containers
 docker-down:

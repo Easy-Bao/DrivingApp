@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -16,68 +17,42 @@ class EnvConfig {
 
   static bool get offlineMode =>
       dotenv.env['OFFLINE_MODE']?.toLowerCase() == 'true';
-
-  static Uri get passengerServiceUri {
-    return _configuredUri('PASSENGER_SERVICE_URL');
-  }
-
-  static Uri get authServiceUri {
-    return _configuredUri(
-      'AUTH_SERVICE_URL',
-      fallback: 'PASSENGER_SERVICE_URL',
-    );
-  }
-
-  static Uri get tripServiceUri {
-    return _configuredUri(
-      'TRIP_SERVICE_URL',
-      fallback: 'PASSENGER_SERVICE_URL',
-    );
-  }
-
-  static Uri get placeServiceUri {
-    return _configuredUri(
-      'PLACE_SERVICE_BASE_URL',
-      fallback: 'PASSENGER_SERVICE_URL',
-    );
-  }
-
-  static Uri get httpBaseUri => passengerServiceUri;
+  static Uri get apiBaseUri => _configuredUri();
+  static Uri get passengerServiceUri => apiBaseUri;
+  static Uri get authServiceUri => apiBaseUri;
+  static Uri get tripServiceUri => apiBaseUri;
+  static Uri get placeServiceUri => apiBaseUri;
+  static Uri get httpBaseUri => apiBaseUri;
+  static String get httpBaseUrl => apiBaseUri.toString();
 
   static Uri get webSocketBaseUri {
-    final uri = httpBaseUri;
-    final scheme = uri.scheme == 'https' ? 'wss' : 'ws';
-    return uri.replace(scheme: scheme);
+    final uri = apiBaseUri;
+    return uri.replace(scheme: uri.scheme == 'https' ? 'wss' : 'ws');
   }
-
-  static String get httpBaseUrl => httpBaseUri.toString();
 
   static String get webSocketBaseUrl => webSocketBaseUri.toString();
 
-  static Uri _configuredUri(String key, {String? fallback}) {
-    final rawUrl =
-        dotenv.env[key] ?? (fallback == null ? null : dotenv.env[fallback]);
+  static Uri _configuredUri() {
+    final rawUrl = dotenv.env['API_BASE_URL'];
     if (rawUrl == null || rawUrl.trim().isEmpty) {
-      throw StateError('Security Configuration Error: $key is required.');
+      throw StateError(
+        'Security Configuration Error: API_BASE_URL is required.',
+      );
     }
-    return _resolveUri(rawUrl);
-  }
-
-  static Uri _resolveUri(String rawUrl) {
     var uri = Uri.parse(rawUrl);
     final usesAdbReverse =
         dotenv.env['ANDROID_USE_ADB_REVERSE']?.toLowerCase() != 'false';
-    if (!usesAdbReverse && !kIsWeb && Platform.isAndroid) {
-      if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
-        final loopbackHost = dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'];
-        if (loopbackHost == null || loopbackHost.trim().isEmpty) {
-          throw StateError(
-            'Security Configuration Error: '
-            'ANDROID_EMULATOR_LOOPBACK_HOST is required for local Android URLs.',
-          );
-        }
-        uri = uri.replace(host: loopbackHost);
+    if (!usesAdbReverse &&
+        !kIsWeb &&
+        Platform.isAndroid &&
+        (uri.host == 'localhost' || uri.host == '127.0.0.1')) {
+      final loopbackHost = dotenv.env['ANDROID_EMULATOR_LOOPBACK_HOST'];
+      if (loopbackHost == null || loopbackHost.trim().isEmpty) {
+        throw StateError(
+          'Security Configuration Error: ANDROID_EMULATOR_LOOPBACK_HOST is required for local Android URLs.',
+        );
       }
+      uri = uri.replace(host: loopbackHost);
     }
     return uri;
   }

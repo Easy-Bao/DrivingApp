@@ -31,6 +31,8 @@ services:
     container_name: rabbitmq
     image: rabbitmq:3-management-alpine
     restart: always
+    ports:
+      - "${RABBITMQ_HOST_PORT:-5672}:5672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
@@ -45,7 +47,7 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
       CORE_API_PORT: 8080
-      MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN}
+      MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN:-}
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://rabbitmq:5672
     depends_on:

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -26,6 +27,7 @@ import (
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
+	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	ridespostgres "github.com/Easy-Bao/DrivingApp/server/internal/rides/adapter/postgres"
 	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
 	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
@@ -48,6 +50,14 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		database, err := sql.Open("postgres", databaseURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := platformmigration.PreserveLegacyTables(context.Background(), database); err != nil {
+			log.Fatal(err)
+		}
+		defer database.Close()
 		if err := client.Schema.Create(context.Background(), migrate.WithForeignKeys(true)); err != nil {
 			log.Fatal(err)
 		}

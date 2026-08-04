@@ -17,5 +17,11 @@ if [[ -z "${DATABASE_URL}" ]]; then
   exit 1
 fi
 
+# Local Compose Postgres does not expose SSL. Keep production URLs untouched,
+# while making the development migration explicit and repeatable.
+if [[ "${DATABASE_URL}" == *"127.0.0.1"* || "${DATABASE_URL}" == *"localhost"* ]] && [[ "${DATABASE_URL}" != *"sslmode="* ]]; then
+  DATABASE_URL="${DATABASE_URL}?sslmode=disable"
+fi
+
 cd "${repository_root}/server"
 GOCACHE="${GOCACHE:-/tmp/easyride-go-cache}" DATABASE_URL="${DATABASE_URL}" go run ./cmd/migrate
