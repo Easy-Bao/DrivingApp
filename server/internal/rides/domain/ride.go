@@ -44,6 +44,7 @@ type BidSession struct {
 	DistanceKm          float64    `json:"distance_km"`
 	DurationMinutes     float64    `json:"duration_minutes"`
 	OfferedFareCentavos int64      `json:"offered_fare_centavos"`
+	CustomFareCentavos  *int64     `json:"custom_fare_centavos,omitempty"`
 	Status              string     `json:"status"`
 	TargetDriverID      *int       `json:"target_driver_id,omitempty"`
 	AcceptedDriverID    *int       `json:"accepted_driver_id,omitempty"`

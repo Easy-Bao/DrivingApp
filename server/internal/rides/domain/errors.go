@@ -1,0 +1,14 @@
+package domain
+
+import "errors"
+
+var (
+	ErrInvalidTrip             = errors.New("invalid trip details")
+	ErrActiveBooking           = errors.New("passenger already has an active booking")
+	ErrDriverAtCapacity        = errors.New("driver has reached the five-passenger capacity")
+	ErrUnauthorizedRide        = errors.New("you are not a participant in this ride")
+	ErrUnauthorizedSession     = errors.New("you are not a participant in this booking")
+	ErrInvalidFareOffer        = errors.New("offer must not be lower than the calculated minimum fare")
+	ErrDriverUnavailable       = errors.New("driver is unavailable")
+	ErrInvalidStatusTransition = errors.New("invalid ride status transition")
+)

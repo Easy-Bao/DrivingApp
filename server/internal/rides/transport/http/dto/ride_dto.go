@@ -30,16 +30,17 @@ type StatusRequest struct {
 }
 
 type BidSessionRequest struct {
-	RideType         string  `json:"ride_type"`
-	PickupLatitude   float64 `json:"pickup_latitude"`
-	PickupLongitude  float64 `json:"pickup_longitude"`
-	PickupName       string  `json:"pickup_name"`
-	DropoffLatitude  float64 `json:"dropoff_latitude"`
-	DropoffLongitude float64 `json:"dropoff_longitude"`
-	DropoffName      string  `json:"dropoff_name"`
-	DistanceKm       float64 `json:"distance_km"`
-	DurationMinutes  float64 `json:"duration_minutes"`
-	TargetDriverID   *int    `json:"target_driver_id"`
+	RideType           string  `json:"ride_type"`
+	PickupLatitude     float64 `json:"pickup_latitude"`
+	PickupLongitude    float64 `json:"pickup_longitude"`
+	PickupName         string  `json:"pickup_name"`
+	DropoffLatitude    float64 `json:"dropoff_latitude"`
+	DropoffLongitude   float64 `json:"dropoff_longitude"`
+	DropoffName        string  `json:"dropoff_name"`
+	DistanceKm         float64 `json:"distance_km"`
+	DurationMinutes    float64 `json:"duration_minutes"`
+	TargetDriverID     *int    `json:"target_driver_id"`
+	CustomFareCentavos *int64  `json:"custom_fare_centavos"`
 }
 
 type BidOfferRequest struct {

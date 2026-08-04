@@ -15,11 +15,22 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	if !ok {
 		return domain.BidSession{}, ErrBiddingPersistenceUnavailable
 	}
-	if session.RideType == "" {
-		session.RideType = "Solo Ride"
+	if err := validateTrip(session.PickupLatitude, session.PickupLongitude, session.DropoffLatitude, session.DropoffLongitude, session.DistanceKm, session.DurationMinutes); err != nil {
+		return domain.BidSession{}, err
 	}
-	if session.OfferedFareCentavos == 0 {
-		session.OfferedFareCentavos = CalculateFare(session.DistanceKm, session.DurationMinutes)
+	if session.RideType == "" {
+		session.RideType = "solo"
+	}
+	minimumFare := CalculateFare(session.DistanceKm, session.DurationMinutes)
+	if minimumFare <= 0 {
+		return domain.BidSession{}, domain.ErrInvalidTrip
+	}
+	session.OfferedFareCentavos = minimumFare
+	if session.CustomFareCentavos != nil {
+		if *session.CustomFareCentavos < minimumFare {
+			return domain.BidSession{}, domain.ErrInvalidFareOffer
+		}
+		session.OfferedFareCentavos = *session.CustomFareCentavos
 	}
 	if session.Status == "" {
 		session.Status = "open"
@@ -51,6 +62,9 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 	if !ok {
 		return domain.BidOffer{}, ErrBiddingPersistenceUnavailable
 	}
+	if offer.DriverID <= 0 || offer.ProposedFareCentavos < 0 {
+		return domain.BidOffer{}, domain.ErrInvalidFareOffer
+	}
 	if offer.ProposedFareCentavos == 0 {
 		session, err := repository.Session(ctx, offer.SessionID)
 		if err != nil {
@@ -69,15 +83,21 @@ func (service *Service) AcceptOffer(ctx context.Context, sessionID, offerID, dri
 	if !ok {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, ErrBiddingPersistenceUnavailable
 	}
+	if driverID <= 0 {
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
+	}
 	return repository.AcceptOffer(ctx, sessionID, offerID, driverID)
 }
 
-func (service *Service) CancelSession(ctx context.Context, sessionID int) (domain.BidSession, error) {
+func (service *Service) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return domain.BidSession{}, ErrBiddingPersistenceUnavailable
 	}
-	return repository.CancelSession(ctx, sessionID)
+	if passengerID <= 0 {
+		return domain.BidSession{}, domain.ErrUnauthorizedSession
+	}
+	return repository.CancelSession(ctx, sessionID, passengerID)
 }
 
 func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {

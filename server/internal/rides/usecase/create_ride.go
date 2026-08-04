@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"math"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 )
@@ -24,11 +25,15 @@ func (service *Service) Get(ctx context.Context, id int) (domain.Ride, error) {
 }
 
 func (service *Service) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
+	if err := validateTrip(ride.PickupLatitude, ride.PickupLongitude, ride.DropoffLatitude, ride.DropoffLongitude, ride.DistanceKm, ride.DurationMinutes); err != nil {
+		return domain.Ride{}, err
+	}
+	ride.FareCentavos = CalculateFare(ride.DistanceKm, ride.DurationMinutes)
 	if ride.Status == "" {
 		ride.Status = "requested"
 	}
 	if ride.RideType == "" {
-		ride.RideType = "Solo Ride"
+		ride.RideType = "solo"
 	}
 	return service.repository.CreateRide(ctx, ride)
 }
@@ -41,7 +46,7 @@ func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (d
 	return repository.AcceptRide(ctx, rideID, driverID)
 }
 
-func (service *Service) UpdateStatus(ctx context.Context, rideID int, next string) (domain.Ride, error) {
+func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
 	repository, ok := service.repository.(domain.LifecycleRepository)
 	if !ok {
 		return domain.Ride{}, errors.New("ride lifecycle persistence is unavailable")
@@ -50,6 +55,15 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID int, next strin
 	if err != nil {
 		return domain.Ride{}, err
 	}
+	if current.PassengerID != actorID && (current.DriverID == nil || *current.DriverID != actorID) {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	if current.PassengerID == actorID && next != "canceled" && next != "cancelled" {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	if current.DriverID == nil && next != "canceled" && next != "cancelled" {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
 	allowed := map[string]map[string]bool{
 		"requested":  {"accepted": true, "canceled": true, "cancelled": true},
 		"accepted":   {"arrived": true, "canceled": true, "cancelled": true},
@@ -57,17 +71,37 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID int, next strin
 		"in_transit": {"completed": true, "canceled": true, "cancelled": true},
 	}
 	if !allowed[current.Status][next] {
-		return domain.Ride{}, errors.New("invalid ride status transition")
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	return repository.UpdateStatus(ctx, rideID, next)
+	return repository.UpdateStatus(ctx, rideID, actorID, current.Status, next)
 }
 
 func CalculateFare(distanceKm, durationMinutes float64) int64 {
+	if !isFiniteNonNegative(distanceKm) || !isFiniteNonNegative(durationMinutes) {
+		return 0
+	}
 	total := 2500 + distanceKm*100 + durationMinutes*50
 	if total < 2500 {
 		return 2500
 	}
 	return int64(total)
+}
+
+func validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes float64) error {
+	values := []float64{pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes}
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return domain.ErrInvalidTrip
+		}
+	}
+	if pickupLatitude < -90 || pickupLatitude > 90 || dropoffLatitude < -90 || dropoffLatitude > 90 || pickupLongitude < -180 || pickupLongitude > 180 || dropoffLongitude < -180 || dropoffLongitude > 180 || distanceKm < 0 || durationMinutes < 0 {
+		return domain.ErrInvalidTrip
+	}
+	return nil
+}
+
+func isFiniteNonNegative(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0) && value >= 0
 }
 
 func (service *Service) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
