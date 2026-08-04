@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/token"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
 )
 

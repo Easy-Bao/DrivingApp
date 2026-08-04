@@ -175,8 +175,8 @@ server
       audit_event.go
     ent.go
     generate.go
-  database
-    migrations
+    migrate
+      migrations
   api-gateway
     README.md
 ```
@@ -235,12 +235,13 @@ logging, PostgreSQL, Redis, object storage, clock, and HTTP middleware. It is
 not a place for domain models or cross-module business services.
 
 `server/ent/schema` - Ent schema declarations for the single PostgreSQL graph.
-Schemas can be grouped by domain in separate files, but generated Ent code and
-migrations are produced from one graph. Each module owns the schema files for
-its tables and exposes narrow repository ports to other modules.
+Each domain owns its schema files, but all files are compiled into one Ent
+client and one migration stream. A separate Ent client per module would make
+cross-domain transactions harder and recreate the old service split.
 
-`server/database/migrations` - Reviewed, additive SQL migrations generated or
-maintained for deployment. Never use `db:push` against shared environments.
+`server/ent/migrate/migrations` - Reviewed, additive production migrations. Ent
+schema changes are generated and reviewed here; never use `db:push` against
+shared environments.
 
 `server/api-gateway` - Reverse-proxy configuration and deployment notes. It
 routes `/api/*` to `core-api` and `/ws/*` to `realtime-service`; it contains no
@@ -397,3 +398,19 @@ state-changing ride and document operations.
 
 Until these steps are complete, the existing Hono services and Drizzle schemas
 remain active and should not be described as migrated.
+
+## Deletion Gate
+
+Remove a legacy service only after its replacement has all of the following:
+
+- equivalent endpoint and error-contract tests;
+- persistence tests against the same PostgreSQL tables;
+- authentication and authorization negative tests;
+- retry and idempotency coverage for state-changing operations;
+- gateway and mobile client traffic switched to the replacement;
+- a rollback window with no legacy writer still active.
+
+The legacy `server/database/init` directory is part of the current Docker
+bootstrap and must remain until every service using those tables has moved to
+the Go migration path. Once Ent owns startup migrations, remove that directory
+and its Compose mount in the same verified cutover commit, not earlier.
