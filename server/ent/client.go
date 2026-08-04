@@ -22,6 +22,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
@@ -49,6 +50,8 @@ type Client struct {
 	Notification *NotificationClient
 	// PassengerProfile is the client for interacting with the PassengerProfile builders.
 	PassengerProfile *PassengerProfileClient
+	// PassengerReview is the client for interacting with the PassengerReview builders.
+	PassengerReview *PassengerReviewClient
 	// Review is the client for interacting with the Review builders.
 	Review *ReviewClient
 	// Ride is the client for interacting with the Ride builders.
@@ -76,6 +79,7 @@ func (c *Client) init() {
 	c.DriverProfile = NewDriverProfileClient(c.config)
 	c.Notification = NewNotificationClient(c.config)
 	c.PassengerProfile = NewPassengerProfileClient(c.config)
+	c.PassengerReview = NewPassengerReviewClient(c.config)
 	c.Review = NewReviewClient(c.config)
 	c.Ride = NewRideClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -180,6 +184,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DriverProfile:    NewDriverProfileClient(cfg),
 		Notification:     NewNotificationClient(cfg),
 		PassengerProfile: NewPassengerProfileClient(cfg),
+		PassengerReview:  NewPassengerReviewClient(cfg),
 		Review:           NewReviewClient(cfg),
 		Ride:             NewRideClient(cfg),
 		User:             NewUserClient(cfg),
@@ -211,6 +216,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DriverProfile:    NewDriverProfileClient(cfg),
 		Notification:     NewNotificationClient(cfg),
 		PassengerProfile: NewPassengerProfileClient(cfg),
+		PassengerReview:  NewPassengerReviewClient(cfg),
 		Review:           NewReviewClient(cfg),
 		Ride:             NewRideClient(cfg),
 		User:             NewUserClient(cfg),
@@ -245,8 +251,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
-		c.DriverProfile, c.Notification, c.PassengerProfile, c.Review, c.Ride, c.User,
-		c.WalletLedger,
+		c.DriverProfile, c.Notification, c.PassengerProfile, c.PassengerReview,
+		c.Review, c.Ride, c.User, c.WalletLedger,
 	} {
 		n.Use(hooks...)
 	}
@@ -257,8 +263,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
-		c.DriverProfile, c.Notification, c.PassengerProfile, c.Review, c.Ride, c.User,
-		c.WalletLedger,
+		c.DriverProfile, c.Notification, c.PassengerProfile, c.PassengerReview,
+		c.Review, c.Ride, c.User, c.WalletLedger,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -283,6 +289,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Notification.mutate(ctx, m)
 	case *PassengerProfileMutation:
 		return c.PassengerProfile.mutate(ctx, m)
+	case *PassengerReviewMutation:
+		return c.PassengerReview.mutate(ctx, m)
 	case *ReviewMutation:
 		return c.Review.mutate(ctx, m)
 	case *RideMutation:
@@ -1360,6 +1368,139 @@ func (c *PassengerProfileClient) mutate(ctx context.Context, m *PassengerProfile
 	}
 }
 
+// PassengerReviewClient is a client for the PassengerReview schema.
+type PassengerReviewClient struct {
+	config
+}
+
+// NewPassengerReviewClient returns a client for the PassengerReview from the given config.
+func NewPassengerReviewClient(c config) *PassengerReviewClient {
+	return &PassengerReviewClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `passengerreview.Hooks(f(g(h())))`.
+func (c *PassengerReviewClient) Use(hooks ...Hook) {
+	c.hooks.PassengerReview = append(c.hooks.PassengerReview, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `passengerreview.Intercept(f(g(h())))`.
+func (c *PassengerReviewClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PassengerReview = append(c.inters.PassengerReview, interceptors...)
+}
+
+// Create returns a builder for creating a PassengerReview entity.
+func (c *PassengerReviewClient) Create() *PassengerReviewCreate {
+	mutation := newPassengerReviewMutation(c.config, OpCreate)
+	return &PassengerReviewCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PassengerReview entities.
+func (c *PassengerReviewClient) CreateBulk(builders ...*PassengerReviewCreate) *PassengerReviewCreateBulk {
+	return &PassengerReviewCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PassengerReviewClient) MapCreateBulk(slice any, setFunc func(*PassengerReviewCreate, int)) *PassengerReviewCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PassengerReviewCreateBulk{err: fmt.Errorf("calling to PassengerReviewClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PassengerReviewCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PassengerReviewCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PassengerReview.
+func (c *PassengerReviewClient) Update() *PassengerReviewUpdate {
+	mutation := newPassengerReviewMutation(c.config, OpUpdate)
+	return &PassengerReviewUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PassengerReviewClient) UpdateOne(_m *PassengerReview) *PassengerReviewUpdateOne {
+	mutation := newPassengerReviewMutation(c.config, OpUpdateOne, withPassengerReview(_m))
+	return &PassengerReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PassengerReviewClient) UpdateOneID(id int) *PassengerReviewUpdateOne {
+	mutation := newPassengerReviewMutation(c.config, OpUpdateOne, withPassengerReviewID(id))
+	return &PassengerReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PassengerReview.
+func (c *PassengerReviewClient) Delete() *PassengerReviewDelete {
+	mutation := newPassengerReviewMutation(c.config, OpDelete)
+	return &PassengerReviewDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PassengerReviewClient) DeleteOne(_m *PassengerReview) *PassengerReviewDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PassengerReviewClient) DeleteOneID(id int) *PassengerReviewDeleteOne {
+	builder := c.Delete().Where(passengerreview.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PassengerReviewDeleteOne{builder}
+}
+
+// Query returns a query builder for PassengerReview.
+func (c *PassengerReviewClient) Query() *PassengerReviewQuery {
+	return &PassengerReviewQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePassengerReview},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PassengerReview entity by its id.
+func (c *PassengerReviewClient) Get(ctx context.Context, id int) (*PassengerReview, error) {
+	return c.Query().Where(passengerreview.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PassengerReviewClient) GetX(ctx context.Context, id int) *PassengerReview {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PassengerReviewClient) Hooks() []Hook {
+	return c.hooks.PassengerReview
+}
+
+// Interceptors returns the client interceptors.
+func (c *PassengerReviewClient) Interceptors() []Interceptor {
+	return c.inters.PassengerReview
+}
+
+func (c *PassengerReviewClient) mutate(ctx context.Context, m *PassengerReviewMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PassengerReviewCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PassengerReviewUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PassengerReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PassengerReviewDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PassengerReview mutation op: %q", m.Op())
+	}
+}
+
 // ReviewClient is a client for the Review schema.
 type ReviewClient struct {
 	config
@@ -1896,11 +2037,12 @@ func (c *WalletLedgerClient) mutate(ctx context.Context, m *WalletLedgerMutation
 type (
 	hooks struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
-		Notification, PassengerProfile, Review, Ride, User, WalletLedger []ent.Hook
+		Notification, PassengerProfile, PassengerReview, Review, Ride, User,
+		WalletLedger []ent.Hook
 	}
 	inters struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
-		Notification, PassengerProfile, Review, Ride, User,
+		Notification, PassengerProfile, PassengerReview, Review, Ride, User,
 		WalletLedger []ent.Interceptor
 	}
 )

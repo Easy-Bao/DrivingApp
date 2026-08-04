@@ -30,6 +30,9 @@ type Notification func(*sql.Selector)
 // PassengerProfile is the predicate function for passengerprofile builders.
 type PassengerProfile func(*sql.Selector)
 
+// PassengerReview is the predicate function for passengerreview builders.
+type PassengerReview func(*sql.Selector)
+
 // Review is the predicate function for review builders.
 type Review func(*sql.Selector)
 

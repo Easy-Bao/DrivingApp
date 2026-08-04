@@ -36,6 +36,7 @@ func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/drivers/{id}/trips", handler.driverTrips)
 	mux.HandleFunc("GET /api/v1/drivers/{id}/reviews", handler.driverReviews)
 	mux.HandleFunc("POST /api/v1/drivers/{id}/reviews", handler.createReview)
+	mux.HandleFunc("POST /api/v1/passengers/{id}/reviews", handler.createPassengerReview)
 	mux.HandleFunc("POST /api/v1/fares/estimate", handler.estimate)
 	mux.HandleFunc("GET /api/v1/fares/configs", handler.fareConfigs)
 	mux.HandleFunc("GET /api/v1/fares/rating-config", handler.ratingConfig)
@@ -60,6 +61,7 @@ func (handler *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /drivers/{id}/trips", handler.driverTrips)
 	mux.HandleFunc("GET /drivers/{id}/reviews", handler.driverReviews)
 	mux.HandleFunc("POST /drivers/{id}/reviews", handler.createReview)
+	mux.HandleFunc("POST /passengers/{id}/reviews", handler.createPassengerReview)
 	mux.HandleFunc("POST /bids/fare", handler.estimate)
 	mux.HandleFunc("POST /bids", handler.createSession)
 	mux.HandleFunc("GET /bids/active", handler.activeSessions)
@@ -314,11 +316,35 @@ func (handler *Handler) createReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.ReviewRequest
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&input) != nil {
+	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&input) != nil || input.RideID <= 0 {
 		errorJSON(w, 400, "invalid review")
 		return
 	}
-	item, err := handler.service.CreateReview(r.Context(), domain.Review{DriverID: driverID, PassengerID: passengerID, PassengerName: input.PassengerName, Rating: input.Rating, Comment: input.Comment})
+	item, err := handler.service.CreateReview(r.Context(), domain.Review{RideID: input.RideID, DriverID: driverID, PassengerID: passengerID, Rating: input.Rating, Comment: input.Comment})
+	if err != nil {
+		errorJSON(w, 400, err.Error())
+		return
+	}
+	jsonJSON(w, 201, item)
+}
+
+func (handler *Handler) createPassengerReview(w http.ResponseWriter, r *http.Request) {
+	driverID, ok := handler.identity(r)
+	if !ok {
+		errorJSON(w, 401, "unauthorized")
+		return
+	}
+	passengerID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		errorJSON(w, 400, "invalid passenger id")
+		return
+	}
+	var input dto.ReviewRequest
+	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&input) != nil || input.RideID <= 0 {
+		errorJSON(w, 400, "invalid review")
+		return
+	}
+	item, err := handler.service.CreatePassengerReview(r.Context(), domain.PassengerReview{RideID: input.RideID, DriverID: driverID, PassengerID: passengerID, Rating: input.Rating, Comment: input.Comment})
 	if err != nil {
 		errorJSON(w, 400, err.Error())
 		return

@@ -1,6 +1,7 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -37,9 +38,10 @@ class _FareSummaryScreenState extends State<FareSummaryScreen> {
       _error = null;
     });
 
-    final fare = await BlocProvider.of<RideFlowCubit>(
-      context,
-    ).confirmCashPayment();
+    final cubit = BlocProvider.of<RideFlowCubit>(context);
+    final passengerId = cubit.activePassengerId;
+    final rideId = cubit.activeRideId;
+    final fare = await cubit.confirmCashPayment();
     if (!mounted) return;
 
     if (fare == null) {
@@ -51,7 +53,18 @@ class _FareSummaryScreenState extends State<FareSummaryScreen> {
       return;
     }
 
-    context.goNamed(HomeRoutes.dashboard);
+    if (passengerId == null || passengerId.isEmpty || rideId == null) {
+      context.goNamed(HomeRoutes.dashboard);
+      return;
+    }
+    context.pushReplacementNamed(
+      TripRoutes.ratePassenger,
+      extra: {
+        'rideId': rideId,
+        'passengerId': passengerId,
+        'passengerName': cubit.activePassengerName,
+      },
+    );
   }
 
   @override

@@ -9,11 +9,11 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/Easy-Bao/DrivingApp/server/ent/review"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 )
 
-// Review is the model entity for the Review schema.
-type Review struct {
+// PassengerReview is the model entity for the PassengerReview schema.
+type PassengerReview struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
@@ -23,8 +23,6 @@ type Review struct {
 	DriverID int `json:"driver_id,omitempty"`
 	// PassengerID holds the value of the "passenger_id" field.
 	PassengerID int `json:"passenger_id,omitempty"`
-	// PassengerName holds the value of the "passenger_name" field.
-	PassengerName string `json:"passenger_name,omitempty"`
 	// Rating holds the value of the "rating" field.
 	Rating float64 `json:"rating,omitempty"`
 	// Comment holds the value of the "comment" field.
@@ -35,17 +33,17 @@ type Review struct {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Review) scanValues(columns []string) ([]any, error) {
+func (*PassengerReview) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case review.FieldRating:
+		case passengerreview.FieldRating:
 			values[i] = new(sql.NullFloat64)
-		case review.FieldID, review.FieldRideID, review.FieldDriverID, review.FieldPassengerID:
+		case passengerreview.FieldID, passengerreview.FieldRideID, passengerreview.FieldDriverID, passengerreview.FieldPassengerID:
 			values[i] = new(sql.NullInt64)
-		case review.FieldPassengerName, review.FieldComment:
+		case passengerreview.FieldComment:
 			values[i] = new(sql.NullString)
-		case review.FieldCreatedAt:
+		case passengerreview.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -55,56 +53,50 @@ func (*Review) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Review fields.
-func (_m *Review) assignValues(columns []string, values []any) error {
+// to the PassengerReview fields.
+func (_m *PassengerReview) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case review.FieldID:
+		case passengerreview.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case review.FieldRideID:
+		case passengerreview.FieldRideID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field ride_id", values[i])
 			} else if value.Valid {
 				_m.RideID = int(value.Int64)
 			}
-		case review.FieldDriverID:
+		case passengerreview.FieldDriverID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field driver_id", values[i])
 			} else if value.Valid {
 				_m.DriverID = int(value.Int64)
 			}
-		case review.FieldPassengerID:
+		case passengerreview.FieldPassengerID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field passenger_id", values[i])
 			} else if value.Valid {
 				_m.PassengerID = int(value.Int64)
 			}
-		case review.FieldPassengerName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field passenger_name", values[i])
-			} else if value.Valid {
-				_m.PassengerName = value.String
-			}
-		case review.FieldRating:
+		case passengerreview.FieldRating:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field rating", values[i])
 			} else if value.Valid {
 				_m.Rating = value.Float64
 			}
-		case review.FieldComment:
+		case passengerreview.FieldComment:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field comment", values[i])
 			} else if value.Valid {
 				_m.Comment = value.String
 			}
-		case review.FieldCreatedAt:
+		case passengerreview.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
@@ -117,34 +109,34 @@ func (_m *Review) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the Review.
+// Value returns the ent.Value that was dynamically selected and assigned to the PassengerReview.
 // This includes values selected through modifiers, order, etc.
-func (_m *Review) Value(name string) (ent.Value, error) {
+func (_m *PassengerReview) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// Update returns a builder for updating this Review.
-// Note that you need to call Review.Unwrap() before calling this method if this Review
+// Update returns a builder for updating this PassengerReview.
+// Note that you need to call PassengerReview.Unwrap() before calling this method if this PassengerReview
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *Review) Update() *ReviewUpdateOne {
-	return NewReviewClient(_m.config).UpdateOne(_m)
+func (_m *PassengerReview) Update() *PassengerReviewUpdateOne {
+	return NewPassengerReviewClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the Review entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the PassengerReview entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *Review) Unwrap() *Review {
+func (_m *PassengerReview) Unwrap() *PassengerReview {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Review is not a transactional entity")
+		panic("ent: PassengerReview is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *Review) String() string {
+func (_m *PassengerReview) String() string {
 	var builder strings.Builder
-	builder.WriteString("Review(")
+	builder.WriteString("PassengerReview(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("ride_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.RideID))
@@ -154,9 +146,6 @@ func (_m *Review) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("passenger_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PassengerID))
-	builder.WriteString(", ")
-	builder.WriteString("passenger_name=")
-	builder.WriteString(_m.PassengerName)
 	builder.WriteString(", ")
 	builder.WriteString("rating=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Rating))
@@ -170,5 +159,5 @@ func (_m *Review) String() string {
 	return builder.String()
 }
 
-// Reviews is a parsable slice of Review.
-type Reviews []*Review
+// PassengerReviews is a parsable slice of PassengerReview.
+type PassengerReviews []*PassengerReview

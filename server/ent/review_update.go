@@ -28,6 +28,33 @@ func (_u *ReviewUpdate) Where(ps ...predicate.Review) *ReviewUpdate {
 	return _u
 }
 
+// SetRideID sets the "ride_id" field.
+func (_u *ReviewUpdate) SetRideID(v int) *ReviewUpdate {
+	_u.mutation.ResetRideID()
+	_u.mutation.SetRideID(v)
+	return _u
+}
+
+// SetNillableRideID sets the "ride_id" field if the given value is not nil.
+func (_u *ReviewUpdate) SetNillableRideID(v *int) *ReviewUpdate {
+	if v != nil {
+		_u.SetRideID(*v)
+	}
+	return _u
+}
+
+// AddRideID adds value to the "ride_id" field.
+func (_u *ReviewUpdate) AddRideID(v int) *ReviewUpdate {
+	_u.mutation.AddRideID(v)
+	return _u
+}
+
+// ClearRideID clears the value of the "ride_id" field.
+func (_u *ReviewUpdate) ClearRideID() *ReviewUpdate {
+	_u.mutation.ClearRideID()
+	return _u
+}
+
 // SetDriverID sets the "driver_id" field.
 func (_u *ReviewUpdate) SetDriverID(v int) *ReviewUpdate {
 	_u.mutation.ResetDriverID()
@@ -209,6 +236,15 @@ func (_u *ReviewUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.RideID(); ok {
+		_spec.SetField(review.FieldRideID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRideID(); ok {
+		_spec.AddField(review.FieldRideID, field.TypeInt, value)
+	}
+	if _u.mutation.RideIDCleared() {
+		_spec.ClearField(review.FieldRideID, field.TypeInt)
+	}
 	if value, ok := _u.mutation.DriverID(); ok {
 		_spec.SetField(review.FieldDriverID, field.TypeInt, value)
 	}
@@ -260,6 +296,33 @@ type ReviewUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ReviewMutation
+}
+
+// SetRideID sets the "ride_id" field.
+func (_u *ReviewUpdateOne) SetRideID(v int) *ReviewUpdateOne {
+	_u.mutation.ResetRideID()
+	_u.mutation.SetRideID(v)
+	return _u
+}
+
+// SetNillableRideID sets the "ride_id" field if the given value is not nil.
+func (_u *ReviewUpdateOne) SetNillableRideID(v *int) *ReviewUpdateOne {
+	if v != nil {
+		_u.SetRideID(*v)
+	}
+	return _u
+}
+
+// AddRideID adds value to the "ride_id" field.
+func (_u *ReviewUpdateOne) AddRideID(v int) *ReviewUpdateOne {
+	_u.mutation.AddRideID(v)
+	return _u
+}
+
+// ClearRideID clears the value of the "ride_id" field.
+func (_u *ReviewUpdateOne) ClearRideID() *ReviewUpdateOne {
+	_u.mutation.ClearRideID()
+	return _u
 }
 
 // SetDriverID sets the "driver_id" field.
@@ -472,6 +535,15 @@ func (_u *ReviewUpdateOne) sqlSave(ctx context.Context) (_node *Review, err erro
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.RideID(); ok {
+		_spec.SetField(review.FieldRideID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRideID(); ok {
+		_spec.AddField(review.FieldRideID, field.TypeInt, value)
+	}
+	if _u.mutation.RideIDCleared() {
+		_spec.ClearField(review.FieldRideID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.DriverID(); ok {
 		_spec.SetField(review.FieldDriverID, field.TypeInt, value)

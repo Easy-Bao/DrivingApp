@@ -12,6 +12,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   final SecureSessionService _sessionService;
 
   String? _activeRideId;
+  String? _activePassengerId;
+  String? _activePassengerName;
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
 
@@ -23,17 +25,22 @@ class RideFlowCubit extends Cubit<RideFlowState> {
        super(const RideFlowInitial());
 
   String? get activeRideId => _activeRideId;
+  String? get activePassengerId => _activePassengerId;
+  String get activePassengerName => _activePassengerName ?? 'Passenger';
 
   void resumeRide({
     required String rideId,
     required String status,
     required String passengerName,
+    String? passengerId,
     double pickupLat = 0,
     double pickupLng = 0,
     required double destLat,
     required double destLng,
   }) {
     _activeRideId = rideId;
+    _activePassengerId = passengerId;
+    _activePassengerName = passengerName;
     if (status == 'arrived') {
       emit(
         RideFlowWaitingPassenger(
@@ -72,6 +79,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     required double pickupLng,
   }) async {
     _activeRideId = rideId;
+    _activePassengerName = passengerName;
 
     final driverId = await _sessionService.readDriverId();
     if (driverId == null || driverId.isEmpty) {
@@ -211,6 +219,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     try {
       final ride = await _tripRemoteDataSource.getRideStatus(rideId);
+      _activePassengerId ??= ride['passenger_id']?.toString();
+      _activePassengerName ??= ride['passenger_name']?.toString();
       final status = ride['status']?.toString();
       if (status != 'completed') {
         final updated = await _tripRemoteDataSource.updateRideStatus(
@@ -277,6 +287,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   void reset() {
     _waitTimer?.cancel();
     _activeRideId = null;
+    _activePassengerId = null;
+    _activePassengerName = null;
     emit(const RideFlowInitial());
   }
 

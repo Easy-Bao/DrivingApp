@@ -10,70 +10,48 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Easy-Bao/DrivingApp/server/ent/review"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 )
 
-// ReviewCreate is the builder for creating a Review entity.
-type ReviewCreate struct {
+// PassengerReviewCreate is the builder for creating a PassengerReview entity.
+type PassengerReviewCreate struct {
 	config
-	mutation *ReviewMutation
+	mutation *PassengerReviewMutation
 	hooks    []Hook
 }
 
 // SetRideID sets the "ride_id" field.
-func (_c *ReviewCreate) SetRideID(v int) *ReviewCreate {
+func (_c *PassengerReviewCreate) SetRideID(v int) *PassengerReviewCreate {
 	_c.mutation.SetRideID(v)
 	return _c
 }
 
-// SetNillableRideID sets the "ride_id" field if the given value is not nil.
-func (_c *ReviewCreate) SetNillableRideID(v *int) *ReviewCreate {
-	if v != nil {
-		_c.SetRideID(*v)
-	}
-	return _c
-}
-
 // SetDriverID sets the "driver_id" field.
-func (_c *ReviewCreate) SetDriverID(v int) *ReviewCreate {
+func (_c *PassengerReviewCreate) SetDriverID(v int) *PassengerReviewCreate {
 	_c.mutation.SetDriverID(v)
 	return _c
 }
 
 // SetPassengerID sets the "passenger_id" field.
-func (_c *ReviewCreate) SetPassengerID(v int) *ReviewCreate {
+func (_c *PassengerReviewCreate) SetPassengerID(v int) *PassengerReviewCreate {
 	_c.mutation.SetPassengerID(v)
 	return _c
 }
 
-// SetPassengerName sets the "passenger_name" field.
-func (_c *ReviewCreate) SetPassengerName(v string) *ReviewCreate {
-	_c.mutation.SetPassengerName(v)
-	return _c
-}
-
-// SetNillablePassengerName sets the "passenger_name" field if the given value is not nil.
-func (_c *ReviewCreate) SetNillablePassengerName(v *string) *ReviewCreate {
-	if v != nil {
-		_c.SetPassengerName(*v)
-	}
-	return _c
-}
-
 // SetRating sets the "rating" field.
-func (_c *ReviewCreate) SetRating(v float64) *ReviewCreate {
+func (_c *PassengerReviewCreate) SetRating(v float64) *PassengerReviewCreate {
 	_c.mutation.SetRating(v)
 	return _c
 }
 
 // SetComment sets the "comment" field.
-func (_c *ReviewCreate) SetComment(v string) *ReviewCreate {
+func (_c *PassengerReviewCreate) SetComment(v string) *PassengerReviewCreate {
 	_c.mutation.SetComment(v)
 	return _c
 }
 
 // SetNillableComment sets the "comment" field if the given value is not nil.
-func (_c *ReviewCreate) SetNillableComment(v *string) *ReviewCreate {
+func (_c *PassengerReviewCreate) SetNillableComment(v *string) *PassengerReviewCreate {
 	if v != nil {
 		_c.SetComment(*v)
 	}
@@ -81,32 +59,32 @@ func (_c *ReviewCreate) SetNillableComment(v *string) *ReviewCreate {
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (_c *ReviewCreate) SetCreatedAt(v time.Time) *ReviewCreate {
+func (_c *PassengerReviewCreate) SetCreatedAt(v time.Time) *PassengerReviewCreate {
 	_c.mutation.SetCreatedAt(v)
 	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *ReviewCreate) SetNillableCreatedAt(v *time.Time) *ReviewCreate {
+func (_c *PassengerReviewCreate) SetNillableCreatedAt(v *time.Time) *PassengerReviewCreate {
 	if v != nil {
 		_c.SetCreatedAt(*v)
 	}
 	return _c
 }
 
-// Mutation returns the ReviewMutation object of the builder.
-func (_c *ReviewCreate) Mutation() *ReviewMutation {
+// Mutation returns the PassengerReviewMutation object of the builder.
+func (_c *PassengerReviewCreate) Mutation() *PassengerReviewMutation {
 	return _c.mutation
 }
 
-// Save creates the Review in the database.
-func (_c *ReviewCreate) Save(ctx context.Context) (*Review, error) {
+// Save creates the PassengerReview in the database.
+func (_c *PassengerReviewCreate) Save(ctx context.Context) (*PassengerReview, error) {
 	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (_c *ReviewCreate) SaveX(ctx context.Context) *Review {
+func (_c *PassengerReviewCreate) SaveX(ctx context.Context) *PassengerReview {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -115,59 +93,67 @@ func (_c *ReviewCreate) SaveX(ctx context.Context) *Review {
 }
 
 // Exec executes the query.
-func (_c *ReviewCreate) Exec(ctx context.Context) error {
+func (_c *PassengerReviewCreate) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *ReviewCreate) ExecX(ctx context.Context) {
+func (_c *PassengerReviewCreate) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ReviewCreate) defaults() {
+func (_c *PassengerReviewCreate) defaults() {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		v := review.DefaultCreatedAt()
+		v := passengerreview.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_c *ReviewCreate) check() error {
+func (_c *PassengerReviewCreate) check() error {
+	if _, ok := _c.mutation.RideID(); !ok {
+		return &ValidationError{Name: "ride_id", err: errors.New(`ent: missing required field "PassengerReview.ride_id"`)}
+	}
+	if v, ok := _c.mutation.RideID(); ok {
+		if err := passengerreview.RideIDValidator(v); err != nil {
+			return &ValidationError{Name: "ride_id", err: fmt.Errorf(`ent: validator failed for field "PassengerReview.ride_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.DriverID(); !ok {
-		return &ValidationError{Name: "driver_id", err: errors.New(`ent: missing required field "Review.driver_id"`)}
+		return &ValidationError{Name: "driver_id", err: errors.New(`ent: missing required field "PassengerReview.driver_id"`)}
 	}
 	if v, ok := _c.mutation.DriverID(); ok {
-		if err := review.DriverIDValidator(v); err != nil {
-			return &ValidationError{Name: "driver_id", err: fmt.Errorf(`ent: validator failed for field "Review.driver_id": %w`, err)}
+		if err := passengerreview.DriverIDValidator(v); err != nil {
+			return &ValidationError{Name: "driver_id", err: fmt.Errorf(`ent: validator failed for field "PassengerReview.driver_id": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.PassengerID(); !ok {
-		return &ValidationError{Name: "passenger_id", err: errors.New(`ent: missing required field "Review.passenger_id"`)}
+		return &ValidationError{Name: "passenger_id", err: errors.New(`ent: missing required field "PassengerReview.passenger_id"`)}
 	}
 	if v, ok := _c.mutation.PassengerID(); ok {
-		if err := review.PassengerIDValidator(v); err != nil {
-			return &ValidationError{Name: "passenger_id", err: fmt.Errorf(`ent: validator failed for field "Review.passenger_id": %w`, err)}
+		if err := passengerreview.PassengerIDValidator(v); err != nil {
+			return &ValidationError{Name: "passenger_id", err: fmt.Errorf(`ent: validator failed for field "PassengerReview.passenger_id": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.Rating(); !ok {
-		return &ValidationError{Name: "rating", err: errors.New(`ent: missing required field "Review.rating"`)}
+		return &ValidationError{Name: "rating", err: errors.New(`ent: missing required field "PassengerReview.rating"`)}
 	}
 	if v, ok := _c.mutation.Rating(); ok {
-		if err := review.RatingValidator(v); err != nil {
-			return &ValidationError{Name: "rating", err: fmt.Errorf(`ent: validator failed for field "Review.rating": %w`, err)}
+		if err := passengerreview.RatingValidator(v); err != nil {
+			return &ValidationError{Name: "rating", err: fmt.Errorf(`ent: validator failed for field "PassengerReview.rating": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Review.created_at"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "PassengerReview.created_at"`)}
 	}
 	return nil
 }
 
-func (_c *ReviewCreate) sqlSave(ctx context.Context) (*Review, error) {
+func (_c *PassengerReviewCreate) sqlSave(ctx context.Context) (*PassengerReview, error) {
 	if err := _c.check(); err != nil {
 		return nil, err
 	}
@@ -185,63 +171,59 @@ func (_c *ReviewCreate) sqlSave(ctx context.Context) (*Review, error) {
 	return _node, nil
 }
 
-func (_c *ReviewCreate) createSpec() (*Review, *sqlgraph.CreateSpec) {
+func (_c *PassengerReviewCreate) createSpec() (*PassengerReview, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Review{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(review.Table, sqlgraph.NewFieldSpec(review.FieldID, field.TypeInt))
+		_node = &PassengerReview{config: _c.config}
+		_spec = sqlgraph.NewCreateSpec(passengerreview.Table, sqlgraph.NewFieldSpec(passengerreview.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.RideID(); ok {
-		_spec.SetField(review.FieldRideID, field.TypeInt, value)
+		_spec.SetField(passengerreview.FieldRideID, field.TypeInt, value)
 		_node.RideID = value
 	}
 	if value, ok := _c.mutation.DriverID(); ok {
-		_spec.SetField(review.FieldDriverID, field.TypeInt, value)
+		_spec.SetField(passengerreview.FieldDriverID, field.TypeInt, value)
 		_node.DriverID = value
 	}
 	if value, ok := _c.mutation.PassengerID(); ok {
-		_spec.SetField(review.FieldPassengerID, field.TypeInt, value)
+		_spec.SetField(passengerreview.FieldPassengerID, field.TypeInt, value)
 		_node.PassengerID = value
 	}
-	if value, ok := _c.mutation.PassengerName(); ok {
-		_spec.SetField(review.FieldPassengerName, field.TypeString, value)
-		_node.PassengerName = value
-	}
 	if value, ok := _c.mutation.Rating(); ok {
-		_spec.SetField(review.FieldRating, field.TypeFloat64, value)
+		_spec.SetField(passengerreview.FieldRating, field.TypeFloat64, value)
 		_node.Rating = value
 	}
 	if value, ok := _c.mutation.Comment(); ok {
-		_spec.SetField(review.FieldComment, field.TypeString, value)
+		_spec.SetField(passengerreview.FieldComment, field.TypeString, value)
 		_node.Comment = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(review.FieldCreatedAt, field.TypeTime, value)
+		_spec.SetField(passengerreview.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	return _node, _spec
 }
 
-// ReviewCreateBulk is the builder for creating many Review entities in bulk.
-type ReviewCreateBulk struct {
+// PassengerReviewCreateBulk is the builder for creating many PassengerReview entities in bulk.
+type PassengerReviewCreateBulk struct {
 	config
 	err      error
-	builders []*ReviewCreate
+	builders []*PassengerReviewCreate
 }
 
-// Save creates the Review entities in the database.
-func (_c *ReviewCreateBulk) Save(ctx context.Context) ([]*Review, error) {
+// Save creates the PassengerReview entities in the database.
+func (_c *PassengerReviewCreateBulk) Save(ctx context.Context) ([]*PassengerReview, error) {
 	if _c.err != nil {
 		return nil, _c.err
 	}
 	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
-	nodes := make([]*Review, len(_c.builders))
+	nodes := make([]*PassengerReview, len(_c.builders))
 	mutators := make([]Mutator, len(_c.builders))
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*ReviewMutation)
+				mutation, ok := m.(*PassengerReviewMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -288,7 +270,7 @@ func (_c *ReviewCreateBulk) Save(ctx context.Context) ([]*Review, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_c *ReviewCreateBulk) SaveX(ctx context.Context) []*Review {
+func (_c *PassengerReviewCreateBulk) SaveX(ctx context.Context) []*PassengerReview {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -297,13 +279,13 @@ func (_c *ReviewCreateBulk) SaveX(ctx context.Context) []*Review {
 }
 
 // Exec executes the query.
-func (_c *ReviewCreateBulk) Exec(ctx context.Context) error {
+func (_c *PassengerReviewCreateBulk) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *ReviewCreateBulk) ExecX(ctx context.Context) {
+func (_c *PassengerReviewCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}

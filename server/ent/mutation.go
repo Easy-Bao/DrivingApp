@@ -19,6 +19,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/predicate"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
@@ -43,6 +44,7 @@ const (
 	TypeDriverProfile    = "DriverProfile"
 	TypeNotification     = "Notification"
 	TypePassengerProfile = "PassengerProfile"
+	TypePassengerReview  = "PassengerReview"
 	TypeReview           = "Review"
 	TypeRide             = "Ride"
 	TypeUser             = "User"
@@ -6071,12 +6073,767 @@ func (m *PassengerProfileMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown PassengerProfile edge %s", name)
 }
 
+// PassengerReviewMutation represents an operation that mutates the PassengerReview nodes in the graph.
+type PassengerReviewMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *int
+	ride_id         *int
+	addride_id      *int
+	driver_id       *int
+	adddriver_id    *int
+	passenger_id    *int
+	addpassenger_id *int
+	rating          *float64
+	addrating       *float64
+	comment         *string
+	created_at      *time.Time
+	clearedFields   map[string]struct{}
+	done            bool
+	oldValue        func(context.Context) (*PassengerReview, error)
+	predicates      []predicate.PassengerReview
+}
+
+var _ ent.Mutation = (*PassengerReviewMutation)(nil)
+
+// passengerreviewOption allows management of the mutation configuration using functional options.
+type passengerreviewOption func(*PassengerReviewMutation)
+
+// newPassengerReviewMutation creates new mutation for the PassengerReview entity.
+func newPassengerReviewMutation(c config, op Op, opts ...passengerreviewOption) *PassengerReviewMutation {
+	m := &PassengerReviewMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePassengerReview,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPassengerReviewID sets the ID field of the mutation.
+func withPassengerReviewID(id int) passengerreviewOption {
+	return func(m *PassengerReviewMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *PassengerReview
+		)
+		m.oldValue = func(ctx context.Context) (*PassengerReview, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().PassengerReview.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPassengerReview sets the old PassengerReview of the mutation.
+func withPassengerReview(node *PassengerReview) passengerreviewOption {
+	return func(m *PassengerReviewMutation) {
+		m.oldValue = func(context.Context) (*PassengerReview, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PassengerReviewMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PassengerReviewMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PassengerReviewMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PassengerReviewMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().PassengerReview.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetRideID sets the "ride_id" field.
+func (m *PassengerReviewMutation) SetRideID(i int) {
+	m.ride_id = &i
+	m.addride_id = nil
+}
+
+// RideID returns the value of the "ride_id" field in the mutation.
+func (m *PassengerReviewMutation) RideID() (r int, exists bool) {
+	v := m.ride_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRideID returns the old "ride_id" field's value of the PassengerReview entity.
+// If the PassengerReview object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerReviewMutation) OldRideID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRideID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRideID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRideID: %w", err)
+	}
+	return oldValue.RideID, nil
+}
+
+// AddRideID adds i to the "ride_id" field.
+func (m *PassengerReviewMutation) AddRideID(i int) {
+	if m.addride_id != nil {
+		*m.addride_id += i
+	} else {
+		m.addride_id = &i
+	}
+}
+
+// AddedRideID returns the value that was added to the "ride_id" field in this mutation.
+func (m *PassengerReviewMutation) AddedRideID() (r int, exists bool) {
+	v := m.addride_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRideID resets all changes to the "ride_id" field.
+func (m *PassengerReviewMutation) ResetRideID() {
+	m.ride_id = nil
+	m.addride_id = nil
+}
+
+// SetDriverID sets the "driver_id" field.
+func (m *PassengerReviewMutation) SetDriverID(i int) {
+	m.driver_id = &i
+	m.adddriver_id = nil
+}
+
+// DriverID returns the value of the "driver_id" field in the mutation.
+func (m *PassengerReviewMutation) DriverID() (r int, exists bool) {
+	v := m.driver_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDriverID returns the old "driver_id" field's value of the PassengerReview entity.
+// If the PassengerReview object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerReviewMutation) OldDriverID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDriverID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDriverID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDriverID: %w", err)
+	}
+	return oldValue.DriverID, nil
+}
+
+// AddDriverID adds i to the "driver_id" field.
+func (m *PassengerReviewMutation) AddDriverID(i int) {
+	if m.adddriver_id != nil {
+		*m.adddriver_id += i
+	} else {
+		m.adddriver_id = &i
+	}
+}
+
+// AddedDriverID returns the value that was added to the "driver_id" field in this mutation.
+func (m *PassengerReviewMutation) AddedDriverID() (r int, exists bool) {
+	v := m.adddriver_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDriverID resets all changes to the "driver_id" field.
+func (m *PassengerReviewMutation) ResetDriverID() {
+	m.driver_id = nil
+	m.adddriver_id = nil
+}
+
+// SetPassengerID sets the "passenger_id" field.
+func (m *PassengerReviewMutation) SetPassengerID(i int) {
+	m.passenger_id = &i
+	m.addpassenger_id = nil
+}
+
+// PassengerID returns the value of the "passenger_id" field in the mutation.
+func (m *PassengerReviewMutation) PassengerID() (r int, exists bool) {
+	v := m.passenger_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPassengerID returns the old "passenger_id" field's value of the PassengerReview entity.
+// If the PassengerReview object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerReviewMutation) OldPassengerID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPassengerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPassengerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPassengerID: %w", err)
+	}
+	return oldValue.PassengerID, nil
+}
+
+// AddPassengerID adds i to the "passenger_id" field.
+func (m *PassengerReviewMutation) AddPassengerID(i int) {
+	if m.addpassenger_id != nil {
+		*m.addpassenger_id += i
+	} else {
+		m.addpassenger_id = &i
+	}
+}
+
+// AddedPassengerID returns the value that was added to the "passenger_id" field in this mutation.
+func (m *PassengerReviewMutation) AddedPassengerID() (r int, exists bool) {
+	v := m.addpassenger_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPassengerID resets all changes to the "passenger_id" field.
+func (m *PassengerReviewMutation) ResetPassengerID() {
+	m.passenger_id = nil
+	m.addpassenger_id = nil
+}
+
+// SetRating sets the "rating" field.
+func (m *PassengerReviewMutation) SetRating(f float64) {
+	m.rating = &f
+	m.addrating = nil
+}
+
+// Rating returns the value of the "rating" field in the mutation.
+func (m *PassengerReviewMutation) Rating() (r float64, exists bool) {
+	v := m.rating
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRating returns the old "rating" field's value of the PassengerReview entity.
+// If the PassengerReview object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerReviewMutation) OldRating(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRating is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRating requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRating: %w", err)
+	}
+	return oldValue.Rating, nil
+}
+
+// AddRating adds f to the "rating" field.
+func (m *PassengerReviewMutation) AddRating(f float64) {
+	if m.addrating != nil {
+		*m.addrating += f
+	} else {
+		m.addrating = &f
+	}
+}
+
+// AddedRating returns the value that was added to the "rating" field in this mutation.
+func (m *PassengerReviewMutation) AddedRating() (r float64, exists bool) {
+	v := m.addrating
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRating resets all changes to the "rating" field.
+func (m *PassengerReviewMutation) ResetRating() {
+	m.rating = nil
+	m.addrating = nil
+}
+
+// SetComment sets the "comment" field.
+func (m *PassengerReviewMutation) SetComment(s string) {
+	m.comment = &s
+}
+
+// Comment returns the value of the "comment" field in the mutation.
+func (m *PassengerReviewMutation) Comment() (r string, exists bool) {
+	v := m.comment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldComment returns the old "comment" field's value of the PassengerReview entity.
+// If the PassengerReview object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerReviewMutation) OldComment(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldComment is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldComment requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldComment: %w", err)
+	}
+	return oldValue.Comment, nil
+}
+
+// ClearComment clears the value of the "comment" field.
+func (m *PassengerReviewMutation) ClearComment() {
+	m.comment = nil
+	m.clearedFields[passengerreview.FieldComment] = struct{}{}
+}
+
+// CommentCleared returns if the "comment" field was cleared in this mutation.
+func (m *PassengerReviewMutation) CommentCleared() bool {
+	_, ok := m.clearedFields[passengerreview.FieldComment]
+	return ok
+}
+
+// ResetComment resets all changes to the "comment" field.
+func (m *PassengerReviewMutation) ResetComment() {
+	m.comment = nil
+	delete(m.clearedFields, passengerreview.FieldComment)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *PassengerReviewMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *PassengerReviewMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the PassengerReview entity.
+// If the PassengerReview object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerReviewMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *PassengerReviewMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// Where appends a list predicates to the PassengerReviewMutation builder.
+func (m *PassengerReviewMutation) Where(ps ...predicate.PassengerReview) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the PassengerReviewMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *PassengerReviewMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.PassengerReview, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *PassengerReviewMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *PassengerReviewMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (PassengerReview).
+func (m *PassengerReviewMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PassengerReviewMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.ride_id != nil {
+		fields = append(fields, passengerreview.FieldRideID)
+	}
+	if m.driver_id != nil {
+		fields = append(fields, passengerreview.FieldDriverID)
+	}
+	if m.passenger_id != nil {
+		fields = append(fields, passengerreview.FieldPassengerID)
+	}
+	if m.rating != nil {
+		fields = append(fields, passengerreview.FieldRating)
+	}
+	if m.comment != nil {
+		fields = append(fields, passengerreview.FieldComment)
+	}
+	if m.created_at != nil {
+		fields = append(fields, passengerreview.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PassengerReviewMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case passengerreview.FieldRideID:
+		return m.RideID()
+	case passengerreview.FieldDriverID:
+		return m.DriverID()
+	case passengerreview.FieldPassengerID:
+		return m.PassengerID()
+	case passengerreview.FieldRating:
+		return m.Rating()
+	case passengerreview.FieldComment:
+		return m.Comment()
+	case passengerreview.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PassengerReviewMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case passengerreview.FieldRideID:
+		return m.OldRideID(ctx)
+	case passengerreview.FieldDriverID:
+		return m.OldDriverID(ctx)
+	case passengerreview.FieldPassengerID:
+		return m.OldPassengerID(ctx)
+	case passengerreview.FieldRating:
+		return m.OldRating(ctx)
+	case passengerreview.FieldComment:
+		return m.OldComment(ctx)
+	case passengerreview.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown PassengerReview field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PassengerReviewMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case passengerreview.FieldRideID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRideID(v)
+		return nil
+	case passengerreview.FieldDriverID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDriverID(v)
+		return nil
+	case passengerreview.FieldPassengerID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPassengerID(v)
+		return nil
+	case passengerreview.FieldRating:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRating(v)
+		return nil
+	case passengerreview.FieldComment:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetComment(v)
+		return nil
+	case passengerreview.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown PassengerReview field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PassengerReviewMutation) AddedFields() []string {
+	var fields []string
+	if m.addride_id != nil {
+		fields = append(fields, passengerreview.FieldRideID)
+	}
+	if m.adddriver_id != nil {
+		fields = append(fields, passengerreview.FieldDriverID)
+	}
+	if m.addpassenger_id != nil {
+		fields = append(fields, passengerreview.FieldPassengerID)
+	}
+	if m.addrating != nil {
+		fields = append(fields, passengerreview.FieldRating)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PassengerReviewMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case passengerreview.FieldRideID:
+		return m.AddedRideID()
+	case passengerreview.FieldDriverID:
+		return m.AddedDriverID()
+	case passengerreview.FieldPassengerID:
+		return m.AddedPassengerID()
+	case passengerreview.FieldRating:
+		return m.AddedRating()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PassengerReviewMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case passengerreview.FieldRideID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRideID(v)
+		return nil
+	case passengerreview.FieldDriverID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDriverID(v)
+		return nil
+	case passengerreview.FieldPassengerID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPassengerID(v)
+		return nil
+	case passengerreview.FieldRating:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRating(v)
+		return nil
+	}
+	return fmt.Errorf("unknown PassengerReview numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PassengerReviewMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(passengerreview.FieldComment) {
+		fields = append(fields, passengerreview.FieldComment)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PassengerReviewMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PassengerReviewMutation) ClearField(name string) error {
+	switch name {
+	case passengerreview.FieldComment:
+		m.ClearComment()
+		return nil
+	}
+	return fmt.Errorf("unknown PassengerReview nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PassengerReviewMutation) ResetField(name string) error {
+	switch name {
+	case passengerreview.FieldRideID:
+		m.ResetRideID()
+		return nil
+	case passengerreview.FieldDriverID:
+		m.ResetDriverID()
+		return nil
+	case passengerreview.FieldPassengerID:
+		m.ResetPassengerID()
+		return nil
+	case passengerreview.FieldRating:
+		m.ResetRating()
+		return nil
+	case passengerreview.FieldComment:
+		m.ResetComment()
+		return nil
+	case passengerreview.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown PassengerReview field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PassengerReviewMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PassengerReviewMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PassengerReviewMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PassengerReviewMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PassengerReviewMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PassengerReviewMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PassengerReviewMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown PassengerReview unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PassengerReviewMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown PassengerReview edge %s", name)
+}
+
 // ReviewMutation represents an operation that mutates the Review nodes in the graph.
 type ReviewMutation struct {
 	config
 	op              Op
 	typ             string
 	id              *int
+	ride_id         *int
+	addride_id      *int
 	driver_id       *int
 	adddriver_id    *int
 	passenger_id    *int
@@ -6188,6 +6945,76 @@ func (m *ReviewMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetRideID sets the "ride_id" field.
+func (m *ReviewMutation) SetRideID(i int) {
+	m.ride_id = &i
+	m.addride_id = nil
+}
+
+// RideID returns the value of the "ride_id" field in the mutation.
+func (m *ReviewMutation) RideID() (r int, exists bool) {
+	v := m.ride_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRideID returns the old "ride_id" field's value of the Review entity.
+// If the Review object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReviewMutation) OldRideID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRideID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRideID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRideID: %w", err)
+	}
+	return oldValue.RideID, nil
+}
+
+// AddRideID adds i to the "ride_id" field.
+func (m *ReviewMutation) AddRideID(i int) {
+	if m.addride_id != nil {
+		*m.addride_id += i
+	} else {
+		m.addride_id = &i
+	}
+}
+
+// AddedRideID returns the value that was added to the "ride_id" field in this mutation.
+func (m *ReviewMutation) AddedRideID() (r int, exists bool) {
+	v := m.addride_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearRideID clears the value of the "ride_id" field.
+func (m *ReviewMutation) ClearRideID() {
+	m.ride_id = nil
+	m.addride_id = nil
+	m.clearedFields[review.FieldRideID] = struct{}{}
+}
+
+// RideIDCleared returns if the "ride_id" field was cleared in this mutation.
+func (m *ReviewMutation) RideIDCleared() bool {
+	_, ok := m.clearedFields[review.FieldRideID]
+	return ok
+}
+
+// ResetRideID resets all changes to the "ride_id" field.
+func (m *ReviewMutation) ResetRideID() {
+	m.ride_id = nil
+	m.addride_id = nil
+	delete(m.clearedFields, review.FieldRideID)
 }
 
 // SetDriverID sets the "driver_id" field.
@@ -6526,7 +7353,10 @@ func (m *ReviewMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ReviewMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
+	if m.ride_id != nil {
+		fields = append(fields, review.FieldRideID)
+	}
 	if m.driver_id != nil {
 		fields = append(fields, review.FieldDriverID)
 	}
@@ -6553,6 +7383,8 @@ func (m *ReviewMutation) Fields() []string {
 // schema.
 func (m *ReviewMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case review.FieldRideID:
+		return m.RideID()
 	case review.FieldDriverID:
 		return m.DriverID()
 	case review.FieldPassengerID:
@@ -6574,6 +7406,8 @@ func (m *ReviewMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *ReviewMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case review.FieldRideID:
+		return m.OldRideID(ctx)
 	case review.FieldDriverID:
 		return m.OldDriverID(ctx)
 	case review.FieldPassengerID:
@@ -6595,6 +7429,13 @@ func (m *ReviewMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *ReviewMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case review.FieldRideID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRideID(v)
+		return nil
 	case review.FieldDriverID:
 		v, ok := value.(int)
 		if !ok {
@@ -6645,6 +7486,9 @@ func (m *ReviewMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *ReviewMutation) AddedFields() []string {
 	var fields []string
+	if m.addride_id != nil {
+		fields = append(fields, review.FieldRideID)
+	}
 	if m.adddriver_id != nil {
 		fields = append(fields, review.FieldDriverID)
 	}
@@ -6662,6 +7506,8 @@ func (m *ReviewMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *ReviewMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case review.FieldRideID:
+		return m.AddedRideID()
 	case review.FieldDriverID:
 		return m.AddedDriverID()
 	case review.FieldPassengerID:
@@ -6677,6 +7523,13 @@ func (m *ReviewMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ReviewMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case review.FieldRideID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRideID(v)
+		return nil
 	case review.FieldDriverID:
 		v, ok := value.(int)
 		if !ok {
@@ -6706,6 +7559,9 @@ func (m *ReviewMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ReviewMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(review.FieldRideID) {
+		fields = append(fields, review.FieldRideID)
+	}
 	if m.FieldCleared(review.FieldPassengerName) {
 		fields = append(fields, review.FieldPassengerName)
 	}
@@ -6726,6 +7582,9 @@ func (m *ReviewMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ReviewMutation) ClearField(name string) error {
 	switch name {
+	case review.FieldRideID:
+		m.ClearRideID()
+		return nil
 	case review.FieldPassengerName:
 		m.ClearPassengerName()
 		return nil
@@ -6740,6 +7599,9 @@ func (m *ReviewMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *ReviewMutation) ResetField(name string) error {
 	switch name {
+	case review.FieldRideID:
+		m.ResetRideID()
+		return nil
 	case review.FieldDriverID:
 		m.ResetDriverID()
 		return nil

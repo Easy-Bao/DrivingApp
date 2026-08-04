@@ -11,4 +11,6 @@ var (
 	ErrInvalidFareOffer        = errors.New("offer must not be lower than the calculated minimum fare")
 	ErrDriverUnavailable       = errors.New("driver is unavailable")
 	ErrInvalidStatusTransition = errors.New("invalid ride status transition")
+	ErrReviewNotAllowed        = errors.New("reviews are allowed only after a completed ride")
+	ErrReviewAlreadySubmitted  = errors.New("a review was already submitted for this ride")
 )

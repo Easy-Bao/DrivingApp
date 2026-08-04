@@ -105,7 +105,14 @@ class TripModule {
     ChildRoute(
       name: TripRoutes.ratePassenger,
       'ride/rate',
-      child: (context, GoRouterState state) => const RatePassengerScreen(),
+      child: (context, GoRouterState state) {
+        final data = SafeRouteExtra.asMap(state.extra);
+        return RatePassengerScreen(
+          rideId: data['rideId']?.toString() ?? '',
+          passengerId: data['passengerId']?.toString() ?? '',
+          passengerName: data['passengerName']?.toString() ?? 'Passenger',
+        );
+      },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),

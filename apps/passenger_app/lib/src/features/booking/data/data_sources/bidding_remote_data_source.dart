@@ -36,7 +36,7 @@ abstract class BiddingRemoteDataSource {
   Future<bool> updateRideStatus(String rideId, String status);
   Future<bool> submitDriverReview({
     required String driverId,
-    required String passengerName,
+    required String rideId,
     required double rating,
     required String comment,
   });
@@ -181,14 +181,14 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   @override
   Future<bool> submitDriverReview({
     required String driverId,
-    required String passengerName,
+    required String rideId,
     required double rating,
     required String comment,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/drivers/$driverId/reviews',
       data: {
-        'passenger_name': passengerName,
+        'ride_id': int.tryParse(rideId),
         'rating': rating,
         'comment': comment,
       },

@@ -14,6 +14,7 @@ type Review struct {
 
 func (Review) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("ride_id").Optional(),
 		field.Int("driver_id").Positive(),
 		field.Int("passenger_id").Positive(),
 		field.String("passenger_name").Optional(),

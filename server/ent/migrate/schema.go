@@ -142,9 +142,33 @@ var (
 		Columns:    PassengerProfilesColumns,
 		PrimaryKey: []*schema.Column{PassengerProfilesColumns[0]},
 	}
+	// PassengerReviewsColumns holds the columns for the "passenger_reviews" table.
+	PassengerReviewsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "ride_id", Type: field.TypeInt},
+		{Name: "driver_id", Type: field.TypeInt},
+		{Name: "passenger_id", Type: field.TypeInt},
+		{Name: "rating", Type: field.TypeFloat64},
+		{Name: "comment", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// PassengerReviewsTable holds the schema information for the "passenger_reviews" table.
+	PassengerReviewsTable = &schema.Table{
+		Name:       "passenger_reviews",
+		Columns:    PassengerReviewsColumns,
+		PrimaryKey: []*schema.Column{PassengerReviewsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "passengerreview_ride_id",
+				Unique:  true,
+				Columns: []*schema.Column{PassengerReviewsColumns[1]},
+			},
+		},
+	}
 	// ReviewsColumns holds the columns for the "reviews" table.
 	ReviewsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "ride_id", Type: field.TypeInt, Nullable: true},
 		{Name: "driver_id", Type: field.TypeInt},
 		{Name: "passenger_id", Type: field.TypeInt},
 		{Name: "passenger_name", Type: field.TypeString, Nullable: true},
@@ -239,6 +263,7 @@ var (
 		DriverProfilesTable,
 		NotificationsTable,
 		PassengerProfilesTable,
+		PassengerReviewsTable,
 		ReviewsTable,
 		RidesTable,
 		UsersTable,

@@ -28,6 +28,8 @@ type Tx struct {
 	Notification *NotificationClient
 	// PassengerProfile is the client for interacting with the PassengerProfile builders.
 	PassengerProfile *PassengerProfileClient
+	// PassengerReview is the client for interacting with the PassengerReview builders.
+	PassengerReview *PassengerReviewClient
 	// Review is the client for interacting with the Review builders.
 	Review *ReviewClient
 	// Ride is the client for interacting with the Ride builders.
@@ -175,6 +177,7 @@ func (tx *Tx) init() {
 	tx.DriverProfile = NewDriverProfileClient(tx.config)
 	tx.Notification = NewNotificationClient(tx.config)
 	tx.PassengerProfile = NewPassengerProfileClient(tx.config)
+	tx.PassengerReview = NewPassengerReviewClient(tx.config)
 	tx.Review = NewReviewClient(tx.config)
 	tx.Ride = NewRideClient(tx.config)
 	tx.User = NewUserClient(tx.config)

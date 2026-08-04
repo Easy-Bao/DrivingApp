@@ -10,6 +10,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/bidoffer"
 	"github.com/Easy-Bao/DrivingApp/server/ent/bidsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
@@ -446,11 +447,37 @@ func (repository *Repository) DriverReviews(ctx context.Context, driverID, limit
 }
 
 func (repository *Repository) CreateReview(ctx context.Context, value domain.Review) (domain.Review, error) {
-	item, err := repository.client.Review.Create().SetDriverID(value.DriverID).SetPassengerID(value.PassengerID).SetPassengerName(value.PassengerName).SetRating(value.Rating).SetComment(value.Comment).Save(ctx)
+	trip, err := repository.client.Ride.Get(ctx, value.RideID)
+	if err != nil || trip.Status != "completed" || trip.PassengerID != value.PassengerID || trip.DriverID != value.DriverID {
+		return domain.Review{}, domain.ErrReviewNotAllowed
+	}
+	if exists, err := repository.client.Review.Query().Where(review.RideIDEQ(value.RideID)).Exist(ctx); err != nil {
+		return domain.Review{}, err
+	} else if exists {
+		return domain.Review{}, domain.ErrReviewAlreadySubmitted
+	}
+	item, err := repository.client.Review.Create().SetRideID(value.RideID).SetDriverID(value.DriverID).SetPassengerID(value.PassengerID).SetPassengerName(value.PassengerName).SetRating(value.Rating).SetComment(value.Comment).Save(ctx)
 	if err != nil {
 		return domain.Review{}, err
 	}
 	return fromReview(item), nil
+}
+
+func (repository *Repository) CreatePassengerReview(ctx context.Context, value domain.PassengerReview) (domain.PassengerReview, error) {
+	trip, err := repository.client.Ride.Get(ctx, value.RideID)
+	if err != nil || trip.Status != "completed" || trip.PassengerID != value.PassengerID || trip.DriverID != value.DriverID {
+		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
+	}
+	if exists, err := repository.client.PassengerReview.Query().Where(passengerreview.RideIDEQ(value.RideID)).Exist(ctx); err != nil {
+		return domain.PassengerReview{}, err
+	} else if exists {
+		return domain.PassengerReview{}, domain.ErrReviewAlreadySubmitted
+	}
+	item, err := repository.client.PassengerReview.Create().SetRideID(value.RideID).SetDriverID(value.DriverID).SetPassengerID(value.PassengerID).SetRating(value.Rating).SetComment(value.Comment).Save(ctx)
+	if err != nil {
+		return domain.PassengerReview{}, err
+	}
+	return fromPassengerReview(item), nil
 }
 
 func (repository *Repository) OnlineDrivers(ctx context.Context) ([]domain.OnlineDriver, error) {
@@ -502,5 +529,9 @@ func fromOffer(item *ent.BidOffer) domain.BidOffer {
 }
 
 func fromReview(item *ent.Review) domain.Review {
-	return domain.Review{ID: item.ID, DriverID: item.DriverID, PassengerID: item.PassengerID, PassengerName: item.PassengerName, Rating: item.Rating, Comment: item.Comment, CreatedAt: item.CreatedAt.UTC().Format(time.RFC3339)}
+	return domain.Review{ID: item.ID, RideID: item.RideID, DriverID: item.DriverID, PassengerID: item.PassengerID, PassengerName: item.PassengerName, Rating: item.Rating, Comment: item.Comment, CreatedAt: item.CreatedAt.UTC().Format(time.RFC3339)}
+}
+
+func fromPassengerReview(item *ent.PassengerReview) domain.PassengerReview {
+	return domain.PassengerReview{ID: item.ID, RideID: item.RideID, DriverID: item.DriverID, PassengerID: item.PassengerID, Rating: item.Rating, Comment: item.Comment, CreatedAt: item.CreatedAt.UTC().Format(time.RFC3339)}
 }

@@ -83,6 +83,7 @@ class PassengerPaymentScreen extends StatelessWidget {
                   queryParameters: {
                     'driverId': ride.driverId,
                     'driverName': ride.driverName,
+                    'rideId': ride.id,
                   },
                 ),
                 style: ElevatedButton.styleFrom(

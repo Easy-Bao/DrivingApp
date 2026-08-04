@@ -13,6 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
@@ -146,22 +147,44 @@ func init() {
 	passengerprofileDescUserID := passengerprofileFields[0].Descriptor()
 	// passengerprofile.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	passengerprofile.UserIDValidator = passengerprofileDescUserID.Validators[0].(func(int) error)
+	passengerreviewFields := schema.PassengerReview{}.Fields()
+	_ = passengerreviewFields
+	// passengerreviewDescRideID is the schema descriptor for ride_id field.
+	passengerreviewDescRideID := passengerreviewFields[0].Descriptor()
+	// passengerreview.RideIDValidator is a validator for the "ride_id" field. It is called by the builders before save.
+	passengerreview.RideIDValidator = passengerreviewDescRideID.Validators[0].(func(int) error)
+	// passengerreviewDescDriverID is the schema descriptor for driver_id field.
+	passengerreviewDescDriverID := passengerreviewFields[1].Descriptor()
+	// passengerreview.DriverIDValidator is a validator for the "driver_id" field. It is called by the builders before save.
+	passengerreview.DriverIDValidator = passengerreviewDescDriverID.Validators[0].(func(int) error)
+	// passengerreviewDescPassengerID is the schema descriptor for passenger_id field.
+	passengerreviewDescPassengerID := passengerreviewFields[2].Descriptor()
+	// passengerreview.PassengerIDValidator is a validator for the "passenger_id" field. It is called by the builders before save.
+	passengerreview.PassengerIDValidator = passengerreviewDescPassengerID.Validators[0].(func(int) error)
+	// passengerreviewDescRating is the schema descriptor for rating field.
+	passengerreviewDescRating := passengerreviewFields[3].Descriptor()
+	// passengerreview.RatingValidator is a validator for the "rating" field. It is called by the builders before save.
+	passengerreview.RatingValidator = passengerreviewDescRating.Validators[0].(func(float64) error)
+	// passengerreviewDescCreatedAt is the schema descriptor for created_at field.
+	passengerreviewDescCreatedAt := passengerreviewFields[5].Descriptor()
+	// passengerreview.DefaultCreatedAt holds the default value on creation for the created_at field.
+	passengerreview.DefaultCreatedAt = passengerreviewDescCreatedAt.Default.(func() time.Time)
 	reviewFields := schema.Review{}.Fields()
 	_ = reviewFields
 	// reviewDescDriverID is the schema descriptor for driver_id field.
-	reviewDescDriverID := reviewFields[0].Descriptor()
+	reviewDescDriverID := reviewFields[1].Descriptor()
 	// review.DriverIDValidator is a validator for the "driver_id" field. It is called by the builders before save.
 	review.DriverIDValidator = reviewDescDriverID.Validators[0].(func(int) error)
 	// reviewDescPassengerID is the schema descriptor for passenger_id field.
-	reviewDescPassengerID := reviewFields[1].Descriptor()
+	reviewDescPassengerID := reviewFields[2].Descriptor()
 	// review.PassengerIDValidator is a validator for the "passenger_id" field. It is called by the builders before save.
 	review.PassengerIDValidator = reviewDescPassengerID.Validators[0].(func(int) error)
 	// reviewDescRating is the schema descriptor for rating field.
-	reviewDescRating := reviewFields[3].Descriptor()
+	reviewDescRating := reviewFields[4].Descriptor()
 	// review.RatingValidator is a validator for the "rating" field. It is called by the builders before save.
 	review.RatingValidator = reviewDescRating.Validators[0].(func(float64) error)
 	// reviewDescCreatedAt is the schema descriptor for created_at field.
-	reviewDescCreatedAt := reviewFields[5].Descriptor()
+	reviewDescCreatedAt := reviewFields[6].Descriptor()
 	// review.DefaultCreatedAt holds the default value on creation for the created_at field.
 	review.DefaultCreatedAt = reviewDescCreatedAt.Default.(func() time.Time)
 	rideFields := schema.Ride{}.Fields()

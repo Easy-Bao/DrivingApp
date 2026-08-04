@@ -158,6 +158,17 @@ func (service *Service) CreateReview(ctx context.Context, review domain.Review) 
 	return repository.CreateReview(ctx, review)
 }
 
+func (service *Service) CreatePassengerReview(ctx context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
+	repository, ok := service.repository.(domain.PassengerReviewRepository)
+	if !ok {
+		return domain.PassengerReview{}, errors.New("passenger review persistence is unavailable")
+	}
+	if review.Rating < 1 || review.Rating > 5 {
+		return domain.PassengerReview{}, errors.New("rating must be between 1 and 5")
+	}
+	return repository.CreatePassengerReview(ctx, review)
+}
+
 func (service *Service) OnlineDrivers(ctx context.Context) ([]domain.OnlineDriver, error) {
 	repository, ok := service.repository.(domain.AnalyticsRepository)
 	if !ok {

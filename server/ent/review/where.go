@@ -54,6 +54,11 @@ func IDLTE(id int) predicate.Review {
 	return predicate.Review(sql.FieldLTE(FieldID, id))
 }
 
+// RideID applies equality check predicate on the "ride_id" field. It's identical to RideIDEQ.
+func RideID(v int) predicate.Review {
+	return predicate.Review(sql.FieldEQ(FieldRideID, v))
+}
+
 // DriverID applies equality check predicate on the "driver_id" field. It's identical to DriverIDEQ.
 func DriverID(v int) predicate.Review {
 	return predicate.Review(sql.FieldEQ(FieldDriverID, v))
@@ -82,6 +87,56 @@ func Comment(v string) predicate.Review {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Review {
 	return predicate.Review(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// RideIDEQ applies the EQ predicate on the "ride_id" field.
+func RideIDEQ(v int) predicate.Review {
+	return predicate.Review(sql.FieldEQ(FieldRideID, v))
+}
+
+// RideIDNEQ applies the NEQ predicate on the "ride_id" field.
+func RideIDNEQ(v int) predicate.Review {
+	return predicate.Review(sql.FieldNEQ(FieldRideID, v))
+}
+
+// RideIDIn applies the In predicate on the "ride_id" field.
+func RideIDIn(vs ...int) predicate.Review {
+	return predicate.Review(sql.FieldIn(FieldRideID, vs...))
+}
+
+// RideIDNotIn applies the NotIn predicate on the "ride_id" field.
+func RideIDNotIn(vs ...int) predicate.Review {
+	return predicate.Review(sql.FieldNotIn(FieldRideID, vs...))
+}
+
+// RideIDGT applies the GT predicate on the "ride_id" field.
+func RideIDGT(v int) predicate.Review {
+	return predicate.Review(sql.FieldGT(FieldRideID, v))
+}
+
+// RideIDGTE applies the GTE predicate on the "ride_id" field.
+func RideIDGTE(v int) predicate.Review {
+	return predicate.Review(sql.FieldGTE(FieldRideID, v))
+}
+
+// RideIDLT applies the LT predicate on the "ride_id" field.
+func RideIDLT(v int) predicate.Review {
+	return predicate.Review(sql.FieldLT(FieldRideID, v))
+}
+
+// RideIDLTE applies the LTE predicate on the "ride_id" field.
+func RideIDLTE(v int) predicate.Review {
+	return predicate.Review(sql.FieldLTE(FieldRideID, v))
+}
+
+// RideIDIsNil applies the IsNil predicate on the "ride_id" field.
+func RideIDIsNil() predicate.Review {
+	return predicate.Review(sql.FieldIsNull(FieldRideID))
+}
+
+// RideIDNotNil applies the NotNil predicate on the "ride_id" field.
+func RideIDNotNil() predicate.Review {
+	return predicate.Review(sql.FieldNotNull(FieldRideID))
 }
 
 // DriverIDEQ applies the EQ predicate on the "driver_id" field.

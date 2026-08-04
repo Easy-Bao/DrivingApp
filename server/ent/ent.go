@@ -20,6 +20,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
@@ -92,6 +93,7 @@ func checkColumn(t, c string) error {
 			driverprofile.Table:    driverprofile.ValidColumn,
 			notification.Table:     notification.ValidColumn,
 			passengerprofile.Table: passengerprofile.ValidColumn,
+			passengerreview.Table:  passengerreview.ValidColumn,
 			review.Table:           review.ValidColumn,
 			ride.Table:             ride.ValidColumn,
 			user.Table:             user.ValidColumn,

@@ -10,6 +10,8 @@ import (
 
 type analyticsRepository struct{}
 
+type passengerReviewRepository struct{ analyticsRepository }
+
 func (analyticsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
@@ -41,6 +43,10 @@ func (analyticsRepository) CreateReview(_ context.Context, review domain.Review)
 func (analyticsRepository) OnlineDrivers(context.Context) ([]domain.OnlineDriver, error) {
 	return []domain.OnlineDriver{{ID: 7}}, nil
 }
+func (passengerReviewRepository) CreatePassengerReview(_ context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
+	review.ID = 1
+	return review, nil
+}
 
 func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 	service := usecase.NewService(analyticsRepository{})
@@ -59,5 +65,16 @@ func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 	}
 	if _, err := service.CreateReview(context.Background(), domain.Review{DriverID: 7, Rating: 6}); err == nil {
 		t.Fatal("expected out-of-range rating to be rejected")
+	}
+}
+
+func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
+	service := usecase.NewService(passengerReviewRepository{})
+	review, err := service.CreatePassengerReview(context.Background(), domain.PassengerReview{RideID: 9, Rating: 5})
+	if err != nil || review.ID != 1 {
+		t.Fatalf("passenger review = %#v, %v", review, err)
+	}
+	if _, err := service.CreatePassengerReview(context.Background(), domain.PassengerReview{RideID: 9, Rating: 0}); err == nil {
+		t.Fatal("expected out-of-range passenger rating to be rejected")
 	}
 }

@@ -6,17 +6,17 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class PassengerRatingScreen extends StatefulWidget {
   final String driverId;
   final String driverName;
+  final String rideId;
 
   const PassengerRatingScreen({
     super.key,
     required this.driverId,
     required this.driverName,
+    required this.rideId,
   });
 
   @override
@@ -27,6 +27,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
   int _selectedStars = 0;
   final TextEditingController _feedbackController = TextEditingController();
   bool _isSubmitting = false;
+  String? _error;
 
   void _finishRating() {
     unawaited(_submitRating());
@@ -34,7 +35,7 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
 
   Future<void> _submitRating() async {
     if (_selectedStars == 0) {
-      CustomToast.show(context, 'Please select a rating.');
+      setState(() => _error = 'Please select a rating.');
       return;
     }
 
@@ -43,26 +44,22 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final passengerName = prefs.getString('passenger_name') ?? 'Passenger';
-
-      await Modular.get<BiddingRemoteDataSource>().submitDriverReview(
-        driverId: widget.driverId,
-        passengerName: passengerName,
-        rating: _selectedStars.toDouble(),
-        comment: _feedbackController.text.trim(),
-      );
+      final submitted = await Modular.get<BiddingRemoteDataSource>()
+          .submitDriverReview(
+            driverId: widget.driverId,
+            rideId: widget.rideId,
+            rating: _selectedStars.toDouble(),
+            comment: _feedbackController.text.trim(),
+          );
+      if (!submitted) throw StateError('review was not accepted');
 
       if (mounted) {
-        CustomToast.show(context, 'Thank you for your feedback!');
         context.goNamed(HomeRoutes.home);
       }
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
-        CustomToast.show(
-          context,
-          'Unable to submit your review right now. Please try again.',
-          isError: true,
+        setState(
+          () => _error = 'Unable to submit your review. Please try again.',
         );
       }
     } finally {
@@ -193,6 +190,18 @@ class _PassengerRatingScreenState extends State<PassengerRatingScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
+
+                  if (_error != null) ...[
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppTheme.cancel,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
