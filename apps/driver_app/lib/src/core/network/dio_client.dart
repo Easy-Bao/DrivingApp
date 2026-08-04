@@ -4,6 +4,7 @@ import 'package:driver_app/src/core/network/interceptors/auth_interceptor.dart';
 import 'package:driver_app/src/core/network/interceptors/logging_interceptor.dart';
 import 'package:driver_app/src/core/network/interceptors/retry_interceptor.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:shared_core/shared_core.dart';
 
 class DioClient {
   DioClient._();
@@ -25,6 +26,7 @@ class DioClient {
     if (kDebugMode) {
       dio.interceptors.add(LoggingInterceptor());
     }
+    dio.interceptors.add(IdempotencyInterceptor());
     dio.interceptors.add(RetryInterceptor(dio));
 
     return dio;

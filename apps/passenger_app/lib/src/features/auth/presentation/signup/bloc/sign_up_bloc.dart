@@ -3,6 +3,8 @@ import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials
 import 'package:passenger_app/src/features/auth/domain/usecases/register_use_case.dart';
 import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_event.dart';
 import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_state.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 
 export 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_event.dart';
 export 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_state.dart';
@@ -21,26 +23,15 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     final normalizedName = event.name.trim();
     final normalizedEmail = event.email.trim();
     final normalizedPhone = event.phone.trim();
-    final normalizedPassword = event.password.trim();
+    final normalizedPassword = event.password;
 
-    if (normalizedName.isEmpty) {
-      emit(const SignUpFailure('Please enter your full name'));
-      return;
-    }
-    if (normalizedEmail.isEmpty) {
-      emit(const SignUpFailure('Please enter email address'));
-      return;
-    }
-    if (!normalizedEmail.contains('@')) {
-      emit(const SignUpFailure('Please enter a valid email address'));
-      return;
-    }
-    if (normalizedPhone.isEmpty) {
-      emit(const SignUpFailure('Please enter phone number'));
-      return;
-    }
-    if (normalizedPassword.length < 6) {
-      emit(const SignUpFailure('Password must be at least 6 characters long'));
+    final validationError =
+        authFormValidator.name(normalizedName) ??
+        authFormValidator.email(normalizedEmail) ??
+        authFormValidator.phone(normalizedPhone) ??
+        authFormValidator.password(normalizedPassword);
+    if (validationError != null) {
+      emit(SignUpFailure(validationError));
       return;
     }
 
@@ -53,20 +44,23 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       password: normalizedPassword,
     );
 
-    result.fold((failure) => emit(SignUpFailure(failure.message)), (response) {
-      final needsVerification = response['needsVerification'] == true;
-      if (needsVerification) {
-        emit(SignUpNeedsVerification(normalizedEmail));
-      } else {
-        final credentials = AuthCredentials(
-          passengerId: response['passengerId'] as String? ?? '',
-          passengerName: normalizedName,
-          passengerEmail: normalizedEmail,
-          passengerPhone: normalizedPhone,
-          token: response['token'] as String? ?? '',
-        );
-        emit(SignUpSuccess(credentials));
-      }
-    });
+    result.fold(
+      (failure) => emit(SignUpFailure(safeAuthFailureMessage(failure))),
+      (response) {
+        final needsVerification = response['needsVerification'] == true;
+        if (needsVerification) {
+          emit(SignUpNeedsVerification(normalizedEmail));
+        } else {
+          final credentials = AuthCredentials(
+            passengerId: response['passengerId']?.toString() ?? '',
+            passengerName: normalizedName,
+            passengerEmail: normalizedEmail,
+            passengerPhone: normalizedPhone,
+            token: response['token']?.toString() ?? '',
+          );
+          emit(SignUpSuccess(credentials));
+        }
+      },
+    );
   }
 }

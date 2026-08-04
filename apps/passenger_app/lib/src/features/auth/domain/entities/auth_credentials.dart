@@ -20,7 +20,7 @@ class AuthCredentials extends Equatable {
   factory AuthCredentials.fromJson(Map<String, dynamic> json) {
     return AuthCredentials(
       passengerId:
-          json['passengerId'] as String? ?? json['id'] as String? ?? '',
+          json['passengerId']?.toString() ?? json['id']?.toString() ?? '',
       passengerName:
           json['passengerName'] as String? ?? json['name'] as String? ?? '',
       passengerEmail:

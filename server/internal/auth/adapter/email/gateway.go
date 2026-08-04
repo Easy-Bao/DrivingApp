@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/resilience"
 	mail "github.com/wneessen/go-mail"
 )
 
@@ -13,6 +15,7 @@ type Delivery func(context.Context, Config, string, string, string) error
 type GoMailGateway struct {
 	config  Config
 	deliver Delivery
+	breaker *resilience.CircuitBreaker
 }
 
 func NewGoMailGatewayFromEnv() *GoMailGateway {
@@ -20,14 +23,22 @@ func NewGoMailGatewayFromEnv() *GoMailGateway {
 }
 
 func NewGoMailGateway(config Config) *GoMailGateway {
-	return &GoMailGateway{config: config, deliver: deliverWithGoMail}
+	return newGoMailGateway(config, deliverWithGoMail)
 }
 
 func NewGoMailGatewayWithDelivery(config Config, deliver Delivery) *GoMailGateway {
 	if deliver == nil {
 		return NewGoMailGateway(config)
 	}
-	return &GoMailGateway{config: config, deliver: deliver}
+	return newGoMailGateway(config, deliver)
+}
+
+func newGoMailGateway(config Config, deliver Delivery) *GoMailGateway {
+	return &GoMailGateway{
+		config:  config,
+		deliver: deliver,
+		breaker: resilience.NewCircuitBreaker(3, 30*time.Second),
+	}
 }
 
 func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) error {
@@ -41,7 +52,9 @@ func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) 
 	if recipient == "" {
 		return fmt.Errorf("%w: recipient is empty", ErrInvalidConfig)
 	}
-	return gateway.deliver(ctx, gateway.config, recipient, gateway.config.Subject, verificationBody(code))
+	return gateway.breaker.Do(ctx, func(ctx context.Context) error {
+		return gateway.deliver(ctx, gateway.config, recipient, gateway.config.Subject, verificationBody(code))
+	})
 }
 
 func deliverWithGoMail(ctx context.Context, config Config, recipient, subject, body string) error {

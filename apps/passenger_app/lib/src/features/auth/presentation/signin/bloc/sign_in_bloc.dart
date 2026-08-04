@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/presentation/signin/bloc/sign_in_event.dart';
 import 'package:passenger_app/src/features/auth/presentation/signin/bloc/sign_in_state.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 
 export 'package:passenger_app/src/features/auth/presentation/signin/bloc/sign_in_event.dart';
 export 'package:passenger_app/src/features/auth/presentation/signin/bloc/sign_in_state.dart';
@@ -20,16 +22,13 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     final normalizedEmail = event.email.trim().toLowerCase();
     final password = event.password;
 
-    if (normalizedEmail.isEmpty) {
-      emit(const SignInFailure('Please enter email'));
-      return;
-    }
-    if (!normalizedEmail.contains('@')) {
-      emit(const SignInFailure('Please enter a valid email'));
-      return;
-    }
-    if (password.isEmpty) {
-      emit(const SignInFailure('Please enter password'));
+    final emailError = authFormValidator.email(normalizedEmail);
+    final passwordError = authFormValidator.password(
+      password,
+      minimumLength: 1,
+    );
+    if (emailError != null || passwordError != null) {
+      emit(SignInFailure(emailError ?? passwordError!));
       return;
     }
 
@@ -40,14 +39,15 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
       password: password,
     );
 
-    result.fold((failure) => emit(SignInFailure(failure.message)), (
-      credentials,
-    ) {
-      if (credentials.needsVerification) {
-        emit(SignInNeedsVerification(normalizedEmail));
-      } else {
-        emit(SignInSuccess(credentials));
-      }
-    });
+    result.fold(
+      (failure) => emit(SignInFailure(safeAuthFailureMessage(failure))),
+      (credentials) {
+        if (credentials.needsVerification) {
+          emit(SignInNeedsVerification(normalizedEmail));
+        } else {
+          emit(SignInSuccess(credentials));
+        }
+      },
+    );
   }
 }

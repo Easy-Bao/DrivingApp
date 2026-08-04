@@ -23,14 +23,18 @@ class VerifyOtpTimerTicked extends VerifyOtpEvent {
 class VerifyOtpSubmitted extends VerifyOtpEvent {
   final String email;
   final String code;
-  final String password;
 
-  const VerifyOtpSubmitted({
-    required this.email,
-    required this.code,
-    this.password = '',
-  });
+  const VerifyOtpSubmitted({required this.email, required this.code});
 
   @override
-  List<Object?> get props => [email, code, password];
+  List<Object?> get props => [email, code];
+}
+
+class VerifyOtpResendRequested extends VerifyOtpEvent {
+  final String email;
+
+  const VerifyOtpResendRequested({required this.email});
+
+  @override
+  List<Object?> get props => [email];
 }

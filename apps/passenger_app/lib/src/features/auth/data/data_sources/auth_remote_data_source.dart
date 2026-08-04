@@ -15,7 +15,12 @@ abstract class AuthRemoteDataSource {
     required String password,
   });
 
-  Future<bool> verifyOtp({required String email, required String code});
+  Future<Map<String, dynamic>> verifyOtp({
+    required String email,
+    required String code,
+  });
+
+  Future<bool> requestVerificationCode({required String email});
 
   Future<bool> resetPassword({required String email});
 
@@ -63,10 +68,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<bool> verifyOtp({required String email, required String code}) async {
+  Future<Map<String, dynamic>> verifyOtp({
+    required String email,
+    required String code,
+  }) async {
     final responseBody = await _postJson(
       ApiEndpoints.verifyOtp,
       requestBody: {'email': email, 'code': code},
+    );
+    return _extractDataPayload(responseBody);
+  }
+
+  @override
+  Future<bool> requestVerificationCode({required String email}) async {
+    final responseBody = await _postJson(
+      ApiEndpoints.passengerOtp,
+      requestBody: {'email': email},
     );
     return responseBody['success'] == true;
   }
@@ -126,23 +143,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   String _extractErrorMessage(DioException error) {
     final statusCode = error.response?.statusCode;
-    if (statusCode != null && statusCode >= 500) {
-      return 'The authentication service is temporarily unavailable. Please try again.';
-    }
-
-    final errorData = error.response?.data;
-    if (errorData is Map) {
-      final message = errorData['message'] ?? errorData['error'];
-      if (message is String && message.isNotEmpty) {
-        return message;
-      }
-    }
-    if (errorData is String && errorData.isNotEmpty) {
-      return errorData;
-    }
-    if (error.response?.statusCode == null) {
+    if (statusCode == null) {
       return 'Cannot reach the authentication service. Check that the local services are running.';
     }
-    return 'Authentication service request failed.';
+    if (statusCode >= 500) {
+      return 'The authentication service is temporarily unavailable. Please try again.';
+    }
+    return switch (statusCode) {
+      400 ||
+      422 => 'The request could not be completed. Please check your details.',
+      401 || 403 => 'Invalid email or password.',
+      404 => 'The requested authentication action is unavailable.',
+      409 => 'This email is already registered.',
+      _ => 'Authentication request failed. Please try again.',
+    };
   }
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http"
@@ -48,7 +49,14 @@ func main() {
 
 	address := ":" + port("REALTIME_SERVICE_PORT", "8081")
 	log.Println("realtime-service listening on " + address)
-	if err := http.ListenAndServe(address, middleware.Logging(logger.New("realtime-service"))(router)); err != nil {
+	if err := http.ListenAndServe(address, middleware.Logging(logger.New("realtime-service"))(
+		middleware.SecureHTTPWithIdempotency(
+			router,
+			middleware.SecurityConfigFromEnv(),
+			middleware.NewRateLimiterFromEnv(middleware.NewRedisCounterStore(redisClient)),
+			middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute),
+		),
+	)); err != nil {
 		log.Fatal(err)
 	}
 }

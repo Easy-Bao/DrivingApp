@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/resilience"
 )
 
 const (
@@ -20,14 +21,16 @@ const (
 )
 
 type Provider struct {
-	token  string
-	client *http.Client
+	token   string
+	client  *http.Client
+	breaker *resilience.CircuitBreaker
 }
 
 func NewProvider(token string) *Provider {
 	return &Provider{
-		token:  token,
-		client: &http.Client{Timeout: 5 * time.Second},
+		token:   token,
+		client:  &http.Client{Timeout: 5 * time.Second},
+		breaker: resilience.NewCircuitBreaker(5, 30*time.Second),
 	}
 }
 
@@ -168,6 +171,15 @@ func (provider *Provider) Route(ctx context.Context, origin, destination domain.
 }
 
 func (provider *Provider) getJSON(ctx context.Context, endpoint string, target any) error {
+	if provider.breaker == nil {
+		provider.breaker = resilience.NewCircuitBreaker(5, 30*time.Second)
+	}
+	return provider.breaker.Do(ctx, func(ctx context.Context) error {
+		return provider.fetchJSON(ctx, endpoint, target)
+	})
+}
+
+func (provider *Provider) fetchJSON(ctx context.Context, endpoint string, target any) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return err

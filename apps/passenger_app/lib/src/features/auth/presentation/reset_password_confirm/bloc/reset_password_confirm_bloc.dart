@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/confirm_reset_password_use_case.dart';
 import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_event.dart';
 import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_state.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 
 export 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_event.dart';
 export 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_state.dart';
@@ -19,14 +21,11 @@ class ResetPasswordConfirmBloc
     ResetPasswordConfirmSubmitted event,
     Emitter<ResetPasswordConfirmState> emit,
   ) async {
-    final trimmedPassword = event.newPassword.trim();
+    final trimmedPassword = event.newPassword;
     final normalizedEmail = event.email.trim().toLowerCase();
-    if (trimmedPassword.length < 8) {
-      emit(
-        const ResetPasswordConfirmFailure(
-          'Password must be at least 8 characters.',
-        ),
-      );
+    final validationError = authFormValidator.password(trimmedPassword);
+    if (validationError != null) {
+      emit(ResetPasswordConfirmFailure(validationError));
       return;
     }
 
@@ -39,7 +38,8 @@ class ResetPasswordConfirmBloc
     );
 
     result.fold(
-      (failure) => emit(ResetPasswordConfirmFailure(failure.message)),
+      (failure) =>
+          emit(ResetPasswordConfirmFailure(safeAuthFailureMessage(failure))),
       (_) => emit(const ResetPasswordConfirmSuccess()),
     );
   }

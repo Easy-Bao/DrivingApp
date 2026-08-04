@@ -11,12 +11,7 @@ class VerifyOtpUseCase {
   Future<Either<Failure, AuthCredentials>> execute({
     required String email,
     required String code,
-    required String password,
   }) {
-    return _authRepository.verifyOtp(
-      email: email,
-      code: code,
-      password: password,
-    );
+    return _authRepository.verifyOtp(email: email, code: code);
   }
 }

@@ -23,6 +23,11 @@ class ValidationFailure extends Failure {
   const ValidationFailure([super.message = 'Invalid input parameters.']);
 }
 
+class EmailAlreadyRegisteredFailure extends Failure {
+  const EmailAlreadyRegisteredFailure()
+    : super('This email is already registered.');
+}
+
 class CacheFailure extends Failure {
   const CacheFailure([super.message = 'Failed to load local storage cache.']);
 }

@@ -7,6 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/signin/bloc/sign_in_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -31,10 +32,6 @@ class _SigninScreenContent extends StatefulWidget {
 }
 
 class _SigninScreenContentState extends State<_SigninScreenContent> {
-  static final RegExp _emailRegex = RegExp(
-    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-  );
-
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -43,8 +40,7 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
 
   String? _emailError;
   String? _passwordError;
-  bool _isServerErrorCleared = false;
-  Timer? _validationErrorTimer;
+  String? _submissionError;
 
   @override
   Widget build(BuildContext context) {
@@ -80,16 +76,13 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                   extra: {'email': state.email},
                 ),
               );
+            } else if (state is SignInFailure) {
+              setState(() => _submissionError = state.errorMessage);
             }
           },
           builder: (context, state) {
             final isLoading = state is SignInLoading;
-            final serverErrorMessage =
-                state is SignInFailure && !_isServerErrorCleared
-                ? state.errorMessage
-                : null;
-
-            final effectiveEmailError = _emailError ?? serverErrorMessage;
+            final effectiveEmailError = _emailError ?? _submissionError;
             final effectivePasswordError = _passwordError;
 
             return LayoutBuilder(
@@ -157,10 +150,10 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                 ),
                                 onChanged: (_) {
                                   if (_emailError != null ||
-                                      _isServerErrorCleared == false) {
+                                      _submissionError != null) {
                                     setState(() {
                                       _emailError = null;
-                                      _isServerErrorCleared = true;
+                                      _submissionError = null;
                                     });
                                   }
                                 },
@@ -242,10 +235,10 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
                                 ),
                                 onChanged: (_) {
                                   if (_passwordError != null ||
-                                      _isServerErrorCleared == false) {
+                                      _submissionError != null) {
                                     setState(() {
                                       _passwordError = null;
-                                      _isServerErrorCleared = true;
+                                      _submissionError = null;
                                     });
                                   }
                                 },
@@ -441,23 +434,9 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
 
   @override
   void dispose() {
-    _validationErrorTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _startErrorAutoDismissTimer() {
-    _validationErrorTimer?.cancel();
-    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _emailError = null;
-          _passwordError = null;
-          _isServerErrorCleared = true;
-        });
-      }
-    });
   }
 
   void _submitSignIn(BuildContext context) {
@@ -466,20 +445,12 @@ class _SigninScreenContentState extends State<_SigninScreenContent> {
     final password = _passwordController.text;
 
     setState(() {
-      _isServerErrorCleared = false;
-      if (email.isEmpty) {
-        _emailError = 'Please enter your email';
-      } else if (!_emailRegex.hasMatch(email)) {
-        _emailError = 'Please enter a valid email address';
-      } else {
-        _emailError = null;
-      }
-
-      _passwordError = password.isEmpty ? 'Please enter your password' : null;
+      _submissionError = null;
+      _emailError = authFormValidator.email(email);
+      _passwordError = authFormValidator.password(password, minimumLength: 1);
     });
 
     if (_emailError != null || _passwordError != null) {
-      _startErrorAutoDismissTimer();
       return;
     }
 

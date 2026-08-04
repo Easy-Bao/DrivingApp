@@ -5,6 +5,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ResetPasswordConfirmScreen extends StatelessWidget {
@@ -51,6 +52,7 @@ class _ResetPasswordConfirmScreenContentState
 
   String? _newPasswordError;
   String? _confirmPasswordError;
+  String? _submissionError;
 
   @override
   void dispose() {
@@ -65,21 +67,12 @@ class _ResetPasswordConfirmScreenContentState
     final confirmPassword = _confirmPasswordController.text;
 
     setState(() {
-      if (newPassword.isEmpty) {
-        _newPasswordError = 'Please enter your new password';
-      } else if (newPassword.length < 8) {
-        _newPasswordError = 'Password must be at least 8 characters';
-      } else {
-        _newPasswordError = null;
-      }
-
-      if (confirmPassword.isEmpty) {
-        _confirmPasswordError = 'Please confirm your password';
-      } else if (newPassword != confirmPassword) {
-        _confirmPasswordError = 'Passwords do not match';
-      } else {
-        _confirmPasswordError = null;
-      }
+      _submissionError = null;
+      _newPasswordError = authFormValidator.password(newPassword);
+      _confirmPasswordError = authFormValidator.confirmation(
+        newPassword,
+        confirmPassword,
+      );
     });
 
     if (_newPasswordError != null || _confirmPasswordError != null) {
@@ -117,7 +110,7 @@ class _ResetPasswordConfirmScreenContentState
               CustomToast.show(context, 'Password updated successfully!');
               context.goNamed(AuthRoutes.signin);
             } else if (state is ResetPasswordConfirmFailure) {
-              CustomToast.show(context, state.errorMessage);
+              setState(() => _submissionError = state.errorMessage);
             }
           },
           builder: (context, state) {
@@ -159,6 +152,18 @@ class _ResetPasswordConfirmScreenContentState
                                 height: 1.5,
                               ),
                             ),
+                            if (_submissionError != null) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                _submissionError!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppTheme.cancel,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 40),
                             const Align(
                               alignment: Alignment.centerLeft,
@@ -183,8 +188,12 @@ class _ResetPasswordConfirmScreenContentState
                                 fontWeight: FontWeight.w500,
                               ),
                               onChanged: (_) {
-                                if (_newPasswordError != null) {
-                                  setState(() => _newPasswordError = null);
+                                if (_newPasswordError != null ||
+                                    _submissionError != null) {
+                                  setState(() {
+                                    _newPasswordError = null;
+                                    _submissionError = null;
+                                  });
                                 }
                               },
                               decoration: InputDecoration(
@@ -266,8 +275,12 @@ class _ResetPasswordConfirmScreenContentState
                                 fontWeight: FontWeight.w500,
                               ),
                               onChanged: (_) {
-                                if (_confirmPasswordError != null) {
-                                  setState(() => _confirmPasswordError = null);
+                                if (_confirmPasswordError != null ||
+                                    _submissionError != null) {
+                                  setState(() {
+                                    _confirmPasswordError = null;
+                                    _submissionError = null;
+                                  });
                                 }
                               },
                               decoration: InputDecoration(

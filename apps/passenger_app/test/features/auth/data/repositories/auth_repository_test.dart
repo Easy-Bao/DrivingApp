@@ -48,7 +48,7 @@ void main() {
           (_) async => <String, dynamic>{
             'token': 'jwt-token',
             'user': <String, dynamic>{
-              'id': 'passenger-42',
+              'id': 42,
               'name': 'Test Passenger',
               'email': 'passenger@example.com',
               'phone': '+639170000001',
@@ -70,7 +70,7 @@ void main() {
         expect(
           credentials,
           const AuthCredentials(
-            passengerId: 'passenger-42',
+            passengerId: '42',
             passengerName: 'Test Passenger',
             passengerEmail: 'passenger@example.com',
             passengerPhone: '+639170000001',
@@ -79,9 +79,7 @@ void main() {
           ),
         );
         verify(() => secureSessionService.saveToken('jwt-token')).called(1);
-        verify(
-          () => secureSessionService.savePassengerId('passenger-42'),
-        ).called(1);
+        verify(() => secureSessionService.savePassengerId('42')).called(1);
 
         expect(preferences.containsKey('jwt_token'), isFalse);
         expect(preferences.containsKey('passenger_id'), isFalse);
@@ -133,4 +131,47 @@ void main() {
       verifyNever(() => secureSessionService.savePassengerId(any()));
     });
   });
+
+  test(
+    'verifyOtp persists the session returned by the verification endpoint',
+    () async {
+      when(
+        () => remoteDataSource.verifyOtp(
+          email: 'passenger@example.com',
+          code: '123456',
+        ),
+      ).thenAnswer(
+        (_) async => <String, dynamic>{
+          'token': 'verified-jwt',
+          'user': <String, dynamic>{
+            'id': 42,
+            'name': 'Test Passenger',
+            'email': 'passenger@example.com',
+            'phone': '+639170000001',
+          },
+        },
+      );
+
+      final result = await repository.verifyOtp(
+        email: 'passenger@example.com',
+        code: '123456',
+      );
+
+      late AuthCredentials credentials;
+      result.fold(
+        (failure) => fail('Expected credentials, got ${failure.message}'),
+        (value) => credentials = value,
+      );
+      expect(credentials.passengerId, '42');
+      expect(credentials.token, 'verified-jwt');
+      verify(() => secureSessionService.saveToken('verified-jwt')).called(1);
+      verify(() => secureSessionService.savePassengerId('42')).called(1);
+      verifyNever(
+        () => remoteDataSource.loginPassenger(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      );
+    },
+  );
 }

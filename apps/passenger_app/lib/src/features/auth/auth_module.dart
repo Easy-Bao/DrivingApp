@@ -6,6 +6,7 @@ import 'package:passenger_app/src/features/auth/data/repositories/auth_repositor
 import 'package:passenger_app/src/features/auth/domain/repositories/i_auth_repository.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/confirm_reset_password_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/register_use_case.dart';
+import 'package:passenger_app/src/features/auth/domain/usecases/resend_otp_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
@@ -42,6 +43,9 @@ class AuthModule extends Module {
     i.addLazySingleton<VerifyOtpUseCase>(
       (i) => VerifyOtpUseCase(i.get<IAuthRepository>()),
     );
+    i.addLazySingleton<ResendOtpUseCase>(
+      (i) => ResendOtpUseCase(i.get<IAuthRepository>()),
+    );
     i.addLazySingleton<ResetPasswordUseCase>(
       (i) => ResetPasswordUseCase(i.get<IAuthRepository>()),
     );
@@ -50,7 +54,10 @@ class AuthModule extends Module {
     );
     i.add<SignInBloc>((i) => SignInBloc(i.get<SignInUseCase>()));
     i.add<SignUpBloc>((i) => SignUpBloc(i.get<RegisterUseCase>()));
-    i.add<VerifyOtpBloc>((i) => VerifyOtpBloc(i.get<VerifyOtpUseCase>()));
+    i.add<VerifyOtpBloc>(
+      (i) =>
+          VerifyOtpBloc(i.get<VerifyOtpUseCase>(), i.get<ResendOtpUseCase>()),
+    );
     i.add<ForgotPasswordBloc>(
       (i) => ForgotPasswordBloc(i.get<ResetPasswordUseCase>()),
     );
@@ -98,11 +105,9 @@ class AuthModule extends Module {
             (state.uri.queryParameters['email'] ??
                 extra['email']?.toString()) ??
             '';
-        final password = extra['password']?.toString() ?? '';
         final isForgotPassword = extra['isForgotPassword'] == true;
         return VerifyOtpScreen(
           email: email,
-          password: password,
           isForgotPassword: isForgotPassword,
         );
       },

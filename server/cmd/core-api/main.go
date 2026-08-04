@@ -149,8 +149,15 @@ func main() {
 	})
 
 	server := &http.Server{
-		Addr:              ":" + port("CORE_API_PORT", "8080"),
-		Handler:           middleware.Logging(logger.New("core-api"))(router),
+		Addr: ":" + port("CORE_API_PORT", "8080"),
+		Handler: middleware.Logging(logger.New("core-api"))(
+			middleware.SecureHTTPWithIdempotency(
+				router,
+				middleware.SecurityConfigFromEnv(),
+				middleware.NewRateLimiterFromEnv(middleware.NewRedisCounterStore(redisClient)),
+				middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute),
+			),
+		),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      15 * time.Second,

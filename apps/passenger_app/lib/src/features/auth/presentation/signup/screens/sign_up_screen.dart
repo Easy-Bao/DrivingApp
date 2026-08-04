@@ -8,6 +8,7 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/core/utils/phone_number_validator.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -32,10 +33,6 @@ class _SignupScreenContent extends StatefulWidget {
 }
 
 class _SignupScreenContentState extends State<_SignupScreenContent> {
-  static final RegExp _emailRegex = RegExp(
-    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-  );
-
   final TextEditingController _passengerNameController =
       TextEditingController();
   final TextEditingController _passengerPhoneController =
@@ -51,30 +48,15 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
   String? _phoneError;
   String? _emailError;
   String? _passwordError;
-  Timer? _validationErrorTimer;
+  String? _submissionError;
 
   @override
   void dispose() {
-    _validationErrorTimer?.cancel();
     _passengerNameController.dispose();
     _passengerPhoneController.dispose();
     _passengerEmailController.dispose();
     _passengerPasswordController.dispose();
     super.dispose();
-  }
-
-  void _startErrorAutoDismissTimer() {
-    _validationErrorTimer?.cancel();
-    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _nameError = null;
-          _phoneError = null;
-          _emailError = null;
-          _passwordError = null;
-        });
-      }
-    });
   }
 
   void _submitRegistration(BuildContext context) {
@@ -85,30 +67,17 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
     final password = _passengerPasswordController.text;
 
     setState(() {
-      _nameError = name.isEmpty ? 'Please enter your name' : null;
-      if (rawPhone.isEmpty) {
-        _phoneError = 'Please enter your phone number';
-      } else if (!PhoneNumberValidator.isValidPHNumber(rawPhone)) {
-        _phoneError = 'Enter a valid number';
-      } else {
-        _phoneError = null;
-      }
-
-      if (email.isEmpty) {
-        _emailError = 'Please enter your email';
-      } else if (!_emailRegex.hasMatch(email)) {
-        _emailError = 'Please enter a valid email address';
-      } else {
-        _emailError = null;
-      }
-      _passwordError = password.isEmpty ? 'Please enter your password' : null;
+      _submissionError = null;
+      _nameError = authFormValidator.name(name);
+      _phoneError = authFormValidator.phone(rawPhone);
+      _emailError = authFormValidator.email(email);
+      _passwordError = authFormValidator.password(password);
     });
 
     if (_nameError != null ||
         _phoneError != null ||
         _emailError != null ||
         _passwordError != null) {
-      _startErrorAutoDismissTimer();
       return;
     }
 
@@ -154,19 +123,16 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
               unawaited(
                 context.pushNamed(
                   AuthRoutes.verifyOtp,
-                  extra: {
-                    'email': state.email,
-                    'password': _passengerPasswordController.text,
-                  },
+                  extra: {'email': state.email},
                 ),
               );
+            } else if (state is SignUpFailure) {
+              setState(() => _submissionError = state.errorMessage);
             }
           },
           builder: (context, state) {
             final isLoading = state is SignUpLoading;
-            final errorMessage = state is SignUpFailure
-                ? state.errorMessage
-                : null;
+            final errorMessage = _submissionError;
 
             return Center(
               child: ConstrainedBox(
@@ -253,7 +219,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               controller: _passengerNameController,
                               textInputAction: TextInputAction.next,
                               onChanged: (_) {
-                                setState(() => _nameError = null);
+                                setState(() {
+                                  _nameError = null;
+                                  _submissionError = null;
+                                });
                               },
                               decoration: InputDecoration(
                                 hintText: 'Full Name',
@@ -320,7 +289,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                               keyboardType: TextInputType.phone,
                               textInputAction: TextInputAction.next,
                               onChanged: (_) {
-                                setState(() => _phoneError = null);
+                                setState(() {
+                                  _phoneError = null;
+                                  _submissionError = null;
+                                });
                               },
                               decoration: InputDecoration(
                                 hintText: '09171234567',
@@ -391,7 +363,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
                                   onChanged: (_) {
-                                    setState(() => _emailError = null);
+                                    setState(() {
+                                      _emailError = null;
+                                      _submissionError = null;
+                                    });
                                   },
                                   decoration: InputDecoration(
                                     hintText: 'Email',
@@ -464,7 +439,10 @@ class _SignupScreenContentState extends State<_SignupScreenContent> {
                                   controller: _passengerPasswordController,
                                   textInputAction: TextInputAction.done,
                                   onChanged: (_) {
-                                    setState(() => _passwordError = null);
+                                    setState(() {
+                                      _passwordError = null;
+                                      _submissionError = null;
+                                    });
                                   },
                                   onSubmitted: (_) =>
                                       _submitRegistration(context),

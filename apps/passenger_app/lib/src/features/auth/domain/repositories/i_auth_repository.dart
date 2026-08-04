@@ -18,7 +18,10 @@ abstract class IAuthRepository {
   Future<Either<Failure, AuthCredentials>> verifyOtp({
     required String email,
     required String code,
-    required String password,
+  });
+
+  Future<Either<Failure, void>> requestVerificationCode({
+    required String email,
   });
 
   Future<Either<Failure, void>> resetPassword({required String email});

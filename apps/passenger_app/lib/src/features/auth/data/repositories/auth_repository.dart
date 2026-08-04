@@ -29,45 +29,12 @@ class AuthRepository implements IAuthRepository {
         email: email,
         password: password,
       );
-
-      final token = responseData['token'] as String? ?? '';
-      final passengerData = responseData['user'];
-      if (token.isEmpty || passengerData is! Map) {
-        throw DataParsingException(
-          message: 'Authentication response did not contain a valid session.',
-        );
-      }
-
-      final passenger = Map<String, dynamic>.from(passengerData);
-      final passengerId = passenger['id'] as String? ?? '';
-      if (passengerId.isEmpty) {
-        throw DataParsingException(
-          message: 'Authentication response did not contain a passenger ID.',
-        );
-      }
-
-      final passengerName = passenger['name'] as String? ?? '';
-      final passengerEmail = passenger['email'] as String? ?? email;
-      final passengerPhone = passenger['phone'] as String? ?? '';
-      final needsVerification = responseData['needsVerification'] == true;
-
-      await _secureSessionService.saveToken(token);
-      await _secureSessionService.savePassengerId(passengerId);
-
-      await _preferences.setString('passenger_name', passengerName);
-      await _preferences.setString('passenger_email', passengerEmail);
-      await _preferences.setString('passenger_phone', passengerPhone);
-
-      return Right(
-        AuthCredentials(
-          passengerId: passengerId,
-          passengerName: passengerName,
-          passengerEmail: passengerEmail,
-          passengerPhone: passengerPhone,
-          token: token,
-          needsVerification: needsVerification,
-        ),
+      final credentials = _credentialsFromResponse(
+        responseData,
+        fallbackEmail: email,
       );
+      await _persistSession(credentials);
+      return Right(credentials);
     } on ServerException catch (error) {
       if (error.statusCode == 401 || error.statusCode == 403) {
         return const Left(AuthFailure('Invalid email or password.'));
@@ -102,12 +69,17 @@ class AuthRepository implements IAuthRepository {
       return Right(responseData);
     } catch (error) {
       if (error is ServerException) {
+        if (error.statusCode == 409) {
+          return const Left(EmailAlreadyRegisteredFailure());
+        }
+        if (error.statusCode == 0) {
+          return const Left(NetworkFailure());
+        }
         return Left(ValidationFailure(error.message));
       }
-      final msg = error.toString().contains('already exists')
-          ? 'This email is already registered.'
-          : 'Registration failed. Please try again.';
-      return Left(ValidationFailure(msg));
+      return const Left(
+        ServerFailure('Registration failed. Please try again.'),
+      );
     }
   }
 
@@ -115,37 +87,88 @@ class AuthRepository implements IAuthRepository {
   Future<Either<Failure, AuthCredentials>> verifyOtp({
     required String email,
     required String code,
-    required String password,
   }) async {
     try {
-      final success = await _remoteDataSource.verifyOtp(
+      final responseData = await _remoteDataSource.verifyOtp(
         email: email,
         code: code,
       );
-      if (!success) {
-        return const Left(
-          ValidationFailure('Invalid or expired verification code.'),
-        );
-      }
-      if (password.isNotEmpty) {
-        return authenticatePassenger(email: email, password: password);
-      }
-      return Right(
-        AuthCredentials(
-          passengerId: '',
-          passengerName: '',
-          passengerEmail: email,
-          passengerPhone: '',
-          token: '',
-          needsVerification: false,
-        ),
+      final credentials = _credentialsFromResponse(
+        responseData,
+        fallbackEmail: email,
       );
+      await _persistSession(credentials);
+      return Right(credentials);
     } catch (error) {
       if (error is ServerException) {
         return Left(ValidationFailure(error.message));
       }
       return const Left(
         ServerFailure('Verification failed. Please try again.'),
+      );
+    }
+  }
+
+  AuthCredentials _credentialsFromResponse(
+    Map<String, dynamic> responseData, {
+    required String fallbackEmail,
+  }) {
+    final token = _stringValue(responseData['token']);
+    final passengerData = responseData['user'];
+    if (token.isEmpty || passengerData is! Map) {
+      throw DataParsingException(
+        message: 'Authentication response did not contain a valid session.',
+      );
+    }
+
+    final passenger = Map<String, dynamic>.from(passengerData);
+    final passengerId = _stringValue(passenger['id']);
+    if (passengerId.isEmpty) {
+      throw DataParsingException(
+        message: 'Authentication response did not contain a passenger ID.',
+      );
+    }
+
+    final passengerEmail = _stringValue(passenger['email']);
+    return AuthCredentials(
+      passengerId: passengerId,
+      passengerName: _stringValue(passenger['name']),
+      passengerEmail: passengerEmail.isEmpty ? fallbackEmail : passengerEmail,
+      passengerPhone: _stringValue(passenger['phone']),
+      token: token,
+      needsVerification: responseData['needsVerification'] == true,
+    );
+  }
+
+  Future<void> _persistSession(AuthCredentials credentials) async {
+    await _secureSessionService.saveToken(credentials.token);
+    await _secureSessionService.savePassengerId(credentials.passengerId);
+    await _preferences.setString('passenger_name', credentials.passengerName);
+    await _preferences.setString('passenger_email', credentials.passengerEmail);
+    await _preferences.setString('passenger_phone', credentials.passengerPhone);
+  }
+
+  String _stringValue(Object? value) => value?.toString() ?? '';
+
+  @override
+  Future<Either<Failure, void>> requestVerificationCode({
+    required String email,
+  }) async {
+    try {
+      final success = await _remoteDataSource.requestVerificationCode(
+        email: email,
+      );
+      if (!success) {
+        return const Left(
+          ServerFailure('Failed to send a new verification code.'),
+        );
+      }
+      return const Right(null);
+    } on ServerException catch (error) {
+      return Left(ValidationFailure(error.message));
+    } catch (_) {
+      return const Left(
+        ServerFailure('Failed to send a new verification code.'),
       );
     }
   }

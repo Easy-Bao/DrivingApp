@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger_app/src/features/auth/domain/usecases/resend_otp_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
 import 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_event.dart';
 import 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_state.dart';
@@ -10,13 +11,16 @@ export 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/ver
 
 class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
   final VerifyOtpUseCase _verifyOtpUseCase;
+  final ResendOtpUseCase _resendOtpUseCase;
   Timer? _timer;
   int _seconds = 60;
 
-  VerifyOtpBloc(this._verifyOtpUseCase) : super(const VerifyOtpInitial()) {
+  VerifyOtpBloc(this._verifyOtpUseCase, this._resendOtpUseCase)
+    : super(const VerifyOtpInitial()) {
     on<VerifyOtpTimerStarted>(_onVerifyOtpTimerStarted);
     on<VerifyOtpTimerTicked>(_onVerifyOtpTimerTicked);
     on<VerifyOtpSubmitted>(_onVerifyOtpSubmitted);
+    on<VerifyOtpResendRequested>(_onVerifyOtpResendRequested);
   }
 
   void _onVerifyOtpTimerStarted(
@@ -64,12 +68,38 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
     final result = await _verifyOtpUseCase.execute(
       email: normalizedEmail,
       code: normalizedCode,
-      password: event.password,
     );
 
     result.fold(
-      (failure) => emit(VerifyOtpFailure(failure.message)),
+      (_) => emit(
+        const VerifyOtpFailure(
+          'That code is invalid or has expired. Request a new code and try again.',
+        ),
+      ),
       (_) => emit(const VerifyOtpSuccess()),
+    );
+  }
+
+  Future<void> _onVerifyOtpResendRequested(
+    VerifyOtpResendRequested event,
+    Emitter<VerifyOtpState> emit,
+  ) async {
+    emit(const VerifyOtpResending());
+
+    final result = await _resendOtpUseCase.execute(
+      email: event.email.trim().toLowerCase(),
+    );
+
+    result.fold(
+      (_) => emit(
+        const VerifyOtpResendFailure(
+          "We couldn't send a new code right now. Please try again.",
+        ),
+      ),
+      (_) {
+        emit(const VerifyOtpResent());
+        add(const VerifyOtpTimerStarted());
+      },
     );
   }
 

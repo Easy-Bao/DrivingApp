@@ -2,11 +2,14 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 )
 
 func main() {
@@ -29,12 +32,18 @@ func main() {
 	})
 	port := requiredEnv("GATEWAY_PORT")
 	log.Println("api-gateway listening on :" + port)
-	log.Fatal(http.ListenAndServe(":"+port, withForwardedHeaders(router)))
+	securedRouter := middleware.SecureHTTP(router, middleware.SecurityConfigFromEnv(), nil)
+	log.Fatal(http.ListenAndServe(":"+port, withForwardedHeaders(securedRouter)))
 }
 
 func withForwardedHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		request.Header.Set("X-Forwarded-Proto", "http")
+		clientHost, _, err := net.SplitHostPort(request.RemoteAddr)
+		if err != nil {
+			clientHost = request.RemoteAddr
+		}
+		request.Header.Set("X-Forwarded-For", clientHost)
 		next.ServeHTTP(writer, request)
 	})
 }

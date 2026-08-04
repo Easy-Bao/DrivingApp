@@ -24,3 +24,18 @@ The Flutter workspace has exactly `shared_core` and `shared_ui`; the former
 contains the consolidated models and network/location/fare/realtime utilities,
 while the latter contains reusable presentation components. App themes remain
 in the two client applications.
+
+The public gateway and both backend applications now apply Redis-backed rate
+limits, request IDs, CORS/security headers, control-character target checks,
+and global request-body limits. State-changing Flutter requests carry an
+idempotency key; the backend stores successful responses in Redis for replay.
+Mapbox and go-mail calls use circuit breakers. Request logs include status,
+request ID, client IP, user agent, and selected security-event classifications
+without request bodies or credentials.
+
+The API deliberately does not use SQLi/XSS keyword blacklists or mobile-app
+HMAC signatures: Ent parameterization, strict DTO validation, JSON encoding,
+TLS, and JWTs provide the meaningful controls, while an embedded mobile secret
+cannot prove that a request came from an official compiled app. The Ent audit
+table exists, but durable append-only audit writes and fraud-specific signals
+remain follow-up work.

@@ -5,6 +5,7 @@ class ApiEndpoints {
 
   static const String passengerLogin = '/auth/passenger/login';
   static const String passengerRegister = '/auth/passenger/register';
+  static const String passengerOtp = '/auth/passenger/otp';
   static const String verifyOtp = '/auth/verify-otp';
   static const String forgotPassword = '/auth/forgot-password';
   static const String resetPassword = '/auth/reset-password';

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/resilience"
 )
 
 func TestMailConfigUsesEnvironmentContract(t *testing.T) {
@@ -98,6 +99,25 @@ func TestGoMailGatewayRejectsEmptyRecipient(t *testing.T) {
 	})
 	if err := gateway.Send(context.Background(), " ", "123456"); !errors.Is(err, email.ErrInvalidConfig) {
 		t.Fatalf("expected ErrInvalidConfig, got %v", err)
+	}
+}
+
+func TestGoMailGatewayOpensCircuitAfterDeliveryFailures(t *testing.T) {
+	calls := 0
+	gateway := email.NewGoMailGatewayWithDelivery(validMailConfig(), func(context.Context, email.Config, string, string, string) error {
+		calls++
+		return errors.New("mail provider unavailable")
+	})
+	for index := 0; index < 3; index++ {
+		if err := gateway.Send(context.Background(), "passenger@example.test", "123456"); err == nil {
+			t.Fatal("expected delivery failure")
+		}
+	}
+	if err := gateway.Send(context.Background(), "passenger@example.test", "123456"); !errors.Is(err, resilience.ErrCircuitOpen) {
+		t.Fatalf("fourth send error = %v, want circuit open", err)
+	}
+	if calls != 3 {
+		t.Fatalf("delivery calls = %d, want 3", calls)
 	}
 }
 

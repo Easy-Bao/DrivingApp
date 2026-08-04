@@ -8,17 +8,14 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class VerifyOtpScreen extends StatelessWidget {
   final String email;
-  final String password;
   final bool isForgotPassword;
 
   const VerifyOtpScreen({
     super.key,
     required this.email,
-    this.password = '',
     this.isForgotPassword = false,
   });
 
@@ -29,7 +26,6 @@ class VerifyOtpScreen extends StatelessWidget {
           Modular.get<VerifyOtpBloc>()..add(const VerifyOtpTimerStarted()),
       child: _VerifyOtpScreenContent(
         email: email,
-        password: password,
         isForgotPassword: isForgotPassword,
       ),
     );
@@ -38,12 +34,10 @@ class VerifyOtpScreen extends StatelessWidget {
 
 class _VerifyOtpScreenContent extends StatefulWidget {
   final String email;
-  final String password;
   final bool isForgotPassword;
 
   const _VerifyOtpScreenContent({
     required this.email,
-    required this.password,
     required this.isForgotPassword,
   });
 
@@ -84,13 +78,9 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
         ),
       );
     } else {
-      BlocProvider.of<VerifyOtpBloc>(context).add(
-        VerifyOtpSubmitted(
-          email: widget.email,
-          code: code,
-          password: widget.password,
-        ),
-      );
+      BlocProvider.of<VerifyOtpBloc>(
+        context,
+      ).add(VerifyOtpSubmitted(email: widget.email, code: code));
     }
   }
 
@@ -126,24 +116,24 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
               } else {
                 context.goNamed(HomeRoutes.home);
               }
-            } else if (state is VerifyOtpFailure) {
-              CustomToast.show(
-                context,
-                state.errorMessage.isEmpty
-                    ? 'Incorrect verification code'
-                    : state.errorMessage,
-              );
+            } else if (state is VerifyOtpResent) {
+              _otpController.clear();
             }
           },
           builder: (context, state) {
             final isLoading = state is VerifyOtpLoading;
+            final isResending = state is VerifyOtpResending;
             final errorMessage = state is VerifyOtpFailure
+                ? state.errorMessage
+                : state is VerifyOtpResendFailure
                 ? state.errorMessage
                 : null;
             final secondsRemaining = state is VerifyOtpTimerTicking
                 ? state.secondsRemaining
                 : 60;
-            final isTimerExpired = state is VerifyOtpTimerExpired;
+            final isTimerExpired =
+                state is VerifyOtpTimerExpired ||
+                state is VerifyOtpResendFailure;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
@@ -252,26 +242,7 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: isTimerExpired
-                        ? () => BlocProvider.of<VerifyOtpBloc>(
-                            context,
-                          ).add(const VerifyOtpTimerStarted())
-                        : null,
-                    child: Text(
-                      isTimerExpired
-                          ? 'Resend code'
-                          : 'Resend code in ${secondsRemaining}s',
-                      style: TextStyle(
-                        color: isTimerExpired
-                            ? AppTheme.primaryColor
-                            : AppTheme.tertiaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   Hero(
                     tag: 'auth_primary_button',
                     child: Material(
@@ -315,6 +286,45 @@ class _VerifyOtpScreenContentState extends State<_VerifyOtpScreenContent> {
                         ),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      const Text(
+                        "Didn't get a code?",
+                        style: TextStyle(
+                          color: AppTheme.tertiaryColor,
+                          fontSize: 14,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: isTimerExpired && !isResending
+                            ? () => BlocProvider.of<VerifyOtpBloc>(context).add(
+                                VerifyOtpResendRequested(email: widget.email),
+                              )
+                            : null,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          isResending
+                              ? 'Sending...'
+                              : isTimerExpired
+                              ? 'Resend'
+                              : 'Resend in ${secondsRemaining}s',
+                          style: TextStyle(
+                            color: isTimerExpired && !isResending
+                                ? AppTheme.primaryColor
+                                : AppTheme.tertiaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
