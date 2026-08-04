@@ -1,20 +1,36 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/ent"
+	"github.com/Easy-Bao/DrivingApp/server/ent/migrate"
 	"github.com/Easy-Bao/DrivingApp/server/internal/coreapi"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	router := http.NewServeMux()
-	router.Handle("/", coreapi.NewHandler(os.Getenv("JWT_SECRET")))
+	coreHandler := coreapi.NewHandler(os.Getenv("JWT_SECRET"))
+	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
+		client, err := ent.Open("postgres", databaseURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := client.Schema.Create(context.Background(), migrate.WithForeignKeys(true)); err != nil {
+			log.Fatal(err)
+		}
+		defer client.Close()
+		coreHandler = coreapi.NewPersistentHandler(client, os.Getenv("JWT_SECRET"))
+	}
+	router.Handle("/", coreHandler)
 	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
 	locationhttp.NewHandler(usecase.NewService(provider)).RegisterRoutes(router)
 	router.HandleFunc("GET /health", func(writer http.ResponseWriter, _ *http.Request) {
