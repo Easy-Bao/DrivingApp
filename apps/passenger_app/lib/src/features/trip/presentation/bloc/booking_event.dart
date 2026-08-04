@@ -56,6 +56,7 @@ class AcceptBidOfferEvent extends BookingEvent {
   final String vehicleType;
   final String plateNumber;
   final double proposedFare;
+  final String? driverRating;
 
   const AcceptBidOfferEvent({
     required this.offerId,
@@ -64,6 +65,7 @@ class AcceptBidOfferEvent extends BookingEvent {
     required this.vehicleType,
     required this.plateNumber,
     required this.proposedFare,
+    this.driverRating,
   });
 }
 

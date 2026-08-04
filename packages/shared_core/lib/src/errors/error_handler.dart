@@ -6,6 +6,9 @@ class ErrorHandler {
   String get componentName => 'shared-error-handler';
 
   static String getErrorMessage(Object error) {
+    if (error is ServerFailure) {
+      return 'The service is temporarily unavailable. Please try again.';
+    }
     if (error is Failure) {
       return error.message;
     }

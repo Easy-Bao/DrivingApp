@@ -23,6 +23,21 @@ import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
+double? _fareInPesos(Map<String, dynamic> value) {
+  final cents =
+      value['fare_centavos'] ??
+      value['offered_fare_centavos'] ??
+      value['proposed_fare_centavos'];
+  if (cents is num && cents > 0) return cents / 100;
+  final legacyFare = value['fare'];
+  return legacyFare is num && legacyFare > 0 ? legacyFare.toDouble() : null;
+}
+
+double? _distanceInKm(Map<String, dynamic> value) {
+  final distance = value['distance_km'] ?? value['distance'];
+  return distance is num && distance >= 0 ? distance.toDouble() : null;
+}
+
 class DriverDashboardScreen extends StatefulWidget {
   const DriverDashboardScreen({super.key});
 
@@ -214,14 +229,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final vehicleType = prefs.getString('vehicle_type') ?? '';
     final plateNumber = prefs.getString('plate_number') ?? '';
 
+    final fare = _fareInPesos(bid);
+    if (fare == null) return;
+
     final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: bid['id'],
       driverId: driverId,
       driverName: driverName,
       plateNumber: plateNumber,
       vehicleType: vehicleType,
-      offerPrice: SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']),
-      proposedFare: SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']),
+      offerPrice: fare,
+      proposedFare: fare,
     );
 
     if (mounted) {
@@ -234,6 +252,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   void _resumeTrip(Map<String, dynamic> trip) {
+    final fare = _fareInPesos(trip);
+    final distance = _distanceInKm(trip);
+    final duration = (trip['duration_minutes'] as num?)?.toDouble();
+    if (fare == null || distance == null || duration == null) return;
     final status = trip['status'] as String?;
     String routeName = TripRoutes.enRoutePickup;
     if (status == 'arrived') {
@@ -246,6 +268,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       rideId: trip['id'],
       status: trip['status'] ?? 'accepted',
       passengerName: trip['passenger_name'] ?? 'Passenger',
+      distanceKm: (trip['distance_km'] as num?)?.toDouble(),
       pickupLat: SafeParse.toDouble(trip['pickup_latitude']),
       pickupLng: SafeParse.toDouble(trip['pickup_longitude']),
       destLat: SafeParse.toDouble(trip['dropoff_latitude']),
@@ -257,9 +280,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       extra: {
         'pickup': trip['pickup_name'] ?? 'Pickup',
         'dropoff': trip['dropoff_name'] ?? 'Dropoff',
-        'distance': SafeParse.toDouble(trip['distance_km']),
-        'fare': SafeParse.toDouble(trip['fare']),
-        'duration': '${SafeParse.toDouble(trip['duration_minutes'])} min',
+        'distance': distance,
+        'fare': fare,
+        'duration': '${duration.toStringAsFixed(0)} min',
       },
     );
   }
@@ -267,12 +290,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   Future<void> _completeTripFromDashboard(Map<String, dynamic> trip) async {
     final rideId = trip['id'] as String?;
     if (rideId == null) return;
+    final fare = _fareInPesos(trip);
+    final distance = _distanceInKm(trip);
+    final duration = (trip['duration_minutes'] as num?)?.toDouble();
+    if (fare == null || distance == null || duration == null) return;
 
     final cubit = BlocProvider.of<RideFlowCubit>(context);
     cubit.resumeRide(
       rideId: rideId,
       status: trip['status'] ?? 'accepted',
       passengerName: trip['passenger_name'] ?? 'Passenger',
+      distanceKm: (trip['distance_km'] as num?)?.toDouble(),
       pickupLat: SafeParse.toDouble(trip['pickup_latitude']),
       pickupLng: SafeParse.toDouble(trip['pickup_longitude']),
       destLat: SafeParse.toDouble(trip['dropoff_latitude']),
@@ -288,9 +316,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         extra: {
           'pickup': trip['pickup_name'] ?? 'Pickup',
           'dropoff': trip['dropoff_name'] ?? 'Dropoff',
-          'distance': SafeParse.toDouble(trip['distance_km']),
+          'distance': distance,
           'fare': finalFare,
-          'duration': '${SafeParse.toDouble(trip['duration_minutes'])} min',
+          'duration': '${duration.toStringAsFixed(0)} min',
         },
       );
     }
@@ -647,7 +675,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
               const Spacer(),
               Text(
-                '₱${SafeParse.toDouble(trip['fare']).toStringAsFixed(2)}',
+                _fareInPesos(trip) == null
+                    ? '—'
+                    : '₱${_fareInPesos(trip)!.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w900,
@@ -790,10 +820,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildPoolBidCard(Map<String, dynamic> bid) {
-    final pickup = bid['pickup_name'] ?? 'Pickup location unavailable';
-    final dropoff = bid['dropoff_name'] ?? 'Destination unavailable';
-    final fare = SafeParse.toDouble(bid['offered_fare'] ?? bid['fare']);
-    final distance = (bid['distance'] as num?)?.toDouble() ?? 2.4;
+    final pickup = bid['pickup_name']?.toString() ?? '—';
+    final dropoff = bid['dropoff_name']?.toString() ?? '—';
+    final fare = _fareInPesos(bid);
+    final distance = _distanceInKm(bid);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -891,7 +921,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${distance.toStringAsFixed(1)} km away · ~8 min',
+                distance == null
+                    ? 'Distance unavailable'
+                    : '${distance.toStringAsFixed(1)} km away',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -899,7 +931,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 ),
               ),
               Text(
-                '₱${fare > 0 ? fare.toStringAsFixed(0) : '145'}',
+                fare == null ? '—' : '₱${fare.toStringAsFixed(0)}',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
@@ -938,7 +970,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => _acceptBid(bid),
+                  onPressed: fare == null ? null : () => _acceptBid(bid),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.secondaryColor,
                     elevation: 0,

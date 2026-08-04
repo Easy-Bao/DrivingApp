@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/activity_detail_map_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/destination_preview_screen.dart';
 import 'package:passenger_app/src/features/trip/presentation/screens/driver_matched_screen.dart';
@@ -31,17 +30,18 @@ class TripModule {
       'home/activity-detail',
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
+        final latitude = (data['lat'] as num?)?.toDouble();
+        final longitude = (data['lng'] as num?)?.toDouble();
+        if (latitude == null || longitude == null) {
+          return const Scaffold(
+            body: Center(child: Text('Location data is unavailable.')),
+          );
+        }
         return ActivityDetailMapScreen(
-          placeName: data['title'] as String? ?? 'Location Detail',
+          placeName: data['title'] as String? ?? 'Location',
           placeSubtitle: data['subtitle'] as String? ?? '',
-          destinationLat:
-              (data['lat'] as num?)?.toDouble() ??
-              LocationService.lastPosition?.latitude ??
-              0.0,
-          destinationLng:
-              (data['lng'] as num?)?.toDouble() ??
-              LocationService.lastPosition?.longitude ??
-              0.0,
+          destinationLat: latitude,
+          destinationLng: longitude,
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -68,25 +68,31 @@ class TripModule {
           }
         }
 
-        place ??= PlaceModel(
-          id: 'dest_${DateTime.now().millisecondsSinceEpoch}',
-          name:
-              state.uri.queryParameters['destinationName'] ??
-              'Selected Destination',
-          fullAddress: state.uri.queryParameters['destinationAddress'] ?? '',
-          latitude:
-              double.tryParse(
-                state.uri.queryParameters['destinationLat'] ?? '',
-              ) ??
-              LocationService.lastPosition?.latitude ??
-              0.0,
-          longitude:
-              double.tryParse(
-                state.uri.queryParameters['destinationLng'] ?? '',
-              ) ??
-              LocationService.lastPosition?.longitude ??
-              0.0,
-        );
+        if (place == null) {
+          final name = state.uri.queryParameters['destinationName'];
+          final latitude = double.tryParse(
+            state.uri.queryParameters['destinationLat'] ?? '',
+          );
+          final longitude = double.tryParse(
+            state.uri.queryParameters['destinationLng'] ?? '',
+          );
+          if (name == null ||
+              name.trim().isEmpty ||
+              latitude == null ||
+              longitude == null) {
+            return const Scaffold(
+              body: Center(child: Text('Destination data is unavailable.')),
+            );
+          }
+          place = PlaceModel(
+            id: state.uri.queryParameters['destinationId'] ?? name,
+            name: name,
+            fullAddress:
+                state.uri.queryParameters['destinationAddress'] ?? name,
+            latitude: latitude,
+            longitude: longitude,
+          );
+        }
 
         return DestinationPreviewScreen(
           destination: place,
@@ -104,40 +110,29 @@ class TripModule {
         final data = SafeRouteExtra.asMap(state.extra);
         final destination = data['destination'] is PlaceModel
             ? data['destination'] as PlaceModel
-            : PlaceModel(
-                id: 'dest_${DateTime.now().millisecondsSinceEpoch}',
-                name:
-                    state.uri.queryParameters['destinationName'] ??
-                    'Selected Destination',
-                fullAddress:
-                    state.uri.queryParameters['destinationAddress'] ?? '',
-                latitude:
-                    double.tryParse(
-                      state.uri.queryParameters['destinationLat'] ?? '',
-                    ) ??
-                    LocationService.lastPosition?.latitude ??
-                    0.0,
-                longitude:
-                    double.tryParse(
-                      state.uri.queryParameters['destinationLng'] ?? '',
-                    ) ??
-                    LocationService.lastPosition?.longitude ??
-                    0.0,
-              );
+            : null;
+        final distanceKm =
+            (data['distanceKm'] as num?)?.toDouble() ??
+            double.tryParse(state.uri.queryParameters['distanceKm'] ?? '');
+        final distance =
+            data['distance'] as String? ??
+            state.uri.queryParameters['distance'];
+        final duration =
+            data['duration'] as String? ??
+            state.uri.queryParameters['duration'];
+        if (destination == null ||
+            distanceKm == null ||
+            distance == null ||
+            duration == null) {
+          return const Scaffold(
+            body: Center(child: Text('Trip route data is unavailable.')),
+          );
+        }
         return RideSelectionScreen(
           destination: destination,
-          distance:
-              data['distance'] as String? ??
-              state.uri.queryParameters['distance'] ??
-              '0.0 km',
-          duration:
-              data['duration'] as String? ??
-              state.uri.queryParameters['duration'] ??
-              '0 min',
-          distanceKm:
-              (data['distanceKm'] as num?)?.toDouble() ??
-              double.tryParse(state.uri.queryParameters['distanceKm'] ?? '') ??
-              0.0,
+          distance: distance,
+          duration: duration,
+          distanceKm: distanceKm,
           pickupAddress:
               data['pickupAddress'] as String? ??
               state.uri.queryParameters['pickupAddress'],
@@ -157,12 +152,20 @@ class TripModule {
             body: Center(child: Text('Destination data is unavailable.')),
           );
         }
+        final fare = (data['fare'] as num?)?.toDouble();
+        final distance = data['distance'] as String?;
+        final duration = data['duration'] as String?;
+        if (fare == null || fare <= 0 || distance == null || duration == null) {
+          return const Scaffold(
+            body: Center(child: Text('Fare and trip data are unavailable.')),
+          );
+        }
         return FindingDriverScreen(
           rideType: data['rideType'] as String? ?? 'Solo Ride',
-          fare: (data['fare'] as num?)?.toDouble() ?? 0.0,
+          fare: fare,
           destination: destination,
-          distance: data['distance'] as String? ?? '0.0 km',
-          duration: data['duration'] as String? ?? '0 min',
+          distance: distance,
+          duration: duration,
           pickupAddress: data['pickupAddress'] as String?,
         );
       },
@@ -180,12 +183,20 @@ class TripModule {
             body: Center(child: Text('Destination data is unavailable.')),
           );
         }
+        final fare = (data['fare'] as num?)?.toDouble();
+        final distance = data['distance'] as String?;
+        final duration = data['duration'] as String?;
+        if (fare == null || fare <= 0 || distance == null || duration == null) {
+          return const Scaffold(
+            body: Center(child: Text('Fare and trip data are unavailable.')),
+          );
+        }
         return DriverMatchedScreen(
           rideType: data['rideType'] as String? ?? 'Solo Ride',
-          fare: (data['fare'] as num?)?.toDouble() ?? 0.0,
+          fare: fare,
           destination: destination,
-          distance: data['distance'] as String? ?? '0.0 km',
-          duration: data['duration'] as String? ?? '0 min',
+          distance: distance,
+          duration: duration,
           driverId: data['driverId'] as String?,
           driverName: data['driverName'] as String?,
           driverRating: data['driverRating'] as String?,

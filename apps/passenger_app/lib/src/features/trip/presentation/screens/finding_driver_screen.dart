@@ -90,11 +90,13 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   List<DriverModel> _nearbyDrivers = [];
   bool _showNearestDriverDetails = false;
   bool _isLeaving = false;
+  bool _locationUnavailable = false;
 
   String _driverMarkerLabel(DriverModel driver) {
-    final onboard = driver.hasPassengerOnboard ? 1 : 0;
+    final onboard = driver.onboardPassengerCount;
     return '${driver.name}\n★ ${driver.rating.toStringAsFixed(1)} • '
-        '${driver.distanceKm.toStringAsFixed(1)} km • $onboard/5 passengers';
+        '${driver.distanceKm.toStringAsFixed(1)} km • '
+        '${onboard == null ? '—' : '$onboard/5'} passengers';
   }
 
   List<DriverModel> _uniqueNearbyDrivers(NearestDriverFound state) {
@@ -121,10 +123,13 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
     );
     unawaited(_dotCtrl.repeat());
 
-    final lat =
-        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final lng =
-        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final position = LocationService.lastPosition;
+    if (position == null) {
+      _locationUnavailable = true;
+      return;
+    }
+    final lat = position.latitude;
+    final lng = position.longitude;
 
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
     if (!bookingBloc.hasActiveDriverSearch) {
@@ -157,6 +162,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
           vehicleType: driver.vehicleType,
           plateNumber: driver.plateNumber,
           rating: driver.rating.toStringAsFixed(1),
+          onboardPassengerCount: driver.onboardPassengerCount,
         ),
       ),
     );
@@ -172,11 +178,10 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   void _onMapCreated(AppMapController controller, BuildContext context) {
     if (!_initialized) {
       _initialized = true;
-      final lat =
-          LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-      final lng =
-          LocationService.lastPosition?.longitude ??
-          widget.destination.longitude;
+      final position = LocationService.lastPosition;
+      if (position == null) return;
+      final lat = position.latitude;
+      final lng = position.longitude;
 
       BlocProvider.of<LiveMapBloc>(context).add(
         InitializeMapEvent(
@@ -198,17 +203,18 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   }
 
   void _startDirectBooking(DriverModel driver) {
-    final pickupLat =
-        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final pickupLng =
-        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final position = LocationService.lastPosition;
+    if (position == null) return;
+    final pickupLat = position.latitude;
+    final pickupLng = position.longitude;
 
-    final distanceNum =
-        double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ??
-        1.0;
-    final durationNum =
-        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
-        5.0;
+    final distanceNum = double.tryParse(
+      widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''),
+    );
+    final durationNum = double.tryParse(
+      widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''),
+    );
+    if (distanceNum == null || durationNum == null) return;
 
     final tripMetadata = BidSessionTrip(
       rideType: widget.rideType,
@@ -231,17 +237,18 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
   }
 
   void _startOpenBooking() {
-    final pickupLat =
-        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final pickupLng =
-        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final position = LocationService.lastPosition;
+    if (position == null) return;
+    final pickupLat = position.latitude;
+    final pickupLng = position.longitude;
 
-    final distanceNum =
-        double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), '')) ??
-        1.0;
-    final durationNum =
-        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
-        5.0;
+    final distanceNum = double.tryParse(
+      widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''),
+    );
+    final durationNum = double.tryParse(
+      widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''),
+    );
+    if (distanceNum == null || durationNum == null) return;
 
     final tripMetadata = BidSessionTrip(
       rideType: widget.rideType,
@@ -280,10 +287,19 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
 
   @override
   Widget build(BuildContext context) {
-    final defaultLat =
-        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final defaultLng =
-        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    if (_locationUnavailable) {
+      return const Scaffold(
+        body: Center(child: Text('Your location is unavailable.')),
+      );
+    }
+    final position = LocationService.lastPosition;
+    if (position == null) {
+      return const Scaffold(
+        body: Center(child: Text('Your location is unavailable.')),
+      );
+    }
+    final defaultLat = position.latitude;
+    final defaultLng = position.longitude;
 
     return PopScope(
       canPop: false,
@@ -358,7 +374,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                 'pickupAddress': widget.pickupAddress,
                 'driverId': match.driverId,
                 'driverName': match.driverName,
-                'driverRating': '5.0',
+                'driverRating': match.driverRating,
                 'vehicleType': match.vehicleType,
                 'plateNumber': match.plateNumber,
                 'fare': match.proposedFare,
@@ -640,7 +656,6 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                             }
                             return FindingDriverBidsPanelWidget(
                               offers: state.offers,
-                              fallbackFare: widget.fare,
                               onAcceptOfferPressed: (offer) {
                                 BlocProvider.of<BookingBloc>(context).add(
                                   AcceptBidOfferEvent(
@@ -650,6 +665,7 @@ class _FindingDriverScreenContentState extends State<FindingDriverScreenContent>
                                     vehicleType: offer.vehicleType,
                                     plateNumber: offer.plateNumber,
                                     proposedFare: offer.proposedFare,
+                                    driverRating: offer.ratingStr,
                                   ),
                                 );
                               },

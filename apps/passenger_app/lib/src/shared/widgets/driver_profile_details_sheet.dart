@@ -13,6 +13,7 @@ class DriverProfileDetailsSheet extends StatefulWidget {
   final String vehicleType;
   final String plateNumber;
   final String rating;
+  final int? onboardPassengerCount;
 
   const DriverProfileDetailsSheet({
     super.key,
@@ -21,6 +22,7 @@ class DriverProfileDetailsSheet extends StatefulWidget {
     required this.vehicleType,
     required this.plateNumber,
     required this.rating,
+    this.onboardPassengerCount,
   });
 
   @override
@@ -84,7 +86,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       }
       for (final r in rawReviews) {
         if (r is Map<String, dynamic>) {
-          dynamicReviews.add(_parseReview(r));
+          final review = _parseReview(r);
+          if (review['rating'] is num) dynamicReviews.add(review);
         }
       }
     } catch (error) {
@@ -152,7 +155,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       }
       for (final r in rawReviews) {
         if (r is Map<String, dynamic>) {
-          nextReviews.add(_parseReview(r));
+          final review = _parseReview(r);
+          if (review['rating'] is num) nextReviews.add(review);
         }
       }
     } catch (_) {
@@ -270,6 +274,15 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                     label: 'Total Trips',
                     iconColor: AppTheme.primaryColor,
                   ),
+                  Container(width: 1, height: 40, color: AppTheme.borderSide),
+                  _buildMetricCard(
+                    icon: LucideIcons.users,
+                    value: widget.onboardPassengerCount == null
+                        ? '—'
+                        : '${widget.onboardPassengerCount}/5',
+                    label: 'Onboard',
+                    iconColor: AppTheme.primaryColor,
+                  ),
                 ],
               ),
 
@@ -342,7 +355,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                               children: [
                                 Text(
                                   reviewItem['passengerName']?.toString() ??
-                                      'Passenger',
+                                      '—',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
@@ -350,7 +363,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                                   ),
                                 ),
                                 Text(
-                                  reviewItem['date']?.toString() ?? 'Recent',
+                                  reviewItem['date']?.toString() ?? '—',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: AppTheme.primaryColor.withValues(
@@ -367,7 +380,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                                   final ratingValue =
                                       (reviewItem['rating'] as num?)
                                           ?.toDouble() ??
-                                      5.0;
+                                      0.0;
                                   if (ratingValue >= starIndex + 1) {
                                     return const Icon(
                                       Icons.star_rounded,
@@ -393,7 +406,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                                 const SizedBox(width: 6),
                                 Text(
                                   ((reviewItem['rating'] as num?)?.toDouble() ??
-                                          5.0)
+                                          0.0)
                                       .toStringAsFixed(1),
                                   style: TextStyle(
                                     fontSize: 11,

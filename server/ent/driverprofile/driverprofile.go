@@ -56,6 +56,8 @@ var (
 	UserIDValidator func(int) error
 	// DefaultRating holds the default value on creation for the "rating" field.
 	DefaultRating float64
+	// RatingValidator is a validator for the "rating" field. It is called by the builders before save.
+	RatingValidator func(float64) error
 	// DefaultIsOnline holds the default value on creation for the "is_online" field.
 	DefaultIsOnline bool
 	// DefaultWalletBalanceCentavos holds the default value on creation for the "wallet_balance_centavos" field.

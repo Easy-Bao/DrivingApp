@@ -23,7 +23,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
   double _weekTotal = 0;
   int _weekTripsCount = 0;
   double _hoursOnline = 0;
-  String _rating = '4.9';
+  String _rating = '—';
 
   List<_EarnDay> _dailyData = const [
     _EarnDay('Mon', 0),
@@ -48,7 +48,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
     final driverId = await secureSession.readDriverId() ?? '';
     final prefs = await SharedPreferences.getInstance();
 
-    final rating = prefs.getString('rating') ?? '5.0';
+    final rating = prefs.getString('rating') ?? '—';
     if (mounted) {
       setState(() {
         _rating = rating;

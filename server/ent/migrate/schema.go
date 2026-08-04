@@ -103,7 +103,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "vehicle_type", Type: field.TypeString},
 		{Name: "plate_number", Type: field.TypeString},
-		{Name: "rating", Type: field.TypeFloat64, Default: 5},
+		{Name: "rating", Type: field.TypeFloat64, Default: 0},
 		{Name: "is_online", Type: field.TypeBool, Default: false},
 		{Name: "wallet_balance_centavos", Type: field.TypeInt64, Default: 0},
 	}

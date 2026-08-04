@@ -196,7 +196,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              review['passengerName'] as String? ?? 'Passenger',
+                              review['passengerName'] as String? ?? '—',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -204,7 +204,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              review['date'] as String? ?? 'Recent',
+                              review['date'] as String? ?? '—',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: AppTheme.primaryColor.withValues(
@@ -219,7 +219,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                           children: [
                             ...List.generate(5, (starIndex) {
                               final ratingValue =
-                                  (review['rating'] as num?)?.toDouble() ?? 5.0;
+                                  (review['rating'] as num?)?.toDouble() ?? 0.0;
                               if (ratingValue >= starIndex + 1) {
                                 return const Icon(
                                   Icons.star_rounded,
@@ -244,7 +244,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                             }),
                             const SizedBox(width: 6),
                             Text(
-                              ((review['rating'] as num?)?.toDouble() ?? 5.0)
+                              ((review['rating'] as num?)?.toDouble() ?? 0.0)
                                   .toStringAsFixed(1),
                               style: TextStyle(
                                 fontSize: 10,

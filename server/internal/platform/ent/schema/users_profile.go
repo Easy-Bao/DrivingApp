@@ -27,7 +27,7 @@ func (DriverProfile) Fields() []ent.Field {
 		field.String("name"),
 		field.String("vehicle_type"),
 		field.String("plate_number"),
-		field.Float("rating").Default(5),
+		field.Float("rating").Range(0, 5).Default(0),
 		field.Bool("is_online").Default(false),
 		field.Int64("wallet_balance_centavos").NonNegative().Default(0),
 	}

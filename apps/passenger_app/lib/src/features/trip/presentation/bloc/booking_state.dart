@@ -66,6 +66,7 @@ class DriverMatchResult {
   final String vehicleType;
   final String plateNumber;
   final double proposedFare;
+  final String? driverRating;
 
   const DriverMatchResult({
     required this.driverId,
@@ -73,6 +74,7 @@ class DriverMatchResult {
     required this.vehicleType,
     required this.plateNumber,
     required this.proposedFare,
+    this.driverRating,
   });
 }
 

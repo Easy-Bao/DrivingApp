@@ -399,6 +399,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             vehicleType: pendingOffer['vehicle_type']?.toString() ?? '',
             plateNumber: pendingOffer['plate_number']?.toString() ?? '',
             proposedFare: proposedFareCentavos / 100,
+            driverRating: pendingOffer['driver_rating']?.toString(),
           ),
         );
         return;
@@ -485,6 +486,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             vehicleType: event.vehicleType,
             plateNumber: event.plateNumber,
             proposedFare: event.proposedFare,
+            driverRating: event.driverRating,
           ),
           createdRide: RideHistoryModel(
             id: rideId,

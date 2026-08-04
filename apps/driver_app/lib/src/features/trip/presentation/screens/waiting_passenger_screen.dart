@@ -2,6 +2,7 @@ import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
@@ -45,6 +46,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
   int _unreadChatMessagesCount = 0;
   int _viewedPassengerMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -96,7 +98,9 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
           });
         }
       });
-    } catch (_) {}
+    } catch (error) {
+      dev.log('Unable to refresh passenger chat count: $error');
+    }
   }
 
   String get _waitFormatted {
@@ -105,53 +109,55 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     return '${elapsedMinutes.toString().padLeft(2, '0')}:${elapsedSeconds.toString().padLeft(2, '0')}';
   }
 
-  static const double _defaultLat = 7.8286;
-  static const double _defaultLng = 123.4361;
-
   Future<void> _startTrip() async {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowWaitingPassenger
-        ? state.passengerName
-        : 'Passenger';
-
-    final waitingState = state is RideFlowWaitingPassenger ? state : null;
-    final pickupLat = waitingState?.pickupLat ?? _defaultLat;
-    final pickupLng = waitingState?.pickupLng ?? _defaultLng;
-
-    double destLat = pickupLat + 0.03;
-    double destLng = pickupLng + 0.03;
+    if (state is! RideFlowWaitingPassenger ||
+        state.pickupLat == 0 ||
+        state.pickupLng == 0) {
+      _showError('Passenger pickup coordinates are unavailable.');
+      return;
+    }
 
     try {
       final places = await MapProvider.searchPlaces(widget.dropoff);
-      if (places.isNotEmpty) {
-        destLat = places.first.latitude;
-        destLng = places.first.longitude;
+      if (places.isEmpty) {
+        _showError('The destination could not be located.');
+        return;
       }
-    } catch (_) {}
+      final destination = places.first;
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    final started = await BlocProvider.of<RideFlowCubit>(context).startRide(
-      passengerName: passengerName,
-      destLat: destLat,
-      destLng: destLng,
-      distanceKm: widget.distance,
-      passengerLat: pickupLat,
-      passengerLng: pickupLng,
-    );
-
-    if (mounted && started) {
-      context.pushReplacementNamed(
-        TripRoutes.inTransit,
-        extra: {
-          'pickup': widget.pickup,
-          'dropoff': widget.dropoff,
-          'distance': widget.distance,
-          'fare': widget.fare,
-          'duration': widget.duration,
-        },
+      final started = await BlocProvider.of<RideFlowCubit>(context).startRide(
+        passengerName: state.passengerName,
+        destLat: destination.latitude,
+        destLng: destination.longitude,
+        distanceKm: widget.distance,
+        passengerLat: state.pickupLat,
+        passengerLng: state.pickupLng,
       );
+
+      if (mounted && started) {
+        context.pushReplacementNamed(
+          TripRoutes.inTransit,
+          extra: {
+            'pickup': widget.pickup,
+            'dropoff': widget.dropoff,
+            'distance': widget.distance,
+            'fare': widget.fare,
+            'duration': widget.duration,
+          },
+        );
+      }
+    } catch (error) {
+      dev.log('Unable to resolve trip destination: $error');
+      _showError('Unable to start the trip right now. Please try again.');
     }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    setState(() => _errorMessage = message);
   }
 
   @override
@@ -159,7 +165,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
     final passengerName = state is RideFlowWaitingPassenger
         ? state.passengerName
-        : 'Passenger';
+        : '—';
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -202,6 +208,10 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                         ],
                       ),
                       const SizedBox(height: 24),
+                      if (_errorMessage != null) ...[
+                        _buildErrorBanner(),
+                        const SizedBox(height: 12),
+                      ],
                       Expanded(
                         child: SingleChildScrollView(
                           child: WaitingPassengerPanelWidget(
@@ -241,7 +251,10 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                                     }
                                   }
                                 }
-                              } catch (_) {}
+                              } catch (error) {
+                                dev.log('Unable to call passenger: $error');
+                                _showError('Unable to contact the passenger.');
+                              }
                             },
                             onChatPressed: () async {
                               final rideId =
@@ -254,7 +267,7 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
                               ).state;
                               final pName = rState is RideFlowWaitingPassenger
                                   ? rState.passengerName
-                                  : 'Passenger';
+                                  : '—';
                               final cubit = BlocProvider.of<RideFlowCubit>(
                                 context,
                               );
@@ -317,6 +330,25 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cancel.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        _errorMessage!,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: AppTheme.cancel,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

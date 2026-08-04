@@ -113,6 +113,8 @@ func init() {
 	driverprofileDescRating := driverprofileFields[4].Descriptor()
 	// driverprofile.DefaultRating holds the default value on creation for the rating field.
 	driverprofile.DefaultRating = driverprofileDescRating.Default.(float64)
+	// driverprofile.RatingValidator is a validator for the "rating" field. It is called by the builders before save.
+	driverprofile.RatingValidator = driverprofileDescRating.Validators[0].(func(float64) error)
 	// driverprofileDescIsOnline is the schema descriptor for is_online field.
 	driverprofileDescIsOnline := driverprofileFields[5].Descriptor()
 	// driverprofile.DefaultIsOnline holds the default value on creation for the is_online field.

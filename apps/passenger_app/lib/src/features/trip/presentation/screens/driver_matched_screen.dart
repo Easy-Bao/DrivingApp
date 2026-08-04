@@ -78,11 +78,10 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
     try {
       final secureSession = Modular.get<SecureSessionService>();
       var activeRideId = await secureSession.readActiveRideId() ?? '';
-      var pickupLat =
-          LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-      var pickupLng =
-          LocationService.lastPosition?.longitude ??
-          widget.destination.longitude;
+      final currentPosition = LocationService.lastPosition;
+      if (currentPosition == null) return;
+      var pickupLat = currentPosition.latitude;
+      var pickupLng = currentPosition.longitude;
       var pickupName = widget.pickupAddress ?? 'Current Location';
       var driverName = widget.driverName ?? 'Driver';
       var vehiclePlate = widget.plateNumber ?? 'Vehicle plate unavailable';
@@ -162,28 +161,8 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
 
   void _goToTracking() {
     if (!mounted) return;
-    final ride =
-        _createdRide ??
-        RideHistoryModel(
-          id: '',
-          pickup: widget.pickupAddress ?? 'Current Location',
-          destination: widget.destination.name,
-          pickupLat:
-              LocationService.lastPosition?.latitude ??
-              widget.destination.latitude,
-          pickupLng:
-              LocationService.lastPosition?.longitude ??
-              widget.destination.longitude,
-          destLat: widget.destination.latitude,
-          destLng: widget.destination.longitude,
-          date: DateTime.now().toLocal().toString(),
-          price: '₱${widget.fare.toStringAsFixed(2)}',
-          status: 'accepted',
-          driverId: widget.driverId ?? '',
-          driverName: widget.driverName ?? '',
-          vehiclePlate: widget.plateNumber ?? '',
-          vehicleType: widget.vehicleType ?? '',
-        );
+    final ride = _createdRide;
+    if (ride == null || ride.id.isEmpty) return;
     context.goNamed(ActivityRoutes.activityTrackDriver, extra: ride);
   }
 
@@ -263,7 +242,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                             plateNumber:
                                 widget.plateNumber ??
                                 'Vehicle plate unavailable',
-                            rating: widget.driverRating ?? '5.0',
+                            rating: widget.driverRating ?? '—',
                           ),
                     ),
                   );
@@ -315,7 +294,7 @@ class _DriverMatchedScreenState extends State<DriverMatchedScreen>
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      widget.driverRating ?? '4.9',
+                                      widget.driverRating ?? '—',
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,

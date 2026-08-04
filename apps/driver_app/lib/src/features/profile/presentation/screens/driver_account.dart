@@ -23,7 +23,7 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
   String _name = '';
   String _vehicleType = '';
   String _plateNumber = '';
-  String _rating = '5.0';
+  String _rating = '—';
 
   int? _totalTrips;
   double? _lifetimeEarnings;
@@ -60,7 +60,10 @@ class _DriverAccountScreenState extends State<DriverAccountScreen> {
       final name = profileData['name'] as String? ?? _name;
       final vehicleType = profileData['vehicleType'] as String? ?? _vehicleType;
       final plateNumber = profileData['plateNumber'] as String? ?? _plateNumber;
-      final rating = (profileData['rating'] ?? 5.0).toString();
+      final ratingValue = profileData['rating'];
+      final rating = ratingValue is num && ratingValue > 0
+          ? ratingValue.toStringAsFixed(1)
+          : _rating;
 
       await prefs.setString('driver_name', name);
       await prefs.setString('vehicle_type', vehicleType);

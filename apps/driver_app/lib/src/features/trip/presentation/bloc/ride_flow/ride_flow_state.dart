@@ -52,7 +52,7 @@ class RideFlowInTransit extends RideFlowState {
   final String passengerName;
   final double destLat;
   final double destLng;
-  final double distanceKm;
+  final double? distanceKm;
   final double passengerLat;
   final double passengerLng;
 
@@ -60,7 +60,7 @@ class RideFlowInTransit extends RideFlowState {
     required this.passengerName,
     required this.destLat,
     required this.destLng,
-    required this.distanceKm,
+    this.distanceKm,
     this.passengerLat = 0,
     this.passengerLng = 0,
   });

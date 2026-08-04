@@ -21,19 +21,29 @@ class DriverOfferItem {
     required this.proposedFare,
   });
 
-  factory DriverOfferItem.fromMap(
-    Map<String, dynamic> rawMap,
-    double fallbackFare,
-  ) {
-    final offerId =
-        rawMap['offer_id'] as String? ?? rawMap['id'] as String? ?? '';
-    final driverName = rawMap['driver_name'] as String? ?? 'Driver';
-    final vehicle = rawMap['vehicle_type'] as String? ?? 'Bao Bao';
-    final plate = rawMap['plate_number'] as String? ?? '';
-    final ratingStr = rawMap['driver_rating']?.toString() ?? '5.0';
-    final proposedFare =
-        (rawMap['proposed_fare'] as num?)?.toDouble() ?? fallbackFare;
-    final driverId = rawMap['driver_id'] as String? ?? '';
+  static DriverOfferItem? tryParse(Map<String, dynamic> rawMap) {
+    final offerId = rawMap['id']?.toString() ?? rawMap['offer_id']?.toString();
+    final driverId = rawMap['driver_id']?.toString();
+    final driverName = rawMap['driver_name']?.toString();
+    final vehicle = rawMap['vehicle_type']?.toString();
+    final plate = rawMap['plate_number']?.toString();
+    final proposedFareCentavos = (rawMap['proposed_fare_centavos'] as num?)
+        ?.toInt();
+    if (offerId == null ||
+        offerId.isEmpty ||
+        driverId == null ||
+        driverId.isEmpty ||
+        driverName == null ||
+        driverName.isEmpty ||
+        vehicle == null ||
+        vehicle.isEmpty ||
+        plate == null ||
+        plate.isEmpty ||
+        proposedFareCentavos == null ||
+        proposedFareCentavos <= 0) {
+      return null;
+    }
+    final ratingStr = rawMap['driver_rating']?.toString() ?? '—';
 
     return DriverOfferItem(
       offerId: offerId,
@@ -42,21 +52,19 @@ class DriverOfferItem {
       vehicleType: vehicle,
       plateNumber: plate,
       ratingStr: ratingStr,
-      proposedFare: proposedFare,
+      proposedFare: proposedFareCentavos / 100,
     );
   }
 }
 
 class FindingDriverBidsPanelWidget extends StatelessWidget {
   final List<dynamic> offers;
-  final double fallbackFare;
   final Function(DriverOfferItem offer) onAcceptOfferPressed;
   final VoidCallback onCancelPressed;
 
   const FindingDriverBidsPanelWidget({
     super.key,
     required this.offers,
-    required this.fallbackFare,
     required this.onAcceptOfferPressed,
     required this.onCancelPressed,
   });
@@ -65,7 +73,8 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final parsedOffers = offers
         .whereType<Map<String, dynamic>>()
-        .map((m) => DriverOfferItem.fromMap(m, fallbackFare))
+        .map(DriverOfferItem.tryParse)
+        .whereType<DriverOfferItem>()
         .toList();
 
     return Container(

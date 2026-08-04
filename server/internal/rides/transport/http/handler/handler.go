@@ -440,7 +440,8 @@ func (handler *Handler) activeSessions(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) session(w http.ResponseWriter, r *http.Request) {
-	if _, ok := handler.identity(r); !ok {
+	actorID, ok := handler.identity(r)
+	if !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
@@ -454,17 +455,27 @@ func (handler *Handler) session(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 404, "bid session not found")
 		return
 	}
+	if !canViewSession(actorID, item) {
+		errorJSON(w, http.StatusForbidden, "forbidden")
+		return
+	}
 	jsonJSON(w, 200, item)
 }
 
 func (handler *Handler) offers(w http.ResponseWriter, r *http.Request) {
-	if _, ok := handler.identity(r); !ok {
+	actorID, ok := handler.identity(r)
+	if !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
 	id, err := strconv.Atoi(r.PathValue("sessionID"))
 	if err != nil {
 		errorJSON(w, 400, "invalid session id")
+		return
+	}
+	session, err := handler.service.Session(r.Context(), id)
+	if err != nil || session.PassengerID != actorID {
+		errorJSON(w, http.StatusForbidden, "forbidden")
 		return
 	}
 	items, err := handler.service.Offers(r.Context(), id)
@@ -603,4 +614,11 @@ func rideErrorStatus(err error) int {
 	default:
 		return 500
 	}
+}
+
+func canViewSession(actorID int, session domain.BidSession) bool {
+	if session.PassengerID == actorID {
+		return true
+	}
+	return session.TargetDriverID != nil && *session.TargetDriverID == actorID
 }
