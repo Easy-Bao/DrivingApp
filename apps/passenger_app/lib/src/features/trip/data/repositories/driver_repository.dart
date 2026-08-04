@@ -37,7 +37,33 @@ class DriverRepository implements IDriverRepository {
     required double lng,
   }) async {
     try {
-      final rawList = await _biddingDataSource.fetchOnlineDrivers();
+      final profiles = await _biddingDataSource.fetchOnlineDrivers();
+      final nearbyPoints = await _biddingDataSource.fetchNearbyDrivers(
+        latitude: lat,
+        longitude: lng,
+      );
+      final pointsByDriverId = <String, Map<String, dynamic>>{};
+      for (final rawPoint in nearbyPoints.whereType<Map<String, dynamic>>()) {
+        final driverId = rawPoint['driver_id']?.toString();
+        final pointLat = (rawPoint['latitude'] as num?)?.toDouble();
+        final pointLng = (rawPoint['longitude'] as num?)?.toDouble();
+        if (driverId == null ||
+            driverId.isEmpty ||
+            pointLat == null ||
+            pointLng == null) {
+          continue;
+        }
+        pointsByDriverId[driverId] = {'lat': pointLat, 'lng': pointLng};
+      }
+      final rawList = profiles
+          .whereType<Map<String, dynamic>>()
+          .map((profile) {
+            final point = pointsByDriverId[profile['id']?.toString()];
+            if (point == null) return null;
+            return {...profile, ...point};
+          })
+          .whereType<Map<String, dynamic>>()
+          .toList();
       final candidates = rawList
           .whereType<Map<String, dynamic>>()
           .map((driver) {
@@ -87,7 +113,7 @@ class DriverRepository implements IDriverRepository {
       if (distanceKm > 5.0) continue;
 
       final etaMinutes = _calculateEta(distanceKm);
-      final rating = (d['rating'] as num?)?.toDouble() ?? 5.0;
+      final rating = (d['rating'] as num?)?.toDouble() ?? 0;
       final score = _calculateMatchingScore(distanceKm, rating, etaMinutes);
 
       drivers.add(_mapToDriverModel(d, distanceKm, etaMinutes, score));
@@ -130,25 +156,29 @@ class DriverRepository implements IDriverRepository {
     double score,
   ) {
     return DriverModel(
-      id: data['id'] as String? ?? '',
-      name: data['name'] as String? ?? 'Driver',
-      vehicleType: data['vehicleType'] as String? ?? 'Bao Bao',
-      plateNumber: data['plateNumber'] as String? ?? 'Unknown',
-      rating: (data['rating'] as num?)?.toDouble() ?? 5.0,
-      lat: (data['lat'] as num?)?.toDouble() ?? 0.0,
-      lng: (data['lng'] as num?)?.toDouble() ?? 0.0,
+      id: data['id']?.toString() ?? '',
+      name: data['name']?.toString() ?? '',
+      vehicleType:
+          data['vehicleType']?.toString() ??
+          data['vehicle_type']?.toString() ??
+          '',
+      plateNumber:
+          data['plateNumber']?.toString() ??
+          data['plate_number']?.toString() ??
+          '',
+      rating: (data['rating'] as num?)?.toDouble() ?? 0,
+      lat: (data['lat'] as num?)?.toDouble() ?? 0,
+      lng: (data['lng'] as num?)?.toDouble() ?? 0,
       distanceKm: distanceKm,
       etaMinutes: etaMinutes,
       score: score,
-      hasPassengerOnboard:
-          data['hasPassengerOnboard'] as bool? ??
-          data['has_passenger_onboard'] as bool? ??
-          ((data['id'] as String? ?? '').hashCode.abs() % 2 == 1),
+      onboardPassengerCount:
+          (data['onboardPassengerCount'] as num?)?.toInt() ??
+          (data['onboard_passenger_count'] as num?)?.toInt(),
       avatarUrl: data['avatarUrl'] as String? ?? data['avatar_url'] as String?,
       recentFeedback:
           data['recentFeedback'] as String? ??
-          data['recent_feedback'] as String? ??
-          'Smooth ride, polite driver and very clean vehicle.',
+          data['recent_feedback'] as String?,
     );
   }
 }

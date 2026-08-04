@@ -34,7 +34,6 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
   String _distance = '';
   String _duration = '';
   double _distanceKm = 0.0;
-  Map<String, double> _fares = {};
   RouteModel? _route;
   bool _isLoadingRoute = false;
   bool _routeRendered = false;
@@ -91,11 +90,6 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
         _distance = '${km.toStringAsFixed(1)} km';
         _duration = '$mins min';
         _distanceKm = km;
-        _fares = {
-          'Solo Ride': (km * 15 + 30),
-          'Share-Bao': (km * 10 + 20),
-          'Bao Premium': (km * 20 + 45),
-        };
       });
       await _renderRoute();
     } finally {
@@ -380,8 +374,7 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                           context.pushNamed(
                             TripRoutes.rideSelection,
                             queryParameters: params,
-                            extra: _fares,
-                          ),
+                        ),
                         );
                       },
                       style: ElevatedButton.styleFrom(

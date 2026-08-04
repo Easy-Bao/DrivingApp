@@ -24,7 +24,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   StreamSubscription<DriverMatchResult>? _driverFoundSubscription;
 
   DriverModel? _nearestDriver;
-  int _totalTrips = 0;
+  int? _totalTrips;
   List<Map<String, dynamic>> _reviews = [];
   bool _isLoadingReviews = false;
   bool _nearestSearchCancelled = false;
@@ -38,8 +38,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   double? _dropoffLat;
   double? _dropoffLng;
   String? _dropoffName;
-  double? _fare;
-  String? _rideType;
 
   Future<String> _resolvePickupName() async {
     final providedName = _pickupName?.trim();
@@ -91,6 +89,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       state is BookingSearching ||
       state is BookingOffersReceived;
 
+  bool get hasActiveBooking =>
+      hasActiveDriverSearch || state is BookingDriverMatched;
+
   Future<void> _onLocateNearestDriver(
     LocateNearestDriverEvent event,
     Emitter<BookingState> emit,
@@ -115,6 +116,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         lat: event.pickupLat,
         lng: event.pickupLng,
       );
+      if (isClosed || _nearestSearchCancelled) return;
 
       result.fold(
         (failure) {
@@ -127,6 +129,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
       if (nearbyDrivers.isNotEmpty) break;
       await Future.delayed(const Duration(seconds: 2));
+      if (isClosed || _nearestSearchCancelled) return;
     }
 
     if (nearbyDrivers.isEmpty) {
@@ -153,14 +156,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     try {
       final stats = await _biddingDataSource.fetchDriverStats(closestDriver.id);
-      if (stats['totalTrips'] != null) {
-        _totalTrips = stats['totalTrips'] as int;
-      } else {
-        _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
-      }
+      final totalTrips = stats['totalTrips'] ?? stats['total_trips'];
+      _totalTrips = (totalTrips as num?)?.toInt();
     } catch (error) {
-      dev.log('Error loading driver stats, fallback to seed: $error');
-      _totalTrips = (closestDriver.name.hashCode.abs() % 150) + 20;
+      dev.log('Unable to load driver stats: $error');
+      _totalTrips = null;
     }
 
     try {
@@ -185,7 +185,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       for (final r in rawReviews) {
         if (r is Map<String, dynamic>) {
           final createdAtStr = r['createdAt'] ?? r['created_at'];
-          String dateFormatted = 'Recent';
+          var dateFormatted = '';
           if (createdAtStr != null) {
             try {
               final parsedDate = DateTime.parse(createdAtStr.toString());
@@ -210,10 +210,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             }
           }
           processedReviews.add({
-            'passengerName':
-                r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
-            'comment': r['comment'] ?? '',
-            'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
+            'passengerName': r['passengerName'] ?? r['passenger_name'],
+            'comment': r['comment'],
+            'rating': (r['rating'] as num?)?.toDouble(),
             'date': dateFormatted,
           });
         }
@@ -265,7 +264,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     StartDirectBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
-    if (_nearestDriver == null) return;
+    if (_nearestDriver == null || hasActiveBooking) return;
     _isAutoAcceptingOffer = false;
     emit(BookingSearching(isDirect: true, targetDriver: _nearestDriver));
 
@@ -282,12 +281,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
-    _fare = event.trip.fare;
-    _rideType = event.trip.rideType;
 
     try {
       final response = await _biddingDataSource.requestRide({
-        'passenger_id': passengerId,
         'ride_type': event.trip.rideType,
         'pickup_latitude': event.pickupLat,
         'pickup_longitude': event.pickupLng,
@@ -298,6 +294,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'distance_km': event.distanceKm,
         'duration_minutes': event.durationMinutes,
         'target_driver_id': _nearestDriver!.id,
+        'custom_fare_centavos': (event.trip.fare * 100).round(),
       });
       final sessionId = response['id'] as String?;
       if (sessionId == null || sessionId.isEmpty) {
@@ -314,6 +311,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     StartOpenBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
+    if (hasActiveBooking) return;
     emit(const BookingSearching(isDirect: false));
 
     final passengerId = await _secureSessionService.readPassengerId() ?? '';
@@ -329,12 +327,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
-    _fare = event.trip.fare;
-    _rideType = event.trip.rideType;
 
     try {
       final response = await _biddingDataSource.requestRide({
-        'passenger_id': passengerId,
         'ride_type': event.trip.rideType,
         'pickup_latitude': event.pickupLat,
         'pickup_longitude': event.pickupLng,
@@ -344,6 +339,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'dropoff_name': _dropoffName,
         'distance_km': event.distanceKm,
         'duration_minutes': event.durationMinutes,
+        'custom_fare_centavos': (event.trip.fare * 100).round(),
       });
       final sessionId = response['id'] as String?;
       if (sessionId == null || sessionId.isEmpty) {
@@ -386,20 +382,23 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           .whereType<Map<String, dynamic>>()
           .where((offer) => offer['status'] == 'pending')
           .firstWhere((_) => true, orElse: () => <String, dynamic>{});
-      final offerId = pendingOffer['id'] as String? ?? '';
-      if (offerId.isNotEmpty) {
+      final offerId = pendingOffer['id']?.toString() ?? '';
+      final proposedFareCentavos =
+          (pendingOffer['proposed_fare_centavos'] as num?)?.toInt();
+      final driverId = pendingOffer['driver_id']?.toString() ?? '';
+      if (offerId.isNotEmpty &&
+          driverId.isNotEmpty &&
+          proposedFareCentavos != null &&
+          proposedFareCentavos > 0) {
         _isAutoAcceptingOffer = true;
         add(
           AcceptBidOfferEvent(
             offerId: offerId,
-            driverId: pendingOffer['driver_id'] as String? ?? '',
-            driverName: pendingOffer['driver_name'] as String? ?? 'Driver',
-            vehicleType: pendingOffer['vehicle_type'] as String? ?? 'Bao Bao',
-            plateNumber: pendingOffer['plate_number'] as String? ?? '',
-            proposedFare:
-                (pendingOffer['proposed_fare'] as num?)?.toDouble() ??
-                _fare ??
-                0.0,
+            driverId: driverId,
+            driverName: pendingOffer['driver_name']?.toString() ?? '',
+            vehicleType: pendingOffer['vehicle_type']?.toString() ?? '',
+            plateNumber: pendingOffer['plate_number']?.toString() ?? '',
+            proposedFare: proposedFareCentavos / 100,
           ),
         );
         return;
@@ -434,62 +433,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
 
-    final passengerId = await _secureSessionService.readPassengerId() ?? '';
-
-    RideHistoryModel? createdRide;
-
-    if (passengerId.isNotEmpty) {
-      try {
-        final res = await _biddingDataSource.requestRide({
-          'passenger_id': passengerId,
-          'ride_type': _rideType ?? '',
-          'pickup_latitude': _pickupLat ?? 0.0,
-          'pickup_longitude': _pickupLng ?? 0.0,
-          'pickup_name': _pickupName ?? 'Current Location',
-          'dropoff_latitude': _dropoffLat ?? 0.0,
-          'dropoff_longitude': _dropoffLng ?? 0.0,
-          'dropoff_name': _dropoffName ?? 'Destination',
-          'fare': _fare ?? 0.0,
-        });
-        if (res['id'] != null) {
-          final activeRideId = res['id']?.toString() ?? '';
-          await _secureSessionService.saveActiveRideId(activeRideId);
-          await _startBackgroundTelemetry();
-
-          createdRide = RideHistoryModel(
-            id: activeRideId,
-            pickup: res['pickup_name'] as String? ?? _pickupName ?? '',
-
-            destination: _dropoffName ?? '',
-            pickupLat: SafeParse.toDouble(res['pickup_latitude']),
-            pickupLng: SafeParse.toDouble(res['pickup_longitude']),
-            destLat: _dropoffLat ?? 0.0,
-            destLng: _dropoffLng ?? 0.0,
-            date: DateTime.now().toLocal().toString(),
-            price: '₱${(_fare ?? 0.0).toStringAsFixed(2)}',
-            status: RideStatus.accepted.value,
-            driverId: res['driver_id'] as String? ?? event.matchResult.driverId,
-            driverName:
-                res['driver_name'] as String? ?? event.matchResult.driverName,
-            vehiclePlate:
-                res['plate_number'] as String? ?? event.matchResult.plateNumber,
-            vehicleType:
-                res['vehicle_type'] as String? ?? event.matchResult.vehicleType,
-          );
-        }
-      } catch (error) {
-        dev.log(
-          'Error creating ride request, falling back to matched result: $error',
-        );
-      }
-    }
-
-    emit(
-      BookingDriverMatched(
-        matchResult: event.matchResult,
-        createdRide: createdRide,
-      ),
-    );
+    emit(BookingDriverMatched(matchResult: event.matchResult));
   }
 
   Future<void> _onAcceptBidOffer(
@@ -507,11 +451,29 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         sessionId: sessionId,
         offerId: event.offerId,
       );
-      final rideId = response['rideId'] as String? ?? '';
+      final ride = response['ride'];
+      final rideMap = ride is Map<String, dynamic>
+          ? ride
+          : const <String, dynamic>{};
+      final rideId =
+          response['ride_id']?.toString() ?? rideMap['id']?.toString() ?? '';
       if (rideId.isEmpty) {
         throw StateError('Accepted booking did not return a ride ID');
       }
 
+      final pickupLat = _pickupLat;
+      final pickupLng = _pickupLng;
+      final dropoffLat = _dropoffLat;
+      final dropoffLng = _dropoffLng;
+      if (pickupLat == null ||
+          pickupLng == null ||
+          dropoffLat == null ||
+          dropoffLng == null) {
+        throw StateError('Booking coordinates are unavailable');
+      }
+      final fareCentavos =
+          (rideMap['fare_centavos'] as num?)?.toDouble() ??
+          event.proposedFare * 100;
       await _secureSessionService.saveActiveRideId(rideId);
       await _startBackgroundTelemetry();
       _cleanupSubscriptions();
@@ -526,14 +488,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           ),
           createdRide: RideHistoryModel(
             id: rideId,
-            pickup: _pickupName ?? 'Current Location',
-            destination: _dropoffName ?? 'Destination',
-            pickupLat: _pickupLat ?? 0.0,
-            pickupLng: _pickupLng ?? 0.0,
-            destLat: _dropoffLat ?? 0.0,
-            destLng: _dropoffLng ?? 0.0,
+            pickup: _pickupName ?? '',
+            destination: _dropoffName ?? '',
+            pickupLat: pickupLat,
+            pickupLng: pickupLng,
+            destLat: dropoffLat,
+            destLng: dropoffLng,
             date: DateTime.now().toLocal().toString(),
-            price: '₱${event.proposedFare.toStringAsFixed(2)}',
+            price: '₱${(fareCentavos / 100).toStringAsFixed(2)}',
             status: RideStatus.accepted.value,
             driverId: event.driverId,
             driverName: event.driverName,
@@ -566,6 +528,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       dev.log('Unable to confirm booking cancellation: $error');
     }
     emit(BookingCanceled());
+    _activeBidSessionId = null;
   }
 
   void _cleanupSubscriptions() {

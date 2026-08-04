@@ -124,12 +124,6 @@ class TripModule {
                     LocationService.lastPosition?.longitude ??
                     0.0,
               );
-        Map<String, double>? fares;
-        if (data['fares'] is Map) {
-          fares = (data['fares'] as Map).map(
-            (k, v) => MapEntry(k.toString(), (v as num).toDouble()),
-          );
-        }
         return RideSelectionScreen(
           destination: destination,
           distance:
@@ -144,7 +138,6 @@ class TripModule {
               (data['distanceKm'] as num?)?.toDouble() ??
               double.tryParse(state.uri.queryParameters['distanceKm'] ?? '') ??
               0.0,
-          fares: fares,
           pickupAddress:
               data['pickupAddress'] as String? ??
               state.uri.queryParameters['pickupAddress'],

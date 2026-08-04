@@ -11,7 +11,7 @@ class DriverModel extends Equatable {
   final double distanceKm;
   final double etaMinutes;
   final double score;
-  final bool hasPassengerOnboard;
+  final int? onboardPassengerCount;
   final String? avatarUrl;
   final String? recentFeedback;
 
@@ -26,26 +26,28 @@ class DriverModel extends Equatable {
     required this.distanceKm,
     required this.etaMinutes,
     required this.score,
-    this.hasPassengerOnboard = false,
+    this.onboardPassengerCount,
     this.avatarUrl,
     this.recentFeedback,
   });
 
+  bool get hasPassengerOnboard => (onboardPassengerCount ?? 0) > 0;
+
   factory DriverModel.fromJson(Map<String, dynamic> json) {
     return DriverModel(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? 'Driver',
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
       vehicleType:
           json['vehicleType'] as String? ??
           json['vehicle_type'] as String? ??
-          'Bao Bao',
+          '',
       plateNumber:
           json['plateNumber'] as String? ??
           json['plate_number'] as String? ??
-          'Unknown',
-      rating: (json['rating'] as num? ?? 5.0).toDouble(),
-      lat: (json['lat'] as num? ?? 0.0).toDouble(),
-      lng: (json['lng'] as num? ?? 0.0).toDouble(),
+          '',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      lat: (json['lat'] as num?)?.toDouble() ?? 0,
+      lng: (json['lng'] as num?)?.toDouble() ?? 0,
       distanceKm:
           (json['distanceKm'] as num? ?? json['distance_km'] as num? ?? 0.0)
               .toDouble(),
@@ -53,10 +55,9 @@ class DriverModel extends Equatable {
           (json['etaMinutes'] as num? ?? json['eta_minutes'] as num? ?? 0.0)
               .toDouble(),
       score: (json['score'] as num? ?? 0.0).toDouble(),
-      hasPassengerOnboard:
-          json['hasPassengerOnboard'] as bool? ??
-          json['has_passenger_onboard'] as bool? ??
-          false,
+      onboardPassengerCount:
+          (json['onboardPassengerCount'] as num?)?.toInt() ??
+          (json['onboard_passenger_count'] as num?)?.toInt(),
       avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
       recentFeedback:
           json['recentFeedback'] as String? ??
@@ -76,7 +77,7 @@ class DriverModel extends Equatable {
       'distanceKm': distanceKm,
       'etaMinutes': etaMinutes,
       'score': score,
-      'hasPassengerOnboard': hasPassengerOnboard,
+      'onboardPassengerCount': onboardPassengerCount,
       'avatarUrl': avatarUrl,
       'recentFeedback': recentFeedback,
     };
@@ -94,7 +95,7 @@ class DriverModel extends Equatable {
     distanceKm,
     etaMinutes,
     score,
-    hasPassengerOnboard,
+    onboardPassengerCount,
     avatarUrl,
     recentFeedback,
   ];

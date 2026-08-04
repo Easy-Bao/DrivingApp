@@ -24,6 +24,10 @@ class RideOptionsPanelWidget extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onOptionSelected;
   final VoidCallback onBookPressed;
+  final TextEditingController customFareController;
+  final double? minimumFare;
+  final String? customFareError;
+  final ValueChanged<String> onCustomFareChanged;
 
   const RideOptionsPanelWidget({
     super.key,
@@ -31,6 +35,10 @@ class RideOptionsPanelWidget extends StatelessWidget {
     required this.selectedIndex,
     required this.onOptionSelected,
     required this.onBookPressed,
+    required this.customFareController,
+    required this.minimumFare,
+    required this.customFareError,
+    required this.onCustomFareChanged,
   });
 
   @override
@@ -68,7 +76,7 @@ class RideOptionsPanelWidget extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Text(
-              'CHOOSE YOUR RIDE',
+              'SOLO RIDE',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
@@ -180,7 +188,9 @@ class RideOptionsPanelWidget extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '₱${option.fare.toStringAsFixed(2)}',
+                          minimumFare == null
+                              ? 'Calculating...'
+                              : '₱${(double.tryParse(customFareController.text) ?? option.fare).toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w900,
@@ -201,9 +211,28 @@ class RideOptionsPanelWidget extends StatelessWidget {
               ),
             );
           }),
+          const SizedBox(height: 4),
+          TextField(
+            controller: customFareController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: onCustomFareChanged,
+            decoration: InputDecoration(
+              labelText: 'Your offer',
+              prefixText: '₱ ',
+              helperText:
+                  'Custom offer cannot be lower than calculated minimum fare.',
+              errorText: customFareError,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.borderSide),
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
           ElevatedButton(
-            onPressed: onBookPressed,
+            onPressed: minimumFare == null || customFareError != null
+                ? null
+                : onBookPressed,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,

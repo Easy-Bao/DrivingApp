@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -33,7 +34,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   int _currentPage = 1;
-  int _totalTripsCount = 0;
+  int? _totalTripsCount;
   List<Map<String, dynamic>> _driverReviewsList = [];
 
   @override
@@ -60,27 +61,16 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     try {
       final statsData = await Modular.get<BiddingRemoteDataSource>()
           .fetchDriverStats(widget.driverId);
-      if (statsData['totalTrips'] != null) {
+      final totalTrips = statsData['totalTrips'] ?? statsData['total_trips'];
+      if (totalTrips is num) {
         if (mounted) {
           setState(() {
-            _totalTripsCount = statsData['totalTrips'] as int;
-          });
-        }
-      } else {
-        final nameHashValue = widget.driverName.hashCode.abs();
-        if (mounted) {
-          setState(() {
-            _totalTripsCount = (nameHashValue % 150) + 20;
+            _totalTripsCount = totalTrips.toInt();
           });
         }
       }
-    } catch (_) {
-      final nameHashValue = widget.driverName.hashCode.abs();
-      if (mounted) {
-        setState(() {
-          _totalTripsCount = (nameHashValue % 150) + 20;
-        });
-      }
+    } catch (error) {
+      dev.log('Unable to load driver stats: $error');
     }
 
     _currentPage = 1;
@@ -97,7 +87,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           dynamicReviews.add(_parseReview(r));
         }
       }
-    } catch (_) {
+    } catch (error) {
+      dev.log('Unable to load driver reviews: $error');
       _hasMore = false;
     }
 
@@ -111,7 +102,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Map<String, dynamic> _parseReview(Map<String, dynamic> r) {
     final createdAtStr = r['createdAt'] ?? r['created_at'];
-    String dateFormatted = 'Recent';
+    var dateFormatted = '';
     if (createdAtStr != null) {
       try {
         final parsedDate = DateTime.parse(createdAtStr.toString());
@@ -131,13 +122,15 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
         ];
         dateFormatted =
             '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
-      } catch (_) {}
+      } catch (error) {
+        dev.log('Unable to parse review date: $error');
+      }
     }
 
     return {
-      'passengerName': r['passengerName'] ?? r['passenger_name'] ?? 'Passenger',
-      'comment': r['comment'] ?? '',
-      'rating': (r['rating'] as num?)?.toDouble() ?? 5.0,
+      'passengerName': r['passengerName'] ?? r['passenger_name'],
+      'comment': r['comment'],
+      'rating': (r['rating'] as num?)?.toDouble(),
       'date': dateFormatted,
     };
   }
@@ -271,7 +264,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                   Container(width: 1, height: 40, color: AppTheme.borderSide),
                   _buildMetricCard(
                     icon: LucideIcons.bike,
-                    value: _isLoadingStats ? '...' : '$_totalTripsCount',
+                    value: _isLoadingStats
+                        ? '...'
+                        : _totalTripsCount?.toString() ?? '—',
                     label: 'Total Trips',
                     iconColor: AppTheme.primaryColor,
                   ),

@@ -420,7 +420,11 @@ func (repository *Repository) OnlineDrivers(ctx context.Context) ([]domain.Onlin
 	}
 	result := make([]domain.OnlineDriver, 0, len(items))
 	for _, item := range items {
-		result = append(result, domain.OnlineDriver{ID: item.UserID, UserID: item.UserID, Name: item.Name, VehicleType: item.VehicleType, PlateNumber: item.PlateNumber, Rating: item.Rating})
+		active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(item.UserID), ride.StatusIn("accepted", "arrived", "in_transit")).Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, domain.OnlineDriver{ID: item.UserID, UserID: item.UserID, Name: item.Name, VehicleType: item.VehicleType, PlateNumber: item.PlateNumber, Rating: item.Rating, OnboardPassengerCount: active})
 	}
 	return result, nil
 }

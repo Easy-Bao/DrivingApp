@@ -16,7 +16,6 @@ class RideSelectionScreen extends StatefulWidget {
   final String distance;
   final String duration;
   final double distanceKm;
-  final Map<String, double>? fares;
   final String? pickupAddress;
 
   const RideSelectionScreen({
@@ -25,7 +24,6 @@ class RideSelectionScreen extends StatefulWidget {
     required this.distance,
     required this.duration,
     required this.distanceKm,
-    this.fares,
     this.pickupAddress,
   });
 
@@ -36,79 +34,108 @@ class RideSelectionScreen extends StatefulWidget {
 class _RideSelectionScreenState extends State<RideSelectionScreen> {
   int _selectedIdx = 0;
   late List<RideOptionData> _options;
+  final TextEditingController _customFareController = TextEditingController();
+  double? _minimumFare;
+  String? _fareError;
   AppMapController? _mapController;
   Widget? _cachedMapView;
 
   @override
   void initState() {
     super.initState();
-    initializeRideOptionsData(widget.fares);
+    initializeRideOptionsData();
     unawaited(fetchServerFareQuotes());
   }
 
-  void initializeRideOptionsData(Map<String, double>? fareMap) {
-    final distanceKm = widget.distanceKm;
-    final formattedFares = fareMap ?? {};
-
+  void initializeRideOptionsData() {
     _options = [
-      RideOptionData(
-        name: 'Solo Ride',
-        subtitle: 'Direct booking, just you',
+      const RideOptionData(
+        name: 'Solo',
+        subtitle: 'Private ride with a server-calculated minimum fare',
         icon: LucideIcons.bike,
-        fare: formattedFares['Solo Ride'] ?? (distanceKm * 15 + 30),
-        eta: '3 min',
+        fare: 0,
+        eta: 'Server calculated',
         badge: null,
-      ),
-      RideOptionData(
-        name: 'Share-Bao',
-        subtitle: 'Pasabay, split the fare',
-        icon: LucideIcons.users,
-        fare: formattedFares['Share-Bao'] ?? (distanceKm * 10 + 20),
-        eta: '5 min',
-        badge: 'Cheapest',
-      ),
-      RideOptionData(
-        name: 'Bao Premium',
-        subtitle: 'Priority pickup, top rated',
-        icon: LucideIcons.crown,
-        fare: formattedFares['Bao Premium'] ?? (distanceKm * 20 + 45),
-        eta: '2 min',
-        badge: 'Fastest',
       ),
     ];
   }
 
   Future<void> fetchServerFareQuotes() async {
     final distanceKm = widget.distanceKm;
-    final durationMins =
-        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), '')) ??
-        10.0;
+    final durationMins = double.tryParse(
+      widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''),
+    );
+    if (durationMins == null) {
+      if (mounted) {
+        setState(() => _fareError = 'Route duration is unavailable.');
+      }
+      return;
+    }
 
     try {
       final datasource = Modular.get<BiddingRemoteDataSource>();
       final res = await datasource.fetchFareEstimate(
         distanceKm: distanceKm,
         durationMinutes: durationMins,
-        rideType: 'Solo Ride',
+        rideType: 'solo',
       );
-      final totalFare = (res['total_fare'] as num?)?.toDouble();
-      if (totalFare != null && mounted) {
+      final totalFare =
+          (res['total_fare'] as num?)?.toDouble() ??
+          ((res['fare_centavos'] as num?)?.toDouble() ?? 0) / 100;
+      if (totalFare > 0 && mounted) {
         setState(() {
-          initializeRideOptionsData({'Solo Ride': totalFare});
+          _minimumFare = totalFare;
+          _customFareController.text = totalFare.toStringAsFixed(2);
+          _options = [
+            RideOptionData(
+              name: 'Solo',
+              subtitle: 'Private ride with a server-calculated minimum fare',
+              icon: LucideIcons.bike,
+              fare: totalFare,
+              eta: 'Server calculated',
+              badge: null,
+            ),
+          ];
+          _fareError = null;
         });
+      } else if (mounted) {
+        setState(() => _fareError = 'The server did not return a valid fare.');
       }
     } catch (error) {
-      debugPrint('Error fetching server fare quotes: $error');
+      if (mounted) {
+        setState(() => _fareError = 'Unable to calculate the fare right now.');
+      }
     }
+  }
+
+  void _onCustomFareChanged(String value) {
+    final minimumFare = _minimumFare;
+    if (minimumFare == null) return;
+    final enteredFare = double.tryParse(value);
+    setState(() {
+      _fareError = enteredFare == null
+          ? 'Enter a valid custom offer.'
+          : enteredFare < minimumFare
+          ? 'Custom offer cannot be lower than calculated minimum fare.'
+          : null;
+    });
+  }
+
+  double? get _selectedFare => double.tryParse(_customFareController.text);
+
+  @override
+  void dispose() {
+    _customFareController.dispose();
+    super.dispose();
   }
 
   Future<void> _drawRoute() async {
     if (_mapController == null) return;
 
-    final pickupLat =
-        LocationService.lastPosition?.latitude ?? widget.destination.latitude;
-    final pickupLng =
-        LocationService.lastPosition?.longitude ?? widget.destination.longitude;
+    final position = LocationService.lastPosition;
+    if (position == null) return;
+    final pickupLat = position.latitude;
+    final pickupLng = position.longitude;
     final destLat = widget.destination.latitude;
     final destLng = widget.destination.longitude;
 
@@ -229,8 +256,6 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
             child: LayoutBuilder(
               builder: (ctx, constraints) {
                 final isWide = constraints.maxWidth > 600.0;
-                final sel = _options[_selectedIdx];
-
                 return ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: isWide ? 600.0 : double.infinity,
@@ -243,8 +268,18 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                         _selectedIdx = idx;
                       });
                     },
+                    customFareController: _customFareController,
+                    minimumFare: _minimumFare,
+                    customFareError: _fareError,
+                    onCustomFareChanged: _onCustomFareChanged,
                     onBookPressed: () {
-                      if (Modular.get<BookingBloc>().hasActiveDriverSearch) {
+                      final fare = _selectedFare;
+                      if (fare == null ||
+                          _minimumFare == null ||
+                          fare < _minimumFare!) {
+                        return;
+                      }
+                      if (Modular.get<BookingBloc>().hasActiveBooking) {
                         CustomToast.show(
                           context,
                           'A driver search is already in progress.',
@@ -256,13 +291,12 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                         context.pushNamed(
                           'FindingDriver',
                           extra: {
-                            'rideType': sel.name,
-                            'fare': sel.fare,
+                            'rideType': 'solo',
+                            'fare': fare,
                             'destination': widget.destination,
                             'distance': widget.distance,
                             'duration': widget.duration,
-                            'pickupAddress':
-                                widget.pickupAddress ?? 'Current Location',
+                            'pickupAddress': widget.pickupAddress,
                           },
                         ),
                       );

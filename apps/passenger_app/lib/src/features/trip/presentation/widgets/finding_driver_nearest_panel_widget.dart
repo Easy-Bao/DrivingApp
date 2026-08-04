@@ -138,7 +138,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
               Container(width: 1, height: 40, color: AppTheme.borderSide),
               _buildMetricCard(
                 icon: LucideIcons.bike,
-                value: '${state.totalTrips}',
+                value: state.totalTrips?.toString() ?? '—',
                 label: 'Total Trips',
                 iconColor: AppTheme.primaryColor,
               ),

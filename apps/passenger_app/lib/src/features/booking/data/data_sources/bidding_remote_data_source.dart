@@ -21,6 +21,11 @@ abstract class BiddingRemoteDataSource {
     int? limit,
   });
   Future<List<dynamic>> fetchOnlineDrivers();
+  Future<List<dynamic>> fetchNearbyDrivers({
+    required double latitude,
+    required double longitude,
+    double radiusKm,
+  });
   Future<Map<String, dynamic>?> getRideStatus(String rideId);
   Future<Map<String, dynamic>?> fetchDriverLocation(String driverId);
   Future<bool> sendPassengerLocation({
@@ -117,6 +122,24 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   Future<List<dynamic>> fetchOnlineDrivers() async {
     final response = await _dio.get<List<dynamic>>('/drivers/online');
     return response.data ?? [];
+  }
+
+  @override
+  Future<List<dynamic>> fetchNearbyDrivers({
+    required double latitude,
+    required double longitude,
+    double radiusKm = 5,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/telemetry/location/nearby',
+      queryParameters: {
+        'latitude': latitude,
+        'longitude': longitude,
+        'radius_km': radiusKm,
+      },
+    );
+    final drivers = response.data?['drivers'];
+    return drivers is List ? List<dynamic>.from(drivers) : const [];
   }
 
   @override
