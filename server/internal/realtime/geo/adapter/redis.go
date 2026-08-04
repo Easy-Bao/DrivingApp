@@ -18,16 +18,27 @@ func (repository *RedisRepository) Upsert(ctx context.Context, point domain.Driv
 	if err != nil {
 		return err
 	}
+	if err := repository.client.GeoAdd(ctx, "drivers:locations", &redis.GeoLocation{Longitude: point.Longitude, Latitude: point.Latitude, Name: point.DriverID}).Err(); err != nil {
+		return err
+	}
 	return repository.client.Set(ctx, fmt.Sprintf("driver:location:%s", point.DriverID), payload, 0).Err()
 }
-func (repository *RedisRepository) Nearby(ctx context.Context, _, _, _ float64) ([]domain.DriverPoint, error) {
-	keys, err := repository.client.Keys(ctx, "driver:location:*").Result()
+func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
+	locations, err := repository.client.GeoSearchLocation(ctx, "drivers:locations", &redis.GeoSearchLocationQuery{
+		GeoSearchQuery: redis.GeoSearchQuery{
+			Longitude:  longitude,
+			Latitude:   latitude,
+			Radius:     radiusKm,
+			RadiusUnit: "km",
+		},
+		WithCoord: false,
+	}).Result()
 	if err != nil {
 		return nil, err
 	}
-	result := make([]domain.DriverPoint, 0, len(keys))
-	for _, key := range keys {
-		payload, getErr := repository.client.Get(ctx, key).Bytes()
+	result := make([]domain.DriverPoint, 0, len(locations))
+	for _, location := range locations {
+		payload, getErr := repository.client.Get(ctx, fmt.Sprintf("driver:location:%s", location.Name)).Bytes()
 		if getErr != nil {
 			continue
 		}

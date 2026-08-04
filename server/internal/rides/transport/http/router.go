@@ -22,6 +22,9 @@ func (router *Router) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/bids/{id}/accept", router.acceptBid)
 	mux.HandleFunc("GET /api/v1/rides/{id}", router.getRide)
 	mux.HandleFunc("POST /api/v1/fares/estimate", router.estimate)
+	mux.HandleFunc("GET /api/v1/fares/configs", router.fareConfigs)
+	mux.HandleFunc("GET /api/v1/fares/rating-config", router.ratingConfig)
+	mux.HandleFunc("POST /api/v1/fares/calculate-final", router.calculateFinal)
 }
 func (router *Router) identity(r *http.Request) (int, bool) {
 	raw := r.Header.Get("Authorization")
@@ -119,6 +122,26 @@ func (router *Router) estimate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonJSON(w, 200, map[string]any{"fare_centavos": usecase.CalculateFare(input.DistanceKm, input.DurationMinutes)})
+}
+func (router *Router) fareConfigs(w http.ResponseWriter, _ *http.Request) {
+	jsonJSON(w, 200, map[string]any{"base_fare_centavos": int64(2500), "per_kilometer_centavos": int64(100), "per_minute_centavos": int64(50)})
+}
+func (router *Router) ratingConfig(w http.ResponseWriter, _ *http.Request) {
+	jsonJSON(w, 200, map[string]any{"minimum_rating": 1, "maximum_rating": 5})
+}
+func (router *Router) calculateFinal(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		DistanceKm      float64 `json:"distance_km"`
+		DurationMinutes float64 `json:"duration_minutes"`
+		CommissionBPS   int64   `json:"commission_bps"`
+	}
+	if json.NewDecoder(r.Body).Decode(&input) != nil || input.DistanceKm < 0 || input.DurationMinutes < 0 || input.CommissionBPS < 0 || input.CommissionBPS > 10000 {
+		errorJSON(w, 400, "invalid final fare input")
+		return
+	}
+	fare := usecase.CalculateFare(input.DistanceKm, input.DurationMinutes)
+	commission := fare * input.CommissionBPS / 10000
+	jsonJSON(w, 200, map[string]any{"fare_centavos": fare, "commission_centavos": commission, "driver_payout_centavos": fare - commission})
 }
 func jsonJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")

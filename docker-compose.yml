@@ -49,8 +49,8 @@ services:
       - "${GATEWAY_PORT:-8000}:8000"
     environment:
       GATEWAY_PORT: 8000
-      CORE_API_URL: http://core-api:8080
-      REALTIME_SERVICE_URL: http://realtime-service:8081
+      CORE_API_URL: ${CORE_API_INTERNAL_URL:-http://core-api:8080}
+      REALTIME_SERVICE_URL: ${REALTIME_SERVICE_INTERNAL_URL:-http://realtime-service:8081}
     depends_on:
       - core-api
       - realtime-service
@@ -61,11 +61,8 @@ services:
       dockerfile: server/Dockerfile
     command: ["/app/realtime-service"]
     restart: always
-    ports:
-      - "${REALTIME_PORT:-8081}:8081"
     environment:
       JWT_SECRET: ${JWT_SECRET}
-      REALTIME_PORT: 8081
       REDIS_URL: redis://redis:6379
     depends_on:
       redis:

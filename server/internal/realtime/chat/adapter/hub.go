@@ -1,8 +1,9 @@
 package adapter
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	"sync"
+
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 )
 
 type Hub struct {

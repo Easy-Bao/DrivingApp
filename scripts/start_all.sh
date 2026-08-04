@@ -48,6 +48,13 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   exit 1
 fi
 
+for variable in CORE_API_URL REALTIME_SERVICE_URL GATEWAY_PORT REDIS_URL; do
+  if [[ -z "${!variable:-}" ]]; then
+    echo "${variable} is required in .env." >&2
+    exit 1
+  fi
+done
+
 cd "${repository_root}"
 ./scripts/database/migrate.sh
 
