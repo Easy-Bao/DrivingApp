@@ -1,7 +1,0 @@
-interface:
-  display_name: "Code Security Audit"
-  short_description: "Audit code against OWASP security controls"
-  default_prompt: "Use $code-security-audit to perform an OWASP-based security audit of this driving app and report evidence-backed findings."
-
-policy:
-  allow_implicit_invocation: true

@@ -1,7 +1,0 @@
-interface:
-  display_name: "Code Review"
-  short_description: "Review changes with risk-aware findings"
-  default_prompt: "Use $code-review to review the current git changes for correctness, compatibility, and production risk."
-
-policy:
-  allow_implicit_invocation: true
