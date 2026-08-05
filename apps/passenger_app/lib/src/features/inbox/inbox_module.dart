@@ -1,6 +1,6 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
-import 'package:passenger_app/src/features/inbox/view/inbox_screen.dart';
+import 'package:passenger_app/src/features/inbox/view/inbox_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class InboxModule {
@@ -12,7 +12,7 @@ class InboxModule {
     ChildRoute(
       name: InboxRoutes.inbox,
       'inbox',
-      child: (context, GoRouterState state) => const InboxScreen(),
+      child: (context, GoRouterState state) => const InboxPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),

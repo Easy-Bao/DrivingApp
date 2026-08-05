@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
-import 'package:passenger_app/src/features/activity/view/passenger_activity_screen.dart';
-import 'package:passenger_app/src/features/activity/view/passenger_payment_screen.dart';
-import 'package:passenger_app/src/features/activity/view/passenger_rating_screen.dart';
-import 'package:passenger_app/src/features/activity/view/view_all_activity_screen.dart';
-import 'package:passenger_app/src/features/activity/view/view_details_screen.dart';
-import 'package:passenger_app/src/features/trip/view/track_driver_screen.dart';
+import 'package:passenger_app/src/features/activity/view/passenger_activity_page.dart';
+import 'package:passenger_app/src/features/activity/view/passenger_payment_page.dart';
+import 'package:passenger_app/src/features/activity/view/passenger_rating_page.dart';
+import 'package:passenger_app/src/features/activity/view/view_all_activity_page.dart';
+import 'package:passenger_app/src/features/activity/view/view_details_page.dart';
+import 'package:passenger_app/src/features/trip/view/track_driver_page.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -18,7 +18,7 @@ class ActivityModule {
       name: ActivityRoutes.viewAllRecentActivity,
       'activity/view-all',
       child: (context, GoRouterState state) =>
-          const PassengerViewAllActivityScreen(),
+          const PassengerViewAllActivityPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -29,7 +29,7 @@ class ActivityModule {
         final ride = state.extra is RideHistoryModel
             ? state.extra as RideHistoryModel
             : null;
-        return ActivityViewDetailsScreen(ride: ride);
+        return ActivityViewDetailsPage(ride: ride);
       },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -46,7 +46,7 @@ class ActivityModule {
             body: Center(child: Text('Trip tracking data not available.')),
           );
         }
-        return ActivityTrackDriverScreen(ride: ride);
+        return ActivityTrackDriverPage(ride: ride);
       },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -58,7 +58,7 @@ class ActivityModule {
         final driverId = state.uri.queryParameters['driverId'] ?? '';
         final driverName = state.uri.queryParameters['driverName'] ?? '';
         final rideId = state.uri.queryParameters['rideId'] ?? '';
-        return PassengerRatingScreen(
+        return PassengerRatingPage(
           driverId: driverId,
           driverName: driverName,
           rideId: rideId,
@@ -78,7 +78,7 @@ class ActivityModule {
             ? const Scaffold(
                 body: Center(child: Text('Payment data unavailable.')),
               )
-            : PassengerPaymentScreen(ride: ride);
+            : PassengerPaymentPage(ride: ride);
       },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
@@ -89,7 +89,7 @@ class ActivityModule {
     ChildRoute(
       name: ActivityRoutes.activity,
       'activity',
-      child: (context, GoRouterState state) => const PassengerActivityScreen(),
+      child: (context, GoRouterState state) => const PassengerActivityPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),

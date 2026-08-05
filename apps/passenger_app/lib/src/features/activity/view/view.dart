@@ -1,5 +1,5 @@
-export 'passenger_activity_screen.dart';
-export 'passenger_payment_screen.dart';
-export 'passenger_rating_screen.dart';
-export 'view_all_activity_screen.dart';
-export 'view_details_screen.dart';
+export 'passenger_activity_page.dart';
+export 'passenger_payment_page.dart';
+export 'passenger_rating_page.dart';
+export 'view_all_activity_page.dart';
+export 'view_details_page.dart';

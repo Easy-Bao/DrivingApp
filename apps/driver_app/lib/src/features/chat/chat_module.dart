@@ -1,6 +1,6 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
-import 'package:driver_app/src/features/chat/view/driver_chat_screen.dart';
+import 'package:driver_app/src/features/chat/view/driver_chat_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ChatModule {
@@ -12,7 +12,7 @@ class ChatModule {
       'dashboard/driver-chat',
       child: (context, GoRouterState state) {
         final extra = SafeRouteExtra.asMap(state.extra);
-        return DriverChatScreen(
+        return DriverChatPage(
           roomId: extra['roomId'] as String?,
           userId: extra['userId'] as String?,
           peerName: extra['peerName'] as String?,

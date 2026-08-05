@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:passenger_app/src/features/trip/view/activity_detail_map_screen.dart';
-import 'package:passenger_app/src/features/trip/view/destination_preview_screen.dart';
-import 'package:passenger_app/src/features/trip/view/driver_matched_screen.dart';
-import 'package:passenger_app/src/features/trip/view/finding_driver_screen.dart';
-import 'package:passenger_app/src/features/trip/view/map_pin_screen.dart';
-import 'package:passenger_app/src/features/trip/view/ride_selection_screen.dart';
-import 'package:passenger_app/src/features/trip/view/search_destination_screen.dart';
+import 'package:passenger_app/src/features/trip/view/activity_detail_map_page.dart';
+import 'package:passenger_app/src/features/trip/view/destination_preview_page.dart';
+import 'package:passenger_app/src/features/trip/view/driver_matched_page.dart';
+import 'package:passenger_app/src/features/trip/view/finding_driver_page.dart';
+import 'package:passenger_app/src/features/trip/view/map_pin_page.dart';
+import 'package:passenger_app/src/features/trip/view/ride_selection_page.dart';
+import 'package:passenger_app/src/features/trip/view/search_destination_page.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -18,7 +18,7 @@ class TripModule {
     ChildRoute(
       name: TripRoutes.searchDestination,
       'home/search',
-      child: (context, GoRouterState state) => SearchDestinationScreen(
+      child: (context, GoRouterState state) => SearchDestinationPage(
         preselectedRideType: state.uri.queryParameters['rideType'],
         pickupAddress: state.uri.queryParameters['pickupAddress'],
       ),
@@ -37,7 +37,7 @@ class TripModule {
             body: Center(child: Text('Location data is unavailable.')),
           );
         }
-        return ActivityDetailMapScreen(
+        return ActivityDetailMapPage(
           placeName: data['title'] as String? ?? 'Location',
           placeSubtitle: data['subtitle'] as String? ?? '',
           destinationLat: latitude,
@@ -50,7 +50,7 @@ class TripModule {
     ChildRoute(
       name: TripRoutes.mapPin,
       'home/map-pin',
-      child: (context, GoRouterState state) => const MapPinScreen(),
+      child: (context, GoRouterState state) => const MapPinPage(),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),
@@ -94,7 +94,7 @@ class TripModule {
           );
         }
 
-        return DestinationPreviewScreen(
+        return DestinationPreviewPage(
           destination: place,
           preselectedRideType: state.uri.queryParameters['rideType'],
           pickupAddress: state.uri.queryParameters['pickupAddress'],
@@ -128,7 +128,7 @@ class TripModule {
             body: Center(child: Text('Trip route data is unavailable.')),
           );
         }
-        return RideSelectionScreen(
+        return RideSelectionPage(
           destination: destination,
           distance: distance,
           duration: duration,
@@ -160,7 +160,7 @@ class TripModule {
             body: Center(child: Text('Fare and trip data are unavailable.')),
           );
         }
-        return FindingDriverScreen(
+        return FindingDriverPage(
           rideType: data['rideType'] as String? ?? 'Solo Ride',
           fare: fare,
           destination: destination,
@@ -191,7 +191,7 @@ class TripModule {
             body: Center(child: Text('Fare and trip data are unavailable.')),
           );
         }
-        return DriverMatchedScreen(
+        return DriverMatchedPage(
           rideType: data['rideType'] as String? ?? 'Solo Ride',
           fare: fare,
           destination: destination,

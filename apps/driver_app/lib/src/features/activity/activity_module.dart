@@ -1,7 +1,7 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
-import 'package:driver_app/src/features/activity/view/driver_trip_history_screen.dart';
-import 'package:driver_app/src/features/activity/view/driver_trip_detail_screen.dart';
+import 'package:driver_app/src/features/activity/view/driver_trip_history_page.dart';
+import 'package:driver_app/src/features/activity/view/driver_trip_detail_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ActivityModule {
@@ -12,7 +12,7 @@ class ActivityModule {
       name: ActivityRoutes.tripDetail,
       'earnings/trip-detail',
       child: (context, GoRouterState state) =>
-          DriverTripDetailScreen(trip: SafeRouteExtra.asMap(state.extra)),
+          DriverTripDetailPage(trip: SafeRouteExtra.asMap(state.extra)),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -22,7 +22,7 @@ class ActivityModule {
     ChildRoute(
       name: ActivityRoutes.tripHistory,
       'trips',
-      child: (context, GoRouterState state) => const DriverTripHistoryScreen(),
+      child: (context, GoRouterState state) => const DriverTripHistoryPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),

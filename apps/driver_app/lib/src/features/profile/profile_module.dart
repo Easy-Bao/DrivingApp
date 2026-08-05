@@ -1,7 +1,7 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
-import 'package:driver_app/src/features/profile/view/driver_account.dart';
-import 'package:driver_app/src/features/activity/view/earnings_screen.dart';
+import 'package:driver_app/src/features/profile/view/driver_account_page.dart';
+import 'package:driver_app/src/features/activity/view/earnings_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ProfileModule {
@@ -13,14 +13,14 @@ class ProfileModule {
     ChildRoute(
       name: ProfileRoutes.earnings,
       'earnings',
-      child: (context, GoRouterState state) => const DriverEarningsScreen(),
+      child: (context, GoRouterState state) => const DriverEarningsPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),
     ChildRoute(
       name: ProfileRoutes.account,
       'account',
-      child: (context, GoRouterState state) => const DriverAccountScreen(),
+      child: (context, GoRouterState state) => const DriverAccountPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),

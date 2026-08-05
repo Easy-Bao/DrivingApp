@@ -15,12 +15,12 @@ import 'package:passenger_app/src/features/auth/domain/usecases/resend_otp_use_c
 import 'package:passenger_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
-import 'package:passenger_app/src/features/auth/view/forgot_password_screen.dart';
-import 'package:passenger_app/src/features/auth/view/onboarding_screen.dart';
-import 'package:passenger_app/src/features/auth/view/reset_password_confirm_screen.dart';
-import 'package:passenger_app/src/features/auth/view/sign_in_screen.dart';
-import 'package:passenger_app/src/features/auth/view/sign_up_screen.dart';
-import 'package:passenger_app/src/features/auth/view/verify_otp_screen.dart';
+import 'package:passenger_app/src/features/auth/view/forgot_password_page.dart';
+import 'package:passenger_app/src/features/auth/view/onboarding_page.dart';
+import 'package:passenger_app/src/features/auth/view/reset_password_confirm_page.dart';
+import 'package:passenger_app/src/features/auth/view/sign_in_page.dart';
+import 'package:passenger_app/src/features/auth/view/sign_up_page.dart';
+import 'package:passenger_app/src/features/auth/view/verify_otp_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -71,28 +71,28 @@ class AuthModule extends Module {
     ChildRoute(
       name: AuthRoutes.onBoarding,
       '/',
-      child: (context, GoRouterState state) => const OnBoardingScreen(),
+      child: (context, GoRouterState state) => const OnBoardingPage(),
       transition: AppTransitions.fadeThrough,
       transitionDuration: AppTransitions.fadeDuration,
     ),
     ChildRoute(
       name: AuthRoutes.signin,
       '/auth/signin',
-      child: (context, GoRouterState state) => const SigninScreen(),
+      child: (context, GoRouterState state) => const SigninPage(),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: AuthRoutes.signup,
       '/auth/signup',
-      child: (context, GoRouterState state) => const SignupScreen(),
+      child: (context, GoRouterState state) => const SignupPage(),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: AuthRoutes.forgotPassword,
       '/auth/forgotpassword',
-      child: (context, GoRouterState state) => const ForgotPasswordScreen(),
+      child: (context, GoRouterState state) => const ForgotPasswordPage(),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -106,10 +106,7 @@ class AuthModule extends Module {
                 extra['email']?.toString()) ??
             '';
         final isForgotPassword = extra['isForgotPassword'] == true;
-        return VerifyOtpScreen(
-          email: email,
-          isForgotPassword: isForgotPassword,
-        );
+        return VerifyOtpPage(email: email, isForgotPassword: isForgotPassword);
       },
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
@@ -121,7 +118,7 @@ class AuthModule extends Module {
         final extra = state.extra is Map ? state.extra as Map : {};
         final email = extra['email']?.toString() ?? '';
         final code = extra['code']?.toString() ?? '';
-        return ResetPasswordConfirmScreen(email: email, code: code);
+        return ResetPasswordConfirmPage(email: email, code: code);
       },
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,

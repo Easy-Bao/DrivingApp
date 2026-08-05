@@ -1,2 +1,2 @@
-export 'add_category_screen.dart';
-export 'saved_place_screen.dart';
+export 'add_category_page.dart';
+export 'saved_place_page.dart';

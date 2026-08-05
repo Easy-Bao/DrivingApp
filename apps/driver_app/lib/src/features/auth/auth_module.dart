@@ -3,9 +3,9 @@ import 'package:driver_app/src/features/auth/data/repositories/auth_repository.d
 import 'package:driver_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:driver_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:driver_app/src/features/auth/bloc/forgot_password/forgot_password_bloc.dart';
-import 'package:driver_app/src/features/auth/view/forgot_password_screen.dart';
+import 'package:driver_app/src/features/auth/view/forgot_password_page.dart';
 import 'package:driver_app/src/features/auth/bloc/sign_in/sign_in_bloc.dart';
-import 'package:driver_app/src/features/auth/view/sign_in_screen.dart';
+import 'package:driver_app/src/features/auth/view/sign_in_page.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -29,14 +29,14 @@ class AuthModule extends Module {
     ChildRoute(
       name: AuthRoutes.signin,
       '/',
-      child: (context, GoRouterState state) => const SigninScreen(),
+      child: (context, GoRouterState state) => const SigninPage(),
       transition: AppTransitions.fade,
       transitionDuration: AppTransitions.fadeDuration,
     ),
     ChildRoute(
       name: AuthRoutes.forgotPassword,
       '/auth/forgotpassword',
-      child: (context, GoRouterState state) => const ForgotPasswordScreen(),
+      child: (context, GoRouterState state) => const ForgotPasswordPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
