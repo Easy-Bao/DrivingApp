@@ -1,0 +1,7 @@
+interface:
+  display_name: "Go Security"
+  short_description: "Secure Go services, APIs, and data flows"
+  default_prompt: "Use $golang-security to audit this driving app's Go services for security vulnerabilities and propose focused fixes."
+
+policy:
+  allow_implicit_invocation: true
