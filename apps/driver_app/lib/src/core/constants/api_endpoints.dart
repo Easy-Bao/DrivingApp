@@ -3,7 +3,7 @@ import 'package:driver_app/src/core/constants/env_config.dart';
 class ApiEndpoints {
   ApiEndpoints._();
 
-  static const String login = '/api/v1/auth/login';
+  static const String driverLogin = '/api/v1/auth/driver/login';
   static const String refreshToken = '/api/v1/auth/refresh';
   static const String driverStatus = '/api/v1/driver/status';
   static const String activeBids = '/api/v1/bids/active';

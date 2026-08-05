@@ -90,11 +90,23 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 	writeJSON(w, http.StatusCreated, map[string]any{"success": true, "data": map[string]any{"user": account, "token": token, "needsVerification": !account.IsVerified}})
 }
 func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	handler.login(w, r, "")
+}
+
+func (handler *Handler) PassengerLogin(w http.ResponseWriter, r *http.Request) {
+	handler.login(w, r, domain.Passenger)
+}
+
+func (handler *Handler) DriverLogin(w http.ResponseWriter, r *http.Request) {
+	handler.login(w, r, domain.Driver)
+}
+
+func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domain.Role) {
 	var input dto.Credentials
 	if !decode(w, r, &input) {
 		return
 	}
-	account, token, err := handler.authenticate.Execute(r.Context(), input.Email, input.Password)
+	account, token, err := handler.authenticate.ExecuteAs(r.Context(), input.Email, input.Password, role)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, domain.ErrInvalidCredentials.Error())
 		return

@@ -30,18 +30,24 @@ class AuthRepository implements IAuthRepository {
 
       final authenticationData =
           (responseData['data'] as Map<String, dynamic>?) ?? responseData;
-      final token = authenticationData['token'] as String? ?? '';
-      final driver =
-          (authenticationData['driver'] as Map<String, dynamic>?) ??
-          (authenticationData['user'] as Map<String, dynamic>?) ??
-          authenticationData;
-      final driverId = driver['id'] as String? ?? '';
-      final driverName = driver['name'] as String? ?? '';
-      final driverEmail = driver['email'] as String? ?? '';
-      final vehicleType =
-          driver['vehicleType'] as String? ?? 'Vehicle type unavailable';
-      final plateNumber =
-          driver['plateNumber'] as String? ?? 'Vehicle plate unavailable';
+      final token = _stringValue(authenticationData['token']);
+      final driverData =
+          authenticationData['driver'] ?? authenticationData['user'];
+      if (driverData is! Map) {
+        throw DataParsingException(
+          message: 'Authentication response did not contain a driver.',
+        );
+      }
+      final driver = Map<String, dynamic>.from(driverData);
+      final driverId = _stringValue(driver['id']);
+      final driverName = _stringValue(driver['name']);
+      final driverEmail = _stringValue(driver['email']);
+      final vehicleType = _stringValue(driver['vehicleType']).isEmpty
+          ? 'Vehicle type unavailable'
+          : _stringValue(driver['vehicleType']);
+      final plateNumber = _stringValue(driver['plateNumber']).isEmpty
+          ? 'Vehicle plate unavailable'
+          : _stringValue(driver['plateNumber']);
       final rating = (driver['rating'] as num?)?.toDouble() ?? 0.0;
 
       if (token.isEmpty || driverId.isEmpty) {
@@ -69,10 +75,24 @@ class AuthRepository implements IAuthRepository {
       );
 
       return Right(credentials);
-    } catch (error) {
-      return const Left(AuthFailure('Invalid email or password'));
+    } on ServerException catch (error) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        return const Left(AuthFailure('Invalid email or password.'));
+      }
+      if (error.statusCode == 0) {
+        return Left(NetworkFailure(error.message));
+      }
+      return Left(ServerFailure(error.message));
+    } on DataParsingException catch (error) {
+      return Left(ServerFailure(error.message));
+    } catch (_) {
+      return const Left(
+        ServerFailure('Unable to sign in right now. Please try again.'),
+      );
     }
   }
+
+  String _stringValue(Object? value) => value?.toString() ?? '';
 
   @override
   Future<Either<Failure, void>> resetPassword({required String email}) async {
