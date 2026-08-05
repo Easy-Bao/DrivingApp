@@ -11,6 +11,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
   final VoidCallback onBookDirectPressed;
   final VoidCallback onSearchAllDriversPressed;
   final VoidCallback onCancelRidePressed;
+  final bool isCanceling;
   final bool compact;
 
   const FindingDriverNearestPanelWidget({
@@ -21,6 +22,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
     required this.onBookDirectPressed,
     required this.onSearchAllDriversPressed,
     required this.onCancelRidePressed,
+    this.isCanceling = false,
     this.compact = false,
   });
 
@@ -341,15 +343,24 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
               ),
               Expanded(
                 child: TextButton(
-                  onPressed: onCancelRidePressed,
-                  child: const Text(
-                    'Cancel Ride',
-                    style: TextStyle(
-                      color: AppTheme.cancel,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
+                  onPressed: isCanceling ? null : onCancelRidePressed,
+                  child: isCanceling
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppTheme.cancel,
+                          ),
+                        )
+                      : const Text(
+                          'Cancel Ride',
+                          style: TextStyle(
+                            color: AppTheme.cancel,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -472,11 +483,20 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
             ],
           ),
           TextButton(
-            onPressed: onCancelRidePressed,
-            child: const Text(
-              'Cancel Ride',
-              style: TextStyle(color: AppTheme.cancel),
-            ),
+            onPressed: isCanceling ? null : onCancelRidePressed,
+            child: isCanceling
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.cancel,
+                    ),
+                  )
+                : const Text(
+                    'Cancel Ride',
+                    style: TextStyle(color: AppTheme.cancel),
+                  ),
           ),
         ],
       ),

@@ -61,12 +61,16 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
   final List<dynamic> offers;
   final Function(DriverOfferItem offer) onAcceptOfferPressed;
   final VoidCallback onCancelPressed;
+  final String? acceptingOfferId;
+  final bool isCanceling;
 
   const FindingDriverBidsPanelWidget({
     super.key,
     required this.offers,
     required this.onAcceptOfferPressed,
     required this.onCancelPressed,
+    this.acceptingOfferId,
+    this.isCanceling = false,
   });
 
   @override
@@ -220,14 +224,25 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            onPressed: () => onAcceptOfferPressed(offer),
-                            child: const Text(
-                              'Accept',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            onPressed: acceptingOfferId != null || isCanceling
+                                ? null
+                                : () => onAcceptOfferPressed(offer),
+                            child: acceptingOfferId == offer.offerId
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Accept',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ],
                       ),
@@ -239,7 +254,9 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           GestureDetector(
-            onTap: onCancelPressed,
+            onTap: isCanceling || acceptingOfferId != null
+                ? null
+                : onCancelPressed,
             child: Container(
               width: double.infinity,
               alignment: Alignment.center,
@@ -248,14 +265,23 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                 color: AppTheme.cancel.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(32),
               ),
-              child: const Text(
-                'Cancel Ride Request',
-                style: TextStyle(
-                  color: AppTheme.cancel,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
+              child: isCanceling
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.cancel,
+                      ),
+                    )
+                  : const Text(
+                      'Cancel Ride Request',
+                      style: TextStyle(
+                        color: AppTheme.cancel,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
             ),
           ),
         ],

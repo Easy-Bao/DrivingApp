@@ -10,6 +10,7 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
   final double distance;
   final double fare;
   final double sliderValue;
+  final bool isConfirmingArrival;
   final int unreadChatMessagesCount;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onSliderCompleted;
@@ -24,6 +25,7 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
     required this.distance,
     required this.fare,
     required this.sliderValue,
+    this.isConfirmingArrival = false,
     required this.unreadChatMessagesCount,
     required this.onSliderChanged,
     required this.onSliderCompleted,
@@ -258,7 +260,9 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
                   children: [
                     Center(
                       child: Text(
-                        sliderValue > 0.8
+                        isConfirmingArrival
+                            ? 'Confirming arrival...'
+                            : sliderValue > 0.8
                             ? 'Release to confirm'
                             : 'Slide to confirm arrival',
                         style: TextStyle(
@@ -271,21 +275,23 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
                     Positioned(
                       left: sliderValue * (maxW - 64),
                       child: GestureDetector(
-                        onHorizontalDragUpdate: (d) {
-                          onSliderChanged(
-                            (sliderValue + d.delta.dx / (maxW - 64)).clamp(
-                              0.0,
-                              1.0,
-                            ),
-                          );
-                        },
-                        onHorizontalDragEnd: (_) {
-                          if (sliderValue > 0.85) {
-                            onSliderCompleted();
-                          } else {
-                            onSliderChanged(0.0);
-                          }
-                        },
+                        onHorizontalDragUpdate: isConfirmingArrival
+                            ? null
+                            : (d) {
+                                onSliderChanged(
+                                  (sliderValue + d.delta.dx / (maxW - 64))
+                                      .clamp(0.0, 1.0),
+                                );
+                              },
+                        onHorizontalDragEnd: isConfirmingArrival
+                            ? null
+                            : (_) {
+                                if (sliderValue > 0.85) {
+                                  onSliderCompleted();
+                                } else {
+                                  onSliderChanged(0.0);
+                                }
+                              },
                         child: Container(
                           width: 64,
                           height: 64,
@@ -299,11 +305,19 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            LucideIcons.chevron_right,
-                            color: Colors.white,
-                            size: 26,
-                          ),
+                          child: isConfirmingArrival
+                              ? const Padding(
+                                  padding: EdgeInsets.all(20),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(
+                                  LucideIcons.chevron_right,
+                                  color: Colors.white,
+                                  size: 26,
+                                ),
                         ),
                       ),
                     ),

@@ -9,6 +9,7 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
   final String passengerName;
   final String waitFormatted;
   final double fare;
+  final bool isStartingTrip;
   final int unreadChatMessagesCount;
   final VoidCallback onStartTripPressed;
   final VoidCallback onCallPressed;
@@ -21,6 +22,7 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
     required this.passengerName,
     required this.waitFormatted,
     required this.fare,
+    this.isStartingTrip = false,
     required this.unreadChatMessagesCount,
     required this.onStartTripPressed,
     required this.onCallPressed,
@@ -242,7 +244,7 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: onStartTripPressed,
+            onPressed: isStartingTrip ? null : onStartTripPressed,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
@@ -252,10 +254,19 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(32),
               ),
             ),
-            child: const Text(
-              'Start Trip',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            child: isStartingTrip
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Start Trip',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
           ),
         ],
       ),

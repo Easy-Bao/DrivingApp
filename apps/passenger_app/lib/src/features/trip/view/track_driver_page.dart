@@ -45,6 +45,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   int _viewedDriverMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
   Timer? _chatMessagesPollTimer;
+  bool _isCancellingTrip = false;
 
   @override
   void initState() {
@@ -219,8 +220,9 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     }
   }
 
-  Future _handleCancelTrip() async {
-    await showDialog(
+  Future<void> _handleCancelTrip() async {
+    if (_isCancellingTrip) return;
+    final shouldCancel = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
@@ -241,7 +243,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(ctx, false),
             child: const Text(
               'Keep Ride',
               style: TextStyle(
@@ -252,10 +254,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(ctx);
-              unawaited(
-                BlocProvider.of<TrackDriverCubit>(context).cancelTrip(),
-              );
+              Navigator.pop(ctx, true);
             },
             child: const Text(
               'Cancel Trip',
@@ -268,6 +267,14 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         ],
       ),
     );
+    if (shouldCancel != true || !mounted) return;
+
+    setState(() => _isCancellingTrip = true);
+    try {
+      await BlocProvider.of<TrackDriverCubit>(context).cancelTrip();
+    } finally {
+      if (mounted) setState(() => _isCancellingTrip = false);
+    }
   }
 
   @override
@@ -465,6 +472,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                           statusSubtitle: statusSubtitle,
                           etaText: etaText,
                           unreadChatMessagesCount: _unreadChatMessagesCount,
+                          isCancellingTrip: _isCancellingTrip,
                           onCallDriverPressed: () async {
                             try {
                               final activeRideId =

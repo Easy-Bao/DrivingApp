@@ -21,6 +21,7 @@ import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_s
 import 'package:driver_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class EnRoutePickupPage extends StatefulWidget {
   final String pickup;
@@ -45,6 +46,7 @@ class EnRoutePickupPage extends StatefulWidget {
 class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
   double _sliderVal = 0;
   bool _isLoading = true;
+  bool _isConfirmingArrival = false;
   double? _passengerLat;
   double? _passengerLng;
   AppMapController? _mapController;
@@ -227,7 +229,8 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
     );
   }
 
-  void _confirmArrival(BuildContext context) {
+  Future<void> _confirmArrival(BuildContext context) async {
+    if (_isConfirmingArrival) return;
     final state = BlocProvider.of<RideFlowCubit>(context).state;
     final passengerName = state is RideFlowEnRoutePickup
         ? state.passengerName
@@ -236,23 +239,53 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
     final pickupLat = pickupState?.pickupLat ?? _passengerLat;
     final pickupLng = pickupState?.pickupLng ?? _passengerLng;
     if (pickupLat == null || pickupLng == null) return;
-    BlocProvider.of<RideFlowCubit>(context).arriveAtPickup(
-      passengerName,
-      pickupLat: pickupLat,
-      pickupLng: pickupLng,
-      destLat: pickupState?.destLat,
-      destLng: pickupState?.destLng,
-    );
-    context.pushReplacementNamed(
-      TripRoutes.waitingPassenger,
-      extra: {
-        'pickup': widget.pickup,
-        'dropoff': widget.dropoff,
-        'distance': widget.distance,
-        'fare': widget.fare,
-        'duration': widget.duration,
-      },
-    );
+
+    setState(() => _isConfirmingArrival = true);
+    final rideCubit = BlocProvider.of<RideFlowCubit>(context);
+    try {
+      await rideCubit.arriveAtPickup(
+        passengerName,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        destLat: pickupState?.destLat,
+        destLng: pickupState?.destLng,
+      );
+      if (!mounted) return;
+      if (rideCubit.state is! RideFlowWaitingPassenger) {
+        CustomToast.show(
+          this.context,
+          'Unable to confirm arrival. Please try again.',
+          isError: true,
+        );
+        return;
+      }
+      this.context.pushReplacementNamed(
+        TripRoutes.waitingPassenger,
+        extra: {
+          'pickup': widget.pickup,
+          'dropoff': widget.dropoff,
+          'distance': widget.distance,
+          'fare': widget.fare,
+          'duration': widget.duration,
+        },
+      );
+    } catch (error) {
+      if (mounted) {
+        CustomToast.show(
+          this.context,
+          'Unable to confirm arrival. Please try again.',
+          isError: true,
+        );
+      }
+      debugPrint('Unable to confirm driver arrival: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isConfirmingArrival = false;
+          _sliderVal = 0;
+        });
+      }
+    }
   }
 
   @override
@@ -319,6 +352,7 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                           distance: widget.distance,
                           fare: widget.fare,
                           sliderValue: _sliderVal,
+                          isConfirmingArrival: _isConfirmingArrival,
                           unreadChatMessagesCount: _unreadChatMessagesCount,
                           onSliderChanged: (val) {
                             setState(() {

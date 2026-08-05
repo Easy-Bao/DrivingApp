@@ -87,6 +87,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   List<DriverModel> _nearbyDrivers = [];
   bool _showNearestDriverDetails = false;
   bool _isLeaving = false;
+  String? _acceptingOfferId;
   bool _locationUnavailable = false;
 
   String _driverMarkerLabel(DriverModel driver) {
@@ -268,7 +269,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   }
 
   void _handleCancel() {
-    if (_isLeaving) return;
+    if (_isLeaving || _acceptingOfferId != null) return;
     setState(() => _isLeaving = true);
     BlocProvider.of<BookingBloc>(context).add(const CancelBookingEvent());
   }
@@ -379,6 +380,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
               };
               context.pushReplacementNamed('DriverMatched', extra: navExtra);
             } else if (state is BookingFailure) {
+              _acceptingOfferId = null;
               if (state.isNoDriverFound) {
                 _handleNoDriverFound();
               } else {
@@ -386,6 +388,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                 _returnHome();
               }
             } else if (state is BookingCanceled) {
+              _acceptingOfferId = null;
               _returnHome();
             }
           },
@@ -608,6 +611,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                               pickupAddress: widget.pickupAddress,
                               dotAnimation: _dotCtrl,
                               onCancelPressed: _handleCancel,
+                              isCanceling: _isLeaving,
                             );
                           } else if (state is NearestDriverFound) {
                             if (_nearbyDrivers.length <= 1 &&
@@ -623,6 +627,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                   _startDirectBooking(state.driver),
                               onSearchAllDriversPressed: _startOpenBooking,
                               onCancelRidePressed: _handleCancel,
+                              isCanceling: _isLeaving,
                               compact: false,
                             );
                           } else if (state is BookingSearching) {
@@ -636,6 +641,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                               pickupAddress: widget.pickupAddress,
                               dotAnimation: _dotCtrl,
                               onCancelPressed: _handleCancel,
+                              isCanceling: _isLeaving,
                             );
                           } else if (state is BookingOffersReceived) {
                             if (state.offers.isEmpty) {
@@ -649,11 +655,18 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                 pickupAddress: widget.pickupAddress,
                                 dotAnimation: _dotCtrl,
                                 onCancelPressed: _handleCancel,
+                                isCanceling: _isLeaving,
                               );
                             }
                             return FindingDriverBidsPanelWidget(
                               offers: state.offers,
                               onAcceptOfferPressed: (offer) {
+                                if (_isLeaving || _acceptingOfferId != null) {
+                                  return;
+                                }
+                                setState(
+                                  () => _acceptingOfferId = offer.offerId,
+                                );
                                 BlocProvider.of<BookingBloc>(context).add(
                                   AcceptBidOfferEvent(
                                     offerId: offer.offerId,
@@ -667,6 +680,8 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                 );
                               },
                               onCancelPressed: _handleCancel,
+                              acceptingOfferId: _acceptingOfferId,
+                              isCanceling: _isLeaving,
                             );
                           }
                           return const SizedBox.shrink();

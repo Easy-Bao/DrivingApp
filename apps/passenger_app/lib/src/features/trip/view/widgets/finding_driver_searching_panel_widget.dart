@@ -11,6 +11,7 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
   final String? pickupAddress;
   final Animation<double> dotAnimation;
   final VoidCallback onCancelPressed;
+  final bool isCanceling;
 
   const FindingDriverSearchingPanelWidget({
     super.key,
@@ -21,6 +22,7 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
     this.pickupAddress,
     required this.dotAnimation,
     required this.onCancelPressed,
+    this.isCanceling = false,
   });
 
   @override
@@ -122,7 +124,7 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           GestureDetector(
-            onTap: onCancelPressed,
+            onTap: isCanceling ? null : onCancelPressed,
             child: Container(
               width: double.infinity,
               alignment: Alignment.center,
@@ -131,14 +133,23 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
                 color: AppTheme.cancel.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(32),
               ),
-              child: const Text(
-                'Cancel Search',
-                style: TextStyle(
-                  color: AppTheme.cancel,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
+              child: isCanceling
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.cancel,
+                      ),
+                    )
+                  : const Text(
+                      'Cancel Search',
+                      style: TextStyle(
+                        color: AppTheme.cancel,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
             ),
           ),
         ],

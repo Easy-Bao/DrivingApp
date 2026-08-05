@@ -10,6 +10,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
   final String statusSubtitle;
   final String etaText;
   final int unreadChatMessagesCount;
+  final bool isCancellingTrip;
   final VoidCallback onCallDriverPressed;
   final VoidCallback onChatDriverPressed;
   final VoidCallback onCancelTripPressed;
@@ -21,6 +22,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
     required this.statusSubtitle,
     required this.etaText,
     required this.unreadChatMessagesCount,
+    this.isCancellingTrip = false,
     required this.onCallDriverPressed,
     required this.onChatDriverPressed,
     required this.onCancelTripPressed,
@@ -177,7 +179,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           GestureDetector(
-            onTap: onCancelTripPressed,
+            onTap: isCancellingTrip ? null : onCancelTripPressed,
             child: Container(
               width: double.infinity,
               alignment: Alignment.center,
@@ -189,14 +191,23 @@ class TrackDriverPanelWidget extends StatelessWidget {
                   color: AppTheme.cancel.withValues(alpha: 0.3),
                 ),
               ),
-              child: const Text(
-                'Cancel Trip',
-                style: TextStyle(
-                  color: AppTheme.cancel,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
+              child: isCancellingTrip
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.cancel,
+                      ),
+                    )
+                  : const Text(
+                      'Cancel Trip',
+                      style: TextStyle(
+                        color: AppTheme.cancel,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
             ),
           ),
         ],

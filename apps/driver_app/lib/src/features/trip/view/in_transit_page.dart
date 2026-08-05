@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class InTransitPage extends StatefulWidget {
   final String pickup;
@@ -41,6 +42,7 @@ class InTransitPage extends StatefulWidget {
 
 class _InTransitPageState extends State<InTransitPage> {
   bool _isLoading = true;
+  bool _isCompletingTrip = false;
   double? _destLat;
   double? _destLng;
   double? _passengerLat;
@@ -202,12 +204,24 @@ class _InTransitPageState extends State<InTransitPage> {
   }
 
   Future<void> _completeTrip(BuildContext context) async {
-    final finalFare = await BlocProvider.of<RideFlowCubit>(
-      context,
-    ).completeRide();
-    if (finalFare == null) return;
-    if (context.mounted) {
-      context.pushReplacementNamed(
+    if (_isCompletingTrip) return;
+    setState(() => _isCompletingTrip = true);
+    try {
+      final finalFare = await BlocProvider.of<RideFlowCubit>(
+        context,
+      ).completeRide();
+      if (finalFare == null) {
+        if (mounted) {
+          CustomToast.show(
+            this.context,
+            'Unable to complete the trip. Please try again.',
+            isError: true,
+          );
+        }
+        return;
+      }
+      if (!mounted) return;
+      this.context.pushReplacementNamed(
         TripRoutes.fareSummary,
         extra: {
           'pickup': widget.pickup,
@@ -217,6 +231,8 @@ class _InTransitPageState extends State<InTransitPage> {
           'duration': widget.duration,
         },
       );
+    } finally {
+      if (mounted) setState(() => _isCompletingTrip = false);
     }
   }
 
@@ -321,6 +337,7 @@ class _InTransitPageState extends State<InTransitPage> {
                         const InTransitPassengerCardWidget(),
                         const SizedBox(height: 24),
                         InTransitCompleteButtonWidget(
+                          isCompletingTrip: _isCompletingTrip,
                           onCompleteTripPressed: () => _completeTrip(context),
                         ),
                       ],

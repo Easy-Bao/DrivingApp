@@ -4,16 +4,18 @@ import 'package:flutter/material.dart';
 
 class InTransitCompleteButtonWidget extends StatelessWidget {
   final VoidCallback onCompleteTripPressed;
+  final bool isCompletingTrip;
 
   const InTransitCompleteButtonWidget({
     super.key,
     required this.onCompleteTripPressed,
+    this.isCompletingTrip = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onCompleteTripPressed,
+      onTap: isCompletingTrip ? null : onCompleteTripPressed,
       child: Container(
         width: double.infinity,
         height: 68,
@@ -28,16 +30,25 @@ class InTransitCompleteButtonWidget extends StatelessWidget {
             ),
           ],
         ),
-        child: const Center(
-          child: Text(
-            'COMPLETE TRIP',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 0.8,
-            ),
-          ),
+        child: Center(
+          child: isCompletingTrip
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text(
+                  'COMPLETE TRIP',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 0.8,
+                  ),
+                ),
         ),
       ),
     );

@@ -46,6 +46,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   LiveMapBloc? _liveMapBloc;
   bool _isTogglingOnline = false;
   bool? _pendingOnline;
+  String? _submittingBidId;
+  String? _completingTripId;
 
   @override
   void initState() {
@@ -231,6 +233,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _acceptBid(Map<String, dynamic> bid) async {
+    if (_submittingBidId != null) return;
     if (_activeTrips.length >= 5) {
       CustomToast.show(
         context,
@@ -259,33 +262,55 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
 
-    final driverId =
-        await Modular.get<SecureSessionService>().readDriverId() ?? '';
-    final prefs = await SharedPreferences.getInstance();
-    final driverName = prefs.getString('driver_name') ?? '';
-    final vehicleType = prefs.getString('vehicle_type') ?? '';
-    final plateNumber = prefs.getString('plate_number') ?? '';
-
     final sessionId = driverValueAsString(bid['id']);
     final fare = driverFareInPesos(bid);
     if (sessionId == null || fare == null) return;
 
-    final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
-      sessionId: sessionId,
-      driverId: driverId,
-      driverName: driverName,
-      plateNumber: plateNumber,
-      vehicleType: vehicleType,
-      offerPrice: fare,
-      proposedFare: fare,
-    );
+    if (mounted) setState(() => _submittingBidId = sessionId);
+    try {
+      final driverId =
+          await Modular.get<SecureSessionService>().readDriverId() ?? '';
+      final prefs = await SharedPreferences.getInstance();
+      final driverName = prefs.getString('driver_name') ?? '';
+      final vehicleType = prefs.getString('vehicle_type') ?? '';
+      final plateNumber = prefs.getString('plate_number') ?? '';
 
-    if (mounted) {
-      if (success) {
-        CustomToast.show(context, 'Offer submitted! Waiting for passenger...');
-      } else {
-        CustomToast.show(context, 'Failed to submit offer.', isError: true);
+      final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
+        sessionId: sessionId,
+        driverId: driverId,
+        driverName: driverName,
+        plateNumber: plateNumber,
+        vehicleType: vehicleType,
+        offerPrice: fare,
+        proposedFare: fare,
+      );
+
+      if (mounted) {
+        if (success) {
+          setState(() {
+            _activeBids.removeWhere(
+              (activeBid) => driverValueAsString(activeBid['id']) == sessionId,
+            );
+          });
+          CustomToast.show(
+            context,
+            'Offer submitted! Waiting for passenger...',
+          );
+        } else {
+          CustomToast.show(context, 'Failed to submit offer.', isError: true);
+        }
       }
+    } catch (error) {
+      if (mounted) {
+        CustomToast.show(
+          context,
+          'Unable to submit the offer. Please try again.',
+          isError: true,
+        );
+      }
+      debugPrint('Unable to submit driver offer: $error');
+    } finally {
+      if (mounted) setState(() => _submittingBidId = null);
     }
   }
 
@@ -332,6 +357,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _completeTripFromDashboard(Map<String, dynamic> trip) async {
+    if (_completingTripId != null) return;
     final rideId = driverValueAsString(trip['id']);
     if (rideId == null) return;
     final fare = driverFareInPesos(trip);
@@ -339,22 +365,34 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final duration = (trip['duration_minutes'] as num?)?.toDouble();
     if (fare == null || distance == null || duration == null) return;
 
-    final cubit = BlocProvider.of<RideFlowCubit>(context);
-    cubit.resumeRide(
-      rideId: rideId,
-      status: driverValueAsString(trip['status']) ?? 'accepted',
-      passengerName: driverValueAsString(trip['passenger_name']) ?? 'Passenger',
-      distanceKm: (trip['distance_km'] as num?)?.toDouble(),
-      pickupLat: SafeParse.toNullableDouble(trip['pickup_latitude']),
-      pickupLng: SafeParse.toNullableDouble(trip['pickup_longitude']),
-      destLat: SafeParse.toNullableDouble(trip['dropoff_latitude']),
-      destLng: SafeParse.toNullableDouble(trip['dropoff_longitude']),
-    );
+    if (mounted) setState(() => _completingTripId = rideId);
+    try {
+      final cubit = BlocProvider.of<RideFlowCubit>(context);
+      cubit.resumeRide(
+        rideId: rideId,
+        status: driverValueAsString(trip['status']) ?? 'accepted',
+        passengerName:
+            driverValueAsString(trip['passenger_name']) ?? 'Passenger',
+        distanceKm: (trip['distance_km'] as num?)?.toDouble(),
+        pickupLat: SafeParse.toNullableDouble(trip['pickup_latitude']),
+        pickupLng: SafeParse.toNullableDouble(trip['pickup_longitude']),
+        destLat: SafeParse.toNullableDouble(trip['dropoff_latitude']),
+        destLng: SafeParse.toNullableDouble(trip['dropoff_longitude']),
+      );
 
-    final finalFare = await cubit.completeRide();
-    if (finalFare == null) return;
+      final finalFare = await cubit.completeRide();
+      if (finalFare == null) {
+        if (mounted) {
+          CustomToast.show(
+            context,
+            'Unable to complete the trip. Please try again.',
+            isError: true,
+          );
+        }
+        return;
+      }
+      if (!mounted) return;
 
-    if (mounted) {
       context.pushNamed(
         TripRoutes.fareSummary,
         extra: {
@@ -365,6 +403,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           'duration': '${duration.toStringAsFixed(0)} min',
         },
       );
+    } finally {
+      if (mounted) setState(() => _completingTripId = null);
     }
   }
 
@@ -609,15 +649,26 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           color: trackColor,
           borderRadius: BorderRadius.circular(24),
         ),
-        child: Switch(
-          value: isOnline,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          activeThumbColor: thumbColor,
-          activeTrackColor: Colors.transparent,
-          inactiveThumbColor: thumbColor,
-          inactiveTrackColor: Colors.transparent,
-          onChanged: (value) => _toggleOnline(context, value),
-        ),
+        child: _isTogglingOnline
+            ? Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: isOnline ? Colors.white : AppTheme.primaryColor,
+                  ),
+                ),
+              )
+            : Switch(
+                value: isOnline,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                activeThumbColor: thumbColor,
+                activeTrackColor: Colors.transparent,
+                inactiveThumbColor: thumbColor,
+                inactiveTrackColor: Colors.transparent,
+                onChanged: (value) => _toggleOnline(context, value),
+              ),
       ),
     );
   }
@@ -722,6 +773,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       (activeTrip) => activeTrip['status'] == 'in_transit',
     );
     final isQueued = hasCurrentTransitRide && status != 'in_transit';
+    final tripId = driverValueAsString(trip['id']);
+    final isCompleting = tripId != null && _completingTripId == tripId;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -864,7 +917,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   child: SizedBox(
                     height: 44,
                     child: ElevatedButton(
-                      onPressed: () => _completeTripFromDashboard(trip),
+                      onPressed: isCompleting
+                          ? null
+                          : () => _completeTripFromDashboard(trip),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.complete,
                         foregroundColor: Colors.white,
@@ -873,13 +928,22 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Complete Trip',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                      ),
+                      child: isCompleting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Complete Trip',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -915,6 +979,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final dropoff = bid['dropoff_name']?.toString() ?? '—';
     final fare = driverFareInPesos(bid);
     final distance = _distanceInKm(bid);
+    final bidId = driverValueAsString(bid['id']);
+    final isSubmitting = bidId != null && _submittingBidId == bidId;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -1036,11 +1102,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _activeBids.removeWhere((b) => b['id'] == bid['id']);
-                    });
-                  },
+                  onPressed: _submittingBidId != null
+                      ? null
+                      : () {
+                          setState(() {
+                            _activeBids.removeWhere(
+                              (b) => b['id'] == bid['id'],
+                            );
+                          });
+                        },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     side: const BorderSide(color: AppTheme.borderSide),
@@ -1061,7 +1131,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: fare == null ? null : () => _acceptBid(bid),
+                  onPressed: fare == null || _submittingBidId != null
+                      ? null
+                      : () => _acceptBid(bid),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     elevation: 0,
@@ -1070,14 +1142,23 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                       borderRadius: BorderRadius.circular(28),
                     ),
                   ),
-                  child: const Text(
-                    'Accept',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Accept',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ],

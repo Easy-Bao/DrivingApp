@@ -46,6 +46,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   int _unreadChatMessagesCount = 0;
   int _viewedPassengerMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
+  bool _isStartingTrip = false;
   String? _errorMessage;
 
   @override
@@ -110,6 +111,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   }
 
   Future<void> _startTrip() async {
+    if (_isStartingTrip) return;
     final state = BlocProvider.of<RideFlowCubit>(context).state;
     if (state is! RideFlowWaitingPassenger ||
         state.pickupLat == null ||
@@ -118,6 +120,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       return;
     }
 
+    setState(() => _isStartingTrip = true);
     try {
       var destinationLat = state.destLat;
       var destinationLng = state.destLng;
@@ -142,6 +145,9 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
         passengerLng: state.pickupLng,
       );
 
+      if (mounted && !started) {
+        _showError('Unable to start the trip right now. Please try again.');
+      }
       if (mounted && started) {
         context.pushReplacementNamed(
           TripRoutes.inTransit,
@@ -157,6 +163,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     } catch (error) {
       dev.log('Unable to resolve trip destination: $error');
       _showError('Unable to start the trip right now. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isStartingTrip = false);
     }
   }
 
@@ -225,6 +233,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                             passengerName: passengerName,
                             waitFormatted: _waitFormatted,
                             fare: widget.fare,
+                            isStartingTrip: _isStartingTrip,
                             unreadChatMessagesCount: _unreadChatMessagesCount,
                             onStartTripPressed: _startTrip,
                             onCallPressed: () async {
