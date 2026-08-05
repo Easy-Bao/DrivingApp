@@ -10,6 +10,7 @@ import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver_app/src/features/trip/presentation/widgets/en_route_pickup_panel_widget.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/trip_map_current_location_button.dart';
 import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,6 +48,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   bool _isLoading = true;
   double? _passengerLat;
   double? _passengerLng;
+  AppMapController? _mapController;
   Timer? _trackingTimer;
 
   int _unreadChatMessagesCount = 0;
@@ -193,6 +195,7 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
   }
 
   void _onMapCreated(AppMapController controller, BuildContext context) {
+    _mapController = controller;
     final pos = LocationService.lastPosition;
     final defaultLat = pos?.latitude ?? _passengerLat;
     final defaultLng = pos?.longitude ?? _passengerLng;
@@ -209,6 +212,20 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
     if (!_isLoading) {
       _triggerDrawRoute(context, defaultLat, defaultLng);
     }
+  }
+
+  Future<void> _recenterMap() async {
+    final controller = _mapController;
+    final position =
+        await LocationService.getCurrentPosition() ??
+        LocationService.lastPosition;
+    if (controller == null || position == null) return;
+    await MapProvider.moveCamera(
+      controller,
+      position.latitude,
+      position.longitude,
+      zoom: 16,
+    );
   }
 
   void _confirmArrival(BuildContext context) {
@@ -273,6 +290,13 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
                   ),
                 ),
                 SafeArea(child: _buildHeader(context)),
+                Positioned(
+                  top: 112,
+                  right: 20,
+                  child: TripMapCurrentLocationButton(
+                    onPressed: _mapController == null ? null : _recenterMap,
+                  ),
+                ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: LayoutBuilder(

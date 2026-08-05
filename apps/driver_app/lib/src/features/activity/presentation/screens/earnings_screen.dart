@@ -1,4 +1,5 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
+import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
@@ -105,7 +106,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
       try {
         final dt = DateTime.parse(t['created_at'] as String? ?? '').toLocal();
         final dayName = days[dt.weekday - 1];
-        final fare = (t['fare'] as num?)?.toDouble() ?? 0.0;
+        final fare = driverFareInPesos(Map<String, dynamic>.from(t as Map));
+        if (fare == null) continue;
         dailyAmounts[dayName] = (dailyAmounts[dayName] ?? 0) + fare;
         total += fare;
       } catch (_) {}
@@ -135,7 +137,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: _isLoading
             ? const Center(

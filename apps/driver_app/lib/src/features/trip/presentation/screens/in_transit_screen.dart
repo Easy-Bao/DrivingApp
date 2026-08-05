@@ -13,6 +13,7 @@ import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_
 import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_meta_row_widget.dart';
 import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
 import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_status_badge_widget.dart';
+import 'package:driver_app/src/features/trip/presentation/widgets/trip_map_current_location_button.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -45,6 +46,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
   double? _destLng;
   double? _passengerLat;
   double? _passengerLng;
+  AppMapController? _mapController;
   Timer? _trackingTimer;
 
   @override
@@ -167,6 +169,7 @@ class _InTransitScreenState extends State<InTransitScreen> {
   }
 
   void _onMapCreated(AppMapController controller, BuildContext context) {
+    _mapController = controller;
     final pos = LocationService.lastPosition;
     final defaultLat = pos?.latitude ?? _destLat;
     final defaultLng = pos?.longitude ?? _destLng;
@@ -183,6 +186,20 @@ class _InTransitScreenState extends State<InTransitScreen> {
     if (!_isLoading) {
       _triggerDrawRoute(context, defaultLat, defaultLng);
     }
+  }
+
+  Future<void> _recenterMap() async {
+    final controller = _mapController;
+    final position =
+        await LocationService.getCurrentPosition() ??
+        LocationService.lastPosition;
+    if (controller == null || position == null) return;
+    await MapProvider.moveCamera(
+      controller,
+      position.latitude,
+      position.longitude,
+      zoom: 16,
+    );
   }
 
   Future<void> _completeTrip(BuildContext context) async {
@@ -262,6 +279,13 @@ class _InTransitScreenState extends State<InTransitScreen> {
                         const InTransitStatusBadgeWidget(),
                       ],
                     ),
+                  ),
+                ),
+                Positioned(
+                  top: 112,
+                  right: 20,
+                  child: TripMapCurrentLocationButton(
+                    onPressed: _mapController == null ? null : _recenterMap,
                   ),
                 ),
                 Align(

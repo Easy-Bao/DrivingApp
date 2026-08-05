@@ -1,4 +1,5 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
+import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 
 import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
@@ -31,7 +32,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
   }
 
   Future<void> _loadPassengerProfile() async {
-    final passengerId = widget.trip['passenger_id'] as String?;
+    final passengerId = driverValueAsString(widget.trip['passenger_id']);
     if (passengerId == null || passengerId.isEmpty) {
       setState(() {
         _isLoading = false;
@@ -66,8 +67,8 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
   }
 
   Future<void> _contactPassenger() async {
-    final passengerId = widget.trip['passenger_id'] as String?;
-    final tripId = widget.trip['id'] as String?;
+    final passengerId = driverValueAsString(widget.trip['passenger_id']);
+    final tripId = driverValueAsString(widget.trip['id']);
 
     if (passengerId == null || tripId == null) return;
 
@@ -148,14 +149,14 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     final statusLabel = isCompleted ? 'Completed' : 'Canceled';
     final fromName = widget.trip['pickup_name'] as String? ?? 'Pickup';
     final toName = widget.trip['dropoff_name'] as String? ?? 'Dropoff';
-    final fareAmt = (widget.trip['fare'] as num?)?.toDouble() ?? 0.0;
+    final fareAmt = driverFareInPesos(widget.trip);
     final rideType = widget.trip['ride_type'] as String? ?? 'Solo Ride';
     final dateStr = _formatDate(widget.trip['created_at'] as String? ?? '');
 
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -321,7 +322,9 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '₱${fareAmt.toStringAsFixed(2)}',
+                            fareAmt == null
+                                ? '—'
+                                : '₱${fareAmt.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,

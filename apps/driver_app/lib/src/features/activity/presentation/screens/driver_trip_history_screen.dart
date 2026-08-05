@@ -1,4 +1,5 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
+import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
@@ -297,7 +298,7 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
     final statusLabel = isCompleted ? 'Completed' : 'Canceled';
     final fromName = trip['pickup_name'] as String? ?? 'Pickup';
     final toName = trip['dropoff_name'] as String? ?? 'Dropoff';
-    final fareAmt = (trip['fare'] as num?)?.toDouble() ?? 0.0;
+    final fareAmt = driverFareInPesos(Map<String, dynamic>.from(trip as Map));
 
     return GestureDetector(
       onTap: () => context.pushNamed(
@@ -365,7 +366,7 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '₱${fareAmt.toStringAsFixed(2)}',
+                  fareAmt == null ? '—' : '₱${fareAmt.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
