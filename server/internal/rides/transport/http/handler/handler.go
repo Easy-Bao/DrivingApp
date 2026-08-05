@@ -196,13 +196,18 @@ func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
-	if _, ok := handler.identity(r); !ok {
+	actorID, ok := handler.identity(r)
+	if !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
 	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid driver id")
+		return
+	}
+	if driverID != actorID {
+		errorJSON(w, 403, "forbidden")
 		return
 	}
 	stats, err := handler.service.DriverStats(r.Context(), driverID)
@@ -215,13 +220,18 @@ func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
-	if _, ok := handler.identity(r); !ok {
+	actorID, ok := handler.identity(r)
+	if !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
 	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid driver id")
+		return
+	}
+	if driverID != actorID {
+		errorJSON(w, 403, "forbidden")
 		return
 	}
 	items, err := handler.service.DriverTrips(r.Context(), driverID)

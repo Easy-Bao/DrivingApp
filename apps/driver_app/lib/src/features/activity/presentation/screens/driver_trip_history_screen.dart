@@ -200,7 +200,9 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
   Map<String, List<dynamic>> _groupByDate(List<dynamic> trips) {
     final map = <String, List<dynamic>>{};
     for (final t in trips) {
-      final dateStr = _formatDate(t['created_at'] as String? ?? '');
+      final dateStr = _formatDate(
+        t['completed_at'] as String? ?? t['created_at'] as String? ?? '',
+      );
       map.putIfAbsent(dateStr, () => []).add(t);
     }
     return map;

@@ -39,6 +39,7 @@ class DriverDashboardScreen extends StatefulWidget {
 class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _pulseCtrl;
+  late final AnimationController _availabilityCtrl;
   Timer? _rideTriggerTimer;
   StreamSubscription<Position>? _locationSubscription;
   List<Map<String, dynamic>> _activeBids = [];
@@ -55,10 +56,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+    _availabilityCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final s = BlocProvider.of<DashboardCubit>(context).state;
+        _availabilityCtrl.value = s.isOnline ? 1 : 0;
         if (s.isOnline) {
           _startPolling();
         }
@@ -70,6 +76,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _pulseCtrl.dispose();
+    _availabilityCtrl.dispose();
     _rideTriggerTimer?.cancel();
     _locationSubscription?.cancel();
     _liveMapBloc?.close();
@@ -354,8 +361,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           CustomToast.show(context, errorMessage, isError: true);
         }
         if (state.isOnline) {
+          _availabilityCtrl.forward();
           _startPolling();
         } else {
+          _availabilityCtrl.reverse();
           _stopPolling();
         }
       },
@@ -366,11 +375,56 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               (_activeBids.isNotEmpty || _activeTrips.isNotEmpty);
           return Scaffold(
             backgroundColor: AppTheme.background,
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: AppTheme.background,
+              titleSpacing: 20,
+              toolbarHeight: 76,
+              title: const Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'BaoRide',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryColor,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  SizedBox(height: 1),
+                  Text(
+                    'Driver',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.tertiaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: IconButton(
+                    tooltip: 'Account',
+                    onPressed: () => context.pushNamed(ProfileRoutes.account),
+                    icon: const Icon(LucideIcons.user_round),
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor.withValues(
+                        alpha: 0.1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             body: SafeArea(
+              top: false,
               child: Column(
                 children: [
-                  _buildTopBar(state),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _buildOnlineCardBanner(context, state),
                   const SizedBox(height: 16),
                   _buildStatsRow(state),
@@ -427,123 +481,107 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     );
   }
 
-  Widget _buildTopBar(DashboardState state) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'BaoRide',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                'Driver',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            ],
-          ),
-          GestureDetector(
-            onTap: () async {
-              await context.pushNamed(ProfileRoutes.account);
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(
-                  LucideIcons.user,
-                  color: AppTheme.primaryColor,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildOnlineCardBanner(BuildContext context, DashboardState state) {
     final isOnline = state.isOnline;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: isOnline ? AppTheme.primaryColor : AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(20),
-          border: isOnline ? null : Border.all(color: AppTheme.borderSide),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isOnline ? "You're online" : "You're offline",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: isOnline ? Colors.white : AppTheme.primaryColor,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) => AnimatedBuilder(
+          animation: _availabilityCtrl,
+          builder: (context, _) {
+            final fillWidth = constraints.maxWidth * _availabilityCtrl.value;
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.neutralColor,
+                  border: isOnline
+                      ? null
+                      : Border.all(color: AppTheme.borderSide),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  isOnline
-                      ? 'Looking for rides nearby'
-                      : 'Go online to receive rides',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isOnline
-                        ? Colors.white.withValues(alpha: 0.8)
-                        : AppTheme.primaryColor.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-            if (_isTogglingOnline)
-              const SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else
-              Transform.scale(
-                scale: 1.1,
-                child: Switch(
-                  value: isOnline,
-                  activeThumbColor: Colors.white,
-                  activeTrackColor: Colors.white.withValues(alpha: 0.3),
-                  inactiveThumbColor: AppTheme.primaryColor.withValues(
-                    alpha: 0.4,
-                  ),
-                  inactiveTrackColor: AppTheme.borderSide,
-                  onChanged: (_) => _toggleOnline(context),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: isOnline ? 0 : null,
+                      right: isOnline ? null : 0,
+                      width: fillWidth,
+                      child: const ColoredBox(color: AppTheme.primaryColor),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isOnline ? "You're online" : "You're offline",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: isOnline
+                                      ? Colors.white
+                                      : AppTheme.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isOnline
+                                    ? 'Looking for rides nearby'
+                                    : 'Go online to receive rides',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: isOnline
+                                      ? Colors.white.withValues(alpha: 0.8)
+                                      : AppTheme.primaryColor.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_isTogglingOnline)
+                            SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: isOnline
+                                    ? Colors.white
+                                    : AppTheme.primaryColor,
+                              ),
+                            )
+                          else
+                            Transform.scale(
+                              scale: 1.1,
+                              child: Switch(
+                                value: isOnline,
+                                activeThumbColor: Colors.white,
+                                activeTrackColor: Colors.white.withValues(
+                                  alpha: 0.3,
+                                ),
+                                inactiveThumbColor: AppTheme.primaryColor
+                                    .withValues(alpha: 0.4),
+                                inactiveTrackColor: AppTheme.borderSide,
+                                onChanged: (_) => _toggleOnline(context),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -570,14 +608,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppTheme.complete.withValues(alpha: 0.15),
+                  color: AppTheme.secondaryColor.withValues(alpha: 0.22),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
                   child: Icon(
                     LucideIcons.radar,
                     size: 32,
-                    color: AppTheme.complete,
+                    color: AppTheme.accent,
                   ),
                 ),
               ),
@@ -587,7 +625,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.complete,
+                  color: AppTheme.accent,
                 ),
               ),
             ],
