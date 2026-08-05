@@ -551,7 +551,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                           if (_isTogglingOnline)
                             SizedBox(
                               width: 28,
-                              height: 28,
+                              height: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: isOnline
@@ -562,16 +562,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                           else
                             Transform.scale(
                               scale: 1.1,
-                              child: Switch(
-                                value: isOnline,
-                                activeThumbColor: Colors.white,
-                                activeTrackColor: Colors.white.withValues(
-                                  alpha: 0.3,
-                                ),
-                                inactiveThumbColor: AppTheme.primaryColor
-                                    .withValues(alpha: 0.4),
-                                inactiveTrackColor: AppTheme.borderSide,
-                                onChanged: (_) => _toggleOnline(context),
+                              child: _buildAvailabilitySwitch(
+                                context,
+                                isOnline,
+                                _availabilityCtrl.value,
                               ),
                             ),
                         ],
@@ -583,6 +577,38 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvailabilitySwitch(
+    BuildContext context,
+    bool isOnline,
+    double animationProgress,
+  ) {
+    final trackColor = isOnline
+        ? Color.lerp(
+            AppTheme.primaryColor.withValues(alpha: 0.16),
+            Colors.white.withValues(alpha: 0.28),
+            animationProgress,
+          )!
+        : AppTheme.borderSide;
+    final thumbColor = isOnline && animationProgress > 0.72
+        ? Colors.white
+        : AppTheme.primaryColor;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: trackColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Switch(
+        value: isOnline,
+        activeThumbColor: thumbColor,
+        activeTrackColor: Colors.transparent,
+        inactiveThumbColor: AppTheme.primaryColor.withValues(alpha: 0.4),
+        inactiveTrackColor: Colors.transparent,
+        onChanged: (_) => _toggleOnline(context),
       ),
     );
   }
