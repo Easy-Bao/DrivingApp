@@ -6,7 +6,6 @@ import 'dart:async';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver_app/src/features/trip/presentation/widgets/en_route_pickup_panel_widget.dart';

@@ -6,7 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 
 class VerifyOtpScreen extends StatelessWidget {

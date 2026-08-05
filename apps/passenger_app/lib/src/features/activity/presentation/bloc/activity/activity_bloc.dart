@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:shared_core/shared_core.dart';
@@ -19,7 +20,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
 
   ActivityBloc({required IActivityRepository repository})
     : _repository = repository,
-      super(ActivityInitial()) {
+      super(const ActivityInitial()) {
     on<LoadActivityEvent>(_onLoad);
     on<RefreshActivityEvent>(_onRefresh);
   }
@@ -29,7 +30,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     Emitter<ActivityState> emit,
   ) async {
     if (state is! ActivityLoaded) {
-      emit(ActivityLoading());
+      emit(const ActivityLoading());
     }
     await _fetchAndEmit(event.passengerId, emit);
   }

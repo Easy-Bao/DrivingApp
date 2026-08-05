@@ -1,13 +1,12 @@
 import 'dart:async';
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/resend_otp_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
-import 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_event.dart';
-import 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_state.dart';
 
-export 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_event.dart';
-export 'package:passenger_app/src/features/auth/presentation/verify_otp/bloc/verify_otp_state.dart';
+part 'verify_otp_event.dart';
+part 'verify_otp_state.dart';
 
 class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
   final VerifyOtpUseCase _verifyOtpUseCase;

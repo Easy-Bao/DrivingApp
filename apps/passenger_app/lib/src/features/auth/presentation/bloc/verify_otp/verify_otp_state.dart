@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+part of 'verify_otp_bloc.dart';
 
 sealed class VerifyOtpState extends Equatable {
   const VerifyOtpState();

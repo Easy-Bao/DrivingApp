@@ -1,12 +1,11 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
-import 'package:passenger_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_event.dart';
-import 'package:passenger_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_state.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 
-export 'package:passenger_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_event.dart';
-export 'package:passenger_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_state.dart';
+part 'forgot_password_event.dart';
+part 'forgot_password_state.dart';
 
 class ForgotPasswordBloc
     extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {

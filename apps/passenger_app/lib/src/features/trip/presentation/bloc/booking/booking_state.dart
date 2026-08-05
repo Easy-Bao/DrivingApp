@@ -1,5 +1,4 @@
-import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
-import 'package:shared_core/shared_core.dart';
+part of 'booking_bloc.dart';
 
 abstract class BookingState {
   const BookingState();

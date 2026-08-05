@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
 import 'package:shared_core/shared_core.dart';
 
 class FindingDriverNearestPanelWidget extends StatelessWidget {

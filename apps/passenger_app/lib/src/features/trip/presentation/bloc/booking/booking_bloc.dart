@@ -6,12 +6,14 @@ import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
 import 'package:shared_core/shared_core.dart';
+
+part 'booking_event.dart';
+part 'booking_state.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final IDriverRepository _driverRepository;

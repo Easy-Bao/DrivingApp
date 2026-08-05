@@ -1,4 +1,4 @@
-import 'package:passenger_app/src/core/location/location.dart';
+part of 'live_map_bloc.dart';
 
 abstract class LiveMapEvent {
   const LiveMapEvent();

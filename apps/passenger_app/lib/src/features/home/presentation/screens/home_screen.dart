@@ -14,8 +14,7 @@ import 'package:passenger_app/src/features/saved_places/domain/entities/saved_pl
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/screens/saved_place_screen.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';

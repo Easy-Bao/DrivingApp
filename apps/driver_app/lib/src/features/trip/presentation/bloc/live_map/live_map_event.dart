@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/location/location.dart';
+part of 'live_map_bloc.dart';
 
 abstract class LiveMapEvent {
   const LiveMapEvent();

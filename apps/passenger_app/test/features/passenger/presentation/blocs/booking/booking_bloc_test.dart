@@ -9,9 +9,7 @@ import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_rep
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_event.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_state.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockDriverRepo extends Mock implements IDriverRepository {}

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
-import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
+import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockActivityRepo extends Mock implements IActivityRepository {}
@@ -67,7 +67,7 @@ void main() {
         ).thenAnswer((_) async => const Right([completedRide, requestedRide]));
         return _makeCubit(repo);
       },
-      act: (bloc) => bloc.add(LoadActivityEvent(passengerId: 'pass-1')),
+      act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
       expect: () => [
         isA<ActivityLoading>(),
         isA<ActivityLoaded>()
@@ -86,7 +86,7 @@ void main() {
         ).thenAnswer((_) async => const Left(ServerFailure('network error')));
         return _makeCubit(repo);
       },
-      act: (bloc) => bloc.add(LoadActivityEvent(passengerId: 'pass-1')),
+      act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
       expect: () => [
         isA<ActivityLoading>(),
         isA<ActivityError>().having(
@@ -105,7 +105,7 @@ void main() {
         ).thenAnswer((_) async => const Right([]));
         return _makeCubit(repo);
       },
-      act: (bloc) => bloc.add(LoadActivityEvent(passengerId: 'pass-1')),
+      act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
       expect: () => [
         isA<ActivityLoading>(),
         isA<ActivityLoaded>()
@@ -124,7 +124,7 @@ void main() {
         ).thenAnswer((_) async => const Right([]));
         return _makeCubit(repo);
       },
-      act: (bloc) => bloc.add(RefreshActivityEvent(passengerId: 'pass-1')),
+      act: (bloc) => bloc.add(const RefreshActivityEvent(passengerId: 'pass-1')),
       expect: () => [isA<ActivityLoaded>()],
     );
   });

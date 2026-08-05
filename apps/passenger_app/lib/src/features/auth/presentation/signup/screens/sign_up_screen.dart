@@ -7,7 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/core/utils/phone_number_validator.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';

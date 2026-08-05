@@ -5,9 +5,10 @@ import 'dart:ui' show Color;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_state.dart';
 import 'package:rxdart/rxdart.dart';
+
+part 'live_map_event.dart';
+part 'live_map_state.dart';
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final BiddingRemoteDataSource _biddingDataSource;

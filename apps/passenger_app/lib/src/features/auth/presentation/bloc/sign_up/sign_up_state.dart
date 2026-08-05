@@ -1,5 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
+part of 'sign_up_bloc.dart';
 
 sealed class SignUpState extends Equatable {
   const SignUpState();

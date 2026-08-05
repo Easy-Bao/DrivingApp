@@ -7,7 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
-import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
+import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -586,7 +586,7 @@ class _PassengerActivityScreenState extends State<PassengerActivityScreen> {
     if (passengerId.isNotEmpty) {
       _bloc.add(LoadActivityEvent(passengerId: passengerId));
     } else {
-      _bloc.add(LoadActivityEvent(passengerId: ''));
+      _bloc.add(const LoadActivityEvent(passengerId: ''));
     }
   }
 

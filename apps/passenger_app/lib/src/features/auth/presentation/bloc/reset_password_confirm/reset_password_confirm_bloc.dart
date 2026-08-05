@@ -1,12 +1,11 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/confirm_reset_password_use_case.dart';
-import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_event.dart';
-import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_state.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 
-export 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_event.dart';
-export 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_state.dart';
+part 'reset_password_confirm_event.dart';
+part 'reset_password_confirm_state.dart';
 
 class ResetPasswordConfirmBloc
     extends Bloc<ResetPasswordConfirmEvent, ResetPasswordConfirmState> {

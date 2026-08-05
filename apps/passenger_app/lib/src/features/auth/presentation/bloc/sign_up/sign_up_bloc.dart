@@ -1,13 +1,12 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/register_use_case.dart';
-import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_event.dart';
-import 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_state.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 
-export 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_event.dart';
-export 'package:passenger_app/src/features/auth/presentation/signup/bloc/sign_up_state.dart';
+part 'sign_up_event.dart';
+part 'sign_up_state.dart';
 
 class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   final RegisterUseCase _registerUseCase;

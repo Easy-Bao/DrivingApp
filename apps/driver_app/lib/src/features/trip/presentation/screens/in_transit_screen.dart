@@ -5,7 +5,6 @@ import 'dart:async';
 
 import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_complete_button_widget.dart';

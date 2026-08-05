@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+part of 'reset_password_confirm_bloc.dart';
 
 sealed class ResetPasswordConfirmEvent extends Equatable {
   const ResetPasswordConfirmEvent();

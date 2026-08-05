@@ -4,7 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/bloc/reset_password_confirm_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/bloc/reset_password_confirm/reset_password_confirm_bloc.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:shared_ui/shared_ui.dart';
 

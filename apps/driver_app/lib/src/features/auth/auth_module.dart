@@ -2,7 +2,7 @@ import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/data/repositories/auth_repository.dart';
 import 'package:driver_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:driver_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
-import 'package:driver_app/src/features/auth/presentation/forgot_password/bloc/forgot_password_bloc.dart';
+import 'package:driver_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:driver_app/src/features/auth/presentation/forgot_password/screens/forgot_password_screen.dart';
 import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver_app/src/features/auth/presentation/signin/screens/sign_in_screen.dart';

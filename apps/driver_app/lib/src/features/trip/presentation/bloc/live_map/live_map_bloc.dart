@@ -4,13 +4,13 @@ import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_state.dart';
-
 import 'package:rxdart/rxdart.dart';
 
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
+
+part 'live_map_event.dart';
+part 'live_map_state.dart';
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final TelemetryRemoteDataSource _telemetryDataSource;

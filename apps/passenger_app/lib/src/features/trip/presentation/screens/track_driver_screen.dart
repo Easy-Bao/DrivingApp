@@ -13,7 +13,6 @@ import 'package:passenger_app/src/features/booking/data/data_sources/bidding_rem
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/track_driver_panel_widget.dart';

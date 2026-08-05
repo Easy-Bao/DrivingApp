@@ -6,7 +6,7 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/activity/activity_module.dart';
 import 'package:passenger_app/src/features/activity/data/repositories/activity_repository.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
-import 'package:passenger_app/src/features/activity/presentation/bloc/activity_bloc.dart';
+import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
 import 'package:passenger_app/src/features/chat/chat_module.dart';
@@ -28,7 +28,7 @@ import 'package:passenger_app/src/features/trip/data/repositories/driver_reposit
 import 'package:passenger_app/src/features/trip/data/repositories/track_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/trip_module.dart';
