@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+part of 'sign_in_bloc.dart';
 
 sealed class SignInEvent extends Equatable {
   const SignInEvent();
@@ -7,7 +7,7 @@ sealed class SignInEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class SignInSubmitted extends SignInEvent {
+final class SignInSubmitted extends SignInEvent {
   final String email;
   final String password;
 

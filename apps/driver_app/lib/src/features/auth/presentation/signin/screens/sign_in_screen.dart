@@ -4,7 +4,7 @@ import 'package:driver_app/src/features/auth/presentation/widgets/social_login_w
 import 'dart:async';
 
 import 'package:driver_app/src/features/auth/auth_routes.dart';
-import 'package:driver_app/src/features/auth/presentation/signin/bloc/sign_in_bloc.dart';
+import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

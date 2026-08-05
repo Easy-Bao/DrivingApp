@@ -6,7 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/auth/presentation/signin/bloc/sign_in_bloc.dart';
+import 'package:passenger_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';

@@ -1,5 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
+part of 'sign_in_bloc.dart';
 
 sealed class SignInState extends Equatable {
   const SignInState();
@@ -8,15 +7,15 @@ sealed class SignInState extends Equatable {
   List<Object?> get props => [];
 }
 
-class SignInInitial extends SignInState {
+final class SignInInitial extends SignInState {
   const SignInInitial();
 }
 
-class SignInLoading extends SignInState {
+final class SignInLoading extends SignInState {
   const SignInLoading();
 }
 
-class SignInSuccess extends SignInState {
+final class SignInSuccess extends SignInState {
   final AuthCredentials credentials;
 
   const SignInSuccess(this.credentials);
@@ -25,7 +24,7 @@ class SignInSuccess extends SignInState {
   List<Object?> get props => [credentials];
 }
 
-class SignInFailure extends SignInState {
+final class SignInFailure extends SignInState {
   final String errorMessage;
 
   const SignInFailure(this.errorMessage);
