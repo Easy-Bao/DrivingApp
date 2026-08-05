@@ -14,11 +14,7 @@ func NewRouter(service *usecase.Service) *Router {
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Route(api.V1Prefix, func(routes chi.Router) {
-		routes.Route("/chat", func(chatRoutes chi.Router) {
-			chatRoutes.Post("/rooms", router.handler.CreateRoom)
-			chatRoutes.Get("/rooms/{roomID}/messages", router.handler.Messages)
-			chatRoutes.Post("/rooms/{roomID}/resolve", router.handler.Resolve)
-		})
-	})
+	mux.Post(api.V1Prefix+"/chat/rooms", router.handler.CreateRoom)
+	mux.Get(api.V1Prefix+"/chat/rooms/{roomID}/messages", router.handler.Messages)
+	mux.Post(api.V1Prefix+"/chat/rooms/{roomID}/resolve", router.handler.Resolve)
 }

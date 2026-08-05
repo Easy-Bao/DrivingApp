@@ -14,12 +14,8 @@ func NewRouter(service *usecase.Service) *Router {
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Route(api.V1Prefix, func(routes chi.Router) {
-		routes.Route("/location", func(locationRoutes chi.Router) {
-			locationRoutes.Get("/search", router.handler.Search)
-			locationRoutes.Get("/nearby", router.handler.Nearby)
-			locationRoutes.Get("/reverse", router.handler.Reverse)
-			locationRoutes.Post("/route", router.handler.Route)
-		})
-	})
+	mux.Get(api.V1Prefix+"/location/search", router.handler.Search)
+	mux.Get(api.V1Prefix+"/location/nearby", router.handler.Nearby)
+	mux.Get(api.V1Prefix+"/location/reverse", router.handler.Reverse)
+	mux.Post(api.V1Prefix+"/location/route", router.handler.Route)
 }

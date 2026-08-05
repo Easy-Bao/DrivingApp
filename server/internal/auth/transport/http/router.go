@@ -18,16 +18,14 @@ func NewRouter(register *usecase.RegisterService, authenticate *usecase.Authenti
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Route(api.V1Prefix, func(routes chi.Router) {
-		routes.Post("/auth/register", router.handler.GenericRegister)
-		routes.Post("/auth/login", router.handler.Login)
-		routes.Post("/auth/passenger/register", router.handler.PassengerRegister)
-		routes.Post("/auth/driver/register", router.handler.DriverRegister)
-		routes.Post("/auth/passenger/login", router.handler.Login)
-		routes.Post("/auth/driver/login", router.handler.Login)
-		routes.Post("/auth/passenger/otp", router.handler.RequestOTP)
-		routes.Post("/auth/passenger/verify-otp", router.handler.VerifyOTP)
-		routes.Post("/auth/passenger/forgot-password", router.handler.ForgotPassword)
-		routes.Post("/auth/passenger/reset-password", router.handler.ResetPassword)
-	})
+	mux.Post(api.V1Prefix+"/auth/register", router.handler.GenericRegister)
+	mux.Post(api.V1Prefix+"/auth/login", router.handler.Login)
+	mux.Post(api.V1Prefix+"/auth/passenger/register", router.handler.PassengerRegister)
+	mux.Post(api.V1Prefix+"/auth/driver/register", router.handler.DriverRegister)
+	mux.Post(api.V1Prefix+"/auth/passenger/login", router.handler.Login)
+	mux.Post(api.V1Prefix+"/auth/driver/login", router.handler.Login)
+	mux.Post(api.V1Prefix+"/auth/passenger/otp", router.handler.RequestOTP)
+	mux.Post(api.V1Prefix+"/auth/passenger/verify-otp", router.handler.VerifyOTP)
+	mux.Post(api.V1Prefix+"/auth/passenger/forgot-password", router.handler.ForgotPassword)
+	mux.Post(api.V1Prefix+"/auth/passenger/reset-password", router.handler.ResetPassword)
 }

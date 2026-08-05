@@ -15,7 +15,5 @@ func NewRouter(service *usecase.Service, verifier *token.Verifier) *Router {
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Route(api.V1Prefix, func(routes chi.Router) {
-		routes.Get("/admin/stats", router.handler.Stats)
-	})
+	mux.Get(api.V1Prefix+"/admin/stats", router.handler.Stats)
 }

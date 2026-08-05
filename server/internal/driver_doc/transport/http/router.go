@@ -15,9 +15,7 @@ func NewRouter(service *usecase.Service, verifier *token.Verifier) *Router {
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Route(api.V1Prefix, func(routes chi.Router) {
-		routes.Post("/driver/documents", router.handler.Upload)
-		routes.Get("/driver/documents/status", router.handler.Status)
-		routes.Patch("/admin/documents/{id}/review", router.handler.Review)
-	})
+	mux.Post(api.V1Prefix+"/driver/documents", router.handler.Upload)
+	mux.Get(api.V1Prefix+"/driver/documents/status", router.handler.Status)
+	mux.Patch(api.V1Prefix+"/admin/documents/{id}/review", router.handler.Review)
 }

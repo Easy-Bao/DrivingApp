@@ -15,13 +15,9 @@ func NewRouter(service *usecase.Service, auth ...*security.TokenManager) *Router
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Route(api.V1Prefix, func(routes chi.Router) {
-		routes.Route("/telemetry", func(telemetryRoutes chi.Router) {
-			telemetryRoutes.Post("/location", router.handler.UpdateDriverLocation)
-			telemetryRoutes.Get("/location/nearby", router.handler.NearbyDrivers)
-			telemetryRoutes.Get("/location/{driverID}", router.handler.GetDriverLocation)
-			telemetryRoutes.Post("/passenger/{rideID}", router.handler.UpdatePassengerLocation)
-			telemetryRoutes.Get("/passenger/{rideID}", router.handler.GetPassengerLocation)
-		})
-	})
+	mux.Post(api.V1Prefix+"/telemetry/location", router.handler.UpdateDriverLocation)
+	mux.Get(api.V1Prefix+"/telemetry/location/nearby", router.handler.NearbyDrivers)
+	mux.Get(api.V1Prefix+"/telemetry/location/{driverID}", router.handler.GetDriverLocation)
+	mux.Post(api.V1Prefix+"/telemetry/passenger/{rideID}", router.handler.UpdatePassengerLocation)
+	mux.Get(api.V1Prefix+"/telemetry/passenger/{rideID}", router.handler.GetPassengerLocation)
 }
