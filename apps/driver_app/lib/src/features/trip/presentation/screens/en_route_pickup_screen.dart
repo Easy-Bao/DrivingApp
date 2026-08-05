@@ -220,9 +220,13 @@ class _EnRoutePickupScreenState extends State<EnRoutePickupScreen> {
     final pickupLat = pickupState?.pickupLat ?? _passengerLat;
     final pickupLng = pickupState?.pickupLng ?? _passengerLng;
     if (pickupLat == null || pickupLng == null) return;
-    BlocProvider.of<RideFlowCubit>(
-      context,
-    ).arriveAtPickup(passengerName, pickupLat: pickupLat, pickupLng: pickupLng);
+    BlocProvider.of<RideFlowCubit>(context).arriveAtPickup(
+      passengerName,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      destLat: pickupState?.destLat,
+      destLng: pickupState?.destLng,
+    );
     context.pushReplacementNamed(
       TripRoutes.waitingPassenger,
       extra: {

@@ -9,13 +9,6 @@ class ActivityModule {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: ActivityRoutes.tripHistory,
-      'earnings/trip-history',
-      child: (context, GoRouterState state) => const DriverTripHistoryScreen(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
       name: ActivityRoutes.tripDetail,
       'earnings/trip-detail',
       child: (context, GoRouterState state) =>
@@ -25,5 +18,13 @@ class ActivityModule {
     ),
   ];
 
-  static List<ModularRoute> shellRoutes = [];
+  static List<ModularRoute> shellRoutes = [
+    ChildRoute(
+      name: ActivityRoutes.tripHistory,
+      'trips',
+      child: (context, GoRouterState state) => const DriverTripHistoryScreen(),
+      transition: AppTransitions.none,
+      transitionDuration: Duration.zero,
+    ),
+  ];
 }

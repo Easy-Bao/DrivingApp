@@ -7,6 +7,7 @@ import 'package:driver_app/src/core/location/repositories/map_native_service.dar
 import 'package:driver_app/src/core/location/services/map_annotation_service.dart';
 import 'package:driver_app/src/core/location/services/map_camera_service.dart';
 import 'package:driver_app/src/core/location/services/device_location_service.dart';
+import 'package:driver_app/src/core/theme/app_theme.dart';
 
 export 'package:driver_app/src/core/location/services/map_annotation_service.dart';
 export 'package:driver_app/src/core/location/services/map_camera_service.dart';
@@ -317,7 +318,7 @@ class MapProvider {
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 4.0,
   }) => MapAnnotationService.addPolyline(
     controller,
@@ -329,7 +330,7 @@ class MapProvider {
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolylineSegment(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 5.0,
   }) => MapAnnotationService.addAnimatedPolylineSegment(
     controller,
@@ -341,7 +342,7 @@ class MapProvider {
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 5.0,
     Duration step = const Duration(milliseconds: 45),
   }) => MapAnnotationService.addAnimatedPolyline(

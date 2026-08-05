@@ -18,8 +18,8 @@ class HomeModule {
         value: Modular.get<DashboardCubit>()..initialize(),
         child: const DriverDashboardScreen(),
       ),
-      transition: AppTransitions.fade,
-      transitionDuration: AppTransitions.fadeDuration,
+      transition: AppTransitions.none,
+      transitionDuration: Duration.zero,
     ),
   ];
 }

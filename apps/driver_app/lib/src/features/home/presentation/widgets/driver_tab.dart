@@ -1,6 +1,7 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'package:driver_app/src/features/home/home_routes.dart';
+import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -31,8 +32,9 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
   int _calcIndex(BuildContext context) {
     final loc = GoRouterState.of(context).uri.path;
     if (loc.startsWith('/driver/dashboard')) return 0;
-    if (loc.startsWith('/driver/earnings')) return 1;
-    if (loc.startsWith('/driver/account')) return 2;
+    if (loc.startsWith('/driver/trips')) return 1;
+    if (loc.startsWith('/driver/earnings')) return 2;
+    if (loc.startsWith('/driver/account')) return 3;
     return 0;
   }
 
@@ -47,9 +49,12 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
         context.goNamed(HomeRoutes.dashboard);
         break;
       case 1:
-        context.goNamed(ProfileRoutes.earnings);
+        context.goNamed(ActivityRoutes.tripHistory);
         break;
       case 2:
+        context.goNamed(ProfileRoutes.earnings);
+        break;
+      case 3:
         context.goNamed(ProfileRoutes.account);
         break;
     }
@@ -86,7 +91,7 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
         bottomNavigationBar: SafeArea(
           top: false,
           child: Container(
-            height: 60,
+            height: 76,
             decoration: BoxDecoration(
               color: AppTheme.surface,
               border: Border(
@@ -105,8 +110,9 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
                   0,
                   sel == 0,
                 ),
-                _tab(context, LucideIcons.wallet, 'Earnings', 1, sel == 1),
-                _tab(context, LucideIcons.user, 'Account', 2, sel == 2),
+                _tab(context, LucideIcons.history, 'Trips', 1, sel == 1),
+                _tab(context, LucideIcons.wallet, 'Earnings', 2, sel == 2),
+                _tab(context, LucideIcons.user, 'Account', 3, sel == 3),
               ],
             ),
           ),

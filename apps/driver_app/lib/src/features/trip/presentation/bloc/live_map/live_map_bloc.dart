@@ -1,9 +1,9 @@
 import 'package:driver_app/src/core/location/location.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
-import 'dart:ui' show Color;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_event.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_state.dart';
 
@@ -83,18 +83,20 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.driverLat,
       event.driverLng,
       isOrigin: true,
-      label: 'Current location\nYou are here',
-      color: const Color(0xFF222222),
+      label: 'Your location\nCurrent position',
+      color: AppTheme.primaryColor,
     );
     _markerManagers.add(driverManager);
 
-    if (event.passengerLat != null && event.passengerLng != null) {
+    if (event.routeTargetLat == null &&
+        event.passengerLat != null &&
+        event.passengerLng != null) {
       final passengerManager = await MapProvider.addMarker(
         _mapController!,
         event.passengerLat!,
         event.passengerLng!,
         label: 'Passenger\nPickup location',
-        color: const Color(0xFF2E7D32),
+        color: AppTheme.complete,
       );
       _markerManagers.add(passengerManager);
     }
@@ -102,6 +104,17 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     final targetLat = event.routeTargetLat ?? event.passengerLat;
     final targetLng = event.routeTargetLng ?? event.passengerLng;
     if (targetLat == null || targetLng == null) return;
+
+    if (event.routeTargetLat != null && event.routeTargetLng != null) {
+      final destinationManager = await MapProvider.addMarker(
+        _mapController!,
+        targetLat,
+        targetLng,
+        label: 'Destination\nDrop-off point',
+        color: AppTheme.accent,
+      );
+      _markerManagers.add(destinationManager);
+    }
 
     await MapProvider.fitBounds(_mapController!, [
       LatLng(event.driverLat, event.driverLng),
@@ -119,7 +132,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       final polylineManager = await MapProvider.addAnimatedPolyline(
         _mapController!,
         routePoints,
-        color: const Color(0xFF222222),
+        color: AppTheme.primaryColor,
         width: 5.0,
       );
       _polylineManagers.add(polylineManager);

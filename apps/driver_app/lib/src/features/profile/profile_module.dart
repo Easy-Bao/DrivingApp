@@ -14,15 +14,15 @@ class ProfileModule {
       name: ProfileRoutes.earnings,
       'earnings',
       child: (context, GoRouterState state) => const DriverEarningsScreen(),
-      transition: AppTransitions.fade,
-      transitionDuration: AppTransitions.fadeDuration,
+      transition: AppTransitions.none,
+      transitionDuration: Duration.zero,
     ),
     ChildRoute(
       name: ProfileRoutes.account,
       'account',
       child: (context, GoRouterState state) => const DriverAccountScreen(),
-      transition: AppTransitions.fade,
-      transitionDuration: AppTransitions.fadeDuration,
+      transition: AppTransitions.none,
+      transitionDuration: Duration.zero,
     ),
   ];
 }

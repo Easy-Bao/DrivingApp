@@ -49,6 +49,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           waitTimeSeconds: 0,
           pickupLat: pickupLat,
           pickupLng: pickupLng,
+          destLat: destLat,
+          destLng: destLng,
         ),
       );
     } else if (status == 'in_transit') {
@@ -68,6 +70,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           passengerName: passengerName,
           pickupLat: pickupLat,
           pickupLng: pickupLng,
+          destLat: destLat,
+          destLng: destLng,
         ),
       );
     }
@@ -78,6 +82,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     required String passengerName,
     required double pickupLat,
     required double pickupLng,
+    double? destLat,
+    double? destLng,
   }) async {
     _activeRideId = rideId;
     _activePassengerName = passengerName;
@@ -108,6 +114,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           passengerName: passengerName,
           pickupLat: pickupLat,
           pickupLng: pickupLng,
+          destLat: destLat,
+          destLng: destLng,
         ),
       );
     } catch (error) {
@@ -120,6 +128,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     String passengerName, {
     double? pickupLat,
     double? pickupLng,
+    double? destLat,
+    double? destLng,
   }) async {
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
@@ -149,6 +159,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         waitTimeSeconds: 0,
         pickupLat: pickupLat,
         pickupLng: pickupLng,
+        destLat: destLat,
+        destLng: destLng,
       ),
     );
     _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -160,6 +172,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
           waitTimeSeconds: _elapsedWaitTime,
           pickupLat: pickupLat,
           pickupLng: pickupLng,
+          destLat: destLat,
+          destLng: destLng,
         ),
       );
     });

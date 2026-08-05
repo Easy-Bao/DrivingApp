@@ -72,7 +72,11 @@ class DriverModule extends Module {
     ShellModularRoute(
       builder: (context, GoRouterState state, child) =>
           DriverShellLayout(child: child),
-      routes: [...HomeModule.shellRoutes, ...ProfileModule.shellRoutes],
+      routes: [
+        ...HomeModule.shellRoutes,
+        ...ActivityModule.shellRoutes,
+        ...ProfileModule.shellRoutes,
+      ],
     ),
   ];
 }

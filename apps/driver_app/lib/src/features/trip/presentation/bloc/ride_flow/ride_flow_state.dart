@@ -15,15 +15,25 @@ class RideFlowEnRoutePickup extends RideFlowState {
   final String passengerName;
   final double? pickupLat;
   final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
 
   const RideFlowEnRoutePickup({
     required this.passengerName,
     this.pickupLat,
     this.pickupLng,
+    this.destLat,
+    this.destLng,
   });
 
   @override
-  List<Object?> get props => [passengerName, pickupLat, pickupLng];
+  List<Object?> get props => [
+    passengerName,
+    pickupLat,
+    pickupLng,
+    destLat,
+    destLng,
+  ];
 }
 
 class RideFlowWaitingPassenger extends RideFlowState {
@@ -31,12 +41,16 @@ class RideFlowWaitingPassenger extends RideFlowState {
   final int waitTimeSeconds;
   final double? pickupLat;
   final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
 
   const RideFlowWaitingPassenger({
     required this.passengerName,
     required this.waitTimeSeconds,
     this.pickupLat,
     this.pickupLng,
+    this.destLat,
+    this.destLng,
   });
 
   @override
@@ -45,6 +59,8 @@ class RideFlowWaitingPassenger extends RideFlowState {
     waitTimeSeconds,
     pickupLat,
     pickupLng,
+    destLat,
+    destLng,
   ];
 }
 

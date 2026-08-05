@@ -109,6 +109,32 @@ void main() {
     );
   });
 
+  group('RideFlowCubit — resumed destination continuity', () {
+    blocTest<RideFlowCubit, RideFlowState>(
+      'keeps the server destination while waiting for the passenger',
+      build: () => _makeCubit(mockTripRemoteDataSource, mockSessionService),
+      act: (cubit) => cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'arrived',
+        passengerName: 'Juan Dela Cruz',
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+        destLat: 7.85,
+        destLng: 123.45,
+      ),
+      expect: () => [
+        const RideFlowWaitingPassenger(
+          passengerName: 'Juan Dela Cruz',
+          waitTimeSeconds: 0,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          destLat: 7.85,
+          destLng: 123.45,
+        ),
+      ],
+    );
+  });
+
   group('RideFlowCubit — reset()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'returns to RideFlowInitial from any state',

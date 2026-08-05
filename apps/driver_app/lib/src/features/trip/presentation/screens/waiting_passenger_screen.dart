@@ -119,19 +119,24 @@ class _WaitingPassengerScreenState extends State<WaitingPassengerScreen> {
     }
 
     try {
-      final places = await MapProvider.searchPlaces(widget.dropoff);
-      if (places.isEmpty) {
-        _showError('The destination could not be located.');
-        return;
+      var destinationLat = state.destLat;
+      var destinationLng = state.destLng;
+      if (destinationLat == null || destinationLng == null) {
+        final places = await MapProvider.searchPlaces(widget.dropoff);
+        if (places.isEmpty) {
+          _showError('The destination could not be located.');
+          return;
+        }
+        destinationLat = places.first.latitude;
+        destinationLng = places.first.longitude;
       }
-      final destination = places.first;
 
       if (!mounted) return;
 
       final started = await BlocProvider.of<RideFlowCubit>(context).startRide(
         passengerName: state.passengerName,
-        destLat: destination.latitude,
-        destLng: destination.longitude,
+        destLat: destinationLat,
+        destLng: destinationLng,
         distanceKm: widget.distance,
         passengerLat: state.pickupLat,
         passengerLng: state.pickupLng,

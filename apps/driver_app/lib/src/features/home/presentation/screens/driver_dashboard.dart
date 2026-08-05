@@ -367,7 +367,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               state.isOnline &&
               (_activeBids.isNotEmpty || _activeTrips.isNotEmpty);
           return Scaffold(
-            backgroundColor: AppTheme.surface,
+            backgroundColor: AppTheme.background,
             body: SafeArea(
               child: Column(
                 children: [
@@ -404,7 +404,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.secondaryColor,
+                                    color: AppTheme.accent,
                                   ),
                                 ),
                               ],
@@ -491,7 +491,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: isOnline ? AppTheme.secondaryColor : AppTheme.neutralColor,
+          color: isOnline ? AppTheme.primaryColor : AppTheme.neutralColor,
           borderRadius: BorderRadius.circular(20),
           border: isOnline ? null : Border.all(color: AppTheme.borderSide),
         ),
@@ -992,7 +992,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 child: ElevatedButton(
                   onPressed: fare == null ? null : () => _acceptBid(bid),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.secondaryColor,
+                    backgroundColor: AppTheme.primaryColor,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

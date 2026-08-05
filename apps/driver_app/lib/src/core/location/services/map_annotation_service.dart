@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/location/services/map_camera_service.dart';
 
 class MapAnnotationService {
@@ -23,7 +24,9 @@ class MapAnnotationService {
 
     final markerColor = color != null
         ? color.toARGB32()
-        : (isOrigin ? 0xFF222222 : 0xFF607B8B);
+        : (isOrigin
+              ? AppTheme.primaryColor.toARGB32()
+              : AppTheme.accent.toARGB32());
 
     await annotationManager.create(
       mapbox.PointAnnotationOptions(
@@ -52,7 +55,7 @@ class MapAnnotationService {
     const height = 104.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    final background = Paint()..color = Colors.white;
+    final background = Paint()..color = AppTheme.surface;
     final shadow = Paint()..color = const Color(0x22000000);
     final cardRect = RRect.fromRectAndRadius(
       const Rect.fromLTWH(8, 8, width - 16, 78),
@@ -78,7 +81,7 @@ class MapAnnotationService {
       width: 250,
       fontSize: 23,
       fontWeight: FontWeight.w700,
-      color: const Color(0xFF1A1D20),
+      color: AppTheme.primaryColor,
     );
     if (lines.length > 1) {
       _drawLabelText(
@@ -88,7 +91,7 @@ class MapAnnotationService {
         width: 250,
         fontSize: 18,
         fontWeight: FontWeight.w500,
-        color: const Color(0x991A1D20),
+        color: AppTheme.primaryColor.withValues(alpha: 0.6),
       );
     }
 
@@ -160,7 +163,7 @@ class MapAnnotationService {
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 4.0,
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
@@ -183,7 +186,7 @@ class MapAnnotationService {
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolylineSegment(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 5.0,
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;
@@ -207,7 +210,7 @@ class MapAnnotationService {
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 5.0,
     Duration step = const Duration(milliseconds: 45),
   }) async {

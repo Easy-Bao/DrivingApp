@@ -210,18 +210,12 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
     final grouped = _groupByDate(_filteredTripsList);
 
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
         title: const Text(
           'Trip History',
           style: TextStyle(
@@ -230,7 +224,7 @@ class _DriverTripHistoryScreenState extends State<DriverTripHistoryScreen> {
             color: AppTheme.primaryColor,
           ),
         ),
-        centerTitle: true,
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.funnel, color: AppTheme.primaryColor),
