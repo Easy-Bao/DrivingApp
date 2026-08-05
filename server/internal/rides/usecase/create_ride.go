@@ -26,12 +26,19 @@ func (calculator RouteCalculatorFunc) CalculateRoute(ctx context.Context, origin
 type Service struct {
 	repository      domain.Repository
 	routeCalculator RouteCalculator
+	pricingConfig   PricingConfig
 }
 
-func NewService(repository domain.Repository) *Service { return &Service{repository: repository} }
+func NewService(repository domain.Repository, pricingConfig PricingConfig) *Service {
+	return &Service{repository: repository, pricingConfig: pricingConfig}
+}
 
-func NewServiceWithRouteCalculator(repository domain.Repository, calculator RouteCalculator) *Service {
-	return &Service{repository: repository, routeCalculator: calculator}
+func NewServiceWithRouteCalculator(repository domain.Repository, calculator RouteCalculator, pricingConfig PricingConfig) *Service {
+	return &Service{repository: repository, routeCalculator: calculator, pricingConfig: pricingConfig}
+}
+
+func (service *Service) PricingConfig() PricingConfig {
+	return service.pricingConfig
 }
 func (service *Service) CreateRide(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
 	return service.repository.CreateRide(ctx, domain.Ride{PassengerID: passengerID, Status: "requested", FareCentavos: fareCentavos, RideType: "Solo Ride"})
@@ -56,7 +63,7 @@ func (service *Service) CreateRideWithDetails(ctx context.Context, ride domain.R
 	}
 	ride.DistanceKm = metrics.DistanceKm
 	ride.DurationMinutes = metrics.DurationMinutes
-	ride.FareCentavos = CalculateFare(metrics.DistanceKm, metrics.DurationMinutes)
+	ride.FareCentavos = service.CalculateFare(metrics.DistanceKm, metrics.DurationMinutes)
 	if ride.Status == "" {
 		ride.Status = "requested"
 	}
@@ -75,13 +82,13 @@ func (service *Service) Fare(ctx context.Context, originLat, originLng, destinat
 		if err != nil {
 			return RouteMetrics{}, 0, err
 		}
-		return metrics, CalculateFare(metrics.DistanceKm, metrics.DurationMinutes), nil
+		return metrics, service.CalculateFare(metrics.DistanceKm, metrics.DurationMinutes), nil
 	}
 	if err := validateTrip(0, 0, 0, 0, distanceKm, durationMinutes); err != nil {
 		return RouteMetrics{}, 0, err
 	}
 	metrics := RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}
-	return metrics, CalculateFare(distanceKm, durationMinutes), nil
+	return metrics, service.CalculateFare(distanceKm, durationMinutes), nil
 }
 
 func (service *Service) authoritativeRoute(ctx context.Context, pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes float64) (RouteMetrics, error) {
@@ -153,15 +160,8 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	return repository.UpdateStatus(ctx, rideID, actorID, current.Status, next)
 }
 
-func CalculateFare(distanceKm, durationMinutes float64) int64 {
-	if !isFiniteNonNegative(distanceKm) || !isFiniteNonNegative(durationMinutes) {
-		return 0
-	}
-	total := 2500 + distanceKm*100 + durationMinutes*50
-	if total < 2500 {
-		return 2500
-	}
-	return int64(total)
+func (service *Service) CalculateFare(distanceKm, durationMinutes float64) int64 {
+	return service.pricingConfig.FareCentavos(distanceKm, durationMinutes)
 }
 
 func validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes float64) error {
@@ -175,10 +175,6 @@ func validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongi
 		return domain.ErrInvalidTrip
 	}
 	return nil
-}
-
-func isFiniteNonNegative(value float64) bool {
-	return !math.IsNaN(value) && !math.IsInf(value, 0) && value >= 0
 }
 
 func (service *Service) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {

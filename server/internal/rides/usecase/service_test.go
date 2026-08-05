@@ -15,6 +15,15 @@ type ridesRepositoryStub struct {
 	updateNext string
 }
 
+func testPricingConfig(t *testing.T) PricingConfig {
+	t.Helper()
+	config, err := LoadPricingConfig()
+	if err != nil {
+		t.Fatalf("LoadPricingConfig returned error: %v", err)
+	}
+	return config
+}
+
 func (stub *ridesRepositoryStub) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
@@ -80,7 +89,7 @@ func (stub *ridesRepositoryStub) Session(context.Context, int) (domain.BidSessio
 
 func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewService(stub)
+	service := NewService(stub, testPricingConfig(t))
 	custom := int64(5000)
 	session, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:        7,
@@ -104,7 +113,7 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 	stub := &ridesRepositoryStub{}
 	service := NewServiceWithRouteCalculator(stub, RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
 		return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
-	}))
+	}), testPricingConfig(t))
 	custom := int64(4000)
 	session, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:        7,
@@ -131,7 +140,7 @@ func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 	stub := &ridesRepositoryStub{}
 	service := NewServiceWithRouteCalculator(stub, RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
 		return RouteMetrics{}, errors.New("mapbox timeout")
-	}))
+	}), testPricingConfig(t))
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
@@ -146,7 +155,7 @@ func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 
 func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewService(stub)
+	service := NewService(stub, testPricingConfig(t))
 	custom := int64(1)
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:        7,
@@ -165,7 +174,7 @@ func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 
 func TestUpdateStatusRequiresRideParticipantAndCurrentState(t *testing.T) {
 	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"}}
-	service := NewService(stub)
+	service := NewService(stub, testPricingConfig(t))
 	if _, err := service.UpdateStatus(context.Background(), 9, 99, "arrived"); !errors.Is(err, domain.ErrUnauthorizedRide) {
 		t.Fatalf("expected unauthorized ride error, got %v", err)
 	}
@@ -181,10 +190,11 @@ func TestUpdateStatusRequiresRideParticipantAndCurrentState(t *testing.T) {
 }
 
 func TestCalculateFareRejectsNonFiniteInput(t *testing.T) {
-	if got := CalculateFare(-1, 2); got != 0 {
+	service := NewService(nil, testPricingConfig(t))
+	if got := service.CalculateFare(-1, 2); got != 0 {
 		t.Fatalf("expected invalid fare to be zero, got %d", got)
 	}
-	if got := CalculateFare(0, 0); got != 2500 {
+	if got := service.CalculateFare(0, 0); got != 2500 {
 		t.Fatalf("expected minimum fare, got %d", got)
 	}
 }

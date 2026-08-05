@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:shared_core/shared_core.dart';
 
 abstract class BiddingRemoteDataSource {
+  Future<FareServiceModel> fetchPricingConfig();
+
   Future<Map<String, dynamic>> fetchFareEstimate({
     required double distanceKm,
     required double durationMinutes,
@@ -51,6 +54,18 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   final Dio _dio;
 
   BiddingRemoteDataSourceImpl(this._dio);
+
+  @override
+  Future<FareServiceModel> fetchPricingConfig() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/fares/configs',
+    );
+    final data = response.data;
+    if (data == null) {
+      throw const FormatException('Pricing configuration response is empty.');
+    }
+    return FareServiceModel.fromJson(data);
+  }
 
   @override
   Future<Map<String, dynamic>> fetchFareEstimate({

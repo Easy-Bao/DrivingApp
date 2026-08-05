@@ -17,11 +17,11 @@ class FareResult extends Equatable {
 
   factory FareResult.fromJson(Map<String, dynamic> json) {
     return FareResult(
-      baseFare: (json['base_fare'] as num?)?.toDouble() ?? 0.0,
-      distanceCharge: (json['distance_charge'] as num?)?.toDouble() ?? 0.0,
-      timeCharge: (json['time_charge'] as num?)?.toDouble() ?? 0.0,
-      surgeCharge: (json['surge_charge'] as num?)?.toDouble() ?? 0.0,
-      totalFare: (json['total_fare'] as num?)?.toDouble() ?? 0.0,
+      baseFare: _requiredNumber(json, 'base_fare'),
+      distanceCharge: _requiredNumber(json, 'distance_charge'),
+      timeCharge: _requiredNumber(json, 'time_charge'),
+      surgeCharge: _requiredNumber(json, 'surge_charge'),
+      totalFare: _requiredNumber(json, 'total_fare'),
     );
   }
 
@@ -43,4 +43,12 @@ class FareResult extends Equatable {
     surgeCharge,
     totalFare,
   ];
+}
+
+double _requiredNumber(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value is! num) {
+    throw FormatException('Missing numeric fare result: $key');
+  }
+  return value.toDouble();
 }

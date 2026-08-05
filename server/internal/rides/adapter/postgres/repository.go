@@ -16,9 +16,14 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 )
 
-type Repository struct{ client *ent.Client }
+type Repository struct {
+	client                *ent.Client
+	platformCommissionBPS int64
+}
 
-func NewRepository(client *ent.Client) *Repository { return &Repository{client: client} }
+func NewRepository(client *ent.Client, platformCommissionBPS int64) *Repository {
+	return &Repository{client: client, platformCommissionBPS: platformCommissionBPS}
+}
 func (repository *Repository) CreateRide(ctx context.Context, value domain.Ride) (domain.Ride, error) {
 	builder := repository.client.Ride.Create().SetPassengerID(value.PassengerID).SetStatus(value.Status).SetFareCentavos(value.FareCentavos).SetRideType(value.RideType)
 	builder.SetPickupLatitude(value.PickupLatitude).SetPickupLongitude(value.PickupLongitude).SetPickupName(value.PickupName)
@@ -157,8 +162,7 @@ func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID i
 	if err != nil {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
-	commissionBPS := int64(1500)
-	commission := rideItem.FareCentavos * commissionBPS / 10000
+	commission := rideItem.FareCentavos * repository.platformCommissionBPS / 10000
 	payout := rideItem.FareCentavos - commission
 	if payout <= 0 {
 		return domain.Ride{}, domain.ErrInvalidFareOffer

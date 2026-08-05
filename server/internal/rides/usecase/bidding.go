@@ -24,7 +24,7 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	if session.RideType == "" {
 		session.RideType = "solo"
 	}
-	minimumFare := CalculateFare(metrics.DistanceKm, metrics.DurationMinutes)
+	minimumFare := service.CalculateFare(metrics.DistanceKm, metrics.DurationMinutes)
 	if minimumFare <= 0 {
 		return domain.BidSession{}, domain.ErrInvalidTrip
 	}

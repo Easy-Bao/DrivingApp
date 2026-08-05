@@ -72,6 +72,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
 
     try {
       final datasource = Modular.get<BiddingRemoteDataSource>();
+      final pricingConfig = await datasource.fetchPricingConfig();
       final res = await datasource.fetchFareEstimate(
         distanceKm: distanceKm,
         durationMinutes: durationMins,
@@ -90,7 +91,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
           _customFareController.text = totalFare.toStringAsFixed(2);
           _options = [
             RideOptionData(
-              name: 'Solo',
+              name: pricingConfig.serviceName,
               subtitle: 'Private ride with a server-calculated minimum fare',
               icon: LucideIcons.bike,
               fare: totalFare,

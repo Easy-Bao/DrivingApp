@@ -7,21 +7,24 @@ class RatingPricingConfig extends Equatable {
   final double baseSurgeCap;
 
   const RatingPricingConfig({
-    this.minimumRatingThreshold = 4.5,
-    this.highRatingBonusMultiplier = 1.05,
-    this.lowRatingSurgePenaltyMultiplier = 1.0,
-    this.baseSurgeCap = 2.5,
+    required this.minimumRatingThreshold,
+    required this.highRatingBonusMultiplier,
+    required this.lowRatingSurgePenaltyMultiplier,
+    required this.baseSurgeCap,
   });
 
   factory RatingPricingConfig.fromJson(Map<String, dynamic> json) {
     return RatingPricingConfig(
-      minimumRatingThreshold:
-          (json['minimumRatingThreshold'] as num?)?.toDouble() ?? 4.5,
-      highRatingBonusMultiplier:
-          (json['highRatingBonusMultiplier'] as num?)?.toDouble() ?? 1.05,
-      lowRatingSurgePenaltyMultiplier:
-          (json['lowRatingSurgePenaltyMultiplier'] as num?)?.toDouble() ?? 1.0,
-      baseSurgeCap: (json['baseSurgeCap'] as num?)?.toDouble() ?? 2.5,
+      minimumRatingThreshold: _requiredNumber(json, 'minimumRatingThreshold'),
+      highRatingBonusMultiplier: _requiredNumber(
+        json,
+        'highRatingBonusMultiplier',
+      ),
+      lowRatingSurgePenaltyMultiplier: _requiredNumber(
+        json,
+        'lowRatingSurgePenaltyMultiplier',
+      ),
+      baseSurgeCap: _requiredNumber(json, 'baseSurgeCap'),
     );
   }
 
@@ -41,4 +44,12 @@ class RatingPricingConfig extends Equatable {
     lowRatingSurgePenaltyMultiplier,
     baseSurgeCap,
   ];
+}
+
+double _requiredNumber(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value is! num) {
+    throw FormatException('Missing numeric pricing configuration: $key');
+  }
+  return value.toDouble();
 }

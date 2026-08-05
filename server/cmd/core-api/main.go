@@ -46,6 +46,10 @@ import (
 
 func main() {
 	router := chi.NewRouter()
+	pricingConfig, err := ridesusecase.LoadPricingConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 	var authRouter *authhttp.Router
 	var usersRouter *usershttp.Router
 	var documentRouter *documenthttp.Router
@@ -88,7 +92,7 @@ func main() {
 		verifier = token.NewVerifier(os.Getenv("JWT_SECRET"))
 		usersRouter = usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(client)), verifier)
 		documentRepository = documentpostgres.NewRepository(client)
-		ridesRouter = rideshttp.NewRouter(ridesusecase.NewServiceWithRouteCalculator(ridespostgres.NewRepository(client), routeCalculator), verifier)
+		ridesRouter = rideshttp.NewRouter(ridesusecase.NewServiceWithRouteCalculator(ridespostgres.NewRepository(client, pricingConfig.PlatformCommissionBPS), routeCalculator, pricingConfig), verifier)
 		adminRouter = adminhttp.NewRouter(adminusecase.NewService(adminpostgres.NewRepository(client)), verifier)
 	} else {
 		log.Fatal("DATABASE_URL is required")

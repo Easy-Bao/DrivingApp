@@ -333,16 +333,17 @@ func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	base := int64(2500)
-	distanceCharge := int64(metrics.DistanceKm * 100)
-	timeCharge := int64(metrics.DurationMinutes * 50)
-	jsonJSON(w, 200, map[string]any{"base_fare": float64(base) / 100, "distance_charge": float64(distanceCharge) / 100, "time_charge": float64(timeCharge) / 100, "surge_charge": float64(0), "fare_centavos": total, "total_fare": float64(total) / 100})
+	config := handler.service.PricingConfig()
+	base := float64(config.BaseFareCentavos) / 100
+	distanceCharge := metrics.DistanceKm * float64(config.PerKilometerCentavos) / 100
+	timeCharge := metrics.DurationMinutes * float64(config.PerMinuteCentavos) / 100
+	jsonJSON(w, 200, map[string]any{"base_fare": base, "distance_charge": distanceCharge, "time_charge": timeCharge, "surge_charge": float64(0), "fare_centavos": total, "total_fare": float64(total) / 100})
 }
 func (handler *Handler) FareConfigs(w http.ResponseWriter, _ *http.Request) {
-	jsonJSON(w, 200, map[string]any{"base_fare_centavos": int64(2500), "per_kilometer_centavos": int64(100), "per_minute_centavos": int64(50)})
+	jsonJSON(w, 200, handler.service.PricingConfig().FareConfigsJSON())
 }
 func (handler *Handler) RatingConfig(w http.ResponseWriter, _ *http.Request) {
-	jsonJSON(w, 200, map[string]any{"minimum_rating": 1, "maximum_rating": 5})
+	jsonJSON(w, 200, handler.service.PricingConfig().RatingConfigJSON())
 }
 func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	var input dto.FinalFareRequest
@@ -355,7 +356,7 @@ func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	commissionBPS := int64(1500)
+	commissionBPS := handler.service.PricingConfig().PlatformCommissionBPS
 	commission := fare * commissionBPS / 10000
 	jsonJSON(w, 200, map[string]any{"fare_centavos": fare, "distance_km": metrics.DistanceKm, "duration_minutes": metrics.DurationMinutes, "commission_centavos": commission, "driver_payout_centavos": fare - commission})
 }
