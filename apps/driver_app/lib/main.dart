@@ -59,7 +59,8 @@ class _ConfigurationErrorApp extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              '$message\n\nRun Driver with --dart-define=API_BASE_URL=...',
+              '$message\n\nSet API_BASE_URL in apps/driver_app/.env or pass '
+              '--dart-define=API_BASE_URL=... when starting Driver.',
               textAlign: TextAlign.center,
             ),
           ),

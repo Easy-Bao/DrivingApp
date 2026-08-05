@@ -64,12 +64,6 @@ test-services:
 start-all: db-migrate
     @./scripts/start_all.sh
 
-run-passenger:
-    cd apps/passenger_app && flutter run
-
-run-driver:
-    cd apps/driver_app && flutter run
-
 # Reverse ports for all connected Android devices/emulators
 adb-reverse:
     @./scripts/adb_reverse.sh

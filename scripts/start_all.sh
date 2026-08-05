@@ -5,11 +5,18 @@ set -Eeuo pipefail
 readonly repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly readiness_timeout_seconds="${READINESS_TIMEOUT_SECONDS:-30}"
 service_pids=()
+service_build_directory=""
 
 cleanup() {
   trap - EXIT INT TERM
   for pid in "${service_pids[@]}"; do kill "${pid}" 2>/dev/null || true; done
   for pid in "${service_pids[@]}"; do wait "${pid}" 2>/dev/null || true; done
+  if [[ -n "${service_build_directory}" ]]; then
+    rm -f "${service_build_directory}/core-api" \
+      "${service_build_directory}/realtime-service" \
+      "${service_build_directory}/api-gateway"
+    rmdir "${service_build_directory}" 2>/dev/null || true
+  fi
 }
 
 require_command() {
@@ -32,6 +39,7 @@ trap cleanup EXIT INT TERM
 require_command go
 require_command curl
 require_command openssl
+require_command mktemp
 
 if [[ ! -f "${repository_root}/.env" ]]; then
   echo "Create .env with DATABASE_URL before starting the backend." >&2
@@ -58,9 +66,16 @@ done
 cd "${repository_root}"
 ./scripts/database/migrate.sh
 
-(cd server && go run ./cmd/core-api) & service_pids+=("$!")
-(cd server && go run ./cmd/realtime-service) & service_pids+=("$!")
-(cd server && go run ./api-gateway) & service_pids+=("$!")
+service_build_directory="$(mktemp -d /tmp/driveapp-services.XXXXXX)"
+go_cache_directory="${GOCACHE:-/tmp/easyride-go-cache}"
+
+(cd server && GOCACHE="${go_cache_directory}" go build -o "${service_build_directory}/core-api" ./cmd/core-api)
+(cd server && GOCACHE="${go_cache_directory}" go build -o "${service_build_directory}/realtime-service" ./cmd/realtime-service)
+(cd server && GOCACHE="${go_cache_directory}" go build -o "${service_build_directory}/api-gateway" ./api-gateway)
+
+"${service_build_directory}/core-api" & service_pids+=("$!")
+"${service_build_directory}/realtime-service" & service_pids+=("$!")
+"${service_build_directory}/api-gateway" & service_pids+=("$!")
 
 wait_for_http_service "http://127.0.0.1:${GATEWAY_PORT:-8000}/health"
 echo "api-gateway is ready; core-api and realtime-service are private upstreams. Press Ctrl-C to stop them."
