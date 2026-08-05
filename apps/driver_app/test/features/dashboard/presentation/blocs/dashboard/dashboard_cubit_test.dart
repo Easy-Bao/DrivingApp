@@ -91,6 +91,33 @@ void main() {
     );
   });
 
+  group('DashboardCubit — initialize()', () {
+    test(
+      'restores the persisted online choice before loading statistics',
+      () async {
+        when(
+          () => repo.getPersistedOnlineStatus(),
+        ).thenAnswer((_) async => const Right(true));
+        when(
+          () => repo.getTodayEarnings(),
+        ).thenAnswer((_) async => const Right(0.0));
+        when(
+          () => repo.getTodayTrips(),
+        ).thenAnswer((_) async => const Right(0));
+        when(
+          () => repo.getHoursOnline(),
+        ).thenAnswer((_) async => const Right(0.0));
+
+        final cubit = _makeCubit(repo);
+        await cubit.initialize();
+
+        expect(cubit.state.isOnline, isTrue);
+        verify(() => repo.getPersistedOnlineStatus()).called(1);
+        await cubit.close();
+      },
+    );
+  });
+
   group('DashboardCubit — toggleOnline()', () {
     const lat = 7.828282;
     const lng = 123.434343;

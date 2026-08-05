@@ -12,6 +12,16 @@ class DashboardCubit extends Cubit<DashboardState> {
     : _repository = repository,
       super(const DashboardState());
 
+  Future<void> initialize() async {
+    final onlineStatusResult = await _repository.getPersistedOnlineStatus();
+    onlineStatusResult.fold(
+      (failure) =>
+          dev.log('Unable to restore driver online status: ${failure.message}'),
+      (isOnline) => emit(state.copyWith(isOnline: isOnline)),
+    );
+    await loadStats();
+  }
+
   Future<void> loadStats() async {
     emit(state.copyWith(isLoadingStats: true, errorMessage: null));
     try {

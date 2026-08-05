@@ -23,6 +23,22 @@ class SecureSessionService {
     return _storage.read(key: StorageKeys.driverId);
   }
 
+  Future<void> saveDriverOnlineStatus(bool isOnline) async {
+    await _storage.write(
+      key: StorageKeys.driverOnlineStatus,
+      value: isOnline.toString(),
+    );
+  }
+
+  Future<bool?> readDriverOnlineStatus() async {
+    final value = await _storage.read(key: StorageKeys.driverOnlineStatus);
+    return switch (value?.toLowerCase()) {
+      'true' => true,
+      'false' => false,
+      _ => null,
+    };
+  }
+
   Future<void> savePassengerId(String passengerId) async {
     await _storage.write(key: StorageKeys.passengerId, value: passengerId);
   }

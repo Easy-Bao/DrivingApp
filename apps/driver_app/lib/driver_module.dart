@@ -44,7 +44,7 @@ class DriverModule extends Module {
           remoteDataSource: i.get<TripRemoteDataSource>(),
         ),
       )
-      ..addFactory<DashboardCubit>(
+      ..addLazySingleton<DashboardCubit>(
         (i) => DashboardCubit(repository: i.get<IDashboardRepository>()),
       )
       ..addFactory<LiveMapBloc>(

@@ -57,6 +57,23 @@ class DashboardRepository implements IDashboardRepository {
   }
 
   @override
+  Future<Either<Failure, bool>> getPersistedOnlineStatus() async {
+    try {
+      final isOnline = await _sessionService.readDriverOnlineStatus() ?? false;
+      if (isOnline && _backgroundTelemetryService != null) {
+        try {
+          await _backgroundTelemetryService.start();
+        } catch (error) {
+          dev.log('Unable to resume background telemetry: $error');
+        }
+      }
+      return Right(isOnline);
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> updateOnlineStatus({
     required bool isOnline,
     required double lat,
@@ -74,6 +91,11 @@ class DashboardRepository implements IDashboardRepository {
         lat: lat,
         lng: lng,
       );
+      try {
+        await _sessionService.saveDriverOnlineStatus(isOnline);
+      } catch (error) {
+        dev.log('Unable to persist driver online status: $error');
+      }
       final backgroundTelemetryService = _backgroundTelemetryService;
       if (backgroundTelemetryService != null) {
         try {
