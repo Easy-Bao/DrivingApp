@@ -126,6 +126,112 @@ func TestReverseGeocodeChoosesMostSpecificFeature(t *testing.T) {
 	}
 }
 
+func TestRouteSelectsByRequestedPreference(t *testing.T) {
+	tests := []struct {
+		name        string
+		preference  domain.RoutePreference
+		expectedKm  float64
+		expectedMin float64
+	}{
+		{
+			name:        "fastest",
+			preference:  domain.RoutePreferenceFastest,
+			expectedKm:  3,
+			expectedMin: 5,
+		},
+		{
+			name:        "shortest",
+			preference:  domain.RoutePreferenceShortest,
+			expectedKm:  2,
+			expectedMin: 8.333333333333334,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := NewProvider("test-token")
+			provider.client = &http.Client{
+				Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+					if request.URL.Path != "/directions/v5/mapbox/driving/123.400000,7.800000;123.500000,7.900000" {
+						t.Fatalf("unexpected directions path: %s", request.URL.Path)
+					}
+					if request.URL.Query().Get("alternatives") != "true" {
+						t.Fatal("expected alternatives to be requested")
+					}
+					body := `{"routes":[
+						{"distance":3000,"duration":300,"geometry":{"coordinates":[[123.4,7.8],[123.5,7.9]]}},
+						{"distance":2000,"duration":500,"geometry":{"coordinates":[[123.4,7.8],[123.45,7.85],[123.5,7.9]]}}
+					]}`
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Body:       io.NopCloser(strings.NewReader(body)),
+						Header:     make(http.Header),
+						Request:    request,
+					}, nil
+				}),
+			}
+
+			route, err := provider.Route(context.Background(), domain.Coordinates{
+				Latitude:  7.8,
+				Longitude: 123.4,
+			}, domain.Coordinates{
+				Latitude:  7.9,
+				Longitude: 123.5,
+			}, domain.RouteOptions{Preference: test.preference})
+			if err != nil {
+				t.Fatalf("route failed: %v", err)
+			}
+			if route.DistanceKm != test.expectedKm || route.DurationMin != test.expectedMin {
+				t.Fatalf("unexpected route metrics: %#v", route)
+			}
+			if route.Preference != string(test.preference) || route.Profile != string(domain.RouteProfileDriving) {
+				t.Fatalf("unexpected route options: %#v", route)
+			}
+		})
+	}
+}
+
+func TestRouteSupportsTrafficProfileAndExcludedRoadPoints(t *testing.T) {
+	provider := NewProvider("test-token")
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			if request.URL.Path != "/directions/v5/mapbox/driving-traffic/123.400000,7.800000;123.500000,7.900000" {
+				t.Fatalf("unexpected directions path: %s", request.URL.Path)
+			}
+			if got := request.URL.Query().Get("exclude"); got != "point(123.400000 7.800000),point(123.450000 7.850000)" {
+				t.Fatalf("unexpected excluded points: %s", got)
+			}
+			body := `{"routes":[{"distance":3000,"duration":300,"geometry":{"coordinates":[[123.4,7.8],[123.5,7.9]]}}]}`
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Header:     make(http.Header),
+				Request:    request,
+			}, nil
+		}),
+	}
+
+	route, err := provider.Route(context.Background(), domain.Coordinates{
+		Latitude:  7.8,
+		Longitude: 123.4,
+	}, domain.Coordinates{
+		Latitude:  7.9,
+		Longitude: 123.5,
+	}, domain.RouteOptions{
+		Profile: domain.RouteProfileDrivingTraffic,
+		ExcludePoints: []domain.Coordinates{
+			{Latitude: 7.8, Longitude: 123.4},
+			{Latitude: 7.85, Longitude: 123.45},
+		},
+	})
+	if err != nil {
+		t.Fatalf("route failed: %v", err)
+	}
+	if route.Profile != string(domain.RouteProfileDrivingTraffic) {
+		t.Fatalf("expected traffic profile, got %#v", route)
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (roundTrip roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {

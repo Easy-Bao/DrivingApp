@@ -77,6 +77,6 @@ func (service *Service) ReverseGeocode(ctx context.Context, coordinates domain.C
 	return result, nil
 }
 
-func (service *Service) Route(ctx context.Context, origin, destination domain.Coordinates) (*domain.Route, error) {
-	return service.provider.Route(ctx, origin, destination)
+func (service *Service) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+	return service.provider.Route(ctx, origin, destination, options)
 }

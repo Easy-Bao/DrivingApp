@@ -1,16 +1,38 @@
 import 'package:equatable/equatable.dart';
 
+enum RoutePreference { fastest, shortest }
+
+enum RouteProfile { driving, drivingTraffic }
+
+extension RoutePreferenceApi on RoutePreference {
+  String get apiValue => switch (this) {
+    RoutePreference.fastest => 'fastest',
+    RoutePreference.shortest => 'shortest',
+  };
+}
+
+extension RouteProfileApi on RouteProfile {
+  String get apiValue => switch (this) {
+    RouteProfile.driving => 'driving',
+    RouteProfile.drivingTraffic => 'driving-traffic',
+  };
+}
+
 class RouteModel extends Equatable {
   final List<List<double>> polylinePoints;
   final double distanceKm;
   final int durationSeconds;
   final String summary;
+  final String preference;
+  final String profile;
 
   const RouteModel({
     required this.polylinePoints,
     required this.distanceKm,
     required this.durationSeconds,
     this.summary = '',
+    this.preference = 'fastest',
+    this.profile = 'driving',
   });
 
   factory RouteModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +65,8 @@ class RouteModel extends Equatable {
       durationSeconds:
           durationSeconds?.toInt() ?? ((durationMinutes ?? 0) * 60).round(),
       summary: json['summary'] as String? ?? '',
+      preference: json['preference'] as String? ?? 'fastest',
+      profile: json['profile'] as String? ?? 'driving',
     );
   }
 
@@ -52,6 +76,8 @@ class RouteModel extends Equatable {
       'distanceKm': distanceKm,
       'durationSeconds': durationSeconds,
       'summary': summary,
+      'preference': preference,
+      'profile': profile,
     };
   }
 
@@ -61,6 +87,8 @@ class RouteModel extends Equatable {
     distanceKm,
     durationSeconds,
     summary,
+    preference,
+    profile,
   ];
 }
 

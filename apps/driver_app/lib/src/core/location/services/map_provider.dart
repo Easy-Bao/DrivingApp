@@ -96,8 +96,11 @@ class MapProvider {
     double originLat,
     double originLng,
     double destLat,
-    double destLng,
-  ) async {
+    double destLng, {
+    RoutePreference preference = RoutePreference.fastest,
+    RouteProfile profile = RouteProfile.driving,
+    List<({double lat, double lng})> excludePoints = const [],
+  }) async {
     final nativeService = _nativeService;
     if (nativeService == null) {
       throw StateError('MapProvider not initialized.');
@@ -109,6 +112,9 @@ class MapProvider {
         originLng: originLng,
         destLat: destLat,
         destLng: destLng,
+        preference: preference,
+        profile: profile,
+        excludePoints: excludePoints,
       );
       return either.fold((failure) {
         debugPrint('MapProvider.getRoute failure: $failure');

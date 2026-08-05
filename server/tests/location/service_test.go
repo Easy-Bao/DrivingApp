@@ -44,7 +44,7 @@ func (providerStub) ReverseGeocode(context.Context, domain.Coordinates) (*domain
 	return &domain.Place{Name: "Pagadian City"}, nil
 }
 
-func (providerStub) Route(context.Context, domain.Coordinates, domain.Coordinates) (*domain.Route, error) {
+func (providerStub) Route(context.Context, domain.Coordinates, domain.Coordinates, domain.RouteOptions) (*domain.Route, error) {
 	return &domain.Route{DistanceKm: 1}, nil
 }
 

@@ -157,6 +157,7 @@ void main() {
           expect(options.data, {
             'origin': {'lat': 7.8242, 'lng': 123.435},
             'destination': {'lat': 7.83, 'lng': 123.44},
+            'preference': 'fastest',
           });
           return ResponseBody.fromString(
             jsonEncode({

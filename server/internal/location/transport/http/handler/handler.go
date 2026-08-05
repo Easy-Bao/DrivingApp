@@ -82,7 +82,12 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 		writeError(writer, http.StatusBadRequest, "invalid route payload")
 		return
 	}
-	route, err := handler.service.Route(request.Context(), payload.Origin, payload.Destination)
+	options, err := payload.Options()
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid route options")
+		return
+	}
+	route, err := handler.service.Route(request.Context(), payload.Origin, payload.Destination, options)
 	if err != nil {
 		writeError(writer, http.StatusBadGateway, "location provider unavailable")
 		return

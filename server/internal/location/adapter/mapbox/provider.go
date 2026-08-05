@@ -18,9 +18,10 @@ import (
 )
 
 const (
-	searchURL      = "https://api.mapbox.com/search/searchbox/v1"
-	directionsURL  = "https://api.mapbox.com/directions/v5/mapbox/driving"
-	nearbyPageSize = 10
+	searchURL           = "https://api.mapbox.com/search/searchbox/v1"
+	directionsURL       = "https://api.mapbox.com/directions/v5/mapbox"
+	nearbyPageSize      = 10
+	reverseFeatureTypes = "address,street,poi,locality,place"
 )
 
 var defaultNearbyCategories = []string{
@@ -179,6 +180,12 @@ func placeFromFeature(feature feature, origin domain.Coordinates) (domain.Place,
 	if name == "" {
 		name = feature.Properties.PreferredName
 	}
+	if name == "" {
+		name = feature.Properties.ShortAddress
+	}
+	if name == "" {
+		name = feature.Properties.PlaceFormatted
+	}
 	address := feature.Properties.Address
 	if address == "" {
 		address = feature.Properties.ShortAddress
@@ -235,7 +242,7 @@ func (provider *Provider) ReverseGeocode(ctx context.Context, coordinates domain
 		"latitude":     {coordinate(coordinates.Latitude)},
 		"access_token": {provider.token},
 		"limit":        {"10"},
-		"types":        {"poi,address,street,neighborhood,locality,place"},
+		"types":        {reverseFeatureTypes},
 	}
 	var response featureResponse
 	if err := provider.getJSON(ctx, searchURL+"/reverse?"+queryParams.Encode(), &response); err != nil {
@@ -282,14 +289,12 @@ func reverseFeatureScore(candidate feature) int {
 		featureType = strings.ToLower(candidate.FeatureType)
 	}
 	switch featureType {
-	case "poi":
-		return 6
 	case "address":
-		return 5
+		return 6
 	case "street":
+		return 5
+	case "poi":
 		return 4
-	case "neighborhood":
-		return 3
 	case "locality":
 		return 2
 	case "place":
@@ -300,40 +305,73 @@ func reverseFeatureScore(candidate feature) int {
 }
 
 type directionsResponse struct {
-	Routes []struct {
-		Distance float64 `json:"distance"`
-		Duration float64 `json:"duration"`
-		Geometry struct {
-			Coordinates [][]float64 `json:"coordinates"`
-		} `json:"geometry"`
-	} `json:"routes"`
+	Routes []mapboxRoute `json:"routes"`
 }
 
-func (provider *Provider) Route(ctx context.Context, origin, destination domain.Coordinates) (*domain.Route, error) {
+type mapboxRoute struct {
+	Distance float64 `json:"distance"`
+	Duration float64 `json:"duration"`
+	Geometry struct {
+		Coordinates [][]float64 `json:"coordinates"`
+	} `json:"geometry"`
+}
+
+func (provider *Provider) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+	normalizedOptions, err := options.Normalize()
+	if err != nil {
+		return nil, err
+	}
 	coordinates := strings.Join([]string{
 		coordinate(origin.Longitude) + "," + coordinate(origin.Latitude),
 		coordinate(destination.Longitude) + "," + coordinate(destination.Latitude),
 	}, ";")
 	queryParams := url.Values{
 		"access_token": {provider.token},
+		"alternatives": {"true"},
 		"overview":     {"full"},
 		"geometries":   {"geojson"},
 	}
+	if len(normalizedOptions.ExcludePoints) > 0 {
+		excludedPoints := make([]string, 0, len(normalizedOptions.ExcludePoints))
+		for _, point := range normalizedOptions.ExcludePoints {
+			excludedPoints = append(excludedPoints, fmt.Sprintf("point(%s %s)", coordinate(point.Longitude), coordinate(point.Latitude)))
+		}
+		queryParams.Set("exclude", strings.Join(excludedPoints, ","))
+	}
 	var response directionsResponse
-	if err := provider.getJSON(ctx, directionsURL+"/"+coordinates+"?"+queryParams.Encode(), &response); err != nil {
+	endpoint := directionsURL + "/" + string(normalizedOptions.Profile) + "/" + coordinates + "?" + queryParams.Encode()
+	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
 		return nil, err
 	}
 	if len(response.Routes) == 0 {
 		return nil, fmt.Errorf("mapbox returned no route")
 	}
-	selected := response.Routes[0]
+	selected := selectRoute(response.Routes, normalizedOptions.Preference)
 	return &domain.Route{
 		Origin:      origin,
 		Destination: destination,
+		Preference:  string(normalizedOptions.Preference),
+		Profile:     string(normalizedOptions.Profile),
 		DistanceKm:  selected.Distance / 1000,
 		DurationMin: selected.Duration / 60,
 		Polyline:    selected.Geometry.Coordinates,
 	}, nil
+}
+
+func selectRoute(routes []mapboxRoute, preference domain.RoutePreference) mapboxRoute {
+	selected := routes[0]
+	for _, candidate := range routes[1:] {
+		if preference == domain.RoutePreferenceShortest {
+			if candidate.Distance < selected.Distance {
+				selected = candidate
+			}
+			continue
+		}
+		if candidate.Duration < selected.Duration {
+			selected = candidate
+		}
+	}
+	return selected
 }
 
 func (provider *Provider) getJSON(ctx context.Context, endpoint string, target any) error {

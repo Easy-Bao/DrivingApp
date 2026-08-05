@@ -6,7 +6,7 @@ type Provider interface {
 	Search(ctx context.Context, query string, origin Coordinates) ([]Place, error)
 	Nearby(ctx context.Context, origin Coordinates, page int) ([]Place, error)
 	ReverseGeocode(ctx context.Context, coordinates Coordinates) (*Place, error)
-	Route(ctx context.Context, origin, destination Coordinates) (*Route, error)
+	Route(ctx context.Context, origin, destination Coordinates, options RouteOptions) (*Route, error)
 }
 
 type Cache interface {

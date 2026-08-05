@@ -125,14 +125,25 @@ class MapNativeService {
     required double originLng,
     required double destLat,
     required double destLng,
+    RoutePreference preference = RoutePreference.fastest,
+    RouteProfile profile = RouteProfile.driving,
+    List<({double lat, double lng})> excludePoints = const [],
   }) async {
     try {
-      final route = await _apiClient.getRoute(
-        body: {
-          'origin': {'lat': originLat, 'lng': originLng},
-          'destination': {'lat': destLat, 'lng': destLng},
-        },
-      );
+      final body = <String, dynamic>{
+        'origin': {'lat': originLat, 'lng': originLng},
+        'destination': {'lat': destLat, 'lng': destLng},
+        'preference': preference.apiValue,
+      };
+      if (profile != RouteProfile.driving) {
+        body['profile'] = profile.apiValue;
+      }
+      if (excludePoints.isNotEmpty) {
+        body['exclude_points'] = excludePoints
+            .map((point) => {'lat': point.lat, 'lng': point.lng})
+            .toList();
+      }
+      final route = await _apiClient.getRoute(body: body);
       return right(route);
     } on DioException catch (e) {
       dev.log('getRoute network failure', name: 'MapNativeService', error: e);

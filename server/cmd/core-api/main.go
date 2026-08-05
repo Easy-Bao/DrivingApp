@@ -58,7 +58,7 @@ func main() {
 	var authRepository *authpostgres.UserRepository
 	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
 	routeCalculator := ridesusecase.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (ridesusecase.RouteMetrics, error) {
-		route, err := provider.Route(ctx, locationdomain.Coordinates{Latitude: originLat, Longitude: originLng}, locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng})
+		route, err := provider.Route(ctx, locationdomain.Coordinates{Latitude: originLat, Longitude: originLng}, locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng}, locationdomain.RouteOptions{})
 		if err != nil {
 			return ridesusecase.RouteMetrics{}, err
 		}
