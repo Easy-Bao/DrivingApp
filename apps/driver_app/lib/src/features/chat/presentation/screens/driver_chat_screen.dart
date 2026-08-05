@@ -5,8 +5,8 @@ import 'dart:async';
 import 'package:shared_core/shared_core.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
-import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/chat/data/data_sources/chat_room_remote_data_source.dart';
 import 'package:driver_app/src/features/chat/presentation/bloc/chat_cubit.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
 
@@ -112,8 +112,9 @@ class _DriverChatScreenState extends State<DriverChatScreen>
       chatRepository: ChatRepository(
         remoteDataSource: WebSocketChatRemoteDataSource(),
         currentUserId: currentUserId,
-        clientDio: Dio(BaseOptions(baseUrl: EnvConfig.httpBaseUrl)),
+        clientDio: Modular.get<Dio>(),
       ),
+      roomRemoteDataSource: Modular.get<ChatRoomRemoteDataSource>(),
     );
     unawaited(_connectChat(currentRoomId, currentUserId));
     unawaited(_checkTripStatus());

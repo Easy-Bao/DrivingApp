@@ -1,15 +1,14 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 
-import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
+import 'package:driver_app/src/features/chat/data/data_sources/chat_room_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/passenger_remote_data_source.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:dio/dio.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverTripDetailScreen extends StatefulWidget {
@@ -77,17 +76,14 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
     if (driverId.isEmpty) return;
 
     try {
-      final initializeChatResponse = await Dio().postUri(
-        EnvConfig.httpBaseUri.replace(path: '/api/v1/chat/rooms'),
-        data: {
-          'roomId': tripId,
-          'driverId': driverId,
-          'passengerId': passengerId,
-        },
-      );
+      final initialized = await Modular.get<ChatRoomRemoteDataSource>()
+          .initializeRoom(
+            roomId: tripId,
+            driverId: driverId,
+            passengerId: passengerId,
+          );
 
-      if (initializeChatResponse.statusCode == 201 ||
-          initializeChatResponse.statusCode == 200) {
+      if (initialized) {
         if (mounted) {
           context.pushNamed(
             ChatRoutes.chat,

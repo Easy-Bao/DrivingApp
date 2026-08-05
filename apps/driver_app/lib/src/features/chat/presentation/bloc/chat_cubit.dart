@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:shared_core/shared_core.dart';
-import 'package:dio/dio.dart';
-import 'package:driver_app/src/core/constants/env_config.dart';
+import 'package:driver_app/src/features/chat/data/data_sources/chat_room_remote_data_source.dart';
 import 'package:driver_app/src/features/chat/presentation/bloc/chat_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -11,11 +10,15 @@ export 'package:driver_app/src/features/chat/presentation/bloc/chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
   final IChatRepository _chatRepository;
+  final ChatRoomRemoteDataSource _roomRemoteDataSource;
   StreamSubscription? _chatSubscription;
 
-  ChatCubit({required IChatRepository chatRepository})
-    : _chatRepository = chatRepository,
-      super(const ChatState());
+  ChatCubit({
+    required IChatRepository chatRepository,
+    required ChatRoomRemoteDataSource roomRemoteDataSource,
+  }) : _chatRepository = chatRepository,
+       _roomRemoteDataSource = roomRemoteDataSource,
+       super(const ChatState());
 
   Future<void> connectToChatRoom({
     required String roomId,
@@ -100,13 +103,8 @@ class ChatCubit extends Cubit<ChatState> {
     String? token,
   }) async {
     try {
-      final gatewayUri = EnvConfig.httpBaseUri;
-      final resolveEndpointUri = gatewayUri.replace(
-        path: '/api/v1/chat/rooms/$roomId/resolve',
-      );
-      final response = await Dio().postUri(resolveEndpointUri);
-
-      if (response.statusCode == 200) {
+      final resolved = await _roomRemoteDataSource.resolveRoom(roomId);
+      if (resolved) {
         await connectToChatRoom(roomId: roomId, wsUri: wsUri, token: token);
       }
     } catch (error, stackTrace) {
