@@ -46,7 +46,7 @@ class DriverDashboardScreen extends StatefulWidget {
 }
 
 class _DriverDashboardScreenState extends State<DriverDashboardScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _pulseCtrl;
   Timer? _rideTriggerTimer;
   StreamSubscription<Position>? _locationSubscription;
@@ -58,6 +58,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _liveMapBloc = Modular.get<LiveMapBloc>();
     _pulseCtrl = AnimationController(
       vsync: this,
@@ -76,11 +77,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pulseCtrl.dispose();
     _rideTriggerTimer?.cancel();
     _locationSubscription?.cancel();
     _liveMapBloc?.close();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      unawaited(_refreshLocationAfterResume());
+    }
+  }
+
+  Future<void> _refreshLocationAfterResume() async {
+    await LocationService.refresh();
+    if (!mounted) return;
+    final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
+    if (dashboardState.isOnline) {
+      _startPolling();
+    }
   }
 
   void _startPolling() {
@@ -171,19 +189,21 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     setState(() => _isTogglingOnline = true);
 
     try {
+      final hasLocationAccess = await LocationPermissionPrompt.ensure(
+        context,
+        title: 'Stay available for nearby rides',
+        message:
+            'We use your location to send accurate ride requests and ETAs.',
+        secondaryLabel: 'Maybe Later',
+      );
+      if (!hasLocationAccess || !context.mounted) return;
+
       var position = LocationService.lastPosition;
       position ??= await LocationService.getCurrentPosition();
 
       if (!context.mounted) return;
 
-      if (position == null) {
-        CustomToast.show(
-          context,
-          'Turn on location permission and GPS to go online.',
-          isError: true,
-        );
-        return;
-      }
+      if (position == null) return;
 
       await BlocProvider.of<DashboardCubit>(
         context,

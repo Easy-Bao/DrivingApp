@@ -1,6 +1,8 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
 
+enum LocationAccessState { ready, serviceDisabled, denied, deniedForever }
+
 class LocationService {
   LocationService._();
 
@@ -14,31 +16,35 @@ class LocationService {
   static Position? get lastPosition => _lastPosition;
 
   static Future<bool> isServiceEnabled() async {
-    return await Geolocator.isLocationServiceEnabled();
+    return Geolocator.isLocationServiceEnabled();
   }
 
-  static Future<bool> checkAndRequestPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return false;
+  static Future<LocationAccessState> getAccessState() async {
+    if (!await isServiceEnabled()) {
+      return LocationAccessState.serviceDisabled;
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return false;
-    }
+    return _stateForPermission(await Geolocator.checkPermission());
+  }
 
-    if (permission == LocationPermission.deniedForever) return false;
+  static Future<LocationAccessState> refresh() => getAccessState();
 
-    return true;
+  static Future<bool> requestPermission() async {
+    if (!await isServiceEnabled()) return false;
+    final state = _stateForPermission(await Geolocator.requestPermission());
+    return state == LocationAccessState.ready;
+  }
+
+  static Future<bool> openLocationSettings() {
+    return Geolocator.openLocationSettings();
+  }
+
+  static Future<bool> openAppSettings() {
+    return Geolocator.openAppSettings();
   }
 
   static Future<Position?> getCurrentPosition() async {
-    final hasPermission = await checkAndRequestPermission();
-    if (!hasPermission) return null;
+    if (await getAccessState() != LocationAccessState.ready) return null;
 
     try {
       _lastPosition = await Geolocator.getCurrentPosition(
@@ -63,6 +69,18 @@ class LocationService {
       _lastPosition = pos;
       return pos;
     });
+  }
+
+  static LocationAccessState _stateForPermission(
+    LocationPermission permission,
+  ) {
+    return switch (permission) {
+      LocationPermission.deniedForever => LocationAccessState.deniedForever,
+      LocationPermission.denied => LocationAccessState.denied,
+      LocationPermission.unableToDetermine => LocationAccessState.denied,
+      LocationPermission.whileInUse ||
+      LocationPermission.always => LocationAccessState.ready,
+    };
   }
 
   static Future<double> distanceBetween(

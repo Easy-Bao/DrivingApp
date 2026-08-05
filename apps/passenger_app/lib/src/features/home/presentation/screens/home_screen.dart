@@ -27,7 +27,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   StreamSubscription? _locationSubscription;
   late final BookingBloc _bookingBloc;
 
@@ -73,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (_locationSubscription != null) {
       unawaited(_locationSubscription!.cancel());
     }
@@ -82,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _bookingBloc = Modular.get<BookingBloc>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -89,6 +91,26 @@ class _HomeScreenState extends State<HomeScreen> {
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshLocationAfterResume());
+    }
+  }
+
+  Future<void> _refreshLocationAfterResume() async {
+    if (!mounted ||
+        await LocationService.getAccessState() != LocationAccessState.ready) {
+      return;
+    }
+
+    final position = await LocationService.getCurrentPosition();
+    if (!mounted || position == null) return;
+    await BlocProvider.of<HomeCubit>(
+      context,
+    ).loadHomeData(lat: position.latitude, lng: position.longitude);
   }
 
   void _handleBookingState(BookingState state) {
@@ -255,8 +277,24 @@ class _HomeScreenState extends State<HomeScreen> {
           prev.currentAddress != curr.currentAddress ||
           prev.isLoading != curr.isLoading,
       builder: (context, state) {
-        if (state.isLoading || state.currentAddress.isEmpty) {
+        if (state.isLoading) {
           return _buildShimmerLocationRow();
+        }
+        if (state.currentAddress.isEmpty) {
+          return const Row(
+            children: [
+              Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
+              SizedBox(width: 6),
+              Text(
+                'Set pickup location manually',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ],
+          );
         }
         return Row(
           children: [
@@ -634,30 +672,18 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     final cubit = BlocProvider.of<HomeCubit>(context);
 
-    final hasPermission = await LocationService.checkAndRequestPermission();
-    if (!hasPermission) {
-      final serviceEnabled = await LocationService.isServiceEnabled();
-      if (mounted) {
-        final message = serviceEnabled
-            ? 'Location permission denied. Enable it in Settings to see your location.'
-            : 'Location services are disabled. Enable them in Settings.';
-        CustomToast.show(context, message, isError: true);
-      }
-      return;
-    }
+    final hasLocationAccess = await LocationPermissionPrompt.ensure(
+      context,
+      title: 'Find nearby places',
+      message:
+          'We use your location to calculate precise pickup points, nearby drivers, and route estimates.',
+      secondaryLabel: 'Enter Address Manually',
+    );
+    if (!hasLocationAccess || !mounted) return;
 
     final position = await LocationService.getCurrentPosition();
-    if (position != null) {
-      await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
-    } else {
-      if (mounted) {
-        CustomToast.show(
-          context,
-          'Unable to acquire your location. Check GPS signal.',
-          isError: true,
-        );
-      }
-    }
+    if (position == null) return;
+    await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
 
     unawaited(_locationSubscription?.cancel());
     _locationSubscription = LocationService.getPositionStream().listen((

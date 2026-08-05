@@ -173,6 +173,17 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen>
       unawaited(_loadNearbyPlaces());
     }
 
+    if (_userLat == null || _userLng == null) {
+      final hasLocationAccess = await LocationPermissionPrompt.ensure(
+        context,
+        title: 'Find places near you',
+        message:
+            'We use your location to show nearby places and calculate accurate ride estimates.',
+        secondaryLabel: 'Search Manually',
+      );
+      if (!hasLocationAccess || !mounted) return;
+    }
+
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && mounted) {
       setState(() {
