@@ -46,6 +46,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   List<Map<String, dynamic>> _activeTrips = [];
   LiveMapBloc? _liveMapBloc;
   bool _isTogglingOnline = false;
+  bool? _pendingOnline;
 
   @override
   void initState() {
@@ -182,9 +183,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     }
   }
 
-  Future<void> _toggleOnline(BuildContext context) async {
+  Future<void> _toggleOnline(BuildContext context, bool requestedOnline) async {
     if (_isTogglingOnline) return;
-    setState(() => _isTogglingOnline = true);
+    setState(() {
+      _isTogglingOnline = true;
+      _pendingOnline = requestedOnline;
+    });
+    if (requestedOnline) {
+      _availabilityCtrl.forward();
+    } else {
+      _availabilityCtrl.reverse();
+    }
 
     try {
       final hasLocationAccess = await LocationPermissionPrompt.ensure(
@@ -207,7 +216,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         context,
       ).toggleOnline(lat: position.latitude, lng: position.longitude);
     } finally {
-      if (mounted) setState(() => _isTogglingOnline = false);
+      if (mounted && context.mounted) {
+        final resolvedOnline = BlocProvider.of<DashboardCubit>(
+          context,
+        ).state.isOnline;
+        _pendingOnline = null;
+        if (resolvedOnline) {
+          _availabilityCtrl.forward();
+        } else {
+          _availabilityCtrl.reverse();
+        }
+        setState(() => _isTogglingOnline = false);
+      }
     }
   }
 
@@ -482,7 +502,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildOnlineCardBanner(BuildContext context, DashboardState state) {
-    final isOnline = state.isOnline;
+    final isOnline = _pendingOnline ?? state.isOnline;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: LayoutBuilder(
@@ -548,26 +568,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                               ),
                             ],
                           ),
-                          if (_isTogglingOnline)
-                            SizedBox(
-                              width: 28,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: isOnline
-                                    ? Colors.white
-                                    : AppTheme.primaryColor,
-                              ),
-                            )
-                          else
-                            Transform.scale(
-                              scale: 1.1,
-                              child: _buildAvailabilitySwitch(
-                                context,
-                                isOnline,
-                                _availabilityCtrl.value,
-                              ),
-                            ),
+                          _buildAvailabilitySwitch(
+                            context,
+                            isOnline,
+                            _availabilityCtrl.value,
+                          ),
                         ],
                       ),
                     ),
@@ -593,22 +598,27 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             animationProgress,
           )!
         : AppTheme.borderSide;
-    final thumbColor = isOnline && animationProgress > 0.72
-        ? Colors.white
-        : AppTheme.primaryColor;
+    final thumbColor = isOnline
+        ? Color.lerp(AppTheme.primaryColor, Colors.white, animationProgress)!
+        : AppTheme.primaryColor.withValues(alpha: 0.4);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: trackColor,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Switch(
-        value: isOnline,
-        activeThumbColor: thumbColor,
-        activeTrackColor: Colors.transparent,
-        inactiveThumbColor: AppTheme.primaryColor.withValues(alpha: 0.4),
-        inactiveTrackColor: Colors.transparent,
-        onChanged: (_) => _toggleOnline(context),
+    return SizedBox(
+      width: 56,
+      height: 32,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: trackColor,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Switch(
+          value: isOnline,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          activeThumbColor: thumbColor,
+          activeTrackColor: Colors.transparent,
+          inactiveThumbColor: thumbColor,
+          inactiveTrackColor: Colors.transparent,
+          onChanged: (value) => _toggleOnline(context, value),
+        ),
       ),
     );
   }
