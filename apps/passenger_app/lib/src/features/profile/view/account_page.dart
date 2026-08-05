@@ -284,11 +284,16 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _handleLogout(BuildContext context) async {
     if (_isLoggingOut) return;
     setState(() => _isLoggingOut = true);
-    await Modular.get<SecureSessionService>().clearSession();
-    if (context.mounted) {
-      context.goNamed(AuthRoutes.signin);
-    } else {
-      _isLoggingOut = false;
+
+    try {
+      await Modular.get<SecureSessionService>().clearSession();
+      if (context.mounted) {
+        context.goNamed(AuthRoutes.signin);
+      }
+    } catch (error) {
+      debugPrint('Unable to log out passenger: $error');
+      if (!mounted) return;
+      setState(() => _isLoggingOut = false);
     }
   }
 }

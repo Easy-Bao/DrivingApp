@@ -26,6 +26,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   double _lifetimeEarnings = 0;
   double _averageRating = 0;
   bool _isRefreshing = false;
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
@@ -492,18 +493,38 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
 
   Widget _buildLogoutButton(BuildContext context) {
     return OutlinedButton.icon(
-      onPressed: () async {
-        await Modular.get<SecureSessionService>().clearSession();
-        if (context.mounted) context.goNamed(AuthRoutes.signin);
-      },
-      icon: const Icon(LucideIcons.log_out, size: 17),
-      label: const Text('Log out'),
+      onPressed: _isLoggingOut ? null : () => _handleLogout(context),
+      icon: _isLoggingOut
+          ? const SizedBox(
+              width: 17,
+              height: 17,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppTheme.cancel,
+              ),
+            )
+          : const Icon(LucideIcons.log_out, size: 17),
+      label: Text(_isLoggingOut ? 'Logging out…' : 'Log out'),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppTheme.cancel,
         side: BorderSide(color: AppTheme.cancel.withValues(alpha: 0.25)),
         backgroundColor: AppTheme.cancel.withValues(alpha: 0.06),
       ),
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    if (_isLoggingOut) return;
+    setState(() => _isLoggingOut = true);
+
+    try {
+      await Modular.get<SecureSessionService>().clearSession();
+      if (context.mounted) context.goNamed(AuthRoutes.signin);
+    } catch (error) {
+      debugPrint('Unable to log out driver: $error');
+      if (!mounted) return;
+      setState(() => _isLoggingOut = false);
+    }
   }
 }
 
