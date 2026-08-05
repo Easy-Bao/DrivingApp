@@ -72,7 +72,9 @@ class ChatRepository implements IChatRepository {
     String roomId,
   ) async {
     try {
-      final response = await clientDio.get('/chat/rooms/$roomId/messages');
+      final response = await clientDio.get(
+        '/api/v1/chat/rooms/$roomId/messages',
+      );
 
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
         final Map<String, dynamic> dataMap =

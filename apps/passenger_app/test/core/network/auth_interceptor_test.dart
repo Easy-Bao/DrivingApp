@@ -13,7 +13,9 @@ void main() {
   test('adds the securely stored token to authenticated requests', () async {
     final secureSessionService = MockSecureSessionService();
     final handler = MockRequestInterceptorHandler();
-    final requestOptions = RequestOptions(path: '/passengers/passenger-42');
+    final requestOptions = RequestOptions(
+      path: '/api/v1/passengers/passenger-42',
+    );
     when(
       () => secureSessionService.readToken(),
     ).thenAnswer((_) async => 'jwt-token');

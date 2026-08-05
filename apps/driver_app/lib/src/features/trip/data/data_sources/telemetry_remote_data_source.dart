@@ -25,7 +25,7 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
     double? speed,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/telemetry/location',
+      '/api/v1/telemetry/location',
       data: {
         'driverId': driverId,
         'lat': lat,
@@ -41,7 +41,7 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
   Future<Map<String, dynamic>> fetchPassengerLocation(String tripId) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
-        '/telemetry/passenger/$tripId',
+        '/api/v1/telemetry/passenger/$tripId',
       );
       return response.data ?? {};
     } catch (_) {

@@ -93,7 +93,7 @@ class BackgroundTelemetryService {
           ),
         );
         await Dio(BaseOptions(baseUrl: baseUrl!)).post<void>(
-          '/telemetry/passenger/$rideId',
+          '/api/v1/telemetry/passenger/$rideId',
           data: {'lat': position.latitude, 'lng': position.longitude},
           options: Options(headers: {'Authorization': 'Bearer $token'}),
         );

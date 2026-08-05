@@ -3,12 +3,12 @@ import 'package:driver_app/src/core/constants/env_config.dart';
 class ApiEndpoints {
   ApiEndpoints._();
 
-  static const String login = '/auth/login';
-  static const String refreshToken = '/auth/refresh';
-  static const String driverStatus = '/driver/status';
-  static const String activeBids = '/bids/active';
-  static const String tripDetails = '/trips';
-  static const String telemetryStream = '/telemetry/location';
+  static const String login = '/api/v1/auth/login';
+  static const String refreshToken = '/api/v1/auth/refresh';
+  static const String driverStatus = '/api/v1/driver/status';
+  static const String activeBids = '/api/v1/bids/active';
+  static const String tripDetails = '/api/v1/trips';
+  static const String telemetryStream = '/api/v1/telemetry/location';
 
   static Uri buildChatWebSocketUri({
     required String roomId,
@@ -16,7 +16,7 @@ class ApiEndpoints {
   }) {
     final base = EnvConfig.webSocketBaseUri;
     return base.replace(
-      path: '/chat/ws',
+      path: '/api/v1/chat/ws',
       queryParameters: {'roomId': roomId, 'userId': userId},
     );
   }

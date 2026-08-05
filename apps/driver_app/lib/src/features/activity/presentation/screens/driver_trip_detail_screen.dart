@@ -77,7 +77,7 @@ class _DriverTripDetailScreenState extends State<DriverTripDetailScreen> {
 
     try {
       final initializeChatResponse = await Dio().postUri(
-        EnvConfig.httpBaseUri.replace(path: '/chat/rooms'),
+        EnvConfig.httpBaseUri.replace(path: '/api/v1/chat/rooms'),
         data: {
           'roomId': tripId,
           'driverId': driverId,

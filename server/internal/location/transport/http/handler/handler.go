@@ -10,7 +10,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
-	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -21,20 +20,7 @@ func NewHandler(service *usecase.Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (handler *Handler) RegisterRoutes(router chi.Router) {
-	router.Get("/api/v1/location/search", handler.search)
-	router.Get("/api/v1/location/nearby", handler.nearby)
-	router.Get("/api/v1/location/reverse", handler.reverse)
-	router.Post("/api/v1/location/route", handler.route)
-	for _, prefix := range []string{"/location", "/places"} {
-		router.Get(prefix+"/search", handler.search)
-		router.Get(prefix+"/nearby", handler.nearby)
-		router.Get(prefix+"/reverse", handler.reverse)
-		router.Post(prefix+"/route", handler.route)
-	}
-}
-
-func (handler *Handler) nearby(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request) {
 	coordinates, err := coordinatesFromQuery(request)
 	if err != nil || !hasCoordinates(request) {
 		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
@@ -56,7 +42,7 @@ func (handler *Handler) nearby(writer http.ResponseWriter, request *http.Request
 	writeJSON(writer, http.StatusOK, map[string]any{"places": places, "page": page})
 }
 
-func (handler *Handler) search(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request) {
 	coordinates, _ := coordinatesFromQuery(request)
 	query := request.URL.Query().Get("q")
 	if query == "" {
@@ -74,7 +60,7 @@ func (handler *Handler) search(writer http.ResponseWriter, request *http.Request
 	writeJSON(writer, http.StatusOK, map[string]any{"places": places})
 }
 
-func (handler *Handler) reverse(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Request) {
 	coordinates, err := coordinatesFromQuery(request)
 	if err != nil || !hasCoordinates(request) {
 		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
@@ -88,7 +74,7 @@ func (handler *Handler) reverse(writer http.ResponseWriter, request *http.Reques
 	writeJSON(writer, http.StatusOK, place)
 }
 
-func (handler *Handler) route(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request) {
 	var payload dto.RouteRequest
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 16<<10))
 	decoder.DisallowUnknownFields()

@@ -78,7 +78,7 @@ class _ActivityViewDetailsScreenState extends State<ActivityViewDetailsScreen> {
 
     try {
       final initializeRoomResponse = await Dio().postUri(
-        EnvConfig.httpBaseUri.replace(path: '/chat/rooms'),
+        EnvConfig.httpBaseUri.replace(path: '/api/v1/chat/rooms'),
         data: {
           'roomId': ride.id,
           'driverId': driverId,

@@ -22,7 +22,7 @@ class DriverRemoteDataSourceImpl implements DriverRemoteDataSource {
     required double lng,
   }) async {
     await _dio.post<Map<String, dynamic>>(
-      '/drivers/$driverId/online',
+      '/api/v1/drivers/$driverId/online',
       data: {'isOnline': isOnline, 'lat': lat, 'lng': lng},
     );
   }

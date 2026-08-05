@@ -13,7 +13,7 @@ class LocationApiClient implements ILocationApiClient {
     double? userLng,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/places/search',
+      '/api/v1/location/search',
       queryParameters: {
         'query': query,
         'userLat': ?userLat,
@@ -29,7 +29,7 @@ class LocationApiClient implements ILocationApiClient {
     required double lng,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/places/reverse',
+      '/api/v1/location/reverse',
       queryParameters: {'lat': lat, 'lng': lng},
     );
     return PlaceModel.fromJson(response.data ?? {});
@@ -42,7 +42,7 @@ class LocationApiClient implements ILocationApiClient {
     int page = 1,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/places/nearby',
+      '/api/v1/location/nearby',
       queryParameters: {'lat': lat, 'lng': lng, 'page': page},
     );
     return response.data ?? {};
@@ -51,7 +51,7 @@ class LocationApiClient implements ILocationApiClient {
   @override
   Future<RouteModel> getRoute({required Map<String, dynamic> body}) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/places/route',
+      '/api/v1/location/route',
       data: body,
     );
     return RouteModel.fromJson(response.data ?? {});
@@ -62,7 +62,7 @@ class LocationApiClient implements ILocationApiClient {
     required Map<String, dynamic> body,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/places/matrix',
+      '/api/v1/location/matrix',
       data: body,
     );
     return response.data ?? {};

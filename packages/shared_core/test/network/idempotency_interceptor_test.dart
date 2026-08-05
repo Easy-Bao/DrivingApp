@@ -16,7 +16,10 @@ void main() {
       ),
     );
 
-    await expectLater(dio.post<void>('/rides'), throwsA(isA<DioException>()));
+    await expectLater(
+      dio.post<void>('/api/v1/rides'),
+      throwsA(isA<DioException>()),
+    );
 
     expect(captured?.headers['Idempotency-Key'], isA<String>());
     expect(

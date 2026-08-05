@@ -23,57 +23,6 @@ type Handler struct {
 func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
-func (handler *Handler) RegisterRoutes(router chi.Router) {
-	router.Post("/api/v1/rides", handler.createRide)
-	router.Post("/api/v1/rides/{id}/accept", handler.acceptRide)
-	router.Post("/api/v1/rides/{id}/status", handler.updateStatus)
-	router.Post("/api/v1/rides/{id}/cash-settle", handler.settleCash)
-	router.Post("/api/v1/rides/{id}/bids", handler.submitBid)
-	router.Post("/api/v1/bids/{id}/accept", handler.acceptBid)
-	router.Get("/api/v1/rides/{id}", handler.getRide)
-	router.Get("/api/v1/passengers/{id}/rides", handler.passengerRides)
-	router.Get("/api/v1/drivers/online", handler.onlineDrivers)
-	router.Get("/api/v1/drivers/{id}/stats", handler.driverStats)
-	router.Get("/api/v1/drivers/{id}/trips", handler.driverTrips)
-	router.Get("/api/v1/drivers/{id}/reviews", handler.driverReviews)
-	router.Post("/api/v1/drivers/{id}/reviews", handler.createReview)
-	router.Post("/api/v1/passengers/{id}/reviews", handler.createPassengerReview)
-	router.Post("/api/v1/fares/estimate", handler.estimate)
-	router.Get("/api/v1/fares/configs", handler.fareConfigs)
-	router.Get("/api/v1/fares/rating-config", handler.ratingConfig)
-	router.Post("/api/v1/fares/calculate-final", handler.calculateFinal)
-	router.Post("/api/v1/bids/fare", handler.estimate)
-	router.Post("/api/v1/bids", handler.createSession)
-	router.Get("/api/v1/bids/active", handler.activeSessions)
-	router.Get("/api/v1/bids/{sessionID}", handler.session)
-	router.Get("/api/v1/bids/{sessionID}/offers", handler.offers)
-	router.Post("/api/v1/bids/{sessionID}/offer", handler.placeOffer)
-	router.Post("/api/v1/bids/{sessionID}/offers/{offerID}/accept", handler.acceptOffer)
-	router.Post("/api/v1/bids/{sessionID}/cancel", handler.cancelSession)
-	router.Post("/api/v1/bids/{sessionID}/cancel-offer", handler.cancelOffer)
-	router.Post("/rides", handler.createRide)
-	router.Post("/rides/{id}/accept", handler.acceptRide)
-	router.Post("/rides/{id}/status", handler.updateStatus)
-	router.Post("/rides/{id}/cash-settle", handler.settleCash)
-	router.Get("/rides/{id}", handler.getRide)
-	router.Get("/passengers/{id}/rides", handler.passengerRides)
-	router.Get("/drivers/online", handler.onlineDrivers)
-	router.Get("/drivers/{id}/stats", handler.driverStats)
-	router.Get("/drivers/{id}/trips", handler.driverTrips)
-	router.Get("/drivers/{id}/reviews", handler.driverReviews)
-	router.Post("/drivers/{id}/reviews", handler.createReview)
-	router.Post("/passengers/{id}/reviews", handler.createPassengerReview)
-	router.Post("/bids/fare", handler.estimate)
-	router.Post("/bids", handler.createSession)
-	router.Get("/bids/active", handler.activeSessions)
-	router.Get("/bids/{sessionID}", handler.session)
-	router.Get("/bids/{sessionID}/offers", handler.offers)
-	router.Post("/bids/{sessionID}/offer", handler.placeOffer)
-	router.Post("/bids/{sessionID}/offers/{offerID}/accept", handler.acceptOffer)
-	router.Post("/bids/{sessionID}/cancel", handler.cancelSession)
-	router.Post("/bids/{sessionID}/cancel-offer", handler.cancelOffer)
-	router.Post("/fares/estimate", handler.estimate)
-}
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	raw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 	if raw == r.Header.Get("Authorization") || raw == "" {
@@ -83,7 +32,7 @@ func (handler *Handler) identity(r *http.Request) (int, bool) {
 	id, parseErr := strconv.Atoi(subject)
 	return id, err == nil && parseErr == nil
 }
-func (handler *Handler) createRide(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -102,7 +51,7 @@ func (handler *Handler) createRide(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 201, ride)
 }
 
-func (handler *Handler) acceptRide(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) AcceptRide(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -121,7 +70,7 @@ func (handler *Handler) acceptRide(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, item)
 }
 
-func (handler *Handler) updateStatus(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -145,7 +94,7 @@ func (handler *Handler) updateStatus(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, item)
 }
 
-func (handler *Handler) settleCash(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, http.StatusUnauthorized, "unauthorized")
@@ -163,7 +112,7 @@ func (handler *Handler) settleCash(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonJSON(w, http.StatusOK, ride)
 }
-func (handler *Handler) submitBid(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) SubmitBid(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -186,7 +135,7 @@ func (handler *Handler) submitBid(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonJSON(w, 201, bid)
 }
-func (handler *Handler) acceptBid(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) AcceptBid(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -204,7 +153,7 @@ func (handler *Handler) acceptBid(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonJSON(w, 200, map[string]any{"bid": bid, "ride": ride})
 }
-func (handler *Handler) getRide(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) GetRide(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -227,7 +176,7 @@ func (handler *Handler) getRide(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, ride)
 }
 
-func (handler *Handler) passengerRides(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -246,7 +195,7 @@ func (handler *Handler) passengerRides(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, items)
 }
 
-func (handler *Handler) driverStats(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 	if _, ok := handler.identity(r); !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
@@ -265,7 +214,7 @@ func (handler *Handler) driverStats(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, map[string]any{"driver_id": stats.DriverID, "total_trips": stats.TotalTrips, "completed_trips": stats.CompletedTrips, "active_trips": stats.ActiveTrips, "total_fare_centavos": stats.TotalFare, "average_rating": stats.AverageRating, "totalTrips": stats.TotalTrips, "completedTrips": stats.CompletedTrips})
 }
 
-func (handler *Handler) driverTrips(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 	if _, ok := handler.identity(r); !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
@@ -283,7 +232,7 @@ func (handler *Handler) driverTrips(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, items)
 }
 
-func (handler *Handler) driverReviews(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) DriverReviews(w http.ResponseWriter, r *http.Request) {
 	if _, ok := handler.identity(r); !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
@@ -305,7 +254,7 @@ func (handler *Handler) driverReviews(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, items)
 }
 
-func (handler *Handler) createReview(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -329,7 +278,7 @@ func (handler *Handler) createReview(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 201, item)
 }
 
-func (handler *Handler) createPassengerReview(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -353,7 +302,7 @@ func (handler *Handler) createPassengerReview(w http.ResponseWriter, r *http.Req
 	jsonJSON(w, 201, item)
 }
 
-func (handler *Handler) onlineDrivers(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 	if _, ok := handler.identity(r); !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
@@ -373,7 +322,7 @@ func queryInt(r *http.Request, key string, fallback int) int {
 	}
 	return value
 }
-func (handler *Handler) estimate(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	var input dto.FareEstimateRequest
 	if json.NewDecoder(r.Body).Decode(&input) != nil {
 		errorJSON(w, 400, "invalid fare input")
@@ -389,13 +338,13 @@ func (handler *Handler) estimate(w http.ResponseWriter, r *http.Request) {
 	timeCharge := int64(metrics.DurationMinutes * 50)
 	jsonJSON(w, 200, map[string]any{"base_fare": float64(base) / 100, "distance_charge": float64(distanceCharge) / 100, "time_charge": float64(timeCharge) / 100, "surge_charge": float64(0), "fare_centavos": total, "total_fare": float64(total) / 100})
 }
-func (handler *Handler) fareConfigs(w http.ResponseWriter, _ *http.Request) {
+func (handler *Handler) FareConfigs(w http.ResponseWriter, _ *http.Request) {
 	jsonJSON(w, 200, map[string]any{"base_fare_centavos": int64(2500), "per_kilometer_centavos": int64(100), "per_minute_centavos": int64(50)})
 }
-func (handler *Handler) ratingConfig(w http.ResponseWriter, _ *http.Request) {
+func (handler *Handler) RatingConfig(w http.ResponseWriter, _ *http.Request) {
 	jsonJSON(w, 200, map[string]any{"minimum_rating": 1, "maximum_rating": 5})
 }
-func (handler *Handler) calculateFinal(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	var input dto.FinalFareRequest
 	if json.NewDecoder(r.Body).Decode(&input) != nil || input.DistanceKm < 0 || input.DurationMinutes < 0 || input.CommissionBPS < 0 || input.CommissionBPS > 10000 {
 		errorJSON(w, 400, "invalid final fare input")
@@ -411,7 +360,7 @@ func (handler *Handler) calculateFinal(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, map[string]any{"fare_centavos": fare, "distance_km": metrics.DistanceKm, "duration_minutes": metrics.DurationMinutes, "commission_centavos": commission, "driver_payout_centavos": fare - commission})
 }
 
-func (handler *Handler) createSession(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -430,7 +379,7 @@ func (handler *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 201, session)
 }
 
-func (handler *Handler) activeSessions(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -444,7 +393,7 @@ func (handler *Handler) activeSessions(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, sessions)
 }
 
-func (handler *Handler) session(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -467,7 +416,7 @@ func (handler *Handler) session(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, item)
 }
 
-func (handler *Handler) offers(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -491,7 +440,7 @@ func (handler *Handler) offers(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, items)
 }
 
-func (handler *Handler) placeOffer(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -519,7 +468,7 @@ func (handler *Handler) placeOffer(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 201, offer)
 }
 
-func (handler *Handler) acceptOffer(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -539,7 +488,7 @@ func (handler *Handler) acceptOffer(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, map[string]any{"session": session, "offer": offer, "ride": ride, "ride_id": ride.ID})
 }
 
-func (handler *Handler) cancelSession(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")
@@ -558,7 +507,7 @@ func (handler *Handler) cancelSession(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, item)
 }
 
-func (handler *Handler) cancelOffer(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
 		errorJSON(w, 401, "unauthorized")

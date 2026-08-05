@@ -13,16 +13,7 @@ type Handler struct{ service *usecase.Service }
 
 func NewHandler(service *usecase.Service) *Handler { return &Handler{service: service} }
 
-func (handler *Handler) RegisterRoutes(router chi.Router) {
-	router.Post("/chat/rooms", handler.createRoom)
-	router.Get("/chat/rooms/{roomID}/messages", handler.messages)
-	router.Post("/chat/rooms/{roomID}/resolve", handler.resolve)
-	router.Post("/api/v1/chat/rooms", handler.createRoom)
-	router.Get("/api/v1/chat/rooms/{roomID}/messages", handler.messages)
-	router.Post("/api/v1/chat/rooms/{roomID}/resolve", handler.resolve)
-}
-
-func (handler *Handler) createRoom(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Request) {
 	var input struct {
 		RoomID      string `json:"roomId"`
 		RoomIDSnake string `json:"room_id"`
@@ -47,7 +38,7 @@ func (handler *Handler) createRoom(writer http.ResponseWriter, request *http.Req
 	writeJSON(writer, http.StatusCreated, map[string]any{"room_id": input.RoomID, "status": "open"})
 }
 
-func (handler *Handler) messages(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Request) {
 	items, err := handler.service.Messages(request.Context(), chi.URLParam(request, "roomID"))
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "could not load chat messages")
@@ -60,7 +51,7 @@ func (handler *Handler) messages(writer http.ResponseWriter, request *http.Reque
 	writeJSON(writer, http.StatusOK, map[string]any{"messages": result})
 }
 
-func (handler *Handler) resolve(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Request) {
 	if err := handler.service.Resolve(request.Context(), chi.URLParam(request, "roomID")); err != nil {
 		writeError(writer, http.StatusInternalServerError, "could not resolve chat room")
 		return

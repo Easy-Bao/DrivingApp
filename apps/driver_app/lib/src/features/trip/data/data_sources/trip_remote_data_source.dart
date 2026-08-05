@@ -30,7 +30,7 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
     required String driverId,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/rides/$tripId/accept',
+      '/api/v1/rides/$tripId/accept',
       data: {'driver_id': driverId},
     );
     return response.statusCode == 200;
@@ -42,7 +42,7 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
     required String status,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/rides/$tripId/status',
+      '/api/v1/rides/$tripId/status',
       data: {'status': status},
     );
     return response.statusCode == 200;
@@ -50,20 +50,24 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> fetchTripDetails(String tripId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/rides/$tripId');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/rides/$tripId',
+    );
     return response.data ?? {};
   }
 
   @override
   Future<Map<String, dynamic>> getRideStatus(String tripId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/rides/$tripId');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/rides/$tripId',
+    );
     return response.data ?? {};
   }
 
   @override
   Future<Map<String, dynamic>> settleCash(String tripId) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/rides/$tripId/cash-settle',
+      '/api/v1/rides/$tripId/cash-settle',
     );
     return response.data ?? {};
   }
@@ -76,7 +80,7 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
     required String comment,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/passengers/$passengerId/reviews',
+      '/api/v1/passengers/$passengerId/reviews',
       data: {
         'ride_id': int.tryParse(rideId),
         'rating': rating,
@@ -89,14 +93,16 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
   @override
   Future<Map<String, dynamic>> fetchStats(String driverId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/drivers/$driverId/stats',
+      '/api/v1/drivers/$driverId/stats',
     );
     return response.data ?? {};
   }
 
   @override
   Future<List<dynamic>> fetchTripHistory(String driverId) async {
-    final response = await _dio.get<List<dynamic>>('/drivers/$driverId/trips');
+    final response = await _dio.get<List<dynamic>>(
+      '/api/v1/drivers/$driverId/trips',
+    );
     return response.data ?? [];
   }
 }

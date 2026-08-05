@@ -96,7 +96,7 @@ class BackgroundTelemetryService {
           ),
         );
         await Dio(BaseOptions(baseUrl: baseUrl!)).post<void>(
-          '/telemetry/location',
+          '/api/v1/telemetry/location',
           data: {
             'driverId': driverId,
             'lat': position.latitude,

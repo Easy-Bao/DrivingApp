@@ -102,7 +102,7 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       final gatewayUri = EnvConfig.httpBaseUri;
       final resolveEndpointUri = gatewayUri.replace(
-        path: '/chat/rooms/$roomId/resolve',
+        path: '/api/v1/chat/rooms/$roomId/resolve',
       );
       final response = await Dio().postUri(resolveEndpointUri);
 

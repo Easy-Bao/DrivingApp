@@ -63,7 +63,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     required double destinationLongitude,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/fare',
+      '/api/v1/bids/fare',
       data: {
         'ride_type': rideType,
         'distance_km': distanceKm,
@@ -79,13 +79,18 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> requestRide(Map<String, dynamic> body) async {
-    final response = await _dio.post<Map<String, dynamic>>('/bids', data: body);
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/bids',
+      data: body,
+    );
     return response.data ?? {};
   }
 
   @override
   Future<List<dynamic>> fetchOffers(String sessionId) async {
-    final response = await _dio.get<List<dynamic>>('/bids/$sessionId/offers');
+    final response = await _dio.get<List<dynamic>>(
+      '/api/v1/bids/$sessionId/offers',
+    );
     return response.data ?? [];
   }
 
@@ -95,7 +100,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     required String offerId,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/$sessionId/offers/$offerId/accept',
+      '/api/v1/bids/$sessionId/offers/$offerId/accept',
       data: {'offer_id': offerId},
     );
     return response.data ?? {};
@@ -104,7 +109,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   @override
   Future<bool> cancelSession(String sessionId) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/$sessionId/cancel',
+      '/api/v1/bids/$sessionId/cancel',
     );
     return response.statusCode == 201 || response.statusCode == 200;
   }
@@ -112,7 +117,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   @override
   Future<Map<String, dynamic>> fetchDriverStats(String driverId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/drivers/$driverId/stats',
+      '/api/v1/drivers/$driverId/stats',
     );
     return response.data ?? {};
   }
@@ -124,7 +129,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     int? limit,
   }) async {
     final response = await _dio.get<List<dynamic>>(
-      '/drivers/$driverId/reviews',
+      '/api/v1/drivers/$driverId/reviews',
       queryParameters: {'page': ?page, 'limit': ?limit},
     );
     return response.data ?? [];
@@ -132,7 +137,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
 
   @override
   Future<List<dynamic>> fetchOnlineDrivers() async {
-    final response = await _dio.get<List<dynamic>>('/drivers/online');
+    final response = await _dio.get<List<dynamic>>('/api/v1/drivers/online');
     return response.data ?? [];
   }
 
@@ -143,7 +148,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     double radiusKm = 5,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/telemetry/location/nearby',
+      '/api/v1/telemetry/location/nearby',
       queryParameters: {
         'latitude': latitude,
         'longitude': longitude,
@@ -156,14 +161,16 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>?> getRideStatus(String rideId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/rides/$rideId');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/rides/$rideId',
+    );
     return response.data;
   }
 
   @override
   Future<Map<String, dynamic>?> fetchDriverLocation(String driverId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/telemetry/location/$driverId',
+      '/api/v1/telemetry/location/$driverId',
     );
     return response.data;
   }
@@ -175,7 +182,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     required double lng,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/telemetry/passenger/$rideId',
+      '/api/v1/telemetry/passenger/$rideId',
       data: {'lat': lat, 'lng': lng},
     );
     return response.statusCode == 200 || response.statusCode == 201;
@@ -184,7 +191,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   @override
   Future<bool> updateRideStatus(String rideId, String status) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/rides/$rideId/status',
+      '/api/v1/rides/$rideId/status',
       data: {'status': status},
     );
     return response.statusCode == 200;
@@ -198,7 +205,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     required String comment,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/drivers/$driverId/reviews',
+      '/api/v1/drivers/$driverId/reviews',
       data: {
         'ride_id': int.tryParse(rideId),
         'rating': rating,
@@ -210,7 +217,9 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> getDriverProfile(String driverId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/drivers/$driverId');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/drivers/$driverId',
+    );
     return response.data ?? {};
   }
 }

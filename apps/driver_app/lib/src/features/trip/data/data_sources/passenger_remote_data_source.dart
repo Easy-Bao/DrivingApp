@@ -12,7 +12,7 @@ class PassengerRemoteDataSourceImpl implements PassengerRemoteDataSource {
   @override
   Future<Map<String, dynamic>> fetchPassengerProfile(String passengerId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/passengers/$passengerId',
+      '/api/v1/passengers/$passengerId',
     );
     return response.data ?? {};
   }

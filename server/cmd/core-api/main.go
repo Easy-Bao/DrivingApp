@@ -150,7 +150,7 @@ func main() {
 	if redisClient != nil {
 		defer redisClient.Close()
 	}
-	locationhttp.NewHandler(usecase.NewServiceWithInfrastructure(provider, cache, publisher)).RegisterRoutes(router)
+	locationhttp.NewRouter(usecase.NewServiceWithInfrastructure(provider, cache, publisher)).RegisterRoutes(router)
 	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"core-api"}`))

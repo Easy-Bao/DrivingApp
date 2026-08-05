@@ -25,7 +25,7 @@ void main() {
 
     test('getNearbyPois parses places JSON response correctly', () async {
       dio.httpClientAdapter = _MockHttpClientAdapter((options) {
-        if (options.uri.path == '/places/nearby') {
+        if (options.uri.path == '/api/v1/location/nearby') {
           return ResponseBody.fromString(
             jsonEncode({
               'places': [
@@ -68,7 +68,7 @@ void main() {
 
     test('searchPlaces parses places JSON response correctly', () async {
       dio.httpClientAdapter = _MockHttpClientAdapter((options) {
-        if (options.uri.path == '/places/search') {
+        if (options.uri.path == '/api/v1/location/search') {
           return ResponseBody.fromString(
             jsonEncode({
               'places': [
@@ -118,7 +118,7 @@ void main() {
 
     test('getDrivingDistances parses Matrix API distances', () async {
       dio.httpClientAdapter = _MockHttpClientAdapter((options) {
-        if (options.uri.path == '/places/matrix') {
+        if (options.uri.path == '/api/v1/location/matrix') {
           return ResponseBody.fromString(
             jsonEncode({
               'distancesKm': [1.25, 3.5],

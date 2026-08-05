@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/go-chi/chi/v5"
 )
@@ -19,11 +20,8 @@ func main() {
 	coreProxy := httputil.NewSingleHostReverseProxy(core)
 	realtimeProxy := httputil.NewSingleHostReverseProxy(realtime)
 	router := chi.NewRouter()
-	router.Handle("/ws", realtimeProxy)
-	router.Handle("/api/v1/telemetry/*", realtimeProxy)
-	router.Handle("/telemetry/*", realtimeProxy)
-	router.Handle("/chat/*", realtimeProxy)
-	router.Handle("/api/v1/chat/*", realtimeProxy)
+	router.Handle(api.V1Prefix+"/chat/*", realtimeProxy)
+	router.Handle(api.V1Prefix+"/telemetry/*", realtimeProxy)
 	// The gateway is the sole public HTTP endpoint. Domain routing happens
 	// behind it, so clients never need a URL for an individual module.
 	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {

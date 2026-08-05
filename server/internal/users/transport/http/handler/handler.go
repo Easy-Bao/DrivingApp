@@ -2,13 +2,14 @@ package handler
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
-	"net/http"
-	"strconv"
 )
 
 type Handler struct {
@@ -19,20 +20,6 @@ type Handler struct {
 func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
-func (handler *Handler) RegisterRoutes(router chi.Router) {
-	router.Get("/api/v1/users/me", handler.me)
-	router.Patch("/api/v1/users/me", handler.update)
-	router.Get("/api/v1/passengers/{id}", handler.profile)
-	router.Put("/api/v1/passengers/{id}", handler.profileUpdate)
-	router.Get("/api/v1/drivers/{id}", handler.profile)
-	router.Post("/api/v1/drivers/{id}/online", handler.online)
-	router.Get("/api/v1/passengers/{id}/notifications", handler.notifications)
-	router.Get("/passengers/{id}", handler.profile)
-	router.Put("/passengers/{id}", handler.profileUpdate)
-	router.Get("/drivers/{id}", handler.profile)
-	router.Post("/drivers/{id}/online", handler.online)
-	router.Get("/passengers/{id}/notifications", handler.notifications)
-}
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	raw := r.Header.Get("Authorization")
 	if len(raw) < 7 {
@@ -42,7 +29,7 @@ func (handler *Handler) identity(r *http.Request) (int, bool) {
 	value, parseErr := strconv.Atoi(id)
 	return value, err == nil && parseErr == nil
 }
-func (handler *Handler) me(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)
 	if !ok {
 		writeError(w, 401, "unauthorized")
@@ -55,7 +42,7 @@ func (handler *Handler) me(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, 200, profile)
 }
-func (handler *Handler) update(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)
 	if !ok {
 		writeError(w, 401, "unauthorized")
@@ -86,7 +73,7 @@ func (handler *Handler) update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, profile)
 }
 
-func (handler *Handler) profile(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		writeError(w, 401, "unauthorized")
@@ -105,7 +92,7 @@ func (handler *Handler) profile(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, profile)
 }
 
-func (handler *Handler) profileUpdate(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if !ok {
@@ -116,10 +103,10 @@ func (handler *Handler) profileUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 403, "forbidden")
 		return
 	}
-	handler.update(w, r)
+	handler.Update(w, r)
 }
 
-func (handler *Handler) notifications(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		writeError(w, 401, "unauthorized")
@@ -138,7 +125,7 @@ func (handler *Handler) notifications(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, items)
 }
 
-func (handler *Handler) online(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		writeError(w, 401, "unauthorized")

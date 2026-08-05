@@ -20,7 +20,9 @@ void main() {
       () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
     ).thenAnswer(
       (_) async => Response<Object?>(
-        requestOptions: RequestOptions(path: '/auth/verify-otp'),
+        requestOptions: RequestOptions(
+          path: '/api/v1/auth/passenger/verify-otp',
+        ),
         statusCode: 200,
         data: <String, dynamic>{
           'success': true,
@@ -42,7 +44,7 @@ void main() {
     expect(result['user'], <String, dynamic>{'id': 42});
     verify(
       () => dio.post<Object?>(
-        '/auth/verify-otp',
+        '/api/v1/auth/passenger/verify-otp',
         data: <String, dynamic>{
           'email': 'passenger@example.com',
           'code': '123456',
@@ -60,7 +62,7 @@ void main() {
         () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
       ).thenAnswer(
         (_) async => Response<Object?>(
-          requestOptions: RequestOptions(path: '/auth/passenger/login'),
+          requestOptions: RequestOptions(path: '/api/v1/auth/passenger/login'),
           statusCode: 200,
           data: <String, dynamic>{
             'success': true,
@@ -77,7 +79,7 @@ void main() {
 
       verify(
         () => dio.post<Object?>(
-          '/auth/passenger/login',
+          '/api/v1/auth/passenger/login',
           data: <String, dynamic>{'email': email, 'password': password},
         ),
       ).called(1);
@@ -101,7 +103,7 @@ void main() {
         () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
       ).thenAnswer(
         (_) async => Response<Object?>(
-          requestOptions: RequestOptions(path: '/auth/passenger/login'),
+          requestOptions: RequestOptions(path: '/api/v1/auth/passenger/login'),
           statusCode: 200,
           data: <String, dynamic>{'success': true, 'data': sessionPayload},
         ),
@@ -122,7 +124,9 @@ void main() {
           () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
         ).thenAnswer(
           (_) async => Response<Object?>(
-            requestOptions: RequestOptions(path: '/auth/passenger/login'),
+            requestOptions: RequestOptions(
+              path: '/api/v1/auth/passenger/login',
+            ),
             statusCode: 200,
             data: <String, dynamic>{
               'success': true,
@@ -146,9 +150,11 @@ void main() {
         () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
       ).thenThrow(
         DioException(
-          requestOptions: RequestOptions(path: '/auth/passenger/login'),
+          requestOptions: RequestOptions(path: '/api/v1/auth/passenger/login'),
           response: Response<Object?>(
-            requestOptions: RequestOptions(path: '/auth/passenger/login'),
+            requestOptions: RequestOptions(
+              path: '/api/v1/auth/passenger/login',
+            ),
             statusCode: 500,
             data: <String, dynamic>{
               'message': 'Failed query: select * from passengers',

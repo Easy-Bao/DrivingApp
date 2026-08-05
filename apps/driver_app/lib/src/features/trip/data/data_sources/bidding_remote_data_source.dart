@@ -31,7 +31,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     Map<String, dynamic>? body,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/fare',
+      '/api/v1/bids/fare',
       data:
           body ??
           {'distance_km': distanceKm, 'duration_minutes': durationMinutes},
@@ -42,7 +42,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   @override
   Future<List<dynamic>> fetchActiveBids(String driverId) async {
     final response = await _dio.get<List<dynamic>>(
-      '/bids/active',
+      '/api/v1/bids/active',
       queryParameters: {'driver_id': driverId},
     );
     return response.data ?? [];
@@ -59,7 +59,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     double? proposedFare,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/$sessionId/offer',
+      '/api/v1/bids/$sessionId/offer',
       data: {
         'driver_id': driverId,
         'offer_price': offerPrice,
@@ -78,7 +78,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     required String driverId,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/bids/$sessionId/cancel-offer',
+      '/api/v1/bids/$sessionId/cancel-offer',
       data: {'driver_id': driverId},
     );
     return response.statusCode == 200;

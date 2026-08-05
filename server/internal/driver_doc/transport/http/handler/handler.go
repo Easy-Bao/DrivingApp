@@ -19,11 +19,6 @@ type Handler struct {
 func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
-func (handler *Handler) RegisterRoutes(router chi.Router) {
-	router.Post("/api/v1/driver/documents", handler.upload)
-	router.Get("/api/v1/driver/documents/status", handler.status)
-	router.Patch("/api/v1/admin/documents/{id}/review", handler.review)
-}
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	raw := r.Header.Get("Authorization")
 	if len(raw) < 7 {
@@ -33,7 +28,7 @@ func (handler *Handler) identity(r *http.Request) (int, bool) {
 	id, parseErr := strconv.Atoi(subject)
 	return id, err == nil && parseErr == nil
 }
-func (handler *Handler) upload(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)
 	if !ok {
 		writeError(w, 401, "unauthorized")
@@ -55,7 +50,7 @@ func (handler *Handler) upload(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, 201, item)
 }
-func (handler *Handler) status(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)
 	if !ok {
 		writeError(w, 401, "unauthorized")
@@ -68,7 +63,7 @@ func (handler *Handler) status(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, 200, map[string]any{"documents": items})
 }
-func (handler *Handler) review(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Review(w http.ResponseWriter, r *http.Request) {
 	if _, ok := handler.identity(r); !ok {
 		writeError(w, 401, "unauthorized")
 		return

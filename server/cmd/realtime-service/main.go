@@ -15,6 +15,7 @@ import (
 	geows "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/ws"
 	geousecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/database"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/logger"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
@@ -40,7 +41,7 @@ func main() {
 	events := ws.NewEventRouter()
 	events.Register("LOCATION_UPDATE", geows.NewEventHandler(geoService))
 	events.Register("CHAT_MESSAGE", chatws.NewEventHandler(chatService))
-	router.Handle("/ws", ws.NewHandlerWithSink(ws.NewHub(), tokenManager, events))
+	router.Handle(api.V1Prefix+"/chat/ws", ws.NewHandlerWithSink(ws.NewHub(), tokenManager, events))
 	geoh.NewRouter(geoService, tokenManager).RegisterRoutes(router)
 	chath.NewRouter(chatService).RegisterRoutes(router)
 	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {

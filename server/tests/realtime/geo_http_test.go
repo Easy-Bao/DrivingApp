@@ -42,7 +42,7 @@ func TestTelemetryUsesTheVerifiedSubjectAsDriverID(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	geoh.NewRouter(geousecase.NewService(repository), security.NewTokenManager("secret")).RegisterRoutes(router)
-	request := httptest.NewRequest(http.MethodPost, "/telemetry/location", strings.NewReader(`{"driver_id":"attacker","lat":14.1,"lng":120.9}`))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"driver_id":"attacker","lat":14.1,"lng":120.9}`))
 	request.Header.Set("Authorization", "Bearer "+token)
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)

@@ -6,7 +6,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
-	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -17,10 +16,7 @@ type Handler struct {
 func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
-func (handler *Handler) RegisterRoutes(router chi.Router) {
-	router.Get("/api/v1/admin/stats", handler.stats)
-}
-func (handler *Handler) stats(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Stats(w http.ResponseWriter, r *http.Request) {
 	raw := r.Header.Get("Authorization")
 	if len(raw) < 7 {
 		writeError(w, 401, "unauthorized")

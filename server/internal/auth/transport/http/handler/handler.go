@@ -9,7 +9,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
-	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -21,36 +20,10 @@ type Handler struct {
 func NewHandler(register *usecase.RegisterService, authenticate *usecase.AuthenticateService, otp *usecase.OTPService) *Handler {
 	return &Handler{register: register, authenticate: authenticate, otp: otp}
 }
-func (handler *Handler) RegisterRoutes(router chi.Router) {
-	router.Post("/api/v1/auth/register", handler.genericRegister)
-	router.Post("/api/v1/auth/login", handler.login)
-	router.Post("/api/v1/auth/passenger/register", handler.passengerRegister)
-	router.Post("/api/v1/auth/driver/register", handler.driverRegister)
-	router.Post("/api/v1/auth/passenger/login", handler.login)
-	router.Post("/api/v1/auth/driver/login", handler.login)
-	router.Post("/api/v1/auth/passenger/otp", handler.requestOTP)
-	router.Post("/api/v1/auth/passenger/verify-otp", handler.verifyOTP)
-	router.Post("/api/v1/auth/passenger/forgot-password", handler.forgotPassword)
-	router.Post("/api/v1/auth/passenger/reset-password", handler.resetPassword)
-	// These aliases keep the public gateway contract stable for the clients
-	// while the application remains the only externally reachable process.
-	router.Post("/auth/passenger/register", handler.passengerRegister)
-	router.Post("/auth/register", handler.genericRegister)
-	router.Post("/auth/driver/register", handler.driverRegister)
-	router.Post("/auth/passenger/login", handler.login)
-	router.Post("/auth/login", handler.login)
-	router.Post("/auth/driver/login", handler.login)
-	router.Post("/auth/passenger/otp", handler.requestOTP)
-	router.Post("/auth/passenger/verify-otp", handler.verifyOTP)
-	router.Post("/auth/verify-otp", handler.verifyOTP)
-	router.Post("/auth/forgot-password", handler.forgotPassword)
-	router.Post("/auth/reset-password", handler.resetPassword)
-}
-
-func (handler *Handler) passengerRegister(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) PassengerRegister(w http.ResponseWriter, r *http.Request) {
 	handler.registerAccount(w, r, false)
 }
-func (handler *Handler) driverRegister(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) DriverRegister(w http.ResponseWriter, r *http.Request) {
 	handler.registerAccount(w, r, true)
 }
 func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, driver bool) {
@@ -61,7 +34,7 @@ func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, 
 	handler.registerDecoded(w, r, input, driver)
 }
 
-func (handler *Handler) genericRegister(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) {
 	var input dto.Credentials
 	if !decode(w, r, &input) {
 		return
@@ -116,7 +89,7 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"success": true, "data": map[string]any{"user": account, "token": token, "needsVerification": !account.IsVerified}})
 }
-func (handler *Handler) login(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var input dto.Credentials
 	if !decode(w, r, &input) {
 		return
@@ -129,7 +102,7 @@ func (handler *Handler) login(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"user": account, "token": token, "needsVerification": !account.IsVerified}})
 }
 
-func (handler *Handler) requestOTP(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 	if handler.otp == nil {
 		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
@@ -145,7 +118,7 @@ func (handler *Handler) requestOTP(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusAccepted, map[string]any{"success": true, "data": map[string]bool{"sent": true}})
 }
 
-func (handler *Handler) verifyOTP(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	if handler.otp == nil {
 		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
@@ -154,7 +127,9 @@ func (handler *Handler) verifyOTP(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &input) {
 		return
 	}
+
 	account, token, err := handler.otp.VerifyPassenger(r.Context(), input.Email, input.Code)
+
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -162,7 +137,7 @@ func (handler *Handler) verifyOTP(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"verified": true, "user": account, "token": token}})
 }
 
-func (handler *Handler) forgotPassword(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if handler.otp == nil {
 		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
@@ -178,7 +153,7 @@ func (handler *Handler) forgotPassword(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"success": true}})
 }
 
-func (handler *Handler) resetPassword(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	if handler.otp == nil {
 		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
@@ -193,9 +168,11 @@ func (handler *Handler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
 }
+
 func toRegisterInput(input dto.Credentials) usecase.RegisterInput {
 	return usecase.RegisterInput{Email: input.Email, Phone: input.Phone, Name: input.Name, Password: input.Password, VehicleType: input.VehicleType, PlateNumber: input.PlateNumber}
 }
+
 func decode(w http.ResponseWriter, r *http.Request, value any) bool {
 	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(value) != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")

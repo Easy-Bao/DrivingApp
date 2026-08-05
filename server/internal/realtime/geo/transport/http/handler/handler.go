@@ -26,26 +26,14 @@ func NewHandler(service *usecase.Service, auth ...*security.TokenManager) *Handl
 	return &Handler{service: service, auth: tokenManager}
 }
 
-func (router *Handler) RegisterRoutes(r chi.Router) {
-	r.Post("/api/v1/telemetry/location", router.update)
-	r.Get("/api/v1/telemetry/location/nearby", router.nearby)
-	r.Get("/api/v1/telemetry/location/{driverID}", router.get)
-	r.Post("/api/v1/telemetry/passenger/{rideID}", router.updatePassenger)
-	r.Get("/api/v1/telemetry/passenger/{rideID}", router.getPassenger)
-	r.Post("/telemetry/location", router.update)
-	r.Get("/telemetry/location/{driverID}", router.get)
-	r.Post("/telemetry/passenger/{rideID}", router.updatePassenger)
-	r.Get("/telemetry/passenger/{rideID}", router.getPassenger)
-}
-
-func (router *Handler) update(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request *http.Request) {
 	var input dto.LocationUpdate
 	if json.NewDecoder(request.Body).Decode(&input) != nil {
 		writeError(writer, http.StatusBadRequest, "invalid location")
 		return
 	}
-	if router.auth != nil {
-		identity, ok := router.identity(request)
+	if handler.auth != nil {
+		identity, ok := handler.identity(request)
 		if !ok {
 			writeError(writer, http.StatusUnauthorized, "unauthorized")
 			return
@@ -65,15 +53,15 @@ func (router *Handler) update(writer http.ResponseWriter, request *http.Request)
 		writeError(writer, http.StatusBadRequest, "driver id is required")
 		return
 	}
-	if err := router.service.Ingest(request.Context(), point); err != nil {
+	if err := handler.service.Ingest(request.Context(), point); err != nil {
 		writeError(writer, http.StatusInternalServerError, "could not save location")
 		return
 	}
 	writeJSON(writer, http.StatusAccepted, map[string]any{"success": true, "location": point})
 }
 
-func (router *Handler) get(writer http.ResponseWriter, request *http.Request) {
-	point, err := router.service.Get(request.Context(), chi.URLParam(request, "driverID"))
+func (handler *Handler) GetDriverLocation(writer http.ResponseWriter, request *http.Request) {
+	point, err := handler.service.Get(request.Context(), chi.URLParam(request, "driverID"))
 	if err != nil {
 		writeError(writer, http.StatusNotFound, "location not found")
 		return
@@ -81,9 +69,9 @@ func (router *Handler) get(writer http.ResponseWriter, request *http.Request) {
 	writeJSON(writer, http.StatusOK, point)
 }
 
-func (router *Handler) updatePassenger(writer http.ResponseWriter, request *http.Request) {
-	if router.auth != nil {
-		if _, ok := router.identity(request); !ok {
+func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, request *http.Request) {
+	if handler.auth != nil {
+		if _, ok := handler.identity(request); !ok {
 			writeError(writer, http.StatusUnauthorized, "unauthorized")
 			return
 		}
@@ -100,15 +88,15 @@ func (router *Handler) updatePassenger(writer http.ResponseWriter, request *http
 		input.Longitude = input.Lng
 	}
 	point := domain.DriverPoint{Latitude: input.Latitude, Longitude: input.Longitude}
-	if err := router.service.UpdatePassenger(request.Context(), chi.URLParam(request, "rideID"), point); err != nil {
+	if err := handler.service.UpdatePassenger(request.Context(), chi.URLParam(request, "rideID"), point); err != nil {
 		writeError(writer, http.StatusInternalServerError, "could not save location")
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]bool{"success": true})
 }
 
-func (router *Handler) getPassenger(writer http.ResponseWriter, request *http.Request) {
-	point, err := router.service.GetPassenger(request.Context(), chi.URLParam(request, "rideID"))
+func (handler *Handler) GetPassengerLocation(writer http.ResponseWriter, request *http.Request) {
+	point, err := handler.service.GetPassenger(request.Context(), chi.URLParam(request, "rideID"))
 	if err != nil {
 		writeError(writer, http.StatusNotFound, "location not found")
 		return
@@ -116,9 +104,9 @@ func (router *Handler) getPassenger(writer http.ResponseWriter, request *http.Re
 	writeJSON(writer, http.StatusOK, point)
 }
 
-func (router *Handler) nearby(writer http.ResponseWriter, request *http.Request) {
-	if router.auth != nil {
-		if _, ok := router.identity(request); !ok {
+func (handler *Handler) NearbyDrivers(writer http.ResponseWriter, request *http.Request) {
+	if handler.auth != nil {
+		if _, ok := handler.identity(request); !ok {
 			writeError(writer, http.StatusUnauthorized, "unauthorized")
 			return
 		}
@@ -131,7 +119,7 @@ func (router *Handler) nearby(writer http.ResponseWriter, request *http.Request)
 		writeError(writer, http.StatusBadRequest, "invalid nearby query")
 		return
 	}
-	points, err := router.service.Nearby(request.Context(), latitude, longitude, radius)
+	points, err := handler.service.Nearby(request.Context(), latitude, longitude, radius)
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "could not load nearby drivers")
 		return
@@ -139,13 +127,13 @@ func (router *Handler) nearby(writer http.ResponseWriter, request *http.Request)
 	writeJSON(writer, http.StatusOK, map[string]any{"drivers": points})
 }
 
-func (router *Handler) identity(request *http.Request) (string, bool) {
+func (handler *Handler) identity(request *http.Request) (string, bool) {
 	const prefix = "Bearer "
 	header := request.Header.Get("Authorization")
 	if len(header) <= len(prefix) || header[:len(prefix)] != prefix {
 		return "", false
 	}
-	subject, err := router.auth.Verify(header[len(prefix):])
+	subject, err := handler.auth.Verify(header[len(prefix):])
 	return subject, err == nil && subject != ""
 }
 
