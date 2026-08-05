@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/profile/presentation/screens/account_screen.dart';
-import 'package:passenger_app/src/features/profile/presentation/screens/help_center_screen.dart';
-import 'package:passenger_app/src/features/profile/presentation/screens/profile_info_screen.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/screens/saved_place_screen.dart';
+import 'package:passenger_app/src/features/profile/view/account_screen.dart';
+import 'package:passenger_app/src/features/profile/view/help_center_screen.dart';
+import 'package:passenger_app/src/features/profile/view/profile_info_screen.dart';
+import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
+import 'package:passenger_app/src/features/saved_places/view/saved_place_screen.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ProfileModule {

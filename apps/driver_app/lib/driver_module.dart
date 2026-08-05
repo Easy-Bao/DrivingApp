@@ -7,21 +7,21 @@ import 'package:driver_app/src/features/activity/domain/repositories/i_driver_ac
 import 'package:driver_app/src/features/chat/chat_module.dart';
 import 'package:driver_app/src/features/home/home_module.dart';
 import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
-import 'package:driver_app/src/features/home/data/data_sources/driver_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
-import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
-import 'package:driver_app/src/features/home/presentation/widgets/driver_tab.dart';
+import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/home/view/widgets/driver_tab.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';
 import 'package:driver_app/src/features/trip/data/repositories/ride_repository.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_ride_repository.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
+import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/features/trip/trip_module.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/bidding_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 
 class DriverModule extends Module {
   @override

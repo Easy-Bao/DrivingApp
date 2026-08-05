@@ -1,7 +1,7 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 
 class InboxRepository implements IInboxRepository {

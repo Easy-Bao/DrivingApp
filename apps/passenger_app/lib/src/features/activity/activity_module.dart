@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
-import 'package:passenger_app/src/features/activity/presentation/screens/passenger_activity_screen.dart';
-import 'package:passenger_app/src/features/activity/presentation/screens/passenger_payment_screen.dart';
-import 'package:passenger_app/src/features/activity/presentation/screens/passenger_rating_screen.dart';
-import 'package:passenger_app/src/features/activity/presentation/screens/view_all_activity_screen.dart';
-import 'package:passenger_app/src/features/activity/presentation/screens/view_details_screen.dart';
-import 'package:passenger_app/src/features/trip/presentation/screens/track_driver_screen.dart';
+import 'package:passenger_app/src/features/activity/view/passenger_activity_screen.dart';
+import 'package:passenger_app/src/features/activity/view/passenger_payment_screen.dart';
+import 'package:passenger_app/src/features/activity/view/passenger_rating_screen.dart';
+import 'package:passenger_app/src/features/activity/view/view_all_activity_screen.dart';
+import 'package:passenger_app/src/features/activity/view/view_details_screen.dart';
+import 'package:passenger_app/src/features/trip/view/track_driver_screen.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 

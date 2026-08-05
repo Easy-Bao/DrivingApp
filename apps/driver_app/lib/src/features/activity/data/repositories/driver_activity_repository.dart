@@ -1,6 +1,6 @@
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:fpdart/fpdart.dart';
 
 class DriverActivityRepository implements IDriverActivityRepository {

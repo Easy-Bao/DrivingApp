@@ -2,8 +2,8 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
-import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockActivityRepo extends Mock implements IActivityRepository {}

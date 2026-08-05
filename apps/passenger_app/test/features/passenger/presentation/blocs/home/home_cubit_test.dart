@@ -2,9 +2,9 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
+import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/home_cubit.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/home_state.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockHomeRepo extends Mock implements IPassengerHomeRepository {}

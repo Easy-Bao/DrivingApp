@@ -6,8 +6,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
 
 class AppWidget extends StatefulWidget {
   const AppWidget({super.key});

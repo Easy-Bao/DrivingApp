@@ -7,9 +7,9 @@ import 'package:passenger_app/src/core/services/background_telemetry_service.dar
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/storage/secure_storage.dart';
 import 'package:passenger_app/src/features/auth/auth_module.dart';
-import 'package:passenger_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
-import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
-import 'package:passenger_app/src/features/booking/data/data_sources/passenger_remote_data_source.dart';
+import 'package:passenger_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppModule extends Module {

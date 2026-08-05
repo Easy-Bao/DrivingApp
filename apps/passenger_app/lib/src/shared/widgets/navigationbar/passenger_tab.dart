@@ -8,9 +8,9 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
-import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
-import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 
 class PassengerShellLayout extends StatefulWidget {

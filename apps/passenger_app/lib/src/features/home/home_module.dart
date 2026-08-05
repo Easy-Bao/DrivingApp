@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:passenger_app/src/features/home/presentation/bloc/home_cubit.dart';
-import 'package:passenger_app/src/features/home/presentation/screens/home_screen.dart';
+import 'package:passenger_app/src/features/home/view/home_screen.dart';
+import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/screens/add_category_screen.dart';
+import 'package:passenger_app/src/features/saved_places/view/add_category_screen.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 

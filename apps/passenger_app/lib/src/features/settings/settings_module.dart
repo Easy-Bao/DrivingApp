@@ -1,6 +1,6 @@
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/settings/presentation/screens/settings_screen.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
+import 'package:passenger_app/src/features/settings/view/settings_screen.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class SettingsModule {

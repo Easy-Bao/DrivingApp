@@ -1,7 +1,7 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
-import 'package:driver_app/src/features/activity/presentation/screens/driver_trip_history_screen.dart';
-import 'package:driver_app/src/features/activity/presentation/screens/driver_trip_detail_screen.dart';
+import 'package:driver_app/src/features/activity/view/driver_trip_history_screen.dart';
+import 'package:driver_app/src/features/activity/view/driver_trip_detail_screen.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ActivityModule {

@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
+import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockTrackRepo extends Mock implements ITrackRepository {}

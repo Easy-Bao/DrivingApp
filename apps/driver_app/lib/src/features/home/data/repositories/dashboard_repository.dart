@@ -3,10 +3,10 @@ import 'dart:developer' as dev;
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/features/home/data/data_sources/driver_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:fpdart/fpdart.dart';
 
 class DashboardRepository implements IDashboardRepository {

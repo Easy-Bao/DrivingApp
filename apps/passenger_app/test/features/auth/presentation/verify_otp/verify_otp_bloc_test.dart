@@ -2,9 +2,9 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger_app/src/features/auth/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/resend_otp_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
-import 'package:passenger_app/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockVerifyOtpUseCase extends Mock implements VerifyOtpUseCase {}

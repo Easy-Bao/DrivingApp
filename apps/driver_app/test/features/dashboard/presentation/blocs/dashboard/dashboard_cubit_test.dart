@@ -5,8 +5,8 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
-import 'package:driver_app/src/features/home/presentation/bloc/dashboard_cubit.dart';
-import 'package:driver_app/src/features/home/presentation/bloc/dashboard_state.dart';
+import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
 
 class MockDashboardRepo extends Mock implements IDashboardRepository {}
 

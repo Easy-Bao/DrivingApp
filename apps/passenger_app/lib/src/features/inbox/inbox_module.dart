@@ -1,6 +1,6 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
-import 'package:passenger_app/src/features/inbox/presentation/screens/inbox_screen.dart';
+import 'package:passenger_app/src/features/inbox/view/inbox_screen.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class InboxModule {

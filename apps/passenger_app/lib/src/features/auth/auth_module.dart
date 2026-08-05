@@ -1,7 +1,12 @@
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
+import 'package:passenger_app/src/features/auth/bloc/forgot_password/forgot_password_bloc.dart';
+import 'package:passenger_app/src/features/auth/bloc/reset_password_confirm/reset_password_confirm_bloc.dart';
+import 'package:passenger_app/src/features/auth/bloc/sign_in/sign_in_bloc.dart';
+import 'package:passenger_app/src/features/auth/bloc/sign_up/sign_up_bloc.dart';
+import 'package:passenger_app/src/features/auth/bloc/verify_otp/verify_otp_bloc.dart';
+import 'package:passenger_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/auth/data/repositories/auth_repository.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/i_auth_repository.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/confirm_reset_password_use_case.dart';
@@ -10,17 +15,12 @@ import 'package:passenger_app/src/features/auth/domain/usecases/resend_otp_use_c
 import 'package:passenger_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
-import 'package:passenger_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
-import 'package:passenger_app/src/features/auth/presentation/bloc/reset_password_confirm/reset_password_confirm_bloc.dart';
-import 'package:passenger_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
-import 'package:passenger_app/src/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
-import 'package:passenger_app/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
-import 'package:passenger_app/src/features/auth/presentation/forgot_password/screens/forgot_password_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm/screens/reset_password_confirm_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/screens/onboarding_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/signin/screens/sign_in_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/signup/screens/sign_up_screen.dart';
-import 'package:passenger_app/src/features/auth/presentation/verify_otp/screens/verify_otp_screen.dart';
+import 'package:passenger_app/src/features/auth/view/forgot_password_screen.dart';
+import 'package:passenger_app/src/features/auth/view/onboarding_screen.dart';
+import 'package:passenger_app/src/features/auth/view/reset_password_confirm_screen.dart';
+import 'package:passenger_app/src/features/auth/view/sign_in_screen.dart';
+import 'package:passenger_app/src/features/auth/view/sign_up_screen.dart';
+import 'package:passenger_app/src/features/auth/view/verify_otp_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 

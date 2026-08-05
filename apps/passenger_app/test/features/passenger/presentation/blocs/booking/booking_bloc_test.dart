@@ -3,13 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/booking/data/data_sources/bidding_remote_data_source.dart';
-import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
+import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
-import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_cubit.dart';
-import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox_state.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockDriverRepo extends Mock implements IDriverRepository {}

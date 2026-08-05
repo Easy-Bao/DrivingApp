@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
+import 'package:passenger_app/src/features/auth/view/validation/auth_failure_message.dart';
 import 'package:shared_core/shared_core.dart';
 
 void main() {

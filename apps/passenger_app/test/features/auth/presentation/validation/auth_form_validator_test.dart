@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
+import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
 
 void main() {
   group('AuthFormValidator.email', () {
