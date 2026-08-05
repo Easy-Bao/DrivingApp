@@ -373,8 +373,9 @@ class _DestinationPreviewScreenState extends State<DestinationPreviewScreen> {
                         unawaited(
                           context.pushNamed(
                             TripRoutes.rideSelection,
+                            extra: {'destination': widget.destination},
                             queryParameters: params,
-                        ),
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(

@@ -110,7 +110,7 @@ class TripModule {
         final data = SafeRouteExtra.asMap(state.extra);
         final destination = data['destination'] is PlaceModel
             ? data['destination'] as PlaceModel
-            : null;
+            : _destinationFromQuery(state.uri.queryParameters);
         final distanceKm =
             (data['distanceKm'] as num?)?.toDouble() ??
             double.tryParse(state.uri.queryParameters['distanceKm'] ?? '');
@@ -212,4 +212,25 @@ class TripModule {
   ];
 
   static List<ModularRoute> shellRoutes = [];
+
+  static PlaceModel? _destinationFromQuery(Map<String, String> parameters) {
+    final name = parameters['destinationName'];
+    final latitude = double.tryParse(parameters['destinationLat'] ?? '');
+    final longitude = double.tryParse(parameters['destinationLng'] ?? '');
+
+    if (name == null ||
+        name.trim().isEmpty ||
+        latitude == null ||
+        longitude == null) {
+      return null;
+    }
+
+    return PlaceModel(
+      id: parameters['destinationId'] ?? name,
+      name: name,
+      fullAddress: parameters['destinationAddress'] ?? name,
+      latitude: latitude,
+      longitude: longitude,
+    );
+  }
 }
