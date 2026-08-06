@@ -1,25 +1,24 @@
 import 'dart:async';
 
+import 'package:driver_app/src/core/location/location.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-enum _LocationGateState { checking, prompt }
+enum _DriverLocationGateState { checking, prompt }
 
-class LocationGatePage extends StatefulWidget {
-  const LocationGatePage({super.key});
+class DriverLocationGatePage extends StatefulWidget {
+  const DriverLocationGatePage({super.key});
 
   @override
-  State<LocationGatePage> createState() => _LocationGatePageState();
+  State<DriverLocationGatePage> createState() => _DriverLocationGatePageState();
 }
 
-class _LocationGatePageState extends State<LocationGatePage>
+class _DriverLocationGatePageState extends State<DriverLocationGatePage>
     with WidgetsBindingObserver {
   static const _pollInterval = Duration(seconds: 2);
 
-  _LocationGateState _viewState = _LocationGateState.checking;
+  _DriverLocationGateState _viewState = _DriverLocationGateState.checking;
   Timer? _accessPoller;
   String? _statusMessage;
   bool _isChecking = false;
@@ -68,16 +67,16 @@ class _LocationGatePageState extends State<LocationGatePage>
       if (!mounted) return;
       if (accessState == LocationAccessState.ready) {
         _stopAccessMonitoring();
-        context.goNamed(HomeRoutes.home);
+        context.go('/driver/dashboard');
         return;
       }
-      if (_viewState != _LocationGateState.prompt) {
-        setState(() => _viewState = _LocationGateState.prompt);
+      if (_viewState != _DriverLocationGateState.prompt) {
+        setState(() => _viewState = _DriverLocationGateState.prompt);
       }
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _viewState = _LocationGateState.prompt;
+        _viewState = _DriverLocationGateState.prompt;
         _statusMessage = 'Location is temporarily unavailable. Try again.';
       });
     } finally {
@@ -88,7 +87,7 @@ class _LocationGatePageState extends State<LocationGatePage>
   Future<void> _enableLocation() async {
     if (_isChecking) return;
     setState(() {
-      _viewState = _LocationGateState.checking;
+      _viewState = _DriverLocationGateState.checking;
       _statusMessage = null;
     });
     _isChecking = true;
@@ -115,17 +114,17 @@ class _LocationGatePageState extends State<LocationGatePage>
       if (!mounted) return;
       if (refreshedState == LocationAccessState.ready) {
         _stopAccessMonitoring();
-        context.goNamed(HomeRoutes.home);
+        context.go('/driver/dashboard');
       } else {
         setState(() {
-          _viewState = _LocationGateState.prompt;
+          _viewState = _DriverLocationGateState.prompt;
           _statusMessage = 'Location access is still off. You can try again.';
         });
       }
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _viewState = _LocationGateState.prompt;
+        _viewState = _DriverLocationGateState.prompt;
         _statusMessage = 'Location is temporarily unavailable. Try again.';
       });
     } finally {
@@ -138,23 +137,23 @@ class _LocationGatePageState extends State<LocationGatePage>
     if (!mounted) return;
     _startAccessMonitoring();
     setState(() {
-      _viewState = _LocationGateState.prompt;
+      _viewState = _DriverLocationGateState.prompt;
       _statusMessage = 'Turn on location in Settings, then return to BaoRide.';
     });
   }
 
   void _skipLocation() {
     _stopAccessMonitoring();
-    context.goNamed(HomeRoutes.home);
+    context.go('/driver/dashboard');
   }
 
   @override
   Widget build(BuildContext context) {
     return switch (_viewState) {
-      _LocationGateState.checking => const Scaffold(
+      _DriverLocationGateState.checking => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
-      _LocationGateState.prompt => LocationPermissionPage(
+      _DriverLocationGateState.prompt => LocationPermissionPage(
         onEnable: _enableLocation,
         onSkip: _skipLocation,
         statusMessage: _statusMessage,

@@ -145,4 +145,25 @@ class DashboardCubit extends Cubit<DashboardState> {
       );
     }
   }
+
+  Future<void> forceOffline({required double lat, required double lng}) async {
+    if (!state.isOnline) return;
+
+    final updateResult = await _repository.updateOnlineStatus(
+      isOnline: false,
+      lat: lat,
+      lng: lng,
+    );
+
+    updateResult.fold(
+      (failure) => emit(state.copyWith(errorMessage: failure.message)),
+      (_) => emit(
+        state.copyWith(
+          isOnline: false,
+          surgeCells: const [],
+          errorMessage: null,
+        ),
+      ),
+    );
+  }
 }

@@ -40,6 +40,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   late final AnimationController _pulseCtrl;
   late final AnimationController _availabilityCtrl;
   Timer? _rideTriggerTimer;
+  Timer? _locationAccessPoller;
   StreamSubscription<Position>? _locationSubscription;
   List<Map<String, dynamic>> _activeBids = [];
   List<Map<String, dynamic>> _activeTrips = [];
@@ -69,6 +70,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       if (mounted) {
         final s = BlocProvider.of<DashboardCubit>(context).state;
         _availabilityCtrl.value = s.isOnline ? 1 : 0;
+        _startLocationAccessMonitoring();
         if (s.isOnline) {
           unawaited(_resumeOnlineTelemetry());
         }
@@ -82,6 +84,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _pulseCtrl.dispose();
     _availabilityCtrl.dispose();
     _rideTriggerTimer?.cancel();
+    _locationAccessPoller?.cancel();
     _locationSubscription?.cancel();
     _liveMapBloc?.close();
     super.dispose();
@@ -95,13 +98,59 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _refreshLocationAfterResume() async {
-    await LocationService.getCurrentPosition();
+    if (!mounted) return;
+    final accessState = await LocationService.getAccessState();
     if (!mounted) return;
     final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
+    if (accessState != LocationAccessState.ready) {
+      if (dashboardState.isOnline) {
+        await _forceOfflineForLocationLoss();
+        if (!mounted) return;
+        context.go('/driver/location-gate');
+      }
+      return;
+    }
+
+    await LocationService.getCurrentPosition();
+    if (!mounted) return;
     if (dashboardState.isOnline) {
       _publishCurrentLocation();
       _startPolling();
     }
+  }
+
+  void _startLocationAccessMonitoring() {
+    _locationAccessPoller ??= Timer.periodic(const Duration(seconds: 2), (
+      timer,
+    ) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      final accessState = await LocationService.getAccessState();
+      if (!mounted) return;
+      if (accessState == LocationAccessState.ready) {
+        timer.cancel();
+        _locationAccessPoller = null;
+        return;
+      }
+
+      if (BlocProvider.of<DashboardCubit>(context).state.isOnline) {
+        timer.cancel();
+        _locationAccessPoller = null;
+        unawaited(_forceOfflineForLocationLoss());
+      }
+    });
+  }
+
+  Future<void> _forceOfflineForLocationLoss() async {
+    if (!mounted) return;
+    final position = LocationService.lastPosition;
+    await BlocProvider.of<DashboardCubit>(
+      context,
+    ).forceOffline(lat: position?.latitude ?? 0, lng: position?.longitude ?? 0);
+    if (mounted) context.go('/driver/location-gate');
   }
 
   Future<void> _resumeOnlineTelemetry() async {
@@ -269,21 +318,21 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
 
     try {
-      final hasLocationAccess = await LocationPermissionPrompt.ensure(
-        context,
-        title: 'Stay available for nearby rides',
-        message:
-            'We use your location to send accurate ride requests and ETAs.',
-        secondaryLabel: 'Maybe Later',
-      );
-      if (!hasLocationAccess || !context.mounted) return;
+      if (requestedOnline &&
+          await LocationService.getAccessState() != LocationAccessState.ready) {
+        if (context.mounted) context.go('/driver/location-gate');
+        return;
+      }
 
       var position = LocationService.lastPosition;
-      position ??= await LocationService.getCurrentPosition();
+      position = await LocationService.getCurrentPosition() ?? position;
 
       if (!context.mounted) return;
 
-      if (position == null) return;
+      if (position == null) {
+        if (requestedOnline) context.go('/driver/location-gate');
+        return;
+      }
 
       await BlocProvider.of<DashboardCubit>(
         context,

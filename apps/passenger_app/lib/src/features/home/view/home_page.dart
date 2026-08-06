@@ -14,7 +14,6 @@ import 'package:passenger_app/src/features/home/bloc/public_driver_summary/publi
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/public_driver_summary_card_widget.dart';
-import 'package:passenger_app/src/features/location/location_routes.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -33,8 +32,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  static const _locationPollInterval = Duration(seconds: 2);
+
   StreamSubscription? _locationSubscription;
+  Timer? _locationAccessPoller;
   late final BookingBloc _bookingBloc;
+  bool _isLoadingLocation = false;
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +83,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (_locationSubscription != null) {
       unawaited(_locationSubscription!.cancel());
     }
+    _locationAccessPoller?.cancel();
     super.dispose();
   }
 
@@ -103,16 +107,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _refreshLocationAfterResume() async {
-    if (!mounted ||
-        await LocationService.getAccessState() != LocationAccessState.ready) {
-      return;
-    }
-
-    final position = await LocationService.getCurrentPosition();
-    if (!mounted || position == null) return;
-    await BlocProvider.of<HomeCubit>(
-      context,
-    ).loadHomeData(lat: position.latitude, lng: position.longitude);
+    await _initLocationAndLoadData();
   }
 
   Widget _buildChipRow() {
@@ -311,7 +306,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
               SizedBox(width: 6),
               Text(
-                'Set pickup location manually',
+                'Turn on location to set pickup',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -344,11 +339,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ],
           );
         }
-        return GestureDetector(
-          onTap: _openManualLocation,
-          behavior: HitTestBehavior.opaque,
-          child: content,
-        );
+        return content;
       },
     );
   }
@@ -700,44 +691,56 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   IconData _iconFromName(String name) => savedPlaceIconFromName(name);
 
   Future<void> _initLocationAndLoadData() async {
-    if (!mounted) return;
-    final cubit = BlocProvider.of<HomeCubit>(context);
+    if (!mounted || _isLoadingLocation) return;
+    _isLoadingLocation = true;
+    try {
+      final cubit = BlocProvider.of<HomeCubit>(context);
+      final hasLocationAccess =
+          await LocationService.getAccessState() == LocationAccessState.ready;
+      if (!hasLocationAccess) {
+        _startLocationAccessMonitoring();
+        return;
+      }
 
-    final hasLocationAccess =
-        await LocationService.getAccessState() == LocationAccessState.ready;
-    final position = hasLocationAccess
-        ? await LocationService.getCurrentPosition() ??
-              LocationService.lastPosition
-        : LocationService.lastPosition;
-    final manualPlace = LocationService.manualPlace;
-    if (position == null) return;
-    await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
-    if (manualPlace != null) {
-      cubit.updateAddress(manualPlace.displayName);
-    }
+      final position =
+          await LocationService.getCurrentPosition() ??
+          LocationService.lastPosition;
+      if (!mounted || position == null) {
+        _startLocationAccessMonitoring();
+        return;
+      }
 
-    if (!hasLocationAccess || LocationService.hasManualLocation) return;
-    unawaited(_locationSubscription?.cancel());
-    _locationSubscription = LocationService.getPositionStream().listen((
-      pos,
-    ) async {
+      _stopLocationAccessMonitoring();
+      await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
       if (!mounted) return;
-      try {
-        await cubit.loadHomeData(lat: pos.latitude, lng: pos.longitude);
-      } catch (_) {}
-    }, onError: (_) {});
+
+      unawaited(_locationSubscription?.cancel());
+      _locationSubscription = LocationService.getPositionStream().listen(
+        (pos) async {
+          if (!mounted) return;
+          try {
+            await cubit.loadHomeData(lat: pos.latitude, lng: pos.longitude);
+          } catch (_) {}
+        },
+        onError: (_) {
+          _startLocationAccessMonitoring();
+        },
+      );
+    } finally {
+      _isLoadingLocation = false;
+    }
   }
 
-  Future<void> _openManualLocation() async {
-    final selectedPlace = await context.pushNamed(LocationRoutes.country);
-    if (!mounted || selectedPlace is! PlaceModel) return;
-    LocationService.setManualLocation(selectedPlace);
-    final cubit = BlocProvider.of<HomeCubit>(context);
-    await cubit.loadHomeData(
-      lat: selectedPlace.latitude,
-      lng: selectedPlace.longitude,
+  void _startLocationAccessMonitoring() {
+    _locationAccessPoller ??= Timer.periodic(
+      _locationPollInterval,
+      (_) => unawaited(_initLocationAndLoadData()),
     );
-    if (mounted) cubit.updateAddress(selectedPlace.displayName);
+  }
+
+  void _stopLocationAccessMonitoring() {
+    _locationAccessPoller?.cancel();
+    _locationAccessPoller = null;
   }
 
   Future<void> _loadSavedPlaces() async {

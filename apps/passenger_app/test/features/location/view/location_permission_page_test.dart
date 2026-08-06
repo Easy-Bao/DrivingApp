@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/location/view/widgets/location_access_panel.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 void main() {
   testWidgets('location prompt exposes enable and skip actions', (
@@ -13,7 +13,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.themeData,
-        home: LocationAccessPrompt(
+        home: LocationPermissionPage(
           onEnable: () => enablePressed = true,
           onSkip: () => skipPressed = true,
         ),
@@ -31,30 +31,26 @@ void main() {
     expect(skipPressed, isTrue);
   });
 
-  testWidgets('unavailable view exposes manual location and explore actions', (
+  testWidgets('location prompt displays a settings return status', (
     tester,
   ) async {
-    var updatePressed = false;
-    var continuePressed = false;
-
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.themeData,
-        home: LocationUnavailableView(
-          onUpdateLocation: () => updatePressed = true,
-          onContinue: () => continuePressed = true,
+        home: LocationPermissionPage(
+          onEnable: _noop,
+          onSkip: _noop,
+          statusMessage:
+              'Turn on location in Settings, then return to BaoRide.',
         ),
       ),
     );
 
-    expect(find.text('We couldn’t locate you'), findsOneWidget);
-    expect(find.text('Update location'), findsOneWidget);
-    expect(find.text('Continue exploring'), findsOneWidget);
-
-    await tester.tap(find.text('Update location'));
-    await tester.tap(find.text('Continue exploring'));
-
-    expect(updatePressed, isTrue);
-    expect(continuePressed, isTrue);
+    expect(
+      find.text('Turn on location in Settings, then return to BaoRide.'),
+      findsOneWidget,
+    );
   });
 }
+
+void _noop() {}

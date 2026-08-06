@@ -12,6 +12,7 @@ import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_rep
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/view/widgets/driver_tab.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';
+import 'package:driver_app/src/features/location/location_module.dart';
 import 'package:driver_app/src/features/trip/data/repositories/ride_repository.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_ride_repository.dart';
 import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
@@ -69,6 +70,7 @@ class DriverModule extends Module {
     ...ChatModule.routes,
     ...ActivityModule.routes,
     ...ProfileModule.routes,
+    ...DriverLocationModule.routes,
 
     ShellModularRoute(
       builder: (context, GoRouterState state, child) =>

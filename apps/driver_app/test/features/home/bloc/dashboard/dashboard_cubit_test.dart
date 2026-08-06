@@ -199,5 +199,18 @@ void main() {
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [const DashboardState(isOnline: false)],
     );
+
+    blocTest<DashboardCubit, DashboardState>(
+      'forces the driver offline when location access is lost',
+      build: () {
+        when(
+          () => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng),
+        ).thenAnswer((_) async => const Right(null));
+        return _makeCubit(repo);
+      },
+      seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
+      act: (cubit) => cubit.forceOffline(lat: lat, lng: lng),
+      expect: () => [const DashboardState(isOnline: false)],
+    );
   });
 }
