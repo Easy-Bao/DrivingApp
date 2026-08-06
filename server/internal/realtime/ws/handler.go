@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -12,6 +13,7 @@ type Handler struct {
 	hub          *Hub
 	authenticate Authenticator
 	sink         EventSink
+	rooms        RoomAuthorizer
 	upgrader     websocket.Upgrader
 }
 
@@ -19,7 +21,13 @@ type Authenticator interface {
 	Verify(token string) (string, error)
 }
 
-type EventSink interface{ Handle(message []byte) error }
+type EventSink interface {
+	Handle(ctx context.Context, message []byte) error
+}
+
+type RoomAuthorizer interface {
+	CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error)
+}
 
 func NewHandler(hub *Hub, authenticate Authenticator) *Handler {
 	return &Handler{
@@ -31,27 +39,51 @@ func NewHandler(hub *Hub, authenticate Authenticator) *Handler {
 	}
 }
 
-func NewHandlerWithSink(hub *Hub, authenticate Authenticator, sink EventSink) *Handler {
+func NewHandlerWithSink(hub *Hub, authenticate Authenticator, sink EventSink, rooms ...RoomAuthorizer) *Handler {
 	handler := NewHandler(hub, authenticate)
 	handler.sink = sink
+	if len(rooms) > 0 {
+		handler.rooms = rooms[0]
+	}
 	return handler
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	token, ok := bearerToken(request.Header.Get("Authorization"))
+	if !ok {
+		http.Error(writer, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	clientID, err := handler.authenticate.Verify(token)
+	if err != nil || clientID == "" {
+		http.Error(writer, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	roomID := request.URL.Query().Get("roomId")
+	if roomID == "" {
+		http.Error(writer, "room id is required", http.StatusBadRequest)
+		return
+	}
+	if handler.rooms != nil {
+		allowed, accessErr := handler.rooms.CanAccessRoom(request.Context(), roomID, clientID)
+		if accessErr != nil {
+			http.Error(writer, "chat room unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		if !allowed {
+			http.Error(writer, "chat room access denied", http.StatusForbidden)
+			return
+		}
+	}
 	connection, err := handler.upgrader.Upgrade(writer, request, nil)
 	if err != nil {
 		return
 	}
 	defer connection.Close()
 
-	token := strings.TrimPrefix(request.Header.Get("Authorization"), "Bearer ")
-	clientID, err := handler.authenticate.Verify(token)
-	if err != nil {
-		_ = connection.WriteJSON(map[string]string{"error": "unauthorized"})
-		return
-	}
-	outbound := handler.hub.Add(clientID)
-	defer handler.hub.Remove(clientID)
+	connection.SetReadLimit(16 << 10)
+	outbound := handler.hub.Add(clientID, roomID)
+	defer handler.hub.Remove(clientID, outbound)
 
 	go func() {
 		for message := range outbound {
@@ -74,10 +106,30 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			continue
 		}
 		if handler.sink != nil {
-			_ = handler.sink.Handle(eventMessage)
+			_ = handler.sink.Handle(request.Context(), eventMessage)
 		}
-		handler.hub.Broadcast(eventMessage)
+		if isChatEvent(eventMessage) {
+			handler.hub.Broadcast(roomID, eventMessage)
+		}
 	}
+}
+
+func bearerToken(header string) (string, bool) {
+	const prefix = "Bearer "
+	if len(header) <= len(prefix) || !strings.HasPrefix(header, prefix) {
+		return "", false
+	}
+	return header[len(prefix):], true
+}
+
+func isChatEvent(message []byte) bool {
+	var event struct {
+		Type string `json:"type"`
+	}
+	if json.Unmarshal(message, &event) != nil {
+		return false
+	}
+	return event.Type == "CHAT_MESSAGE" || event.Type == "message"
 }
 
 func validEvent(message []byte) bool {

@@ -42,9 +42,9 @@ func main() {
 	events := ws.NewEventRouter()
 	events.Register("LOCATION_UPDATE", geows.NewEventHandler(geoService))
 	events.Register("CHAT_MESSAGE", chatws.NewEventHandler(chatService))
-	router.Handle(api.V1Prefix+"/chat/ws", ws.NewHandlerWithSink(ws.NewHub(), tokenManager, events))
+	router.Handle(api.V1Prefix+"/chat/ws", ws.NewHandlerWithSink(ws.NewHub(), tokenManager, events, chatService))
 	geoh.NewRouter(geoService, tokenManager).RegisterRoutes(router)
-	chath.NewRouter(chatService).RegisterRoutes(router)
+	chath.NewRouter(chatService, tokenManager).RegisterRoutes(router)
 	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"realtime-service"}`))
@@ -52,14 +52,19 @@ func main() {
 
 	address := ":" + port("REALTIME_SERVICE_PORT", "8081")
 	log.Println("realtime-service listening on " + address)
-	if err := http.ListenAndServe(address, middleware.Logging(logger.New("realtime-service"))(
-		middleware.SecureHTTPWithIdempotency(
-			router,
-			middleware.SecurityConfigFromEnv(),
-			middleware.NewRateLimiterFromEnv(middleware.NewRedisCounterStore(redisClient)),
-			middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute),
-		),
-	)); err != nil {
+	server := &http.Server{
+		Addr: address,
+		Handler: middleware.Logging(logger.New("realtime-service"))(
+			middleware.SecureHTTPWithIdempotency(
+				router,
+				middleware.SecurityConfigFromEnv(),
+				middleware.NewRateLimiterFromEnv(middleware.NewRedisCounterStore(redisClient)),
+				middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute),
+			)),
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }

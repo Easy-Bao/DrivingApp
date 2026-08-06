@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
@@ -9,8 +10,8 @@ import (
 
 type Router struct{ handler *handler.Handler }
 
-func NewRouter(service *usecase.Service) *Router {
-	return &Router{handler: handler.NewHandler(service)}
+func NewRouter(service *usecase.Service, verifier *token.Verifier) *Router {
+	return &Router{handler: handler.NewHandler(service, verifier)}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {

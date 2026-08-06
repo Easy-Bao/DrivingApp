@@ -4,36 +4,50 @@ import "sync"
 
 type Hub struct {
 	mu      sync.RWMutex
-	clients map[string]chan []byte
+	clients map[string]client
+}
+
+type client struct {
+	roomID  string
+	channel chan []byte
 }
 
 func NewHub() *Hub {
-	return &Hub{clients: make(map[string]chan []byte)}
+	return &Hub{clients: make(map[string]client)}
 }
 
-func (hub *Hub) Add(id string) chan []byte {
+func (hub *Hub) Add(id, roomID string) chan []byte {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	channel := make(chan []byte, 16)
-	hub.clients[id] = channel
+	if existing, ok := hub.clients[id]; ok {
+		close(existing.channel)
+	}
+	hub.clients[id] = client{roomID: roomID, channel: channel}
 	return channel
 }
 
-func (hub *Hub) Remove(id string) {
+func (hub *Hub) Remove(id string, channels ...chan []byte) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
-	if channel, ok := hub.clients[id]; ok {
+	if existing, ok := hub.clients[id]; ok {
+		if len(channels) > 0 && existing.channel != channels[0] {
+			return
+		}
 		delete(hub.clients, id)
-		close(channel)
+		close(existing.channel)
 	}
 }
 
-func (hub *Hub) Broadcast(message []byte) {
+func (hub *Hub) Broadcast(roomID string, message []byte) {
 	hub.mu.RLock()
 	defer hub.mu.RUnlock()
-	for _, channel := range hub.clients {
+	for _, existing := range hub.clients {
+		if existing.roomID != roomID {
+			continue
+		}
 		select {
-		case channel <- message:
+		case existing.channel <- message:
 		default:
 		}
 	}

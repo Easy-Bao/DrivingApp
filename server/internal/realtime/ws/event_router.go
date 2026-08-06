@@ -1,6 +1,9 @@
 package ws
 
-import "encoding/json"
+import (
+	"context"
+	"encoding/json"
+)
 
 // EventRouter keeps realtime event ownership explicit: geo and chat receive
 // only the messages belonging to their bounded context.
@@ -12,7 +15,7 @@ func (router *EventRouter) Register(eventType string, handler EventSink) {
 	router.handlers[eventType] = handler
 }
 
-func (router *EventRouter) Handle(message []byte) error {
+func (router *EventRouter) Handle(ctx context.Context, message []byte) error {
 	var event struct {
 		Type string `json:"type"`
 	}
@@ -20,7 +23,7 @@ func (router *EventRouter) Handle(message []byte) error {
 		return err
 	}
 	if handler := router.handlers[event.Type]; handler != nil {
-		return handler.Handle(message)
+		return handler.Handle(ctx, message)
 	}
 	return nil
 }

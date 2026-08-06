@@ -27,6 +27,7 @@ func NewHandler(service *usecase.Service, auth ...*security.TokenManager) *Handl
 }
 
 func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request *http.Request) {
+	request.Body = http.MaxBytesReader(writer, request.Body, 8<<10)
 	var input dto.LocationUpdate
 	if json.NewDecoder(request.Body).Decode(&input) != nil {
 		writeError(writer, http.StatusBadRequest, "invalid location")
@@ -34,11 +35,11 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 	}
 	if handler.auth != nil {
 		identity, ok := handler.identity(request)
-		if !ok {
+		if !ok || identity.Role != "driver" {
 			writeError(writer, http.StatusUnauthorized, "unauthorized")
 			return
 		}
-		input.DriverID = identity
+		input.DriverID = identity.Subject
 	} else if input.DriverID == "" {
 		input.DriverID = input.LegacyID
 	}
@@ -61,6 +62,12 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 }
 
 func (handler *Handler) GetDriverLocation(writer http.ResponseWriter, request *http.Request) {
+	if handler.auth != nil {
+		if _, ok := handler.identity(request); !ok {
+			writeError(writer, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+	}
 	point, err := handler.service.Get(request.Context(), chi.URLParam(request, "driverID"))
 	if err != nil {
 		writeError(writer, http.StatusNotFound, "location not found")
@@ -76,6 +83,7 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 			return
 		}
 	}
+	request.Body = http.MaxBytesReader(writer, request.Body, 8<<10)
 	var input dto.PassengerLocationUpdate
 	if json.NewDecoder(request.Body).Decode(&input) != nil {
 		writeError(writer, http.StatusBadRequest, "invalid location")
@@ -96,6 +104,12 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 }
 
 func (handler *Handler) GetPassengerLocation(writer http.ResponseWriter, request *http.Request) {
+	if handler.auth != nil {
+		if _, ok := handler.identity(request); !ok {
+			writeError(writer, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+	}
 	point, err := handler.service.GetPassenger(request.Context(), chi.URLParam(request, "rideID"))
 	if err != nil {
 		writeError(writer, http.StatusNotFound, "location not found")
@@ -127,14 +141,14 @@ func (handler *Handler) NearbyDrivers(writer http.ResponseWriter, request *http.
 	writeJSON(writer, http.StatusOK, map[string]any{"drivers": points})
 }
 
-func (handler *Handler) identity(request *http.Request) (string, bool) {
+func (handler *Handler) identity(request *http.Request) (security.Identity, bool) {
 	const prefix = "Bearer "
 	header := request.Header.Get("Authorization")
 	if len(header) <= len(prefix) || header[:len(prefix)] != prefix {
-		return "", false
+		return security.Identity{}, false
 	}
-	subject, err := handler.auth.Verify(header[len(prefix):])
-	return subject, err == nil && subject != ""
+	identity, err := handler.auth.VerifyIdentity(header[len(prefix):])
+	return identity, err == nil && identity.Subject != ""
 }
 
 func writeJSON(writer http.ResponseWriter, status int, value any) {

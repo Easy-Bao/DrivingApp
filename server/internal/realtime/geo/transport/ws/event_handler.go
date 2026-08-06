@@ -10,7 +10,7 @@ import (
 type EventHandler struct{ service *usecase.Service }
 
 func NewEventHandler(service *usecase.Service) *EventHandler { return &EventHandler{service: service} }
-func (handler *EventHandler) Handle(message []byte) error {
+func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
 	var event struct {
 		Type      string  `json:"type"`
 		DriverID  string  `json:"driver_id"`
@@ -20,5 +20,5 @@ func (handler *EventHandler) Handle(message []byte) error {
 	if err := json.Unmarshal(message, &event); err != nil || event.Type != "LOCATION_UPDATE" {
 		return nil
 	}
-	return handler.service.Ingest(context.Background(), domain.DriverPoint{DriverID: event.DriverID, Latitude: event.Latitude, Longitude: event.Longitude})
+	return handler.service.Ingest(ctx, domain.DriverPoint{DriverID: event.DriverID, Latitude: event.Latitude, Longitude: event.Longitude})
 }

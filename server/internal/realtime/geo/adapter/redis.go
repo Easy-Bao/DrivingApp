@@ -13,6 +13,7 @@ const (
 	driverLocationsKey      = "drivers:locations"
 	driverLocationKeyPrefix = "driver:location:"
 	driverLocationTTL       = 45 * time.Second
+	passengerLocationTTL    = 45 * time.Second
 )
 
 type RedisRepository struct{ client *redis.Client }
@@ -106,7 +107,7 @@ func (repository *RedisRepository) UpsertPassenger(ctx context.Context, rideID s
 	if err != nil {
 		return err
 	}
-	return repository.client.Set(ctx, "passenger:location:"+rideID, payload, 0).Err()
+	return repository.client.Set(ctx, "passenger:location:"+rideID, payload, passengerLocationTTL).Err()
 }
 
 func (repository *RedisRepository) GetPassenger(ctx context.Context, rideID string) (domain.DriverPoint, error) {

@@ -42,7 +42,7 @@ func (repository *locationRepository) GetPassenger(context.Context, string) (dom
 
 func TestTelemetryUsesTheVerifiedSubjectAsDriverID(t *testing.T) {
 	repository := &locationRepository{}
-	token, err := security.NewTokenManager("secret").Issue("42")
+	token, err := security.NewTokenManager("secret").IssueWithRole("42", "driver")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,11 +67,11 @@ func TestTelemetryUsesTheVerifiedSubjectAsDriverID(t *testing.T) {
 func TestDriverLocationIsVisibleToPassengerAtTheSameCoordinates(t *testing.T) {
 	repository := &locationRepository{}
 	tokenManager := security.NewTokenManager("secret")
-	driverToken, err := tokenManager.Issue("42")
+	driverToken, err := tokenManager.IssueWithRole("42", "driver")
 	if err != nil {
 		t.Fatal(err)
 	}
-	passengerToken, err := tokenManager.Issue("99")
+	passengerToken, err := tokenManager.IssueWithRole("99", "passenger")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,5 +111,40 @@ func TestDriverLocationIsVisibleToPassengerAtTheSameCoordinates(t *testing.T) {
 	}
 	if len(body.Drivers) != 1 || body.Drivers[0].DriverID != "42" {
 		t.Fatalf("nearby drivers = %#v", body.Drivers)
+	}
+}
+
+func TestExactTelemetryReadsRequireAuthentication(t *testing.T) {
+	router := chi.NewRouter()
+	geoh.NewRouter(geousecase.NewService(&locationRepository{}), security.NewTokenManager("secret")).RegisterRoutes(router)
+
+	for _, path := range []string{
+		"/api/v1/telemetry/location/42",
+		"/api/v1/telemetry/passenger/ride-1",
+	} {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		if response.Code != http.StatusUnauthorized {
+			t.Fatalf("%s status = %d, want %d", path, response.Code, http.StatusUnauthorized)
+		}
+	}
+}
+
+func TestPassengerTokenCannotPublishDriverTelemetry(t *testing.T) {
+	tokenManager := security.NewTokenManager("secret")
+	passengerToken, err := tokenManager.IssueWithRole("99", "passenger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := chi.NewRouter()
+	geoh.NewRouter(geousecase.NewService(&locationRepository{}), tokenManager).RegisterRoutes(router)
+
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"driverId":"42","lat":7.828,"lng":123.434}`))
+	request.Header.Set("Authorization", "Bearer "+passengerToken)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusUnauthorized)
 	}
 }

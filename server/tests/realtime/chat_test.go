@@ -28,7 +28,7 @@ func TestChatRelayPersistsBeforeBroadcasting(t *testing.T) {
 	history := &chatHistory{}
 	service := usecase.NewService(hub, history)
 
-	if err := service.Relay(domain.Message{RoomID: "ride-1", SenderID: "7", Body: "hello"}); err != nil {
+	if err := service.Relay(context.Background(), domain.Message{RoomID: "ride-1", SenderID: "7", Body: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 	if len(history.messages) != 1 || history.messages[0].Body != "hello" {

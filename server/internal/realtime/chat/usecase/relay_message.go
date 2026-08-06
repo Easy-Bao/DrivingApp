@@ -2,8 +2,15 @@ package usecase
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
+)
+
+const (
+	maxRoomIDBytes      = 128
+	maxParticipantBytes = 128
+	maxMessageBytes     = 4096
 )
 
 type Service struct {
@@ -18,9 +25,21 @@ func NewService(publisher domain.Publisher, history ...domain.HistoryRepository)
 	}
 	return &Service{publisher: publisher, history: repository}
 }
-func (service *Service) Relay(message domain.Message) error {
+func (service *Service) Relay(ctx context.Context, message domain.Message) error {
+	if !validRoomID(message.RoomID) || !validParticipantID(message.SenderID) || len(message.Body) == 0 || len(message.Body) > maxMessageBytes {
+		return domain.ErrInvalidMessage
+	}
+	if access, ok := service.history.(domain.RoomAccessRepository); ok {
+		member, err := access.IsMember(ctx, message.RoomID, message.SenderID)
+		if err != nil {
+			return err
+		}
+		if !member {
+			return domain.ErrForbidden
+		}
+	}
 	if service.history != nil {
-		if err := service.history.Append(context.Background(), message); err != nil {
+		if err := service.history.Append(ctx, message); err != nil {
 			return err
 		}
 	}
@@ -28,6 +47,9 @@ func (service *Service) Relay(message domain.Message) error {
 }
 
 func (service *Service) CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error {
+	if !validRoomID(roomID) || !validParticipantID(passengerID) || !validParticipantID(driverID) {
+		return domain.ErrInvalidRoom
+	}
 	if service.history == nil {
 		return nil
 	}
@@ -35,6 +57,9 @@ func (service *Service) CreateRoom(ctx context.Context, roomID, passengerID, dri
 }
 
 func (service *Service) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
+	if !validRoomID(roomID) {
+		return nil, domain.ErrInvalidRoom
+	}
 	if service.history == nil {
 		return []domain.Message{}, nil
 	}
@@ -42,8 +67,49 @@ func (service *Service) Messages(ctx context.Context, roomID string) ([]domain.M
 }
 
 func (service *Service) Resolve(ctx context.Context, roomID string) error {
+	if !validRoomID(roomID) {
+		return domain.ErrInvalidRoom
+	}
 	if service.history == nil {
 		return nil
 	}
 	return service.history.Resolve(ctx, roomID)
+}
+
+func (service *Service) CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error) {
+	if !validRoomID(roomID) || !validParticipantID(userID) || service.history == nil {
+		return false, nil
+	}
+	access, ok := service.history.(domain.RoomAccessRepository)
+	if !ok {
+		return false, nil
+	}
+	return access.IsMember(ctx, roomID, userID)
+}
+
+func (service *Service) MessagesForUser(ctx context.Context, roomID, userID string) ([]domain.Message, error) {
+	if !service.hasAccess(ctx, roomID, userID) {
+		return nil, domain.ErrForbidden
+	}
+	return service.Messages(ctx, roomID)
+}
+
+func (service *Service) ResolveForUser(ctx context.Context, roomID, userID string) error {
+	if !service.hasAccess(ctx, roomID, userID) {
+		return domain.ErrForbidden
+	}
+	return service.Resolve(ctx, roomID)
+}
+
+func (service *Service) hasAccess(ctx context.Context, roomID, userID string) bool {
+	allowed, err := service.CanAccessRoom(ctx, roomID, userID)
+	return err == nil && allowed
+}
+
+func validRoomID(value string) bool {
+	return value != "" && len(value) <= maxRoomIDBytes && !strings.ContainsAny(value, "\r\n")
+}
+
+func validParticipantID(value string) bool {
+	return value != "" && len(value) <= maxParticipantBytes && !strings.ContainsAny(value, "\r\n")
 }
