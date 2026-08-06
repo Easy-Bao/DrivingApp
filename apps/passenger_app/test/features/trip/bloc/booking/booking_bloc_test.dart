@@ -135,6 +135,131 @@ void main() {
     );
   });
 
+  group('BookingBloc — booking request contract', () {
+    const numericDriver = DriverModel(
+      id: '42',
+      name: 'Numeric Driver',
+      vehicleType: 'Sedan',
+      plateNumber: 'ABC 1234',
+      rating: 4.8,
+      lat: 7.828,
+      lng: 123.434,
+      distanceKm: 0.0,
+      etaMinutes: 1,
+      score: 0,
+    );
+    const pickupTrip = BidSessionTrip(
+      rideType: 'Solo Ride',
+      fare: 100,
+      destination: PlaceModel(
+        id: 'destination-1',
+        name: 'Destination',
+        fullAddress: 'Destination address',
+        latitude: 7.83,
+        longitude: 123.44,
+      ),
+      distance: '2 km',
+      duration: '5 min',
+      pickupAddress: 'Pickup address',
+    );
+
+    blocTest<BookingBloc, BookingState>(
+      'serializes a direct booking target as an integer',
+      build: () {
+        when(
+          () => driverRepo.getNearbyDrivers(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right([numericDriver]));
+        when(
+          () => biddingDataSource.fetchDriverStats(any()),
+        ).thenAnswer((_) async => {'totalTrips': 1});
+        when(
+          () => biddingDataSource.fetchDriverReviews(any()),
+        ).thenAnswer((_) async => []);
+        when(
+          () => biddingDataSource.requestRide(any()),
+        ).thenAnswer((_) async => {'id': 101});
+        return _makeBookingBloc(
+          driverRepo: driverRepo,
+          biddingDataSource: biddingDataSource,
+          secureSessionService: secureSessionService,
+        );
+      },
+      act: (bloc) async {
+        bloc.add(
+          const LocateNearestDriverEvent(
+            pickupLat: 7.828,
+            pickupLng: 123.434,
+            trip: pickupTrip,
+          ),
+        );
+        await bloc.stream
+            .where((state) => state is NearestDriverFound)
+            .take(2)
+            .toList();
+        bloc.add(
+          const StartDirectBookingEvent(
+            trip: pickupTrip,
+            pickupLat: 7.828,
+            pickupLng: 123.434,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+      },
+      expect: () => [
+        isA<FindingNearestDriver>(),
+        isA<NearestDriverFound>(),
+        isA<NearestDriverFound>(),
+        isA<BookingSearching>().having(
+          (state) => state.isDirect,
+          'direct booking',
+          isTrue,
+        ),
+      ],
+      verify: (_) {
+        final request =
+            verify(
+                  () => biddingDataSource.requestRide(captureAny()),
+                ).captured.single
+                as Map<String, dynamic>;
+        expect(request['target_driver_id'], 42);
+      },
+    );
+
+    blocTest<BookingBloc, BookingState>(
+      'accepts a numeric session ID returned by the server',
+      build: () {
+        when(
+          () => biddingDataSource.requestRide(any()),
+        ).thenAnswer((_) async => {'id': 202});
+        return _makeBookingBloc(
+          driverRepo: driverRepo,
+          biddingDataSource: biddingDataSource,
+          secureSessionService: secureSessionService,
+        );
+      },
+      act: (bloc) => bloc.add(
+        const StartOpenBookingEvent(
+          trip: pickupTrip,
+          pickupLat: 7.828,
+          pickupLng: 123.434,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      ),
+      expect: () => [
+        isA<BookingSearching>().having(
+          (state) => state.isDirect,
+          'open booking',
+          isFalse,
+        ),
+      ],
+    );
+  });
+
   group('BookingBloc — CancelBookingEvent', () {
     test(
       'does not report a deliberate cancellation as no driver found',

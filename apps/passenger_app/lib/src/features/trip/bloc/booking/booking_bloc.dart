@@ -41,6 +41,16 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   double? _dropoffLng;
   String? _dropoffName;
 
+  String? _sessionIdFromResponse(Map<String, dynamic> response) {
+    final rawSessionId = response['id'];
+    final sessionId = switch (rawSessionId) {
+      String value => value.trim(),
+      num value => value.toInt().toString(),
+      _ => null,
+    };
+    return sessionId == null || sessionId.isEmpty ? null : sessionId;
+  }
+
   Future<String> _resolvePickupName() async {
     final providedName = _pickupName?.trim();
     if (providedName != null &&
@@ -92,7 +102,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       state is BookingOffersReceived;
 
   bool get hasActiveBooking =>
-      hasActiveDriverSearch || state is BookingDriverMatched;
+      state is BookingSearching ||
+      state is BookingOffersReceived ||
+      state is BookingDriverMatched;
 
   Future<void> _onLocateNearestDriver(
     LocateNearestDriverEvent event,
@@ -266,9 +278,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     StartDirectBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
-    if (_nearestDriver == null || hasActiveBooking) return;
+    final nearestDriver = _nearestDriver;
+    if (nearestDriver == null || hasActiveBooking) return;
+    final targetDriverId = int.tryParse(nearestDriver.id);
+    if (targetDriverId == null || targetDriverId <= 0) {
+      emit(const BookingFailure('The selected driver ID is invalid.'));
+      return;
+    }
     _isAutoAcceptingOffer = false;
-    emit(BookingSearching(isDirect: true, targetDriver: _nearestDriver));
+    emit(BookingSearching(isDirect: true, targetDriver: nearestDriver));
 
     final passengerId = await _secureSessionService.readPassengerId() ?? '';
     if (passengerId.isEmpty) {
@@ -295,10 +313,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'dropoff_name': _dropoffName,
         'distance_km': event.distanceKm,
         'duration_minutes': event.durationMinutes,
-        'target_driver_id': _nearestDriver!.id,
+        'target_driver_id': targetDriverId,
         'custom_fare_centavos': (event.trip.fare * 100).round(),
       });
-      final sessionId = response['id'] as String?;
+      final sessionId = _sessionIdFromResponse(response);
       if (sessionId == null || sessionId.isEmpty) {
         throw StateError('Booking session was not created');
       }
@@ -343,7 +361,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'duration_minutes': event.durationMinutes,
         'custom_fare_centavos': (event.trip.fare * 100).round(),
       });
-      final sessionId = response['id'] as String?;
+      final sessionId = _sessionIdFromResponse(response);
       if (sessionId == null || sessionId.isEmpty) {
         throw StateError('Booking session was not created');
       }
