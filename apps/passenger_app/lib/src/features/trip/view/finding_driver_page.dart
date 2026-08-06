@@ -13,6 +13,7 @@ import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip
 import 'package:passenger_app/src/features/trip/view/widgets/driver_dropdown_card_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_bids_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_nearest_panel_widget.dart';
+import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_searching_panel_widget.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
@@ -87,6 +88,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   List<DriverModel> _nearbyDrivers = [];
   bool _showNearestDriverDetails = false;
   bool _isLeaving = false;
+  bool _isNoDriverFound = false;
   String? _acceptingOfferId;
   bool _locationUnavailable = false;
 
@@ -280,7 +282,40 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   }
 
   void _handleNoDriverFound() {
-    _returnHome();
+    if (!mounted) return;
+    setState(() {
+      _isNoDriverFound = true;
+      _nearbyDrivers = [];
+      _selectedDriver = null;
+      _showNearestDriverDetails = false;
+    });
+  }
+
+  void _retryFindingDriver() {
+    final position = LocationService.lastPosition;
+    if (position == null) {
+      setState(() => _locationUnavailable = true);
+      return;
+    }
+
+    setState(() {
+      _isNoDriverFound = false;
+      _isLeaving = false;
+    });
+    BlocProvider.of<BookingBloc>(context).add(
+      LocateNearestDriverEvent(
+        pickupLat: position.latitude,
+        pickupLng: position.longitude,
+        trip: BidSessionTrip(
+          rideType: widget.rideType,
+          fare: widget.fare,
+          destination: widget.destination,
+          distance: widget.distance,
+          duration: widget.duration,
+          pickupAddress: widget.pickupAddress,
+        ),
+      ),
+    );
   }
 
   @override
@@ -610,6 +645,17 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                               destination: widget.destination,
                               pickupAddress: widget.pickupAddress,
                               dotAnimation: _dotCtrl,
+                              onCancelPressed: _handleCancel,
+                              isCanceling: _isLeaving,
+                            );
+                          } else if (_isNoDriverFound &&
+                              state is BookingFailure &&
+                              state.isNoDriverFound) {
+                            return FindingDriverNoDriverPanelWidget(
+                              rideType: widget.rideType,
+                              fare: widget.fare,
+                              destination: widget.destination,
+                              onRetryPressed: _retryFindingDriver,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );

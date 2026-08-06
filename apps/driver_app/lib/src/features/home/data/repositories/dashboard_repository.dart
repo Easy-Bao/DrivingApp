@@ -6,22 +6,26 @@ import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
+import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:fpdart/fpdart.dart';
 
 class DashboardRepository implements IDashboardRepository {
   final TripRemoteDataSource _remoteDataSource;
   final DriverRemoteDataSource _driverRemoteDataSource;
+  final TelemetryRemoteDataSource _telemetryRemoteDataSource;
   final SecureSessionService _sessionService;
   final BackgroundTelemetryService? _backgroundTelemetryService;
 
   DashboardRepository({
     required TripRemoteDataSource remoteDataSource,
     required DriverRemoteDataSource driverRemoteDataSource,
+    required TelemetryRemoteDataSource telemetryRemoteDataSource,
     required SecureSessionService sessionService,
     BackgroundTelemetryService? backgroundTelemetryService,
   }) : _remoteDataSource = remoteDataSource,
        _driverRemoteDataSource = driverRemoteDataSource,
+       _telemetryRemoteDataSource = telemetryRemoteDataSource,
        _sessionService = sessionService,
        _backgroundTelemetryService = backgroundTelemetryService;
 
@@ -91,6 +95,19 @@ class DashboardRepository implements IDashboardRepository {
         lat: lat,
         lng: lng,
       );
+      if (isOnline) {
+        try {
+          final locationSent = await _telemetryRemoteDataSource
+              .sendLocationUpdate(driverId: driverId, lat: lat, lng: lng);
+          if (!locationSent) {
+            dev.log(
+              'Initial driver location was not accepted by realtime API.',
+            );
+          }
+        } catch (error) {
+          dev.log('Unable to publish initial driver location: $error');
+        }
+      }
       try {
         await _sessionService.saveDriverOnlineStatus(isOnline);
       } catch (error) {

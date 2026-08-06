@@ -31,6 +31,7 @@ class DriverModule extends Module {
         (i) => DashboardRepository(
           remoteDataSource: i.get<TripRemoteDataSource>(),
           driverRemoteDataSource: i.get<DriverRemoteDataSource>(),
+          telemetryRemoteDataSource: i.get<TelemetryRemoteDataSource>(),
           sessionService: i.get<SecureSessionService>(),
           backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
         ),

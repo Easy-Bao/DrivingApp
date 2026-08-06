@@ -34,7 +34,9 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
         'speed': ?speed,
       },
     );
-    return response.statusCode == 200 || response.statusCode == 201;
+    return response.statusCode == 200 ||
+        response.statusCode == 201 ||
+        response.statusCode == 202;
   }
 
   @override

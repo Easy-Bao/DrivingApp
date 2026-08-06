@@ -254,7 +254,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         id: 'no-driver-${DateTime.now().millisecondsSinceEpoch}',
         title: 'No driver found',
         message:
-            'We could not find a driver for your ride. You can try again from the home screen.',
+            'We could not find a driver for your ride. You can try searching again.',
         timestamp: DateTime.now(),
         type: 'driver',
         isRead: false,
