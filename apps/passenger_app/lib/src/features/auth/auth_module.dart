@@ -72,7 +72,7 @@ class AuthModule extends Module {
       name: AuthRoutes.root,
       '/',
       child: (context, GoRouterState state) => const SizedBox.shrink(),
-      redirect: (_, _) => '/passenger/location-gate',
+      redirect: (_, state) => AuthRoutes.rootRedirect(state.uri),
     ),
     ChildRoute(
       name: AuthRoutes.signin,

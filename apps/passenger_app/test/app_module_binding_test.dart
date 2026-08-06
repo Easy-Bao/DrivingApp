@@ -23,5 +23,7 @@ void main() {
     expect(Modular.isRegistered<BookingDraftCubit>(), isTrue);
     expect(Modular.isRegistered<SessionBloc>(), isTrue);
     expect(Modular.get<BookingDraftCubit>(), isA<BookingDraftCubit>());
+
+    expect(Modular.routerConfig.namedLocation('Signin'), '/auth/signin');
   });
 }
