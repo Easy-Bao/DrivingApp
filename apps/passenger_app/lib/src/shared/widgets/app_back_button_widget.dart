@@ -3,12 +3,32 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 
 class AppBackButtonWidget extends StatelessWidget {
-  const AppBackButtonWidget({super.key, required this.onPressed});
+  const AppBackButtonWidget({
+    super.key,
+    required this.onPressed,
+    this.showSurface = true,
+  });
+
+  const AppBackButtonWidget.plain({super.key, required this.onPressed})
+    : showSurface = false;
 
   final VoidCallback onPressed;
+  final bool showSurface;
 
   @override
   Widget build(BuildContext context) {
+    final iconButton = IconButton(
+      onPressed: onPressed,
+      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+      padding: EdgeInsets.zero,
+      icon: const Icon(
+        LucideIcons.arrow_left,
+        color: AppTheme.primaryColor,
+        size: 20,
+      ),
+    );
+    if (!showSurface) return iconButton;
+
     return SizedBox(
       width: 46,
       height: 46,
@@ -25,16 +45,7 @@ class AppBackButtonWidget extends StatelessWidget {
             ),
           ],
         ),
-        child: IconButton(
-          onPressed: onPressed,
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          padding: EdgeInsets.zero,
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-            size: 20,
-          ),
-        ),
+        child: iconButton,
       ),
     );
   }

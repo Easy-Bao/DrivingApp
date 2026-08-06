@@ -57,8 +57,6 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   @override
   Widget build(BuildContext context) {
     final sel = _calculateSelectedIndex(context);
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
     return BlocListener<SessionBloc, SessionState>(
       listenWhen: (previous, current) =>
           previous is! AuthenticatedSession && current is AuthenticatedSession,
@@ -90,14 +88,17 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
           bottomNavigationBar: BlocBuilder<SessionBloc, SessionState>(
             builder: (context, sessionState) {
               final isAuthenticated = sessionState is AuthenticatedSession;
+              if (!isAuthenticated) {
+                return GuestActionBarWidget(
+                  onSignUp: () => context.pushNamed(AuthRoutes.signup),
+                  onSignIn: () => context.pushNamed(AuthRoutes.signin),
+                  onHelp: () => context.pushNamed(ProfileRoutes.helpCenter),
+                );
+              }
+              final bottomPadding = MediaQuery.of(context).padding.bottom;
               return Padding(
                 padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
-                child: isAuthenticated
-                    ? _buildAuthenticatedTabBar(context, sel)
-                    : GuestActionBarWidget(
-                        onSignUp: () => context.pushNamed(AuthRoutes.signup),
-                        onSignIn: () => context.pushNamed(AuthRoutes.signin),
-                      ),
+                child: _buildAuthenticatedTabBar(context, sel),
               );
             },
           ),

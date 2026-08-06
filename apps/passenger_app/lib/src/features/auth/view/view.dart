@@ -1,5 +1,4 @@
 export 'forgot_password_page.dart';
-export 'onboarding_page.dart';
 export 'reset_password_confirm_page.dart';
 export 'sign_in_page.dart';
 export 'sign_up_page.dart';

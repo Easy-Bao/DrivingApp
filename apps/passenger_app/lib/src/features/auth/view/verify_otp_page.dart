@@ -94,7 +94,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: Center(
-          child: AppBackButtonWidget(onPressed: () => context.pop()),
+          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
         ),
       ),
       body: SafeArea(

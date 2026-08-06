@@ -16,7 +16,6 @@ import 'package:passenger_app/src/features/auth/domain/usecases/reset_password_u
 import 'package:passenger_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/usecases/verify_otp_use_case.dart';
 import 'package:passenger_app/src/features/auth/view/forgot_password_page.dart';
-import 'package:passenger_app/src/features/auth/view/onboarding_page.dart';
 import 'package:passenger_app/src/features/auth/view/reset_password_confirm_page.dart';
 import 'package:passenger_app/src/features/auth/view/sign_in_page.dart';
 import 'package:passenger_app/src/features/auth/view/sign_up_page.dart';
@@ -68,13 +67,6 @@ class AuthModule extends Module {
 
   @override
   List<ModularRoute> get routes => [
-    ChildRoute(
-      name: AuthRoutes.onBoarding,
-      '/',
-      child: (context, GoRouterState state) => const OnBoardingPage(),
-      transition: AppTransitions.fadeThrough,
-      transitionDuration: AppTransitions.fadeDuration,
-    ),
     ChildRoute(
       name: AuthRoutes.signin,
       '/auth/signin',

@@ -1,88 +1,90 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 
 class GuestActionBarWidget extends StatelessWidget {
   final VoidCallback onSignUp;
   final VoidCallback onSignIn;
+  final VoidCallback onHelp;
 
   const GuestActionBarWidget({
     super.key,
     required this.onSignUp,
     required this.onSignIn,
+    required this.onHelp,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppTheme.borderSide),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Row(
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 12),
+        decoration: const BoxDecoration(
+          color: AppTheme.surface,
+          border: Border(top: BorderSide(color: AppTheme.borderSide)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
               children: [
-                Icon(
-                  LucideIcons.sparkles,
-                  size: 18,
-                  color: AppTheme.primaryColor,
-                ),
-                SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    'Sign in to book rides',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                Expanded(
+                  child: FilledButton(
+                    onPressed: onSignUp,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      backgroundColor: AppTheme.secondaryColor,
+                      foregroundColor: AppTheme.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                     ),
+                    child: const Text('Sign Up'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: onSignIn,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      backgroundColor: AppTheme.complete,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text('Log In'),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton(
-            onPressed: onSignIn,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              foregroundColor: AppTheme.primaryColor,
-              side: const BorderSide(color: AppTheme.borderSide),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(22),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: onHelp,
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 32),
+              ),
+              child: RichText(
+                text: const TextSpan(
+                  style: TextStyle(color: AppTheme.tertiaryColor, fontSize: 14),
+                  children: [
+                    TextSpan(text: 'Need help? '),
+                    TextSpan(
+                      text: 'Visit our Help Centre',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            child: const Text('Log in'),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
-            onPressed: onSignUp,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(22),
-              ),
-            ),
-            child: const Text('Sign up'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

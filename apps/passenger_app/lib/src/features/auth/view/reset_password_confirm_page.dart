@@ -97,7 +97,7 @@ class _ResetPasswordConfirmPageContentState
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: Center(
-          child: AppBackButtonWidget(onPressed: () => context.pop()),
+          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
         ),
       ),
       body: SafeArea(

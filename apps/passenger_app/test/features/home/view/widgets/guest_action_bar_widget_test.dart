@@ -9,6 +9,7 @@ void main() {
   ) async {
     var signUpPressed = false;
     var signInPressed = false;
+    var helpPressed = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -17,19 +18,29 @@ void main() {
           bottomNavigationBar: GuestActionBarWidget(
             onSignUp: () => signUpPressed = true,
             onSignIn: () => signInPressed = true,
+            onHelp: () => helpPressed = true,
           ),
         ),
       ),
     );
 
-    expect(find.text('Sign in to book rides'), findsOneWidget);
-    expect(find.text('Sign up'), findsOneWidget);
-    expect(find.text('Log in'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText &&
+            widget.text.toPlainText() == 'Need help? Visit our Help Centre',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Sign Up'), findsOneWidget);
+    expect(find.text('Log In'), findsOneWidget);
 
-    await tester.tap(find.text('Sign up'));
-    await tester.tap(find.text('Log in'));
+    await tester.tap(find.text('Sign Up'));
+    await tester.tap(find.text('Log In'));
+    await tester.tap(find.byType(TextButton));
 
     expect(signUpPressed, isTrue);
     expect(signInPressed, isTrue);
+    expect(helpPressed, isTrue);
   });
 }
