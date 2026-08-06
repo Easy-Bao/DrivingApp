@@ -14,6 +14,7 @@ type Repository interface {
 
 type LocationRepository interface {
 	Repository
+	Remove(ctx context.Context, driverID string) error
 	Get(ctx context.Context, driverID string) (DriverPoint, error)
 	UpsertPassenger(ctx context.Context, rideID string, point DriverPoint) error
 	GetPassenger(ctx context.Context, rideID string) (DriverPoint, error)

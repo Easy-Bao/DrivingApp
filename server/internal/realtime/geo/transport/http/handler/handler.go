@@ -76,6 +76,23 @@ func (handler *Handler) GetDriverLocation(writer http.ResponseWriter, request *h
 	writeJSON(writer, http.StatusOK, point)
 }
 
+func (handler *Handler) DeleteDriverLocation(writer http.ResponseWriter, request *http.Request) {
+	if handler.auth == nil {
+		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	identity, ok := handler.identity(request)
+	if !ok || identity.Role != "driver" {
+		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if err := handler.service.Remove(request.Context(), identity.Subject); err != nil {
+		writeError(writer, http.StatusInternalServerError, "could not remove location")
+		return
+	}
+	writer.WriteHeader(http.StatusNoContent)
+}
+
 func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, request *http.Request) {
 	if handler.auth != nil {
 		if _, ok := handler.identity(request); !ok {

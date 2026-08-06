@@ -24,6 +24,17 @@ func (service *Service) Nearby(ctx context.Context, latitude, longitude, radiusK
 	return service.repository.Nearby(ctx, latitude, longitude, radiusKm)
 }
 
+func (service *Service) Remove(ctx context.Context, driverID string) error {
+	repository, ok := service.repository.(domain.LocationRepository)
+	if !ok {
+		return errors.New("driver location removal is unavailable")
+	}
+	if driverID == "" {
+		return errors.New("driver id is required")
+	}
+	return repository.Remove(ctx, driverID)
+}
+
 func (service *Service) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {
 	repository, ok := service.repository.(domain.LocationRepository)
 	if !ok {

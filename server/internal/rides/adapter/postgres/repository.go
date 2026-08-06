@@ -248,6 +248,7 @@ func (repository *Repository) CreateSession(ctx context.Context, value domain.Bi
 
 func (repository *Repository) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
 	query := repository.client.BidSession.Query().Where(bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(time.Now()))
+	pendingSessionIDs := map[int]struct{}{}
 	if driverID != nil {
 		profile, err := repository.client.DriverProfile.Query().Where(driverprofile.UserIDEQ(*driverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
 		if err != nil {
@@ -261,13 +262,26 @@ func (repository *Repository) ActiveSessions(ctx context.Context, driverID *int)
 			return []domain.BidSession{}, nil
 		}
 		query.Where(bidsession.Or(bidsession.TargetDriverID(0), bidsession.TargetDriverIDEQ(*driverID)))
+		pendingOffers, err := repository.client.BidOffer.Query().Where(
+			bidoffer.DriverIDEQ(*driverID),
+			bidoffer.StatusEQ("pending"),
+		).All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, offer := range pendingOffers {
+			pendingSessionIDs[offer.SessionID] = struct{}{}
+		}
 	}
-	items, err := query.Order(bidsession.ByCreatedAt()).All(ctx)
+	items, err := query.Order(bidsession.ByCreatedAt()).Limit(50).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	result := make([]domain.BidSession, 0, len(items))
 	for _, item := range items {
+		if _, hasPendingOffer := pendingSessionIDs[item.ID]; hasPendingOffer {
+			continue
+		}
 		result = append(result, fromSession(item))
 	}
 	return result, nil

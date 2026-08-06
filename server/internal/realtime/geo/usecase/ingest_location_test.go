@@ -10,6 +10,7 @@ import (
 type locationRepositoryStub struct{}
 
 func (locationRepositoryStub) Upsert(context.Context, domain.DriverPoint) error { return nil }
+func (locationRepositoryStub) Remove(context.Context, string) error             { return nil }
 func (locationRepositoryStub) Nearby(context.Context, float64, float64, float64) ([]domain.DriverPoint, error) {
 	return nil, nil
 }

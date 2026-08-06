@@ -42,6 +42,18 @@ func (repository *RedisRepository) Upsert(ctx context.Context, point domain.Driv
 	})
 	return err
 }
+
+func (repository *RedisRepository) Remove(ctx context.Context, driverID string) error {
+	if driverID == "" {
+		return nil
+	}
+	_, err := repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.ZRem(ctx, driverLocationsKey, driverID)
+		pipe.Del(ctx, driverLocationKey(driverID))
+		return nil
+	})
+	return err
+}
 func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
 	locations, err := repository.client.GeoSearchLocation(ctx, driverLocationsKey, &redis.GeoSearchLocationQuery{
 		GeoSearchQuery: redis.GeoSearchQuery{

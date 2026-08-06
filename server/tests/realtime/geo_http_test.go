@@ -30,6 +30,12 @@ func (repository *locationRepository) Nearby(_ context.Context, latitude, longit
 	}
 	return nil, nil
 }
+func (repository *locationRepository) Remove(_ context.Context, driverID string) error {
+	if repository.point.DriverID == driverID {
+		repository.point = domain.DriverPoint{}
+	}
+	return nil
+}
 func (repository *locationRepository) Get(context.Context, string) (domain.DriverPoint, error) {
 	return repository.point, nil
 }
@@ -146,5 +152,28 @@ func TestPassengerTokenCannotPublishDriverTelemetry(t *testing.T) {
 	router.ServeHTTP(response, request)
 	if response.Code != http.StatusUnauthorized {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestDriverCanRemoveItsOwnTelemetry(t *testing.T) {
+	repository := &locationRepository{point: domain.DriverPoint{DriverID: "42", Latitude: 7.828, Longitude: 123.434}}
+	tokenManager := security.NewTokenManager("secret")
+	driverToken, err := tokenManager.IssueWithRole("42", "driver")
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := chi.NewRouter()
+	geoh.NewRouter(geousecase.NewService(repository), tokenManager).RegisterRoutes(router)
+
+	request := httptest.NewRequest(http.MethodDelete, "/api/v1/telemetry/location", nil)
+	request.Header.Set("Authorization", "Bearer "+driverToken)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusNoContent)
+	}
+	if repository.point.DriverID != "" {
+		t.Fatalf("driver location was not removed: %#v", repository.point)
 	}
 }
