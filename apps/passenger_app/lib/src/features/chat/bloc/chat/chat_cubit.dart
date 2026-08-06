@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/features/chat/bloc/chat/chat_state.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -66,20 +64,20 @@ class ChatCubit extends Cubit<ChatState> {
                 },
               );
             },
-            onError: (error) {
-              emit(state.copyWith(errorMessage: 'Chat stream error: $error'));
+            onError: (_) {
+              emit(state.copyWith(errorMessage: 'Chat stream unavailable.'));
             },
           );
 
           emit(state.copyWith(isConnecting: false, isConnected: true));
         },
       );
-    } catch (error) {
+    } catch (_) {
       emit(
         state.copyWith(
           isConnecting: false,
           isConnected: false,
-          errorMessage: 'Failed to connect: $error',
+          errorMessage: 'Unable to connect to chat.',
         ),
       );
     }
@@ -100,24 +98,22 @@ class ChatCubit extends Cubit<ChatState> {
     String? token,
   }) async {
     try {
-      final gatewayUri = EnvConfig.passengerServiceUri;
-      final resolveEndpointUri = gatewayUri.replace(
-        path: '/api/v1/chat/rooms/$roomId/resolve',
+      final result = await _chatRepository.resolveChatRoom(roomId);
+      await result.fold(
+        (failure) async =>
+            dev.log('Unable to resolve chat room: ${failure.runtimeType}'),
+        (_) => connectToChatRoom(roomId: roomId, wsUri: wsUri, token: token),
       );
-      final response = await Dio().postUri(resolveEndpointUri);
-
-      if (response.statusCode == 200) {
-        await connectToChatRoom(roomId: roomId, wsUri: wsUri, token: token);
-      }
-    } catch (error, stackTrace) {
-      dev.log('Error resolving chat room in cubit: $error\n$stackTrace');
+    } catch (_) {
+      dev.log('Unable to resolve chat room.');
     }
   }
 
   @override
-  Future<void> close() {
-    unawaited(_chatSubscription?.cancel());
-    unawaited(_chatRepository.terminateChatConnection());
+  Future<void> close() async {
+    await _chatSubscription?.cancel();
+    await _chatRepository.terminateChatConnection();
+    await _chatRepository.dispose();
     return super.close();
   }
 }

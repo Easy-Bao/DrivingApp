@@ -9,6 +9,7 @@ class MapNativeService {
   final LocationApiClient _apiClient;
 
   static const _requestTimeout = Duration(seconds: 6);
+  static const _maxSearchQueryLength = 256;
 
   MapNativeService({
     required Uri placeServiceBaseUri,
@@ -70,6 +71,9 @@ class MapNativeService {
     if (trimmed.isEmpty) {
       return right([]);
     }
+    if (trimmed.length > _maxSearchQueryLength) {
+      return left(const PlaceParseError(message: 'Search query is too long.'));
+    }
 
     try {
       final responseData = await _apiClient.searchPlaces(
@@ -89,14 +93,13 @@ class MapNativeService {
       return right(places);
     } on DioException catch (e) {
       dev.log(
-        'searchPlaces network failure',
+        'searchPlaces network failure: ${e.type.name}',
         name: 'MapNativeService',
-        error: e,
       );
-      return left(PlaceNetworkError(message: e.message));
-    } catch (e) {
-      dev.log('searchPlaces parse error', name: 'MapNativeService', error: e);
-      return left(PlaceParseError(message: e.toString()));
+      return left(const PlaceNetworkError());
+    } catch (_) {
+      dev.log('searchPlaces parse error', name: 'MapNativeService');
+      return left(const PlaceParseError());
     }
   }
 
@@ -109,14 +112,13 @@ class MapNativeService {
       return right(place);
     } on DioException catch (e) {
       dev.log(
-        'reverseGeocode network failure',
+        'reverseGeocode network failure: ${e.type.name}',
         name: 'MapNativeService',
-        error: e,
       );
-      return left(PlaceNetworkError(message: e.message));
-    } catch (e) {
-      dev.log('error', name: 'MapNativeService', error: e);
-      return left(PlaceParseError(message: e.toString()));
+      return left(const PlaceNetworkError());
+    } catch (_) {
+      dev.log('reverseGeocode parse error', name: 'MapNativeService');
+      return left(const PlaceParseError());
     }
   }
 
@@ -146,11 +148,14 @@ class MapNativeService {
       final route = await _apiClient.getRoute(body: body);
       return right(route);
     } on DioException catch (e) {
-      dev.log('getRoute network failure', name: 'MapNativeService', error: e);
-      return left(PlaceNetworkError(message: e.message));
-    } catch (e) {
-      dev.log('error', name: 'MapNativeService', error: e);
-      return left(PlaceParseError(message: e.toString()));
+      dev.log(
+        'getRoute network failure: ${e.type.name}',
+        name: 'MapNativeService',
+      );
+      return left(const PlaceNetworkError());
+    } catch (_) {
+      dev.log('getRoute parse error', name: 'MapNativeService');
+      return left(const PlaceParseError());
     }
   }
 
@@ -179,18 +184,13 @@ class MapNativeService {
       );
     } on DioException catch (e) {
       dev.log(
-        'getDrivingDistances network failure',
+        'getDrivingDistances network failure: ${e.type.name}',
         name: 'MapNativeService',
-        error: e,
       );
-      return left(PlaceNetworkError(message: e.message));
-    } catch (e) {
-      dev.log(
-        'getDrivingDistances parse error',
-        name: 'MapNativeService',
-        error: e,
-      );
-      return left(PlaceParseError(message: e.toString()));
+      return left(const PlaceNetworkError());
+    } catch (_) {
+      dev.log('getDrivingDistances parse error', name: 'MapNativeService');
+      return left(const PlaceParseError());
     }
   }
 
@@ -217,14 +217,13 @@ class MapNativeService {
       return right(places);
     } on DioException catch (e) {
       dev.log(
-        'getNearbyPois network failure',
+        'getNearbyPois network failure: ${e.type.name}',
         name: 'MapNativeService',
-        error: e,
       );
-      return left(PlaceNetworkError(message: e.message));
-    } catch (e) {
-      dev.log('error', name: 'MapNativeService', error: e);
-      return left(PlaceParseError(message: e.toString()));
+      return left(const PlaceNetworkError());
+    } catch (_) {
+      dev.log('getNearbyPois parse error', name: 'MapNativeService');
+      return left(const PlaceParseError());
     }
   }
 }

@@ -69,20 +69,20 @@ class ChatCubit extends Cubit<ChatState> {
                 },
               );
             },
-            onError: (error) {
-              emit(state.copyWith(errorMessage: 'Chat stream error: $error'));
+            onError: (_) {
+              emit(state.copyWith(errorMessage: 'Chat stream unavailable.'));
             },
           );
 
           emit(state.copyWith(isConnecting: false, isConnected: true));
         },
       );
-    } catch (error) {
+    } catch (_) {
       emit(
         state.copyWith(
           isConnecting: false,
           isConnected: false,
-          errorMessage: 'Failed to connect: $error',
+          errorMessage: 'Unable to connect to chat.',
         ),
       );
     }
@@ -107,15 +107,16 @@ class ChatCubit extends Cubit<ChatState> {
       if (resolved) {
         await connectToChatRoom(roomId: roomId, wsUri: wsUri, token: token);
       }
-    } catch (error, stackTrace) {
-      dev.log('Error resolving chat room in cubit: $error\n$stackTrace');
+    } catch (_) {
+      dev.log('Unable to resolve chat room.');
     }
   }
 
   @override
-  Future<void> close() {
-    unawaited(_chatSubscription?.cancel());
-    unawaited(_chatRepository.terminateChatConnection());
+  Future<void> close() async {
+    await _chatSubscription?.cancel();
+    await _chatRepository.terminateChatConnection();
+    await _chatRepository.dispose();
     return super.close();
   }
 }

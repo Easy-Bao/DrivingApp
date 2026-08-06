@@ -69,15 +69,31 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   DartPluginRegistrant.ensureInitialized();
 
   final storage = const FlutterSecureStorage();
-  String? baseUrl;
+  Dio? telemetryClient;
   var sending = false;
 
   service.on('configure').listen((event) {
-    baseUrl = event?['baseUrl'] as String?;
+    final baseUrl = event?['baseUrl'] as String?;
+    final parsed = Uri.tryParse(baseUrl ?? '');
+    if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
+      telemetryClient?.close(force: true);
+      telemetryClient = null;
+      return;
+    }
+    telemetryClient?.close(force: true);
+    telemetryClient = Dio(
+      BaseOptions(
+        baseUrl: parsed.toString(),
+        connectTimeout: const Duration(seconds: 10),
+        sendTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
+    );
   });
 
   Future<void> sendLocation() async {
-    if (sending || baseUrl == null) return;
+    final client = telemetryClient;
+    if (sending || client == null) return;
 
     final token = await storage.read(key: StorageKeys.jwtToken);
     final driverId = await storage.read(key: StorageKeys.driverId);
@@ -96,7 +112,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
           distanceFilter: 10,
         ),
       );
-      await Dio(BaseOptions(baseUrl: baseUrl!)).post<void>(
+      await client.post<void>(
         '/api/v1/telemetry/location',
         data: {
           'driverId': driverId,
@@ -108,9 +124,11 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
     } on DioException catch (error) {
-      dev.log('Driver telemetry request failed: ${error.message}');
-    } catch (error) {
-      dev.log('Driver telemetry collection failed: $error');
+      dev.log(
+        'Driver telemetry request failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
+      );
+    } catch (_) {
+      dev.log('Driver telemetry collection failed.');
     } finally {
       sending = false;
     }
@@ -119,6 +137,8 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   Timer? timer;
   service.on('stopService').listen((_) {
     timer?.cancel();
+    telemetryClient?.close(force: true);
+    telemetryClient = null;
     unawaited(service.stopSelf());
   });
   timer = Timer.periodic(
@@ -126,6 +146,10 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     (_) => unawaited(sendLocation()),
   );
   unawaited(sendLocation());
+}
+
+bool _isValidTelemetryBaseUri(Uri uri) {
+  return (uri.scheme == 'http' || uri.scheme == 'https') && uri.host.isNotEmpty;
 }
 
 @pragma('vm:entry-point')

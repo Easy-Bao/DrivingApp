@@ -22,7 +22,9 @@ class DioClient {
       ),
     );
 
-    dio.interceptors.add(AuthInterceptor(sessionService));
+    dio.interceptors.add(
+      AuthInterceptor(sessionService, allowedBaseUri: baseUrl),
+    );
     if (kDebugMode) {
       dio.interceptors.add(LoggingInterceptor());
     }

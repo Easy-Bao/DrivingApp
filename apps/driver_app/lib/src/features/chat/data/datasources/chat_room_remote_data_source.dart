@@ -35,7 +35,7 @@ class ChatRoomRemoteDataSourceImpl implements ChatRoomRemoteDataSource {
   @override
   Future<bool> resolveRoom(String roomId) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/api/v1/chat/rooms/$roomId/resolve',
+      '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/resolve',
     );
     return response.statusCode == 200;
   }

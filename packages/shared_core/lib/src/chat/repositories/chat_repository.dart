@@ -6,6 +6,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:shared_core/shared_core.dart';
 
 class ChatRepository implements IChatRepository {
+  static const _maxMessageBytes = 4096;
   final ChatRemoteDataSource remoteDataSource;
   final String currentUserId;
   final Dio clientDio;
@@ -32,7 +33,7 @@ class ChatRepository implements IChatRepository {
       );
       return const Right(null);
     } catch (error) {
-      return Left(NetworkFailure('Failed to connect to chat server: $error'));
+      return const Left(NetworkFailure('Unable to connect to chat server.'));
     }
   }
 
@@ -42,7 +43,7 @@ class ChatRepository implements IChatRepository {
       await remoteDataSource.terminateWebSocketConnection();
       return const Right(null);
     } catch (error) {
-      return Left(NetworkFailure('Failed to disconnect chat session: $error'));
+      return const Left(NetworkFailure('Unable to disconnect chat session.'));
     }
   }
 
@@ -52,10 +53,18 @@ class ChatRepository implements IChatRepository {
       return const Left(NetworkFailure('Chat session is disconnected.'));
     }
 
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return const Left(ValidationFailure('Message cannot be empty.'));
+    }
+    if (utf8.encode(trimmed).length > _maxMessageBytes) {
+      return const Left(ValidationFailure('Message is too long.'));
+    }
+
     try {
       final payload = jsonEncode({
         'type': 'message',
-        'text': text.trim(),
+        'text': trimmed,
         'senderId': currentUserId,
         'createdAt': DateTime.now().toIso8601String(),
       });
@@ -63,7 +72,7 @@ class ChatRepository implements IChatRepository {
       remoteDataSource.sendWebSocketChatMessage(payload);
       return const Right(null);
     } catch (error) {
-      return Left(ServerFailure('Failed to send chat payload: $error'));
+      return const Left(ServerFailure('Unable to send chat message.'));
     }
   }
 
@@ -73,7 +82,7 @@ class ChatRepository implements IChatRepository {
   ) async {
     try {
       final response = await clientDio.get(
-        '/api/v1/chat/rooms/$roomId/messages',
+        '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/messages',
       );
 
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
@@ -90,12 +99,26 @@ class ChatRepository implements IChatRepository {
         return Right(messages);
       }
       return const Right([]);
-    } catch (error) {
-      return Left(
-        ServerFailure('Failed to fetch historical chat room logs: $error'),
-      );
+    } catch (_) {
+      return const Left(ServerFailure('Unable to load chat history.'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> resolveChatRoom(String roomId) async {
+    try {
+      final response = await clientDio.post<void>(
+        '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/resolve',
+      );
+      if (response.statusCode == 200) return const Right(null);
+      return const Left(ServerFailure('Unable to resolve chat room.'));
+    } catch (_) {
+      return const Left(ServerFailure('Unable to resolve chat room.'));
+    }
+  }
+
+  @override
+  Future<void> dispose() => remoteDataSource.dispose();
 
   @override
   Stream<Either<Failure, ChatEvent>> get chatEventsStream {
@@ -129,9 +152,7 @@ class ChatRepository implements IChatRepository {
 
         return Left(ServerFailure('Unknown websocket chat event type: $type'));
       } catch (error) {
-        return Left(
-          ServerFailure('Failed to parse incoming websocket payload: $error'),
-        );
+        return const Left(ServerFailure('Unable to read chat message.'));
       }
     });
   }

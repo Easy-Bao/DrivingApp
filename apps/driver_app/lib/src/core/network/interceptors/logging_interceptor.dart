@@ -23,9 +23,8 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     dev.log(
-      'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}',
+      'ERROR[${err.response?.statusCode ?? 'network'}] ${err.type.name} => PATH: ${err.requestOptions.uri.path}',
       name: 'HTTP',
-      error: err,
     );
     handler.next(err);
   }

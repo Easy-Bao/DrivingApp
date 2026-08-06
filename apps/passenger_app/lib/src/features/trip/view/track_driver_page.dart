@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -45,13 +46,26 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   int _viewedDriverMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
   Timer? _chatMessagesPollTimer;
+  ChatRepository? _chatRepository;
   bool _isCancellingTrip = false;
 
   @override
   void initState() {
     super.initState();
     _liveMapBloc = Modular.get<LiveMapBloc>();
+    unawaited(_initializeChatRepository());
     _startChatMessagesPolling();
+  }
+
+  Future<void> _initializeChatRepository() async {
+    final passengerIdentifier =
+        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
+    if (!mounted || passengerIdentifier.isEmpty) return;
+    _chatRepository = ChatRepository(
+      remoteDataSource: WebSocketChatRemoteDataSource(),
+      currentUserId: passengerIdentifier,
+      clientDio: Modular.get<Dio>(),
+    );
   }
 
   @override
@@ -61,6 +75,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     }
     unawaited(MapProvider.clearAnnotations(_routeLineManager));
     _chatMessagesPollTimer?.cancel();
+    unawaited(_chatRepository?.dispose());
     super.dispose();
   }
 
@@ -74,11 +89,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
 
   Future<void> _updateUnreadMessagesCount() async {
     try {
-      final passengerIdentifier =
-          await Modular.get<SecureSessionService>().readPassengerId() ?? '';
-      if (passengerIdentifier.isEmpty) return;
+      final chatRepository = _chatRepository;
+      final passengerIdentifier = chatRepository?.currentUserId ?? '';
+      if (chatRepository == null || passengerIdentifier.isEmpty) return;
 
-      final chatRepository = Modular.get<ChatRepository>();
       final result = await chatRepository.fetchRoomMessages(widget.ride.id);
 
       result.fold((_) => null, (List<ChatMessage> messages) {

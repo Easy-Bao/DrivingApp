@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
@@ -78,8 +77,8 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
     if (driverId == null || driverId.isEmpty) return;
 
     try {
-      final initializeRoomResponse = await Dio().postUri(
-        EnvConfig.httpBaseUri.replace(path: '/api/v1/chat/rooms'),
+      final initializeRoomResponse = await Modular.get<Dio>().post<void>(
+        '/api/v1/chat/rooms',
         data: {
           'roomId': ride.id,
           'driverId': driverId,

@@ -57,16 +57,18 @@ class MapProvider {
 
       return either.fold(
         (failure) {
-          debugPrint('MapProvider.searchPlaces failure: $failure');
+          debugPrint(
+            'MapProvider.searchPlaces failure: ${failure.runtimeType}',
+          );
           return <PlaceModel>[];
         },
         (places) => places.where((p) {
-          if (p.distanceKm == null) return true;
-          return p.distanceKm! <= 30.0;
+          final distance = p.distanceKm;
+          return distance == null || distance <= 30.0;
         }).toList(),
       );
-    } catch (error) {
-      debugPrint('MapProvider.searchPlaces error: $error');
+    } catch (_) {
+      debugPrint('MapProvider.searchPlaces error.');
       return [];
     }
   }
@@ -83,11 +85,13 @@ class MapProvider {
     try {
       final either = await nativeService.reverseGeocode(lat: lat, lng: lng);
       return either.fold((failure) {
-        debugPrint('MapProvider.getPlaceFromCoordinates failure: $failure');
+        debugPrint(
+          'MapProvider.getPlaceFromCoordinates failure: ${failure.runtimeType}',
+        );
         return null;
       }, (place) => place);
-    } catch (error) {
-      debugPrint('MapProvider.getPlaceFromCoordinates error: $error');
+    } catch (_) {
+      debugPrint('MapProvider.getPlaceFromCoordinates error.');
       return null;
     }
   }
@@ -117,11 +121,11 @@ class MapProvider {
         excludePoints: excludePoints,
       );
       return either.fold((failure) {
-        debugPrint('MapProvider.getRoute failure: $failure');
+        debugPrint('MapProvider.getRoute failure: ${failure.runtimeType}');
         return null;
       }, (route) => route);
-    } catch (error) {
-      debugPrint('MapProvider.getRoute error: $error');
+    } catch (_) {
+      debugPrint('MapProvider.getRoute error.');
       return null;
     }
   }
@@ -144,11 +148,13 @@ class MapProvider {
         destinations: destinations,
       );
       return either.fold((failure) {
-        debugPrint('MapProvider.getDrivingDistances failure: $failure');
+        debugPrint(
+          'MapProvider.getDrivingDistances failure: ${failure.runtimeType}',
+        );
         return null;
       }, (distances) => distances);
-    } catch (error) {
-      debugPrint('MapProvider.getDrivingDistances error: $error');
+    } catch (_) {
+      debugPrint('MapProvider.getDrivingDistances error.');
       return null;
     }
   }
@@ -171,7 +177,9 @@ class MapProvider {
       );
       return either.fold(
         (failure) {
-          debugPrint('MapProvider.getNearbyPOIs failure: $failure');
+          debugPrint(
+            'MapProvider.getNearbyPOIs failure: ${failure.runtimeType}',
+          );
           return <PlaceModel>[];
         },
         (pois) => pois
@@ -199,8 +207,8 @@ class MapProvider {
             .whereType<PlaceModel>()
             .toList(),
       );
-    } catch (error) {
-      debugPrint('MapProvider.getNearbyPOIs error: $error');
+    } catch (_) {
+      debugPrint('MapProvider.getNearbyPOIs error.');
       return [];
     }
   }
@@ -225,13 +233,15 @@ class MapProvider {
         zoom: zoom,
       ),
       onCameraChangeListener: (cameraChangedEventData) {
-        if (mapController != null) {
-          onCameraChanged?.call(mapController!);
+        final currentController = mapController;
+        if (currentController != null) {
+          onCameraChanged?.call(currentController);
         }
       },
       onMapIdleListener: (mapIdleEventData) {
-        if (mapController != null) {
-          onMapIdle?.call(mapController!);
+        final currentController = mapController;
+        if (currentController != null) {
+          onMapIdle?.call(currentController);
         }
       },
       onMapCreated: (controller) {
@@ -258,7 +268,8 @@ class MapProvider {
           );
         }
 
-        mapController = AppMapController(controller);
+        final currentController = AppMapController(controller);
+        mapController = currentController;
         if (showUserLocation) {
           unawaited(
             controller.location.updateSettings(
@@ -270,7 +281,7 @@ class MapProvider {
             ),
           );
         }
-        onMapCreated?.call(mapController!);
+        onMapCreated?.call(currentController);
       },
     );
   }

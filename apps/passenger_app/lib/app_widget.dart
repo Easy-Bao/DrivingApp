@@ -58,10 +58,16 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
           },
         ),
       ],
-      child: ModularApp.router(
-        theme: AppTheme.themeData,
-        debugShowCheckedModeBanner: false,
-        title: 'BaoRide Passenger',
+      child: BlocListener<SessionBloc, SessionState>(
+        listenWhen: (_, current) =>
+            current is GuestSession || current is SessionFailure,
+        listener: (context, _) =>
+            BlocProvider.of<BookingDraftCubit>(context).clear(),
+        child: ModularApp.router(
+          theme: AppTheme.themeData,
+          debugShowCheckedModeBanner: false,
+          title: 'BaoRide Passenger',
+        ),
       ),
     );
   }

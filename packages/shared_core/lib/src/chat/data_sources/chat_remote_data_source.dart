@@ -14,10 +14,13 @@ abstract class ChatRemoteDataSource {
   Stream<String> get webSocketEventStream;
 
   bool get isWebSocketConnected;
+
+  Future<void> dispose();
 }
 
 class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
   WebSocket? _chatWebSocket;
+  bool _disposed = false;
   final StreamController<String> _chatEventStreamController =
       StreamController<String>.broadcast();
 
@@ -25,8 +28,10 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
   Stream<String> get webSocketEventStream => _chatEventStreamController.stream;
 
   @override
-  bool get isWebSocketConnected =>
-      _chatWebSocket != null && _chatWebSocket!.readyState == WebSocket.open;
+  bool get isWebSocketConnected {
+    final socket = _chatWebSocket;
+    return socket != null && socket.readyState == WebSocket.open;
+  }
 
   @override
   Future<void> establishWebSocketConnection(
@@ -34,44 +39,55 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
     String? token,
   }) async {
     await terminateWebSocketConnection();
-    _chatWebSocket = await WebSocket.connect(
-      chatServiceUri.toString(),
-      headers: token == null || token.isEmpty
-          ? null
-          : {'Authorization': 'Bearer $token'},
-    );
+    _disposed = false;
+    final socket = await WebSocket.connect(
+          chatServiceUri.toString(),
+          headers: token == null || token.isEmpty
+              ? null
+              : {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 15));
+    _chatWebSocket = socket;
 
-    _chatWebSocket?.listen(
+    socket.listen(
       (event) {
-        if (event is String) {
+        if (!_disposed && event is String) {
           _chatEventStreamController.add(event);
         }
       },
       onError: (error) {
-        _chatEventStreamController.addError(error);
+        if (!_disposed) {
+          _chatEventStreamController.addError(
+            StateError('Chat transport failed'),
+          );
+        }
       },
       onDone: () {
-        unawaited(terminateWebSocketConnection());
+        if (identical(_chatWebSocket, socket)) {
+          unawaited(terminateWebSocketConnection());
+        }
       },
     );
   }
 
   @override
   void sendWebSocketChatMessage(String messagePayload) {
-    if (isWebSocketConnected) {
-      _chatWebSocket!.add(messagePayload);
+    final socket = _chatWebSocket;
+    if (socket != null && socket.readyState == WebSocket.open) {
+      socket.add(messagePayload);
     }
   }
 
   @override
   Future<void> terminateWebSocketConnection() async {
-    if (_chatWebSocket != null) {
-      await _chatWebSocket!.close();
-      _chatWebSocket = null;
-    }
+    final socket = _chatWebSocket;
+    _chatWebSocket = null;
+    await socket?.close();
   }
 
+  @override
   Future<void> dispose() async {
+    _disposed = true;
     await terminateWebSocketConnection();
     await _chatEventStreamController.close();
   }

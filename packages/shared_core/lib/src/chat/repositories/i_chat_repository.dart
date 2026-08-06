@@ -14,6 +14,10 @@ abstract class IChatRepository {
 
   Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(String roomId);
 
+  Future<Either<Failure, void>> resolveChatRoom(String roomId);
+
+  Future<void> dispose();
+
   Stream<Either<Failure, ChatEvent>> get chatEventsStream;
 
   bool get isSessionConnected;
