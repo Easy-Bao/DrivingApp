@@ -5,6 +5,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
@@ -12,12 +13,13 @@ import (
 )
 
 type Handler struct {
-	service  *usecase.Service
-	verifier *token.Verifier
+	service    *usecase.Service
+	verifier   *token.Verifier
+	authorizer *security.AdminAuthorizer
 }
 
-func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
-	return &Handler{service: service, verifier: verifier}
+func NewHandler(service *usecase.Service, verifier *token.Verifier, authorizer *security.AdminAuthorizer) *Handler {
+	return &Handler{service: service, verifier: verifier, authorizer: authorizer}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	raw := r.Header.Get("Authorization")
@@ -64,8 +66,13 @@ func (handler *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"documents": items})
 }
 func (handler *Handler) Review(w http.ResponseWriter, r *http.Request) {
-	if _, ok := handler.identity(r); !ok {
+	identity, ok := handler.identity(r)
+	if !ok {
 		writeError(w, 401, "unauthorized")
+		return
+	}
+	if !handler.authorizer.IsAdmin(strconv.Itoa(identity)) {
+		writeError(w, 403, "forbidden")
 		return
 	}
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))

@@ -48,6 +48,7 @@ import (
 func main() {
 	router := chi.NewRouter()
 	jwtSecret := requiredJWTSecret()
+	adminAuthorizer := security.NewAdminAuthorizer(os.Getenv("ADMIN_USER_IDS"))
 	pricingConfig, err := ridesusecase.LoadPricingConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -95,7 +96,7 @@ func main() {
 		usersRouter = usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(client)), verifier)
 		documentRepository = documentpostgres.NewRepository(client)
 		ridesRouter = rideshttp.NewRouter(ridesusecase.NewServiceWithRouteCalculator(ridespostgres.NewRepository(client, pricingConfig.PlatformCommissionBPS), routeCalculator, pricingConfig), verifier)
-		adminRouter = adminhttp.NewRouter(adminusecase.NewService(adminpostgres.NewRepository(client)), verifier)
+		adminRouter = adminhttp.NewRouter(adminusecase.NewService(adminpostgres.NewRepository(client)), verifier, adminAuthorizer)
 	} else {
 		log.Fatal("DATABASE_URL is required")
 	}
@@ -127,7 +128,7 @@ func main() {
 		authRouter = authhttp.NewRouter(registerService, authenticateService, otpService)
 	}
 	if documentRepository != nil && redisClient != nil && verifier != nil {
-		documentRouter = documenthttp.NewRouter(documentusecase.NewService(documentRepository, documentstorage.NewRedisStorage(redisClient)), verifier)
+		documentRouter = documenthttp.NewRouter(documentusecase.NewService(documentRepository, documentstorage.NewRedisStorage(redisClient)), verifier, adminAuthorizer)
 	}
 	if authRouter != nil {
 		authRouter.RegisterRoutes(router)
