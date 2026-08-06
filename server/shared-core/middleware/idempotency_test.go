@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +11,19 @@ import (
 	"testing"
 	"time"
 )
+
+type failingIdempotencyStore struct{}
+
+func (failingIdempotencyStore) Get(context.Context, string) ([]byte, error) {
+	return nil, errors.New("idempotency store unavailable")
+}
+func (failingIdempotencyStore) Set(context.Context, string, []byte, time.Duration) error {
+	return errors.New("idempotency store unavailable")
+}
+func (failingIdempotencyStore) SetNX(context.Context, string, []byte, time.Duration) (bool, error) {
+	return false, errors.New("idempotency store unavailable")
+}
+func (failingIdempotencyStore) Delete(context.Context, string) error { return nil }
 
 func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 	var calls atomic.Int32
@@ -52,5 +67,19 @@ func TestIdempotencyRejectsKeyReuseWithDifferentBody(t *testing.T) {
 	handler.ServeHTTP(response, second)
 	if response.Code != http.StatusConflict {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusConflict)
+	}
+}
+
+func TestIdempotencyFailsClosedWhenStoreIsUnavailable(t *testing.T) {
+	called := false
+	handler := NewIdempotency(failingIdempotencyStore{}, time.Minute).Middleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		called = true
+	}))
+	request := httptest.NewRequest(http.MethodPost, "/rides", strings.NewReader(`{"fare_centavos":100}`))
+	request.Header.Set("Idempotency-Key", "ride-key-3")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusServiceUnavailable || called {
+		t.Fatalf("status = %d, handler called = %t", response.Code, called)
 	}
 }

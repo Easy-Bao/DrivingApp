@@ -29,7 +29,7 @@ func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request
 	page := 1
 	if rawPage := request.URL.Query().Get("page"); rawPage != "" {
 		page, err = strconv.Atoi(rawPage)
-		if err != nil || page < 1 {
+		if err != nil || page < 1 || page > 100 {
 			writeError(writer, http.StatusBadRequest, "invalid page")
 			return
 		}
@@ -48,8 +48,17 @@ func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request
 	if query == "" {
 		query = request.URL.Query().Get("query")
 	}
+	coordinatesErr := coordinatesError(request)
+	if coordinatesErr != nil {
+		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
+		return
+	}
 	places, err := handler.service.Search(request.Context(), query, coordinates)
 	if errors.Is(err, usecase.ErrEmptySearch) {
+		writeError(writer, http.StatusBadRequest, err.Error())
+		return
+	}
+	if errors.Is(err, usecase.ErrSearchTooLong) || errors.Is(err, usecase.ErrInvalidCoordinates) {
 		writeError(writer, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -88,6 +97,10 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 	route, err := handler.service.Route(request.Context(), payload.Origin, payload.Destination, options)
+	if errors.Is(err, usecase.ErrInvalidCoordinates) {
+		writeError(writer, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err != nil {
 		writeError(writer, http.StatusBadGateway, "location provider unavailable")
 		return
@@ -119,6 +132,23 @@ func coordinatesFromQuery(request *http.Request) (domain.Coordinates, error) {
 func hasCoordinates(request *http.Request) bool {
 	query := request.URL.Query()
 	return (query.Get("lat") != "" || query.Get("userLat") != "") && (query.Get("lng") != "" || query.Get("userLng") != "")
+}
+
+func coordinatesError(request *http.Request) error {
+	query := request.URL.Query()
+	hasLatitude := query.Get("lat") != "" || query.Get("userLat") != ""
+	hasLongitude := query.Get("lng") != "" || query.Get("userLng") != ""
+	if hasLatitude != hasLongitude {
+		return errors.New("incomplete coordinates")
+	}
+	if !hasLatitude {
+		return nil
+	}
+	coordinates, err := coordinatesFromQuery(request)
+	if err != nil || !coordinates.Valid() {
+		return errors.New("invalid coordinates")
+	}
+	return nil
 }
 
 func writeJSON(writer http.ResponseWriter, status int, value any) {

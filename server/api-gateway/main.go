@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
@@ -32,12 +33,25 @@ func main() {
 	port := requiredEnv("GATEWAY_PORT")
 	log.Println("api-gateway listening on :" + port)
 	securedRouter := middleware.SecureHTTP(router, middleware.SecurityConfigFromEnv(), nil)
-	log.Fatal(http.ListenAndServe(":"+port, withForwardedHeaders(securedRouter)))
+	server := &http.Server{
+		Addr:              ":" + port,
+		Handler:           withForwardedHeaders(securedRouter),
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
 }
 
 func withForwardedHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		request.Header.Set("X-Forwarded-Proto", "http")
+		request.Header.Del("X-Forwarded-Proto")
+		protocol := "http"
+		if request.TLS != nil {
+			protocol = "https"
+		}
+		request.Header.Set("X-Forwarded-Proto", protocol)
 		clientHost, _, err := net.SplitHostPort(request.RemoteAddr)
 		if err != nil {
 			clientHost = request.RemoteAddr

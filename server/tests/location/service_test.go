@@ -2,6 +2,7 @@ package location_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
@@ -77,5 +78,20 @@ func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 	places, err = service.Nearby(context.Background(), domain.Coordinates{Latitude: 7.8, Longitude: 123.4}, 1)
 	if err != nil || len(places) != 1 {
 		t.Fatalf("cached nearby places = %#v, %v", places, err)
+	}
+}
+
+func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
+	service := usecase.NewService(providerStub{})
+	if _, err := service.Search(context.Background(), strings.Repeat("x", 257), domain.Coordinates{}); err != usecase.ErrSearchTooLong {
+		t.Fatalf("long search error = %v, want %v", err, usecase.ErrSearchTooLong)
+	}
+	if _, err := service.Route(
+		context.Background(),
+		domain.Coordinates{Latitude: 91, Longitude: 123},
+		domain.Coordinates{Latitude: 7, Longitude: 123},
+		domain.RouteOptions{},
+	); err != usecase.ErrInvalidCoordinates {
+		t.Fatalf("invalid route error = %v, want %v", err, usecase.ErrInvalidCoordinates)
 	}
 }

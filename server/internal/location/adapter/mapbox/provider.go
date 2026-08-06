@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -18,10 +19,13 @@ import (
 )
 
 const (
-	searchURL      = "https://api.mapbox.com/search/searchbox/v1"
-	geocodingURL   = "https://api.mapbox.com/search/geocode/v6"
-	directionsURL  = "https://api.mapbox.com/directions/v5/mapbox"
-	nearbyPageSize = 10
+	searchURL                      = "https://api.mapbox.com/search/searchbox/v1"
+	geocodingURL                   = "https://api.mapbox.com/search/geocode/v6"
+	directionsURL                  = "https://api.mapbox.com/directions/v5/mapbox"
+	nearbyPageSize                 = 10
+	maxNearbyPage                  = 100
+	maxSearchQueryBytes            = 256
+	maxProviderResponseBytes int64 = 4 << 20
 )
 
 var defaultNearbyCategories = []string{
@@ -88,6 +92,9 @@ type categoryResult struct {
 }
 
 func (provider *Provider) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
+	if len([]byte(query)) > maxSearchQueryBytes || !origin.Valid() {
+		return nil, fmt.Errorf("invalid location search")
+	}
 	queryParams := url.Values{
 		"q":            {query},
 		"access_token": {provider.token},
@@ -109,8 +116,8 @@ func (provider *Provider) Search(ctx context.Context, query string, origin domai
 }
 
 func (provider *Provider) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
-	if page < 1 {
-		page = 1
+	if page < 1 || page > maxNearbyPage || !origin.Valid() {
+		return nil, fmt.Errorf("invalid nearby page or coordinates")
 	}
 	categories := provider.nearbyCategories
 	if len(categories) == 0 {
@@ -469,6 +476,9 @@ type mapboxRoute struct {
 }
 
 func (provider *Provider) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+	if !origin.Valid() || !destination.Valid() {
+		return nil, fmt.Errorf("invalid route coordinates")
+	}
 	normalizedOptions, err := options.Normalize()
 	if err != nil {
 		return nil, err
@@ -548,7 +558,7 @@ func (provider *Provider) fetchJSON(ctx context.Context, endpoint string, target
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return fmt.Errorf("location provider returned status %d", response.StatusCode)
 	}
-	return json.NewDecoder(response.Body).Decode(target)
+	return json.NewDecoder(io.LimitReader(response.Body, maxProviderResponseBytes)).Decode(target)
 }
 
 func coordinate(value float64) string {

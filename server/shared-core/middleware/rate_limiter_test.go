@@ -1,11 +1,19 @@
 package middleware
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 )
+
+type failingCounterStore struct{}
+
+func (failingCounterStore) Increment(context.Context, string, time.Duration) (int64, error) {
+	return 0, errors.New("counter store unavailable")
+}
 
 func TestRateLimiterRejectsRequestsAfterLimit(t *testing.T) {
 	limiter := NewRateLimiter(NewMemoryCounterStore(), 2, 2, time.Minute)
@@ -55,5 +63,21 @@ func TestRateLimiterUsesSeparateAuthLimit(t *testing.T) {
 	handler.ServeHTTP(response, second)
 	if response.Code != http.StatusTooManyRequests {
 		t.Fatalf("second auth status = %d, want %d", response.Code, http.StatusTooManyRequests)
+	}
+}
+
+func TestRateLimiterFailsClosedWhenCounterStoreIsUnavailable(t *testing.T) {
+	called := false
+	limiter := NewRateLimiter(failingCounterStore{}, 10, 10, time.Minute)
+	handler := limiter.Middleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		called = true
+	}))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/rides", nil))
+	if response.Code != http.StatusServiceUnavailable || called {
+		t.Fatalf("status = %d, handler called = %t", response.Code, called)
+	}
+	if response.Header().Get("Retry-After") != "1" {
+		t.Fatalf("Retry-After = %q, want 1", response.Header().Get("Retry-After"))
 	}
 }

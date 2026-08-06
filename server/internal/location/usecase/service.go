@@ -9,7 +9,17 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 )
 
-var ErrEmptySearch = errors.New("location search query is empty")
+var (
+	ErrEmptySearch        = errors.New("location search query is empty")
+	ErrSearchTooLong      = errors.New("location search query is too long")
+	ErrInvalidCoordinates = errors.New("location coordinates are invalid")
+	ErrInvalidNearbyPage  = errors.New("location page is invalid")
+)
+
+const (
+	maxSearchQueryBytes = 256
+	maxNearbyPage       = 100
+)
 
 type Service struct {
 	provider  domain.Provider
@@ -30,6 +40,12 @@ func (service *Service) Search(ctx context.Context, query string, origin domain.
 	if query == "" {
 		return nil, ErrEmptySearch
 	}
+	if len([]byte(query)) > maxSearchQueryBytes {
+		return nil, ErrSearchTooLong
+	}
+	if !origin.Valid() {
+		return nil, ErrInvalidCoordinates
+	}
 	key := fmt.Sprintf("search:%s:%.4f:%.4f", query, origin.Latitude, origin.Longitude)
 	var places []domain.Place
 	if service.cache != nil && service.cache.Get(ctx, key, &places) == nil {
@@ -43,8 +59,11 @@ func (service *Service) Search(ctx context.Context, query string, origin domain.
 }
 
 func (service *Service) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
-	if page < 1 {
-		page = 1
+	if page < 1 || page > maxNearbyPage {
+		return nil, ErrInvalidNearbyPage
+	}
+	if !origin.Valid() {
+		return nil, ErrInvalidCoordinates
 	}
 	key := fmt.Sprintf("nearby:%.4f:%.4f:%d", origin.Latitude, origin.Longitude, page)
 	var places []domain.Place
@@ -59,6 +78,9 @@ func (service *Service) Nearby(ctx context.Context, origin domain.Coordinates, p
 }
 
 func (service *Service) ReverseGeocode(ctx context.Context, coordinates domain.Coordinates) (*domain.Place, error) {
+	if !coordinates.Valid() {
+		return nil, ErrInvalidCoordinates
+	}
 	key := fmt.Sprintf("reverse:%.4f:%.4f", coordinates.Latitude, coordinates.Longitude)
 	var place domain.Place
 	if service.cache != nil && service.cache.Get(ctx, key, &place) == nil {
@@ -78,5 +100,8 @@ func (service *Service) ReverseGeocode(ctx context.Context, coordinates domain.C
 }
 
 func (service *Service) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+	if !origin.Valid() || !destination.Valid() {
+		return nil, ErrInvalidCoordinates
+	}
 	return service.provider.Route(ctx, origin, destination, options)
 }

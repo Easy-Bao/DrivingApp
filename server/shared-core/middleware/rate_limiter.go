@@ -109,9 +109,8 @@ func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
 		key := fmt.Sprintf("rate:%s:%s:%d", scope, clientIP(request), windowKey(time.Now(), limiter.window))
 		count, err := limiter.store.Increment(request.Context(), key, limiter.window)
 		if err != nil {
-			// Redis is a protection dependency, not a reason to take the API offline.
-			// The caller still receives the normal request path while infrastructure recovers.
-			next.ServeHTTP(writer, request)
+			writer.Header().Set("Retry-After", "1")
+			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
 			return
 		}
 		writer.Header().Set("X-RateLimit-Limit", strconv.FormatInt(limit, 10))

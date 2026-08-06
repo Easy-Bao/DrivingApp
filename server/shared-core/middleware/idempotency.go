@@ -119,6 +119,8 @@ type Idempotency struct {
 	lockTimeout time.Duration
 }
 
+const maxIdempotencyBodyBytes int64 = 10 << 20
+
 func NewIdempotency(store IdempotencyStore, expiration time.Duration) *Idempotency {
 	if expiration <= 0 {
 		expiration = 10 * time.Minute
@@ -144,6 +146,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 
 		var body []byte
 		if request.Body != nil {
+			request.Body = http.MaxBytesReader(writer, request.Body, maxIdempotencyBodyBytes)
 			var err error
 			body, err = io.ReadAll(request.Body)
 			if err != nil {
@@ -157,13 +160,20 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 		resultKey := baseKey + ":result"
 		lockKey := baseKey + ":lock"
 
-		if cached, err := idempotency.store.Get(request.Context(), resultKey); err == nil && len(cached) > 0 {
+		cached, err := idempotency.store.Get(request.Context(), resultKey)
+		if err != nil {
+			writer.Header().Set("Retry-After", "1")
+			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
+			return
+		}
+		if len(cached) > 0 {
 			replayIdempotentResponse(writer, cached, fingerprint)
 			return
 		}
 		acquired, err := idempotency.store.SetNX(request.Context(), lockKey, []byte(fingerprint), idempotency.lockTimeout)
 		if err != nil {
-			next.ServeHTTP(writer, request)
+			writer.Header().Set("Retry-After", "1")
+			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
 			return
 		}
 		if !acquired {

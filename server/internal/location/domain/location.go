@@ -1,10 +1,18 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 type Coordinates struct {
 	Latitude  float64 `json:"lat"`
 	Longitude float64 `json:"lng"`
+}
+
+func (coordinates Coordinates) Valid() bool {
+	return !math.IsNaN(coordinates.Latitude) && !math.IsInf(coordinates.Latitude, 0) && coordinates.Latitude >= -90 && coordinates.Latitude <= 90 &&
+		!math.IsNaN(coordinates.Longitude) && !math.IsInf(coordinates.Longitude, 0) && coordinates.Longitude >= -180 && coordinates.Longitude <= 180
 }
 
 type RoutePreference string
@@ -42,6 +50,11 @@ func (options RouteOptions) Normalize() (RouteOptions, error) {
 	}
 	if len(options.ExcludePoints) > 50 {
 		return RouteOptions{}, fmt.Errorf("route cannot exclude more than 50 points")
+	}
+	for _, point := range options.ExcludePoints {
+		if !point.Valid() {
+			return RouteOptions{}, fmt.Errorf("route exclusion contains invalid coordinates")
+		}
 	}
 	return options, nil
 }

@@ -366,12 +366,6 @@ func queryInt(r *http.Request, key string, fallback int) int {
 	return value
 }
 
-func min(left, right int) int {
-	if left < right {
-		return left
-	}
-	return right
-}
 func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	var input dto.FareEstimateRequest
 	if json.NewDecoder(r.Body).Decode(&input) != nil {
