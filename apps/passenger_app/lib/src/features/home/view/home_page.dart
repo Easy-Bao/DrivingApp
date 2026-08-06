@@ -32,37 +32,33 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<BookingBloc, BookingState>(
-      bloc: _bookingBloc,
-      listener: (_, state) => _handleBookingState(state),
-      child: Scaffold(
-        backgroundColor: AppTheme.surface,
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 12),
-                        _buildLocationRow(),
-                        const SizedBox(height: 24),
-                        _buildSearchBar(),
-                        const SizedBox(height: 16),
-                        _buildChipRow(),
-                        const SizedBox(height: 24),
-                        _buildRecentActivityHeader(),
-                        Expanded(child: _buildRecentActivityList()),
-                      ],
-                    ),
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 12),
+                      _buildLocationRow(),
+                      const SizedBox(height: 24),
+                      _buildSearchBar(),
+                      const SizedBox(height: 16),
+                      _buildChipRow(),
+                      const SizedBox(height: 24),
+                      _buildRecentActivityHeader(),
+                      Expanded(child: _buildRecentActivityList()),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -86,7 +82,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _bookingBloc = Modular.get<BookingBloc>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _handleBookingState(_bookingBloc.state);
       await _loadSavedPlaces();
       await _initLocationAndLoadData();
     });
@@ -110,33 +105,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     await BlocProvider.of<HomeCubit>(
       context,
     ).loadHomeData(lat: position.latitude, lng: position.longitude);
-  }
-
-  void _handleBookingState(BookingState state) {
-    if (!mounted) return;
-    if (state is BookingFailure && state.isNoDriverFound) {
-      CustomToast.show(
-        context,
-        'No driver found. We added a message to your inbox.',
-        isError: true,
-      );
-      return;
-    }
-    if (state is NearestDriverFound) {
-      unawaited(
-        context.pushNamed(
-          TripRoutes.findingDriver,
-          extra: {
-            'rideType': state.trip.rideType,
-            'fare': state.trip.fare,
-            'destination': state.trip.destination,
-            'distance': state.trip.distance,
-            'duration': state.trip.duration,
-            'pickupAddress': state.trip.pickupAddress,
-          },
-        ),
-      );
-    }
   }
 
   Widget _buildChipRow() {
