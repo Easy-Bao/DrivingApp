@@ -68,7 +68,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         final s = BlocProvider.of<DashboardCubit>(context).state;
         _availabilityCtrl.value = s.isOnline ? 1 : 0;
         if (s.isOnline) {
-          _startPolling();
+          unawaited(_resumeOnlineTelemetry());
         }
       }
     });
@@ -93,12 +93,33 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _refreshLocationAfterResume() async {
-    await LocationService.refresh();
+    await LocationService.getCurrentPosition();
     if (!mounted) return;
     final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
     if (dashboardState.isOnline) {
+      _publishCurrentLocation();
       _startPolling();
     }
+  }
+
+  Future<void> _resumeOnlineTelemetry() async {
+    await LocationService.getCurrentPosition();
+    if (!mounted) return;
+    final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
+    if (!dashboardState.isOnline) return;
+    _publishCurrentLocation();
+    _startPolling();
+  }
+
+  void _publishCurrentLocation() {
+    final position = LocationService.lastPosition;
+    if (position == null) return;
+    _liveMapBloc?.add(
+      DispatchTelemetryLocationEvent(
+        lat: position.latitude,
+        lng: position.longitude,
+      ),
+    );
   }
 
   void _startPolling() {
@@ -421,7 +442,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         }
         if (state.isOnline) {
           _availabilityCtrl.forward();
-          _startPolling();
+          unawaited(_resumeOnlineTelemetry());
         } else {
           _availabilityCtrl.reverse();
           _stopPolling();

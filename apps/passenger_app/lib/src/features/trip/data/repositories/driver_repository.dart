@@ -1,5 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:shared_core/shared_core.dart';
@@ -37,11 +37,12 @@ class DriverRepository implements IDriverRepository {
     required double lng,
   }) async {
     try {
-      final profiles = await _biddingDataSource.fetchOnlineDrivers();
-      final nearbyPoints = await _biddingDataSource.fetchNearbyDrivers(
-        latitude: lat,
-        longitude: lng,
-      );
+      final responses = await Future.wait<List<dynamic>>([
+        _biddingDataSource.fetchOnlineDrivers(),
+        _biddingDataSource.fetchNearbyDrivers(latitude: lat, longitude: lng),
+      ]);
+      final profiles = responses[0];
+      final nearbyPoints = responses[1];
       final pointsByDriverId = <String, Map<String, dynamic>>{};
       for (final rawPoint in nearbyPoints.whereType<Map<String, dynamic>>()) {
         final driverId =
@@ -68,23 +69,9 @@ class DriverRepository implements IDriverRepository {
           })
           .whereType<Map<String, dynamic>>()
           .toList();
-      final candidates = rawList
-          .whereType<Map<String, dynamic>>()
-          .map((driver) {
-            final driverLat = (driver['lat'] as num?)?.toDouble();
-            final driverLng = (driver['lng'] as num?)?.toDouble();
-            if (driverLat == null || driverLng == null) return null;
-            return (lat: driverLat, lng: driverLng);
-          })
-          .whereType<({double lat, double lng})>()
-          .take(24)
-          .toList();
-      final matrixDistances = await MapProvider.getDrivingDistances(
-        originLat: lat,
-        originLng: lng,
-        destinations: candidates,
-      );
-      return Right(_processNearbyDrivers(rawList, lat, lng, matrixDistances));
+      // The realtime service already applies the radius query. Haversine keeps
+      // ranking local and avoids depending on the unregistered matrix route.
+      return Right(_processNearbyDrivers(rawList, lat, lng));
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }
@@ -94,10 +81,8 @@ class DriverRepository implements IDriverRepository {
     List<dynamic> rawDrivers,
     double userLat,
     double userLng,
-    List<double>? matrixDistances,
   ) {
     final List<DriverModel> drivers = [];
-    var matrixIndex = 0;
     for (final d in rawDrivers) {
       if (d is! Map<String, dynamic>) continue;
       final driverLat = (d['lat'] as num?)?.toDouble();
@@ -110,17 +95,17 @@ class DriverRepository implements IDriverRepository {
         driverLat,
         driverLng,
       );
-      final distanceKm = matrixIndex < (matrixDistances?.length ?? 0)
-          ? matrixDistances![matrixIndex]
-          : fallbackDistance;
-      matrixIndex++;
-      if (distanceKm > 5.0) continue;
+      if (fallbackDistance > 5.0) continue;
 
-      final etaMinutes = _calculateEta(distanceKm);
+      final etaMinutes = _calculateEta(fallbackDistance);
       final rating = (d['rating'] as num?)?.toDouble() ?? 0;
-      final score = _calculateMatchingScore(distanceKm, rating, etaMinutes);
+      final score = _calculateMatchingScore(
+        fallbackDistance,
+        rating,
+        etaMinutes,
+      );
 
-      drivers.add(_mapToDriverModel(d, distanceKm, etaMinutes, score));
+      drivers.add(_mapToDriverModel(d, fallbackDistance, etaMinutes, score));
     }
 
     drivers.sort((a, b) => a.score.compareTo(b.score));

@@ -38,20 +38,29 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
-        .listen((event) async {
-          final driverId = await _sessionService.readDriverId();
-          if (driverId != null && driverId.isNotEmpty) {
-            await _telemetryDataSource.sendLocationUpdate(
-              driverId: driverId,
-              lat: event.lat,
-              lng: event.lng,
-            );
-          }
-        });
+        .listen((event) => unawaited(_publishLocation(event)));
 
     on<DispatchTelemetryLocationEvent>((event, emit) {
       _locationSubject.add(event);
     });
+  }
+
+  Future<void> _publishLocation(DispatchTelemetryLocationEvent event) async {
+    try {
+      final driverId = await _sessionService.readDriverId();
+      if (driverId == null || driverId.isEmpty) return;
+      await _telemetryDataSource.sendLocationUpdate(
+        driverId: driverId,
+        lat: event.lat,
+        lng: event.lng,
+      );
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to publish driver location update',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<void> _onInitializeMap(

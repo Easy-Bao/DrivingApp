@@ -1,40 +1,12 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
-import 'package:passenger_app/src/core/location/services/map_provider.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/driver_repository.dart';
-import 'package:shared_core/shared_core.dart';
 
 class MockBiddingRemoteDataSource extends Mock
     implements BiddingRemoteDataSource {}
 
-class MatrixLocationApiClient extends LocationApiClient {
-  MatrixLocationApiClient() : super(Dio());
-
-  @override
-  Future<Map<String, dynamic>> getTravelMatrix({
-    required Map<String, dynamic> body,
-  }) async {
-    return {
-      'distancesKm': [0.0],
-    };
-  }
-}
-
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    await MapProvider.initialize(
-      nativeService: MapNativeService(
-        placeServiceBaseUri: Uri.parse('http://test.invalid'),
-        apiClient: MatrixLocationApiClient(),
-      ),
-    );
-  });
-
   test(
     'connects an online driver to a passenger at the same location',
     () async {
