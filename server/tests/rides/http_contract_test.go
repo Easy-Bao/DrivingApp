@@ -1,17 +1,61 @@
 package rides_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
+	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
 	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
 	"github.com/go-chi/chi/v5"
 )
+
+type activeSessionsRepository struct {
+	requestedDriverID *int
+}
+
+func (repository *activeSessionsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
+	return domain.Ride{}, nil
+}
+func (repository *activeSessionsRepository) CreateBid(context.Context, domain.Bid) (domain.Bid, error) {
+	return domain.Bid{}, nil
+}
+func (repository *activeSessionsRepository) AcceptBid(context.Context, int, int) (domain.Bid, domain.Ride, error) {
+	return domain.Bid{}, domain.Ride{}, nil
+}
+func (repository *activeSessionsRepository) Get(context.Context, int) (domain.Ride, error) {
+	return domain.Ride{}, nil
+}
+func (repository *activeSessionsRepository) CreateSession(context.Context, domain.BidSession) (domain.BidSession, error) {
+	return domain.BidSession{}, nil
+}
+func (repository *activeSessionsRepository) ActiveSessions(_ context.Context, driverID *int) ([]domain.BidSession, error) {
+	repository.requestedDriverID = driverID
+	return []domain.BidSession{{ID: 101, Status: "open"}}, nil
+}
+func (repository *activeSessionsRepository) Offers(context.Context, int) ([]domain.BidOffer, error) {
+	return nil, nil
+}
+func (repository *activeSessionsRepository) PlaceOffer(context.Context, domain.BidOffer) (domain.BidOffer, error) {
+	return domain.BidOffer{}, nil
+}
+func (repository *activeSessionsRepository) AcceptOffer(context.Context, int, int, int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+	return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, nil
+}
+func (repository *activeSessionsRepository) CancelSession(context.Context, int, int) (domain.BidSession, error) {
+	return domain.BidSession{}, nil
+}
+func (repository *activeSessionsRepository) CancelOffer(context.Context, int, int) (domain.BidOffer, error) {
+	return domain.BidOffer{}, nil
+}
+func (repository *activeSessionsRepository) Session(context.Context, int) (domain.BidSession, error) {
+	return domain.BidSession{}, nil
+}
 
 func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 	config, err := ridesusecase.LoadPricingConfig()
@@ -119,5 +163,39 @@ func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing
 	mux.ServeHTTP(protectedResponse, protectedRequest)
 	if protectedResponse.Code != http.StatusUnauthorized {
 		t.Fatalf("protected online-driver status = %d, want %d", protectedResponse.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T) {
+	config, err := ridesusecase.LoadPricingConfig()
+	if err != nil {
+		t.Fatalf("LoadPricingConfig returned error: %v", err)
+	}
+	repository := &activeSessionsRepository{}
+	verifier := token.NewVerifier("test-secret")
+	driverToken, err := verifier.Issue("42")
+	if err != nil {
+		t.Fatalf("Issue() returned error: %v", err)
+	}
+
+	mux := chi.NewRouter()
+	rideshttp.NewRouter(ridesusecase.NewService(repository, config), verifier).RegisterRoutes(mux)
+	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/bids/active", nil)
+	request.Header.Set("Authorization", "Bearer "+driverToken)
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("active session status = %d, body = %s", response.Code, response.Body.String())
+	}
+	if repository.requestedDriverID == nil || *repository.requestedDriverID != 42 {
+		t.Fatalf("active session driver id = %#v, want 42", repository.requestedDriverID)
+	}
+	var sessions []domain.BidSession
+	if err := json.NewDecoder(response.Body).Decode(&sessions); err != nil {
+		t.Fatalf("decode active sessions: %v", err)
+	}
+	if len(sessions) != 1 || sessions[0].ID != 101 {
+		t.Fatalf("active sessions = %#v", sessions)
 	}
 }
