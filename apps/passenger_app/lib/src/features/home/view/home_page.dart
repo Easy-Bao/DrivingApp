@@ -9,8 +9,11 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
+import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
+import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
+import 'package:passenger_app/src/features/home/view/widgets/public_driver_summary_card_widget.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -53,6 +56,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       const SizedBox(height: 24),
                       _buildSearchBar(),
                       _buildPendingBookingBanner(),
+                      _buildPublicDriverSummary(),
                       const SizedBox(height: 16),
                       _buildChipRow(),
                       const SizedBox(height: 24),
@@ -182,6 +186,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             onDismiss: () =>
                 BlocProvider.of<BookingDraftCubit>(context).clear(),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPublicDriverSummary() {
+    return BlocBuilder<PublicDriverSummaryCubit, PublicDriverSummaryState>(
+      buildWhen: (previous, current) =>
+          previous.status != current.status ||
+          previous.summaries != current.summaries,
+      builder: (context, state) {
+        if (state.summaries.isEmpty || state.isLoading) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: PublicDriverSummaryCardWidget(summaries: state.summaries),
         );
       },
     );

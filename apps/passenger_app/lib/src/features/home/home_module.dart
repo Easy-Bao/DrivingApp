@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
+import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/home_page.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
@@ -41,6 +42,13 @@ class HomeModule {
       child: (context, GoRouterState state) => MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => Modular.get<HomeCubit>()),
+          BlocProvider(
+            create: (_) {
+              final cubit = Modular.get<PublicDriverSummaryCubit>();
+              unawaited(cubit.load());
+              return cubit;
+            },
+          ),
           BlocProvider(
             create: (_) {
               final cubit = Modular.get<SavedPlacesCubit>();

@@ -28,6 +28,7 @@ abstract class BiddingRemoteDataSource {
     int? limit,
   });
   Future<List<dynamic>> fetchOnlineDrivers();
+  Future<List<dynamic>> fetchPublicDriverSummaries();
   Future<List<dynamic>> fetchNearbyDrivers({
     required double latitude,
     required double longitude,
@@ -153,6 +154,15 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   @override
   Future<List<dynamic>> fetchOnlineDrivers() async {
     final response = await _dio.get<List<dynamic>>('/api/v1/drivers/online');
+    return response.data ?? [];
+  }
+
+  @override
+  Future<List<dynamic>> fetchPublicDriverSummaries() async {
+    final response = await _dio.get<List<dynamic>>(
+      '/api/v1/drivers/public/summaries',
+      queryParameters: {'limit': 5},
+    );
     return response.data ?? [];
   }
 

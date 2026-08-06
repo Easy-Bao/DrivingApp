@@ -9,8 +9,11 @@ import 'package:passenger_app/src/features/activity/data/repositories/activity_r
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:passenger_app/src/features/chat/chat_module.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
+import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger_app/src/features/home/data/repositories/home_repository.dart';
+import 'package:passenger_app/src/features/home/data/repositories/public_driver_summary_repository.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_public_driver_summary_repository.dart';
 import 'package:passenger_app/src/features/home/home_module.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/data/repositories/inbox_repository.dart';
@@ -55,6 +58,11 @@ class PassengerModule extends Module {
           secureSessionService: i.get<SecureSessionService>(),
         ),
       )
+      ..addLazySingleton<IPublicDriverSummaryRepository>(
+        (i) => PublicDriverSummaryRepository(
+          remoteDataSource: i.get<BiddingRemoteDataSource>(),
+        ),
+      )
       ..addLazySingleton<ISavedPlacesRepository>((i) => SavedPlacesRepository())
       ..addLazySingleton<IActivityRepository>(
         (i) => ActivityRepository(
@@ -77,6 +85,11 @@ class PassengerModule extends Module {
       )
       ..addLazySingleton<HomeCubit>(
         (i) => HomeCubit(repository: i.get<IPassengerHomeRepository>()),
+      )
+      ..addLazySingleton<PublicDriverSummaryCubit>(
+        (i) => PublicDriverSummaryCubit(
+          repository: i.get<IPublicDriverSummaryRepository>(),
+        ),
       )
       ..addLazySingleton<BookingBloc>(
         (i) => BookingBloc(
