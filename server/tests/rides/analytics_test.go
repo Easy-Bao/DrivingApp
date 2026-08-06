@@ -41,7 +41,15 @@ func (analyticsRepository) CreateReview(_ context.Context, review domain.Review)
 	return review, nil
 }
 func (analyticsRepository) OnlineDrivers(context.Context) ([]domain.OnlineDriver, error) {
-	return []domain.OnlineDriver{{ID: 7}}, nil
+	return []domain.OnlineDriver{{
+		ID:                    7,
+		UserID:                7,
+		Name:                  "Ada Driver",
+		VehicleType:           "Motorcycle",
+		PlateNumber:           "XYZ-123",
+		Rating:                4.8,
+		OnboardPassengerCount: 1,
+	}}, nil
 }
 func (passengerReviewRepository) CreatePassengerReview(_ context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
 	review.ID = 1

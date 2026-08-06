@@ -34,6 +34,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.Post(apiPrefix+"/bids/{id}/accept", router.handler.AcceptBid)
 	mux.Get(apiPrefix+"/passengers/{id}/rides", router.handler.PassengerRides)
 	mux.Post(apiPrefix+"/passengers/{id}/reviews", router.handler.CreatePassengerReview)
+	mux.Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
 	mux.Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
 	mux.Get(apiPrefix+"/drivers/{id}/stats", router.handler.DriverStats)
 	mux.Get(apiPrefix+"/drivers/{id}/trips", router.handler.DriverTrips)

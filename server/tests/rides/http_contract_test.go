@@ -78,3 +78,46 @@ func TestDriverAnalyticsRejectsAnotherDriversIdentity(t *testing.T) {
 		})
 	}
 }
+
+func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing.T) {
+	config, err := ridesusecase.LoadPricingConfig()
+	if err != nil {
+		t.Fatalf("LoadPricingConfig returned error: %v", err)
+	}
+	mux := chi.NewRouter()
+	rideshttp.NewRouter(ridesusecase.NewService(analyticsRepository{}, config), nil).RegisterRoutes(mux)
+
+	request := httptest.NewRequest(
+		http.MethodGet,
+		api.V1Prefix+"/drivers/public/summaries?limit=1",
+		nil,
+	)
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	}
+	var summaries []map[string]any
+	if err := json.NewDecoder(response.Body).Decode(&summaries); err != nil {
+		t.Fatalf("decode public driver summaries: %v", err)
+	}
+	if len(summaries) != 1 {
+		t.Fatalf("summaries = %#v, want one item", summaries)
+	}
+	if summaries[0]["name"] != "Ada Driver" || summaries[0]["vehicle_type"] != "Motorcycle" || summaries[0]["rating"] != 4.8 {
+		t.Fatalf("unexpected public summary: %#v", summaries[0])
+	}
+	for _, field := range []string{"user_id", "plate_number", "onboard_passenger_count", "latitude", "longitude"} {
+		if _, exists := summaries[0][field]; exists {
+			t.Fatalf("public summary leaked %q: %#v", field, summaries[0])
+		}
+	}
+
+	protectedRequest := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/online", nil)
+	protectedResponse := httptest.NewRecorder()
+	mux.ServeHTTP(protectedResponse, protectedRequest)
+	if protectedResponse.Code != http.StatusUnauthorized {
+		t.Fatalf("protected online-driver status = %d, want %d", protectedResponse.Code, http.StatusUnauthorized)
+	}
+}

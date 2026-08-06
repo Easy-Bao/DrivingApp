@@ -325,12 +325,52 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, items)
 }
 
+func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Request) {
+	items, err := handler.service.OnlineDrivers(r.Context())
+	if err != nil {
+		errorJSON(w, 500, err.Error())
+		return
+	}
+
+	limit := queryInt(r, "limit", 5)
+	if limit == 0 {
+		limit = 5
+	}
+	if limit > 20 {
+		limit = 20
+	}
+
+	summaries := make([]domain.PublicDriverSummary, 0, min(limit, len(items)))
+	for _, item := range items {
+		if item.ID <= 0 {
+			continue
+		}
+		summaries = append(summaries, domain.PublicDriverSummary{
+			ID:          item.ID,
+			Name:        item.Name,
+			VehicleType: item.VehicleType,
+			Rating:      item.Rating,
+		})
+		if len(summaries) == limit {
+			break
+		}
+	}
+	jsonJSON(w, 200, summaries)
+}
+
 func queryInt(r *http.Request, key string, fallback int) int {
 	value, err := strconv.Atoi(r.URL.Query().Get(key))
 	if err != nil || value < 0 {
 		return fallback
 	}
 	return value
+}
+
+func min(left, right int) int {
+	if left < right {
+		return left
+	}
+	return right
 }
 func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	var input dto.FareEstimateRequest
