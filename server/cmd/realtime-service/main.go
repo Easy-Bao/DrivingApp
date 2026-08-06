@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
@@ -34,7 +35,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer redisClient.Close()
-	tokenManager := security.NewTokenManager(os.Getenv("JWT_SECRET"))
+	tokenManager := security.NewTokenManager(requiredJWTSecret())
 	geoService := geousecase.NewService(geo.NewRedisRepository(redisClient))
 	chatHistory := chatadapter.NewRedisRepository(redisClient)
 	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory)
@@ -68,4 +69,12 @@ func port(name, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func requiredJWTSecret() string {
+	secret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
+	if err := security.ValidateTokenSecret(secret); err != nil {
+		log.Fatal(err)
+	}
+	return secret
 }

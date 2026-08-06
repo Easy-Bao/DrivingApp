@@ -13,7 +13,7 @@ import (
 
 func TestVerifierReturnsSubject(t *testing.T) {
 	verifier := token.NewVerifier("test-secret")
-	token := sign("test-secret", `{"alg":"HS256"}`, fmt.Sprintf(`{"sub":"user-1","exp":%d}`, time.Now().Add(time.Minute).Unix()))
+	token := sign("test-secret", `{"alg":"HS256","typ":"JWT"}`, fmt.Sprintf(`{"sub":"user-1","exp":%d}`, time.Now().Add(time.Minute).Unix()))
 	subject, err := verifier.Verify(token)
 	if err != nil || subject != "user-1" {
 		t.Fatalf("Verify() = %q, %v", subject, err)
@@ -22,7 +22,7 @@ func TestVerifierReturnsSubject(t *testing.T) {
 
 func TestVerifierRejectsModifiedToken(t *testing.T) {
 	verifier := token.NewVerifier("test-secret")
-	token := sign("test-secret", `{"alg":"HS256"}`, fmt.Sprintf(`{"sub":"user-1","exp":%d}`, time.Now().Add(time.Minute).Unix())) + "x"
+	token := sign("test-secret", `{"alg":"HS256","typ":"JWT"}`, fmt.Sprintf(`{"sub":"user-1","exp":%d}`, time.Now().Add(time.Minute).Unix())) + "x"
 	if _, err := verifier.Verify(token); err == nil {
 		t.Fatal("expected modified token to be rejected")
 	}

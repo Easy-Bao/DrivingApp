@@ -25,7 +25,7 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	)
 
 	registration, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{
-		Email: "passenger@example.test", Name: "Passenger", Password: "secret",
+		Email: "passenger@example.test", Name: "Passenger", Password: "secret-8",
 	})
 	if err != nil {
 		t.Fatalf("register passenger: %v", err)
@@ -105,7 +105,7 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 	)
 
 	if _, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{
-		Email: "passenger@example.test", Password: "secret",
+		Email: "passenger@example.test", Password: "secret-8",
 	}); !errors.Is(err, domain.ErrEmailTaken) {
 		t.Fatalf("expected verified email conflict, got %v", err)
 	}

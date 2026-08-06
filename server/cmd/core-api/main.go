@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent/migrate"
@@ -46,6 +47,7 @@ import (
 
 func main() {
 	router := chi.NewRouter()
+	jwtSecret := requiredJWTSecret()
 	pricingConfig, err := ridesusecase.LoadPricingConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -86,10 +88,10 @@ func main() {
 		}
 		defer client.Close()
 		authRepository = authpostgres.NewUserRepository(client)
-		tokenManager := token.NewIssuer(os.Getenv("JWT_SECRET"))
+		tokenManager := token.NewIssuer(jwtSecret)
 		registerService = authusecase.NewRegisterService(authRepository, tokenManager, authRepository)
 		authenticateService = authusecase.NewAuthenticateService(authRepository, tokenManager)
-		verifier = token.NewVerifier(os.Getenv("JWT_SECRET"))
+		verifier = token.NewVerifier(jwtSecret)
 		usersRouter = usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(client)), verifier)
 		documentRepository = documentpostgres.NewRepository(client)
 		ridesRouter = rideshttp.NewRouter(ridesusecase.NewServiceWithRouteCalculator(ridespostgres.NewRepository(client, pricingConfig.PlatformCommissionBPS), routeCalculator, pricingConfig), verifier)
@@ -186,4 +188,12 @@ func port(name, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func requiredJWTSecret() string {
+	secret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
+	if err := security.ValidateTokenSecret(secret); err != nil {
+		log.Fatal(err)
+	}
+	return secret
 }

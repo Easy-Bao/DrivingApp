@@ -110,14 +110,18 @@ type normalizedRegistration struct {
 }
 
 func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistration, error) {
-	if strings.TrimSpace(input.Email) == "" || input.Password == "" {
+	if strings.TrimSpace(input.Email) == "" || len(input.Password) < 8 || len([]byte(input.Password)) > 72 {
+		return normalizedRegistration{}, domain.ErrInvalidCredentials
+	}
+	passwordHash, err := HashPasswordWithError(input.Password)
+	if err != nil {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
 	return normalizedRegistration{
 		Email:             strings.ToLower(strings.TrimSpace(input.Email)),
 		Phone:             strings.TrimSpace(input.Phone),
 		Name:              strings.TrimSpace(input.Name),
-		PasswordHash:      HashPassword(input.Password),
+		PasswordHash:      passwordHash,
 		Role:              role,
 		VehicleType:       strings.TrimSpace(input.VehicleType),
 		PlateNumber:       strings.TrimSpace(input.PlateNumber),
@@ -135,6 +139,6 @@ func (service *RegisterService) create(ctx context.Context, account domain.User)
 			return domain.User{}, "", err
 		}
 	}
-	token, err := service.tokens.Issue(intSubject(created.ID))
+	token, err := issueToken(service.tokens, intSubject(created.ID), created.Role)
 	return created, token, err
 }

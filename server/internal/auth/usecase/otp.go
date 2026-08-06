@@ -96,7 +96,7 @@ func (service *OTPService) VerifyPassenger(ctx context.Context, email, code stri
 			return domain.User{}, "", err
 		}
 		account.IsVerified = true
-		token, err := service.tokens.Issue(strconv.Itoa(account.ID))
+		token, err := issueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
 		return account, token, err
 	}
 	if service.pending == nil || service.registrations == nil {
@@ -125,7 +125,7 @@ func (service *OTPService) ResetPassword(ctx context.Context, email, code, passw
 	if err != nil {
 		return domain.ErrInvalidCredentials
 	}
-	if strings.TrimSpace(password) == "" {
+	if len(password) < 8 || len([]byte(password)) > 72 {
 		return domain.ErrInvalidCredentials
 	}
 	if err := service.store.Consume(ctx, "reset", account.Email, strings.TrimSpace(code)); err != nil {

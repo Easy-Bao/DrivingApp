@@ -26,12 +26,17 @@ func (service *AuthenticateService) ExecuteAs(ctx context.Context, email, passwo
 
 func (service *AuthenticateService) execute(ctx context.Context, email, password string, role domain.Role) (domain.User, string, error) {
 	account, err := service.repository.FindByEmail(ctx, email)
-	if err != nil || account.PasswordHash != HashPassword(password) {
+	if err != nil || !VerifyPassword(account.PasswordHash, password) {
 		return domain.User{}, "", domain.ErrInvalidCredentials
 	}
 	if role != "" && account.Role != role {
 		return domain.User{}, "", domain.ErrInvalidCredentials
 	}
-	token, err := service.tokens.Issue(strconv.Itoa(account.ID))
+	if IsLegacyPasswordHash(account.PasswordHash) {
+		if upgradedHash, hashErr := HashPasswordWithError(password); hashErr == nil {
+			_ = service.repository.UpdatePassword(ctx, account.ID, upgradedHash)
+		}
+	}
+	token, err := issueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
 	return account, token, err
 }
