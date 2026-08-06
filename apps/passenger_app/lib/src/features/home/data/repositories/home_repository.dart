@@ -66,9 +66,7 @@ class HomeRepository implements IPassengerHomeRepository {
     try {
       final passengerId = await _getPassengerId();
       if (passengerId.isEmpty) {
-        return const Left(
-          CacheFailure('No passenger ID found in local cache.'),
-        );
+        return const Right(<Map<String, dynamic>>[]);
       }
       final rawRides = await _passengerRemoteDataSource.fetchRideHistory(
         passengerId,

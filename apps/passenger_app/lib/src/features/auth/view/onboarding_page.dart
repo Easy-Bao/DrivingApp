@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class OnBoardingPage extends StatelessWidget {
@@ -139,6 +140,13 @@ class OnBoardingPage extends StatelessWidget {
                         ],
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      context.goNamed(HomeRoutes.home);
+                    },
+                    child: const Text('Explore as guest'),
                   ),
                 ],
               ),

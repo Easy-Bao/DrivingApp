@@ -31,7 +31,7 @@ void main() async {
 
   await Modular.configure(
     appModule: AppModule(prefs: prefs),
-    initialRoute: '/',
+    initialRoute: '/passenger/home',
     debugLogDiagnostics: true,
     debugLogDiagnosticsGoRouter: true,
     debugLogEventBus: true,

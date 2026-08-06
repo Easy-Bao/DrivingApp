@@ -113,8 +113,10 @@ class PassengerModule extends Module {
     ...SettingsModule.routes,
 
     ShellModularRoute(
-      builder: (context, GoRouterState state, child) =>
-          PassengerShellLayout(child: child),
+      builder: (context, GoRouterState state, child) => PassengerShellLayout(
+        inboxCubit: Modular.get<InboxCubit>(),
+        child: child,
+      ),
       routes: [
         ...HomeModule.shellRoutes,
         ...ActivityModule.shellRoutes,

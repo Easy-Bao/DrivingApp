@@ -4,18 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
+import 'package:passenger_app/src/shared/widgets/navigationbar/guest_action_bar_widget.dart';
 
 class PassengerShellLayout extends StatefulWidget {
   final Widget child;
-  const PassengerShellLayout({super.key, required this.child});
+  final InboxCubit inboxCubit;
+
+  const PassengerShellLayout({
+    super.key,
+    required this.child,
+    required this.inboxCubit,
+  });
 
   @override
   State<PassengerShellLayout> createState() => _PassengerShellLayoutState();
@@ -23,22 +31,27 @@ class PassengerShellLayout extends StatefulWidget {
 
 class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   final List<int> _navigationHistory = [];
+  String? _loadedInboxPassengerId;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_loadInboxNotifications());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_loadInboxNotifications());
+      }
+    });
   }
 
   Future<void> _loadInboxNotifications() async {
-    final passengerId =
-        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
-    if (passengerId.isEmpty) return;
-
-    final inboxCubit = Modular.get<InboxCubit>();
-    if (!inboxCubit.isClosed) {
-      await inboxCubit.loadNotifications(passengerId);
+    final sessionState = BlocProvider.of<SessionBloc>(context).state;
+    if (sessionState is! AuthenticatedSession ||
+        sessionState.passengerId == _loadedInboxPassengerId ||
+        widget.inboxCubit.isClosed) {
+      return;
     }
+    _loadedInboxPassengerId = sessionState.passengerId;
+    await widget.inboxCubit.loadNotifications(sessionState.passengerId);
   }
 
   @override
@@ -46,83 +59,102 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     final sel = _calculateSelectedIndex(context);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return PopScope(
-      canPop:
-          _navigationHistory.length <= 1 &&
-          _navigationHistory.isNotEmpty &&
-          _navigationHistory.last == 0,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        if (_navigationHistory.length > 1) {
-          setState(() {
-            _navigationHistory.removeLast();
-            final previousIndex = _navigationHistory.last;
-            _navigateToIndex(previousIndex);
-          });
-        } else {
-          setState(() {
-            _navigationHistory.clear();
-            _navigationHistory.add(0);
-            _navigateToIndex(0);
-          });
-        }
-      },
-      child: Scaffold(
-        extendBody: true,
-        body: widget.child,
-        bottomNavigationBar: Padding(
-          padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
-          child: Container(
-            height: 58,
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(29),
-              border: Border.all(
-                color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _buildTabItem(
-                  context,
-                  icon: LucideIcons.house,
-                  label: 'Home',
-                  index: 0,
-                  isSelected: sel == 0,
-                ),
-                _buildTabItem(
-                  context,
-                  icon: LucideIcons.history,
-                  label: 'Activity',
-                  index: 1,
-                  isSelected: sel == 1,
-                ),
-                _buildTabItem(
-                  context,
-                  icon: LucideIcons.mail,
-                  label: 'Inbox',
-                  index: 2,
-                  isSelected: sel == 2,
-                ),
-                _buildTabItem(
-                  context,
-                  icon: LucideIcons.user,
-                  label: 'Profile',
-                  index: 3,
-                  isSelected: sel == 3,
-                ),
-              ],
-            ),
+    return BlocListener<SessionBloc, SessionState>(
+      listenWhen: (previous, current) =>
+          previous is! AuthenticatedSession && current is AuthenticatedSession,
+      listener: (_, _) => unawaited(_loadInboxNotifications()),
+      child: PopScope(
+        canPop:
+            _navigationHistory.length <= 1 &&
+            _navigationHistory.isNotEmpty &&
+            _navigationHistory.last == 0,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          if (_navigationHistory.length > 1) {
+            setState(() {
+              _navigationHistory.removeLast();
+              final previousIndex = _navigationHistory.last;
+              _navigateToIndex(previousIndex);
+            });
+          } else {
+            setState(() {
+              _navigationHistory.clear();
+              _navigationHistory.add(0);
+              _navigateToIndex(0);
+            });
+          }
+        },
+        child: Scaffold(
+          extendBody: true,
+          body: widget.child,
+          bottomNavigationBar: BlocBuilder<SessionBloc, SessionState>(
+            builder: (context, sessionState) {
+              final isAuthenticated = sessionState is AuthenticatedSession;
+              return Padding(
+                padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
+                child: isAuthenticated
+                    ? _buildAuthenticatedTabBar(context, sel)
+                    : GuestActionBarWidget(
+                        onSignUp: () => context.pushNamed(AuthRoutes.signup),
+                        onSignIn: () => context.pushNamed(AuthRoutes.signin),
+                      ),
+              );
+            },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAuthenticatedTabBar(BuildContext context, int selectedIndex) {
+    return Container(
+      height: 58,
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(29),
+        border: Border.all(
+          color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildTabItem(
+            context,
+            icon: LucideIcons.house,
+            label: 'Home',
+            index: 0,
+            isSelected: selectedIndex == 0,
+          ),
+          _buildTabItem(
+            context,
+            icon: LucideIcons.history,
+            label: 'Activity',
+            index: 1,
+            isSelected: selectedIndex == 1,
+          ),
+          _buildTabItem(
+            context,
+            icon: LucideIcons.mail,
+            label: 'Inbox',
+            index: 2,
+            isSelected: selectedIndex == 2,
+          ),
+          _buildTabItem(
+            context,
+            icon: LucideIcons.user,
+            label: 'Profile',
+            index: 3,
+            isSelected: selectedIndex == 3,
+          ),
+        ],
       ),
     );
   }
@@ -158,7 +190,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (index == 2)
-                _InboxTabIcon(color: color)
+                _InboxTabIcon(color: color, inboxCubit: widget.inboxCubit)
               else
                 Icon(icon, size: 18, color: color),
               const SizedBox(height: 3),
@@ -239,13 +271,14 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
 
 class _InboxTabIcon extends StatelessWidget {
   final Color color;
+  final InboxCubit inboxCubit;
 
-  const _InboxTabIcon({required this.color});
+  const _InboxTabIcon({required this.color, required this.inboxCubit});
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<InboxCubit, InboxState>(
-      bloc: Modular.get<InboxCubit>(),
+      bloc: inboxCubit,
       builder: (context, state) {
         final unreadCount = state is InboxLoadedState
             ? state.notifications

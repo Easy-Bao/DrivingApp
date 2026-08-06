@@ -7,8 +7,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/core/utils/phone_number_validator.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/auth/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
+import 'package:passenger_app/src/features/auth/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/view/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -116,7 +116,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
         child: BlocConsumer<SignUpBloc, SignUpState>(
           listener: (context, state) {
             if (state is SignUpSuccess) {
-              context.read<SessionBloc>().add(
+              BlocProvider.of<SessionBloc>(context).add(
                 SessionAuthenticatedRequested(
                   passengerId: state.credentials.passengerId,
                 ),
