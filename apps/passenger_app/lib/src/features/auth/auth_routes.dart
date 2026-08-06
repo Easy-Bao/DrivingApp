@@ -1,4 +1,5 @@
 abstract final class AuthRoutes {
+  static const String root = 'AuthRoot';
   static const String signin = 'Signin';
   static const String signup = 'Signup';
   static const String forgotPassword = 'ForgotPassword';

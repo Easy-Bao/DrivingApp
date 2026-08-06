@@ -19,6 +19,7 @@ import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/data/repositories/inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/inbox_module.dart';
+import 'package:passenger_app/src/features/location/location_module.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_module.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
@@ -124,6 +125,7 @@ class PassengerModule extends Module {
     ...ChatModule.routes,
     ...ProfileModule.routes,
     ...SettingsModule.routes,
+    ...LocationModule.routes,
 
     ShellModularRoute(
       builder: (context, GoRouterState state, child) => PassengerShellLayout(

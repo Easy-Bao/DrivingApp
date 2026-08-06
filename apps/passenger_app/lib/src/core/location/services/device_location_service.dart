@@ -1,5 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
+import 'package:shared_core/shared_core.dart';
 
 enum LocationAccessState { ready, serviceDisabled, denied, deniedForever }
 
@@ -7,6 +8,7 @@ class LocationService {
   LocationService._();
 
   static Position? _lastPosition;
+  static PlaceModel? _manualPlace;
   static MapNativeService? _nativeService;
 
   static set nativeService(MapNativeService nativeService) {
@@ -14,6 +16,32 @@ class LocationService {
   }
 
   static Position? get lastPosition => _lastPosition;
+
+  static PlaceModel? get manualPlace => _manualPlace;
+
+  static bool get hasManualLocation => _manualPlace != null;
+
+  static void setManualLocation(PlaceModel place) {
+    _manualPlace = place;
+    _lastPosition = Position(
+      longitude: place.longitude,
+      latitude: place.latitude,
+      timestamp: DateTime.now(),
+      accuracy: 0,
+      altitude: 0,
+      altitudeAccuracy: 0,
+      heading: 0,
+      headingAccuracy: 0,
+      speed: 0,
+      speedAccuracy: 0,
+      isMocked: true,
+    );
+  }
+
+  static void clearManualLocation() {
+    _manualPlace = null;
+    _lastPosition = null;
+  }
 
   static Future<bool> isServiceEnabled() async {
     return Geolocator.isLocationServiceEnabled();
@@ -53,6 +81,7 @@ class LocationService {
           distanceFilter: 10,
         ),
       );
+      _manualPlace = null;
       return _lastPosition;
     } catch (_) {
       return null;
@@ -66,6 +95,7 @@ class LocationService {
         distanceFilter: 5,
       ),
     ).map((pos) {
+      _manualPlace = null;
       _lastPosition = pos;
       return pos;
     });

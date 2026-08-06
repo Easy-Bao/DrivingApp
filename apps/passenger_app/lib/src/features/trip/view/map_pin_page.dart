@@ -52,20 +52,17 @@ class _MapPinPageState extends State<MapPinPage>
 
   Future<void> _initLocation() async {
     if (_centerLat == null || _centerLng == null) {
-      final hasLocationAccess = await LocationPermissionPrompt.ensure(
-        context,
-        title: 'Use your location for pickup',
-        message:
-            'We use your location to place the pickup pin accurately. If you prefer not to share it, return and enter a pickup address manually.',
-        secondaryLabel: 'Maybe Later',
-      );
-      if (!hasLocationAccess || !mounted) {
+      final hasLocationAccess =
+          await LocationService.getAccessState() == LocationAccessState.ready;
+      if (!hasLocationAccess) {
         if (mounted) context.pop();
         return;
       }
     }
 
-    final pos = await LocationService.getCurrentPosition();
+    final pos = _centerLat != null && _centerLng != null
+        ? null
+        : await LocationService.getCurrentPosition();
     if (pos != null && mounted) {
       if (!_hasUserPannedMap) {
         setState(() {
@@ -171,13 +168,10 @@ class _MapPinPageState extends State<MapPinPage>
   }
 
   Future<void> _relocate() async {
-    final hasLocationAccess = await LocationPermissionPrompt.ensure(
-      context,
-      title: 'Locate your pickup point',
-      message: 'Allow location access to center the map on your current spot.',
-      secondaryLabel: 'Maybe Later',
-    );
-    if (!hasLocationAccess || !mounted) return;
+    if (await LocationService.getAccessState() != LocationAccessState.ready ||
+        !mounted) {
+      return;
+    }
 
     final pos = await LocationService.getCurrentPosition();
     if (pos != null && _mapController != null && mounted) {

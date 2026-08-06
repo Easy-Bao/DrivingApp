@@ -14,6 +14,7 @@ import 'package:passenger_app/src/features/home/bloc/public_driver_summary/publi
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/public_driver_summary_card_widget.dart';
+import 'package:passenger_app/src/features/location/location_routes.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -301,11 +302,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           prev.currentAddress != curr.currentAddress ||
           prev.isLoading != curr.isLoading,
       builder: (context, state) {
+        Widget content;
         if (state.isLoading) {
-          return _buildShimmerLocationRow();
-        }
-        if (state.currentAddress.isEmpty) {
-          return const Row(
+          content = _buildShimmerLocationRow();
+        } else if (state.currentAddress.isEmpty) {
+          content = const Row(
             children: [
               Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
               SizedBox(width: 6),
@@ -319,28 +320,34 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ],
           );
-        }
-        return Row(
-          children: [
-            const Icon(
-              LucideIcons.map_pin,
-              size: 14,
-              color: AppTheme.primaryColor,
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                state.currentAddress,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor,
+        } else {
+          content = Row(
+            children: [
+              const Icon(
+                LucideIcons.map_pin,
+                size: 14,
+                color: AppTheme.primaryColor,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  state.currentAddress,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          );
+        }
+        return GestureDetector(
+          onTap: _openManualLocation,
+          behavior: HitTestBehavior.opaque,
+          child: content,
         );
       },
     );
@@ -696,19 +703,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (!mounted) return;
     final cubit = BlocProvider.of<HomeCubit>(context);
 
-    final hasLocationAccess = await LocationPermissionPrompt.ensure(
-      context,
-      title: 'Find nearby places',
-      message:
-          'We use your location to calculate precise pickup points, nearby drivers, and route estimates.',
-      secondaryLabel: 'Enter Address Manually',
-    );
-    if (!hasLocationAccess || !mounted) return;
-
-    final position = await LocationService.getCurrentPosition();
+    final hasLocationAccess =
+        await LocationService.getAccessState() == LocationAccessState.ready;
+    final position = hasLocationAccess
+        ? await LocationService.getCurrentPosition() ??
+              LocationService.lastPosition
+        : LocationService.lastPosition;
+    final manualPlace = LocationService.manualPlace;
     if (position == null) return;
     await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
+    if (manualPlace != null) {
+      cubit.updateAddress(manualPlace.displayName);
+    }
 
+    if (!hasLocationAccess || LocationService.hasManualLocation) return;
     unawaited(_locationSubscription?.cancel());
     _locationSubscription = LocationService.getPositionStream().listen((
       pos,
@@ -718,6 +726,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         await cubit.loadHomeData(lat: pos.latitude, lng: pos.longitude);
       } catch (_) {}
     }, onError: (_) {});
+  }
+
+  Future<void> _openManualLocation() async {
+    final selectedPlace = await context.pushNamed(LocationRoutes.country);
+    if (!mounted || selectedPlace is! PlaceModel) return;
+    LocationService.setManualLocation(selectedPlace);
+    final cubit = BlocProvider.of<HomeCubit>(context);
+    await cubit.loadHomeData(
+      lat: selectedPlace.latitude,
+      lng: selectedPlace.longitude,
+    );
+    if (mounted) cubit.updateAddress(selectedPlace.displayName);
   }
 
   Future<void> _loadSavedPlaces() async {

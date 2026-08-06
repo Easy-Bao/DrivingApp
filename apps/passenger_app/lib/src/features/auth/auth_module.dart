@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
@@ -67,6 +68,12 @@ class AuthModule extends Module {
 
   @override
   List<ModularRoute> get routes => [
+    ChildRoute(
+      name: AuthRoutes.root,
+      '/',
+      child: (context, GoRouterState state) => const SizedBox.shrink(),
+      redirect: (_, _) => '/passenger/location-gate',
+    ),
     ChildRoute(
       name: AuthRoutes.signin,
       '/auth/signin',
