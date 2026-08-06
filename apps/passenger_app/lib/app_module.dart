@@ -13,6 +13,7 @@ import 'package:passenger_app/src/features/auth/data/repositories/session_reposi
 import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppModule extends Module {
@@ -53,7 +54,9 @@ class AppModule extends Module {
       )
       ..addLazySingleton<BiddingRemoteDataSource>(
         (i) => BiddingRemoteDataSourceImpl(i.get<Dio>()),
-      );
+      )
+      // AppWidget provides this state before the passenger route module is active.
+      ..addLazySingleton<BookingDraftCubit>((_) => BookingDraftCubit());
   }
 
   @override
