@@ -119,6 +119,13 @@ class DashboardRepository implements IDashboardRepository {
         lat: lat,
         lng: lng,
       );
+      if (!isOnline) {
+        try {
+          await _telemetryRemoteDataSource.removeLocation();
+        } catch (error) {
+          dev.log('Unable to remove driver location: $error');
+        }
+      }
       try {
         await _sessionService.saveDriverOnlineStatus(isOnline);
       } catch (error) {

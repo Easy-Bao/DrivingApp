@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/core/constants/storage_keys.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
+const _backgroundRideRequestInterval = Duration(seconds: 4);
 
 class BackgroundTelemetryService {
   final Uri _apiBaseUri;
@@ -71,6 +72,8 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   final storage = const FlutterSecureStorage();
   Dio? telemetryClient;
   var sending = false;
+  var pollingRideRequests = false;
+  var activeRequestIds = <String>{};
 
   service.on('configure').listen((event) {
     final baseUrl = event?['baseUrl'] as String?;
@@ -134,18 +137,79 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
-  Timer? timer;
+  Future<void> updateNotification(String content) async {
+    if (service is AndroidServiceInstance) {
+      await service.setForegroundNotificationInfo(
+        title: 'EasyRide Driver',
+        content: content,
+      );
+    }
+  }
+
+  Future<void> pollRideRequests() async {
+    final client = telemetryClient;
+    if (pollingRideRequests || client == null) return;
+
+    final token = await storage.read(key: StorageKeys.jwtToken);
+    final driverId = await storage.read(key: StorageKeys.driverId);
+    if (token == null ||
+        token.isEmpty ||
+        driverId == null ||
+        driverId.isEmpty) {
+      return;
+    }
+
+    pollingRideRequests = true;
+    try {
+      final response = await client.get<List<dynamic>>(
+        '/api/v1/bids/active',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final requestIds = <String>{};
+      for (final item in response.data ?? const <dynamic>[]) {
+        if (item is! Map<String, dynamic>) continue;
+        final id = item['id']?.toString().trim();
+        if (id != null && id.isNotEmpty) requestIds.add(id);
+      }
+
+      final hasNewRequest = requestIds.difference(activeRequestIds).isNotEmpty;
+      activeRequestIds = requestIds;
+      if (hasNewRequest) {
+        await updateNotification('New ride request available.');
+      } else if (requestIds.isEmpty) {
+        await updateNotification('Sharing location while you are online.');
+      }
+    } on DioException catch (error) {
+      dev.log(
+        'Driver request polling failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
+      );
+    } catch (_) {
+      dev.log('Driver request polling failed.');
+    } finally {
+      pollingRideRequests = false;
+    }
+  }
+
+  Timer? locationTimer;
+  Timer? requestTimer;
   service.on('stopService').listen((_) {
-    timer?.cancel();
+    locationTimer?.cancel();
+    requestTimer?.cancel();
+    activeRequestIds = <String>{};
     telemetryClient?.close(force: true);
     telemetryClient = null;
     unawaited(service.stopSelf());
   });
-  timer = Timer.periodic(
+  locationTimer = Timer.periodic(
     _backgroundTelemetryInterval,
     (_) => unawaited(sendLocation()),
   );
+  requestTimer = Timer.periodic(
+    _backgroundRideRequestInterval,
+    (_) => unawaited(pollRideRequests()),
+  );
   unawaited(sendLocation());
+  unawaited(pollRideRequests());
 }
 
 bool _isValidTelemetryBaseUri(Uri uri) {

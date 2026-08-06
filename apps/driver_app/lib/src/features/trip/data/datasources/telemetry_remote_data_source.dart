@@ -8,6 +8,7 @@ abstract class TelemetryRemoteDataSource {
     double? heading,
     double? speed,
   });
+  Future<bool> removeLocation();
   Future<Map<String, dynamic>> fetchPassengerLocation(String tripId);
 }
 
@@ -37,6 +38,12 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
     return response.statusCode == 200 ||
         response.statusCode == 201 ||
         response.statusCode == 202;
+  }
+
+  @override
+  Future<bool> removeLocation() async {
+    final response = await _dio.delete<void>('/api/v1/telemetry/location');
+    return response.statusCode == 200 || response.statusCode == 204;
   }
 
   @override

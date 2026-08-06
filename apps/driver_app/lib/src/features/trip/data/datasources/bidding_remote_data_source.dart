@@ -9,7 +9,7 @@ abstract class BiddingRemoteDataSource {
     double? durationMinutes,
     Map<String, dynamic>? body,
   });
-  Future<List<dynamic>> fetchActiveBids(String driverId);
+  Future<List<dynamic>> fetchActiveBids();
   Future<bool> placeBid({
     required String sessionId,
     required String driverId,
@@ -55,11 +55,8 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   }
 
   @override
-  Future<List<dynamic>> fetchActiveBids(String driverId) async {
-    final response = await _dio.get<List<dynamic>>(
-      '/api/v1/bids/active',
-      queryParameters: {'driver_id': driverId},
-    );
+  Future<List<dynamic>> fetchActiveBids() async {
+    final response = await _dio.get<List<dynamic>>('/api/v1/bids/active');
     return response.data ?? [];
   }
 

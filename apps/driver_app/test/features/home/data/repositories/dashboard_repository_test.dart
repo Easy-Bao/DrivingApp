@@ -120,4 +120,45 @@ void main() {
       );
     },
   );
+
+  test('removes the driver location when going offline', () async {
+    final driverDataSource = MockDriverRemoteDataSource();
+    final telemetryDataSource = MockTelemetryRemoteDataSource();
+    final tripDataSource = MockTripRemoteDataSource();
+    final sessionService = MockSecureSessionService();
+
+    when(
+      () => sessionService.readDriverId(),
+    ).thenAnswer((_) async => 'driver-42');
+    when(
+      () => driverDataSource.updateOnlineStatus(
+        driverId: 'driver-42',
+        isOnline: false,
+        lat: 7.828,
+        lng: 123.434,
+      ),
+    ).thenAnswer((_) async {});
+    when(
+      () => telemetryDataSource.removeLocation(),
+    ).thenAnswer((_) async => true);
+    when(
+      () => sessionService.saveDriverOnlineStatus(false),
+    ).thenAnswer((_) async {});
+
+    final repository = DashboardRepository(
+      remoteDataSource: tripDataSource,
+      driverRemoteDataSource: driverDataSource,
+      telemetryRemoteDataSource: telemetryDataSource,
+      sessionService: sessionService,
+    );
+
+    final result = await repository.updateOnlineStatus(
+      isOnline: false,
+      lat: 7.828,
+      lng: 123.434,
+    );
+
+    expect(result, const Right<Failure, void>(null));
+    verify(() => telemetryDataSource.removeLocation()).called(1);
+  });
 }

@@ -48,6 +48,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool? _pendingOnline;
   String? _submittingBidId;
   String? _completingTripId;
+  final Set<String> _announcedBidIds = <String>{};
+  bool _isShowingRideAlert = false;
 
   @override
   void initState() {
@@ -162,12 +164,28 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             .toList();
 
         final bidsList = await Modular.get<BiddingRemoteDataSource>()
-            .fetchActiveBids(driverId);
+            .fetchActiveBids();
         final List<Map<String, dynamic>> bids = bidsList
             .map((b) => b as Map<String, dynamic>)
             .toList();
 
         if (mounted) {
+          final activeBidIds = bids
+              .map((bid) => driverValueAsString(bid['id']))
+              .whereType<String>()
+              .toSet();
+          _announcedBidIds.removeWhere(
+            (bidId) => !activeBidIds.contains(bidId),
+          );
+          Map<String, dynamic>? newBid;
+          for (final bid in bids) {
+            final bidId = driverValueAsString(bid['id']);
+            if (bidId != null && !_announcedBidIds.contains(bidId)) {
+              _announcedBidIds.add(bidId);
+              newBid = bid;
+              break;
+            }
+          }
           trips.sort((a, b) {
             const statusPriority = {
               'in_transit': 0,
@@ -185,6 +203,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             _activeTrips = trips;
             _activeBids = bids;
           });
+          if (newBid != null && !_isShowingRideAlert) {
+            unawaited(_showRideAlert(newBid));
+          }
         }
       } catch (error) {
         debugPrint('Error polling: $error');
@@ -197,11 +218,41 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _locationSubscription = null;
     _rideTriggerTimer?.cancel();
     _rideTriggerTimer = null;
+    _announcedBidIds.clear();
     if (mounted) {
       setState(() {
         _activeTrips = [];
         _activeBids = [];
       });
+    }
+  }
+
+  Future<void> _showRideAlert(Map<String, dynamic> bid) async {
+    if (!mounted || _isShowingRideAlert) return;
+    final rideId = driverValueAsString(bid['id']);
+    final fare = driverFareInPesos(bid);
+    if (rideId == null || fare == null) return;
+
+    _isShowingRideAlert = true;
+    try {
+      await context.pushNamed(
+        TripRoutes.rideAlert,
+        extra: {
+          'id': rideId,
+          'pickup_name':
+              driverValueAsString(bid['pickup_name']) ??
+              'Pickup location unavailable',
+          'dropoff_name':
+              driverValueAsString(bid['dropoff_name']) ??
+              'Destination unavailable',
+          'distance': _distanceInKm(bid) ?? 0.0,
+          'fare': fare,
+          'duration':
+              '${((bid['duration_minutes'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)} min',
+        },
+      );
+    } finally {
+      _isShowingRideAlert = false;
     }
   }
 

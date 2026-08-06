@@ -32,10 +32,14 @@ class _RideAlertPageState extends State<RideAlertPage>
     super.initState();
 
     final rideData = widget.rideData;
-    if (rideData == null || rideData['id'] is! String) {
+    if (rideData == null) {
       throw ArgumentError('Ride alert data must include a ride id.');
     }
-    _rideId = rideData['id'] as String;
+    final rideId = rideData['id']?.toString().trim();
+    if (rideId == null || rideId.isEmpty) {
+      throw ArgumentError('Ride alert data must include a ride id.');
+    }
+    _rideId = rideId;
     _pickup =
         rideData['pickup_name'] as String? ?? 'Pickup location unavailable';
     _dropoff = rideData['dropoff_name'] as String? ?? 'Destination unavailable';
