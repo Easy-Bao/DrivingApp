@@ -128,7 +128,7 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
           contentPadding: const EdgeInsets.symmetric(vertical: 6),
           leading: const Icon(
             Icons.location_on_outlined,
-            color: AppTheme.complete,
+            color: AppTheme.primaryColor,
           ),
           title: Text(
             place.displayName,
@@ -171,7 +171,7 @@ class _LocationSearchHint extends StatelessWidget {
           children: [
             const Icon(
               Icons.search_rounded,
-              color: AppTheme.complete,
+              color: AppTheme.primaryColor,
               size: 42,
             ),
             const SizedBox(height: 14),

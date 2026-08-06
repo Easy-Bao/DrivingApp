@@ -48,7 +48,7 @@ class GuestActionBarWidget extends StatelessWidget {
                     onPressed: onSignIn,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
-                      backgroundColor: AppTheme.complete,
+                      backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),

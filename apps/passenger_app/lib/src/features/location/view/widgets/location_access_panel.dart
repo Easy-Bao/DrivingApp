@@ -20,7 +20,7 @@ class LocationAccessPrompt extends StatelessWidget {
           const Spacer(),
           const _LocationIllustration(
             icon: LucideIcons.map_pin,
-            iconColor: AppTheme.complete,
+            iconColor: AppTheme.primaryColor,
           ),
           const SizedBox(height: 28),
           const Text(
@@ -61,7 +61,7 @@ class LocationAccessPrompt extends StatelessWidget {
             child: FilledButton(
               onPressed: onEnable,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.complete,
+                backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(52),
                 shape: RoundedRectangleBorder(
@@ -130,7 +130,7 @@ class LocationUnavailableView extends StatelessWidget {
             child: FilledButton(
               onPressed: onUpdateLocation,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.complete,
+                backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(52),
                 shape: RoundedRectangleBorder(
@@ -190,7 +190,7 @@ class _LocationIllustration extends StatelessWidget {
         color: AppTheme.secondaryColor.withValues(alpha: 0.42),
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppTheme.complete.withValues(alpha: 0.15),
+          color: AppTheme.primaryColor.withValues(alpha: 0.15),
           width: 14,
         ),
       ),
@@ -294,11 +294,11 @@ class _ManualLocationIllustration extends StatelessWidget {
           Positioned.fill(child: CustomPaint(painter: _MapLinesPainter())),
           DecoratedBox(
             decoration: BoxDecoration(
-              color: AppTheme.complete,
+              color: AppTheme.primaryColor,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.complete.withValues(alpha: 0.24),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.24),
                   blurRadius: 0,
                   spreadRadius: 12,
                 ),
@@ -324,7 +324,7 @@ class _MapLinesPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
     final accentPaint = Paint()
-      ..color = AppTheme.complete.withValues(alpha: 0.3)
+      ..color = AppTheme.primaryColor.withValues(alpha: 0.3)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
