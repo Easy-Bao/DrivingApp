@@ -89,25 +89,36 @@ class DashboardRepository implements IDashboardRepository {
         return const Left(CacheFailure('Driver ID is not registered.'));
       }
 
+      if (isOnline) {
+        bool locationSent;
+        try {
+          locationSent = await _telemetryRemoteDataSource.sendLocationUpdate(
+            driverId: driverId,
+            lat: lat,
+            lng: lng,
+          );
+        } catch (error) {
+          dev.log('Unable to publish initial driver location: $error');
+          return const Left(
+            NetworkFailure(
+              'Unable to share your location. You are not online yet.',
+            ),
+          );
+        }
+        if (!locationSent) {
+          return const Left(
+            NetworkFailure(
+              'Unable to share your location. You are not online yet.',
+            ),
+          );
+        }
+      }
       await _driverRemoteDataSource.updateOnlineStatus(
         driverId: driverId,
         isOnline: isOnline,
         lat: lat,
         lng: lng,
       );
-      if (isOnline) {
-        try {
-          final locationSent = await _telemetryRemoteDataSource
-              .sendLocationUpdate(driverId: driverId, lat: lat, lng: lng);
-          if (!locationSent) {
-            dev.log(
-              'Initial driver location was not accepted by realtime API.',
-            );
-          }
-        } catch (error) {
-          dev.log('Unable to publish initial driver location: $error');
-        }
-      }
       try {
         await _sessionService.saveDriverOnlineStatus(isOnline);
       } catch (error) {

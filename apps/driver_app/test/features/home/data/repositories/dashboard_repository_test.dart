@@ -69,4 +69,55 @@ void main() {
       ),
     ).called(1);
   });
+
+  test(
+    'does not mark the driver online when initial location publishing fails',
+    () async {
+      final driverDataSource = MockDriverRemoteDataSource();
+      final telemetryDataSource = MockTelemetryRemoteDataSource();
+      final tripDataSource = MockTripRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+
+      when(
+        () => sessionService.readDriverId(),
+      ).thenAnswer((_) async => 'driver-42');
+      when(
+        () => telemetryDataSource.sendLocationUpdate(
+          driverId: 'driver-42',
+          lat: 7.828,
+          lng: 123.434,
+        ),
+      ).thenAnswer((_) async => false);
+
+      final repository = DashboardRepository(
+        remoteDataSource: tripDataSource,
+        driverRemoteDataSource: driverDataSource,
+        telemetryRemoteDataSource: telemetryDataSource,
+        sessionService: sessionService,
+      );
+
+      final result = await repository.updateOnlineStatus(
+        isOnline: true,
+        lat: 7.828,
+        lng: 123.434,
+      );
+
+      expect(
+        result,
+        const Left<Failure, void>(
+          NetworkFailure(
+            'Unable to share your location. You are not online yet.',
+          ),
+        ),
+      );
+      verifyNever(
+        () => driverDataSource.updateOnlineStatus(
+          driverId: any(named: 'driverId'),
+          isOnline: any(named: 'isOnline'),
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      );
+    },
+  );
 }
