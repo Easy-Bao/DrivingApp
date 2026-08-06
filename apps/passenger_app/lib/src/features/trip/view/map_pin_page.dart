@@ -142,11 +142,24 @@ class _MapPinPageState extends State<MapPinPage>
     });
     final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
     if (mounted && requestId == _geocodeRequestId) {
-      final full = place?.fullAddress ?? 'Unknown location';
-      final parts = full.split(',');
+      final placeName = place?.name.trim() ?? '';
+      final fullAddress = place?.fullAddress.trim() ?? '';
+      final addressParts = fullAddress
+          .split(',')
+          .map((part) => part.trim())
+          .where((part) => part.isNotEmpty)
+          .toList();
+      final title = placeName.isNotEmpty
+          ? placeName
+          : addressParts.firstOrNull ?? 'Unknown location';
+      if (placeName.isNotEmpty &&
+          addressParts.isNotEmpty &&
+          addressParts.first.toLowerCase() == placeName.toLowerCase()) {
+        addressParts.removeAt(0);
+      }
       setState(() {
-        _address = parts.first.trim();
-        _subAddress = parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
+        _address = title;
+        _subAddress = addressParts.join(', ');
         _centerLat = lat;
         _centerLng = lng;
         _isGeocoding = false;
