@@ -116,6 +116,42 @@ void main() {
       }, (_) => fail('Expected Left but got Right'));
     });
 
+    test('reverseGeocode preserves Mapbox proximity metadata', () async {
+      dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+        if (options.uri.path == '/api/v1/location/reverse') {
+          return ResponseBody.fromString(
+            jsonEncode({
+              'id': 'street.1',
+              'name': 'Main Street',
+              'address': 'Main Street, Tuburan',
+              'lat': 7.8282,
+              'lng': 123.4363,
+              'match_type': 'road',
+              'distance_meters': 24.5,
+              'confidence': 0.82,
+              'context': {'place': 'Tuburan', 'region': 'Zamboanga del Sur'},
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        }
+        return ResponseBody.fromString('Not Found', 404);
+      });
+
+      final result = await service.reverseGeocode(lat: 7.8282, lng: 123.4361);
+
+      expect(result.isRight(), isTrue);
+      result.fold((failure) => fail('Expected a place: $failure'), (place) {
+        expect(place.matchType, equals('road'));
+        expect(place.distanceMeters, equals(24.5));
+        expect(place.confidence, equals(0.82));
+        expect(place.context['place'], equals('Tuburan'));
+        expect(place.displayName, equals('Near Main Street'));
+      });
+    });
+
     test('getDrivingDistances parses Matrix API distances', () async {
       dio.httpClientAdapter = _MockHttpClientAdapter((options) {
         if (options.uri.path == '/api/v1/location/matrix') {

@@ -143,7 +143,8 @@ class _MapPinPageState extends State<MapPinPage>
     });
     final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
     if (mounted && requestId == _geocodeRequestId) {
-      final placeName = place?.name.trim() ?? '';
+      final placeName = place?.displayName.trim() ?? '';
+      final rawPlaceName = place?.name.trim() ?? '';
       final fullAddress = place?.fullAddress.trim() ?? '';
       final addressParts = fullAddress
           .split(',')
@@ -153,9 +154,9 @@ class _MapPinPageState extends State<MapPinPage>
       final title = placeName.isNotEmpty
           ? placeName
           : addressParts.firstOrNull ?? 'Unknown location';
-      if (placeName.isNotEmpty &&
+      if (rawPlaceName.isNotEmpty &&
           addressParts.isNotEmpty &&
-          addressParts.first.toLowerCase() == placeName.toLowerCase()) {
+          addressParts.first.toLowerCase() == rawPlaceName.toLowerCase()) {
         addressParts.removeAt(0);
       }
       setState(() {

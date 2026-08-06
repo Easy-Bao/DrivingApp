@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	searchURL           = "https://api.mapbox.com/search/searchbox/v1"
-	directionsURL       = "https://api.mapbox.com/directions/v5/mapbox"
-	nearbyPageSize      = 10
-	reverseFeatureTypes = "address,street,poi,locality,place"
+	searchURL      = "https://api.mapbox.com/search/searchbox/v1"
+	geocodingURL   = "https://api.mapbox.com/search/geocode/v6"
+	directionsURL  = "https://api.mapbox.com/directions/v5/mapbox"
+	nearbyPageSize = 10
 )
 
 var defaultNearbyCategories = []string{
@@ -57,6 +57,7 @@ type featureResponse struct {
 type feature struct {
 	ID         string `json:"id"`
 	Properties struct {
+		MapboxID       string          `json:"mapbox_id"`
 		Name           string          `json:"name"`
 		PreferredName  string          `json:"name_preferred"`
 		FeatureType    string          `json:"feature_type"`
@@ -64,11 +65,21 @@ type feature struct {
 		ShortAddress   string          `json:"address"`
 		PlaceFormatted string          `json:"place_formatted"`
 		Category       json.RawMessage `json:"poi_category"`
+		Coordinates    struct {
+			Latitude  *float64 `json:"latitude"`
+			Longitude *float64 `json:"longitude"`
+			Accuracy  string   `json:"accuracy"`
+		} `json:"coordinates"`
+		Context map[string]featureContext `json:"context"`
 	} `json:"properties"`
 	Geometry struct {
 		Coordinates []float64 `json:"coordinates"`
 	} `json:"geometry"`
 	FeatureType string `json:"feature_type"`
+}
+
+type featureContext struct {
+	Name string `json:"name"`
 }
 
 type categoryResult struct {
@@ -173,7 +184,8 @@ func (provider *Provider) nearbyCategory(ctx context.Context, origin domain.Coor
 }
 
 func placeFromFeature(feature feature, origin domain.Coordinates) (domain.Place, bool) {
-	if len(feature.Geometry.Coordinates) < 2 {
+	longitude, latitude, ok := featureCoordinates(feature)
+	if !ok {
 		return domain.Place{}, false
 	}
 	name := feature.Properties.Name
@@ -194,13 +206,14 @@ func placeFromFeature(feature feature, origin domain.Coordinates) (domain.Place,
 		address = feature.Properties.PlaceFormatted
 	}
 	return domain.Place{
-		ID:         feature.ID,
+		ID:         featureID(feature),
 		Name:       name,
 		Address:    address,
 		Category:   categoryName(feature.Properties.Category),
-		Longitude:  feature.Geometry.Coordinates[0],
-		Latitude:   feature.Geometry.Coordinates[1],
-		DistanceKm: haversine(origin.Latitude, origin.Longitude, feature.Geometry.Coordinates[1], feature.Geometry.Coordinates[0]),
+		Longitude:  longitude,
+		Latitude:   latitude,
+		DistanceKm: haversine(origin.Latitude, origin.Longitude, latitude, longitude),
+		Context:    featureContextNames(feature),
 	}, true
 }
 
@@ -242,66 +255,205 @@ func (provider *Provider) ReverseGeocode(ctx context.Context, coordinates domain
 		"latitude":     {coordinate(coordinates.Latitude)},
 		"access_token": {provider.token},
 		"limit":        {"10"},
-		"types":        {reverseFeatureTypes},
 	}
 	var response featureResponse
 	if err := provider.getJSON(ctx, searchURL+"/reverse?"+queryParams.Encode(), &response); err != nil {
 		return nil, err
 	}
-	feature, ok := mostSpecificReverseFeature(response.Features, coordinates)
+	selected, match, ok := mostSpecificReverseFeature(response.Features, coordinates)
+	if !ok {
+		fallbackQuery := url.Values{
+			"longitude":    {coordinate(coordinates.Longitude)},
+			"latitude":     {coordinate(coordinates.Latitude)},
+			"access_token": {provider.token},
+			"limit":        {"1"},
+		}
+		if err := provider.getJSON(ctx, geocodingURL+"/reverse?"+fallbackQuery.Encode(), &response); err != nil {
+			return nil, err
+		}
+		selected, match, ok = mostSpecificReverseFeature(response.Features, coordinates)
+	}
 	if !ok {
 		return nil, fmt.Errorf("mapbox returned no place")
 	}
-	place, _ := placeFromFeature(feature, coordinates)
+	place, _ := placeFromFeature(selected, coordinates)
+	place.MatchType = match.matchType
+	place.DistanceMeters = match.distanceMeters
+	place.Confidence = match.confidence
 	return &place, nil
 }
 
-func mostSpecificReverseFeature(features []feature, origin domain.Coordinates) (feature, bool) {
+type reverseMatch struct {
+	matchType      string
+	distanceMeters float64
+	confidence     float64
+}
+
+type reverseCandidateRank struct {
+	stage       int
+	prominence  int
+	distanceMtr float64
+}
+
+func mostSpecificReverseFeature(features []feature, origin domain.Coordinates) (feature, reverseMatch, bool) {
 	var selected feature
-	selectedScore := -1
-	selectedDistance := math.MaxFloat64
+	var selectedMatch reverseMatch
+	selectedRank := reverseCandidateRank{stage: math.MaxInt, prominence: -1, distanceMtr: math.MaxFloat64}
 	found := false
 	for _, candidate := range features {
-		if len(candidate.Geometry.Coordinates) < 2 {
+		longitude, latitude, ok := featureCoordinates(candidate)
+		if !ok {
 			continue
 		}
-		score := reverseFeatureScore(candidate)
-		distance := haversine(
-			origin.Latitude,
-			origin.Longitude,
-			candidate.Geometry.Coordinates[1],
-			candidate.Geometry.Coordinates[0],
-		)
-		if !found || score > selectedScore ||
-			(score == selectedScore && distance < selectedDistance) {
+		distanceMeters := haversine(origin.Latitude, origin.Longitude, latitude, longitude) * 1000
+		rank := reverseCandidateRankFor(candidate, distanceMeters)
+		if !found || rank.stage < selectedRank.stage ||
+			(rank.stage == selectedRank.stage && rank.prominence > selectedRank.prominence) ||
+			(rank.stage == selectedRank.stage && rank.prominence == selectedRank.prominence && rank.distanceMtr < selectedRank.distanceMtr) {
 			selected = candidate
-			selectedScore = score
-			selectedDistance = distance
+			selectedMatch = reverseMatchFor(candidate, distanceMeters)
+			selectedRank = rank
 			found = true
 		}
 	}
-	return selected, found
+	return selected, selectedMatch, found
 }
 
-func reverseFeatureScore(candidate feature) int {
-	featureType := strings.ToLower(candidate.Properties.FeatureType)
-	if featureType == "" {
-		featureType = strings.ToLower(candidate.FeatureType)
+func reverseCandidateRankFor(candidate feature, distanceMeters float64) reverseCandidateRank {
+	featureType := featureType(candidate)
+	stage := 4
+	switch {
+	case distanceMeters <= 15 && (featureType == "address" || featureType == "poi"):
+		stage = 0
+	case distanceMeters <= 100 && (featureType == "address" || featureType == "poi"):
+		stage = 1
+	case featureType == "street":
+		stage = 2
+	case featureType == "locality" || featureType == "place" || featureType == "district" || featureType == "region":
+		stage = 3
 	}
-	switch featureType {
-	case "address":
-		return 6
-	case "street":
-		return 5
-	case "poi":
-		return 4
-	case "locality":
-		return 2
-	case "place":
-		return 1
-	default:
-		return 0
+	return reverseCandidateRank{
+		stage:       stage,
+		prominence:  reverseFeatureProminence(candidate),
+		distanceMtr: distanceMeters,
 	}
+}
+
+func reverseMatchFor(candidate feature, distanceMeters float64) reverseMatch {
+	featureType := featureType(candidate)
+	accuracy := strings.ToLower(candidate.Properties.Coordinates.Accuracy)
+	matchType := "area"
+	switch {
+	case distanceMeters <= 15 && (accuracy == "rooftop" || accuracy == "parcel" || accuracy == "point"):
+		matchType = "direct"
+	case distanceMeters <= 100 && featureType == "poi":
+		matchType = "nearby_poi"
+	case distanceMeters <= 100 && featureType == "address":
+		matchType = "interpolated"
+	case featureType == "street":
+		matchType = "road"
+	}
+	return reverseMatch{
+		matchType:      matchType,
+		distanceMeters: distanceMeters,
+		confidence:     reverseConfidence(matchType, distanceMeters),
+	}
+}
+
+func reverseFeatureProminence(candidate feature) int {
+	featureType := featureType(candidate)
+	if featureType != "poi" {
+		switch featureType {
+		case "address":
+			return 5
+		case "street":
+			return 4
+		case "locality", "place", "district", "region":
+			return 2
+		default:
+			return 1
+		}
+	}
+	prominence := 6
+	for _, rawCategory := range categoryValues(candidate.Properties.Category) {
+		category := strings.ToLower(rawCategory)
+		if strings.Contains(category, "transit") || strings.Contains(category, "airport") || strings.Contains(category, "hospital") {
+			prominence = 10
+			break
+		}
+		if strings.Contains(category, "university") || strings.Contains(category, "school") || strings.Contains(category, "government") {
+			prominence = 9
+		}
+	}
+	return prominence
+}
+
+func categoryValues(raw json.RawMessage) []string {
+	if len(raw) == 0 {
+		return nil
+	}
+	var categories []string
+	if json.Unmarshal(raw, &categories) == nil {
+		return categories
+	}
+	var category string
+	if json.Unmarshal(raw, &category) == nil && category != "" {
+		return []string{category}
+	}
+	return nil
+}
+
+func reverseConfidence(matchType string, distanceMeters float64) float64 {
+	base := map[string]float64{
+		"direct":       0.98,
+		"interpolated": 0.82,
+		"nearby_poi":   0.76,
+		"road":         0.64,
+		"area":         0.45,
+	}[matchType]
+	confidence := base - math.Min(distanceMeters/1000, 1)*0.15
+	return math.Max(0.1, math.Round(confidence*100)/100)
+}
+
+func featureType(candidate feature) string {
+	result := strings.ToLower(candidate.Properties.FeatureType)
+	if result == "" {
+		result = strings.ToLower(candidate.FeatureType)
+	}
+	return result
+}
+
+func featureID(candidate feature) string {
+	if candidate.ID != "" {
+		return candidate.ID
+	}
+	return candidate.Properties.MapboxID
+}
+
+func featureCoordinates(candidate feature) (float64, float64, bool) {
+	if len(candidate.Geometry.Coordinates) >= 2 {
+		return candidate.Geometry.Coordinates[0], candidate.Geometry.Coordinates[1], true
+	}
+	if candidate.Properties.Coordinates.Longitude == nil || candidate.Properties.Coordinates.Latitude == nil {
+		return 0, 0, false
+	}
+	return *candidate.Properties.Coordinates.Longitude, *candidate.Properties.Coordinates.Latitude, true
+}
+
+func featureContextNames(candidate feature) map[string]string {
+	if len(candidate.Properties.Context) == 0 {
+		return nil
+	}
+	contextNames := make(map[string]string, len(candidate.Properties.Context))
+	for key, value := range candidate.Properties.Context {
+		if strings.TrimSpace(value.Name) != "" {
+			contextNames[key] = value.Name
+		}
+	}
+	if len(contextNames) == 0 {
+		return nil
+	}
+	return contextNames
 }
 
 type directionsResponse struct {

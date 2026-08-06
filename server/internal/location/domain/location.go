@@ -47,13 +47,17 @@ func (options RouteOptions) Normalize() (RouteOptions, error) {
 }
 
 type Place struct {
-	ID         string  `json:"id"`
-	Name       string  `json:"name"`
-	Address    string  `json:"address"`
-	Category   string  `json:"category"`
-	Latitude   float64 `json:"lat"`
-	Longitude  float64 `json:"lng"`
-	DistanceKm float64 `json:"distance_km,omitempty"`
+	ID             string            `json:"id"`
+	Name           string            `json:"name"`
+	Address        string            `json:"address"`
+	Category       string            `json:"category"`
+	Latitude       float64           `json:"lat"`
+	Longitude      float64           `json:"lng"`
+	DistanceKm     float64           `json:"distance_km,omitempty"`
+	MatchType      string            `json:"match_type,omitempty"`
+	DistanceMeters float64           `json:"distance_meters,omitempty"`
+	Confidence     float64           `json:"confidence,omitempty"`
+	Context        map[string]string `json:"context,omitempty"`
 }
 
 type Route struct {

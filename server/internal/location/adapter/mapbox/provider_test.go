@@ -103,7 +103,7 @@ func TestReverseGeocodeChoosesMostSpecificFeature(t *testing.T) {
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			body := `{"features":[
 				{"id":"place","properties":{"name":"Pagadian City","feature_type":"place"},"geometry":{"coordinates":[123.4361,7.8282]}},
-				{"id":"address","properties":{"name":"Antonio Salazar Street","feature_type":"address","full_address":"Antonio Salazar Street, Pagadian City"},"geometry":{"coordinates":[123.4361,7.8282]}}
+				{"id":"address","properties":{"name":"Antonio Salazar Street","feature_type":"address","full_address":"Antonio Salazar Street, Pagadian City","coordinates":{"accuracy":"rooftop"}},"geometry":{"coordinates":[123.4361,7.8282]}}
 			]}`
 			return &http.Response{
 				StatusCode: http.StatusOK,
@@ -123,6 +123,70 @@ func TestReverseGeocodeChoosesMostSpecificFeature(t *testing.T) {
 	}
 	if place.Name != "Antonio Salazar Street" {
 		t.Fatalf("expected the address feature, got %#v", place)
+	}
+	if place.MatchType != "direct" || place.DistanceMeters != 0 {
+		t.Fatalf("expected a direct match at the tapped coordinate, got %#v", place)
+	}
+}
+
+func TestReverseGeocodeFallsBackToGeocodingWhenSearchBoxIsEmpty(t *testing.T) {
+	provider := NewProvider("test-token")
+	var paths []string
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			paths = append(paths, request.URL.Path)
+			if request.URL.Path == "/search/searchbox/v1/reverse" {
+				return responseWithBody(request, `{"features":[]}`), nil
+			}
+			return responseWithBody(request, `{"features":[{"id":"street.1","properties":{"name":"Main Street","feature_type":"street","place_formatted":"Tuburan, Zamboanga del Sur","context":{"place":{"name":"Tuburan"}}},"geometry":{"coordinates":[123.43635,7.8282]}}]}`), nil
+		}),
+	}
+
+	place, err := provider.ReverseGeocode(context.Background(), domain.Coordinates{
+		Latitude:  7.8282,
+		Longitude: 123.4361,
+	})
+	if err != nil {
+		t.Fatalf("reverse geocode fallback failed: %v", err)
+	}
+	if place.Name != "Main Street" || place.MatchType != "road" {
+		t.Fatalf("expected the fallback street match, got %#v", place)
+	}
+	if place.DistanceMeters <= 0 || place.Confidence <= 0 {
+		t.Fatalf("expected fallback match metadata, got %#v", place)
+	}
+	if place.Context["place"] != "Tuburan" {
+		t.Fatalf("expected fallback context, got %#v", place.Context)
+	}
+	if len(paths) != 2 || paths[0] != "/search/searchbox/v1/reverse" || paths[1] != "/search/geocode/v6/reverse" {
+		t.Fatalf("expected Search Box then Geocoding fallback, got %#v", paths)
+	}
+}
+
+func TestReverseGeocodeUsesProminenceWithinRadialStage(t *testing.T) {
+	provider := NewProvider("test-token")
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			body := `{"features":[
+				{"id":"small-shop","properties":{"name":"Small Shop","feature_type":"poi","poi_category":["shop"]},"geometry":{"coordinates":[123.43628,7.8282]}},
+				{"id":"transit-hub","properties":{"name":"Transit Hub","feature_type":"poi","poi_category":["transit"]},"geometry":{"coordinates":[123.43645,7.8282]}}
+			]}`
+			return responseWithBody(request, body), nil
+		}),
+	}
+
+	place, err := provider.ReverseGeocode(context.Background(), domain.Coordinates{
+		Latitude:  7.8282,
+		Longitude: 123.4361,
+	})
+	if err != nil {
+		t.Fatalf("reverse geocode failed: %v", err)
+	}
+	if place.Name != "Transit Hub" {
+		t.Fatalf("expected the prominent nearby POI, got %#v", place)
+	}
+	if place.MatchType != "nearby_poi" || place.DistanceMeters <= 0 {
+		t.Fatalf("expected radial POI metadata, got %#v", place)
 	}
 }
 
@@ -236,4 +300,13 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (roundTrip roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
 	return roundTrip(request)
+}
+
+func responseWithBody(request *http.Request, body string) *http.Response {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(body)),
+		Header:     make(http.Header),
+		Request:    request,
+	}
 }

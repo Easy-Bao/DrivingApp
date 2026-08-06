@@ -8,6 +8,10 @@ class PlaceModel extends Equatable {
   final double longitude;
   final String? category;
   final double? distanceKm;
+  final String? matchType;
+  final double? distanceMeters;
+  final double? confidence;
+  final Map<String, String> context;
 
   const PlaceModel({
     required this.id,
@@ -17,9 +21,40 @@ class PlaceModel extends Equatable {
     required this.longitude,
     this.category,
     this.distanceKm,
+    this.matchType,
+    this.distanceMeters,
+    this.confidence,
+    this.context = const {},
   });
 
+  String get displayName {
+    final value = name.trim().isNotEmpty ? name.trim() : fullAddress.trim();
+    final type = matchType?.trim().toLowerCase();
+    final distance = distanceMeters ?? 0;
+    if (value.isEmpty ||
+        distance <= 0 ||
+        type == null ||
+        type.isEmpty ||
+        type == 'direct') {
+      return value;
+    }
+    if (value.toLowerCase().startsWith('near ')) {
+      return value;
+    }
+    return 'Near $value';
+  }
+
   factory PlaceModel.fromJson(Map<String, dynamic> json) {
+    final context = <String, String>{};
+    final rawContext = json['context'];
+    if (rawContext is Map) {
+      rawContext.forEach((key, value) {
+        if (value != null) {
+          context[key.toString()] = value.toString();
+        }
+      });
+    }
+
     return PlaceModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -35,6 +70,13 @@ class PlaceModel extends Equatable {
       category: json['category']?.toString(),
       distanceKm: (json['distanceKm'] as num? ?? json['distance_km'] as num?)
           ?.toDouble(),
+      matchType:
+          json['matchType']?.toString() ?? json['match_type']?.toString(),
+      distanceMeters:
+          (json['distanceMeters'] as num? ?? json['distance_meters'] as num?)
+              ?.toDouble(),
+      confidence: (json['confidence'] as num?)?.toDouble(),
+      context: context,
     );
   }
 
@@ -47,6 +89,10 @@ class PlaceModel extends Equatable {
       'longitude': longitude,
       'category': category,
       'distanceKm': distanceKm,
+      'matchType': matchType,
+      'distanceMeters': distanceMeters,
+      'confidence': confidence,
+      'context': context,
     };
   }
 
@@ -59,5 +105,9 @@ class PlaceModel extends Equatable {
     longitude,
     category,
     distanceKm,
+    matchType,
+    distanceMeters,
+    confidence,
+    context,
   ];
 }
