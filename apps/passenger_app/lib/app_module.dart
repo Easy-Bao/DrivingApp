@@ -7,7 +7,10 @@ import 'package:passenger_app/src/core/services/background_telemetry_service.dar
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/storage/secure_storage.dart';
 import 'package:passenger_app/src/features/auth/auth_module.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:passenger_app/src/features/auth/data/repositories/session_repository_impl.dart';
+import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,6 +30,14 @@ class AppModule extends Module {
       )
       ..addLazySingleton<SecureStorage>(
         (i) => SecureStorage(i.get<SecureSessionService>()),
+      )
+      ..addLazySingleton<SessionRepository>(
+        (i) => SessionRepositoryImpl(
+          secureSessionService: i.get<SecureSessionService>(),
+        ),
+      )
+      ..addLazySingleton<SessionBloc>(
+        (i) => SessionBloc(sessionRepository: i.get<SessionRepository>()),
       )
       ..addLazySingleton<Dio>(
         (i) => DioClient.create(

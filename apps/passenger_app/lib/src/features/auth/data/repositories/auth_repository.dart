@@ -66,6 +66,13 @@ class AuthRepository implements IAuthRepository {
         phone: phone,
         password: password,
       );
+      if (responseData['needsVerification'] != true) {
+        final credentials = _credentialsFromResponse(
+          responseData,
+          fallbackEmail: email,
+        );
+        await _persistSession(credentials);
+      }
       return Right(responseData);
     } catch (error) {
       if (error is ServerException) {

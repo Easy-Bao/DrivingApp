@@ -7,6 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/sign_in/sign_in_bloc.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/view/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -65,6 +66,11 @@ class _SigninPageContentState extends State<_SigninPageContent> {
         child: BlocConsumer<SignInBloc, SignInState>(
           listener: (context, state) {
             if (state is SignInSuccess) {
+              context.read<SessionBloc>().add(
+                SessionAuthenticatedRequested(
+                  passengerId: state.credentials.passengerId,
+                ),
+              );
               context.goNamed(HomeRoutes.home);
             } else if (state is SignInNeedsVerification) {
               unawaited(

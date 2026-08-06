@@ -50,13 +50,26 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
         if (needsVerification) {
           emit(SignUpNeedsVerification(normalizedEmail));
         } else {
+          final userData = response['user'];
+          final user = userData is Map
+              ? Map<String, dynamic>.from(userData)
+              : const <String, dynamic>{};
           final credentials = AuthCredentials(
-            passengerId: response['passengerId']?.toString() ?? '',
-            passengerName: normalizedName,
-            passengerEmail: normalizedEmail,
-            passengerPhone: normalizedPhone,
+            passengerId:
+                response['passengerId']?.toString() ??
+                user['id']?.toString() ??
+                '',
+            passengerName: user['name']?.toString() ?? normalizedName,
+            passengerEmail: user['email']?.toString() ?? normalizedEmail,
+            passengerPhone: user['phone']?.toString() ?? normalizedPhone,
             token: response['token']?.toString() ?? '',
           );
+          if (credentials.passengerId.isEmpty || credentials.token.isEmpty) {
+            emit(
+              const SignUpFailure('Registration returned an invalid session.'),
+            );
+            return;
+          }
           emit(SignUpSuccess(credentials));
         }
       },

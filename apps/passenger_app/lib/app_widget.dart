@@ -6,6 +6,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 
@@ -17,9 +18,12 @@ class AppWidget extends StatefulWidget {
 }
 
 class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
+  late final SessionBloc _sessionBloc;
+
   @override
   void initState() {
     super.initState();
+    _sessionBloc = Modular.get<SessionBloc>()..add(const SessionStarted());
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -38,13 +42,18 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<TrackDriverCubit>(
-      create: (_) {
-        return TrackDriverCubit(
-          repository: Modular.get<ITrackRepository>(),
-          sessionService: Modular.get<SecureSessionService>(),
-        );
-      },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SessionBloc>.value(value: _sessionBloc),
+        BlocProvider<TrackDriverCubit>(
+          create: (_) {
+            return TrackDriverCubit(
+              repository: Modular.get<ITrackRepository>(),
+              sessionService: Modular.get<SecureSessionService>(),
+            );
+          },
+        ),
+      ],
       child: ModularApp.router(
         theme: AppTheme.themeData,
         debugShowCheckedModeBanner: false,

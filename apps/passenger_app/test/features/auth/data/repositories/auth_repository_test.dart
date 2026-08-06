@@ -174,4 +174,37 @@ void main() {
       );
     },
   );
+
+  test('registerPassenger persists an immediately usable session', () async {
+    when(
+      () => remoteDataSource.registerPassenger(
+        name: 'Test Passenger',
+        email: 'passenger@example.com',
+        phone: '+639170000001',
+        password: 'secret-password',
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{
+        'token': 'registered-jwt',
+        'user': <String, dynamic>{
+          'id': 42,
+          'name': 'Test Passenger',
+          'email': 'passenger@example.com',
+          'phone': '+639170000001',
+        },
+        'needsVerification': false,
+      },
+    );
+
+    final result = await repository.registerPassenger(
+      name: 'Test Passenger',
+      email: 'passenger@example.com',
+      phone: '+639170000001',
+      password: 'secret-password',
+    );
+
+    expect(result.isRight(), isTrue);
+    verify(() => secureSessionService.saveToken('registered-jwt')).called(1);
+    verify(() => secureSessionService.savePassengerId('42')).called(1);
+  });
 }
