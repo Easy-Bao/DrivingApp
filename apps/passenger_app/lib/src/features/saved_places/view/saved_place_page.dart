@@ -10,6 +10,7 @@ import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
 
 class SavedPlacePage extends StatefulWidget {
@@ -169,12 +170,8 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
-          onPressed: () => context.pop(),
+        leading: Center(
+          child: AppBackButtonWidget(onPressed: () => context.pop()),
         ),
         title: const Text(
           'Saved places',

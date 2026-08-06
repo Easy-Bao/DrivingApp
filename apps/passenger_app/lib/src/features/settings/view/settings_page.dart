@@ -10,6 +10,7 @@ import 'package:passenger_app/src/features/settings/bloc/settings/settings_state
 import 'package:passenger_app/src/features/settings/data/repositories/settings_repository.dart';
 import 'package:passenger_app/src/features/settings/view/widgets/settings_item_tile_widget.dart';
 import 'package:passenger_app/src/features/settings/view/widgets/settings_theme_selector_widget.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -75,12 +76,8 @@ class _SettingsPageState extends State<SettingsPage> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
-            ),
-            onPressed: () => context.pop(),
+          leading: Center(
+            child: AppBackButtonWidget(onPressed: () => context.pop()),
           ),
           title: const Text(
             'Settings',

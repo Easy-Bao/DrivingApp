@@ -6,6 +6,7 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/reset_password_confirm/reset_password_confirm_bloc.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ResetPasswordConfirmPage extends StatelessWidget {
@@ -95,12 +96,8 @@ class _ResetPasswordConfirmPageContentState
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
-          onPressed: () => context.pop(),
+        leading: Center(
+          child: AppBackButtonWidget(onPressed: () => context.pop()),
         ),
       ),
       body: SafeArea(

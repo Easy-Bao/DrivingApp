@@ -5,6 +5,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ForgotPasswordPage extends StatelessWidget {
@@ -65,12 +66,8 @@ class _ForgotPasswordPageContentState
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
-          onPressed: () => context.pop(),
+        leading: Center(
+          child: AppBackButtonWidget(onPressed: () => context.pop()),
         ),
       ),
       body: SafeArea(

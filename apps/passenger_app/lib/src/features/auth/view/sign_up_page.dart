@@ -11,6 +11,7 @@ import 'package:passenger_app/src/features/auth/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/view/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class SignupPage extends StatelessWidget {
@@ -99,12 +100,8 @@ class _SignupPageContentState extends State<_SignupPageContent> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
-          onPressed: () => context.pop(),
+        leading: Center(
+          child: AppBackButtonWidget(onPressed: () => context.pop()),
         ),
         centerTitle: true,
         title: Image.asset(

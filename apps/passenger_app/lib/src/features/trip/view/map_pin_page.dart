@@ -5,6 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -233,12 +234,8 @@ class _MapPinPageState extends State<MapPinPage>
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
-            ),
-            onPressed: () => context.pop(),
+          leading: Center(
+            child: AppBackButtonWidget(onPressed: () => context.pop()),
           ),
         ),
         body: const Center(
