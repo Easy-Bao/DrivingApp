@@ -10,11 +10,13 @@ import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/view/saved_place_page.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -50,6 +52,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       _buildLocationRow(),
                       const SizedBox(height: 24),
                       _buildSearchBar(),
+                      _buildPendingBookingBanner(),
                       const SizedBox(height: 16),
                       _buildChipRow(),
                       const SizedBox(height: 24),
@@ -145,6 +148,39 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               }),
               _buildAddPlaceChip(),
             ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPendingBookingBanner() {
+    return BlocBuilder<BookingDraftCubit, BookingDraftState>(
+      buildWhen: (previous, current) => previous.draft != current.draft,
+      builder: (context, state) {
+        final draft = state.draft;
+        if (draft == null) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: PendingBookingBannerWidget(
+            destinationName: draft.destination.name,
+            onContinue: () {
+              final pickupAddress = draft.pickupAddress;
+              BlocProvider.of<BookingDraftCubit>(context).clear();
+              unawaited(
+                context.pushNamed(
+                  TripRoutes.destinationPreview,
+                  extra: draft.destination,
+                  queryParameters: {
+                    if (pickupAddress != null && pickupAddress.isNotEmpty)
+                      'pickupAddress': pickupAddress,
+                  },
+                ),
+              );
+            },
+            onDismiss: () =>
+                BlocProvider.of<BookingDraftCubit>(context).clear(),
           ),
         );
       },

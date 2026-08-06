@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/activity_detail_map_page.dart';
 import 'package:passenger_app/src/features/trip/view/destination_preview_page.dart';
@@ -128,14 +130,17 @@ class TripModule {
             body: Center(child: Text('Trip route data is unavailable.')),
           );
         }
-        return RideSelectionPage(
-          destination: destination,
-          distance: distance,
-          duration: duration,
-          distanceKm: distanceKm,
-          pickupAddress:
-              data['pickupAddress'] as String? ??
-              state.uri.queryParameters['pickupAddress'],
+        return BlocProvider<BookingBloc>.value(
+          value: Modular.get<BookingBloc>(),
+          child: RideSelectionPage(
+            destination: destination,
+            distance: distance,
+            duration: duration,
+            distanceKm: distanceKm,
+            pickupAddress:
+                data['pickupAddress'] as String? ??
+                state.uri.queryParameters['pickupAddress'],
+          ),
         );
       },
       transition: AppTransitions.push.toLeft,

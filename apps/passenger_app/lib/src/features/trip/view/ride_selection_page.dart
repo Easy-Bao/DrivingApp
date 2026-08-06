@@ -1,12 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/domain/entities/booking_draft.dart';
+import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/features/trip/view/widgets/booking_auth_bottom_sheet_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/ride_options_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -125,6 +132,66 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   }
 
   double? get _selectedFare => double.tryParse(_customFareController.text);
+
+  Future<void> _handleBookPressed() async {
+    final fare = _selectedFare;
+    final minimumFare = _minimumFare;
+    if (fare == null || minimumFare == null || fare < minimumFare) {
+      return;
+    }
+
+    final bookingBloc = BlocProvider.of<BookingBloc>(context);
+    if (bookingBloc.hasActiveBooking) {
+      CustomToast.show(
+        context,
+        'A driver search is already in progress.',
+        isError: true,
+      );
+      return;
+    }
+
+    final sessionState = BlocProvider.of<SessionBloc>(context).state;
+    if (sessionState is! AuthenticatedSession) {
+      BlocProvider.of<BookingDraftCubit>(context).save(
+        BookingDraft(
+          destination: widget.destination,
+          pickupAddress: widget.pickupAddress,
+        ),
+      );
+      final action = await showModalBottomSheet<BookingAuthAction>(
+        context: context,
+        backgroundColor: AppTheme.surface,
+        isScrollControlled: true,
+        isDismissible: true,
+        enableDrag: true,
+        barrierColor: Colors.black54,
+        useSafeArea: true,
+        builder: (_) => const BookingAuthBottomSheetWidget(),
+      );
+      if (!mounted || action == null) return;
+      final authRoute = switch (action) {
+        BookingAuthAction.signIn => AuthRoutes.signin,
+        BookingAuthAction.signUp => AuthRoutes.signup,
+      };
+      unawaited(context.pushNamed(authRoute));
+      return;
+    }
+
+    BlocProvider.of<BookingDraftCubit>(context).clear();
+    unawaited(
+      context.pushNamed(
+        TripRoutes.findingDriver,
+        extra: {
+          'rideType': 'solo',
+          'fare': fare,
+          'destination': widget.destination,
+          'distance': widget.distance,
+          'duration': widget.duration,
+          'pickupAddress': widget.pickupAddress,
+        },
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -279,35 +346,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                     minimumFare: _minimumFare,
                     customFareError: _fareError,
                     onCustomFareChanged: _onCustomFareChanged,
-                    onBookPressed: () {
-                      final fare = _selectedFare;
-                      if (fare == null ||
-                          _minimumFare == null ||
-                          fare < _minimumFare!) {
-                        return;
-                      }
-                      if (Modular.get<BookingBloc>().hasActiveBooking) {
-                        CustomToast.show(
-                          context,
-                          'A driver search is already in progress.',
-                          isError: true,
-                        );
-                        return;
-                      }
-                      unawaited(
-                        context.pushNamed(
-                          'FindingDriver',
-                          extra: {
-                            'rideType': 'solo',
-                            'fare': fare,
-                            'destination': widget.destination,
-                            'distance': widget.distance,
-                            'duration': widget.duration,
-                            'pickupAddress': widget.pickupAddress,
-                          },
-                        ),
-                      );
-                    },
+                    onBookPressed: () => unawaited(_handleBookPressed()),
                   ),
                 );
               },

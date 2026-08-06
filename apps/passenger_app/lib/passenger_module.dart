@@ -23,6 +23,7 @@ import 'package:passenger_app/src/features/saved_places/data/repositories/saved_
 import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
 import 'package:passenger_app/src/features/settings/settings_module.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
@@ -86,6 +87,7 @@ class PassengerModule extends Module {
           backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
         ),
       )
+      ..addLazySingleton<BookingDraftCubit>((_) => BookingDraftCubit())
       ..addFactory<LiveMapBloc>(
         (i) => LiveMapBloc(biddingDataSource: i.get<BiddingRemoteDataSource>()),
       )

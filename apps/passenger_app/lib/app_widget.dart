@@ -7,6 +7,7 @@ import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 
@@ -45,6 +46,9 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
     return MultiBlocProvider(
       providers: [
         BlocProvider<SessionBloc>.value(value: _sessionBloc),
+        BlocProvider<BookingDraftCubit>.value(
+          value: Modular.get<BookingDraftCubit>(),
+        ),
         BlocProvider<TrackDriverCubit>(
           create: (_) {
             return TrackDriverCubit(
