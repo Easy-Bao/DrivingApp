@@ -41,12 +41,11 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
     await terminateWebSocketConnection();
     _disposed = false;
     final socket = await WebSocket.connect(
-          chatServiceUri.toString(),
-          headers: token == null || token.isEmpty
-              ? null
-              : {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 15));
+      chatServiceUri.toString(),
+      headers: token == null || token.isEmpty
+          ? null
+          : {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
     _chatWebSocket = socket;
 
     socket.listen(

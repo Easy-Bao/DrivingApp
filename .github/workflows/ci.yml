@@ -50,13 +50,18 @@ jobs:
           else
             while IFS= read -r file; do
               case "${file}" in
-                apps/*|packages/*|pubspec.yaml|melos.yaml|analysis_options.yaml)
+                apps/*|packages/*|assets/*|pubspec.yaml|pubspec.lock|melos.yaml|analysis_options.yaml)
                   mobile=true
                   ;;
-                server/*)
+                server/*|Dockerfile|docker-compose.yml)
                   backend=true
                   ;;
                 web/admin_app/*)
+                  admin_web=true
+                  ;;
+                scripts/*|justfile|.github/*)
+                  mobile=true
+                  backend=true
                   admin_web=true
                   ;;
               esac
@@ -99,6 +104,9 @@ jobs:
 
       - name: Install Melos
         run: dart pub global activate melos
+
+      - name: Install root dependencies
+        run: flutter pub get
 
       - name: Bootstrap workspace
         run: melos bootstrap

@@ -124,7 +124,8 @@ void main() {
         ).thenAnswer((_) async => const Right([]));
         return _makeCubit(repo);
       },
-      act: (bloc) => bloc.add(const RefreshActivityEvent(passengerId: 'pass-1')),
+      act: (bloc) =>
+          bloc.add(const RefreshActivityEvent(passengerId: 'pass-1')),
       expect: () => [isA<ActivityLoaded>()],
     );
   });

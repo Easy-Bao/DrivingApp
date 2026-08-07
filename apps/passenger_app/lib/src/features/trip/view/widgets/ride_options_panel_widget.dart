@@ -237,7 +237,8 @@ class RideOptionsPanelWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           ElevatedButton(
-            onPressed: minimumFare == null ||
+            onPressed:
+                minimumFare == null ||
                     customFareError != null ||
                     selectedOption == null
                 ? null
