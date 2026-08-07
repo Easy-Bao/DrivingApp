@@ -1,164 +1,34 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
+import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-enum _LocationGateState { checking, prompt }
-
-class LocationGatePage extends StatefulWidget {
+class LocationGatePage extends StatelessWidget {
   const LocationGatePage({super.key});
 
   @override
-  State<LocationGatePage> createState() => _LocationGatePageState();
-}
-
-class _LocationGatePageState extends State<LocationGatePage>
-    with WidgetsBindingObserver {
-  static const _pollInterval = Duration(seconds: 2);
-
-  _LocationGateState _viewState = _LocationGateState.checking;
-  Timer? _accessPoller;
-  String? _statusMessage;
-  bool _isChecking = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startAccessMonitoring();
-      unawaited(_refreshAccess());
-    });
-  }
-
-  @override
-  void dispose() {
-    _accessPoller?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      unawaited(_refreshAccess());
-    }
-  }
-
-  void _startAccessMonitoring() {
-    _accessPoller ??= Timer.periodic(
-      _pollInterval,
-      (_) => unawaited(_refreshAccess()),
-    );
-  }
-
-  void _stopAccessMonitoring() {
-    _accessPoller?.cancel();
-    _accessPoller = null;
-  }
-
-  Future<void> _refreshAccess() async {
-    if (!mounted || _isChecking) return;
-    _isChecking = true;
-    try {
-      final accessState = await LocationService.getAccessState();
-      if (!mounted) return;
-      if (accessState == LocationAccessState.ready) {
-        _stopAccessMonitoring();
-        context.goNamed(HomeRoutes.home);
-        return;
-      }
-      if (_viewState != _LocationGateState.prompt) {
-        setState(() => _viewState = _LocationGateState.prompt);
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _viewState = _LocationGateState.prompt;
-        _statusMessage = 'Location is temporarily unavailable. Try again.';
-      });
-    } finally {
-      _isChecking = false;
-    }
-  }
-
-  Future<void> _enableLocation() async {
-    if (_isChecking) return;
-    setState(() {
-      _viewState = _LocationGateState.checking;
-      _statusMessage = null;
-    });
-    _isChecking = true;
-
-    try {
-      final accessState = await LocationService.getAccessState();
-      switch (accessState) {
-        case LocationAccessState.denied:
-          await LocationService.requestPermission();
-          break;
-        case LocationAccessState.serviceDisabled:
-          await LocationService.openLocationSettings();
-          _showSettingsReturnMessage();
-          return;
-        case LocationAccessState.deniedForever:
-          await LocationService.openAppSettings();
-          _showSettingsReturnMessage();
-          return;
-        case LocationAccessState.ready:
-          break;
-      }
-
-      final refreshedState = await LocationService.getAccessState();
-      if (!mounted) return;
-      if (refreshedState == LocationAccessState.ready) {
-        _stopAccessMonitoring();
-        context.goNamed(HomeRoutes.home);
-      } else {
-        setState(() {
-          _viewState = _LocationGateState.prompt;
-          _statusMessage = 'Location access is still off. You can try again.';
-        });
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _viewState = _LocationGateState.prompt;
-        _statusMessage = 'Location is temporarily unavailable. Try again.';
-      });
-    } finally {
-      _isChecking = false;
-    }
-  }
-
-  void _showSettingsReturnMessage() {
-    _isChecking = false;
-    if (!mounted) return;
-    _startAccessMonitoring();
-    setState(() {
-      _viewState = _LocationGateState.prompt;
-      _statusMessage = 'Turn on location in Settings, then return to BaoRide.';
-    });
-  }
-
-  void _skipLocation() {
-    _stopAccessMonitoring();
-    context.goNamed(HomeRoutes.home);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return switch (_viewState) {
-      _LocationGateState.checking => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      _LocationGateState.prompt => LocationPermissionPage(
-        onEnable: _enableLocation,
-        onSkip: _skipLocation,
-        statusMessage: _statusMessage,
-      ),
-    };
+    return BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
+      builder: (context, state) => switch (state) {
+        LocationAccessChecking() => const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+        LocationAccessReady() => const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+        final LocationAccessUnavailable unavailable => LocationPermissionPage(
+          onEnable: () =>
+              BlocProvider.of<LocationAccessCubit>(context).enable(),
+          onSkip: () {
+            BlocProvider.of<LocationAccessCubit>(context).suppressPrompt();
+            context.goNamed(HomeRoutes.home);
+          },
+          statusMessage: unavailable.message,
+        ),
+      },
+    );
   }
 }

@@ -14,6 +14,9 @@ import 'package:passenger_app/src/features/home/bloc/public_driver_summary/publi
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/public_driver_summary_card_widget.dart';
+import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
+import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
+import 'package:passenger_app/src/features/location/location_routes.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -31,45 +34,45 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
-  static const _locationPollInterval = Duration(seconds: 2);
-
+class _HomePageState extends State<HomePage> {
   StreamSubscription? _locationSubscription;
-  Timer? _locationAccessPoller;
   late final BookingBloc _bookingBloc;
   bool _isLoadingLocation = false;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
-                      const SizedBox(height: 12),
-                      _buildLocationRow(),
-                      const SizedBox(height: 24),
-                      _buildSearchBar(),
-                      _buildPendingBookingBanner(),
-                      _buildPublicDriverSummary(),
-                      const SizedBox(height: 16),
-                      _buildChipRow(),
-                      const SizedBox(height: 24),
-                      _buildRecentActivityHeader(),
-                      Expanded(child: _buildRecentActivityList()),
-                    ],
+    return BlocListener<LocationAccessCubit, LocationAccessViewState>(
+      listener: _handleLocationAccess,
+      child: Scaffold(
+        backgroundColor: AppTheme.surface,
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 12),
+                        _buildLocationRow(),
+                        const SizedBox(height: 24),
+                        _buildSearchBar(),
+                        _buildPendingBookingBanner(),
+                        _buildPublicDriverSummary(),
+                        const SizedBox(height: 16),
+                        _buildChipRow(),
+                        const SizedBox(height: 24),
+                        _buildRecentActivityHeader(),
+                        Expanded(child: _buildRecentActivityList()),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -79,35 +82,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     if (_locationSubscription != null) {
       unawaited(_locationSubscription!.cancel());
     }
-    _locationAccessPoller?.cancel();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _bookingBloc = Modular.get<BookingBloc>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _loadSavedPlaces();
-      await _initLocationAndLoadData();
+      if (!mounted) return;
+      if (BlocProvider.of<LocationAccessCubit>(context).state
+          is LocationAccessReady) {
+        await _initLocationAndLoadData();
+      }
     });
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      unawaited(_refreshLocationAfterResume());
+  void _handleLocationAccess(
+    BuildContext context,
+    LocationAccessViewState state,
+  ) {
+    switch (state) {
+      case LocationAccessReady():
+        unawaited(_initLocationAndLoadData());
+      case LocationAccessUnavailable():
+        unawaited(_stopLocationUpdates());
+        BlocProvider.of<HomeCubit>(context).clearLocation();
+      case LocationAccessChecking():
+        break;
     }
-  }
-
-  Future<void> _refreshLocationAfterResume() async {
-    await _initLocationAndLoadData();
   }
 
   Widget _buildChipRow() {
@@ -339,9 +347,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ],
           );
         }
-        return content;
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: state.currentAddress.isEmpty ? _showLocationPrompt : null,
+          child: content,
+        );
       },
     );
+  }
+
+  void _showLocationPrompt() {
+    BlocProvider.of<LocationAccessCubit>(context).showPrompt();
+    context.goNamed(LocationRoutes.gate);
   }
 
   Widget _buildRecentActivityHeader() {
@@ -695,26 +712,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _isLoadingLocation = true;
     try {
       final cubit = BlocProvider.of<HomeCubit>(context);
-      final hasLocationAccess =
-          await LocationService.getAccessState() == LocationAccessState.ready;
-      if (!hasLocationAccess) {
-        _startLocationAccessMonitoring();
+      final locationAccessCubit = BlocProvider.of<LocationAccessCubit>(context);
+      if (locationAccessCubit.state is! LocationAccessReady) {
         return;
       }
 
       final position =
           await LocationService.getCurrentPosition() ??
           LocationService.lastPosition;
-      if (!mounted || position == null) {
-        _startLocationAccessMonitoring();
+      if (!mounted) return;
+      if (position == null) {
+        await locationAccessCubit.refresh();
         return;
       }
 
-      _stopLocationAccessMonitoring();
       await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
       if (!mounted) return;
 
-      unawaited(_locationSubscription?.cancel());
+      await _locationSubscription?.cancel();
       _locationSubscription = LocationService.getPositionStream().listen(
         (pos) async {
           if (!mounted) return;
@@ -723,7 +738,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           } catch (_) {}
         },
         onError: (_) {
-          _startLocationAccessMonitoring();
+          if (mounted) unawaited(locationAccessCubit.refresh());
         },
       );
     } finally {
@@ -731,16 +746,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  void _startLocationAccessMonitoring() {
-    _locationAccessPoller ??= Timer.periodic(
-      _locationPollInterval,
-      (_) => unawaited(_initLocationAndLoadData()),
-    );
-  }
-
-  void _stopLocationAccessMonitoring() {
-    _locationAccessPoller?.cancel();
-    _locationAccessPoller = null;
+  Future<void> _stopLocationUpdates() async {
+    await _locationSubscription?.cancel();
+    _locationSubscription = null;
   }
 
   Future<void> _loadSavedPlaces() async {

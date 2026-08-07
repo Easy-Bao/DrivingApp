@@ -39,7 +39,7 @@ class LocationPermissionPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'BaoRide uses your location to find nearby drivers and place your pickup accurately.',
+                'EasyRide uses your location to find nearby drivers and place your pickup accurately.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
               ),

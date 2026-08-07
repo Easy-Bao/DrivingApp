@@ -21,6 +21,7 @@ void main() {
     );
 
     expect(find.text('Make every pickup easier'), findsOneWidget);
+    expect(find.textContaining('EasyRide uses your location'), findsOneWidget);
     expect(find.text('Turn on location'), findsOneWidget);
     expect(find.text('Not now'), findsOneWidget);
 
@@ -37,17 +38,17 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.themeData,
-        home: LocationPermissionPage(
+        home: const LocationPermissionPage(
           onEnable: _noop,
           onSkip: _noop,
           statusMessage:
-              'Turn on location in Settings, then return to BaoRide.',
+              'Turn on location in Settings, then return to EasyRide.',
         ),
       ),
     );
 
     expect(
-      find.text('Turn on location in Settings, then return to BaoRide.'),
+      find.text('Turn on location in Settings, then return to EasyRide.'),
       findsOneWidget,
     );
   });

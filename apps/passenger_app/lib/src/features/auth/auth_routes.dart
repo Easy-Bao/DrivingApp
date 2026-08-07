@@ -13,8 +13,8 @@ abstract final class AuthRoutes {
   static const String verifyOtpPath = '/auth/verifyotp';
   static const String resetPasswordConfirm = 'ResetPasswordConfirm';
   static const String resetPasswordConfirmPath = '/auth/resetpassword';
+}
 
-  static String? rootRedirect(Uri uri) {
-    return uri.path == rootPath ? LocationRoutes.fullGatePath : null;
-  }
+String? authRootRedirect(Uri uri) {
+  return uri.path == AuthRoutes.rootPath ? LocationRoutes.fullGatePath : null;
 }

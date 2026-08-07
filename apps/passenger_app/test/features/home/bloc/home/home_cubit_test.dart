@@ -92,5 +92,12 @@ void main() {
       act: (cubit) => cubit.updateAddress('SM City Pagadian'),
       expect: () => [const HomeState(currentAddress: 'SM City Pagadian')],
     );
+
+    blocTest<HomeCubit, HomeState>(
+      'clears a stale pickup when location access is lost',
+      build: () => _makeCubit(repo)..updateAddress('SM City Pagadian'),
+      act: (cubit) => cubit.clearLocation(),
+      expect: () => const [HomeState()],
+    );
   });
 }

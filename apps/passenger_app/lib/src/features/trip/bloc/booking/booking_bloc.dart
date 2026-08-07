@@ -44,8 +44,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   String? _sessionIdFromResponse(Map<String, dynamic> response) {
     final rawSessionId = response['id'];
     final sessionId = switch (rawSessionId) {
-      String value => value.trim(),
-      num value => value.toInt().toString(),
+      final String value => value.trim(),
+      final num value => value.toInt().toString(),
       _ => null,
     };
     return sessionId == null || sessionId.isEmpty ? null : sessionId;

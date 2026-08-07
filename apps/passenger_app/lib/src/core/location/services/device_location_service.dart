@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
 
@@ -28,6 +30,11 @@ class LocationService {
   }
 
   static Future<LocationAccessState> refresh() => getAccessState();
+
+  static Stream<LocationAccessState> get accessStateChanges =>
+      Geolocator.getServiceStatusStream()
+          .asyncMap((_) => getAccessState())
+          .distinct();
 
   static Future<bool> requestPermission() async {
     if (!await isServiceEnabled()) return false;

@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
+import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
+import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
+import 'package:passenger_app/src/features/location/location_access_navigation.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
@@ -20,12 +22,17 @@ class AppWidget extends StatefulWidget {
 
 class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   late final SessionBloc _sessionBloc;
+  late final LocationAccessCubit _locationAccessCubit;
 
   @override
   void initState() {
     super.initState();
     _sessionBloc = Modular.get<SessionBloc>()..add(const SessionStarted());
+    _locationAccessCubit = Modular.get<LocationAccessCubit>();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_locationAccessCubit.start());
+    });
   }
 
   @override
@@ -36,8 +43,8 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      unawaited(LocationService.refresh());
+    if (state == .resumed) {
+      unawaited(_locationAccessCubit.refresh());
     }
   }
 
@@ -46,6 +53,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
     return MultiBlocProvider(
       providers: [
         BlocProvider<SessionBloc>.value(value: _sessionBloc),
+        BlocProvider<LocationAccessCubit>.value(value: _locationAccessCubit),
         BlocProvider<BookingDraftCubit>.value(
           value: Modular.get<BookingDraftCubit>(),
         ),
@@ -58,17 +66,37 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
           },
         ),
       ],
-      child: BlocListener<SessionBloc, SessionState>(
-        listenWhen: (_, current) =>
-            current is GuestSession || current is SessionFailure,
-        listener: (context, _) =>
-            BlocProvider.of<BookingDraftCubit>(context).clear(),
-        child: ModularApp.router(
-          theme: AppTheme.themeData,
-          debugShowCheckedModeBanner: false,
-          title: 'BaoRide Passenger',
+      child: ModularApp.router(
+        theme: AppTheme.themeData,
+        debugShowCheckedModeBanner: false,
+        title: 'EasyRide Passenger',
+        builder: (context, child) => MultiBlocListener(
+          listeners: [
+            BlocListener<SessionBloc, SessionState>(
+              listenWhen: (_, current) =>
+                  current is GuestSession || current is SessionFailure,
+              listener: (context, _) =>
+                  BlocProvider.of<BookingDraftCubit>(context).clear(),
+            ),
+            BlocListener<LocationAccessCubit, LocationAccessViewState>(
+              listener: _handleLocationAccess,
+            ),
+          ],
+          child: child ?? const SizedBox.shrink(),
         ),
       ),
     );
+  }
+
+  void _handleLocationAccess(BuildContext _, LocationAccessViewState state) {
+    final currentPath =
+        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
+    final destinationName = locationAccessDestinationName(
+      currentPath: currentPath,
+      accessState: state,
+    );
+    if (destinationName != null) {
+      Modular.routerConfig.goNamed(destinationName);
+    }
   }
 }

@@ -74,4 +74,10 @@ class HomeCubit extends Cubit<HomeState> {
   void updateAddress(String address) {
     emit(state.copyWith(currentAddress: address));
   }
+
+  void clearLocation() {
+    _lastLat = null;
+    _lastLng = null;
+    emit(state.copyWith(isLoading: false, currentAddress: ''));
+  }
 }

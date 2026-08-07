@@ -12,9 +12,12 @@ import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/auth/data/repositories/session_repository_impl.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
+import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
+import 'package:passenger_app/src/features/location/data/repositories/location_access_repository.dart';
+import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
-import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppModule extends Module {
@@ -40,6 +43,13 @@ class AppModule extends Module {
       )
       ..addLazySingleton<SessionBloc>(
         (i) => SessionBloc(sessionRepository: i.get<SessionRepository>()),
+      )
+      ..addLazySingleton<ILocationAccessRepository>(
+        (_) => LocationAccessRepository(),
+      )
+      ..addLazySingleton<LocationAccessCubit>(
+        (i) =>
+            LocationAccessCubit(repository: i.get<ILocationAccessRepository>()),
       )
       ..addLazySingleton<Dio>(
         (i) => DioClient.create(

@@ -67,11 +67,11 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>BaoRide needs your location to find nearby destinations and provide ride services.</string>
+	<string>EasyRide uses your location to find nearby destinations and set an accurate pickup.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>BaoRide needs your location to track your ride in the background.</string>
+	<string>EasyRide uses your location to track an active ride in the background.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>BaoRide needs your location for ride booking and navigation services.</string>
+	<string>EasyRide uses your location for ride booking, pickup, and navigation.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
