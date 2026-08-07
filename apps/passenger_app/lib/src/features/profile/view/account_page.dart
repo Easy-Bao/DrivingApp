@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
@@ -24,12 +24,10 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ProfileCubit>(
-      create: (_) {
-        final cubit = Modular.get<ProfileCubit>();
-        unawaited(cubit.loadProfile());
-        return cubit;
-      },
+    return BlocListener<SessionBloc, SessionState>(
+      listenWhen: (_, current) =>
+          current is GuestSession || current is SessionFailure,
+      listener: _handleSessionState,
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
           final initials = _getInitials(state.name);
@@ -211,6 +209,24 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  void _handleSessionState(BuildContext context, SessionState state) {
+    switch (state) {
+      case GuestSession():
+        context.goNamed(AuthRoutes.signin);
+      case SessionFailure():
+        if (_isLoggingOut) {
+          setState(() => _isLoggingOut = false);
+          CustomToast.show(
+            context,
+            'Unable to log out. Please try again.',
+            isError: true,
+          );
+        }
+      case SessionLoading() || AuthenticatedSession():
+        break;
+    }
+  }
+
   Widget _buildMenuTile({
     required IconData icon,
     required String title,
@@ -281,19 +297,9 @@ class _AccountPageState extends State<AccountPage> {
     return parts[0][0].toUpperCase();
   }
 
-  Future<void> _handleLogout(BuildContext context) async {
+  void _handleLogout(BuildContext context) {
     if (_isLoggingOut) return;
     setState(() => _isLoggingOut = true);
-
-    try {
-      await Modular.get<SecureSessionService>().clearSession();
-      if (context.mounted) {
-        context.goNamed(AuthRoutes.signin);
-      }
-    } catch (error) {
-      debugPrint('Unable to log out passenger: $error');
-      if (!mounted) return;
-      setState(() => _isLoggingOut = false);
-    }
+    BlocProvider.of<SessionBloc>(context).add(const SessionLogoutRequested());
   }
 }

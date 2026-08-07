@@ -77,13 +77,13 @@ class PassengerModule extends Module {
       ..addLazySingleton<SavedPlacesCubit>(
         (i) => SavedPlacesCubit(repository: i.get<ISavedPlacesRepository>()),
       )
-      ..addLazySingleton<ActivityBloc>(
+      ..addFactory<ActivityBloc>(
         (i) => ActivityBloc(repository: i.get<IActivityRepository>()),
       )
       ..addLazySingleton<InboxCubit>(
         (i) => InboxCubit(inboxRepository: i.get<IInboxRepository>()),
       )
-      ..addLazySingleton<HomeCubit>(
+      ..addFactory<HomeCubit>(
         (i) => HomeCubit(repository: i.get<IPassengerHomeRepository>()),
       )
       ..addLazySingleton<PublicDriverSummaryCubit>(

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -19,81 +19,36 @@ class PassengerActivityPage extends StatefulWidget {
 }
 
 class _PassengerActivityPageState extends State<PassengerActivityPage> {
-  late ActivityBloc _bloc;
+  bool _hasLoadedActivity = false;
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ActivityBloc>.value(
-      value: _bloc,
-      child: Scaffold(
-        backgroundColor: AppTheme.surface,
-        body: SafeArea(
-          child: RefreshIndicator(
-            color: AppTheme.primaryColor,
-            onRefresh: _loadActivity,
-            child: BlocBuilder<ActivityBloc, ActivityState>(
-              builder: (context, state) {
-                if (state is ActivityLoading) {
-                  return _buildLoadingState();
-                }
-                if (state is ActivityError) {
-                  return _buildErrorState(state.message);
-                }
-                if (state is ActivityLoaded) {
-                  final activeRides = state.upcoming;
-                  final pastRides = state.past;
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: AppTheme.primaryColor,
+          onRefresh: _loadActivity,
+          child: BlocBuilder<ActivityBloc, ActivityState>(
+            builder: (context, state) {
+              if (state is ActivityLoading) {
+                return _buildLoadingState();
+              }
+              if (state is ActivityError) {
+                return _buildErrorState(state.message);
+              }
+              if (state is ActivityLoaded) {
+                final activeRides = state.upcoming;
+                final pastRides = state.past;
 
-                  if (activeRides.isEmpty && pastRides.isEmpty) {
-                    return CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(
-                            24.0,
-                            0.0,
-                            24.0,
-                            16.0,
-                          ),
-                          sliver: SliverList(
-                            delegate: SliverChildListDelegate([
-                              const Text(
-                                'Activity',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryColor,
-                                  letterSpacing: -1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Tap a ride to see details',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                ),
-                              ),
-                            ]),
-                          ),
-                        ),
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: _buildEmptyState(),
-                        ),
-                      ],
-                    );
-                  }
-
+                if (activeRides.isEmpty && pastRides.isEmpty) {
                   return CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(
                           24.0,
-                          24.0,
+                          0.0,
                           24.0,
                           16.0,
                         ),
@@ -119,66 +74,105 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                          ]),
+                        ),
+                      ),
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _buildEmptyState(),
+                      ),
+                    ],
+                  );
+                }
+
+                return CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        24.0,
+                        24.0,
+                        24.0,
+                        16.0,
+                      ),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          const Text(
+                            'Activity',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor,
+                              letterSpacing: -1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tap a ride to see details',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ]),
+                      ),
+                    ),
+
+                    if (activeRides.isNotEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            _buildActiveRideCard(activeRides.first),
+                            const SizedBox(height: 24),
                           ]),
                         ),
                       ),
 
-                      if (activeRides.isNotEmpty)
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                          sliver: SliverList(
-                            delegate: SliverChildListDelegate([
-                              _buildActiveRideCard(activeRides.first),
-                              const SizedBox(height: 24),
-                            ]),
-                          ),
-                        ),
-
-                      if (pastRides.isNotEmpty)
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(
-                            24.0,
-                            8.0,
-                            24.0,
-                            12.0,
-                          ),
-                          sliver: SliverList(
-                            delegate: SliverChildListDelegate([
-                              Text(
-                                'PAST RIDES',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ]),
-                          ),
-                        ),
-
+                    if (pastRides.isNotEmpty)
                       SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        padding: const EdgeInsets.fromLTRB(
+                          24.0,
+                          8.0,
+                          24.0,
+                          12.0,
+                        ),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            return _buildPastRideCard(pastRides[index]);
-                          }, childCount: pastRides.length),
+                          delegate: SliverChildListDelegate([
+                            Text(
+                              'PAST RIDES',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.4,
+                                ),
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ]),
                         ),
                       ),
 
-                      const SliverToBoxAdapter(child: SizedBox(height: 36)),
-                    ],
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          return _buildPastRideCard(pastRides[index]);
+                        }, childCount: pastRides.length),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 36)),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
         ),
       ),
@@ -188,18 +182,9 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_hasLoadedActivity) return;
+    _hasLoadedActivity = true;
     unawaited(_loadActivity());
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _bloc = Modular.get<ActivityBloc>();
   }
 
   Widget _buildActiveRideCard(RideHistoryModel ride) {
@@ -579,13 +564,10 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
   }
 
   Future<void> _loadActivity() async {
-    final passengerId =
-        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
-    if (!mounted || _bloc.isClosed) return;
-    if (passengerId.isNotEmpty) {
-      _bloc.add(LoadActivityEvent(passengerId: passengerId));
-    } else {
-      _bloc.add(const LoadActivityEvent(passengerId: ''));
+    final sessionState = BlocProvider.of<SessionBloc>(context).state;
+    final activityBloc = BlocProvider.of<ActivityBloc>(context);
+    if (sessionState case AuthenticatedSession(:final passengerId)) {
+      activityBloc.add(LoadActivityEvent(passengerId: passengerId));
     }
   }
 

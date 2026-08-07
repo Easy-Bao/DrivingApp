@@ -58,9 +58,23 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   Widget build(BuildContext context) {
     final sel = _calculateSelectedIndex(context);
     return BlocListener<SessionBloc, SessionState>(
-      listenWhen: (previous, current) =>
-          previous is! AuthenticatedSession && current is AuthenticatedSession,
-      listener: (_, _) => unawaited(_loadInboxNotifications()),
+      listenWhen: (_, current) =>
+          current is AuthenticatedSession ||
+          current is GuestSession ||
+          current is SessionFailure,
+      listener: (_, state) {
+        switch (state) {
+          case AuthenticatedSession():
+            unawaited(_loadInboxNotifications());
+          case GuestSession() || SessionFailure():
+            _loadedInboxPassengerId = null;
+            if (!widget.inboxCubit.isClosed) {
+              widget.inboxCubit.clearSessionData();
+            }
+          case SessionLoading():
+            break;
+        }
+      },
       child: PopScope(
         canPop:
             _navigationHistory.length <= 1 &&

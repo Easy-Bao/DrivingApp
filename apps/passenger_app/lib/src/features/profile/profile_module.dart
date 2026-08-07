@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/profile/view/account_page.dart';
 import 'package:passenger_app/src/features/profile/view/help_center_page.dart';
@@ -42,7 +45,14 @@ class ProfileModule {
     ChildRoute(
       name: ProfileRoutes.account,
       ProfileRoutes.accountPath,
-      child: (context, GoRouterState state) => const AccountPage(),
+      child: (context, GoRouterState state) => BlocProvider<ProfileCubit>(
+        create: (_) {
+          final cubit = Modular.get<ProfileCubit>();
+          unawaited(cubit.loadProfile());
+          return cubit;
+        },
+        child: const AccountPage(),
+      ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),

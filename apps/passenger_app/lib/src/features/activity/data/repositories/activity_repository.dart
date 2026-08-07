@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
@@ -34,6 +35,25 @@ class ActivityRepository implements IActivityRepository {
   }) : _passengerRemoteDataSource = passengerRemoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
+    if (error is DioException) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        return const AuthFailure(
+          'Your session has ended. Sign in again to view activity.',
+        );
+      }
+      return switch (error.type) {
+        DioExceptionType.connectionError ||
+        DioExceptionType.connectionTimeout ||
+        DioExceptionType.receiveTimeout ||
+        DioExceptionType.sendTimeout => const NetworkFailure(
+          'Unable to connect. Check your connection and try again.',
+        ),
+        _ => const ServerFailure(
+          'Activity is temporarily unavailable. Please try again.',
+        ),
+      };
+    }
     if (error is ServerException) {
       if (error.statusCode == 401 || error.statusCode == 403) {
         return const AuthFailure(
@@ -43,15 +63,19 @@ class ActivityRepository implements IActivityRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return ServerFailure('Server returned status code ${error.statusCode}.');
+      return const ServerFailure(
+        'Activity is temporarily unavailable. Please try again.',
+      );
     }
     if (error is DataParsingException) {
-      return ValidationFailure(error.message);
+      return const ValidationFailure('Activity data could not be read.');
     }
     if (error is CacheException) {
-      return CacheFailure(error.message);
+      return const CacheFailure('Unable to read saved activity data.');
     }
-    return ServerFailure('Unexpected system error: $error');
+    return const ServerFailure(
+      'Activity is temporarily unavailable. Please try again.',
+    );
   }
 
   @override

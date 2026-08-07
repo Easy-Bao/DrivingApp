@@ -52,7 +52,9 @@ class _SigninPageContentState extends State<_SigninPageContent> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: Center(
-          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
+          child: AppBackButtonWidget.plain(
+            onPressed: () => context.goNamed(HomeRoutes.home),
+          ),
         ),
         centerTitle: true,
         title: Image.asset(

@@ -6,17 +6,26 @@ import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_rep
 class InboxCubit extends Cubit<InboxState> {
   final IInboxRepository inboxRepository;
   final List<InboxNotification> _localNotifications = [];
+  String? _activePassengerId;
+  int _sessionRevision = 0;
 
   InboxCubit({required this.inboxRepository})
     : super(const InboxInitialState());
 
   Future<void> loadNotifications(String passengerId) async {
+    if (_activePassengerId != passengerId) {
+      _activePassengerId = passengerId;
+      _sessionRevision++;
+      _localNotifications.clear();
+    }
+    final requestRevision = _sessionRevision;
     if (state is! InboxLoadedState) {
       emit(const InboxLoadingState());
     }
     final result = await inboxRepository.fetchPassengerNotifications(
       passengerId,
     );
+    if (isClosed || requestRevision != _sessionRevision) return;
 
     result.fold(
       (failure) => emit(InboxErrorState(failure.message)),
@@ -72,5 +81,12 @@ class InboxCubit extends Cubit<InboxState> {
         emit(InboxLoadedState(currentList));
       }
     }
+  }
+
+  void clearSessionData() {
+    _activePassengerId = null;
+    _sessionRevision++;
+    _localNotifications.clear();
+    emit(const InboxInitialState());
   }
 }

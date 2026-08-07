@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_activity_page.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_payment_page.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_rating_page.dart';
@@ -89,7 +91,10 @@ class ActivityModule {
     ChildRoute(
       name: ActivityRoutes.activity,
       ActivityRoutes.activityPath,
-      child: (context, GoRouterState state) => const PassengerActivityPage(),
+      child: (context, GoRouterState state) => BlocProvider<ActivityBloc>(
+        create: (_) => Modular.get<ActivityBloc>(),
+        child: const PassengerActivityPage(),
+      ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),
