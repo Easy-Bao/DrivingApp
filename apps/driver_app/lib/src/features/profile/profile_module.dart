@@ -12,14 +12,14 @@ class ProfileModule {
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: ProfileRoutes.earnings,
-      'earnings',
+      ProfileRoutes.earningsPath,
       child: (context, GoRouterState state) => const DriverEarningsPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),
     ChildRoute(
       name: ProfileRoutes.account,
-      'account',
+      ProfileRoutes.accountPath,
       child: (context, GoRouterState state) => const DriverAccountPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

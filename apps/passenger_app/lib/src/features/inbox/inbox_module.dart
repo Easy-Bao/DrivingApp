@@ -11,7 +11,7 @@ class InboxModule {
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: InboxRoutes.inbox,
-      'inbox',
+      InboxRoutes.inboxPath,
       child: (context, GoRouterState state) => const InboxPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

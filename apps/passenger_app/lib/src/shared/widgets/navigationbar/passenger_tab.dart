@@ -6,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
@@ -89,8 +90,8 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
               final isAuthenticated = sessionState is AuthenticatedSession;
               if (!isAuthenticated) {
                 return GuestActionBarWidget(
-                  onSignUp: () => context.push('/auth/signup'),
-                  onSignIn: () => context.push('/auth/signin'),
+                  onSignUp: () => context.pushNamed(AuthRoutes.signup),
+                  onSignIn: () => context.pushNamed(AuthRoutes.signin),
                   onHelp: () => context.pushNamed(ProfileRoutes.helpCenter),
                 );
               }
@@ -230,16 +231,17 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
       }
     }
 
-    if (location.contains('/home')) {
+    if (location.startsWith(HomeRoutes.fullHomePath)) {
       return 0;
     }
-    if (location.contains('/activity')) {
+    if (location.startsWith(ActivityRoutes.fullActivityPath)) {
       return 1;
     }
-    if (location.contains('/inbox')) {
+    if (location.startsWith(InboxRoutes.fullInboxPath)) {
       return 2;
     }
-    if (location.contains('/account') || location.contains('/help')) {
+    if (location.startsWith(ProfileRoutes.fullAccountPath) ||
+        location.startsWith(ProfileRoutes.fullHelpPath)) {
       return 3;
     }
 

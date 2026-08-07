@@ -31,10 +31,10 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
 
   int _calcIndex(BuildContext context) {
     final loc = GoRouterState.of(context).uri.path;
-    if (loc.startsWith('/driver/dashboard')) return 0;
-    if (loc.startsWith('/driver/trips')) return 1;
-    if (loc.startsWith('/driver/earnings')) return 2;
-    if (loc.startsWith('/driver/account')) return 3;
+    if (loc.startsWith(HomeRoutes.fullDashboardPath)) return 0;
+    if (loc.startsWith(ActivityRoutes.fullTripHistoryPath)) return 1;
+    if (loc.startsWith(ProfileRoutes.fullEarningsPath)) return 2;
+    if (loc.startsWith(ProfileRoutes.fullAccountPath)) return 3;
     return 0;
   }
 

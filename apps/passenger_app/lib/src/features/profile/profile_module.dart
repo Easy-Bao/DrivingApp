@@ -14,21 +14,21 @@ class ProfileModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: ProfileRoutes.profileInfo,
-      'account/profile-info',
+      ProfileRoutes.profileInfoPath,
       child: (context, GoRouterState state) => const ProfileInfoPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: ProfileRoutes.helpCenter,
-      'account/help-center',
+      ProfileRoutes.helpCenterPath,
       child: (context, GoRouterState state) => const HelpCenterPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: ProfileRoutes.help,
-      'help',
+      ProfileRoutes.helpPath,
       child: (context, GoRouterState state) => BlocProvider<SavedPlacesCubit>(
         create: (_) => Modular.get<SavedPlacesCubit>(),
         child: const SavedPlacePage(),
@@ -41,7 +41,7 @@ class ProfileModule {
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: ProfileRoutes.account,
-      'account',
+      ProfileRoutes.accountPath,
       child: (context, GoRouterState state) => const AccountPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

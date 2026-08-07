@@ -10,6 +10,7 @@ import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip.dart';
+import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/driver_dropdown_card_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_bids_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_nearest_panel_widget.dart';
@@ -413,7 +414,10 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                 'fare': match.proposedFare,
                 'createdRide': state.createdRide,
               };
-              context.pushReplacementNamed('DriverMatched', extra: navExtra);
+              context.pushReplacementNamed(
+                TripRoutes.driverMatched,
+                extra: navExtra,
+              );
             } else if (state is BookingFailure) {
               _acceptingOfferId = null;
               if (state.isNoDriverFound) {

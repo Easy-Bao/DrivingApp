@@ -16,7 +16,7 @@ class TripModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: TripRoutes.rideAlert,
-      'dashboard/ride-alert',
+      TripRoutes.rideAlertPath,
       child: (context, GoRouterState state) =>
           RideAlertPage(rideData: SafeRouteExtra.asMap(state.extra)),
       transition: AppTransitions.modal.toTop,
@@ -24,7 +24,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.enRoutePickup,
-      'ride/en-route',
+      TripRoutes.enRoutePickupPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         return EnRoutePickupPage(
@@ -40,7 +40,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.waitingPassenger,
-      'ride/waiting',
+      TripRoutes.waitingPassengerPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         return WaitingPassengerPage(
@@ -56,7 +56,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.inTransit,
-      'ride/in-transit',
+      TripRoutes.inTransitPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         return InTransitPage(
@@ -72,7 +72,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.completeTrip,
-      'ride/complete',
+      TripRoutes.completeTripPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         return CompleteTripPage(
@@ -88,7 +88,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.fareSummary,
-      'ride/fare-summary',
+      TripRoutes.fareSummaryPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         return FareSummaryPage(
@@ -104,7 +104,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.ratePassenger,
-      'ride/rate',
+      TripRoutes.ratePassengerPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         return RatePassengerPage(

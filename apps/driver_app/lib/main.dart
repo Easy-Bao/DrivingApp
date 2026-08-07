@@ -2,6 +2,7 @@ import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
+import 'package:driver_app/src/features/auth/auth_routes.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -37,7 +38,7 @@ void main() async {
 
   await Modular.configure(
     appModule: AppModule(prefs: prefs),
-    initialRoute: '/',
+    initialRoute: AuthRoutes.signinPath,
     debugLogDiagnostics: true,
     debugLogDiagnosticsGoRouter: true,
     debugLogEventBus: true,

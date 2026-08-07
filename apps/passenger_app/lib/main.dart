@@ -5,6 +5,7 @@ import 'package:passenger_app/app_module.dart';
 import 'package:passenger_app/app_widget.dart';
 import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/location/location.dart';
+import 'package:passenger_app/src/features/location/location_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -31,7 +32,7 @@ void main() async {
 
   await Modular.configure(
     appModule: AppModule(prefs: prefs),
-    initialRoute: '/passenger/location-gate',
+    initialRoute: LocationRoutes.fullGatePath,
     debugLogDiagnostics: true,
     debugLogDiagnosticsGoRouter: true,
     debugLogEventBus: true,

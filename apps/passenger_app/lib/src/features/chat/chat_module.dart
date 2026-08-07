@@ -9,7 +9,7 @@ class ChatModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: ChatRoutes.driverChat,
-      'activity/driver-chat',
+      ChatRoutes.driverChatPath,
       child: (context, GoRouterState state) {
         final extra = SafeRouteExtra.asMap(state.extra);
         return DriverChatPage(

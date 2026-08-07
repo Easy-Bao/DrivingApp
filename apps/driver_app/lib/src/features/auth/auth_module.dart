@@ -28,14 +28,14 @@ class AuthModule extends Module {
   List<ModularRoute> get routes => [
     ChildRoute(
       name: AuthRoutes.signin,
-      '/',
+      AuthRoutes.signinPath,
       child: (context, GoRouterState state) => const SigninPage(),
       transition: AppTransitions.fade,
       transitionDuration: AppTransitions.fadeDuration,
     ),
     ChildRoute(
       name: AuthRoutes.forgotPassword,
-      '/auth/forgotpassword',
+      AuthRoutes.forgotPasswordPath,
       child: (context, GoRouterState state) => const ForgotPasswordPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

@@ -70,34 +70,34 @@ class AuthModule extends Module {
   List<ModularRoute> get routes => [
     ChildRoute(
       name: AuthRoutes.root,
-      '/',
+      AuthRoutes.rootPath,
       child: (context, GoRouterState state) => const SizedBox.shrink(),
       redirect: (_, state) => AuthRoutes.rootRedirect(state.uri),
     ),
     ChildRoute(
       name: AuthRoutes.signin,
-      '/auth/signin',
+      AuthRoutes.signinPath,
       child: (context, GoRouterState state) => const SigninPage(),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: AuthRoutes.signup,
-      '/auth/signup',
+      AuthRoutes.signupPath,
       child: (context, GoRouterState state) => const SignupPage(),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: AuthRoutes.forgotPassword,
-      '/auth/forgotpassword',
+      AuthRoutes.forgotPasswordPath,
       child: (context, GoRouterState state) => const ForgotPasswordPage(),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: AuthRoutes.verifyOtp,
-      '/auth/verifyotp',
+      AuthRoutes.verifyOtpPath,
       child: (context, GoRouterState state) {
         final extra = state.extra is Map ? state.extra as Map : {};
         final email =
@@ -112,7 +112,7 @@ class AuthModule extends Module {
     ),
     ChildRoute(
       name: AuthRoutes.resetPasswordConfirm,
-      '/auth/resetpassword',
+      AuthRoutes.resetPasswordConfirmPath,
       child: (context, GoRouterState state) {
         final extra = state.extra is Map ? state.extra as Map : {};
         final email = extra['email']?.toString() ?? '';

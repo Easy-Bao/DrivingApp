@@ -13,7 +13,7 @@ class HomeModule {
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: HomeRoutes.dashboard,
-      'dashboard',
+      HomeRoutes.dashboardPath,
       child: (context, GoRouterState state) => BlocProvider.value(
         value: Modular.get<DashboardCubit>()..initialize(),
         child: const DriverDashboardPage(),

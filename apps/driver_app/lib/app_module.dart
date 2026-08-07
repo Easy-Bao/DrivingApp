@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:driver_app/driver_module.dart';
+import 'package:driver_app/src/core/routing/app_routes.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/network/dio_client.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
@@ -70,7 +71,7 @@ class AppModule extends Module {
 
   @override
   List<ModularRoute> get routes => [
-    ModuleRoute('/', module: AuthModule()),
-    ModuleRoute('/driver/', module: DriverModule()),
+    ModuleRoute(AppRoutes.authModulePath, module: AuthModule()),
+    ModuleRoute(AppRoutes.driverModulePath, module: DriverModule()),
   ];
 }

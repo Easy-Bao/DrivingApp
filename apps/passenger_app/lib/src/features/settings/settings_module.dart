@@ -9,7 +9,7 @@ class SettingsModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: SettingsRoutes.settings,
-      'settings',
+      SettingsRoutes.settingsPath,
       child: (context, GoRouterState state) => const SettingsPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

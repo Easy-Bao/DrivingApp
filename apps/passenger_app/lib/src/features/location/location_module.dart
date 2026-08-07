@@ -9,7 +9,7 @@ class LocationModule {
   static final List<ModularRoute> routes = [
     ChildRoute(
       name: LocationRoutes.gate,
-      'location-gate',
+      LocationRoutes.gatePath,
       child: (context, GoRouterState state) => const LocationGatePage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

@@ -8,6 +8,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
 import 'package:driver_app/src/features/home/view/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
+import 'package:driver_app/src/features/location/location_routes.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
@@ -106,7 +107,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       if (dashboardState.isOnline) {
         await _forceOfflineForLocationLoss();
         if (!mounted) return;
-        context.go('/driver/location-gate');
+        context.goNamed(DriverLocationRoutes.gate);
       }
       return;
     }
@@ -150,7 +151,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     await BlocProvider.of<DashboardCubit>(
       context,
     ).forceOffline(lat: position?.latitude ?? 0, lng: position?.longitude ?? 0);
-    if (mounted) context.go('/driver/location-gate');
+    if (mounted) context.goNamed(DriverLocationRoutes.gate);
   }
 
   Future<void> _resumeOnlineTelemetry() async {
@@ -320,7 +321,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     try {
       if (requestedOnline &&
           await LocationService.getAccessState() != LocationAccessState.ready) {
-        if (context.mounted) context.go('/driver/location-gate');
+        if (context.mounted) {
+          context.goNamed(DriverLocationRoutes.gate);
+        }
         return;
       }
 
@@ -330,7 +333,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       if (!context.mounted) return;
 
       if (position == null) {
-        if (requestedOnline) context.go('/driver/location-gate');
+        if (requestedOnline) {
+          context.goNamed(DriverLocationRoutes.gate);
+        }
         return;
       }
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:driver_app/src/core/location/location.dart';
+import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -67,7 +68,7 @@ class _DriverLocationGatePageState extends State<DriverLocationGatePage>
       if (!mounted) return;
       if (accessState == LocationAccessState.ready) {
         _stopAccessMonitoring();
-        context.go('/driver/dashboard');
+        context.goNamed(HomeRoutes.dashboard);
         return;
       }
       if (_viewState != _DriverLocationGateState.prompt) {
@@ -114,7 +115,7 @@ class _DriverLocationGatePageState extends State<DriverLocationGatePage>
       if (!mounted) return;
       if (refreshedState == LocationAccessState.ready) {
         _stopAccessMonitoring();
-        context.go('/driver/dashboard');
+        context.goNamed(HomeRoutes.dashboard);
       } else {
         setState(() {
           _viewState = _DriverLocationGateState.prompt;
@@ -144,7 +145,7 @@ class _DriverLocationGatePageState extends State<DriverLocationGatePage>
 
   void _skipLocation() {
     _stopAccessMonitoring();
-    context.go('/driver/dashboard');
+    context.goNamed(HomeRoutes.dashboard);
   }
 
   @override

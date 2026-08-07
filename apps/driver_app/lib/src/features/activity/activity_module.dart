@@ -10,7 +10,7 @@ class ActivityModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: ActivityRoutes.tripDetail,
-      'earnings/trip-detail',
+      ActivityRoutes.tripDetailPath,
       child: (context, GoRouterState state) =>
           DriverTripDetailPage(trip: SafeRouteExtra.asMap(state.extra)),
       transition: AppTransitions.push.toLeft,
@@ -21,7 +21,7 @@ class ActivityModule {
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: ActivityRoutes.tripHistory,
-      'trips',
+      ActivityRoutes.tripHistoryPath,
       child: (context, GoRouterState state) => const DriverTripHistoryPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

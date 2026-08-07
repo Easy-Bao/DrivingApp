@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/bloc/sign_in/sign_in_bloc.dart';
+import 'package:driver_app/src/features/location/location_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -110,7 +111,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
         child: BlocConsumer<SignInBloc, SignInState>(
           listener: (context, state) {
             if (state is SignInSuccess) {
-              context.go('/driver/location-gate');
+              context.goNamed(DriverLocationRoutes.gate);
             }
           },
           builder: (context, state) {

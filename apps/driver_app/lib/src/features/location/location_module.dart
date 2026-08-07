@@ -9,7 +9,7 @@ class DriverLocationModule {
   static final List<ModularRoute> routes = [
     ChildRoute(
       name: DriverLocationRoutes.gate,
-      'location-gate',
+      DriverLocationRoutes.gatePath,
       child: (context, GoRouterState state) => const DriverLocationGatePage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

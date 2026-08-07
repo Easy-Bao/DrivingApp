@@ -19,7 +19,7 @@ class TripModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: TripRoutes.searchDestination,
-      'home/search',
+      TripRoutes.searchDestinationPath,
       child: (context, GoRouterState state) => SearchDestinationPage(
         preselectedRideType: state.uri.queryParameters['rideType'],
         pickupAddress: state.uri.queryParameters['pickupAddress'],
@@ -29,7 +29,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.activityDetailMap,
-      'home/activity-detail',
+      TripRoutes.activityDetailMapPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         final latitude = (data['lat'] as num?)?.toDouble();
@@ -51,14 +51,14 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.mapPin,
-      'home/map-pin',
+      TripRoutes.mapPinPath,
       child: (context, GoRouterState state) => const MapPinPage(),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
       name: TripRoutes.destinationPreview,
-      'home/destination-preview',
+      TripRoutes.destinationPreviewPath,
       child: (context, GoRouterState state) {
         PlaceModel? place;
         if (state.extra is PlaceModel) {
@@ -107,7 +107,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.rideSelection,
-      'home/ride-selection',
+      TripRoutes.rideSelectionPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         final destination = data['destination'] is PlaceModel
@@ -148,7 +148,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.findingDriver,
-      'home/finding-driver',
+      TripRoutes.findingDriverPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         final destination = data['destination'];
@@ -179,7 +179,7 @@ class TripModule {
     ),
     ChildRoute(
       name: TripRoutes.driverMatched,
-      'home/driver-matched',
+      TripRoutes.driverMatchedPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
         final destination = data['destination'];

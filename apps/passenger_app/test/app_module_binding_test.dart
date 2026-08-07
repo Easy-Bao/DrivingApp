@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/app_module.dart';
+import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,7 +15,7 @@ void main() {
 
     await Modular.configure(
       appModule: AppModule(prefs: preferences),
-      initialRoute: '/passenger/home',
+      initialRoute: HomeRoutes.fullHomePath,
       debugLogDiagnostics: false,
       debugLogDiagnosticsGoRouter: false,
       debugLogEventBus: false,
@@ -24,6 +26,9 @@ void main() {
     expect(Modular.isRegistered<SessionBloc>(), isTrue);
     expect(Modular.get<BookingDraftCubit>(), isA<BookingDraftCubit>());
 
-    expect(Modular.routerConfig.namedLocation('Signin'), '/auth/signin');
+    expect(
+      Modular.routerConfig.namedLocation(AuthRoutes.signin),
+      AuthRoutes.signinPath,
+    );
   });
 }

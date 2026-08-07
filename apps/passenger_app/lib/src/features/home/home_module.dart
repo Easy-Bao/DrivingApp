@@ -18,7 +18,7 @@ class HomeModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: HomeRoutes.addCategory,
-      'home/add-category',
+      HomeRoutes.addCategoryPath,
       child: (context, GoRouterState state) {
         final extra = SafeRouteExtra.asMap(state.extra);
         final onSave = extra['onSave'] as Function(SavedPlace)?;
@@ -38,7 +38,7 @@ class HomeModule {
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: HomeRoutes.home,
-      'home',
+      HomeRoutes.homePath,
       child: (context, GoRouterState state) => MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => Modular.get<HomeCubit>()),

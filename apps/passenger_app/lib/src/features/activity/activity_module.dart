@@ -16,7 +16,7 @@ class ActivityModule {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: ActivityRoutes.viewAllRecentActivity,
-      'activity/view-all',
+      ActivityRoutes.viewAllRecentActivityPath,
       child: (context, GoRouterState state) =>
           const PassengerViewAllActivityPage(),
       transition: AppTransitions.push.toLeft,
@@ -24,7 +24,7 @@ class ActivityModule {
     ),
     ChildRoute(
       name: ActivityRoutes.activityViewDetails,
-      'activity/viewDetails',
+      ActivityRoutes.activityViewDetailsPath,
       child: (context, GoRouterState state) {
         final ride = state.extra is RideHistoryModel
             ? state.extra as RideHistoryModel
@@ -36,7 +36,7 @@ class ActivityModule {
     ),
     ChildRoute(
       name: ActivityRoutes.activityTrackDriver,
-      'activity/trackDriver',
+      ActivityRoutes.activityTrackDriverPath,
       child: (context, GoRouterState state) {
         final ride = state.extra is RideHistoryModel
             ? state.extra as RideHistoryModel
@@ -53,7 +53,7 @@ class ActivityModule {
     ),
     ChildRoute(
       name: ActivityRoutes.passengerRating,
-      'activity/rating',
+      ActivityRoutes.passengerRatingPath,
       child: (context, GoRouterState state) {
         final driverId = state.uri.queryParameters['driverId'] ?? '';
         final driverName = state.uri.queryParameters['driverName'] ?? '';
@@ -69,7 +69,7 @@ class ActivityModule {
     ),
     ChildRoute(
       name: ActivityRoutes.passengerPayment,
-      'activity/payment',
+      ActivityRoutes.passengerPaymentPath,
       child: (context, GoRouterState state) {
         final ride = state.extra is RideHistoryModel
             ? state.extra as RideHistoryModel
@@ -88,7 +88,7 @@ class ActivityModule {
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: ActivityRoutes.activity,
-      'activity',
+      ActivityRoutes.activityPath,
       child: (context, GoRouterState state) => const PassengerActivityPage(),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
