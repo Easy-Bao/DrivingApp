@@ -1,6 +1,7 @@
 package mapbox
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -92,7 +93,7 @@ type categoryResult struct {
 }
 
 func (provider *Provider) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
-	if len([]byte(query)) > maxSearchQueryBytes || !origin.Valid() {
+	if len(query) > maxSearchQueryBytes || !origin.Valid() {
 		return nil, fmt.Errorf("invalid location search")
 	}
 	queryParams := url.Values{
@@ -127,12 +128,9 @@ func (provider *Provider) Nearby(ctx context.Context, origin domain.Coordinates,
 	results := make(chan categoryResult, len(categories))
 	var waitGroup sync.WaitGroup
 	for _, category := range categories {
-		category := category
-		waitGroup.Add(1)
-		go func() {
-			defer waitGroup.Done()
+		waitGroup.Go(func() {
 			results <- provider.nearbyCategory(ctx, origin, category)
-		}()
+		})
 	}
 	waitGroup.Wait()
 	close(results)
@@ -153,11 +151,11 @@ func (provider *Provider) Nearby(ctx context.Context, origin domain.Coordinates,
 	}
 
 	places = uniqueNearbyPlaces(places)
-	sort.SliceStable(places, func(i, j int) bool {
-		if places[i].DistanceKm == places[j].DistanceKm {
-			return places[i].Name < places[j].Name
+	slices.SortStableFunc(places, func(left, right domain.Place) int {
+		if distanceOrder := cmp.Compare(left.DistanceKm, right.DistanceKm); distanceOrder != 0 {
+			return distanceOrder
 		}
-		return places[i].DistanceKm < places[j].DistanceKm
+		return cmp.Compare(left.Name, right.Name)
 	})
 
 	start := (page - 1) * nearbyPageSize
@@ -439,12 +437,16 @@ func featureID(candidate feature) string {
 
 func featureCoordinates(candidate feature) (float64, float64, bool) {
 	if len(candidate.Geometry.Coordinates) >= 2 {
-		return candidate.Geometry.Coordinates[0], candidate.Geometry.Coordinates[1], true
+		longitude := candidate.Geometry.Coordinates[0]
+		latitude := candidate.Geometry.Coordinates[1]
+		return longitude, latitude, (domain.Coordinates{Latitude: latitude, Longitude: longitude}).Valid()
 	}
 	if candidate.Properties.Coordinates.Longitude == nil || candidate.Properties.Coordinates.Latitude == nil {
 		return 0, 0, false
 	}
-	return *candidate.Properties.Coordinates.Longitude, *candidate.Properties.Coordinates.Latitude, true
+	longitude := *candidate.Properties.Coordinates.Longitude
+	latitude := *candidate.Properties.Coordinates.Latitude
+	return longitude, latitude, (domain.Coordinates{Latitude: latitude, Longitude: longitude}).Valid()
 }
 
 func featureContextNames(candidate feature) map[string]string {
@@ -558,7 +560,14 @@ func (provider *Provider) fetchJSON(ctx context.Context, endpoint string, target
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return fmt.Errorf("location provider returned status %d", response.StatusCode)
 	}
-	return json.NewDecoder(io.LimitReader(response.Body, maxProviderResponseBytes)).Decode(target)
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxProviderResponseBytes+1))
+	if err != nil {
+		return err
+	}
+	if int64(len(body)) > maxProviderResponseBytes {
+		return fmt.Errorf("location provider response exceeds %d bytes", maxProviderResponseBytes)
+	}
+	return json.Unmarshal(body, target)
 }
 
 func coordinate(value float64) string {
@@ -572,5 +581,6 @@ func haversine(lat1, lng1, lat2, lng2 float64) float64 {
 	dLng := (lng2 - lng1) * radians
 	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
 		math.Cos(lat1*radians)*math.Cos(lat2*radians)*math.Sin(dLng/2)*math.Sin(dLng/2)
+	a = min(1, max(0, a))
 	return earthRadiusKm * 2 * math.Asin(math.Sqrt(a))
 }

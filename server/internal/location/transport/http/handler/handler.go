@@ -3,6 +3,7 @@ package httptransport
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -15,6 +16,8 @@ import (
 type Handler struct {
 	service *usecase.Service
 }
+
+const maxRoutePayloadBytes = 16 << 10
 
 func NewHandler(service *usecase.Service) *Handler {
 	return &Handler{service: service}
@@ -36,7 +39,7 @@ func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request
 	}
 	places, err := handler.service.Nearby(request.Context(), coordinates, page)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "location provider unavailable")
+		writeServiceError(writer, err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{"places": places, "page": page})
@@ -54,16 +57,8 @@ func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	places, err := handler.service.Search(request.Context(), query, coordinates)
-	if errors.Is(err, usecase.ErrEmptySearch) {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
-	if errors.Is(err, usecase.ErrSearchTooLong) || errors.Is(err, usecase.ErrInvalidCoordinates) {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "location provider unavailable")
+		writeServiceError(writer, err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{"places": places})
@@ -77,7 +72,7 @@ func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Reques
 	}
 	place, err := handler.service.ReverseGeocode(request.Context(), coordinates)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "location provider unavailable")
+		writeServiceError(writer, err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, place)
@@ -85,9 +80,7 @@ func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Reques
 
 func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request) {
 	var payload dto.RouteRequest
-	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 16<<10))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&payload); err != nil {
+	if err := decodeRouteRequest(writer, request, &payload); err != nil {
 		writeError(writer, http.StatusBadRequest, "invalid route payload")
 		return
 	}
@@ -97,15 +90,36 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 	route, err := handler.service.Route(request.Context(), payload.Origin, payload.Destination, options)
-	if errors.Is(err, usecase.ErrInvalidCoordinates) {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "location provider unavailable")
+		writeServiceError(writer, err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, route)
+}
+
+func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, payload *dto.RouteRequest) error {
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, maxRoutePayloadBytes))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(payload); err != nil {
+		return err
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return errors.New("route payload must contain exactly one JSON value")
+	}
+	return nil
+}
+
+func writeServiceError(writer http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, usecase.ErrEmptySearch),
+		errors.Is(err, usecase.ErrSearchTooLong),
+		errors.Is(err, usecase.ErrInvalidCoordinates),
+		errors.Is(err, usecase.ErrInvalidNearbyPage),
+		errors.Is(err, usecase.ErrInvalidRouteOptions):
+		writeError(writer, http.StatusBadRequest, err.Error())
+	default:
+		writeError(writer, http.StatusBadGateway, "location provider unavailable")
+	}
 }
 
 func coordinatesFromQuery(request *http.Request) (domain.Coordinates, error) {

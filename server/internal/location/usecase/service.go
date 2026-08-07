@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	ErrEmptySearch        = errors.New("location search query is empty")
-	ErrSearchTooLong      = errors.New("location search query is too long")
-	ErrInvalidCoordinates = errors.New("location coordinates are invalid")
-	ErrInvalidNearbyPage  = errors.New("location page is invalid")
+	ErrEmptySearch         = errors.New("location search query is empty")
+	ErrSearchTooLong       = errors.New("location search query is too long")
+	ErrInvalidCoordinates  = errors.New("location coordinates are invalid")
+	ErrInvalidNearbyPage   = errors.New("location page is invalid")
+	ErrInvalidRouteOptions = errors.New("location route options are invalid")
 )
 
 const (
@@ -40,7 +41,7 @@ func (service *Service) Search(ctx context.Context, query string, origin domain.
 	if query == "" {
 		return nil, ErrEmptySearch
 	}
-	if len([]byte(query)) > maxSearchQueryBytes {
+	if len(query) > maxSearchQueryBytes {
 		return nil, ErrSearchTooLong
 	}
 	if !origin.Valid() {
@@ -103,5 +104,9 @@ func (service *Service) Route(ctx context.Context, origin, destination domain.Co
 	if !origin.Valid() || !destination.Valid() {
 		return nil, ErrInvalidCoordinates
 	}
-	return service.provider.Route(ctx, origin, destination, options)
+	normalizedOptions, err := options.Normalize()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidRouteOptions, err)
+	}
+	return service.provider.Route(ctx, origin, destination, normalizedOptions)
 }

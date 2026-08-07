@@ -2,6 +2,7 @@ package location_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -49,6 +50,18 @@ func (providerStub) Route(context.Context, domain.Coordinates, domain.Coordinate
 	return &domain.Route{DistanceKm: 1}, nil
 }
 
+type routeProviderSpy struct {
+	providerStub
+	options domain.RouteOptions
+	calls   int
+}
+
+func (provider *routeProviderSpy) Route(_ context.Context, _, _ domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+	provider.calls++
+	provider.options = options
+	return &domain.Route{DistanceKm: 1}, nil
+}
+
 func TestServiceRejectsEmptySearch(t *testing.T) {
 	service := usecase.NewService(providerStub{})
 	_, err := service.Search(context.Background(), "  ", domain.Coordinates{})
@@ -93,5 +106,27 @@ func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
 		domain.RouteOptions{},
 	); err != usecase.ErrInvalidCoordinates {
 		t.Fatalf("invalid route error = %v, want %v", err, usecase.ErrInvalidCoordinates)
+	}
+}
+
+func TestServiceOwnsRouteOptionValidationAndNormalization(t *testing.T) {
+	provider := &routeProviderSpy{}
+	service := usecase.NewService(provider)
+	origin := domain.Coordinates{Latitude: 7.8, Longitude: 123.4}
+	destination := domain.Coordinates{Latitude: 7.9, Longitude: 123.5}
+
+	if _, err := service.Route(context.Background(), origin, destination, domain.RouteOptions{}); err != nil {
+		t.Fatalf("route failed: %v", err)
+	}
+	if provider.options.Preference != domain.RoutePreferenceFastest || provider.options.Profile != domain.RouteProfileDriving {
+		t.Fatalf("provider received unnormalized options: %#v", provider.options)
+	}
+
+	_, err := service.Route(context.Background(), origin, destination, domain.RouteOptions{Profile: "walking"})
+	if !errors.Is(err, usecase.ErrInvalidRouteOptions) {
+		t.Fatalf("invalid options error = %v, want %v", err, usecase.ErrInvalidRouteOptions)
+	}
+	if provider.calls != 1 {
+		t.Fatalf("provider calls = %d, want 1", provider.calls)
 	}
 }

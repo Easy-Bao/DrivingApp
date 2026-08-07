@@ -3,6 +3,7 @@ package mapbox
 import (
 	"context"
 	"io"
+	"math"
 	"net/http"
 	"strings"
 	"sync"
@@ -94,6 +95,36 @@ func TestNearbyPaginatesMergedResults(t *testing.T) {
 	pageTwo, err := provider.Nearby(context.Background(), origin, 2)
 	if err != nil || len(pageTwo) != 0 {
 		t.Fatalf("page two = %#v, %v", pageTwo, err)
+	}
+}
+
+func TestPlaceFromFeatureRejectsOutOfRangeCoordinates(t *testing.T) {
+	candidate := feature{}
+	candidate.Geometry.Coordinates = []float64{181, 91}
+
+	if _, ok := placeFromFeature(candidate, domain.Coordinates{}); ok {
+		t.Fatal("expected out-of-range provider coordinates to be rejected")
+	}
+}
+
+func TestProviderRejectsTrailingResponseData(t *testing.T) {
+	provider := NewProvider("test-token")
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			return responseWithBody(request, `{"features":[]} {}`), nil
+		}),
+	}
+
+	_, err := provider.Search(context.Background(), "Pagadian", domain.Coordinates{Latitude: 7.8, Longitude: 123.4})
+	if err == nil {
+		t.Fatal("expected trailing provider data to be rejected")
+	}
+}
+
+func TestHaversineRemainsFiniteForAntipodalCoordinates(t *testing.T) {
+	distance := haversine(0, 0, 0, 180)
+	if math.IsNaN(distance) || math.IsInf(distance, 0) || distance <= 0 {
+		t.Fatalf("antipodal distance = %v, want a finite positive value", distance)
 	}
 }
 
