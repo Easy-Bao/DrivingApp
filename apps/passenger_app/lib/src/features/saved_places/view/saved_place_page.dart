@@ -194,7 +194,6 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 6),
               Text(
                 'Book these in one tap from Home',
                 style: TextStyle(

@@ -113,9 +113,7 @@ class _AccountPageState extends State<AccountPage> {
                     ),
 
                     const SizedBox(height: 24),
-
                     _buildSectionTitle('PLACES AND SAFETY'),
-
                     const SizedBox(height: 12),
                     _buildMenuTile(
                       icon: LucideIcons.map_pin,
