@@ -2,6 +2,7 @@ import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
+import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await BackgroundTelemetryService.stopExistingServiceForStartup();
   final prefs = await SharedPreferences.getInstance();
 
   await dotenv.load(fileName: '.env', isOptional: true);

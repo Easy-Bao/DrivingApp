@@ -96,6 +96,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Prepare optional mobile environment assets
+        run: |
+          for app in driver_app passenger_app; do
+            printf '%s\n' '# CI placeholder; runtime configuration is injected during app builds.' > "apps/${app}/.env"
+          done
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:

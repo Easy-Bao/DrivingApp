@@ -5,12 +5,14 @@ import 'package:passenger_app/app_module.dart';
 import 'package:passenger_app/app_widget.dart';
 import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/location/location.dart';
+import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/features/location/location_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await BackgroundTelemetryService.stopExistingServiceForStartup();
   final prefs = await SharedPreferences.getInstance();
 
   await dotenv.load(fileName: '.env', isOptional: true);
