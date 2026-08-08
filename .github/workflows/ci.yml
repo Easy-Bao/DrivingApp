@@ -24,7 +24,6 @@ jobs:
     outputs:
       mobile: ${{ steps.scope.outputs.mobile }}
       backend: ${{ steps.scope.outputs.backend }}
-      admin_web: ${{ steps.scope.outputs.admin_web }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -41,12 +40,10 @@ jobs:
         run: |
           mobile=false
           backend=false
-          admin_web=false
 
           if [[ "${EVENT_NAME}" == "push" ]]; then
             mobile=true
             backend=true
-            admin_web=true
           else
             while IFS= read -r file; do
               case "${file}" in
@@ -56,13 +53,9 @@ jobs:
                 server/*|Dockerfile|docker-compose.yml)
                   backend=true
                   ;;
-                web/admin_app/*)
-                  admin_web=true
-                  ;;
                 scripts/*|justfile|.github/*)
                   mobile=true
                   backend=true
-                  admin_web=true
                   ;;
               esac
             done < <(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")
@@ -70,7 +63,6 @@ jobs:
 
           echo "mobile=${mobile}" >> "${GITHUB_OUTPUT}"
           echo "backend=${backend}" >> "${GITHUB_OUTPUT}"
-          echo "admin_web=${admin_web}" >> "${GITHUB_OUTPUT}"
 
   repository-integrity:
     name: Repository Integrity
@@ -161,35 +153,6 @@ jobs:
 
       - name: Test backend
         run: ./scripts/ci/test_backend_services.sh
-
-  admin_web_quality_gate:
-    name: Admin Web Quality Gate
-    needs: change_scope
-    if: needs.change_scope.outputs.admin_web == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web/admin_app
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Check Admin web
-        run: bun run check
-
-      - name: Test Admin web
-        run: bun run test
-
-      - name: Build Admin web
-        run: bun run build
 
   dependency-review:
     name: Dependency Security Review
