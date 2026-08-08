@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
@@ -12,6 +11,7 @@ import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:passenger_app/src/features/home/view/widgets/home_location_row_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/public_driver_summary_card_widget.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
@@ -35,9 +35,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  StreamSubscription? _locationSubscription;
   late final BookingBloc _bookingBloc;
-  bool _isLoadingLocation = false;
 
   @override
   Widget build(BuildContext context) {
@@ -81,14 +79,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  void dispose() {
-    if (_locationSubscription != null) {
-      unawaited(_locationSubscription!.cancel());
-    }
-    super.dispose();
-  }
-
-  @override
   void initState() {
     super.initState();
     _bookingBloc = Modular.get<BookingBloc>();
@@ -98,7 +88,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       if (BlocProvider.of<LocationAccessCubit>(context).state
           is LocationAccessReady) {
-        await _initLocationAndLoadData();
+        await BlocProvider.of<HomeCubit>(context).startLocationTracking();
       }
     });
   }
@@ -107,12 +97,12 @@ class _HomePageState extends State<HomePage> {
     BuildContext context,
     LocationAccessViewState state,
   ) {
+    final homeCubit = BlocProvider.of<HomeCubit>(context);
     switch (state) {
       case LocationAccessReady():
-        unawaited(_initLocationAndLoadData());
+        unawaited(homeCubit.startLocationTracking());
       case LocationAccessUnavailable():
-        unawaited(_stopLocationUpdates());
-        BlocProvider.of<HomeCubit>(context).clearLocation();
+        unawaited(homeCubit.stopLocationTracking(clearAddress: true));
       case LocationAccessChecking():
         break;
     }
@@ -282,75 +272,25 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildShimmerLocationRow() {
-    return Row(
-      children: [
-        const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
-        const SizedBox(width: 6),
-        Container(
-          width: 140,
-          height: 12,
-          decoration: BoxDecoration(
-            color: AppTheme.neutralColor,
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildLocationRow() {
-    return BlocBuilder<HomeCubit, HomeState>(
-      buildWhen: (prev, curr) =>
-          prev.currentAddress != curr.currentAddress ||
-          prev.isLoading != curr.isLoading,
-      builder: (context, state) {
-        Widget content;
-        if (state.isLoading) {
-          content = _buildShimmerLocationRow();
-        } else if (state.currentAddress.isEmpty) {
-          content = const Row(
-            children: [
-              Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
-              SizedBox(width: 6),
-              Text(
-                'Turn on location to set pickup',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor,
-                ),
+    return BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
+      builder: (context, accessState) {
+        return BlocBuilder<HomeCubit, HomeState>(
+          buildWhen: (prev, curr) =>
+              prev.currentAddress != curr.currentAddress ||
+              prev.isLoading != curr.isLoading,
+          builder: (context, homeState) {
+            return HomeLocationRowWidget(
+              isAccessChecking: accessState is LocationAccessChecking,
+              hasLocationAccess: accessState is LocationAccessReady,
+              isAddressLoading: homeState.isLoading,
+              currentAddress: homeState.currentAddress,
+              onRequestLocation: _showLocationPrompt,
+              onRetryAddress: () => unawaited(
+                BlocProvider.of<HomeCubit>(context).refreshCurrentLocation(),
               ),
-            ],
-          );
-        } else {
-          content = Row(
-            children: [
-              const Icon(
-                LucideIcons.map_pin,
-                size: 14,
-                color: AppTheme.primaryColor,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  state.currentAddress,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: state.currentAddress.isEmpty ? _showLocationPrompt : null,
-          child: content,
+            );
+          },
         );
       },
     );
@@ -706,50 +646,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   IconData _iconFromName(String name) => savedPlaceIconFromName(name);
-
-  Future<void> _initLocationAndLoadData() async {
-    if (!mounted || _isLoadingLocation) return;
-    _isLoadingLocation = true;
-    try {
-      final cubit = BlocProvider.of<HomeCubit>(context);
-      final locationAccessCubit = BlocProvider.of<LocationAccessCubit>(context);
-      if (locationAccessCubit.state is! LocationAccessReady) {
-        return;
-      }
-
-      final position =
-          await LocationService.getCurrentPosition() ??
-          LocationService.lastPosition;
-      if (!mounted) return;
-      if (position == null) {
-        await locationAccessCubit.refresh();
-        return;
-      }
-
-      await cubit.loadHomeData(lat: position.latitude, lng: position.longitude);
-      if (!mounted) return;
-
-      await _locationSubscription?.cancel();
-      _locationSubscription = LocationService.getPositionStream().listen(
-        (pos) async {
-          if (!mounted) return;
-          try {
-            await cubit.loadHomeData(lat: pos.latitude, lng: pos.longitude);
-          } catch (_) {}
-        },
-        onError: (_) {
-          if (mounted) unawaited(locationAccessCubit.refresh());
-        },
-      );
-    } finally {
-      _isLoadingLocation = false;
-    }
-  }
-
-  Future<void> _stopLocationUpdates() async {
-    await _locationSubscription?.cancel();
-    _locationSubscription = null;
-  }
 
   Future<void> _loadSavedPlaces() async {
     if (!mounted) return;

@@ -1,25 +1,40 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
+import 'package:passenger_app/src/features/home/domain/entities/current_location.dart';
+import 'package:passenger_app/src/features/home/domain/failures/current_location_failure.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockHomeRepo extends Mock implements IPassengerHomeRepository {}
 
-HomeCubit _makeCubit(IPassengerHomeRepository repo) =>
-    HomeCubit(repository: repo);
+class MockCurrentLocationRepo extends Mock
+    implements ICurrentLocationRepository {}
+
+HomeCubit _makeCubit(
+  IPassengerHomeRepository repo,
+  ICurrentLocationRepository currentLocationRepo,
+) =>
+    HomeCubit(repository: repo, currentLocationRepository: currentLocationRepo);
 
 void main() {
   late MockHomeRepo repo;
+  late MockCurrentLocationRepo currentLocationRepo;
 
-  setUp(() => repo = MockHomeRepo());
+  setUp(() {
+    repo = MockHomeRepo();
+    currentLocationRepo = MockCurrentLocationRepo();
+  });
 
   group('HomeCubit — initial state', () {
     test('starts with empty address and no locations', () async {
-      final cubit = _makeCubit(repo);
+      final cubit = _makeCubit(repo, currentLocationRepo);
       expect(cubit.state.isLoading, isFalse);
       expect(cubit.state.currentAddress, '');
       expect(cubit.state.recentLocations, isEmpty);
@@ -50,7 +65,7 @@ void main() {
         when(
           () => repo.getRecentLocations(),
         ).thenAnswer((_) async => Right(mockLocations));
-        return _makeCubit(repo);
+        return _makeCubit(repo, currentLocationRepo);
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
       expect: () => [
@@ -75,7 +90,7 @@ void main() {
         when(
           () => repo.getRecentLocations(),
         ).thenAnswer((_) async => const Left(ServerFailure('network error')));
-        return _makeCubit(repo);
+        return _makeCubit(repo, currentLocationRepo);
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
       expect: () => [
@@ -88,16 +103,90 @@ void main() {
   group('HomeCubit — updateAddress()', () {
     blocTest<HomeCubit, HomeState>(
       'emits updated address without touching other state',
-      build: () => _makeCubit(repo),
+      build: () => _makeCubit(repo, currentLocationRepo),
       act: (cubit) => cubit.updateAddress('SM City Pagadian'),
       expect: () => [const HomeState(currentAddress: 'SM City Pagadian')],
     );
 
     blocTest<HomeCubit, HomeState>(
       'clears a stale pickup when location access is lost',
-      build: () => _makeCubit(repo)..updateAddress('SM City Pagadian'),
+      build: () =>
+          _makeCubit(repo, currentLocationRepo)
+            ..updateAddress('SM City Pagadian'),
       act: (cubit) => cubit.clearLocation(),
       expect: () => const [HomeState()],
+    );
+  });
+
+  group('HomeCubit — location tracking', () {
+    blocTest<HomeCubit, HomeState>(
+      'uses the position stream when the immediate GPS fix is unavailable',
+      setUp: () {
+        when(
+          () => currentLocationRepo.getCurrentLocation(),
+        ).thenAnswer((_) async => const Left(CurrentLocationFailure()));
+        when(() => currentLocationRepo.watchCurrentLocation()).thenAnswer(
+          (_) => Stream.value(
+            const Right(
+              CurrentLocation(latitude: 7.828282, longitude: 123.434343),
+            ),
+          ),
+        );
+        when(
+          () => repo.resolveAddress(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right('Tuburan, Pagadian'));
+        when(
+          () => repo.getRecentLocations(),
+        ).thenAnswer((_) async => const Right([]));
+      },
+      build: () => _makeCubit(repo, currentLocationRepo),
+      act: (cubit) => cubit.startLocationTracking(),
+      expect: () => const [
+        HomeState(isLoading: true),
+        HomeState(currentAddress: 'Tuburan, Pagadian'),
+      ],
+      verify: (_) {
+        verify(() => currentLocationRepo.watchCurrentLocation()).called(1);
+        verify(() => currentLocationRepo.getCurrentLocation()).called(1);
+      },
+    );
+
+    test(
+      'ignores an in-flight GPS fix after location access is lost',
+      () async {
+        final locationCompleter = Completer<Either<Failure, CurrentLocation>>();
+        when(
+          () => currentLocationRepo.watchCurrentLocation(),
+        ).thenAnswer((_) => const Stream.empty());
+        when(
+          () => currentLocationRepo.getCurrentLocation(),
+        ).thenAnswer((_) => locationCompleter.future);
+
+        final cubit = _makeCubit(repo, currentLocationRepo)
+          ..updateAddress('SM City Pagadian');
+        final start = cubit.startLocationTracking();
+        await Future<void>.delayed(Duration.zero);
+
+        await cubit.stopLocationTracking(clearAddress: true);
+        locationCompleter.complete(
+          const Right(
+            CurrentLocation(latitude: 7.828282, longitude: 123.434343),
+          ),
+        );
+        await start;
+
+        expect(cubit.state.currentAddress, isEmpty);
+        verifyNever(
+          () => repo.resolveAddress(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        );
+        await cubit.close();
+      },
     );
   });
 }

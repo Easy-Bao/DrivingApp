@@ -10,8 +10,11 @@ import 'package:passenger_app/src/features/activity/domain/repositories/i_activi
 import 'package:passenger_app/src/features/chat/chat_module.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
+import 'package:passenger_app/src/features/home/data/datasources/current_location_data_source.dart';
+import 'package:passenger_app/src/features/home/data/repositories/current_location_repository.dart';
 import 'package:passenger_app/src/features/home/data/repositories/home_repository.dart';
 import 'package:passenger_app/src/features/home/data/repositories/public_driver_summary_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_public_driver_summary_repository.dart';
 import 'package:passenger_app/src/features/home/home_module.dart';
@@ -58,6 +61,14 @@ class PassengerModule extends Module {
           secureSessionService: i.get<SecureSessionService>(),
         ),
       )
+      ..addLazySingleton<CurrentLocationDataSource>(
+        (i) => DeviceCurrentLocationDataSource(),
+      )
+      ..addLazySingleton<ICurrentLocationRepository>(
+        (i) => CurrentLocationRepository(
+          dataSource: i.get<CurrentLocationDataSource>(),
+        ),
+      )
       ..addLazySingleton<IPublicDriverSummaryRepository>(
         (i) => PublicDriverSummaryRepository(
           remoteDataSource: i.get<BiddingRemoteDataSource>(),
@@ -84,7 +95,10 @@ class PassengerModule extends Module {
         (i) => InboxCubit(inboxRepository: i.get<IInboxRepository>()),
       )
       ..addFactory<HomeCubit>(
-        (i) => HomeCubit(repository: i.get<IPassengerHomeRepository>()),
+        (i) => HomeCubit(
+          repository: i.get<IPassengerHomeRepository>(),
+          currentLocationRepository: i.get<ICurrentLocationRepository>(),
+        ),
       )
       ..addLazySingleton<PublicDriverSummaryCubit>(
         (i) => PublicDriverSummaryCubit(
