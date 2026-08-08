@@ -13,6 +13,28 @@ String _shortenAddress(String fullAddress) {
   return fullAddress;
 }
 
+String _firstContextValue(PlaceModel place) {
+  const cityContextKeys = [
+    'place',
+    'locality',
+    'municipality',
+    'district',
+    'county',
+    'region',
+  ];
+  for (final key in cityContextKeys) {
+    final value = place.context[key]?.trim();
+    if (value != null && value.isNotEmpty) return value;
+  }
+  return '';
+}
+
+String formatHomeAddress(PlaceModel place) {
+  final city = _firstContextValue(place);
+  if (city.isNotEmpty) return city;
+  return _shortenAddress(place.fullAddress);
+}
+
 class HomeRepository implements IPassengerHomeRepository {
   final PassengerRemoteDataSource _passengerRemoteDataSource;
   final SecureSessionService _secureSessionService;
@@ -51,8 +73,9 @@ class HomeRepository implements IPassengerHomeRepository {
   }) async {
     try {
       final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
-      if (place != null && place.fullAddress.isNotEmpty) {
-        return Right(_shortenAddress(place.fullAddress));
+      if (place != null) {
+        final address = formatHomeAddress(place);
+        if (address.isNotEmpty) return Right(address);
       }
       return const Right('');
     } catch (error) {

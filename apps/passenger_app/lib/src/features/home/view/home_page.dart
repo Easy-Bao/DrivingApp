@@ -83,12 +83,13 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _bookingBloc = Modular.get<BookingBloc>();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _loadSavedPlaces();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_loadSavedPlaces());
       if (!mounted) return;
       if (BlocProvider.of<LocationAccessCubit>(context).state
           is LocationAccessReady) {
-        await BlocProvider.of<HomeCubit>(context).startLocationTracking();
+        unawaited(BlocProvider.of<HomeCubit>(context).startLocationTracking());
       }
     });
   }
