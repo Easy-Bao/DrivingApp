@@ -228,8 +228,6 @@ class _ForgotPasswordPageContentState
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          SizedBox(width: 10),
-                                          Icon(LucideIcons.send_horizontal),
                                         ],
                                       ),
                               ),
