@@ -90,7 +90,14 @@ class DashboardCubit extends Cubit<DashboardState> {
 
     if (updateResult.isLeft()) {
       updateResult.fold(
-        (failure) => emit(state.copyWith(errorMessage: failure.message)),
+        (failure) => emit(
+          state.copyWith(
+            isOnline: false,
+            isLoadingHeatmap: false,
+            surgeCells: const [],
+            errorMessage: failure.message,
+          ),
+        ),
         (_) {},
       );
       return;
@@ -147,8 +154,6 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   Future<void> forceOffline({required double lat, required double lng}) async {
-    if (!state.isOnline) return;
-
     final updateResult = await _repository.updateOnlineStatus(
       isOnline: false,
       lat: lat,
@@ -156,14 +161,46 @@ class DashboardCubit extends Cubit<DashboardState> {
     );
 
     updateResult.fold(
-      (failure) => emit(state.copyWith(errorMessage: failure.message)),
+      (failure) => emit(
+        state.copyWith(
+          isOnline: false,
+          isLoadingHeatmap: false,
+          surgeCells: const [],
+          errorMessage: failure.message,
+        ),
+      ),
       (_) => emit(
         state.copyWith(
           isOnline: false,
+          isLoadingHeatmap: false,
           surgeCells: const [],
           errorMessage: null,
         ),
       ),
     );
+  }
+
+  Future<bool> refreshOnlinePresence({
+    required double lat,
+    required double lng,
+  }) async {
+    if (!state.isOnline) return false;
+
+    final updateResult = await _repository.updateOnlineStatus(
+      isOnline: true,
+      lat: lat,
+      lng: lng,
+    );
+    return updateResult.fold((failure) {
+      emit(
+        state.copyWith(
+          isOnline: false,
+          isLoadingHeatmap: false,
+          surgeCells: const [],
+          errorMessage: failure.message,
+        ),
+      );
+      return false;
+    }, (_) => true);
   }
 }

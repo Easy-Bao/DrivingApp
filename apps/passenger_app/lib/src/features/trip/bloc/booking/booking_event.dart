@@ -17,6 +17,7 @@ class LocateNearestDriverEvent extends BookingEvent {
 }
 
 class StartDirectBookingEvent extends BookingEvent {
+  final DriverModel targetDriver;
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
@@ -24,6 +25,7 @@ class StartDirectBookingEvent extends BookingEvent {
   final double durationMinutes;
 
   const StartDirectBookingEvent({
+    required this.targetDriver,
     required this.trip,
     required this.pickupLat,
     required this.pickupLng,

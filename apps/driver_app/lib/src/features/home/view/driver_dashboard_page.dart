@@ -1,9 +1,9 @@
+import 'dart:async';
+import 'dart:developer' as dev;
+
 import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
-
-import 'dart:async';
-
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
@@ -41,12 +41,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   late final AnimationController _pulseCtrl;
   late final AnimationController _availabilityCtrl;
   Timer? _rideTriggerTimer;
+  Timer? _presenceHeartbeatTimer;
   Timer? _locationAccessPoller;
   StreamSubscription<Position>? _locationSubscription;
   List<Map<String, dynamic>> _activeBids = [];
   List<Map<String, dynamic>> _activeTrips = [];
   LiveMapBloc? _liveMapBloc;
   bool _isTogglingOnline = false;
+  bool _isResumingOnline = false;
+  bool _isRefreshingPresence = false;
   bool? _pendingOnline;
   String? _submittingBidId;
   String? _completingTripId;
@@ -85,6 +88,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _pulseCtrl.dispose();
     _availabilityCtrl.dispose();
     _rideTriggerTimer?.cancel();
+    _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
     _locationSubscription?.cancel();
     _liveMapBloc?.close();
@@ -112,11 +116,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
 
-    await LocationService.getCurrentPosition();
-    if (!mounted) return;
     if (dashboardState.isOnline) {
-      _publishCurrentLocation();
-      _startPolling();
+      await _resumeOnlineTelemetry();
     }
   }
 
@@ -155,12 +156,33 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _resumeOnlineTelemetry() async {
-    await LocationService.getCurrentPosition();
-    if (!mounted) return;
-    final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
-    if (!dashboardState.isOnline) return;
-    _publishCurrentLocation();
-    _startPolling();
+    if (_isResumingOnline) return;
+    _isResumingOnline = true;
+    try {
+      await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      final position = LocationService.lastPosition;
+      final cubit = BlocProvider.of<DashboardCubit>(context);
+      if (!cubit.state.isOnline || position == null) return;
+
+      final presenceRestored = await cubit.refreshOnlinePresence(
+        lat: position.latitude,
+        lng: position.longitude,
+      );
+      if (!mounted || !presenceRestored) return;
+      _publishCurrentLocation();
+      _startPolling();
+    } catch (error) {
+      dev.log('Unable to restore online driver telemetry: $error');
+      if (!mounted) return;
+      final position = LocationService.lastPosition;
+      await BlocProvider.of<DashboardCubit>(context).forceOffline(
+        lat: position?.latitude ?? 0,
+        lng: position?.longitude ?? 0,
+      );
+    } finally {
+      _isResumingOnline = false;
+    }
   }
 
   void _publishCurrentLocation() {
@@ -183,6 +205,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         DispatchTelemetryLocationEvent(lat: pos.latitude, lng: pos.longitude),
       );
     });
+
+    _presenceHeartbeatTimer?.cancel();
+    _presenceHeartbeatTimer = Timer.periodic(
+      const Duration(seconds: 20),
+      (_) => unawaited(_refreshOnlinePresence()),
+    );
 
     _rideTriggerTimer?.cancel();
     _rideTriggerTimer = Timer.periodic(const Duration(seconds: 4), (
@@ -263,11 +291,30 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     });
   }
 
+  Future<void> _refreshOnlinePresence() async {
+    if (!mounted || _isRefreshingPresence) return;
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    final position = LocationService.lastPosition;
+    if (!cubit.state.isOnline || position == null) return;
+
+    _isRefreshingPresence = true;
+    try {
+      await cubit.refreshOnlinePresence(
+        lat: position.latitude,
+        lng: position.longitude,
+      );
+    } finally {
+      _isRefreshingPresence = false;
+    }
+  }
+
   void _stopPolling() {
     _locationSubscription?.cancel();
     _locationSubscription = null;
     _rideTriggerTimer?.cancel();
     _rideTriggerTimer = null;
+    _presenceHeartbeatTimer?.cancel();
+    _presenceHeartbeatTimer = null;
     _announcedBidIds.clear();
     if (mounted) {
       setState(() {

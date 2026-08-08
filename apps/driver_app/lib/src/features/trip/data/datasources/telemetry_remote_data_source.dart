@@ -52,7 +52,12 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/v1/telemetry/passenger/$tripId',
       );
-      return response.data ?? {};
+      final data = response.data ?? const <String, dynamic>{};
+      return {
+        ...data,
+        'lat': data['lat'] ?? data['latitude'],
+        'lng': data['lng'] ?? data['longitude'],
+      };
     } catch (_) {
       return {};
     }

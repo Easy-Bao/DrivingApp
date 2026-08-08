@@ -26,11 +26,15 @@ BookingBloc _makeBookingBloc({
   required BiddingRemoteDataSource biddingDataSource,
   required SecureSessionService secureSessionService,
   InboxCubit? inboxCubit,
+  int nearestDriverMaxAttempts = 5,
+  Duration nearestDriverRetryDelay = const Duration(seconds: 2),
 }) => BookingBloc(
   driverRepository: driverRepo,
   biddingDataSource: biddingDataSource,
   secureSessionService: secureSessionService,
   inboxCubit: inboxCubit,
+  nearestDriverMaxAttempts: nearestDriverMaxAttempts,
+  nearestDriverRetryDelay: nearestDriverRetryDelay,
 );
 
 void main() {
@@ -133,6 +137,54 @@ void main() {
             .having((s) => s.isLoadingReviews, 'isLoadingReviews', false),
       ],
     );
+
+    blocTest<BookingBloc, BookingState>(
+      'reports an availability outage instead of claiming no driver exists',
+      build: () {
+        when(
+          () => driverRepo.getNearbyDrivers(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer(
+          (_) async =>
+              const Left(NetworkFailure('Unable to check nearby drivers.')),
+        );
+        return _makeBookingBloc(
+          driverRepo: driverRepo,
+          biddingDataSource: biddingDataSource,
+          secureSessionService: secureSessionService,
+          nearestDriverMaxAttempts: 1,
+          nearestDriverRetryDelay: Duration.zero,
+        );
+      },
+      act: (bloc) => bloc.add(
+        const LocateNearestDriverEvent(
+          pickupLat: 7.828,
+          pickupLng: 123.434,
+          trip: testTrip,
+        ),
+      ),
+      expect: () => [
+        isA<FindingNearestDriver>(),
+        isA<BookingFailure>()
+            .having(
+              (state) => state.message,
+              'message',
+              'Unable to check nearby drivers.',
+            )
+            .having(
+              (state) => state.isNoDriverFound,
+              'no-driver classification',
+              isFalse,
+            ),
+      ],
+      verify: (_) {
+        verify(
+          () => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434),
+        ).called(1);
+      },
+    );
   });
 
   group('BookingBloc — booking request contract', () {
@@ -147,6 +199,18 @@ void main() {
       distanceKm: 0.0,
       etaMinutes: 1,
       score: 0,
+    );
+    const selectedDriver = DriverModel(
+      id: '77',
+      name: 'Selected Driver',
+      vehicleType: 'Sedan',
+      plateNumber: 'XYZ 5678',
+      rating: 4.9,
+      lat: 7.829,
+      lng: 123.435,
+      distanceKm: 1.0,
+      etaMinutes: 3,
+      score: 1,
     );
     const pickupTrip = BidSessionTrip(
       rideType: 'Solo Ride',
@@ -164,14 +228,14 @@ void main() {
     );
 
     blocTest<BookingBloc, BookingState>(
-      'serializes a direct booking target as an integer',
+      'books the selected driver rather than the nearest driver',
       build: () {
         when(
           () => driverRepo.getNearbyDrivers(
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right([numericDriver]));
+        ).thenAnswer((_) async => const Right([numericDriver, selectedDriver]));
         when(
           () => biddingDataSource.fetchDriverStats(any()),
         ).thenAnswer((_) async => {'totalTrips': 1});
@@ -201,6 +265,7 @@ void main() {
             .toList();
         bloc.add(
           const StartDirectBookingEvent(
+            targetDriver: selectedDriver,
             trip: pickupTrip,
             pickupLat: 7.828,
             pickupLng: 123.434,
@@ -225,7 +290,7 @@ void main() {
                   () => biddingDataSource.requestRide(captureAny()),
                 ).captured.single
                 as Map<String, dynamic>;
-        expect(request['target_driver_id'], 42);
+        expect(request['target_driver_id'], 77);
       },
     );
 

@@ -249,6 +249,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
 
     BlocProvider.of<BookingBloc>(context).add(
       StartDirectBookingEvent(
+        targetDriver: driver,
         trip: tripMetadata,
         pickupLat: pickupLat,
         pickupLng: pickupLng,

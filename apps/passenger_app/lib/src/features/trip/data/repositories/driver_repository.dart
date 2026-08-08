@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
@@ -11,6 +12,22 @@ class DriverRepository implements IDriverRepository {
     : _biddingDataSource = biddingDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
+    if (error is DioException) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        return const AuthFailure(
+          'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (statusCode == null) {
+        return const NetworkFailure(
+          'Unable to check nearby drivers. Check your connection and try again.',
+        );
+      }
+      return const ServerFailure(
+        'Driver availability is temporarily unavailable. Please try again.',
+      );
+    }
     if (error is ServerException) {
       if (error.statusCode == 401 || error.statusCode == 403) {
         return const AuthFailure(

@@ -53,10 +53,10 @@ class TrackRepository implements ITrackRepository {
   fetchDriverLocation(String driverId) async {
     try {
       final locData = await _biddingDataSource.fetchDriverLocation(driverId);
-      if (locData != null && locData['lat'] != null && locData['lng'] != null) {
-        final lat = (locData['lat'] as num).toDouble();
-        final lng = (locData['lng'] as num).toDouble();
-        return Right((lat, lng));
+      final latitude = (locData?['latitude'] ?? locData?['lat']) as num?;
+      final longitude = (locData?['longitude'] ?? locData?['lng']) as num?;
+      if (latitude != null && longitude != null) {
+        return Right((latitude.toDouble(), longitude.toDouble()));
       }
       return const Left(
         ServerFailure('Driver location coordinates unavailable.'),

@@ -1,6 +1,9 @@
+import 'package:driver_app/src/core/location/location.dart';
+import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
+import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:flutter/material.dart';
@@ -518,6 +521,20 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     setState(() => _isLoggingOut = true);
 
     try {
+      final position = LocationService.lastPosition;
+      try {
+        await Modular.get<DashboardCubit>().forceOffline(
+          lat: position?.latitude ?? 0,
+          lng: position?.longitude ?? 0,
+        );
+      } catch (error) {
+        debugPrint('Unable to clear driver availability during logout: $error');
+      }
+      try {
+        await Modular.get<BackgroundTelemetryService>().stop();
+      } catch (error) {
+        debugPrint('Unable to stop driver telemetry during logout: $error');
+      }
       await Modular.get<SecureSessionService>().clearSession();
       if (context.mounted) context.goNamed(AuthRoutes.signin);
     } catch (error) {

@@ -201,6 +201,22 @@ void main() {
     );
 
     blocTest<DashboardCubit, DashboardState>(
+      'failed online transition keeps the rendered driver offline',
+      build: () {
+        when(
+          () => repo.updateOnlineStatus(isOnline: true, lat: lat, lng: lng),
+        ).thenAnswer(
+          (_) async => const Left(NetworkFailure('location unavailable')),
+        );
+        return _makeCubit(repo);
+      },
+      act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
+      expect: () => [
+        const DashboardState(errorMessage: 'location unavailable'),
+      ],
+    );
+
+    blocTest<DashboardCubit, DashboardState>(
       'forces the driver offline when location access is lost',
       build: () {
         when(
@@ -211,6 +227,40 @@ void main() {
       seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
       act: (cubit) => cubit.forceOffline(lat: lat, lng: lng),
       expect: () => [const DashboardState(isOnline: false)],
+    );
+
+    blocTest<DashboardCubit, DashboardState>(
+      'failed presence refresh invalidates a restored online preference',
+      build: () {
+        when(
+          () => repo.updateOnlineStatus(isOnline: true, lat: lat, lng: lng),
+        ).thenAnswer(
+          (_) async => const Left(NetworkFailure('presence unavailable')),
+        );
+        return _makeCubit(repo);
+      },
+      seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
+      act: (cubit) => cubit.refreshOnlinePresence(lat: lat, lng: lng),
+      expect: () => [
+        const DashboardState(errorMessage: 'presence unavailable'),
+      ],
+    );
+
+    test(
+      'forceOffline reconciles the server even from local offline state',
+      () async {
+        when(
+          () => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng),
+        ).thenAnswer((_) async => const Right(null));
+        final cubit = _makeCubit(repo);
+
+        await cubit.forceOffline(lat: lat, lng: lng);
+
+        verify(
+          () => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng),
+        ).called(1);
+        await cubit.close();
+      },
     );
   });
 }

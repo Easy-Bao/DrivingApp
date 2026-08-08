@@ -27,7 +27,7 @@ class RideUpdate extends Equatable {
   factory RideUpdate.fromJson(Map<String, dynamic> json) {
     return RideUpdate(
       status: RideStatus.fromString(json['status'] as String? ?? 'requested'),
-      driverId: json['driver_id'] as String? ?? json['driverId'] as String?,
+      driverId: (json['driver_id'] ?? json['driverId'])?.toString(),
       driverName:
           json['driver_name'] as String? ??
           json['driverName'] as String? ??

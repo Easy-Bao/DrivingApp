@@ -1,5 +1,6 @@
 import 'dart:developer' as dev;
 
+import 'package:dio/dio.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
@@ -30,6 +31,22 @@ class DashboardRepository implements IDashboardRepository {
        _backgroundTelemetryService = backgroundTelemetryService;
 
   Failure _mapExceptionToFailure(Object error) {
+    if (error is DioException) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        return const AuthFailure(
+          'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (statusCode == null) {
+        return const NetworkFailure(
+          'Unable to reach driver availability services. Check your connection and try again.',
+        );
+      }
+      return const ServerFailure(
+        'Driver availability is temporarily unavailable. Please try again.',
+      );
+    }
     if (error is ServerException) {
       if (error.statusCode == 401 || error.statusCode == 403) {
         return const AuthFailure(
@@ -64,16 +81,45 @@ class DashboardRepository implements IDashboardRepository {
   Future<Either<Failure, bool>> getPersistedOnlineStatus() async {
     try {
       final isOnline = await _sessionService.readDriverOnlineStatus() ?? false;
-      if (isOnline && _backgroundTelemetryService != null) {
-        try {
-          await _backgroundTelemetryService.start();
-        } catch (error) {
-          dev.log('Unable to resume background telemetry: $error');
-        }
-      }
       return Right(isOnline);
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
+    }
+  }
+
+  Future<void> _clearOnlinePresence({
+    required String driverId,
+    required double lat,
+    required double lng,
+    required bool markServerOffline,
+  }) async {
+    if (markServerOffline) {
+      try {
+        await _driverRemoteDataSource.updateOnlineStatus(
+          driverId: driverId,
+          isOnline: false,
+          lat: lat,
+          lng: lng,
+        );
+      } catch (error) {
+        dev.log('Unable to mark driver offline during cleanup: $error');
+      }
+    }
+
+    try {
+      await _telemetryRemoteDataSource.removeLocation();
+    } catch (error) {
+      dev.log('Unable to remove driver location during cleanup: $error');
+    }
+    try {
+      await _sessionService.saveDriverOnlineStatus(false);
+    } catch (error) {
+      dev.log('Unable to persist offline driver status: $error');
+    }
+    try {
+      await _backgroundTelemetryService?.stop();
+    } catch (error) {
+      dev.log('Unable to stop background telemetry: $error');
     }
   }
 
@@ -83,68 +129,96 @@ class DashboardRepository implements IDashboardRepository {
     required double lat,
     required double lng,
   }) async {
+    final String driverId;
     try {
-      final driverId = await _getDriverId();
-      if (driverId.isEmpty) {
-        return const Left(CacheFailure('Driver ID is not registered.'));
-      }
+      driverId = await _getDriverId();
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    }
+    if (driverId.isEmpty) {
+      return const Left(CacheFailure('Driver ID is not registered.'));
+    }
 
-      if (isOnline) {
-        bool locationSent;
-        try {
-          locationSent = await _telemetryRemoteDataSource.sendLocationUpdate(
-            driverId: driverId,
-            lat: lat,
-            lng: lng,
-          );
-        } catch (error) {
-          dev.log('Unable to publish initial driver location: $error');
-          return const Left(
-            NetworkFailure(
-              'Unable to share your location. You are not online yet.',
-            ),
-          );
-        }
-        if (!locationSent) {
-          return const Left(
-            NetworkFailure(
-              'Unable to share your location. You are not online yet.',
-            ),
-          );
-        }
+    if (!isOnline) {
+      Object? statusError;
+      try {
+        await _driverRemoteDataSource.updateOnlineStatus(
+          driverId: driverId,
+          isOnline: false,
+          lat: lat,
+          lng: lng,
+        );
+      } catch (error) {
+        statusError = error;
       }
-      await _driverRemoteDataSource.updateOnlineStatus(
+      await _clearOnlinePresence(
         driverId: driverId,
-        isOnline: isOnline,
+        lat: lat,
+        lng: lng,
+        markServerOffline: false,
+      );
+      return statusError == null
+          ? const Right(null)
+          : Left(_mapExceptionToFailure(statusError));
+    }
+
+    try {
+      final locationSent = await _telemetryRemoteDataSource.sendLocationUpdate(
+        driverId: driverId,
         lat: lat,
         lng: lng,
       );
-      if (!isOnline) {
-        try {
-          await _telemetryRemoteDataSource.removeLocation();
-        } catch (error) {
-          dev.log('Unable to remove driver location: $error');
-        }
+      if (!locationSent) {
+        await _clearOnlinePresence(
+          driverId: driverId,
+          lat: lat,
+          lng: lng,
+          markServerOffline: true,
+        );
+        return const Left(
+          NetworkFailure(
+            'Unable to share your location. You are not online yet.',
+          ),
+        );
       }
+
+      await _driverRemoteDataSource.updateOnlineStatus(
+        driverId: driverId,
+        isOnline: true,
+        lat: lat,
+        lng: lng,
+      );
+
       try {
-        await _sessionService.saveDriverOnlineStatus(isOnline);
+        await _backgroundTelemetryService?.start();
+      } catch (error) {
+        dev.log('Unable to start background telemetry: $error');
+        await _clearOnlinePresence(
+          driverId: driverId,
+          lat: lat,
+          lng: lng,
+          markServerOffline: true,
+        );
+        return const Left(
+          NetworkFailure(
+            'Unable to keep sharing your location. You are not online yet.',
+          ),
+        );
+      }
+
+      try {
+        await _sessionService.saveDriverOnlineStatus(true);
       } catch (error) {
         dev.log('Unable to persist driver online status: $error');
       }
-      final backgroundTelemetryService = _backgroundTelemetryService;
-      if (backgroundTelemetryService != null) {
-        try {
-          if (isOnline) {
-            await backgroundTelemetryService.start();
-          } else {
-            await backgroundTelemetryService.stop();
-          }
-        } catch (error) {
-          dev.log('Unable to update background telemetry state: $error');
-        }
-      }
       return const Right(null);
     } catch (error) {
+      await _clearOnlinePresence(
+        driverId: driverId,
+        lat: lat,
+        lng: lng,
+        markServerOffline: true,
+      );
       return Left(_mapExceptionToFailure(error));
     }
   }

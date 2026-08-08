@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
@@ -16,7 +17,9 @@ import (
 )
 
 type activeSessionsRepository struct {
-	requestedDriverID *int
+	requestedDriverID  *int
+	requestedSessionID int
+	requestedOfferID   int
 }
 
 func (repository *activeSessionsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
@@ -38,23 +41,30 @@ func (repository *activeSessionsRepository) ActiveSessions(_ context.Context, dr
 	repository.requestedDriverID = driverID
 	return []domain.BidSession{{ID: 101, Status: "open"}}, nil
 }
-func (repository *activeSessionsRepository) Offers(context.Context, int) ([]domain.BidOffer, error) {
-	return nil, nil
+func (repository *activeSessionsRepository) Offers(_ context.Context, sessionID int) ([]domain.BidOffer, error) {
+	repository.requestedSessionID = sessionID
+	return []domain.BidOffer{}, nil
 }
-func (repository *activeSessionsRepository) PlaceOffer(context.Context, domain.BidOffer) (domain.BidOffer, error) {
-	return domain.BidOffer{}, nil
+func (repository *activeSessionsRepository) PlaceOffer(_ context.Context, offer domain.BidOffer) (domain.BidOffer, error) {
+	repository.requestedSessionID = offer.SessionID
+	return offer, nil
 }
-func (repository *activeSessionsRepository) AcceptOffer(context.Context, int, int, int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
-	return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, nil
+func (repository *activeSessionsRepository) AcceptOffer(_ context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+	repository.requestedSessionID = sessionID
+	repository.requestedOfferID = offerID
+	return domain.BidSession{ID: sessionID, PassengerID: passengerID}, domain.BidOffer{ID: int64(offerID), SessionID: sessionID}, domain.Ride{ID: 303, PassengerID: passengerID}, nil
 }
-func (repository *activeSessionsRepository) CancelSession(context.Context, int, int) (domain.BidSession, error) {
-	return domain.BidSession{}, nil
+func (repository *activeSessionsRepository) CancelSession(_ context.Context, sessionID, passengerID int) (domain.BidSession, error) {
+	repository.requestedSessionID = sessionID
+	return domain.BidSession{ID: sessionID, PassengerID: passengerID}, nil
 }
-func (repository *activeSessionsRepository) CancelOffer(context.Context, int, int) (domain.BidOffer, error) {
-	return domain.BidOffer{}, nil
+func (repository *activeSessionsRepository) CancelOffer(_ context.Context, sessionID, driverID int) (domain.BidOffer, error) {
+	repository.requestedSessionID = sessionID
+	return domain.BidOffer{SessionID: sessionID, DriverID: driverID}, nil
 }
-func (repository *activeSessionsRepository) Session(context.Context, int) (domain.BidSession, error) {
-	return domain.BidSession{}, nil
+func (repository *activeSessionsRepository) Session(_ context.Context, sessionID int) (domain.BidSession, error) {
+	repository.requestedSessionID = sessionID
+	return domain.BidSession{ID: sessionID, PassengerID: 42}, nil
 }
 
 func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
@@ -197,5 +207,56 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 	}
 	if len(sessions) != 1 || sessions[0].ID != 101 {
 		t.Fatalf("active sessions = %#v", sessions)
+	}
+}
+
+func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
+	config, err := ridesusecase.LoadPricingConfig()
+	if err != nil {
+		t.Fatalf("LoadPricingConfig returned error: %v", err)
+	}
+	repository := &activeSessionsRepository{}
+	verifier := token.NewVerifier("test-secret")
+	accessToken, err := verifier.Issue("42")
+	if err != nil {
+		t.Fatalf("Issue() returned error: %v", err)
+	}
+	mux := chi.NewRouter()
+	rideshttp.NewRouter(ridesusecase.NewService(repository, config), verifier).RegisterRoutes(mux)
+
+	tests := []struct {
+		name            string
+		method          string
+		path            string
+		body            string
+		expectedStatus  int
+		expectedOfferID int
+	}{
+		{name: "session", method: http.MethodGet, path: api.V1Prefix + "/bids/101", expectedStatus: http.StatusOK},
+		{name: "offers", method: http.MethodGet, path: api.V1Prefix + "/bids/101/offers", expectedStatus: http.StatusOK},
+		{name: "place offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/offer", body: `{"offer_price":25}`, expectedStatus: http.StatusCreated},
+		{name: "accept offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/offers/202/accept", body: `{}`, expectedStatus: http.StatusOK, expectedOfferID: 202},
+		{name: "cancel session", method: http.MethodPost, path: api.V1Prefix + "/bids/101/cancel", body: `{}`, expectedStatus: http.StatusOK},
+		{name: "cancel offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/cancel-offer", body: `{}`, expectedStatus: http.StatusOK},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequest(test.method, test.path, strings.NewReader(test.body))
+			request.Header.Set("Authorization", "Bearer "+accessToken)
+			response := httptest.NewRecorder()
+
+			mux.ServeHTTP(response, request)
+
+			if response.Code != test.expectedStatus {
+				t.Fatalf("status = %d, want %d, body = %s", response.Code, test.expectedStatus, response.Body.String())
+			}
+			if repository.requestedSessionID != 101 {
+				t.Fatalf("session id = %d, want 101", repository.requestedSessionID)
+			}
+			if test.expectedOfferID != 0 && repository.requestedOfferID != test.expectedOfferID {
+				t.Fatalf("offer id = %d, want %d", repository.requestedOfferID, test.expectedOfferID)
+			}
+		})
 	}
 }

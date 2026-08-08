@@ -21,11 +21,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final SecureSessionService _secureSessionService;
   final BackgroundTelemetryService? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
+  final int _nearestDriverMaxAttempts;
+  final Duration _nearestDriverRetryDelay;
 
   StreamSubscription<List<dynamic>>? _offersSubscription;
   StreamSubscription<DriverMatchResult>? _driverFoundSubscription;
 
-  DriverModel? _nearestDriver;
   int? _totalTrips;
   List<Map<String, dynamic>> _reviews = [];
   bool _isLoadingReviews = false;
@@ -80,11 +81,16 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required SecureSessionService secureSessionService,
     InboxCubit? inboxCubit,
     BackgroundTelemetryService? backgroundTelemetryService,
-  }) : _driverRepository = driverRepository,
+    int nearestDriverMaxAttempts = 5,
+    Duration nearestDriverRetryDelay = const Duration(seconds: 2),
+  }) : assert(nearestDriverMaxAttempts > 0),
+       _driverRepository = driverRepository,
        _biddingDataSource = biddingDataSource,
        _secureSessionService = secureSessionService,
        _inboxCubit = inboxCubit,
        _backgroundTelemetryService = backgroundTelemetryService,
+       _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
+       _nearestDriverRetryDelay = nearestDriverRetryDelay,
        super(BookingInitial()) {
     on<LocateNearestDriverEvent>(_onLocateNearestDriver);
     on<StartDirectBookingEvent>(_onStartDirectBooking);
@@ -124,8 +130,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     List<DriverModel> nearbyDrivers = [];
     Failure? lastFailure;
+    var receivedSuccessfulLookup = false;
 
-    for (int attempt = 0; attempt < 5; attempt++) {
+    for (int attempt = 0; attempt < _nearestDriverMaxAttempts; attempt++) {
       final result = await _driverRepository.getNearbyDrivers(
         lat: event.pickupLat,
         lng: event.pickupLng,
@@ -137,16 +144,24 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           lastFailure = failure;
         },
         (drivers) {
+          receivedSuccessfulLookup = true;
+          lastFailure = null;
           nearbyDrivers = drivers;
         },
       );
 
       if (nearbyDrivers.isNotEmpty) break;
-      await Future.delayed(const Duration(seconds: 2));
+      if (attempt + 1 < _nearestDriverMaxAttempts) {
+        await Future.delayed(_nearestDriverRetryDelay);
+      }
       if (isClosed || _nearestSearchCancelled) return;
     }
 
     if (nearbyDrivers.isEmpty) {
+      if (!receivedSuccessfulLookup && lastFailure != null) {
+        emit(BookingFailure(lastFailure!.message));
+        return;
+      }
       if (!_nearestSearchCancelled) {
         _notifyNoDriverFound();
       }
@@ -166,8 +181,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         closestDriver = d;
       }
     }
-    _nearestDriver = closestDriver;
-
     try {
       final stats = await _biddingDataSource.fetchDriverStats(closestDriver.id);
       final totalTrips = stats['totalTrips'] ?? stats['total_trips'];
@@ -278,15 +291,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     StartDirectBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
-    final nearestDriver = _nearestDriver;
-    if (nearestDriver == null || hasActiveBooking) return;
-    final targetDriverId = int.tryParse(nearestDriver.id);
+    if (hasActiveBooking) return;
+    final targetDriver = event.targetDriver;
+    final targetDriverId = int.tryParse(targetDriver.id);
     if (targetDriverId == null || targetDriverId <= 0) {
       emit(const BookingFailure('The selected driver ID is invalid.'));
       return;
     }
     _isAutoAcceptingOffer = false;
-    emit(BookingSearching(isDirect: true, targetDriver: nearestDriver));
+    emit(BookingSearching(isDirect: true, targetDriver: targetDriver));
 
     final passengerId = await _secureSessionService.readPassengerId() ?? '';
     if (passengerId.isEmpty) {
