@@ -286,6 +286,24 @@ func TestRouteSelectsByRequestedPreference(t *testing.T) {
 	}
 }
 
+func TestRouteShortestPreferenceKeepsPrimaryRouteForMarginalSavings(t *testing.T) {
+	routes := []mapboxRoute{
+		{
+			Distance: 2500,
+			Duration: 480,
+		},
+		{
+			Distance: 2400,
+			Duration: 540,
+		},
+	}
+
+	selected := selectRoute(routes, domain.RoutePreferenceShortest)
+	if selected.Distance != 2500 || selected.Duration != 480 {
+		t.Fatalf("expected the primary route for a marginal distance saving, got %#v", selected)
+	}
+}
+
 func TestRouteSupportsTrafficProfileAndExcludedRoadPoints(t *testing.T) {
 	provider := NewProvider("test-token")
 	provider.client = &http.Client{

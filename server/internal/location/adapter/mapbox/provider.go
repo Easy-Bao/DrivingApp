@@ -523,19 +523,27 @@ func (provider *Provider) Route(ctx context.Context, origin, destination domain.
 }
 
 func selectRoute(routes []mapboxRoute, preference domain.RoutePreference) mapboxRoute {
-	selected := routes[0]
+	fastest := routes[0]
+	shortest := routes[0]
 	for _, candidate := range routes[1:] {
-		if preference == domain.RoutePreferenceShortest {
-			if candidate.Distance < selected.Distance {
-				selected = candidate
-			}
-			continue
+		if candidate.Duration < fastest.Duration {
+			fastest = candidate
 		}
-		if candidate.Duration < selected.Duration {
-			selected = candidate
+		if candidate.Distance < shortest.Distance {
+			shortest = candidate
 		}
 	}
-	return selected
+
+	if preference == domain.RoutePreferenceShortest {
+		// Mapbox alternatives are close-in-time alternatives, not a global
+		// shortest-path search. Keep the primary driveable route unless the
+		// alternative provides a meaningful distance reduction.
+		const meaningfulDistanceReduction = 0.9
+		if shortest.Distance < fastest.Distance*meaningfulDistanceReduction {
+			return shortest
+		}
+	}
+	return fastest
 }
 
 func (provider *Provider) getJSON(ctx context.Context, endpoint string, target any) error {
