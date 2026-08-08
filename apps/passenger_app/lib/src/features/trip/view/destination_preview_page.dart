@@ -30,6 +30,8 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
   AppMapController? _mapController;
   double? _userLat = LocationService.lastPosition?.latitude;
   double? _userLng = LocationService.lastPosition?.longitude;
+  double? _pickupLat;
+  double? _pickupLng;
   String _distance = '';
   String _duration = '';
   double _distanceKm = 0.0;
@@ -78,14 +80,18 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
         _userLng!,
         widget.destination.latitude,
         widget.destination.longitude,
+        preference: RoutePreference.shortest,
       );
 
       if (!mounted || route == null) return;
 
       final km = route.distanceKm;
       final mins = (route.durationSeconds / 60.0).ceil();
+      final routeStart = route.startCoordinate;
       setState(() {
         _route = route;
+        _pickupLat = routeStart?.lat ?? _userLat;
+        _pickupLng = routeStart?.lng ?? _userLng;
         _distance = '${km.toStringAsFixed(1)} km';
         _duration = '$mins min';
         _distanceKm = km;
@@ -102,13 +108,17 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
     if (controller == null || route == null || _routeRendered) return;
     if (route.polylinePoints.length < 2) return;
 
+    final pickupLat = _pickupLat ?? _userLat;
+    final pickupLng = _pickupLng ?? _userLng;
+    if (pickupLat == null || pickupLng == null) return;
+
     _routeRendered = true;
     try {
       _pickupMarker = await MapProvider.addMarker(
         controller,
-        _userLat!,
-        _userLng!,
-        label: 'Current location\nYou are here',
+        pickupLat,
+        pickupLng,
+        label: 'Pickup point\nDriver will meet you here',
         isOrigin: true,
       );
       _destinationMarker = await MapProvider.addMarker(
@@ -131,6 +141,7 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
         controller,
         [
           LatLng(_userLat!, _userLng!),
+          LatLng(pickupLat, pickupLng),
           LatLng(widget.destination.latitude, widget.destination.longitude),
           ...routePoints,
         ],
@@ -368,6 +379,12 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
                         }
                         if (widget.preselectedRideType != null) {
                           params['rideType'] = widget.preselectedRideType!;
+                        }
+                        final pickupLat = _pickupLat ?? _userLat;
+                        final pickupLng = _pickupLng ?? _userLng;
+                        if (pickupLat != null && pickupLng != null) {
+                          params['pickupLat'] = pickupLat.toString();
+                          params['pickupLng'] = pickupLng.toString();
                         }
                         unawaited(
                           context.pushNamed(

@@ -24,6 +24,8 @@ class RideSelectionPage extends StatefulWidget {
   final String duration;
   final double distanceKm;
   final String? pickupAddress;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
 
   const RideSelectionPage({
     super.key,
@@ -32,6 +34,8 @@ class RideSelectionPage extends StatefulWidget {
     required this.duration,
     required this.distanceKm,
     this.pickupAddress,
+    this.pickupLatitude,
+    this.pickupLongitude,
   });
 
   @override
@@ -47,6 +51,17 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   AppMapController? _mapController;
   Widget? _cachedMapView;
 
+  ({double lat, double lng})? get _pickupCoordinate {
+    final latitude = widget.pickupLatitude;
+    final longitude = widget.pickupLongitude;
+    if (latitude != null && longitude != null) {
+      return (lat: latitude, lng: longitude);
+    }
+    final position = LocationService.lastPosition;
+    if (position == null) return null;
+    return (lat: position.latitude, lng: position.longitude);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -59,8 +74,8 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   }
 
   Future<void> fetchServerFareQuotes() async {
-    final position = LocationService.lastPosition;
-    if (position == null) {
+    final pickup = _pickupCoordinate;
+    if (pickup == null) {
       if (mounted) {
         setState(() => _fareError = 'Your pickup location is unavailable.');
       }
@@ -84,8 +99,8 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         distanceKm: distanceKm,
         durationMinutes: durationMins,
         rideType: 'solo',
-        originLatitude: position.latitude,
-        originLongitude: position.longitude,
+        originLatitude: pickup.lat,
+        originLongitude: pickup.lng,
         destinationLatitude: widget.destination.latitude,
         destinationLongitude: widget.destination.longitude,
       );
@@ -188,6 +203,8 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           'distance': widget.distance,
           'duration': widget.duration,
           'pickupAddress': widget.pickupAddress,
+          'pickupLat': _pickupCoordinate?.lat,
+          'pickupLng': _pickupCoordinate?.lng,
         },
       ),
     );
@@ -202,10 +219,10 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   Future<void> _drawRoute() async {
     if (_mapController == null) return;
 
-    final position = LocationService.lastPosition;
-    if (position == null) return;
-    final pickupLat = position.latitude;
-    final pickupLng = position.longitude;
+    final pickup = _pickupCoordinate;
+    if (pickup == null) return;
+    final pickupLat = pickup.lat;
+    final pickupLng = pickup.lng;
     final destLat = widget.destination.latitude;
     final destLng = widget.destination.longitude;
 
@@ -215,6 +232,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         pickupLng,
         destLat,
         destLng,
+        preference: RoutePreference.shortest,
       );
       if (route != null && mounted) {
         await MapProvider.addMarker(
@@ -222,7 +240,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           pickupLat,
           pickupLng,
           isOrigin: true,
-          label: 'Current location\nYou are here',
+          label: 'Pickup point\nDriver will meet you here',
         );
         await MapProvider.addMarker(
           _mapController!,
@@ -271,14 +289,14 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final position = LocationService.lastPosition;
-    if (position == null) {
+    final pickup = _pickupCoordinate;
+    if (pickup == null) {
       return const Scaffold(
         body: Center(child: Text('Your location is unavailable.')),
       );
     }
-    final defaultLat = position.latitude;
-    final defaultLng = position.longitude;
+    final defaultLat = pickup.lat;
+    final defaultLng = pickup.lng;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,

@@ -137,6 +137,12 @@ class TripModule {
             distance: distance,
             duration: duration,
             distanceKm: distanceKm,
+            pickupLatitude:
+                (data['pickupLat'] as num?)?.toDouble() ??
+                double.tryParse(state.uri.queryParameters['pickupLat'] ?? ''),
+            pickupLongitude:
+                (data['pickupLng'] as num?)?.toDouble() ??
+                double.tryParse(state.uri.queryParameters['pickupLng'] ?? ''),
             pickupAddress:
                 data['pickupAddress'] as String? ??
                 state.uri.queryParameters['pickupAddress'],
@@ -171,6 +177,8 @@ class TripModule {
           destination: destination,
           distance: distance,
           duration: duration,
+          pickupLatitude: (data['pickupLat'] as num?)?.toDouble(),
+          pickupLongitude: (data['pickupLng'] as num?)?.toDouble(),
           pickupAddress: data['pickupAddress'] as String?,
         );
       },

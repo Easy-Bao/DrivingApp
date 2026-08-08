@@ -27,6 +27,8 @@ class FindingDriverPage extends StatelessWidget {
   final String distance;
   final String duration;
   final String? pickupAddress;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
 
   const FindingDriverPage({
     super.key,
@@ -36,6 +38,8 @@ class FindingDriverPage extends StatelessWidget {
     required this.distance,
     required this.duration,
     this.pickupAddress,
+    this.pickupLatitude,
+    this.pickupLongitude,
   });
 
   @override
@@ -52,6 +56,8 @@ class FindingDriverPage extends StatelessWidget {
         distance: distance,
         duration: duration,
         pickupAddress: pickupAddress,
+        pickupLatitude: pickupLatitude,
+        pickupLongitude: pickupLongitude,
       ),
     );
   }
@@ -64,6 +70,8 @@ class FindingDriverPageContent extends StatefulWidget {
   final String distance;
   final String duration;
   final String? pickupAddress;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
 
   const FindingDriverPageContent({
     super.key,
@@ -73,6 +81,8 @@ class FindingDriverPageContent extends StatefulWidget {
     required this.distance,
     required this.duration,
     this.pickupAddress,
+    this.pickupLatitude,
+    this.pickupLongitude,
   });
 
   @override
@@ -92,6 +102,17 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   bool _isNoDriverFound = false;
   String? _acceptingOfferId;
   bool _locationUnavailable = false;
+
+  ({double lat, double lng})? get _pickupCoordinate {
+    final latitude = widget.pickupLatitude;
+    final longitude = widget.pickupLongitude;
+    if (latitude != null && longitude != null) {
+      return (lat: latitude, lng: longitude);
+    }
+    final position = LocationService.lastPosition;
+    if (position == null) return null;
+    return (lat: position.latitude, lng: position.longitude);
+  }
 
   String _driverMarkerLabel(DriverModel driver) {
     final onboard = driver.onboardPassengerCount;
@@ -124,13 +145,13 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
     );
     unawaited(_dotCtrl.repeat());
 
-    final position = LocationService.lastPosition;
-    if (position == null) {
+    final pickup = _pickupCoordinate;
+    if (pickup == null) {
       _locationUnavailable = true;
       return;
     }
-    final lat = position.latitude;
-    final lng = position.longitude;
+    final lat = pickup.lat;
+    final lng = pickup.lng;
 
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
     if (!bookingBloc.hasActiveDriverSearch) {
@@ -179,10 +200,10 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   void _onMapCreated(AppMapController controller, BuildContext context) {
     if (!_initialized) {
       _initialized = true;
-      final position = LocationService.lastPosition;
-      if (position == null) return;
-      final lat = position.latitude;
-      final lng = position.longitude;
+      final pickup = _pickupCoordinate;
+      if (pickup == null) return;
+      final lat = pickup.lat;
+      final lng = pickup.lng;
 
       BlocProvider.of<LiveMapBloc>(context).add(
         InitializeMapEvent(
@@ -196,7 +217,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
         AddMapMarkerEvent(
           lat: lat,
           lng: lng,
-          label: 'Current location\nYou are here',
+          label: 'Pickup point\nDriver will meet you here',
           isOrigin: true,
         ),
       );
@@ -204,10 +225,10 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   }
 
   void _startDirectBooking(DriverModel driver) {
-    final position = LocationService.lastPosition;
-    if (position == null) return;
-    final pickupLat = position.latitude;
-    final pickupLng = position.longitude;
+    final pickup = _pickupCoordinate;
+    if (pickup == null) return;
+    final pickupLat = pickup.lat;
+    final pickupLng = pickup.lng;
 
     final distanceNum = double.tryParse(
       widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''),
@@ -238,10 +259,10 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   }
 
   void _startOpenBooking() {
-    final position = LocationService.lastPosition;
-    if (position == null) return;
-    final pickupLat = position.latitude;
-    final pickupLng = position.longitude;
+    final pickup = _pickupCoordinate;
+    if (pickup == null) return;
+    final pickupLat = pickup.lat;
+    final pickupLng = pickup.lng;
 
     final distanceNum = double.tryParse(
       widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''),
@@ -293,8 +314,8 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   }
 
   void _retryFindingDriver() {
-    final position = LocationService.lastPosition;
-    if (position == null) {
+    final pickup = _pickupCoordinate;
+    if (pickup == null) {
       setState(() => _locationUnavailable = true);
       return;
     }
@@ -305,8 +326,8 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
     });
     BlocProvider.of<BookingBloc>(context).add(
       LocateNearestDriverEvent(
-        pickupLat: position.latitude,
-        pickupLng: position.longitude,
+        pickupLat: pickup.lat,
+        pickupLng: pickup.lng,
         trip: BidSessionTrip(
           rideType: widget.rideType,
           fare: widget.fare,
@@ -326,14 +347,14 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
         body: Center(child: Text('Your location is unavailable.')),
       );
     }
-    final position = LocationService.lastPosition;
-    if (position == null) {
+    final pickup = _pickupCoordinate;
+    if (pickup == null) {
       return const Scaffold(
         body: Center(child: Text('Your location is unavailable.')),
       );
     }
-    final defaultLat = position.latitude;
-    final defaultLng = position.longitude;
+    final defaultLat = pickup.lat;
+    final defaultLng = pickup.lng;
 
     return PopScope(
       canPop: false,
