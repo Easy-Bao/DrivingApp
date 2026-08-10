@@ -2,30 +2,56 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 )
 
-type locationRepositoryStub struct{}
+type locationRepositoryStub struct {
+	driverPoint    domain.DriverPoint
+	passengerPoint domain.DriverPoint
+}
 
-func (locationRepositoryStub) Upsert(context.Context, domain.DriverPoint) error { return nil }
-func (locationRepositoryStub) Remove(context.Context, string) error             { return nil }
+func (stub *locationRepositoryStub) Upsert(_ context.Context, point domain.DriverPoint) error {
+	stub.driverPoint = point
+	return nil
+}
+func (locationRepositoryStub) Remove(context.Context, string) error { return nil }
 func (locationRepositoryStub) Nearby(context.Context, float64, float64, float64) ([]domain.DriverPoint, error) {
 	return nil, nil
 }
-func (locationRepositoryStub) Get(context.Context, string) (domain.DriverPoint, error) {
-	return domain.DriverPoint{}, nil
+func (stub *locationRepositoryStub) Get(context.Context, string) (domain.DriverPoint, error) {
+	return stub.driverPoint, nil
 }
-func (locationRepositoryStub) UpsertPassenger(context.Context, string, domain.DriverPoint) error {
+func (stub *locationRepositoryStub) UpsertPassenger(_ context.Context, _ string, point domain.DriverPoint) error {
+	stub.passengerPoint = point
 	return nil
 }
-func (locationRepositoryStub) GetPassenger(context.Context, string) (domain.DriverPoint, error) {
-	return domain.DriverPoint{}, nil
+func (stub *locationRepositoryStub) GetPassenger(context.Context, string) (domain.DriverPoint, error) {
+	return stub.passengerPoint, nil
+}
+
+type assignmentLookupStub struct{ assignment domain.RideAssignment }
+
+func (stub assignmentLookupStub) ForDriver(context.Context, string) (domain.RideAssignment, bool, error) {
+	return stub.assignment, stub.assignment.RideID != "", nil
+}
+
+func (stub assignmentLookupStub) ForRide(_ context.Context, rideID string) (domain.RideAssignment, bool, error) {
+	return stub.assignment, stub.assignment.RideID == rideID, nil
+}
+
+type locationEventPublisherStub struct{ envelopes []event.Envelope }
+
+func (stub *locationEventPublisherStub) Publish(_ context.Context, envelope event.Envelope) error {
+	stub.envelopes = append(stub.envelopes, envelope)
+	return nil
 }
 
 func TestIngestRejectsInvalidCoordinates(t *testing.T) {
-	service := NewService(locationRepositoryStub{})
+	service := NewService(&locationRepositoryStub{})
 	if err := service.Ingest(context.Background(), domain.DriverPoint{DriverID: "7", Latitude: 91, Longitude: 122}); err == nil {
 		t.Fatal("expected invalid latitude to be rejected")
 	}
@@ -35,11 +61,47 @@ func TestIngestRejectsInvalidCoordinates(t *testing.T) {
 }
 
 func TestNearbyRejectsUnboundedRadius(t *testing.T) {
-	service := NewService(locationRepositoryStub{})
+	service := NewService(&locationRepositoryStub{})
 	if _, err := service.Nearby(context.Background(), 6.7, 122.1, 0); err == nil {
 		t.Fatal("expected zero radius to be rejected")
 	}
 	if _, err := service.Nearby(context.Background(), 6.7, 122.1, 51); err == nil {
 		t.Fatal("expected oversized radius to be rejected")
+	}
+}
+
+func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	publisher := &locationEventPublisherStub{}
+	service := NewService(
+		repository,
+		WithRideAssignments(assignmentLookupStub{assignment: domain.RideAssignment{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2"}}),
+		WithEventPublisher(publisher),
+	)
+
+	if err := service.Ingest(context.Background(), domain.DriverPoint{DriverID: "driver-1", Latitude: 6.7, Longitude: 122.1}); err != nil {
+		t.Fatalf("Ingest() error = %v", err)
+	}
+	if len(publisher.envelopes) != 1 {
+		t.Fatalf("published event count = %d, want 1", len(publisher.envelopes))
+	}
+	published := publisher.envelopes[0]
+	if published.Type != event.DriverLocationUpdated {
+		t.Fatalf("event type = %q", published.Type)
+	}
+	if published.Scope.RideID != "ride-7" || published.Scope.DriverID != "driver-1" || published.Scope.PassengerID != "passenger-2" {
+		t.Fatalf("event scope = %#v", published.Scope)
+	}
+}
+
+func TestPassengerLocationRequiresTheRidePassenger(t *testing.T) {
+	service := NewService(
+		&locationRepositoryStub{},
+		WithRideAssignments(assignmentLookupStub{assignment: domain.RideAssignment{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2"}}),
+	)
+
+	err := service.UpdatePassenger(context.Background(), "ride-7", "passenger-3", domain.DriverPoint{Latitude: 6.7, Longitude: 122.1})
+	if !errors.Is(err, domain.ErrRideAccessDenied) {
+		t.Fatalf("UpdatePassenger() error = %v, want access denied", err)
 	}
 }

@@ -2,8 +2,6 @@ package usecase
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"log"
 	"strconv"
 	"time"
@@ -58,7 +56,7 @@ func (service *Service) publish(ctx context.Context, eventType event.Type, scope
 	if service.eventPublisher == nil {
 		return
 	}
-	envelope, err := event.New(nextEventID(), eventType, time.Now(), scope, payload)
+	envelope, err := event.New(event.NewID(), eventType, time.Now(), scope, payload)
 	if err != nil {
 		log.Printf("realtime event construction failed: %v", err)
 		return
@@ -73,12 +71,4 @@ func positiveIdentifier(value int) string {
 		return ""
 	}
 	return strconv.Itoa(value)
-}
-
-func nextEventID() string {
-	var bytes [16]byte
-	if _, err := rand.Read(bytes[:]); err == nil {
-		return hex.EncodeToString(bytes[:])
-	}
-	return strconv.FormatInt(time.Now().UnixNano(), 10)
 }

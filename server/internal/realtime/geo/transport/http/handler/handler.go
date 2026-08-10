@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -62,13 +63,28 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 }
 
 func (handler *Handler) GetDriverLocation(writer http.ResponseWriter, request *http.Request) {
+	driverID := chi.URLParam(request, "driverID")
 	if handler.auth != nil {
-		if _, ok := handler.identity(request); !ok {
+		identity, ok := handler.identity(request)
+		if !ok {
 			writeError(writer, http.StatusUnauthorized, "unauthorized")
 			return
 		}
+		if identity.Role == "passenger" {
+			point, err := handler.service.GetDriverForPassenger(request.Context(), driverID, identity.Subject)
+			if err != nil {
+				writeRideLocationError(writer, err)
+				return
+			}
+			writeJSON(writer, http.StatusOK, point)
+			return
+		}
+		if identity.Role != "driver" || identity.Subject != driverID {
+			writeError(writer, http.StatusForbidden, "forbidden")
+			return
+		}
 	}
-	point, err := handler.service.Get(request.Context(), chi.URLParam(request, "driverID"))
+	point, err := handler.service.Get(request.Context(), driverID)
 	if err != nil {
 		writeError(writer, http.StatusNotFound, "location not found")
 		return
@@ -94,11 +110,14 @@ func (handler *Handler) DeleteDriverLocation(writer http.ResponseWriter, request
 }
 
 func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, request *http.Request) {
-	if handler.auth != nil {
-		if _, ok := handler.identity(request); !ok {
-			writeError(writer, http.StatusUnauthorized, "unauthorized")
-			return
-		}
+	if handler.auth == nil {
+		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	identity, ok := handler.identity(request)
+	if !ok || identity.Role != "passenger" {
+		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		return
 	}
 	request.Body = http.MaxBytesReader(writer, request.Body, 8<<10)
 	var input dto.PassengerLocationUpdate
@@ -113,23 +132,26 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 		input.Longitude = input.Lng
 	}
 	point := domain.DriverPoint{Latitude: input.Latitude, Longitude: input.Longitude}
-	if err := handler.service.UpdatePassenger(request.Context(), chi.URLParam(request, "rideID"), point); err != nil {
-		writeError(writer, http.StatusInternalServerError, "could not save location")
+	if err := handler.service.UpdatePassenger(request.Context(), chi.URLParam(request, "rideID"), identity.Subject, point); err != nil {
+		writeRideLocationError(writer, err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]bool{"success": true})
 }
 
 func (handler *Handler) GetPassengerLocation(writer http.ResponseWriter, request *http.Request) {
-	if handler.auth != nil {
-		if _, ok := handler.identity(request); !ok {
-			writeError(writer, http.StatusUnauthorized, "unauthorized")
-			return
-		}
+	if handler.auth == nil {
+		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		return
 	}
-	point, err := handler.service.GetPassenger(request.Context(), chi.URLParam(request, "rideID"))
+	identity, ok := handler.identity(request)
+	if !ok || identity.Role != "driver" {
+		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	point, err := handler.service.GetPassengerForDriver(request.Context(), chi.URLParam(request, "rideID"), identity.Subject)
 	if err != nil {
-		writeError(writer, http.StatusNotFound, "location not found")
+		writeRideLocationError(writer, err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, point)
@@ -173,4 +195,12 @@ func writeJSON(writer http.ResponseWriter, status int, value any) {
 }
 func writeError(writer http.ResponseWriter, status int, message string) {
 	writeJSON(writer, status, map[string]string{"error": message})
+}
+
+func writeRideLocationError(writer http.ResponseWriter, err error) {
+	if errors.Is(err, domain.ErrRideAccessDenied) || errors.Is(err, domain.ErrRideAssignmentUnavailable) {
+		writeError(writer, http.StatusForbidden, "forbidden")
+		return
+	}
+	writeError(writer, http.StatusInternalServerError, "could not access location")
 }

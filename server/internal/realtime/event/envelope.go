@@ -3,6 +3,8 @@
 package event
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,6 +49,17 @@ type Envelope struct {
 	OccurredAt time.Time       `json:"occurred_at"`
 	Scope      Scope           `json:"scope"`
 	Payload    json.RawMessage `json:"payload"`
+}
+
+// NewID produces a transport-safe identifier for deduplicating transient
+// event delivery. If the operating system random source is unavailable, the
+// timestamp fallback still preserves the authoritative REST recovery path.
+func NewID() string {
+	var bytes [16]byte
+	if _, err := rand.Read(bytes[:]); err == nil {
+		return hex.EncodeToString(bytes[:])
+	}
+	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
 
 func New(id string, eventType Type, occurredAt time.Time, scope Scope, payload map[string]any) (Envelope, error) {

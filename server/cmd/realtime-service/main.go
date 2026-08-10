@@ -45,7 +45,11 @@ func main() {
 	}
 	defer redisClient.Close()
 	tokenManager := security.NewTokenManager(requiredJWTSecret())
-	geoService := geousecase.NewService(geo.NewRedisRepository(redisClient))
+	geoService := geousecase.NewService(
+		geo.NewRedisRepository(redisClient),
+		geousecase.WithRideAssignments(eventadapter.NewRedisRideAssignmentLookup(redisClient)),
+		geousecase.WithEventPublisher(eventadapter.NewRedisPublisher(redisClient)),
+	)
 	chatHistory := chatadapter.NewRedisRepository(redisClient)
 	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory)
 	eventHub := stream.NewHub()
