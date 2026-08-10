@@ -41,7 +41,12 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	if session.ExpiresAt.IsZero() {
 		session.ExpiresAt = time.Now().Add(5 * time.Minute)
 	}
-	return repository.CreateSession(ctx, session)
+	created, err := repository.CreateSession(ctx, session)
+	if err != nil {
+		return domain.BidSession{}, err
+	}
+	service.publishSession(ctx, rideCreatedEvent, created, map[string]any{"session": created})
+	return created, nil
 }
 
 func (service *Service) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
@@ -78,7 +83,16 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 	if offer.Status == "" {
 		offer.Status = "pending"
 	}
-	return repository.PlaceOffer(ctx, offer)
+	created, err := repository.PlaceOffer(ctx, offer)
+	if err != nil {
+		return domain.BidOffer{}, err
+	}
+	if session, sessionErr := repository.Session(ctx, created.SessionID); sessionErr == nil {
+		service.publishSession(ctx, rideOfferUpdatedEvent, session, map[string]any{"offer": created})
+	} else {
+		service.publishDriverOffer(ctx, created, map[string]any{"offer": created})
+	}
+	return created, nil
 }
 
 func (service *Service) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
@@ -89,7 +103,16 @@ func (service *Service) AcceptOffer(ctx context.Context, sessionID, offerID, pas
 	if passengerID <= 0 {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
 	}
-	return repository.AcceptOffer(ctx, sessionID, offerID, passengerID)
+	session, offer, ride, err := repository.AcceptOffer(ctx, sessionID, offerID, passengerID)
+	if err != nil {
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+	}
+	service.publishRide(ctx, rideMatchedEvent, ride, map[string]any{
+		"offer":   offer,
+		"ride":    ride,
+		"session": session,
+	})
+	return session, offer, ride, nil
 }
 
 func (service *Service) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
@@ -100,7 +123,12 @@ func (service *Service) CancelSession(ctx context.Context, sessionID, passengerI
 	if passengerID <= 0 {
 		return domain.BidSession{}, domain.ErrUnauthorizedSession
 	}
-	return repository.CancelSession(ctx, sessionID, passengerID)
+	session, err := repository.CancelSession(ctx, sessionID, passengerID)
+	if err != nil {
+		return domain.BidSession{}, err
+	}
+	service.publishSession(ctx, rideOfferUpdatedEvent, session, map[string]any{"session": session})
+	return session, nil
 }
 
 func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
@@ -108,7 +136,16 @@ func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int
 	if !ok {
 		return domain.BidOffer{}, ErrBiddingPersistenceUnavailable
 	}
-	return repository.CancelOffer(ctx, sessionID, driverID)
+	offer, err := repository.CancelOffer(ctx, sessionID, driverID)
+	if err != nil {
+		return domain.BidOffer{}, err
+	}
+	if session, sessionErr := repository.Session(ctx, sessionID); sessionErr == nil {
+		service.publishSession(ctx, rideOfferUpdatedEvent, session, map[string]any{"offer": offer})
+	} else {
+		service.publishDriverOffer(ctx, offer, map[string]any{"offer": offer})
+	}
+	return offer, nil
 }
 
 func (service *Service) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {

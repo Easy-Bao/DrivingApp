@@ -30,6 +30,7 @@ import (
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
+	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/event/adapter"
 	ridespostgres "github.com/Easy-Bao/DrivingApp/server/internal/rides/adapter/postgres"
 	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
 	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
@@ -57,6 +58,7 @@ func main() {
 	var usersRouter *usershttp.Router
 	var documentRouter *documenthttp.Router
 	var ridesRouter *rideshttp.Router
+	var ridesRepository *ridespostgres.Repository
 	var adminRouter *adminhttp.Router
 	var documentRepository *documentpostgres.Repository
 	var registerService *authusecase.RegisterService
@@ -95,7 +97,7 @@ func main() {
 		verifier = token.NewVerifier(jwtSecret)
 		usersRouter = usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(client)), verifier)
 		documentRepository = documentpostgres.NewRepository(client)
-		ridesRouter = rideshttp.NewRouter(ridesusecase.NewServiceWithRouteCalculator(ridespostgres.NewRepository(client, pricingConfig.PlatformCommissionBPS), routeCalculator, pricingConfig), verifier)
+		ridesRepository = ridespostgres.NewRepository(client, pricingConfig.PlatformCommissionBPS)
 		adminRouter = adminhttp.NewRouter(adminusecase.NewService(adminpostgres.NewRepository(client)), verifier, adminAuthorizer)
 	} else {
 		log.Fatal("DATABASE_URL is required")
@@ -112,6 +114,15 @@ func main() {
 		cache = locationredis.NewCache(redisClient)
 	} else {
 		log.Fatal("REDIS_URL is required")
+	}
+	if ridesRepository != nil && verifier != nil && redisClient != nil {
+		ridesService := ridesusecase.NewServiceWithRouteCalculator(
+			ridesRepository,
+			routeCalculator,
+			pricingConfig,
+			eventadapter.NewRedisPublisher(redisClient),
+		)
+		ridesRouter = rideshttp.NewRouter(ridesService, verifier)
 	}
 	if registerService != nil && authenticateService != nil && verifier != nil {
 		var otpService *authusecase.OTPService

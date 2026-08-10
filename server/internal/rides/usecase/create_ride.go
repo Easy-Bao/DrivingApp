@@ -27,30 +27,48 @@ type Service struct {
 	repository      domain.Repository
 	routeCalculator RouteCalculator
 	pricingConfig   PricingConfig
+	eventPublisher  domain.EventPublisher
 }
 
-func NewService(repository domain.Repository, pricingConfig PricingConfig) *Service {
-	return &Service{repository: repository, pricingConfig: pricingConfig}
+func NewService(repository domain.Repository, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *Service {
+	return &Service{repository: repository, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers)}
 }
 
-func NewServiceWithRouteCalculator(repository domain.Repository, calculator RouteCalculator, pricingConfig PricingConfig) *Service {
-	return &Service{repository: repository, routeCalculator: calculator, pricingConfig: pricingConfig}
+func NewServiceWithRouteCalculator(repository domain.Repository, calculator RouteCalculator, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *Service {
+	return &Service{repository: repository, routeCalculator: calculator, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers)}
 }
 
 func (service *Service) PricingConfig() PricingConfig {
 	return service.pricingConfig
 }
 func (service *Service) CreateRide(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
-	return service.repository.CreateRide(ctx, domain.Ride{PassengerID: passengerID, Status: "requested", FareCentavos: fareCentavos, RideType: "Solo Ride"})
+	ride, err := service.repository.CreateRide(ctx, domain.Ride{PassengerID: passengerID, Status: "requested", FareCentavos: fareCentavos, RideType: "Solo Ride"})
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	service.publishRide(ctx, rideCreatedEvent, ride, map[string]any{"ride": ride})
+	return ride, nil
 }
 func (service *Service) SubmitBid(ctx context.Context, rideID, driverID int, fareCentavos int64) (domain.Bid, error) {
 	if rideID <= 0 || driverID <= 0 || fareCentavos <= 0 {
 		return domain.Bid{}, domain.ErrInvalidFareOffer
 	}
-	return service.repository.CreateBid(ctx, domain.Bid{RideID: rideID, DriverID: driverID, FareCentavos: fareCentavos, Status: "pending"})
+	bid, err := service.repository.CreateBid(ctx, domain.Bid{RideID: rideID, DriverID: driverID, FareCentavos: fareCentavos, Status: "pending"})
+	if err != nil {
+		return domain.Bid{}, err
+	}
+	if ride, rideErr := service.repository.Get(ctx, rideID); rideErr == nil {
+		service.publishRide(ctx, rideOfferUpdatedEvent, ride, map[string]any{"bid": bid})
+	}
+	return bid, nil
 }
 func (service *Service) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
-	return service.repository.AcceptBid(ctx, bidID, driverID)
+	bid, ride, err := service.repository.AcceptBid(ctx, bidID, driverID)
+	if err != nil {
+		return domain.Bid{}, domain.Ride{}, err
+	}
+	service.publishRide(ctx, rideMatchedEvent, ride, map[string]any{"ride": ride, "bid": bid})
+	return bid, ride, nil
 }
 func (service *Service) Get(ctx context.Context, id int) (domain.Ride, error) {
 	return service.repository.Get(ctx, id)
@@ -70,7 +88,12 @@ func (service *Service) CreateRideWithDetails(ctx context.Context, ride domain.R
 	if ride.RideType == "" {
 		ride.RideType = "solo"
 	}
-	return service.repository.CreateRide(ctx, ride)
+	created, err := service.repository.CreateRide(ctx, ride)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	service.publishRide(ctx, rideCreatedEvent, created, map[string]any{"ride": created})
+	return created, nil
 }
 
 func (service *Service) Fare(ctx context.Context, originLat, originLng, destinationLat, destinationLng *float64, distanceKm, durationMinutes float64) (RouteMetrics, int64, error) {
@@ -116,7 +139,12 @@ func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (d
 	if !ok {
 		return domain.Ride{}, errors.New("ride lifecycle persistence is unavailable")
 	}
-	return repository.AcceptRide(ctx, rideID, driverID)
+	ride, err := repository.AcceptRide(ctx, rideID, driverID)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	service.publishRide(ctx, rideMatchedEvent, ride, map[string]any{"ride": ride})
+	return ride, nil
 }
 
 func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
@@ -127,7 +155,12 @@ func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (d
 	if driverID <= 0 {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
-	return repository.SettleCash(ctx, rideID, driverID)
+	ride, err := repository.SettleCash(ctx, rideID, driverID)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	service.publishRide(ctx, rideStatusChangedEvent, ride, map[string]any{"ride": ride, "payment_status": ride.PaymentStatus})
+	return ride, nil
 }
 
 func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
@@ -157,7 +190,15 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	if !allowed[current.Status][next] {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	return repository.UpdateStatus(ctx, rideID, actorID, current.Status, next)
+	updated, err := repository.UpdateStatus(ctx, rideID, actorID, current.Status, next)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	service.publishRide(ctx, rideStatusChangedEvent, updated, map[string]any{
+		"previous_status": current.Status,
+		"ride":            updated,
+	})
+	return updated, nil
 }
 
 func (service *Service) CalculateFare(distanceKm, durationMinutes float64) int64 {
