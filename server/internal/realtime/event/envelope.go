@@ -140,6 +140,39 @@ func (scope Scope) Validate() error {
 	return nil
 }
 
+// Topics returns the internal fan-out destinations for an already validated
+// event. Topic names are never accepted from mobile clients.
+func (envelope Envelope) Topics() []string {
+	topics := make([]string, 0, 4)
+	if envelope.Scope.RideID != "" {
+		topics = append(topics, "ride:"+envelope.Scope.RideID)
+	}
+	if envelope.Scope.RoomID != "" {
+		topics = append(topics, "room:"+envelope.Scope.RoomID)
+	}
+	if envelope.Scope.DriverID != "" {
+		topics = append(topics, "driver:"+envelope.Scope.DriverID)
+	}
+	if envelope.Scope.PassengerID != "" {
+		topics = append(topics, "passenger:"+envelope.Scope.PassengerID)
+	}
+	return topics
+}
+
+func DriverTopic(driverID string) (string, error) {
+	if err := validateIdentifier("driver id", driverID, true); err != nil {
+		return "", err
+	}
+	return "driver:" + driverID, nil
+}
+
+func PassengerTopic(passengerID string) (string, error) {
+	if err := validateIdentifier("passenger id", passengerID, true); err != nil {
+		return "", err
+	}
+	return "passenger:" + passengerID, nil
+}
+
 func (eventType Type) valid() bool {
 	switch eventType {
 	case RideOfferCreated,

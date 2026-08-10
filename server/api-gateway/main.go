@@ -22,6 +22,7 @@ func main() {
 	realtimeProxy := httputil.NewSingleHostReverseProxy(realtime)
 	router := chi.NewRouter()
 	router.Handle(api.V1Prefix+"/chat/*", realtimeProxy)
+	router.Handle(api.V1Prefix+"/realtime/*", realtimeProxy)
 	router.Handle(api.V1Prefix+"/telemetry/*", realtimeProxy)
 	// The gateway is the sole public HTTP endpoint. Domain routing happens
 	// behind it, so clients never need a URL for an individual module.

@@ -77,3 +77,24 @@ func TestEnvelopeRejectsInvalidContractValues(t *testing.T) {
 		})
 	}
 }
+
+func TestEnvelopeTopicsAreDerivedFromValidatedScope(t *testing.T) {
+	t.Parallel()
+
+	envelope, err := New(
+		"event-1",
+		RideMatched,
+		time.Now().UTC(),
+		Scope{RideID: "ride-1", DriverID: "driver-1", PassengerID: "passenger-1"},
+		map[string]any{},
+	)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	got := envelope.Topics()
+	want := []string{"ride:ride-1", "driver:driver-1", "passenger:passenger-1"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("Topics() = %v, want %v", got, want)
+	}
+}
