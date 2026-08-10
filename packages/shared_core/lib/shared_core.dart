@@ -25,4 +25,5 @@ export 'src/models/waypoint_model.dart';
 export 'src/network/idempotency_interceptor.dart';
 export 'src/network/request_metrics.dart';
 export 'src/realtime/realtime_event.dart';
+export 'src/realtime/realtime_web_socket_client.dart';
 export 'src/utils/safe_parse.dart';
