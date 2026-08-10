@@ -23,5 +23,6 @@ export 'src/models/route_model.dart';
 export 'src/models/route_sequence_result_model.dart';
 export 'src/models/waypoint_model.dart';
 export 'src/network/idempotency_interceptor.dart';
+export 'src/network/request_metrics.dart';
 export 'src/realtime/realtime_event.dart';
 export 'src/utils/safe_parse.dart';

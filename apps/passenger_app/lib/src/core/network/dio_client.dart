@@ -26,6 +26,9 @@ class DioClient {
       AuthInterceptor(sessionService, allowedBaseUri: baseUrl),
     );
     if (kDebugMode) {
+      dio.interceptors.add(
+        RequestMetricsInterceptor(HttpRequestMetrics.instance),
+      );
       dio.interceptors.add(LoggingInterceptor());
     }
     dio.interceptors.add(IdempotencyInterceptor());
