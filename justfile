@@ -61,28 +61,37 @@ db-migrate: infra-up
 test-services:
     cd server && go test ./...
 
-start-all: db-migrate
-    @./scripts/start_all.sh
+# Start every application and dependency through Docker Compose.
+start-all: services-up
+
+# Docker-only service lifecycle for the whole team.
+services-up:
+    @./script.sh --start
+
+services-down:
+    @./script.sh --stop
+
+services-status:
+    @./script.sh --status
+
+services-logs:
+    @./script.sh --logs
 
 # Reverse ports for all connected Android devices/emulators
 adb-reverse:
     @./scripts/adb_reverse.sh
 
-# Start all docker compose containers in background
-docker-up:
-    docker compose up -d --remove-orphans
+# Backward-compatible Docker aliases.
+docker-up: services-up
 
-# Stop all compose containers
-docker-down:
-    docker compose down
+docker-down: services-down
 
 # Build or rebuild compose images
 docker-build:
-    docker compose build
+    docker compose build postgres-db redis rabbitmq core-api realtime-service api-gateway
 
-# View logs for compose containers
-docker-logs:
-    docker compose logs -f
+# View logs for all Docker services.
+docker-logs: services-logs
 
 generate-ent:
     cd server && go generate ./ent/generate.go
