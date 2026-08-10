@@ -21,11 +21,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final SecureSessionService _secureSessionService;
   final BackgroundTelemetryService? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
+  final RealtimeWebSocketClient? _realtimeClient;
   final int _nearestDriverMaxAttempts;
   final Duration _nearestDriverRetryDelay;
 
-  StreamSubscription<List<dynamic>>? _offersSubscription;
-  StreamSubscription<DriverMatchResult>? _driverFoundSubscription;
+  StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
+  StreamSubscription<RealtimeConnectionState>? _realtimeStateSubscription;
 
   int? _totalTrips;
   List<Map<String, dynamic>> _reviews = [];
@@ -33,6 +34,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   bool _nearestSearchCancelled = false;
   bool _noDriverNotificationSent = false;
   bool _isAutoAcceptingOffer = false;
+  bool _realtimeWasConnected = false;
   String? _activeBidSessionId;
 
   double? _pickupLat;
@@ -81,6 +83,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required SecureSessionService secureSessionService,
     InboxCubit? inboxCubit,
     BackgroundTelemetryService? backgroundTelemetryService,
+    RealtimeWebSocketClient? realtimeClient,
     int nearestDriverMaxAttempts = 5,
     Duration nearestDriverRetryDelay = const Duration(seconds: 2),
   }) : assert(nearestDriverMaxAttempts > 0),
@@ -89,6 +92,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
        _secureSessionService = secureSessionService,
        _inboxCubit = inboxCubit,
        _backgroundTelemetryService = backgroundTelemetryService,
+       _realtimeClient = realtimeClient,
        _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
        _nearestDriverRetryDelay = nearestDriverRetryDelay,
        super(BookingInitial()) {
@@ -386,21 +390,57 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _subscribeToSession(String sessionId) {
-    unawaited(_offersSubscription?.cancel());
-    unawaited(_driverFoundSubscription?.cancel());
+    _cleanupRealtimeSubscriptions();
+    final realtimeClient = _realtimeClient;
+    if (realtimeClient == null) {
+      return;
+    }
+    _realtimeEventsSubscription = realtimeClient.events.listen((event) {
+      if (event is! RideOfferUpdatedEvent || isClosed) {
+        return;
+      }
+      final offer = event.envelope.payload['offer'];
+      if (offer is! Map || offer['session_id']?.toString() != sessionId) {
+        return;
+      }
+      final updatedOffer = Map<String, dynamic>.from(offer);
+      final currentOffers = switch (state) {
+        BookingOffersReceived(:final offers) => offers,
+        _ => const <dynamic>[],
+      };
+      final updatedOffers =
+          currentOffers
+              .where((item) => item is! Map || item['id'] != updatedOffer['id'])
+              .toList()
+            ..add(updatedOffer);
+      add(UpdateOffersEvent(updatedOffers));
+    });
+    _realtimeStateSubscription = realtimeClient.states.listen((state) {
+      if (state is! RealtimeConnected) {
+        return;
+      }
+      if (_realtimeWasConnected) {
+        unawaited(_loadOfferSnapshot(sessionId));
+      }
+      _realtimeWasConnected = true;
+    });
+    unawaited(_connectAndLoadOfferSnapshot(sessionId));
+  }
 
-    _offersSubscription = Stream.periodic(const Duration(seconds: 3))
-        .asyncMap((_) async {
-          try {
-            return await _biddingDataSource.fetchOffers(sessionId);
-          } catch (error) {
-            dev.log('Failed to poll booking offers: $error');
-            return const <dynamic>[];
-          }
-        })
-        .listen((offers) {
-          add(UpdateOffersEvent(offers));
-        });
+  Future<void> _connectAndLoadOfferSnapshot(String sessionId) async {
+    final realtimeClient = _realtimeClient;
+    if (realtimeClient == null) return;
+    await realtimeClient.start();
+    await _loadOfferSnapshot(sessionId);
+  }
+
+  Future<void> _loadOfferSnapshot(String sessionId) async {
+    if (isClosed || _activeBidSessionId != sessionId) return;
+    try {
+      add(UpdateOffersEvent(await _biddingDataSource.fetchOffers(sessionId)));
+    } catch (error) {
+      dev.log('Failed to refresh booking offers: $error');
+    }
   }
 
   void _onUpdateOffers(UpdateOffersEvent event, Emitter<BookingState> emit) {
@@ -567,10 +607,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _cleanupSubscriptions() {
-    unawaited(_offersSubscription?.cancel());
-    unawaited(_driverFoundSubscription?.cancel());
-    _offersSubscription = null;
-    _driverFoundSubscription = null;
+    _cleanupRealtimeSubscriptions();
+  }
+
+  void _cleanupRealtimeSubscriptions() {
+    unawaited(_realtimeEventsSubscription?.cancel());
+    unawaited(_realtimeStateSubscription?.cancel());
+    _realtimeEventsSubscription = null;
+    _realtimeStateSubscription = null;
+    _realtimeWasConnected = false;
   }
 
   Future<void> _startBackgroundTelemetry() async {

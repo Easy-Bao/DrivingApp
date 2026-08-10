@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/activity/activity_module.dart';
@@ -40,6 +41,7 @@ import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_rep
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/trip_module.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
+import 'package:shared_core/shared_core.dart';
 
 class PassengerModule extends Module {
   @override
@@ -94,6 +96,12 @@ class PassengerModule extends Module {
       ..addLazySingleton<InboxCubit>(
         (i) => InboxCubit(inboxRepository: i.get<IInboxRepository>()),
       )
+      ..addLazySingleton<RealtimeWebSocketClient>(
+        (i) => RealtimeWebSocketClient(
+          uri: EnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
+          tokenProvider: i.get<SecureSessionService>().readToken,
+        ),
+      )
       ..addFactory<HomeCubit>(
         (i) => HomeCubit(
           repository: i.get<IPassengerHomeRepository>(),
@@ -112,6 +120,7 @@ class PassengerModule extends Module {
           secureSessionService: i.get<SecureSessionService>(),
           inboxCubit: i.get<InboxCubit>(),
           backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
+          realtimeClient: i.get<RealtimeWebSocketClient>(),
         ),
       )
       ..addFactory<LiveMapBloc>(
