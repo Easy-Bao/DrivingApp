@@ -69,6 +69,36 @@ void main() {
     verify(() => secureSessionService.saveDriverId('42')).called(1);
   });
 
+  test(
+    'uses the authenticated user ID from a profile-shaped response',
+    () async {
+      when(
+        () => remoteDataSource.authenticateDriver(
+          email: 'driver@example.com',
+          password: 'secret-password',
+        ),
+      ).thenAnswer(
+        (_) async => <String, dynamic>{
+          'token': 'jwt-token',
+          'driver': <String, dynamic>{
+            'id': 7,
+            'userId': 42,
+            'name': 'Test Driver',
+            'email': 'driver@example.com',
+          },
+        },
+      );
+
+      final result = await repository.authenticateDriver(
+        email: 'driver@example.com',
+        password: 'secret-password',
+      );
+
+      expect(result.isRight(), isTrue);
+      verify(() => secureSessionService.saveDriverId('42')).called(1);
+    },
+  );
+
   test('returns a server failure for malformed session data', () async {
     when(
       () => remoteDataSource.authenticateDriver(

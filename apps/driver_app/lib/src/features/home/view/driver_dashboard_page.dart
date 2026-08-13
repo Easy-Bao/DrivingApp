@@ -375,20 +375,22 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       }
 
       var position = LocationService.lastPosition;
-      position = await LocationService.getCurrentPosition() ?? position;
+      if (requestedOnline) {
+        position = await LocationService.getCurrentPosition() ?? position;
+      }
 
       if (!context.mounted) return;
 
-      if (position == null) {
-        if (requestedOnline) {
-          context.goNamed(DriverLocationRoutes.gate);
-        }
+      if (requestedOnline && position == null) {
+        context.goNamed(DriverLocationRoutes.gate);
         return;
       }
 
-      await BlocProvider.of<DashboardCubit>(
-        context,
-      ).toggleOnline(lat: position.latitude, lng: position.longitude);
+      await BlocProvider.of<DashboardCubit>(context).toggleOnline(
+        requestedOnline: requestedOnline,
+        lat: position?.latitude ?? 0,
+        lng: position?.longitude ?? 0,
+      );
     } finally {
       if (mounted && context.mounted) {
         final resolvedOnline = BlocProvider.of<DashboardCubit>(
@@ -397,6 +399,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         _pendingOnline = null;
         if (resolvedOnline) {
           _availabilityCtrl.forward();
+          _publishCurrentLocation();
+          _startPolling();
         } else {
           _availabilityCtrl.reverse();
         }
@@ -594,7 +598,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         }
         if (state.isOnline) {
           _availabilityCtrl.forward();
-          unawaited(_resumeOnlineTelemetry());
+          // A user-triggered transition already establishes telemetry and
+          // starts the background service in the repository. Re-running the
+          // full online handshake here creates a duplicate request and can
+          // race the first transition. Restored sessions still need the
+          // reconciliation performed by _resumeOnlineTelemetry().
+          if (!_isTogglingOnline) {
+            unawaited(_resumeOnlineTelemetry());
+          }
         } else {
           _availabilityCtrl.reverse();
           _stopPolling();

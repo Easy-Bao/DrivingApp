@@ -15,14 +15,18 @@ func NewProfileRepository(client *ent.Client) *ProfileRepository {
 	return &ProfileRepository{client: client}
 }
 func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
-	if profile, err := repository.client.DriverProfile.Query().Where(driverprofile.UserIDEQ(userID)).Only(ctx); err == nil {
+	profile, err := repository.client.DriverProfile.Query().Where(driverprofile.UserIDEQ(userID)).Only(ctx)
+	if err == nil {
 		return domain.Profile{ID: profile.ID, UserID: profile.UserID, Role: "driver", Name: profile.Name, VehicleType: profile.VehicleType, PlateNumber: profile.PlateNumber, Rating: profile.Rating, IsOnline: profile.IsOnline}, nil
 	}
-	profile, err := repository.client.PassengerProfile.Query().Where(passengerprofile.UserIDEQ(userID)).Only(ctx)
+	if !ent.IsNotFound(err) {
+		return domain.Profile{}, err
+	}
+	passengerProfile, err := repository.client.PassengerProfile.Query().Where(passengerprofile.UserIDEQ(userID)).Only(ctx)
 	if err != nil {
 		return domain.Profile{}, err
 	}
-	return domain.Profile{ID: profile.ID, UserID: profile.UserID, Role: "passenger", Name: profile.Name, PreferredRideType: profile.PreferredRideType}, nil
+	return domain.Profile{ID: passengerProfile.ID, UserID: passengerProfile.UserID, Role: "passenger", Name: passengerProfile.Name, PreferredRideType: passengerProfile.PreferredRideType}, nil
 }
 func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
 	if profile.Role == "driver" {

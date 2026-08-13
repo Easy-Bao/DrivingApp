@@ -65,13 +65,33 @@ class BackgroundTelemetryService {
     await initialize();
     await _waitForResumedActivity();
     await _ensureLocationAccess();
+    var serviceWasStarted = false;
     if (!await _service.isRunning()) {
       final started = await _service.startService();
       if (!started) {
         throw StateError('Background telemetry service could not be started.');
       }
+      serviceWasStarted = true;
     }
-    _service.invoke('configure', {'baseUrl': _apiBaseUri.toString()});
+    await _configureService(serviceWasStarted: serviceWasStarted);
+  }
+
+  Future<void> _configureService({required bool serviceWasStarted}) async {
+    final configuration = {'baseUrl': _apiBaseUri.toString()};
+    _service.invoke('configure', configuration);
+    if (!serviceWasStarted) return;
+
+    // The plugin starts a separate isolate. The first event can arrive before
+    // that isolate has registered its listener, so replay configuration after
+    // short bounded delays. Reconfiguration is idempotent in the entrypoint.
+    for (final delay in const [
+      Duration(milliseconds: 200),
+      Duration(milliseconds: 500),
+    ]) {
+      await Future<void>.delayed(delay);
+      if (!await _service.isRunning()) return;
+      _service.invoke('configure', configuration);
+    }
   }
 
   Future<void> _stopRunningServiceBeforeConfigure() async {
@@ -186,7 +206,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       await client.post<void>(
         '/api/v1/telemetry/location',
         data: {
-          'driverId': driverId,
+          'driver_id': driverId,
           'lat': position.latitude,
           'lng': position.longitude,
           'heading': position.heading,

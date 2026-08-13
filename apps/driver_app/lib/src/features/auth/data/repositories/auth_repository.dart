@@ -39,7 +39,14 @@ class AuthRepository implements IAuthRepository {
         );
       }
       final driver = Map<String, dynamic>.from(driverData);
-      final driverId = _stringValue(driver['id']);
+      // Availability endpoints are authorized with the user ID from the JWT.
+      // Older profile-shaped login responses also contained a separate
+      // profile ID, so prefer the account ID when either shape is returned.
+      final driverId = _firstNonEmptyString([
+        driver['userId'],
+        driver['user_id'],
+        driver['id'],
+      ]);
       final driverName = _stringValue(driver['name']);
       final driverEmail = _stringValue(driver['email']);
       final vehicleType = _stringValue(driver['vehicleType']).isEmpty
@@ -93,6 +100,14 @@ class AuthRepository implements IAuthRepository {
   }
 
   String _stringValue(Object? value) => value?.toString() ?? '';
+
+  String _firstNonEmptyString(Iterable<Object?> values) {
+    for (final value in values) {
+      final stringValue = _stringValue(value);
+      if (stringValue.isNotEmpty) return stringValue;
+    }
+    return '';
+  }
 
   @override
   Future<Either<Failure, void>> resetPassword({required String email}) async {

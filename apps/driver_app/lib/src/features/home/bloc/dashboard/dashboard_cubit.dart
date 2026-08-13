@@ -79,8 +79,12 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  Future<void> toggleOnline({required double lat, required double lng}) async {
-    final goingOnline = !state.isOnline;
+  Future<void> toggleOnline({
+    required double lat,
+    required double lng,
+    bool? requestedOnline,
+  }) async {
+    final goingOnline = requestedOnline ?? !state.isOnline;
 
     final updateResult = await _repository.updateOnlineStatus(
       isOnline: goingOnline,

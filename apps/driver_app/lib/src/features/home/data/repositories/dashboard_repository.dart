@@ -33,9 +33,16 @@ class DashboardRepository implements IDashboardRepository {
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
       final statusCode = error.response?.statusCode;
-      if (statusCode == 401 || statusCode == 403) {
+      if (statusCode == 401) {
         return const AuthFailure(
           'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (statusCode == 403) {
+        final profileMessage = _safeAvailabilityMessage(error.response?.data);
+        if (profileMessage != null) return ServerFailure(profileMessage);
+        return const AuthFailure(
+          'This account is not authorized to change driver availability.',
         );
       }
       if (statusCode == null) {
@@ -43,18 +50,37 @@ class DashboardRepository implements IDashboardRepository {
           'Unable to reach driver availability services. Check your connection and try again.',
         );
       }
+      if (statusCode == 400 || statusCode == 422) {
+        return ValidationFailure(
+          _safeAvailabilityMessage(error.response?.data) ??
+              'The online status request was invalid. Please try again.',
+        );
+      }
+      if (statusCode == 404) {
+        return const ServerFailure(
+          'Driver availability endpoint was not found. Check that the API services are running.',
+        );
+      }
       return const ServerFailure(
-        'Driver availability is temporarily unavailable. Please try again.',
+        'Unable to update your driver availability. Please try again.',
       );
     }
     if (error is ServerException) {
-      if (error.statusCode == 401 || error.statusCode == 403) {
+      if (error.statusCode == 401) {
         return const AuthFailure(
           'Session expired or unauthorized. Please sign in again.',
         );
       }
+      if (error.statusCode == 403) {
+        return const AuthFailure(
+          'This account is not authorized to change driver availability.',
+        );
+      }
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
+      }
+      if (error.statusCode == 0) {
+        return NetworkFailure(error.message);
       }
       return ServerFailure(error.message);
     }
@@ -64,7 +90,23 @@ class DashboardRepository implements IDashboardRepository {
     if (error is CacheException) {
       return CacheFailure(error.message);
     }
-    return ServerFailure('Unexpected system error: $error');
+    return const ServerFailure(
+      'Unable to update your driver availability. Please try again.',
+    );
+  }
+
+  String? _safeAvailabilityMessage(Object? responseData) {
+    if (responseData is! Map) return null;
+    final rawMessage = responseData['error'] ?? responseData['message'];
+    if (rawMessage is! String) return null;
+
+    return switch (rawMessage.trim().toLowerCase()) {
+      'is_online is required' || 'invalid online status' =>
+        'The online status request was invalid. Please try again.',
+      'driver profile required' =>
+        'Your account is not configured as a driver.',
+      _ => null,
+    };
   }
 
   Future<String> _getDriverId() async {

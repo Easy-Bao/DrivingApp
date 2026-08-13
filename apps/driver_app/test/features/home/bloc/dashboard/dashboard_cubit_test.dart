@@ -201,6 +201,24 @@ void main() {
     );
 
     blocTest<DashboardCubit, DashboardState>(
+      'honors the switch value instead of inferring it from stale state',
+      build: () {
+        when(
+          () => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng),
+        ).thenAnswer((_) async => const Right(null));
+        return _makeCubit(repo);
+      },
+      act: (cubit) =>
+          cubit.toggleOnline(requestedOnline: false, lat: lat, lng: lng),
+      expect: () => [const DashboardState(isOnline: false)],
+      verify: (_) {
+        verify(
+          () => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng),
+        ).called(1);
+      },
+    );
+
+    blocTest<DashboardCubit, DashboardState>(
       'failed online transition keeps the rendered driver offline',
       build: () {
         when(

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
@@ -21,11 +23,13 @@ func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
-	raw := r.Header.Get("Authorization")
-	if len(raw) < 7 {
+	raw := strings.TrimSpace(r.Header.Get("Authorization"))
+	if len(raw) <= len("Bearer ") || !strings.HasPrefix(raw, "Bearer ") {
 		return 0, false
 	}
-	id, err := handler.verifier.Verify(raw[7:])
+	id, err := handler.verifier.Verify(
+		strings.TrimSpace(strings.TrimPrefix(raw, "Bearer ")),
+	)
 	value, parseErr := strconv.Atoi(id)
 	return value, err == nil && parseErr == nil
 }
@@ -132,12 +136,27 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || targetID != actorID {
+	if err != nil {
 		writeError(w, 403, "forbidden")
 		return
 	}
 	profile, err := handler.service.Get(r.Context(), actorID)
-	if err != nil || profile.Role != "driver" {
+	if err != nil {
+		if ent.IsNotFound(err) {
+			writeError(w, http.StatusForbidden, "driver profile required")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "could not load driver profile")
+		return
+	}
+	// Older clients persisted the driver-profile ID instead of the account ID.
+	// The profile is still resolved from the verified account, so accepting that
+	// legacy path value does not broaden access to another driver's profile.
+	if targetID != actorID && targetID != profile.ID {
+		writeError(w, 403, "forbidden")
+		return
+	}
+	if profile.Role != "driver" {
 		writeError(w, 403, "driver profile required")
 		return
 	}

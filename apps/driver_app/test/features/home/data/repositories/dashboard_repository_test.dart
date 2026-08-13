@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -21,6 +22,17 @@ class MockSecureSessionService extends Mock implements SecureSessionService {}
 
 class MockBackgroundTelemetryService extends Mock
     implements BackgroundTelemetryService {}
+
+DioException _httpFailure({required int statusCode, Object? data}) {
+  return DioException(
+    requestOptions: RequestOptions(path: '/api/v1/drivers/42/online'),
+    response: Response<Object?>(
+      requestOptions: RequestOptions(path: '/api/v1/drivers/42/online'),
+      statusCode: statusCode,
+      data: data,
+    ),
+  );
+}
 
 void main() {
   test('publishes the initial driver location when going online', () async {
@@ -268,4 +280,76 @@ void main() {
     expect(result, const Right<Failure, void>(null));
     verify(() => telemetryDataSource.removeLocation()).called(1);
   });
+
+  test(
+    'keeps the server error actionable when availability update fails',
+    () async {
+      final driverDataSource = MockDriverRemoteDataSource();
+      final telemetryDataSource = MockTelemetryRemoteDataSource();
+      final tripDataSource = MockTripRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+
+      when(
+        () => sessionService.readDriverId(),
+      ).thenAnswer((_) async => 'driver-42');
+      when(
+        () => telemetryDataSource.sendLocationUpdate(
+          driverId: 'driver-42',
+          lat: 7.828,
+          lng: 123.434,
+        ),
+      ).thenAnswer((_) async => true);
+      when(
+        () => driverDataSource.updateOnlineStatus(
+          driverId: 'driver-42',
+          isOnline: true,
+          lat: 7.828,
+          lng: 123.434,
+        ),
+      ).thenThrow(
+        _httpFailure(
+          statusCode: 400,
+          data: <String, dynamic>{'error': 'is_online is required'},
+        ),
+      );
+      when(
+        () => driverDataSource.updateOnlineStatus(
+          driverId: 'driver-42',
+          isOnline: false,
+          lat: 7.828,
+          lng: 123.434,
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => telemetryDataSource.removeLocation(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => sessionService.saveDriverOnlineStatus(false),
+      ).thenAnswer((_) async {});
+
+      final repository = DashboardRepository(
+        remoteDataSource: tripDataSource,
+        driverRemoteDataSource: driverDataSource,
+        telemetryRemoteDataSource: telemetryDataSource,
+        sessionService: sessionService,
+      );
+
+      final result = await repository.updateOnlineStatus(
+        isOnline: true,
+        lat: 7.828,
+        lng: 123.434,
+      );
+
+      expect(result.isLeft(), isTrue);
+      result.fold((failure) {
+        expect(failure, isA<ValidationFailure>());
+        expect(
+          failure.message,
+          'The online status request was invalid. Please try again.',
+        );
+      }, (_) => fail('Expected availability update to fail.'));
+      verify(() => telemetryDataSource.removeLocation()).called(1);
+      verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
+    },
+  );
 }
