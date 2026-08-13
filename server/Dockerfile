@@ -9,4 +9,5 @@ RUN CGO_ENABLED=0 go build -o /out/core-api ./cmd/core-api && \
 FROM gcr.io/distroless/static-debian12
 COPY --from=build /out/core-api /app/core-api
 COPY --from=build /out/realtime-service /app/realtime-service
+EXPOSE 8080 8081
 ENTRYPOINT ["/app/core-api"]
