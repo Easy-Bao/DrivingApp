@@ -66,16 +66,16 @@ start-all: services-up
 
 # Docker-only service lifecycle for the whole team.
 services-up:
-    @./script.sh --start
+    @./scripts/script.sh --start
 
 services-down:
-    @./script.sh --stop
+    @./scripts/script.sh --stop
 
 services-status:
-    @./script.sh --status
+    @./scripts/script.sh --status
 
 services-logs:
-    @./script.sh --logs
+    @./scripts/script.sh --logs
 
 # Reverse ports for all connected Android devices/emulators
 adb-reverse:

@@ -71,7 +71,7 @@ check_flutter_resource_disposal() {
 
   files_missing_dispose="$(
     while IFS= read -r dart_file; do
-      if ! rg --quiet 'void dispose\(|Future<void> close\(|void close\(' "${dart_file}"; then
+      if ! rg --quiet 'void dispose\(|Future<void> dispose\(|Future<void> close\(|void close\(' "${dart_file}"; then
         echo "${dart_file}"
       fi
     done <<< "${dart_files_with_resources}"

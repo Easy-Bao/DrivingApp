@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 readonly SCRIPT_NAME="$(basename "$0")"
-readonly REPOSITORY_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPOSITORY_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly ENV_FILE="$REPOSITORY_ROOT/.env"
 readonly DEFAULT_WAIT_TIMEOUT_SECONDS=120
 MOBILE_SERVICES=(
@@ -23,11 +23,11 @@ wait_timeout_seconds="$DEFAULT_WAIT_TIMEOUT_SECONDS"
 usage() {
   cat <<'USAGE'
 Usage:
-  ./script.sh --start [--no-build]
-  ./script.sh --stop
-  ./script.sh --restart [--no-build]
-  ./script.sh --status
-  ./script.sh --logs
+  ./scripts/script.sh --start [--no-build]
+  ./scripts/script.sh --stop
+  ./scripts/script.sh --restart [--no-build]
+  ./scripts/script.sh --status
+  ./scripts/script.sh --logs
 
 Commands:
   --start       Build and start the mobile services.
@@ -120,7 +120,7 @@ wait_for_gateway() {
   until curl --fail --silent --show-error --max-time 5 "$health_url" >/dev/null 2>&1; do
     if (( SECONDS >= deadline )); then
       compose ps --all
-      die "API gateway did not become ready within ${wait_timeout_seconds}s. Run './script.sh --logs' for details."
+      die "API gateway did not become ready within ${wait_timeout_seconds}s. Run './scripts/script.sh --logs' for details."
     fi
     sleep 1
   done

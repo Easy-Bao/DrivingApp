@@ -56,7 +56,7 @@ class MapProvider {
         userLng: userLng,
       );
 
-      return either.fold(
+      return await either.fold(
         (failure) {
           debugPrint(
             'MapProvider.searchPlaces failure: ${failure.runtimeType}',
@@ -85,7 +85,7 @@ class MapProvider {
 
     try {
       final either = await nativeService.reverseGeocode(lat: lat, lng: lng);
-      return either.fold((failure) {
+      return await either.fold((failure) {
         debugPrint(
           'MapProvider.getPlaceFromCoordinates failure: ${failure.runtimeType}',
         );
@@ -121,7 +121,7 @@ class MapProvider {
         profile: profile,
         excludePoints: excludePoints,
       );
-      return either.fold((failure) {
+      return await either.fold((failure) {
         debugPrint('MapProvider.getRoute failure: ${failure.runtimeType}');
         return null;
       }, (route) => route);
@@ -148,7 +148,7 @@ class MapProvider {
         originLng: originLng,
         destinations: destinations,
       );
-      return either.fold((failure) {
+      return await either.fold((failure) {
         debugPrint(
           'MapProvider.getDrivingDistances failure: ${failure.runtimeType}',
         );
@@ -176,7 +176,7 @@ class MapProvider {
         lng: lng,
         page: page,
       );
-      return either.fold(
+      return await either.fold(
         (failure) {
           debugPrint(
             'MapProvider.getNearbyPOIs failure: ${failure.runtimeType}',
