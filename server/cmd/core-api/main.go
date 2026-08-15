@@ -19,16 +19,19 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
 	authusecase "github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
-	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/adapter/postgres"
-	documentstorage "github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/adapter/storage"
-	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/transport/http"
-	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/usecase"
+	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
+	documentstorage "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/storage"
+	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
+	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
 	locationqueue "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/queue"
 	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
+	passengerhome "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
+	passengerhomeadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/adapter"
+	passengerhomehttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/transport/http"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/event/adapter"
 	ridespostgres "github.com/Easy-Bao/DrivingApp/server/internal/rides/adapter/postgres"
@@ -58,6 +61,7 @@ func main() {
 	var usersRouter *usershttp.Router
 	var documentRouter *documenthttp.Router
 	var ridesRouter *rideshttp.Router
+	var ridesService *ridesusecase.Service
 	var ridesRepository *ridespostgres.Repository
 	var adminRouter *adminhttp.Router
 	var documentRepository *documentpostgres.Repository
@@ -65,6 +69,7 @@ func main() {
 	var authenticateService *authusecase.AuthenticateService
 	var verifier *security.TokenManager
 	var authRepository *authpostgres.UserRepository
+	var locationService *usecase.Service
 	provider := mapbox.NewProvider(os.Getenv("MAPBOX_ACCESS_TOKEN"))
 	routeCalculator := ridesusecase.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (ridesusecase.RouteMetrics, error) {
 		route, err := provider.Route(ctx, locationdomain.Coordinates{Latitude: originLat, Longitude: originLng}, locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng}, locationdomain.RouteOptions{})
@@ -116,7 +121,7 @@ func main() {
 		log.Fatal("REDIS_URL is required")
 	}
 	if ridesRepository != nil && verifier != nil && redisClient != nil {
-		ridesService := ridesusecase.NewServiceWithRouteCalculator(
+		ridesService = ridesusecase.NewServiceWithRouteCalculator(
 			ridesRepository,
 			routeCalculator,
 			pricingConfig,
@@ -168,7 +173,15 @@ func main() {
 	if redisClient != nil {
 		defer redisClient.Close()
 	}
-	locationhttp.NewRouter(usecase.NewServiceWithInfrastructure(provider, cache, publisher)).RegisterRoutes(router)
+	locationService = usecase.NewServiceWithInfrastructure(provider, cache, publisher)
+	locationhttp.NewRouter(locationService).RegisterRoutes(router)
+	if ridesService != nil && verifier != nil {
+		passengerHomeQuery := passengerhome.NewService(
+			passengerhomeadapter.NewRidesReader(ridesService),
+			passengerhomeadapter.NewLocationResolver(locationService),
+		)
+		passengerhomehttp.NewRouter(passengerHomeQuery, verifier).RegisterRoutes(router)
+	}
 	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"core-api"}`))

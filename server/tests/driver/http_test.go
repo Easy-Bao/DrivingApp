@@ -1,4 +1,4 @@
-package driver_doc_test
+package driver_test
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/domain"
-	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/transport/http"
-	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
+	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
+	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )

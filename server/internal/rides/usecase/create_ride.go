@@ -242,6 +242,23 @@ func (service *Service) PassengerRides(ctx context.Context, passengerID int) ([]
 	return repository.PassengerRides(ctx, passengerID)
 }
 
+func (service *Service) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
+	if passengerID <= 0 || limit <= 0 || limit > 100 {
+		return nil, errors.New("invalid passenger recent rides request")
+	}
+	if repository, ok := service.repository.(domain.RecentPassengerRidesRepository); ok {
+		return repository.PassengerRecentRides(ctx, passengerID, limit)
+	}
+	rides, err := service.PassengerRides(ctx, passengerID)
+	if err != nil {
+		return nil, err
+	}
+	if len(rides) > limit {
+		return rides[:limit], nil
+	}
+	return rides, nil
+}
+
 func (service *Service) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
 	repository, ok := service.repository.(domain.AnalyticsRepository)
 	if !ok {

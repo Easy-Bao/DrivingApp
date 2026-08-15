@@ -1,51 +1,90 @@
+import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
+import 'package:passenger_app/src/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:passenger_app/src/features/home/domain/entities/home_data.dart';
+import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
-String _shortenAddress(String fullAddress) {
-  final parts = fullAddress.split(',').map((p) => p.trim()).toList();
-  if (parts.length >= 2) {
-    return '${parts[parts.length - 2]}, ${parts.last}';
+class HomeRepository implements IHomeRepository {
+  final HomeRemoteDataSource _homeRemoteDataSource;
+
+  HomeRepository({required HomeRemoteDataSource homeRemoteDataSource})
+    : _homeRemoteDataSource = homeRemoteDataSource;
+
+  @override
+  Future<Either<Failure, HomeData>> loadHomeData({
+    required double lat,
+    required double lng,
+  }) async {
+    try {
+      final response = await _homeRemoteDataSource.fetchHomeData(
+        lat: lat,
+        lng: lng,
+      );
+      final rawAddress = response['current_address'];
+      if (rawAddress != null && rawAddress is! String) {
+        throw DataParsingException(
+          message: 'Passenger home address has an invalid format.',
+        );
+      }
+      return Right(
+        HomeData(
+          currentAddress: rawAddress as String? ?? '',
+          recentLocations: _parseRecentLocations(response['recent_locations']),
+        ),
+      );
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    }
   }
-  return fullAddress;
-}
 
-String _firstContextValue(PlaceModel place) {
-  const cityContextKeys = [
-    'place',
-    'locality',
-    'municipality',
-    'district',
-    'county',
-    'region',
-  ];
-  for (final key in cityContextKeys) {
-    final value = place.context[key]?.trim();
-    if (value != null && value.isNotEmpty) return value;
+  List<RecentLocation> _parseRecentLocations(Object? rawLocations) {
+    if (rawLocations is! List) {
+      throw DataParsingException(
+        message: 'Passenger home activity has an invalid format.',
+      );
+    }
+
+    final locations = <RecentLocation>[];
+    for (final rawLocation in rawLocations) {
+      if (rawLocation is! Map) continue;
+      final title = rawLocation['title']?.toString().trim() ?? '';
+      final latitude = SafeParse.toNullableDouble(rawLocation['lat']);
+      final longitude = SafeParse.toNullableDouble(rawLocation['lng']);
+      if (title.isEmpty || latitude == null || longitude == null) continue;
+      locations.add(
+        RecentLocation(
+          title: title,
+          subtitle: rawLocation['subtitle']?.toString() ?? 'Previous Trip',
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      );
+    }
+    return locations;
   }
-  return '';
-}
-
-String formatHomeAddress(PlaceModel place) {
-  final city = _firstContextValue(place);
-  if (city.isNotEmpty) return city;
-  return _shortenAddress(place.fullAddress);
-}
-
-class HomeRepository implements IPassengerHomeRepository {
-  final PassengerRemoteDataSource _passengerRemoteDataSource;
-  final SecureSessionService _secureSessionService;
-
-  HomeRepository({
-    required PassengerRemoteDataSource passengerRemoteDataSource,
-    required SecureSessionService secureSessionService,
-  }) : _passengerRemoteDataSource = passengerRemoteDataSource,
-       _secureSessionService = secureSessionService;
 
   Failure _mapExceptionToFailure(Object error) {
+    if (error is DioException) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        return const AuthFailure(
+          'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      return switch (error.type) {
+        DioExceptionType.connectionError ||
+        DioExceptionType.connectionTimeout ||
+        DioExceptionType.receiveTimeout ||
+        DioExceptionType.sendTimeout => const NetworkFailure(
+          'Unable to connect. Check your connection and try again.',
+        ),
+        _ => const ServerFailure(
+          'Home data is temporarily unavailable. Please try again.',
+        ),
+      };
+    }
     if (error is ServerException) {
       if (error.statusCode == 401 || error.statusCode == 403) {
         return const AuthFailure(
@@ -53,83 +92,17 @@ class HomeRepository implements IPassengerHomeRepository {
         );
       }
       if (error.statusCode == 400 || error.statusCode == 422) {
-        return const ValidationFailure('Invalid request data.');
+        return const ValidationFailure('Invalid home data request.');
       }
-      return ServerFailure('Server returned status code ${error.statusCode}.');
+      return const ServerFailure(
+        'Home data is temporarily unavailable. Please try again.',
+      );
     }
     if (error is DataParsingException) {
       return ValidationFailure(error.message);
     }
-    if (error is CacheException) {
-      return CacheFailure(error.message);
-    }
-    return ServerFailure('Unexpected system error: $error');
-  }
-
-  @override
-  Future<Either<Failure, String>> resolveAddress({
-    required double lat,
-    required double lng,
-  }) async {
-    try {
-      final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
-      if (place != null) {
-        final address = formatHomeAddress(place);
-        if (address.isNotEmpty) return Right(address);
-      }
-      return const Right('');
-    } catch (error) {
-      return Left(_mapExceptionToFailure(error));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<Map<String, dynamic>>>>
-  getRecentLocations() async {
-    try {
-      final passengerId = await _getPassengerId();
-      if (passengerId.isEmpty) {
-        return const Right(<Map<String, dynamic>>[]);
-      }
-      final rawRides = await _passengerRemoteDataSource.fetchRideHistory(
-        passengerId,
-      );
-      return Right(_filterAndFormatRecentLocations(rawRides));
-    } catch (error) {
-      return Left(_mapExceptionToFailure(error));
-    }
-  }
-
-  Future<String> _getPassengerId() async {
-    try {
-      return await _secureSessionService.readPassengerId() ?? '';
-    } catch (error) {
-      throw CacheException(
-        message: 'Failed to access the secure passenger session: $error',
-      );
-    }
-  }
-
-  List<Map<String, dynamic>> _filterAndFormatRecentLocations(
-    List<dynamic> rawRides,
-  ) {
-    final Set<String> seenDestinations = {};
-    final List<Map<String, dynamic>> list = [];
-    for (final r in rawRides.cast<Map<String, dynamic>>()) {
-      final status = r['status'] as String? ?? '';
-      if (status != 'completed') continue;
-      final destName = r['dropoff_name'] as String? ?? '';
-      if (destName.isEmpty || seenDestinations.contains(destName)) continue;
-      seenDestinations.add(destName);
-      final pickupName = r['pickup_name'] as String? ?? 'Previous Trip';
-      list.add({
-        'title': _shortenAddress(destName),
-        'subtitle': _shortenAddress(pickupName),
-        'lat': (r['dropoff_latitude'] as num).toDouble(),
-        'lng': (r['dropoff_longitude'] as num).toDouble(),
-      });
-      if (list.length >= 5) break;
-    }
-    return list;
+    return const ServerFailure(
+      'Home data is temporarily unavailable. Please try again.',
+    );
   }
 }

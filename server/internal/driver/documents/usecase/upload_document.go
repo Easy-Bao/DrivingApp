@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 )
 
 type Service struct {

@@ -1,0 +1,128 @@
+package handler
+
+import (
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
+	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+)
+
+type Handler struct {
+	query    home.Query
+	verifier *token.Verifier
+}
+
+func NewHandler(query home.Query, verifier *token.Verifier) *Handler {
+	return &Handler{query: query, verifier: verifier}
+}
+
+func (handler *Handler) Get(writer http.ResponseWriter, request *http.Request) {
+	passengerID, status := handler.passengerID(request)
+	if status != 0 {
+		writeError(writer, status, statusMessage(status))
+		return
+	}
+
+	coordinates, err := coordinatesFromQuery(request)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
+		return
+	}
+
+	snapshot, err := handler.query.Get(request.Context(), passengerID, coordinates)
+	if err != nil {
+		writeError(writer, http.StatusBadGateway, "passenger home data unavailable")
+		return
+	}
+	response.JSON(writer, http.StatusOK, toResponse(snapshot))
+}
+
+func (handler *Handler) passengerID(request *http.Request) (*int, int) {
+	rawAuthorization := strings.TrimSpace(request.Header.Get("Authorization"))
+	if rawAuthorization == "" {
+		return nil, 0
+	}
+	if handler.verifier == nil || !strings.HasPrefix(rawAuthorization, "Bearer ") {
+		return nil, http.StatusUnauthorized
+	}
+
+	identity, err := handler.verifier.VerifyIdentity(
+		strings.TrimSpace(strings.TrimPrefix(rawAuthorization, "Bearer ")),
+	)
+	if err != nil {
+		return nil, http.StatusUnauthorized
+	}
+	if identity.Role != "" && identity.Role != "passenger" {
+		return nil, http.StatusForbidden
+	}
+	passengerID, err := strconv.Atoi(identity.Subject)
+	if err != nil || passengerID <= 0 {
+		return nil, http.StatusUnauthorized
+	}
+	return &passengerID, 0
+}
+
+func coordinatesFromQuery(request *http.Request) (*home.Coordinates, error) {
+	query := request.URL.Query()
+	latitudeValue := strings.TrimSpace(query.Get("lat"))
+	longitudeValue := strings.TrimSpace(query.Get("lng"))
+	if latitudeValue == "" && longitudeValue == "" {
+		return nil, nil
+	}
+	if latitudeValue == "" || longitudeValue == "" {
+		return nil, strconv.ErrSyntax
+	}
+
+	latitude, latitudeErr := strconv.ParseFloat(latitudeValue, 64)
+	longitude, longitudeErr := strconv.ParseFloat(longitudeValue, 64)
+	coordinates := &home.Coordinates{
+		Latitude:  latitude,
+		Longitude: longitude,
+	}
+	if latitudeErr != nil || longitudeErr != nil || !coordinates.Valid() {
+		return nil, strconv.ErrSyntax
+	}
+	return coordinates, nil
+}
+
+type snapshotResponse struct {
+	CurrentAddress  string                   `json:"current_address"`
+	RecentLocations []recentLocationResponse `json:"recent_locations"`
+}
+
+type recentLocationResponse struct {
+	Title     string  `json:"title"`
+	Subtitle  string  `json:"subtitle"`
+	Latitude  float64 `json:"lat"`
+	Longitude float64 `json:"lng"`
+}
+
+func toResponse(snapshot home.Snapshot) snapshotResponse {
+	recentLocations := make([]recentLocationResponse, 0, len(snapshot.RecentLocations))
+	for _, location := range snapshot.RecentLocations {
+		recentLocations = append(recentLocations, recentLocationResponse{
+			Title:     location.Title,
+			Subtitle:  location.Subtitle,
+			Latitude:  location.Latitude,
+			Longitude: location.Longitude,
+		})
+	}
+	return snapshotResponse{
+		CurrentAddress:  snapshot.CurrentAddress,
+		RecentLocations: recentLocations,
+	}
+}
+
+func statusMessage(status int) string {
+	if status == http.StatusForbidden {
+		return "passenger access required"
+	}
+	return "unauthorized"
+}
+
+func writeError(writer http.ResponseWriter, status int, message string) {
+	response.JSON(writer, status, map[string]string{"error": message})
+}

@@ -6,11 +6,11 @@ import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 class HomeCubit extends Cubit<HomeState> {
-  final IPassengerHomeRepository _repository;
+  final IHomeRepository _repository;
   final ICurrentLocationRepository _currentLocationRepository;
 
   StreamSubscription<Either<Failure, CurrentLocation>>? _locationSubscription;
@@ -22,7 +22,7 @@ class HomeCubit extends Cubit<HomeState> {
   bool _isTrackingLocation = false;
 
   HomeCubit({
-    required IPassengerHomeRepository repository,
+    required IHomeRepository repository,
     required ICurrentLocationRepository currentLocationRepository,
   }) : _repository = repository,
        _currentLocationRepository = currentLocationRepository,
@@ -47,41 +47,24 @@ class HomeCubit extends Cubit<HomeState> {
       emit(state.copyWith(isLoading: true));
     }
     try {
-      final results = await Future.wait([
-        _repository.resolveAddress(lat: lat, lng: lng),
-        _repository.getRecentLocations(),
-      ]);
-
-      final addressResult = results[0] as Either<Failure, String>;
-      final locationsResult =
-          results[1] as Either<Failure, List<Map<String, dynamic>>>;
-
-      String resolvedAddress = state.currentAddress;
-      List<Map<String, dynamic>> resolvedLocations = state.recentLocations;
-
-      addressResult.fold(
-        (Failure failure) =>
-            dev.log('Error resolving passenger address: ${failure.message}'),
-        (address) => resolvedAddress = address,
-      );
-
-      locationsResult.fold(
-        (Failure failure) => dev.log(
-          'Error loading recent passenger locations: ${failure.message}',
-        ),
-        (locations) => resolvedLocations = locations,
-      );
+      final result = await _repository.loadHomeData(lat: lat, lng: lng);
 
       if (isClosed || dataRevision != _dataRevision) return;
-      emit(
-        state.copyWith(
-          isLoading: false,
-          currentAddress: resolvedAddress,
-          recentLocations: resolvedLocations,
+      result.fold(
+        (failure) {
+          dev.log('Error loading passenger home data: ${failure.message}');
+          emit(state.copyWith(isLoading: false));
+        },
+        (homeData) => emit(
+          state.copyWith(
+            isLoading: false,
+            currentAddress: homeData.currentAddress,
+            recentLocations: homeData.recentLocations,
+          ),
         ),
       );
     } catch (error) {
-      dev.log('Error executing parallel home data load: $error');
+      dev.log('Error executing home data load: $error');
       if (isClosed || dataRevision != _dataRevision) return;
       emit(state.copyWith(isLoading: false));
     }

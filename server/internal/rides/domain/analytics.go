@@ -58,6 +58,10 @@ type AnalyticsRepository interface {
 	OnlineDrivers(ctx context.Context) ([]OnlineDriver, error)
 }
 
+type RecentPassengerRidesRepository interface {
+	PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]Ride, error)
+}
+
 type PassengerReviewRepository interface {
 	CreatePassengerReview(ctx context.Context, review PassengerReview) (PassengerReview, error)
 }

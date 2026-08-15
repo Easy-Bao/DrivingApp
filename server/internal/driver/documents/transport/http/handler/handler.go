@@ -2,8 +2,8 @@ package handler
 
 import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"

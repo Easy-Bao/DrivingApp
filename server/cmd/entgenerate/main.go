@@ -32,9 +32,19 @@ func main() {
 		panic(err)
 	}
 
-	modules := []string{"auth", "users", "driver_doc", "rides", "admin"}
+	type schemaModule struct {
+		sourcePath   string
+		outputPrefix string
+	}
+	modules := []schemaModule{
+		{sourcePath: "auth", outputPrefix: "auth"},
+		{sourcePath: "users", outputPrefix: "users"},
+		{sourcePath: "driver/documents", outputPrefix: "driver_documents"},
+		{sourcePath: "rides", outputPrefix: "rides"},
+		{sourcePath: "admin", outputPrefix: "admin"},
+	}
 	for _, module := range modules {
-		source := filepath.Join(root, "internal", module, "schema")
+		source := filepath.Join(root, "internal", module.sourcePath, "schema")
 		err = filepath.WalkDir(source, func(path string, entry fs.DirEntry, walkErr error) error {
 			if walkErr != nil {
 				return walkErr
@@ -46,7 +56,7 @@ func main() {
 			if readErr != nil {
 				return readErr
 			}
-			return os.WriteFile(filepath.Join(aggregate, module+"_"+entry.Name()), contents, 0o644)
+			return os.WriteFile(filepath.Join(aggregate, module.outputPrefix+"_"+entry.Name()), contents, 0o644)
 		})
 		if err != nil {
 			panic(err)

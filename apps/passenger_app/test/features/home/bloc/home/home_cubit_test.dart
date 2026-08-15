@@ -7,18 +7,20 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/domain/entities/current_location.dart';
+import 'package:passenger_app/src/features/home/domain/entities/home_data.dart';
+import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
 import 'package:passenger_app/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
-class MockHomeRepo extends Mock implements IPassengerHomeRepository {}
+class MockHomeRepo extends Mock implements IHomeRepository {}
 
 class MockCurrentLocationRepo extends Mock
     implements ICurrentLocationRepository {}
 
 HomeCubit _makeCubit(
-  IPassengerHomeRepository repo,
+  IHomeRepository repo,
   ICurrentLocationRepository currentLocationRepo,
 ) =>
     HomeCubit(repository: repo, currentLocationRepository: currentLocationRepo);
@@ -44,33 +46,37 @@ void main() {
 
   group('HomeCubit — loadHomeData()', () {
     const resolvedAddress = 'Tuburan, Pagadian';
-    final mockLocations = [
-      {
-        'title': 'Plaza Luz',
-        'subtitle': 'San Francisco',
-        'lat': 7.8275,
-        'lng': 123.4365,
-      },
+    const mockLocations = <RecentLocation>[
+      RecentLocation(
+        title: 'Plaza Luz',
+        subtitle: 'San Francisco',
+        latitude: 7.8275,
+        longitude: 123.4365,
+      ),
     ];
 
     blocTest<HomeCubit, HomeState>(
       'emits [loading=true, loaded with address+locations] on success',
       build: () {
         when(
-          () => repo.resolveAddress(
+          () => repo.loadHomeData(
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right(resolvedAddress));
-        when(
-          () => repo.getRecentLocations(),
-        ).thenAnswer((_) async => Right(mockLocations));
+        ).thenAnswer(
+          (_) async => Right(
+            HomeData(
+              currentAddress: resolvedAddress,
+              recentLocations: mockLocations,
+            ),
+          ),
+        );
         return _makeCubit(repo, currentLocationRepo);
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
       expect: () => [
         const HomeState(isLoading: true),
-        HomeState(
+        const HomeState(
           isLoading: false,
           currentAddress: resolvedAddress,
           recentLocations: mockLocations,
@@ -82,13 +88,10 @@ void main() {
       'emits [loading=true, loading=false] gracefully on error',
       build: () {
         when(
-          () => repo.resolveAddress(
+          () => repo.loadHomeData(
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Left(ServerFailure('geocode error')));
-        when(
-          () => repo.getRecentLocations(),
         ).thenAnswer((_) async => const Left(ServerFailure('network error')));
         return _makeCubit(repo, currentLocationRepo);
       },
@@ -133,14 +136,18 @@ void main() {
           ),
         );
         when(
-          () => repo.resolveAddress(
+          () => repo.loadHomeData(
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right('Tuburan, Pagadian'));
-        when(
-          () => repo.getRecentLocations(),
-        ).thenAnswer((_) async => const Right([]));
+        ).thenAnswer(
+          (_) async => Right(
+            HomeData(
+              currentAddress: 'Tuburan, Pagadian',
+              recentLocations: const [],
+            ),
+          ),
+        );
       },
       build: () => _makeCubit(repo, currentLocationRepo),
       act: (cubit) => cubit.startLocationTracking(),
@@ -180,7 +187,7 @@ void main() {
 
         expect(cubit.state.currentAddress, isEmpty);
         verifyNever(
-          () => repo.resolveAddress(
+          () => repo.loadHomeData(
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),

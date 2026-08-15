@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/bid"
 	"github.com/Easy-Bao/DrivingApp/server/ent/bidoffer"
@@ -483,6 +484,22 @@ func (repository *Repository) PassengerRides(ctx context.Context, passengerID in
 	result := make([]domain.Ride, 0, len(items))
 	for index := len(items) - 1; index >= 0; index-- {
 		result = append(result, fromRide(items[index]))
+	}
+	return result, nil
+}
+
+func (repository *Repository) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
+	items, err := repository.client.Ride.Query().
+		Where(ride.PassengerIDEQ(passengerID)).
+		Order(ride.ByID(entsql.OrderDesc())).
+		Limit(limit).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.Ride, 0, len(items))
+	for _, item := range items {
+		result = append(result, fromRide(item))
 	}
 	return result, nil
 }

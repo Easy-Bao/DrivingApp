@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverdocument"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 )
 
 type Repository struct{ client *ent.Client }

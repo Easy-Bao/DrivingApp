@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
@@ -12,11 +13,12 @@ import 'package:passenger_app/src/features/chat/chat_module.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger_app/src/features/home/data/datasources/current_location_data_source.dart';
+import 'package:passenger_app/src/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/data/repositories/current_location_repository.dart';
 import 'package:passenger_app/src/features/home/data/repositories/home_repository.dart';
 import 'package:passenger_app/src/features/home/data/repositories/public_driver_summary_repository.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_passenger_home_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_public_driver_summary_repository.dart';
 import 'package:passenger_app/src/features/home/home_module.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
@@ -57,11 +59,12 @@ class PassengerModule extends Module {
           biddingDataSource: i.get<BiddingRemoteDataSource>(),
         ),
       )
-      ..addLazySingleton<IPassengerHomeRepository>(
-        (i) => HomeRepository(
-          passengerRemoteDataSource: i.get<PassengerRemoteDataSource>(),
-          secureSessionService: i.get<SecureSessionService>(),
-        ),
+      ..addLazySingleton<IHomeRepository>(
+        (i) =>
+            HomeRepository(homeRemoteDataSource: i.get<HomeRemoteDataSource>()),
+      )
+      ..addLazySingleton<HomeRemoteDataSource>(
+        (i) => HomeRemoteDataSourceImpl(i.get<Dio>()),
       )
       ..addLazySingleton<CurrentLocationDataSource>(
         (i) => DeviceCurrentLocationDataSource(),
@@ -104,7 +107,7 @@ class PassengerModule extends Module {
       )
       ..addFactory<HomeCubit>(
         (i) => HomeCubit(
-          repository: i.get<IPassengerHomeRepository>(),
+          repository: i.get<IHomeRepository>(),
           currentLocationRepository: i.get<ICurrentLocationRepository>(),
         ),
       )

@@ -1,9 +1,9 @@
-package driver_doc_test
+package driver_test
 
 import (
 	"context"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver_doc/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"testing"
 )
 

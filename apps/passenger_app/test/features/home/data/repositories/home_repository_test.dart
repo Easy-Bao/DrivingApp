@@ -1,58 +1,60 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/data/repositories/home_repository.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:passenger_app/src/features/home/domain/entities/home_data.dart';
+import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
 
-class MockPassengerRemoteDataSource extends Mock
-    implements PassengerRemoteDataSource {}
-
-class MockSecureSessionService extends Mock implements SecureSessionService {}
+class MockHomeRemoteDataSource extends Mock implements HomeRemoteDataSource {}
 
 void main() {
-  test('uses the city context instead of a postcode for the pickup label', () {
-    const place = PlaceModel(
-      id: 'postcode.7016',
-      name: '7016',
-      fullAddress: '7016, Philippines',
-      latitude: 7.8282,
-      longitude: 123.4361,
-      context: {'place': 'Pagadian City'},
-    );
+  test(
+    'maps the aggregate home response for guest and signed-in states',
+    () async {
+      final remoteDataSource = MockHomeRemoteDataSource();
+      when(
+        () => remoteDataSource.fetchHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async => {
+          'current_address': 'Pagadian City',
+          'recent_locations': [
+            {
+              'title': 'City Plaza',
+              'subtitle': 'Downtown',
+              'lat': 7.8282,
+              'lng': 123.4361,
+            },
+          ],
+        },
+      );
 
-    expect(formatHomeAddress(place), 'Pagadian City');
-  });
+      final repository = HomeRepository(homeRemoteDataSource: remoteDataSource);
 
-  test('uses city context when the provider omits a full address', () {
-    const place = PlaceModel(
-      id: 'postcode.7016',
-      name: '7016',
-      fullAddress: '',
-      latitude: 7.8282,
-      longitude: 123.4361,
-      context: {'place': 'Pagadian City'},
-    );
+      final result = await repository.loadHomeData(lat: 7.8, lng: 123.4);
 
-    expect(formatHomeAddress(place), 'Pagadian City');
-  });
-
-  test('guest home skips authenticated ride-history requests', () async {
-    final remoteDataSource = MockPassengerRemoteDataSource();
-    final secureSessionService = MockSecureSessionService();
-    when(
-      () => secureSessionService.readPassengerId(),
-    ).thenAnswer((_) async => null);
-
-    final repository = HomeRepository(
-      passengerRemoteDataSource: remoteDataSource,
-      secureSessionService: secureSessionService,
-    );
-
-    final result = await repository.getRecentLocations();
-
-    expect(result.isRight(), isTrue);
-    expect(result.getOrElse((_) => const []), isEmpty);
-    verifyNever(() => remoteDataSource.fetchRideHistory(any()));
-  });
+      expect(result.isRight(), isTrue);
+      expect(
+        result.getOrElse(
+          (_) => HomeData(currentAddress: '', recentLocations: const []),
+        ),
+        HomeData(
+          currentAddress: 'Pagadian City',
+          recentLocations: const [
+            RecentLocation(
+              title: 'City Plaza',
+              subtitle: 'Downtown',
+              latitude: 7.8282,
+              longitude: 123.4361,
+            ),
+          ],
+        ),
+      );
+      verify(
+        () => remoteDataSource.fetchHomeData(lat: 7.8, lng: 123.4),
+      ).called(1);
+    },
+  );
 }

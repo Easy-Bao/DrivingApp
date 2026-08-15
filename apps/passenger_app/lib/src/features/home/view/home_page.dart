@@ -11,6 +11,7 @@ import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_state.dart';
+import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/widgets/home_location_row_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
@@ -362,7 +363,7 @@ class _HomePageState extends State<HomePage> {
               Divider(height: 1, color: Colors.grey[100]),
           itemBuilder: (context, index) {
             final location = state.recentLocations[index];
-            final title = location['title'] as String? ?? '';
+            final title = location.title;
             IconData icon;
             if (title.contains('Luz') || title.contains('Plaza')) {
               icon = LucideIcons.circle_play;
@@ -379,7 +380,7 @@ class _HomePageState extends State<HomePage> {
             return _buildLocationItem(
               icon: icon,
               title: title,
-              subtitle: location['subtitle'] as String? ?? 'Previous Trip',
+              subtitle: location.subtitle,
               onTap: () => _openActivityDetail(location),
             );
           },
@@ -634,8 +635,16 @@ class _HomePageState extends State<HomePage> {
     await BlocProvider.of<SavedPlacesCubit>(context).loadPlaces();
   }
 
-  Future _openActivityDetail(Map<String, dynamic> location) async {
-    await context.pushNamed(TripRoutes.activityDetailMap, extra: location);
+  Future<void> _openActivityDetail(RecentLocation location) async {
+    await context.pushNamed(
+      TripRoutes.activityDetailMap,
+      extra: {
+        'title': location.title,
+        'subtitle': location.subtitle,
+        'lat': location.latitude,
+        'lng': location.longitude,
+      },
+    );
   }
 
   Future _showChipOptions(int index, String label) async {
