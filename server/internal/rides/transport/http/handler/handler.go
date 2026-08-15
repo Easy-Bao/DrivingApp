@@ -319,7 +319,7 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := handler.service.OnlineDrivers(r.Context())
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
 	jsonJSON(w, 200, items)
@@ -328,7 +328,7 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Request) {
 	items, err := handler.service.OnlineDrivers(r.Context())
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
 

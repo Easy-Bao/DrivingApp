@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:shared_core/src/utils/safe_parse.dart';
 
 class DriverModel extends Equatable {
   final String id;
@@ -35,33 +36,27 @@ class DriverModel extends Equatable {
 
   factory DriverModel.fromJson(Map<String, dynamic> json) {
     return DriverModel(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      vehicleType:
-          json['vehicleType'] as String? ??
-          json['vehicle_type'] as String? ??
-          '',
-      plateNumber:
-          json['plateNumber'] as String? ??
-          json['plate_number'] as String? ??
-          '',
-      rating: (json['rating'] as num?)?.toDouble() ?? 0,
-      lat: (json['lat'] as num?)?.toDouble() ?? 0,
-      lng: (json['lng'] as num?)?.toDouble() ?? 0,
-      distanceKm:
-          (json['distanceKm'] as num? ?? json['distance_km'] as num? ?? 0.0)
-              .toDouble(),
-      etaMinutes:
-          (json['etaMinutes'] as num? ?? json['eta_minutes'] as num? ?? 0.0)
-              .toDouble(),
-      score: (json['score'] as num? ?? 0.0).toDouble(),
-      onboardPassengerCount:
-          (json['onboardPassengerCount'] as num?)?.toInt() ??
-          (json['onboard_passenger_count'] as num?)?.toInt(),
-      avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
-      recentFeedback:
-          json['recentFeedback'] as String? ??
-          json['recent_feedback'] as String?,
+      id: SafeParse.toStringValue(json['id'] ?? json['user_id']),
+      name: SafeParse.toStringValue(json['name']),
+      vehicleType: SafeParse.toStringValue(
+        json['vehicleType'] ?? json['vehicle_type'],
+      ),
+      plateNumber: SafeParse.toStringValue(
+        json['plateNumber'] ?? json['plate_number'],
+      ),
+      rating: SafeParse.toDouble(json['rating']),
+      lat: SafeParse.toDouble(json['lat']),
+      lng: SafeParse.toDouble(json['lng']),
+      distanceKm: SafeParse.toDouble(json['distanceKm'] ?? json['distance_km']),
+      etaMinutes: SafeParse.toDouble(json['etaMinutes'] ?? json['eta_minutes']),
+      score: SafeParse.toDouble(json['score']),
+      onboardPassengerCount: _nullableInt(
+        json['onboardPassengerCount'] ?? json['onboard_passenger_count'],
+      ),
+      avatarUrl: _nullableString(json['avatarUrl'] ?? json['avatar_url']),
+      recentFeedback: _nullableString(
+        json['recentFeedback'] ?? json['recent_feedback'],
+      ),
     );
   }
 
@@ -99,4 +94,15 @@ class DriverModel extends Equatable {
     avatarUrl,
     recentFeedback,
   ];
+}
+
+int? _nullableInt(Object? value) {
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value.trim());
+  return null;
+}
+
+String? _nullableString(Object? value) {
+  final normalized = SafeParse.toStringValue(value).trim();
+  return normalized.isEmpty ? null : normalized;
 }

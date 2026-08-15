@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:shared_core/src/utils/safe_parse.dart';
 
 class RideHistoryModel extends Equatable {
   final String id;
@@ -37,42 +38,35 @@ class RideHistoryModel extends Equatable {
 
   factory RideHistoryModel.fromJson(Map<String, dynamic> json) {
     return RideHistoryModel(
-      id: json['id'] as String? ?? '',
-      pickup: json['pickup'] as String? ?? json['pickup_name'] as String? ?? '',
-      destination:
-          json['destination'] as String? ??
-          json['dropoff_name'] as String? ??
-          '',
-      pickupLat:
-          (json['pickupLat'] as num? ?? json['pickup_latitude'] as num? ?? 0.0)
-              .toDouble(),
-      pickupLng:
-          (json['pickupLng'] as num? ?? json['pickup_longitude'] as num? ?? 0.0)
-              .toDouble(),
-      destLat:
-          (json['destLat'] as num? ?? json['dropoff_latitude'] as num? ?? 0.0)
-              .toDouble(),
-      destLng:
-          (json['destLng'] as num? ?? json['dropoff_longitude'] as num? ?? 0.0)
-              .toDouble(),
-      date: json['date'] as String? ?? json['created_at'] as String? ?? '',
-      price: json['price'] as String? ?? json['fare']?.toString() ?? '',
-      status: json['status'] as String? ?? '',
-      driverId:
-          json['driverId'] as String? ?? json['driver_id'] as String? ?? '',
-      driverName:
-          json['driverName'] as String? ?? json['driver_name'] as String? ?? '',
-      vehiclePlate:
-          json['vehiclePlate'] as String? ??
-          json['plate_number'] as String? ??
-          '',
-      vehicleType:
-          json['vehicleType'] as String? ??
-          json['vehicle_type'] as String? ??
-          '',
-      driverRating:
-          (json['driver_rating'] as num?)?.toDouble() ??
-          (json['driverRating'] as num?)?.toDouble(),
+      id: SafeParse.toStringValue(json['id']),
+      pickup: SafeParse.toStringValue(json['pickup'] ?? json['pickup_name']),
+      destination: SafeParse.toStringValue(
+        json['destination'] ?? json['dropoff_name'],
+      ),
+      pickupLat: SafeParse.toDouble(
+        json['pickupLat'] ?? json['pickup_latitude'],
+      ),
+      pickupLng: SafeParse.toDouble(
+        json['pickupLng'] ?? json['pickup_longitude'],
+      ),
+      destLat: SafeParse.toDouble(json['destLat'] ?? json['dropoff_latitude']),
+      destLng: SafeParse.toDouble(json['destLng'] ?? json['dropoff_longitude']),
+      date: SafeParse.toStringValue(json['date'] ?? json['created_at']),
+      price: SafeParse.toStringValue(json['price'] ?? json['fare']),
+      status: SafeParse.toStringValue(json['status']),
+      driverId: SafeParse.toStringValue(json['driverId'] ?? json['driver_id']),
+      driverName: SafeParse.toStringValue(
+        json['driverName'] ?? json['driver_name'],
+      ),
+      vehiclePlate: SafeParse.toStringValue(
+        json['vehiclePlate'] ?? json['plate_number'],
+      ),
+      vehicleType: SafeParse.toStringValue(
+        json['vehicleType'] ?? json['vehicle_type'],
+      ),
+      driverRating: SafeParse.toNullableDouble(
+        json['driver_rating'] ?? json['driverRating'],
+      ),
     );
   }
 

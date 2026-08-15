@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:driver_app/src/features/trip/view/widgets/ride_alert_card_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -69,21 +68,8 @@ class _RideAlertPageState extends State<RideAlertPage>
   Future<void> _accept() async {
     _autoDecline?.cancel();
 
-    final driverId = await Modular.get<SecureSessionService>().readDriverId();
-    if (driverId == null || driverId.isEmpty) {
-      if (mounted) {
-        CustomToast.show(
-          context,
-          'Driver session is unavailable.',
-          isError: true,
-        );
-      }
-      return;
-    }
-
     final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
       sessionId: _rideId,
-      driverId: driverId,
       offerPrice: _fare,
       proposedFare: _fare,
     );

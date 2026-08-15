@@ -174,7 +174,7 @@ func (handler *Handler) NearbyDrivers(writer http.ResponseWriter, request *http.
 	}
 	points, err := handler.service.Nearby(request.Context(), latitude, longitude, radius)
 	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "could not load nearby drivers")
+		writeError(writer, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{"drivers": points})

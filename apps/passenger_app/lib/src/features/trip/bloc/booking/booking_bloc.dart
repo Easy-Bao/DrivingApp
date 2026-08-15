@@ -10,6 +10,7 @@ import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notificat
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:shared_core/shared_core.dart';
 
 part 'booking_event.dart';
@@ -96,7 +97,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
        _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
        _nearestDriverRetryDelay = nearestDriverRetryDelay,
        super(BookingInitial()) {
-    on<LocateNearestDriverEvent>(_onLocateNearestDriver);
+    on<LocateNearestDriverEvent>(
+      _onLocateNearestDriver,
+      transformer: (events, mapper) => events.exhaustMap(mapper),
+    );
     on<StartDirectBookingEvent>(_onStartDirectBooking);
     on<StartOpenBookingEvent>(_onStartOpenBooking);
     on<AcceptBidOfferEvent>(_onAcceptBidOffer);
@@ -134,7 +138,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     List<DriverModel> nearbyDrivers = [];
     Failure? lastFailure;
-    var receivedSuccessfulLookup = false;
+    var lastLookupSucceeded = false;
 
     for (int attempt = 0; attempt < _nearestDriverMaxAttempts; attempt++) {
       final result = await _driverRepository.getNearbyDrivers(
@@ -146,15 +150,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       result.fold(
         (failure) {
           lastFailure = failure;
+          lastLookupSucceeded = false;
         },
         (drivers) {
-          receivedSuccessfulLookup = true;
+          lastLookupSucceeded = true;
           lastFailure = null;
           nearbyDrivers = drivers;
         },
       );
 
       if (nearbyDrivers.isNotEmpty) break;
+      if (!lastLookupSucceeded) break;
       if (attempt + 1 < _nearestDriverMaxAttempts) {
         await Future.delayed(_nearestDriverRetryDelay);
       }
@@ -162,7 +168,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
 
     if (nearbyDrivers.isEmpty) {
-      if (!receivedSuccessfulLookup && lastFailure != null) {
+      if (!lastLookupSucceeded && lastFailure != null) {
         emit(BookingFailure(lastFailure!.message));
         return;
       }

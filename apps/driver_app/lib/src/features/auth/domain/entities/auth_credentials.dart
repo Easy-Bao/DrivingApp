@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:shared_core/shared_core.dart';
 
 class AuthCredentials extends Equatable {
   final String driverId;
@@ -19,15 +20,18 @@ class AuthCredentials extends Equatable {
 
   factory AuthCredentials.fromJson(Map<String, dynamic> json) {
     return AuthCredentials(
-      driverId: json['driverId'] as String? ?? json['id'] as String? ?? '',
-      driverName:
-          json['driverName'] as String? ?? json['name'] as String? ?? '',
-      driverEmail:
-          json['driverEmail'] as String? ?? json['email'] as String? ?? '',
-      vehicleType: json['vehicleType'] as String? ?? 'Vehicle type unavailable',
-      plateNumber:
-          json['plateNumber'] as String? ?? 'Vehicle plate unavailable',
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      driverId: SafeParse.toStringValue(json['driverId'] ?? json['id']),
+      driverName: SafeParse.toStringValue(json['driverName'] ?? json['name']),
+      driverEmail: SafeParse.toStringValue(json['driverEmail'] ?? json['email']),
+      vehicleType: SafeParse.toStringValue(
+        json['vehicleType'],
+        'Vehicle type unavailable',
+      ),
+      plateNumber: SafeParse.toStringValue(
+        json['plateNumber'],
+        'Vehicle plate unavailable',
+      ),
+      rating: SafeParse.toDouble(json['rating']),
     );
   }
 

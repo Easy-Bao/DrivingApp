@@ -154,7 +154,7 @@ void main() {
           driverRepo: driverRepo,
           biddingDataSource: biddingDataSource,
           secureSessionService: secureSessionService,
-          nearestDriverMaxAttempts: 1,
+          nearestDriverMaxAttempts: 5,
           nearestDriverRetryDelay: Duration.zero,
         );
       },
@@ -178,6 +178,51 @@ void main() {
               'no-driver classification',
               isFalse,
             ),
+      ],
+      verify: (_) {
+        verify(
+          () => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434),
+        ).called(1);
+      },
+    );
+
+    blocTest<BookingBloc, BookingState>(
+      'drops duplicate locate events while a search is active',
+      build: () {
+        when(
+          () => driverRepo.getNearbyDrivers(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right([testDriver]));
+        when(
+          () => biddingDataSource.fetchDriverStats(any()),
+        ).thenAnswer((_) async => {'totalTrips': 42});
+        when(
+          () => biddingDataSource.fetchDriverReviews(any()),
+        ).thenAnswer((_) async => []);
+        return _makeBookingBloc(
+          driverRepo: driverRepo,
+          biddingDataSource: biddingDataSource,
+          secureSessionService: secureSessionService,
+          nearestDriverMaxAttempts: 1,
+          nearestDriverRetryDelay: Duration.zero,
+        );
+      },
+      act: (bloc) {
+        const event = LocateNearestDriverEvent(
+          pickupLat: 7.828,
+          pickupLng: 123.434,
+          trip: testTrip,
+        );
+        bloc
+          ..add(event)
+          ..add(event);
+      },
+      expect: () => [
+        isA<FindingNearestDriver>(),
+        isA<NearestDriverFound>(),
+        isA<NearestDriverFound>(),
       ],
       verify: (_) {
         verify(

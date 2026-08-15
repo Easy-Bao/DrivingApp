@@ -12,13 +12,13 @@ import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart
 import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/driver_dropdown_card_widget.dart';
+import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_availability_error_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_bids_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_nearest_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_searching_panel_widget.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverPage extends StatelessWidget {
   final String rideType;
@@ -100,6 +100,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   bool _showNearestDriverDetails = false;
   bool _isLeaving = false;
   bool _isNoDriverFound = false;
+  String? _driverSearchError;
   String? _acceptingOfferId;
   bool _locationUnavailable = false;
 
@@ -308,6 +309,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
     if (!mounted) return;
     setState(() {
       _isNoDriverFound = true;
+      _driverSearchError = null;
       _nearbyDrivers = [];
       _selectedDriver = null;
       _showNearestDriverDetails = false;
@@ -323,6 +325,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
 
     setState(() {
       _isNoDriverFound = false;
+      _driverSearchError = null;
       _isLeaving = false;
     });
     BlocProvider.of<BookingBloc>(context).add(
@@ -445,8 +448,10 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
               if (state.isNoDriverFound) {
                 _handleNoDriverFound();
               } else {
-                CustomToast.show(context, state.message, isError: true);
-                _returnHome();
+                setState(() {
+                  _driverSearchError = state.message;
+                  _isNoDriverFound = false;
+                });
               }
             } else if (state is BookingCanceled) {
               _acceptingOfferId = null;
@@ -679,6 +684,16 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                               state.isNoDriverFound) {
                             return FindingDriverNoDriverPanelWidget(
                               rideType: widget.rideType,
+                              fare: widget.fare,
+                              destination: widget.destination,
+                              onRetryPressed: _retryFindingDriver,
+                              onCancelPressed: _handleCancel,
+                              isCanceling: _isLeaving,
+                            );
+                          } else if (_driverSearchError != null &&
+                              state is BookingFailure) {
+                            return FindingDriverAvailabilityErrorPanelWidget(
+                              message: _driverSearchError!,
                               fare: widget.fare,
                               destination: widget.destination,
                               onRetryPressed: _retryFindingDriver,

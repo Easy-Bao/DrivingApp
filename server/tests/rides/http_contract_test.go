@@ -3,6 +3,7 @@ package rides_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,6 +16,12 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
 	"github.com/go-chi/chi/v5"
 )
+
+type failingOnlineDriversRepository struct{ analyticsRepository }
+
+func (failingOnlineDriversRepository) OnlineDrivers(context.Context) ([]domain.OnlineDriver, error) {
+	return nil, errors.New("database password leaked")
+}
 
 type activeSessionsRepository struct {
 	requestedDriverID  *int
@@ -173,6 +180,35 @@ func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing
 	mux.ServeHTTP(protectedResponse, protectedRequest)
 	if protectedResponse.Code != http.StatusUnauthorized {
 		t.Fatalf("protected online-driver status = %d, want %d", protectedResponse.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
+	config, err := ridesusecase.LoadPricingConfig()
+	if err != nil {
+		t.Fatalf("LoadPricingConfig returned error: %v", err)
+	}
+	verifier := token.NewVerifier("test-secret")
+	accessToken, err := verifier.Issue("42")
+	if err != nil {
+		t.Fatalf("Issue() returned error: %v", err)
+	}
+
+	mux := chi.NewRouter()
+	rideshttp.NewRouter(
+		ridesusecase.NewService(failingOnlineDriversRepository{}, config),
+		verifier,
+	).RegisterRoutes(mux)
+	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/online", nil)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusServiceUnavailable)
+	}
+	if strings.Contains(response.Body.String(), "database password") {
+		t.Fatalf("response leaked persistence details: %s", response.Body.String())
 	}
 }
 

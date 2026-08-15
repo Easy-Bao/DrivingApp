@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:shared_core/shared_core.dart';
 
 class InboxNotification extends Equatable {
   final String id;
@@ -37,14 +38,16 @@ class InboxNotification extends Equatable {
 
   factory InboxNotification.fromJson(Map<String, dynamic> json) {
     return InboxNotification(
-      id: json['id'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      message: json['message'] as String? ?? '',
+      id: SafeParse.toStringValue(json['id']),
+      title: SafeParse.toStringValue(json['title']),
+      message: SafeParse.toStringValue(json['message'] ?? json['body']),
       timestamp:
-          DateTime.tryParse(json['timestamp'] as String? ?? '') ??
+          DateTime.tryParse(
+            SafeParse.toStringValue(json['timestamp'] ?? json['created_at']),
+          ) ??
           DateTime.now(),
-      type: json['type'] as String? ?? 'system',
-      isRead: json['isRead'] as bool? ?? false,
+      type: SafeParse.toStringValue(json['type'], 'system'),
+      isRead: _toBool(json['isRead'] ?? json['is_read']),
     );
   }
 
@@ -61,4 +64,9 @@ class InboxNotification extends Equatable {
 
   @override
   List<Object?> get props => [id, title, message, timestamp, type, isRead];
+}
+
+bool _toBool(Object? value) {
+  if (value is bool) return value;
+  return value?.toString().toLowerCase() == 'true';
 }

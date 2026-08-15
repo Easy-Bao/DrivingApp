@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:shared_core/src/enums/ride_status.dart';
+import 'package:shared_core/src/utils/safe_parse.dart';
 
 class RideUpdate extends Equatable {
   final RideStatus status;
@@ -26,24 +27,26 @@ class RideUpdate extends Equatable {
 
   factory RideUpdate.fromJson(Map<String, dynamic> json) {
     return RideUpdate(
-      status: RideStatus.fromString(json['status'] as String? ?? 'requested'),
-      driverId: (json['driver_id'] ?? json['driverId'])?.toString(),
-      driverName:
-          json['driver_name'] as String? ??
-          json['driverName'] as String? ??
-          'Driver',
-      vehiclePlate:
-          json['plate_number'] as String? ??
-          json['vehiclePlate'] as String? ??
-          '—',
-      vehicleType:
-          json['vehicle_type'] as String? ??
-          json['vehicleType'] as String? ??
-          'Bao Bao',
-      pickupLat: (json['pickup_latitude'] as num?)?.toDouble(),
-      pickupLng: (json['pickup_longitude'] as num?)?.toDouble(),
-      destinationLat: (json['dropoff_latitude'] as num?)?.toDouble(),
-      destinationLng: (json['dropoff_longitude'] as num?)?.toDouble(),
+      status: RideStatus.fromString(
+        SafeParse.toStringValue(json['status'], 'requested'),
+      ),
+      driverId: _nullableString(json['driver_id'] ?? json['driverId']),
+      driverName: SafeParse.toStringValue(
+        json['driver_name'] ?? json['driverName'],
+        'Driver',
+      ),
+      vehiclePlate: SafeParse.toStringValue(
+        json['plate_number'] ?? json['vehiclePlate'],
+        '—',
+      ),
+      vehicleType: SafeParse.toStringValue(
+        json['vehicle_type'] ?? json['vehicleType'],
+        'Bao Bao',
+      ),
+      pickupLat: SafeParse.toNullableDouble(json['pickup_latitude']),
+      pickupLng: SafeParse.toNullableDouble(json['pickup_longitude']),
+      destinationLat: SafeParse.toNullableDouble(json['dropoff_latitude']),
+      destinationLng: SafeParse.toNullableDouble(json['dropoff_longitude']),
     );
   }
 
@@ -69,4 +72,9 @@ class RideUpdate extends Equatable {
     destinationLat,
     destinationLng,
   ];
+}
+
+String? _nullableString(Object? value) {
+  final normalized = SafeParse.toStringValue(value).trim();
+  return normalized.isEmpty ? null : normalized;
 }

@@ -445,8 +445,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     if (mounted) setState(() => _submittingBidId = sessionId);
     try {
-      final driverId =
-          await Modular.get<SecureSessionService>().readDriverId() ?? '';
       final prefs = await SharedPreferences.getInstance();
       final driverName = prefs.getString('driver_name') ?? '';
       final vehicleType = prefs.getString('vehicle_type') ?? '';
@@ -454,7 +452,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
       final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
         sessionId: sessionId,
-        driverId: driverId,
         driverName: driverName,
         plateNumber: plateNumber,
         vehicleType: vehicleType,

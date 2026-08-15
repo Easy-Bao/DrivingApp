@@ -12,7 +12,6 @@ abstract class BiddingRemoteDataSource {
   Future<List<dynamic>> fetchActiveBids();
   Future<bool> placeBid({
     required String sessionId,
-    required String driverId,
     required double offerPrice,
     String? driverName,
     String? plateNumber,
@@ -63,7 +62,6 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   @override
   Future<bool> placeBid({
     required String sessionId,
-    required String driverId,
     required double offerPrice,
     String? driverName,
     String? plateNumber,
@@ -73,12 +71,10 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/bids/$sessionId/offer',
       data: {
-        'driver_id': driverId,
-        'offer_price': offerPrice,
+        'proposed_fare_centavos': ((proposedFare ?? offerPrice) * 100).round(),
         'driver_name': ?driverName,
         'plate_number': ?plateNumber,
         'vehicle_type': ?vehicleType,
-        'proposed_fare': ?proposedFare,
       },
     );
     return response.statusCode == 200 || response.statusCode == 201;

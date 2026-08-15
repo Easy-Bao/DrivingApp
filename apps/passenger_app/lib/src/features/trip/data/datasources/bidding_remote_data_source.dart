@@ -144,9 +144,13 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     int? page,
     int? limit,
   }) async {
+    final pageSize = limit ?? 20;
     final response = await _dio.get<List<dynamic>>(
       '/api/v1/drivers/$driverId/reviews',
-      queryParameters: {'page': ?page, 'limit': ?limit},
+      queryParameters: {
+        'offset': page == null ? null : (page - 1).clamp(0, 100) * pageSize,
+        'limit': ?limit,
+      },
     );
     return response.data ?? [];
   }

@@ -53,8 +53,12 @@ class TrackRepository implements ITrackRepository {
   fetchDriverLocation(String driverId) async {
     try {
       final locData = await _biddingDataSource.fetchDriverLocation(driverId);
-      final latitude = (locData?['latitude'] ?? locData?['lat']) as num?;
-      final longitude = (locData?['longitude'] ?? locData?['lng']) as num?;
+      final latitude = SafeParse.toNullableDouble(
+        locData?['latitude'] ?? locData?['lat'],
+      );
+      final longitude = SafeParse.toNullableDouble(
+        locData?['longitude'] ?? locData?['lng'],
+      );
       if (latitude != null && longitude != null) {
         return Right((latitude.toDouble(), longitude.toDouble()));
       }

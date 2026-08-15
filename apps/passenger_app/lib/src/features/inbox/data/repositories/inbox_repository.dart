@@ -21,17 +21,19 @@ class InboxRepository implements IInboxRepository {
 
       for (final n in rawNotifications) {
         if (n is Map<String, dynamic>) {
-          final type = n['type'] as String? ?? 'system';
+          final type = SafeParse.toStringValue(n['type'], 'system');
           if (type != 'ride' && type != 'driver' && type != 'chat') {
             continue;
           }
 
-          final id = n['id'] as String? ?? '';
-          final title = n['title'] as String? ?? '';
-          final message = n['message'] as String? ?? '';
-          final isRead = n['isRead'] as bool? ?? false;
+          final id = SafeParse.toStringValue(n['id']);
+          final title = SafeParse.toStringValue(n['title']);
+          final message = SafeParse.toStringValue(n['message'] ?? n['body']);
+          final isRead = _toBool(n['isRead'] ?? n['is_read']);
           final dt =
-              DateTime.tryParse(n['timestamp'] as String? ?? '') ??
+              DateTime.tryParse(
+                SafeParse.toStringValue(n['timestamp'] ?? n['created_at']),
+              ) ??
               DateTime.now();
 
           list.add(
@@ -52,5 +54,10 @@ class InboxRepository implements IInboxRepository {
     } catch (error) {
       return Left(ServerFailure('Failed to fetch notifications: $error'));
     }
+  }
+
+  bool _toBool(Object? value) {
+    if (value is bool) return value;
+    return value?.toString().toLowerCase() == 'true';
   }
 }

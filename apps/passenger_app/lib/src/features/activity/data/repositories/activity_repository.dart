@@ -96,20 +96,22 @@ class ActivityRepository implements IActivityRepository {
 
   RideHistoryModel _mapToModel(Map<String, dynamic> raw) {
     return RideHistoryModel(
-      id: raw['id'] as String? ?? '',
-      pickup: _shortenAddress(raw['pickup_name'] as String? ?? ''),
-      destination: _shortenAddress(raw['dropoff_name'] as String? ?? ''),
+      id: SafeParse.toStringValue(raw['id']),
+      pickup: _shortenAddress(SafeParse.toStringValue(raw['pickup_name'])),
+      destination: _shortenAddress(
+        SafeParse.toStringValue(raw['dropoff_name']),
+      ),
       pickupLat: SafeParse.toDouble(raw['pickup_latitude']),
       pickupLng: SafeParse.toDouble(raw['pickup_longitude']),
       destLat: SafeParse.toDouble(raw['dropoff_latitude']),
       destLng: SafeParse.toDouble(raw['dropoff_longitude']),
       date: _formatCreatedAt(raw['created_at']),
       price: _formatPrice(raw['fare']),
-      status: raw['status'] as String? ?? 'unknown',
-      driverId: raw['driver_id'] as String? ?? '',
-      driverName: raw['driver_name'] as String? ?? '',
-      vehiclePlate: raw['plate_number'] as String? ?? '',
-      vehicleType: raw['vehicle_type'] as String? ?? '',
+      status: SafeParse.toStringValue(raw['status'], 'unknown'),
+      driverId: SafeParse.toStringValue(raw['driver_id']),
+      driverName: SafeParse.toStringValue(raw['driver_name']),
+      vehiclePlate: SafeParse.toStringValue(raw['plate_number']),
+      vehicleType: SafeParse.toStringValue(raw['vehicle_type']),
     );
   }
 

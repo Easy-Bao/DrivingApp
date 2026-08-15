@@ -8,6 +8,9 @@ import 'package:shared_core/shared_core.dart';
 class DriverRepository implements IDriverRepository {
   final BiddingRemoteDataSource _biddingDataSource;
 
+  Future<Either<Failure, List<DriverModel>>>? _activeNearbyLookup;
+  ({double lat, double lng})? _activeNearbyCoordinates;
+
   DriverRepository({required BiddingRemoteDataSource biddingDataSource})
     : _biddingDataSource = biddingDataSource;
 
@@ -45,11 +48,44 @@ class DriverRepository implements IDriverRepository {
     if (error is CacheException) {
       return CacheFailure(error.message);
     }
-    return ServerFailure('Unexpected system error: $error');
+    return const ServerFailure(
+      'Driver availability is temporarily unavailable. Please try again.',
+    );
   }
 
   @override
   Future<Either<Failure, List<DriverModel>>> getNearbyDrivers({
+    required double lat,
+    required double lng,
+  }) async {
+    if (!_isValidCoordinate(lat, lng)) {
+      return const Left(ValidationFailure('Pickup location is invalid.'));
+    }
+
+    final activeLookup = _activeNearbyLookup;
+    final activeCoordinates = _activeNearbyCoordinates;
+    if (activeLookup != null &&
+        activeCoordinates?.lat == lat &&
+        activeCoordinates?.lng == lng) {
+      return activeLookup;
+    }
+
+    final lookup = _loadNearbyDrivers(lat: lat, lng: lng);
+    _activeNearbyLookup = lookup;
+    _activeNearbyCoordinates = (lat: lat, lng: lng);
+    try {
+      return await lookup;
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    } finally {
+      if (identical(_activeNearbyLookup, lookup)) {
+        _activeNearbyLookup = null;
+        _activeNearbyCoordinates = null;
+      }
+    }
+  }
+
+  Future<Either<Failure, List<DriverModel>>> _loadNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
@@ -62,15 +98,19 @@ class DriverRepository implements IDriverRepository {
       final nearbyPoints = responses[1];
       final pointsByDriverId = <String, Map<String, dynamic>>{};
       for (final rawPoint in nearbyPoints.whereType<Map<String, dynamic>>()) {
-        final driverId =
-            rawPoint['driver_id']?.toString() ??
-            rawPoint['driverId']?.toString();
-        final pointLat = (rawPoint['latitude'] as num?)?.toDouble();
-        final pointLng = (rawPoint['longitude'] as num?)?.toDouble();
-        if (driverId == null ||
-            driverId.isEmpty ||
+        final driverId = _stringValue(
+          rawPoint['driver_id'] ?? rawPoint['driverId'],
+        );
+        final pointLat = SafeParse.toNullableDouble(
+          rawPoint['latitude'] ?? rawPoint['lat'],
+        );
+        final pointLng = SafeParse.toNullableDouble(
+          rawPoint['longitude'] ?? rawPoint['lng'],
+        );
+        if (driverId.isEmpty ||
             pointLat == null ||
-            pointLng == null) {
+            pointLng == null ||
+            !_isValidCoordinate(pointLat, pointLng)) {
           continue;
         }
         pointsByDriverId[driverId] = {'lat': pointLat, 'lng': pointLng};
@@ -78,14 +118,13 @@ class DriverRepository implements IDriverRepository {
       final rawList = profiles
           .whereType<Map<String, dynamic>>()
           .map((profile) {
-            final profileId =
-                profile['id']?.toString() ?? profile['user_id']?.toString();
+            final profileId = _stringValue(profile['id'] ?? profile['user_id']);
             final point = pointsByDriverId[profileId];
             if (point == null) return null;
             return {...profile, ...point};
           })
           .whereType<Map<String, dynamic>>()
-          .toList();
+          .toList(growable: false);
       // The realtime service already applies the radius query. Haversine keeps
       // ranking local and avoids depending on the unregistered matrix route.
       return Right(_processNearbyDrivers(rawList, lat, lng));
@@ -102,9 +141,13 @@ class DriverRepository implements IDriverRepository {
     final List<DriverModel> drivers = [];
     for (final d in rawDrivers) {
       if (d is! Map<String, dynamic>) continue;
-      final driverLat = (d['lat'] as num?)?.toDouble();
-      final driverLng = (d['lng'] as num?)?.toDouble();
-      if (driverLat == null || driverLng == null) continue;
+      final driverLat = SafeParse.toNullableDouble(d['lat']);
+      final driverLng = SafeParse.toNullableDouble(d['lng']);
+      if (driverLat == null ||
+          driverLng == null ||
+          !_isValidCoordinate(driverLat, driverLng)) {
+        continue;
+      }
 
       final fallbackDistance = _calculateDistance(
         userLat,
@@ -115,14 +158,15 @@ class DriverRepository implements IDriverRepository {
       if (fallbackDistance > 5.0) continue;
 
       final etaMinutes = _calculateEta(fallbackDistance);
-      final rating = (d['rating'] as num?)?.toDouble() ?? 0;
+      final rating = SafeParse.toNullableDouble(d['rating']) ?? 0;
       final score = _calculateMatchingScore(
         fallbackDistance,
         rating,
         etaMinutes,
       );
 
-      drivers.add(_mapToDriverModel(d, fallbackDistance, etaMinutes, score));
+      final driver = _mapToDriverModel(d, fallbackDistance, etaMinutes, score);
+      if (driver != null) drivers.add(driver);
     }
 
     drivers.sort((a, b) => a.score.compareTo(b.score));
@@ -155,36 +199,57 @@ class DriverRepository implements IDriverRepository {
     return (0.5 * distanceKm) + (0.3 * (5.0 - rating)) + (0.2 * etaMinutes);
   }
 
-  DriverModel _mapToDriverModel(
+  DriverModel? _mapToDriverModel(
     Map<String, dynamic> data,
     double distanceKm,
     double etaMinutes,
     double score,
   ) {
+    final driverId = _stringValue(data['id'] ?? data['user_id']);
+    if (driverId.isEmpty) return null;
+
     return DriverModel(
-      id: data['id']?.toString() ?? '',
-      name: data['name']?.toString() ?? '',
-      vehicleType:
-          data['vehicleType']?.toString() ??
-          data['vehicle_type']?.toString() ??
-          '',
-      plateNumber:
-          data['plateNumber']?.toString() ??
-          data['plate_number']?.toString() ??
-          '',
-      rating: (data['rating'] as num?)?.toDouble() ?? 0,
-      lat: (data['lat'] as num?)?.toDouble() ?? 0,
-      lng: (data['lng'] as num?)?.toDouble() ?? 0,
+      id: driverId,
+      name: _stringValue(data['name']),
+      vehicleType: _stringValue(data['vehicleType'] ?? data['vehicle_type']),
+      plateNumber: _stringValue(data['plateNumber'] ?? data['plate_number']),
+      rating: SafeParse.toNullableDouble(data['rating']) ?? 0,
+      lat: SafeParse.toNullableDouble(data['lat']) ?? 0,
+      lng: SafeParse.toNullableDouble(data['lng']) ?? 0,
       distanceKm: distanceKm,
       etaMinutes: etaMinutes,
       score: score,
-      onboardPassengerCount:
-          (data['onboardPassengerCount'] as num?)?.toInt() ??
-          (data['onboard_passenger_count'] as num?)?.toInt(),
-      avatarUrl: data['avatarUrl'] as String? ?? data['avatar_url'] as String?,
-      recentFeedback:
-          data['recentFeedback'] as String? ??
-          data['recent_feedback'] as String?,
+      onboardPassengerCount: _nullableInt(
+        data['onboardPassengerCount'] ?? data['onboard_passenger_count'],
+      ),
+      avatarUrl: _nullableString(data['avatarUrl'] ?? data['avatar_url']),
+      recentFeedback: _nullableString(
+        data['recentFeedback'] ?? data['recent_feedback'],
+      ),
     );
+  }
+
+  static String _stringValue(Object? value) {
+    return value?.toString().trim() ?? '';
+  }
+
+  static String? _nullableString(Object? value) {
+    final normalized = _stringValue(value);
+    return normalized.isEmpty ? null : normalized;
+  }
+
+  static int? _nullableInt(Object? value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
+
+  static bool _isValidCoordinate(double lat, double lng) {
+    return lat.isFinite &&
+        lng.isFinite &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lng >= -180 &&
+        lng <= 180;
   }
 }
