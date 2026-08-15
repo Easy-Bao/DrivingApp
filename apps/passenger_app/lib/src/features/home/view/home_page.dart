@@ -157,6 +157,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildPendingBookingBanner() {
+    final isAuthenticated = context.select<SessionBloc, bool>(
+      (bloc) => bloc.state.isAuthenticated,
+    );
+
     return BlocBuilder<BookingDraftCubit, BookingDraftState>(
       buildWhen: (previous, current) => previous.draft != current.draft,
       builder: (context, state) {
@@ -166,6 +170,7 @@ class _HomePageState extends State<HomePage> {
         return Padding(
           padding: const EdgeInsets.only(top: 12),
           child: PendingBookingBannerWidget(
+            isAuthenticated: isAuthenticated,
             destinationName: draft.destination.name,
             onContinue: () {
               final pickupAddress = draft.pickupAddress;

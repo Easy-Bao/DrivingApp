@@ -3,12 +3,14 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 
 class PendingBookingBannerWidget extends StatelessWidget {
+  final bool isAuthenticated;
   final String destinationName;
   final VoidCallback onContinue;
   final VoidCallback onDismiss;
 
   const PendingBookingBannerWidget({
     super.key,
+    required this.isAuthenticated,
     required this.destinationName,
     required this.onContinue,
     required this.onDismiss,
@@ -16,6 +18,8 @@ class PendingBookingBannerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!isAuthenticated) return const SizedBox.shrink();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
