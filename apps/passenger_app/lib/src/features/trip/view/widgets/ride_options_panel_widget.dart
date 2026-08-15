@@ -27,6 +27,9 @@ class RideOptionsPanelWidget extends StatelessWidget {
   final TextEditingController customFareController;
   final double? minimumFare;
   final String? customFareError;
+  final bool isLoadingFare;
+  final String? fareError;
+  final VoidCallback? onRetryFare;
   final ValueChanged<String> onCustomFareChanged;
 
   const RideOptionsPanelWidget({
@@ -38,8 +41,68 @@ class RideOptionsPanelWidget extends StatelessWidget {
     required this.customFareController,
     required this.minimumFare,
     required this.customFareError,
+    required this.isLoadingFare,
+    required this.fareError,
+    required this.onRetryFare,
     required this.onCustomFareChanged,
   });
+
+  Widget _buildFareStatus() {
+    if (isLoadingFare) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 10),
+            Text('Calculating fare…'),
+          ],
+        ),
+      );
+    }
+
+    final error = fareError;
+    if (error != null) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.fromLTRB(14, 12, 8, 8),
+        decoration: BoxDecoration(
+          color: AppTheme.cancel.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.error_outline, color: AppTheme.cancel, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                error,
+                style: const TextStyle(
+                  color: AppTheme.cancel,
+                  fontSize: 13,
+                  height: 1.25,
+                ),
+              ),
+            ),
+            TextButton(onPressed: onRetryFare, child: const Text('Try again')),
+          ],
+        ),
+      );
+    }
+
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 24),
+      child: Center(child: Text('Fare details are unavailable.')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,11 +151,7 @@ class RideOptionsPanelWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          if (options.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text('Calculating your server fare...')),
-            ),
+          if (options.isEmpty) _buildFareStatus(),
           ...List.generate(options.length, (index) {
             final option = options[index];
             final isSelected = index == selectedIndex;
@@ -218,29 +277,33 @@ class RideOptionsPanelWidget extends StatelessWidget {
               ),
             );
           }),
-          const SizedBox(height: 4),
-          TextField(
-            controller: customFareController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: onCustomFareChanged,
-            decoration: InputDecoration(
-              labelText: 'Your offer',
-              prefixText: '₱ ',
-              helperText:
-                  'Custom offer cannot be lower than calculated minimum fare.',
-              errorText: customFareError,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppTheme.borderSide),
+          if (selectedOption != null) ...[
+            const SizedBox(height: 4),
+            TextField(
+              controller: customFareController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: onCustomFareChanged,
+              decoration: InputDecoration(
+                labelText: 'Your offer',
+                prefixText: '₱ ',
+                helperText:
+                    'Custom offer cannot be lower than calculated minimum fare.',
+                errorText: customFareError,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppTheme.borderSide),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
+          ],
           ElevatedButton(
             onPressed:
-                minimumFare == null ||
-                    customFareError != null ||
-                    selectedOption == null
+                selectedOption == null ||
+                    minimumFare == null ||
+                    customFareError != null
                 ? null
                 : onBookPressed,
             style: ElevatedButton.styleFrom(
@@ -254,7 +317,9 @@ class RideOptionsPanelWidget extends StatelessWidget {
             ),
             child: Text(
               selectedOption == null
-                  ? 'Calculating...'
+                  ? isLoadingFare
+                        ? 'Calculating fare…'
+                        : 'Fare unavailable'
                   : 'Book ${selectedOption.name}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),

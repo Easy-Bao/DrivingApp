@@ -95,23 +95,32 @@ class RouteModel extends Equatable {
 extension RouteModelExtension on RouteModel {
   Duration get estimatedTime => Duration(seconds: durationSeconds);
 
+  /// Returns only finite GeoJSON coordinates that Mapbox can render.
+  /// Mapbox coordinates are ordered longitude first.
+  List<List<double>> get validPolylinePoints => polylinePoints
+      .where(_isValidPolylinePoint)
+      .map((point) => [point[0], point[1]])
+      .toList(growable: false);
+
+  bool get hasGeometry => validPolylinePoints.length >= 2;
+
   /// Returns the first valid point from the GeoJSON polyline as a map-ready
   /// latitude/longitude pair. Mapbox coordinates are ordered longitude first.
   ({double lat, double lng})? get startCoordinate {
-    for (final point in polylinePoints) {
-      if (point.length < 2 ||
-          !point[0].isFinite ||
-          !point[1].isFinite ||
-          point[1] < -90 ||
-          point[1] > 90 ||
-          point[0] < -180 ||
-          point[0] > 180) {
-        continue;
-      }
-      return (lat: point[1], lng: point[0]);
-    }
+    final point = validPolylinePoints.firstOrNull;
+    if (point != null) return (lat: point[1], lng: point[0]);
     return null;
   }
+}
+
+bool _isValidPolylinePoint(List<double> point) {
+  return point.length >= 2 &&
+      point[0].isFinite &&
+      point[1].isFinite &&
+      point[1] >= -90 &&
+      point[1] <= 90 &&
+      point[0] >= -180 &&
+      point[0] <= 180;
 }
 
 class RouteModelLegacyAdapter {

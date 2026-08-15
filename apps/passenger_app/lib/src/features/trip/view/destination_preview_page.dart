@@ -38,6 +38,7 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
   RouteModel? _route;
   bool _isLoadingRoute = false;
   bool _routeRendered = false;
+  String? _routeError;
   mapbox.PointAnnotationManager? _pickupMarker;
   mapbox.PointAnnotationManager? _destinationMarker;
   mapbox.PolylineAnnotationManager? _routeLine;
@@ -58,32 +59,72 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
 
   Future<void> _initLocation() async {
     final pos = await LocationService.getCurrentPosition();
-    if (pos != null && mounted) {
+    if (pos != null) {
+      if (!mounted) return;
       setState(() {
         _userLat = pos.latitude;
         _userLng = pos.longitude;
       });
       await _loadRoute();
-    } else if (_userLat != null && _userLng != null) {
+      return;
+    }
+
+    if (_userLat != null && _userLng != null) {
       await _loadRoute();
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _routeError = 'We need your pickup location to calculate this route.';
+      });
     }
   }
 
   Future<void> _loadRoute() async {
-    if (_userLat == null || _userLng == null) return;
     if (_isLoadingRoute) return;
-    _isLoadingRoute = true;
+    final userLat = _userLat;
+    final userLng = _userLng;
+    if (userLat == null || userLng == null) {
+      if (mounted) {
+        setState(() {
+          _routeError = 'We need your pickup location to calculate this route.';
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingRoute = true;
+        _routeError = null;
+        _routeRendered = false;
+      });
+    } else {
+      _isLoadingRoute = true;
+    }
 
     try {
       final route = await MapProvider.getRoute(
-        _userLat!,
-        _userLng!,
+        userLat,
+        userLng,
         widget.destination.latitude,
         widget.destination.longitude,
         preference: RoutePreference.shortest,
       );
 
-      if (!mounted || route == null) return;
+      if (!mounted) return;
+      if (route == null || !route.hasGeometry || route.durationSeconds <= 0) {
+        setState(() {
+          _route = null;
+          _distance = '';
+          _duration = '';
+          _distanceKm = 0.0;
+          _routeError =
+              'We couldn’t load the route for this destination. Please try again.';
+        });
+        return;
+      }
 
       final km = route.distanceKm;
       final mins = (route.durationSeconds / 60.0).ceil();
@@ -97,8 +138,23 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
         _distanceKm = km;
       });
       await _renderRoute();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _route = null;
+          _distance = '';
+          _duration = '';
+          _distanceKm = 0.0;
+          _routeError =
+              'We couldn’t load the route for this destination. Please try again.';
+        });
+      }
     } finally {
-      _isLoadingRoute = false;
+      if (mounted) {
+        setState(() => _isLoadingRoute = false);
+      } else {
+        _isLoadingRoute = false;
+      }
     }
   }
 
@@ -106,14 +162,17 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
     final controller = _mapController;
     final route = _route;
     if (controller == null || route == null || _routeRendered) return;
-    if (route.polylinePoints.length < 2) return;
+    final routePoints = route.validPolylinePoints;
+    if (routePoints.length < 2) return;
 
     final pickupLat = _pickupLat ?? _userLat;
     final pickupLng = _pickupLng ?? _userLng;
     if (pickupLat == null || pickupLng == null) return;
 
-    _routeRendered = true;
     try {
+      await MapProvider.clearAnnotations(_pickupMarker);
+      await MapProvider.clearAnnotations(_destinationMarker);
+      await MapProvider.clearAnnotations(_routeLine);
       _pickupMarker = await MapProvider.addMarker(
         controller,
         pickupLat,
@@ -130,33 +189,107 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
       );
       _routeLine = await MapProvider.addPolyline(
         controller,
-        route.polylinePoints,
+        routePoints,
         color: AppTheme.primaryColor,
         width: 5.0,
       );
-      final routePoints = route.polylinePoints
-          .where((point) => point.length >= 2)
-          .map((point) => LatLng(point[1], point[0]));
       await MapProvider.fitBounds(
         controller,
         [
-          LatLng(_userLat!, _userLng!),
           LatLng(pickupLat, pickupLng),
           LatLng(widget.destination.latitude, widget.destination.longitude),
-          ...routePoints,
+          ...routePoints.map((point) => LatLng(point[1], point[0])),
         ],
         padding: 80.0,
         maxZoom: 14.5,
       );
+      if (!mounted) return;
+      setState(() {
+        _routeRendered = true;
+        _routeError = null;
+      });
     } catch (error) {
-      _routeRendered = false;
+      if (mounted) {
+        setState(() {
+          _routeRendered = false;
+          _routeError =
+              'We couldn’t display the route right now. Please try again.';
+        });
+      } else {
+        _routeRendered = false;
+      }
       debugPrint('Error rendering route preview: $error');
     }
+  }
+
+  void _retryRoute() {
+    unawaited(_loadRoute());
+  }
+
+  Widget _buildRouteStatus() {
+    final routeError = _routeError;
+    if (_isLoadingRoute) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.neutralColor,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 10),
+            Text('Calculating route…'),
+          ],
+        ),
+      );
+    }
+
+    if (routeError == null) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 8),
+      decoration: BoxDecoration(
+        color: AppTheme.cancel.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            LucideIcons.circle_alert,
+            color: AppTheme.cancel,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              routeError,
+              style: const TextStyle(
+                color: AppTheme.cancel,
+                fontSize: 13,
+                height: 1.25,
+              ),
+            ),
+          ),
+          TextButton(onPressed: _retryRoute, child: const Text('Try again')),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final fullAddress = widget.destination.fullAddress;
+    final canConfirmDestination =
+        _route != null && _routeRendered && !_isLoadingRoute;
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
@@ -298,6 +431,9 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  _buildRouteStatus(),
+                  if (_routeError != null || _isLoadingRoute)
+                    const SizedBox(height: 16),
                   if (_distance.isNotEmpty && _duration.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -360,40 +496,45 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: () {
-                        final params = <String, String>{
-                          'destinationName': widget.destination.name,
-                          'destinationLat': widget.destination.latitude
-                              .toString(),
-                          'destinationLng': widget.destination.longitude
-                              .toString(),
-                          'distance': _distance,
-                          'duration': _duration,
-                          'distanceKm': _distanceKm.toString(),
-                        };
-                        if (fullAddress.isNotEmpty) {
-                          params['destinationAddress'] = fullAddress;
-                        }
-                        if (widget.pickupAddress != null) {
-                          params['pickupAddress'] = widget.pickupAddress!;
-                        }
-                        if (widget.preselectedRideType != null) {
-                          params['rideType'] = widget.preselectedRideType!;
-                        }
-                        final pickupLat = _pickupLat ?? _userLat;
-                        final pickupLng = _pickupLng ?? _userLng;
-                        if (pickupLat != null && pickupLng != null) {
-                          params['pickupLat'] = pickupLat.toString();
-                          params['pickupLng'] = pickupLng.toString();
-                        }
-                        unawaited(
-                          context.pushNamed(
-                            TripRoutes.rideSelection,
-                            extra: {'destination': widget.destination},
-                            queryParameters: params,
-                          ),
-                        );
-                      },
+                      onPressed: canConfirmDestination
+                          ? () {
+                              final params = <String, String>{
+                                'destinationName': widget.destination.name,
+                                'destinationLat': widget.destination.latitude
+                                    .toString(),
+                                'destinationLng': widget.destination.longitude
+                                    .toString(),
+                                'distance': _distance,
+                                'duration': _duration,
+                                'distanceKm': _distanceKm.toString(),
+                              };
+                              if (fullAddress.isNotEmpty) {
+                                params['destinationAddress'] = fullAddress;
+                              }
+                              if (widget.pickupAddress != null) {
+                                params['pickupAddress'] = widget.pickupAddress!;
+                              }
+                              if (widget.preselectedRideType != null) {
+                                params['rideType'] =
+                                    widget.preselectedRideType!;
+                              }
+                              final pickupLat = _pickupLat ?? _userLat;
+                              final pickupLng = _pickupLng ?? _userLng;
+                              if (pickupLat != null && pickupLng != null) {
+                                params['pickupLat'] = pickupLat.toString();
+                                params['pickupLng'] = pickupLng.toString();
+                              }
+                              unawaited(
+                                context.pushNamed(
+                                  TripRoutes.rideSelection,
+                                  extra: {'destination': widget.destination},
+                                  queryParameters: params,
+                                ),
+                              );
+                            }
+                          : _routeError != null
+                          ? _retryRoute
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
@@ -402,9 +543,15 @@ class _DestinationPreviewPageState extends State<DestinationPreviewPage> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Confirm Destination',
-                        style: TextStyle(
+                      child: Text(
+                        _isLoadingRoute
+                            ? 'Calculating route…'
+                            : _routeError != null
+                            ? 'Try again'
+                            : canConfirmDestination
+                            ? 'Confirm Destination'
+                            : 'Preparing route…',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

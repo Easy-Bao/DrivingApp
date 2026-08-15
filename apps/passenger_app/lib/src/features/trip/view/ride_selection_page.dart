@@ -48,8 +48,12 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   final TextEditingController _customFareController = TextEditingController();
   double? _minimumFare;
   String? _fareError;
+  String? _customFareError;
+  bool _isLoadingFare = true;
   AppMapController? _mapController;
   Widget? _cachedMapView;
+  RouteModel? _route;
+  Future<RouteModel?>? _routeRequest;
 
   ({double lat, double lng})? get _pickupCoordinate {
     final latitude = widget.pickupLatitude;
@@ -66,38 +70,114 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   void initState() {
     super.initState();
     initializeRideOptionsData();
-    unawaited(fetchServerFareQuotes());
+    unawaited(_initializeTripDetails());
   }
 
   void initializeRideOptionsData() {
     _options = const [];
   }
 
-  Future<void> fetchServerFareQuotes() async {
-    final pickup = _pickupCoordinate;
-    if (pickup == null) {
-      if (mounted) {
-        setState(() => _fareError = 'Your pickup location is unavailable.');
-      }
-      return;
-    }
-    final distanceKm = widget.distanceKm;
-    final durationMins = double.tryParse(
-      widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''),
-    );
-    if (durationMins == null) {
-      if (mounted) {
-        setState(() => _fareError = 'Route duration is unavailable.');
-      }
-      return;
+  Future<void> _initializeTripDetails() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingFare = true;
+        _fareError = null;
+        _customFareError = null;
+      });
     }
 
     try {
+      final route = await _loadRoute();
+      if (!mounted) return;
+
+      final distanceKm =
+          _positiveValue(route?.distanceKm) ??
+          _positiveValue(widget.distanceKm);
+      final durationMinutes = route != null && route.durationSeconds > 0
+          ? route.durationSeconds / 60.0
+          : _parseDurationMinutes(widget.duration);
+      if (distanceKm == null || durationMinutes == null) {
+        setState(() {
+          _isLoadingFare = false;
+          _fareError = 'We couldn’t determine the route details for this trip.';
+          _options = const [];
+          _minimumFare = null;
+          _customFareController.clear();
+        });
+        return;
+      }
+
+      await _fetchServerFareQuotes(
+        distanceKm: distanceKm,
+        durationMinutes: durationMinutes,
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingFare = false;
+          _fareError =
+              'We couldn’t load the fare for this route. Please try again.';
+          _options = const [];
+          _minimumFare = null;
+          _customFareController.clear();
+        });
+      }
+    }
+  }
+
+  Future<RouteModel?> _loadRoute() async {
+    final cachedRoute = _route;
+    if (cachedRoute != null) return cachedRoute;
+
+    final ongoingRequest = _routeRequest;
+    if (ongoingRequest != null) return ongoingRequest;
+
+    final pickup = _pickupCoordinate;
+    if (pickup == null) return null;
+
+    final request = MapProvider.getRoute(
+      pickup.lat,
+      pickup.lng,
+      widget.destination.latitude,
+      widget.destination.longitude,
+      preference: RoutePreference.shortest,
+    );
+    _routeRequest = request;
+    try {
+      final route = await request;
+      if (route != null && mounted) {
+        setState(() => _route = route);
+      }
+      return route;
+    } finally {
+      if (identical(_routeRequest, request)) {
+        _routeRequest = null;
+      }
+    }
+  }
+
+  Future<void> _fetchServerFareQuotes({
+    required double distanceKm,
+    required double durationMinutes,
+  }) async {
+    if (mounted) {
+      setState(() {
+        _isLoadingFare = true;
+        _fareError = null;
+        _customFareError = null;
+      });
+    }
+
+    try {
+      final pickup = _pickupCoordinate;
+      if (pickup == null) {
+        throw StateError('Pickup location is unavailable.');
+      }
       final datasource = Modular.get<BiddingRemoteDataSource>();
       final pricingConfig = await datasource.fetchPricingConfig();
       final res = await datasource.fetchFareEstimate(
         distanceKm: distanceKm,
-        durationMinutes: durationMins,
+        durationMinutes: durationMinutes,
         rideType: 'solo',
         originLatitude: pickup.lat,
         originLongitude: pickup.lng,
@@ -114,23 +194,70 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           _options = [
             RideOptionData(
               name: pricingConfig.serviceName,
-              subtitle: 'Private ride with a server-calculated minimum fare',
+              subtitle: 'Private ride with a calculated minimum fare',
               icon: LucideIcons.bike,
               fare: totalFare,
-              eta: 'Server calculated',
+              eta: 'Estimated for this route',
               badge: null,
             ),
           ];
           _fareError = null;
+          _customFareError = null;
         });
       } else if (mounted) {
-        setState(() => _fareError = 'The server did not return a valid fare.');
+        setState(() {
+          _isLoadingFare = false;
+          _fareError = 'We couldn’t calculate a fare for this route.';
+          _options = const [];
+          _minimumFare = null;
+          _customFareController.clear();
+        });
       }
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
-        setState(() => _fareError = 'Unable to calculate the fare right now.');
+        setState(() {
+          _isLoadingFare = false;
+          _fareError =
+              'We couldn’t calculate a fare for this route. Please try again.';
+          _options = const [];
+          _minimumFare = null;
+          _customFareController.clear();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingFare = false);
       }
     }
+  }
+
+  void _retryFareCalculation() {
+    unawaited(_initializeTripDetails());
+  }
+
+  static double? _positiveValue(double? value) {
+    return value != null && value.isFinite && value > 0 ? value : null;
+  }
+
+  static double? _parseDurationMinutes(String rawDuration) {
+    final value = rawDuration.trim().toLowerCase();
+    if (value.isEmpty) return null;
+
+    final hours = double.tryParse(
+      RegExp(r'(\d+(?:\.\d+)?)\s*h').firstMatch(value)?.group(1) ?? '',
+    );
+    final minutes = double.tryParse(
+      RegExp(r'(\d+(?:\.\d+)?)\s*m').firstMatch(value)?.group(1) ?? '',
+    );
+    if (hours != null || minutes != null) {
+      final totalMinutes = (hours ?? 0) * 60 + (minutes ?? 0);
+      return _positiveValue(totalMinutes);
+    }
+
+    final numericValue = double.tryParse(
+      value.replaceAll(RegExp(r'[^0-9.]'), ''),
+    );
+    return _positiveValue(numericValue);
   }
 
   void _onCustomFareChanged(String value) {
@@ -138,7 +265,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     if (minimumFare == null) return;
     final enteredFare = double.tryParse(value);
     setState(() {
-      _fareError = enteredFare == null
+      _customFareError = enteredFare == null
           ? 'Enter a valid custom offer.'
           : enteredFare < minimumFare
           ? 'Custom offer cannot be lower than calculated minimum fare.'
@@ -227,14 +354,9 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     final destLng = widget.destination.longitude;
 
     try {
-      final route = await MapProvider.getRoute(
-        pickupLat,
-        pickupLng,
-        destLat,
-        destLng,
-        preference: RoutePreference.shortest,
-      );
-      if (route != null && mounted) {
+      final route = await _loadRoute();
+      if (route != null && route.hasGeometry && mounted) {
+        final routePoints = route.validPolylinePoints;
         await MapProvider.addMarker(
           _mapController!,
           pickupLat,
@@ -251,19 +373,16 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         );
         await MapProvider.addPolyline(
           _mapController!,
-          route.polylinePoints,
+          routePoints,
           color: AppTheme.primaryColor,
           width: 5.0,
         );
-        final routePoints = route.polylinePoints
-            .where((point) => point.length >= 2)
-            .map((point) => LatLng(point[1], point[0]));
         await MapProvider.fitBounds(
           _mapController!,
           [
             LatLng(pickupLat, pickupLng),
             LatLng(destLat, destLng),
-            ...routePoints,
+            ...routePoints.map((point) => LatLng(point[1], point[0])),
           ],
           padding: 80.0,
           maxZoom: 14.5,
@@ -362,7 +481,10 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                     },
                     customFareController: _customFareController,
                     minimumFare: _minimumFare,
-                    customFareError: _fareError,
+                    customFareError: _customFareError,
+                    isLoadingFare: _isLoadingFare,
+                    fareError: _fareError,
+                    onRetryFare: _retryFareCalculation,
                     onCustomFareChanged: _onCustomFareChanged,
                     onBookPressed: () => unawaited(_handleBookPressed()),
                   ),

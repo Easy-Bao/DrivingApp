@@ -163,11 +163,22 @@ class MapAnnotationService {
     Color color = const Color(0xFF222222),
     double width = 4.0,
   }) async {
+    final validPoints = points.where(_isValidPolylinePoint).toList();
+    if (validPoints.length < 2) {
+      throw ArgumentError.value(
+        points,
+        'points',
+        'at least two valid coordinates are required',
+      );
+    }
+
     final mapCtrl = controller.native as mapbox.MapboxMap;
     final annotationManager = await mapCtrl.annotations
         .createPolylineAnnotationManager();
 
-    final coordinates = points.map((p) => mapbox.Position(p[0], p[1])).toList();
+    final coordinates = validPoints
+        .map((point) => mapbox.Position(point[0], point[1]))
+        .toList();
 
     await annotationManager.create(
       mapbox.PolylineAnnotationOptions(
@@ -178,6 +189,16 @@ class MapAnnotationService {
       ),
     );
     return annotationManager;
+  }
+
+  static bool _isValidPolylinePoint(List<double> point) {
+    return point.length >= 2 &&
+        point[0].isFinite &&
+        point[1].isFinite &&
+        point[1] >= -90 &&
+        point[1] <= 90 &&
+        point[0] >= -180 &&
+        point[0] <= 180;
   }
 
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolyline(
