@@ -6,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
@@ -14,6 +15,7 @@ import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/widgets/home_location_row_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/public_driver_summary_card_widget.dart';
+import 'package:passenger_app/src/features/home/view/widgets/recent_activity_empty_state_widget.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/location/location_routes.dart';
@@ -330,6 +332,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildRecentActivityList() {
+    final isGuest = context.select<SessionBloc, bool>((bloc) {
+      final sessionState = bloc.state;
+      return sessionState is GuestSession || sessionState is SessionFailure;
+    });
+
     return BlocBuilder<HomeCubit, HomeState>(
       buildWhen: (prev, curr) =>
           prev.recentLocations != curr.recentLocations ||
@@ -345,33 +352,7 @@ class _HomePageState extends State<HomePage> {
           );
         }
         if (state.recentLocations.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'No recent trips yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Your recent ride history will appear here.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return RecentActivityEmptyStateWidget(isGuest: isGuest);
         }
         return ListView.separated(
           padding: const EdgeInsets.only(bottom: 20),

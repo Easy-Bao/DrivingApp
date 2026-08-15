@@ -23,6 +23,11 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isGuest = context.select<SessionBloc, bool>((bloc) {
+      final sessionState = bloc.state;
+      return sessionState is GuestSession || sessionState is SessionFailure;
+    });
+
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
@@ -31,6 +36,9 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
           onRefresh: _loadActivity,
           child: BlocBuilder<ActivityBloc, ActivityState>(
             builder: (context, state) {
+              if (isGuest) {
+                return _buildGuestEmptyState();
+              }
               if (state is ActivityLoading) {
                 return _buildLoadingState();
               }
@@ -79,7 +87,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                       ),
                       SliverFillRemaining(
                         hasScrollBody: false,
-                        child: _buildEmptyState(),
+                        child: _buildEmptyState(isGuest: false),
                       ),
                     ],
                   );
@@ -348,16 +356,53 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildGuestEmptyState() {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              const Text(
+                'Activity',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryColor,
+                  letterSpacing: -1.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Sign in to view your ride history',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                ),
+              ),
+            ]),
+          ),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _buildEmptyState(isGuest: true),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState({required bool isGuest}) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'No rides yet',
-              style: TextStyle(
+            Text(
+              isGuest ? 'Guest mode' : 'No rides yet',
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: AppTheme.primaryColor,
@@ -365,7 +410,9 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Your completed and canceled trips will appear here.',
+              isGuest
+                  ? 'Sign in to view your recent trips.'
+                  : 'Your completed and canceled trips will appear here.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
