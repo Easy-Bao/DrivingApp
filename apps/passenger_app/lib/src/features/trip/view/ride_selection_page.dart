@@ -15,27 +15,34 @@ import 'package:passenger_app/src/features/trip/domain/entities/booking_draft.da
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/booking_auth_bottom_sheet_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/ride_options_panel_widget.dart';
+import 'package:passenger_app/src/features/trip/view/widgets/ride_tip_selector_widget.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class RideSelectionPage extends StatefulWidget {
   final PlaceModel destination;
-  final String distance;
-  final String duration;
-  final double distanceKm;
+  final String? distance;
+  final String? duration;
+  final double? distanceKm;
+  final String rideType;
   final String? pickupAddress;
   final double? pickupLatitude;
   final double? pickupLongitude;
+  final int initialTipAmount;
+  final String initialNotes;
 
   const RideSelectionPage({
     super.key,
     required this.destination,
-    required this.distance,
-    required this.duration,
-    required this.distanceKm,
+    this.distance,
+    this.duration,
+    this.distanceKm,
+    this.rideType = 'solo',
     this.pickupAddress,
     this.pickupLatitude,
     this.pickupLongitude,
+    this.initialTipAmount = 0,
+    this.initialNotes = '',
   });
 
   @override
@@ -44,8 +51,10 @@ class RideSelectionPage extends StatefulWidget {
 
 class _RideSelectionPageState extends State<RideSelectionPage> {
   int _selectedIdx = 0;
+  late int _selectedTipAmount;
   late List<RideOptionData> _options;
   final TextEditingController _customFareController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
   double? _minimumFare;
   String? _fareError;
   String? _customFareError;
@@ -54,6 +63,9 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   Widget? _cachedMapView;
   RouteModel? _route;
   Future<RouteModel?>? _routeRequest;
+  bool _isShowingFareDetails = false;
+  bool _isResolvingPickup = true;
+  ({double lat, double lng})? _resolvedPickup;
 
   ({double lat, double lng})? get _pickupCoordinate {
     final latitude = widget.pickupLatitude;
@@ -61,16 +73,103 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     if (latitude != null && longitude != null) {
       return (lat: latitude, lng: longitude);
     }
+    final resolvedPickup = _resolvedPickup;
+    if (resolvedPickup != null) return resolvedPickup;
     final position = LocationService.lastPosition;
     if (position == null) return null;
     return (lat: position.latitude, lng: position.longitude);
   }
 
+  String get _rideTypeLabel {
+    final normalized = widget.rideType.trim();
+    if (normalized.isEmpty) return 'Solo Ride';
+    return normalized
+        .split(RegExp(r'[_-]+'))
+        .map(
+          (word) => word.isEmpty
+              ? word
+              : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+        )
+        .join(' ');
+  }
+
+  String get _pickupLabel {
+    final address = widget.pickupAddress?.trim();
+    return address == null || address.isEmpty ? 'Current location' : address;
+  }
+
+  String get _distanceLabel {
+    final route = _route;
+    if (route != null && route.distanceKm > 0) {
+      return '${route.distanceKm.toStringAsFixed(1)} km';
+    }
+    return widget.distance ?? '';
+  }
+
+  String get _durationLabel {
+    final route = _route;
+    if (route != null && route.durationSeconds > 0) {
+      return '${(route.durationSeconds / 60.0).ceil()} min';
+    }
+    return widget.duration ?? '';
+  }
+
+  double? get _effectiveDistanceKm =>
+      _positiveValue(_route?.distanceKm) ?? _positiveValue(widget.distanceKm);
+
+  double? get _effectiveDurationMinutes {
+    final route = _route;
+    if (route != null && route.durationSeconds > 0) {
+      return route.durationSeconds / 60.0;
+    }
+    final duration = widget.duration;
+    return duration == null ? null : _parseDurationMinutes(duration);
+  }
+
+  double get _baseFare {
+    if (_options.isEmpty) return 0;
+    final optionIndex = _selectedIdx.clamp(0, _options.length - 1).toInt();
+    final option = _options[optionIndex];
+    return double.tryParse(_customFareController.text) ?? option.fare;
+  }
+
+  double get _totalFare => _baseFare + _selectedTipAmount;
+
   @override
   void initState() {
     super.initState();
+    _selectedTipAmount =
+        RideTipSelectorWidget.tipOptions.contains(widget.initialTipAmount)
+        ? widget.initialTipAmount
+        : 0;
+    _notesController.text = widget.initialNotes;
     initializeRideOptionsData();
-    unawaited(_initializeTripDetails());
+    if (_pickupCoordinate != null) {
+      _isResolvingPickup = false;
+      unawaited(_initializeTripDetails());
+    } else {
+      unawaited(_resolvePickupLocation());
+    }
+  }
+
+  Future<void> _resolvePickupLocation() async {
+    try {
+      final position = await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      if (position != null) {
+        setState(() {
+          _resolvedPickup = (lat: position.latitude, lng: position.longitude);
+          _isResolvingPickup = false;
+        });
+        await _initializeTripDetails();
+        return;
+      }
+    } catch (_) {
+      // The fare panel will render the location-unavailable recovery state.
+    }
+    if (!mounted) return;
+    setState(() => _isResolvingPickup = false);
+    await _initializeTripDetails();
   }
 
   void initializeRideOptionsData() {
@@ -87,15 +186,12 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     }
 
     try {
-      final route = await _loadRoute();
+      await _loadRoute();
       if (!mounted) return;
+      unawaited(_drawRoute());
 
-      final distanceKm =
-          _positiveValue(route?.distanceKm) ??
-          _positiveValue(widget.distanceKm);
-      final durationMinutes = route != null && route.durationSeconds > 0
-          ? route.durationSeconds / 60.0
-          : _parseDurationMinutes(widget.duration);
+      final distanceKm = _effectiveDistanceKm;
+      final durationMinutes = _effectiveDurationMinutes;
       if (distanceKm == null || durationMinutes == null) {
         setState(() {
           _isLoadingFare = false;
@@ -178,7 +274,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       final res = await datasource.fetchFareEstimate(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,
-        rideType: 'solo',
+        rideType: widget.rideType,
         originLatitude: pickup.lat,
         originLongitude: pickup.lng,
         destinationLatitude: widget.destination.latitude,
@@ -275,12 +371,33 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
 
   double? get _selectedFare => double.tryParse(_customFareController.text);
 
+  void _onTipSelected(int amount) {
+    if (!mounted) return;
+    setState(() => _selectedTipAmount = amount);
+  }
+
+  void _onNotesChanged(String _) {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  void _showFareDetails() {
+    if (!mounted || _totalFare <= 0) return;
+    setState(() => _isShowingFareDetails = true);
+  }
+
+  void _hideFareDetails() {
+    if (!mounted) return;
+    setState(() => _isShowingFareDetails = false);
+  }
+
   Future<void> _handleBookPressed() async {
     final fare = _selectedFare;
     final minimumFare = _minimumFare;
     if (fare == null || minimumFare == null || fare < minimumFare) {
       return;
     }
+    final totalFare = fare + _selectedTipAmount;
 
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
     if (bookingBloc.hasActiveBooking) {
@@ -298,6 +415,8 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         BookingDraft(
           destination: widget.destination,
           pickupAddress: widget.pickupAddress,
+          tipAmount: _selectedTipAmount,
+          notes: _notesController.text.trim(),
         ),
       );
       final action = await showModalBottomSheet<BookingAuthAction>(
@@ -324,11 +443,11 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       context.pushNamed(
         TripRoutes.findingDriver,
         extra: {
-          'rideType': 'solo',
-          'fare': fare,
+          'rideType': widget.rideType,
+          'fare': totalFare,
           'destination': widget.destination,
-          'distance': widget.distance,
-          'duration': widget.duration,
+          'distance': _distanceLabel,
+          'duration': _durationLabel,
           'pickupAddress': widget.pickupAddress,
           'pickupLat': _pickupCoordinate?.lat,
           'pickupLng': _pickupCoordinate?.lng,
@@ -340,6 +459,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   @override
   void dispose() {
     _customFareController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -410,8 +530,20 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   Widget build(BuildContext context) {
     final pickup = _pickupCoordinate;
     if (pickup == null) {
-      return const Scaffold(
-        body: Center(child: Text('Your location is unavailable.')),
+      return Scaffold(
+        backgroundColor: AppTheme.surface,
+        body: Center(
+          child: _isResolvingPickup
+              ? const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text('Getting your current location…'),
+                  ],
+                )
+              : const Text('Your location is unavailable.'),
+        ),
       );
     }
     final defaultLat = pickup.lat;
@@ -470,8 +602,15 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                 return ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: isWide ? 600.0 : double.infinity,
+                    maxHeight: MediaQuery.sizeOf(context).height * 0.68,
                   ),
                   child: RideOptionsPanelWidget(
+                    rideTypeLabel: _rideTypeLabel,
+                    pickupLabel: _pickupLabel,
+                    destinationName: widget.destination.name,
+                    destinationAddress: widget.destination.fullAddress,
+                    distance: _distanceLabel,
+                    duration: _durationLabel,
                     options: _options,
                     selectedIndex: _selectedIdx,
                     onOptionSelected: (idx) {
@@ -486,6 +625,14 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                     fareError: _fareError,
                     onRetryFare: _retryFareCalculation,
                     onCustomFareChanged: _onCustomFareChanged,
+                    notesController: _notesController,
+                    onNotesChanged: _onNotesChanged,
+                    selectedTipAmount: _selectedTipAmount,
+                    onTipSelected: _onTipSelected,
+                    totalFare: _totalFare,
+                    isShowingFareDetails: _isShowingFareDetails,
+                    onShowFareDetails: _showFareDetails,
+                    onHideFareDetails: _hideFareDetails,
                     onBookPressed: () => unawaited(_handleBookPressed()),
                   ),
                 );

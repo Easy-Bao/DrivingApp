@@ -1,5 +1,4 @@
 export 'activity_detail_map_page.dart';
-export 'destination_preview_page.dart';
 export 'driver_matched_page.dart';
 export 'finding_driver_page.dart';
 export 'map_pin_page.dart';
@@ -11,5 +10,8 @@ export 'widgets/finding_driver_bids_panel_widget.dart';
 export 'widgets/finding_driver_nearest_panel_widget.dart';
 export 'widgets/finding_driver_no_driver_panel_widget.dart';
 export 'widgets/finding_driver_searching_panel_widget.dart';
+export 'widgets/ride_fare_details_widget.dart';
 export 'widgets/ride_options_panel_widget.dart';
+export 'widgets/ride_tip_selector_widget.dart';
+export 'widgets/ride_trip_summary_widget.dart';
 export 'widgets/track_driver_panel_widget.dart';

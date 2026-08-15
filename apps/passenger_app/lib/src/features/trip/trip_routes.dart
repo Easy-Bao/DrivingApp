@@ -5,8 +5,6 @@ abstract final class TripRoutes {
   static const String activityDetailMapPath = 'home/activity-detail';
   static const String mapPin = 'MapPin';
   static const String mapPinPath = 'home/map-pin';
-  static const String destinationPreview = 'DestinationPreview';
-  static const String destinationPreviewPath = 'home/destination-preview';
   static const String rideSelection = 'RideSelection';
   static const String rideSelectionPath = 'home/ride-selection';
   static const String findingDriver = 'FindingDriver';

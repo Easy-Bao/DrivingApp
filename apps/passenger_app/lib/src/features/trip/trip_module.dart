@@ -4,7 +4,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/activity_detail_map_page.dart';
-import 'package:passenger_app/src/features/trip/view/destination_preview_page.dart';
 import 'package:passenger_app/src/features/trip/view/driver_matched_page.dart';
 import 'package:passenger_app/src/features/trip/view/finding_driver_page.dart';
 import 'package:passenger_app/src/features/trip/view/map_pin_page.dart';
@@ -57,60 +56,14 @@ class TripModule {
       transitionDuration: AppTransitions.modalDuration,
     ),
     ChildRoute(
-      name: TripRoutes.destinationPreview,
-      TripRoutes.destinationPreviewPath,
-      child: (context, GoRouterState state) {
-        PlaceModel? place;
-        if (state.extra is PlaceModel) {
-          place = state.extra as PlaceModel;
-        } else if (state.extra is Map) {
-          final map = state.extra as Map;
-          if (map['destination'] is PlaceModel) {
-            place = map['destination'] as PlaceModel;
-          }
-        }
-
-        if (place == null) {
-          final name = state.uri.queryParameters['destinationName'];
-          final latitude = double.tryParse(
-            state.uri.queryParameters['destinationLat'] ?? '',
-          );
-          final longitude = double.tryParse(
-            state.uri.queryParameters['destinationLng'] ?? '',
-          );
-          if (name == null ||
-              name.trim().isEmpty ||
-              latitude == null ||
-              longitude == null) {
-            return const Scaffold(
-              body: Center(child: Text('Destination data is unavailable.')),
-            );
-          }
-          place = PlaceModel(
-            id: state.uri.queryParameters['destinationId'] ?? name,
-            name: name,
-            fullAddress:
-                state.uri.queryParameters['destinationAddress'] ?? name,
-            latitude: latitude,
-            longitude: longitude,
-          );
-        }
-
-        return DestinationPreviewPage(
-          destination: place,
-          preselectedRideType: state.uri.queryParameters['rideType'],
-          pickupAddress: state.uri.queryParameters['pickupAddress'],
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
       name: TripRoutes.rideSelection,
       TripRoutes.rideSelectionPath,
       child: (context, GoRouterState state) {
+        final extra = state.extra;
         final data = SafeRouteExtra.asMap(state.extra);
-        final destination = data['destination'] is PlaceModel
+        final destination = extra is PlaceModel
+            ? extra
+            : data['destination'] is PlaceModel
             ? data['destination'] as PlaceModel
             : _destinationFromQuery(state.uri.queryParameters);
         final distanceKm =
@@ -122,10 +75,7 @@ class TripModule {
         final duration =
             data['duration'] as String? ??
             state.uri.queryParameters['duration'];
-        if (destination == null ||
-            distanceKm == null ||
-            distance == null ||
-            duration == null) {
+        if (destination == null) {
           return const Scaffold(
             body: Center(child: Text('Trip route data is unavailable.')),
           );
@@ -137,6 +87,18 @@ class TripModule {
             distance: distance,
             duration: duration,
             distanceKm: distanceKm,
+            rideType:
+                data['rideType'] as String? ??
+                state.uri.queryParameters['rideType'] ??
+                'solo',
+            initialTipAmount:
+                (data['tipAmount'] as num?)?.toInt() ??
+                int.tryParse(state.uri.queryParameters['tipAmount'] ?? '') ??
+                0,
+            initialNotes:
+                data['notes'] as String? ??
+                state.uri.queryParameters['notes'] ??
+                '',
             pickupLatitude:
                 (data['pickupLat'] as num?)?.toDouble() ??
                 double.tryParse(state.uri.queryParameters['pickupLat'] ?? ''),

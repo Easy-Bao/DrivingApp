@@ -388,7 +388,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     }
     unawaited(
       context.pushNamed(
-        'DestinationPreview',
+        TripRoutes.rideSelection,
         extra: place,
         queryParameters: queryParams,
       ),

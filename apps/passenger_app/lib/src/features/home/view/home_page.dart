@@ -177,8 +177,12 @@ class _HomePageState extends State<HomePage> {
               BlocProvider.of<BookingDraftCubit>(context).clear();
               unawaited(
                 context.pushNamed(
-                  TripRoutes.destinationPreview,
-                  extra: draft.destination,
+                  TripRoutes.rideSelection,
+                  extra: {
+                    'destination': draft.destination,
+                    'tipAmount': draft.tipAmount,
+                    'notes': draft.notes,
+                  },
                   queryParameters: {
                     if (pickupAddress != null && pickupAddress.isNotEmpty)
                       'pickupAddress': pickupAddress,
@@ -612,7 +616,7 @@ class _HomePageState extends State<HomePage> {
       final address = BlocProvider.of<HomeCubit>(context).state.currentAddress;
       unawaited(
         context.pushNamed(
-          TripRoutes.destinationPreview,
+          TripRoutes.rideSelection,
           extra: syntheticPlace,
           queryParameters: {'pickupAddress': address},
         ),

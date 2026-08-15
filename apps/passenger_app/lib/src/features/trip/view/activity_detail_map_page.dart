@@ -278,7 +278,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                         );
                         unawaited(
                           context.pushNamed(
-                            TripRoutes.destinationPreview,
+                            TripRoutes.rideSelection,
                             extra: place,
                           ),
                         );
