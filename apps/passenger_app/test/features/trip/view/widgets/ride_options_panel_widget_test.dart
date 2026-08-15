@@ -155,8 +155,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Fare details'), findsOneWidget);
     expect(find.text('Passenger'), findsOneWidget);
-    expect(find.text('Pickup'), findsNWidgets(2));
-    expect(find.text('Destination'), findsNWidgets(2));
+    expect(find.text('Pickup'), findsOneWidget);
+    expect(find.text('Destination'), findsOneWidget);
+    expect(find.text('Solo Ride'), findsNothing);
+    expect(find.text('Your offer'), findsNothing);
+    expect(find.text('Notes for the driver (optional)'), findsNothing);
+    expect(find.text('Book Solo Ride'), findsNothing);
 
     await tester.tap(find.byTooltip('Back to fare summary'));
     expect(hideDetailsCount, 1);

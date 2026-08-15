@@ -329,56 +329,131 @@ class RideOptionsPanelWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFareSummary({required RideOptionData selectedOption}) {
+  Widget _buildFareSummary() => _buildTotalFareCard();
+
+  Widget _buildFareDetails({required RideOptionData selectedOption}) {
     final baseFare =
         double.tryParse(customFareController.text) ?? selectedOption.fare;
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 260),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        layoutBuilder: (currentChild, previousChildren) => ClipRect(
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: <Widget>[
-              ...previousChildren,
-              currentChild ?? const SizedBox.shrink(),
-            ],
+    return RideFareDetailsWidget(
+      passengerLabel: 'You',
+      pickupLabel: pickupLabel,
+      destinationName: destinationName,
+      destinationAddress: destinationAddress,
+      distance: distance,
+      duration: duration,
+      baseFare: baseFare,
+      tipAmount: selectedTipAmount,
+      totalFare: totalFare,
+      notes: notesController.text.trim(),
+      onBackPressed: onHideFareDetails,
+    );
+  }
+
+  Widget _buildFareSummaryContent({
+    required RideOptionData? selectedOption,
+    required bool canBook,
+  }) {
+    return Column(
+      key: const ValueKey('fare-summary-content'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          rideTypeLabel.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+            letterSpacing: 1.2,
           ),
         ),
-        transitionBuilder: (child, animation) {
-          final isDetails = child.key == const ValueKey('fare-details');
-          final isEnteringDetails = isShowingFareDetails && isDetails;
-          final beginOffset =
-              isEnteringDetails || (!isShowingFareDetails && !isDetails)
-              ? const Offset(1, 0)
-              : const Offset(-1, 0);
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: beginOffset,
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          );
-        },
-        child: isShowingFareDetails
-            ? RideFareDetailsWidget(
-                passengerLabel: 'You',
-                pickupLabel: pickupLabel,
-                destinationName: destinationName,
-                destinationAddress: destinationAddress,
-                distance: distance,
-                duration: duration,
-                baseFare: baseFare,
-                tipAmount: selectedTipAmount,
-                totalFare: totalFare,
-                notes: notesController.text.trim(),
-                onBackPressed: onHideFareDetails,
-              )
-            : _buildTotalFareCard(),
-      ),
+        const SizedBox(height: 12),
+        RideTripSummaryWidget(
+          pickupLabel: pickupLabel,
+          destinationName: destinationName,
+          destinationAddress: destinationAddress,
+          distance: distance,
+          duration: duration,
+        ),
+        const SizedBox(height: 12),
+        if (options.isEmpty) _buildFareStatus(),
+        for (var index = 0; index < options.length; index++)
+          _buildRideOption(options[index], index),
+        if (selectedOption != null) ...[
+          const SizedBox(height: 4),
+          TextField(
+            controller: customFareController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: onCustomFareChanged,
+            decoration: InputDecoration(
+              labelText: 'Your offer',
+              prefixText: '₱ ',
+              helperText:
+                  'Custom offer cannot be lower than calculated minimum fare.',
+              errorText: customFareError,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.borderSide),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          RideTipSelectorWidget(
+            selectedTipAmount: selectedTipAmount,
+            onTipSelected: onTipSelected,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: notesController,
+            maxLines: 2,
+            maxLength: 160,
+            onChanged: onNotesChanged,
+            decoration: InputDecoration(
+              labelText: 'Notes for the driver (optional)',
+              hintText: 'Add a pickup note',
+              prefixIcon: const Icon(LucideIcons.file_text, size: 18),
+              counterText: '',
+              alignLabelWithHint: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.borderSide),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildFareSummary(),
+          const SizedBox(height: 12),
+        ],
+        ElevatedButton(
+          onPressed: canBook ? onBookPressed : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 54),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(32),
+            ),
+          ),
+          child: Text(
+            selectedOption == null
+                ? isLoadingFare
+                      ? 'Calculating fare…'
+                      : 'Fare unavailable'
+                : 'Book ${selectedOption.name}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFareDetailsContent({required RideOptionData selectedOption}) {
+    return Column(
+      key: const ValueKey('fare-details-content'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [_buildFareDetails(selectedOption: selectedOption)],
     );
   }
 
@@ -422,101 +497,45 @@ class RideOptionsPanelWidget extends StatelessWidget {
                 ),
               ),
             ),
-            Text(
-              rideTypeLabel.toUpperCase(),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 12),
-            RideTripSummaryWidget(
-              pickupLabel: pickupLabel,
-              destinationName: destinationName,
-              destinationAddress: destinationAddress,
-              distance: distance,
-              duration: duration,
-            ),
-            const SizedBox(height: 12),
-            if (options.isEmpty) _buildFareStatus(),
-            for (var index = 0; index < options.length; index++)
-              _buildRideOption(options[index], index),
-            if (selectedOption != null) ...[
-              const SizedBox(height: 4),
-              TextField(
-                controller: customFareController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                onChanged: onCustomFareChanged,
-                decoration: InputDecoration(
-                  labelText: 'Your offer',
-                  prefixText: '₱ ',
-                  helperText:
-                      'Custom offer cannot be lower than calculated minimum fare.',
-                  errorText: customFareError,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppTheme.borderSide),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                layoutBuilder: (currentChild, previousChildren) => ClipRect(
+                  child: Stack(
+                    alignment: Alignment.topCenter,
+                    children: <Widget>[
+                      ...previousChildren,
+                      currentChild ?? const SizedBox.shrink(),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              RideTipSelectorWidget(
-                selectedTipAmount: selectedTipAmount,
-                onTipSelected: onTipSelected,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: notesController,
-                maxLines: 2,
-                maxLength: 160,
-                onChanged: onNotesChanged,
-                decoration: InputDecoration(
-                  labelText: 'Notes for the driver (optional)',
-                  hintText: 'Add a pickup note',
-                  prefixIcon: const Icon(LucideIcons.file_text, size: 18),
-                  counterText: '',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppTheme.borderSide),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildFareSummary(selectedOption: selectedOption),
-              const SizedBox(height: 12),
-            ],
-            ElevatedButton(
-              onPressed: isShowingFareDetails
-                  ? onHideFareDetails
-                  : canBook
-                  ? onBookPressed
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 54),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(32),
-                ),
-              ),
-              child: Text(
-                selectedOption == null
-                    ? isLoadingFare
-                          ? 'Calculating fare…'
-                          : 'Fare unavailable'
-                    : isShowingFareDetails
-                    ? 'Back to fare summary'
-                    : 'Book ${selectedOption.name}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
+                transitionBuilder: (child, animation) {
+                  final isDetails =
+                      child.key == const ValueKey('fare-details-content');
+                  final isEnteringDetails = isShowingFareDetails && isDetails;
+                  final beginOffset =
+                      isEnteringDetails || (!isShowingFareDetails && !isDetails)
+                      ? const Offset(1, 0)
+                      : const Offset(-1, 0);
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: beginOffset,
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  );
+                },
+                child: isShowingFareDetails && selectedOption != null
+                    ? _buildFareDetailsContent(selectedOption: selectedOption)
+                    : _buildFareSummaryContent(
+                        selectedOption: selectedOption,
+                        canBook: canBook,
+                      ),
               ),
             ),
           ],
