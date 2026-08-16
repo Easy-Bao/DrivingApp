@@ -116,6 +116,10 @@ func (service *OTPService) VerifyPassenger(ctx context.Context, email, code stri
 	return account, token, nil
 }
 
+func (service *OTPService) IssueRefreshToken(account domain.User) (string, error) {
+	return issueRefreshToken(service.tokens, strconv.Itoa(account.ID), account.Role)
+}
+
 func (service *OTPService) RequestPasswordReset(ctx context.Context, email string) error {
 	return service.request(ctx, "reset", email)
 }

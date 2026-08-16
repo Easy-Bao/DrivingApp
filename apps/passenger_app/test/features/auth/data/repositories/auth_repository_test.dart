@@ -31,6 +31,9 @@ void main() {
 
     when(() => secureSessionService.saveToken(any())).thenAnswer((_) async {});
     when(
+      () => secureSessionService.saveRefreshToken(any()),
+    ).thenAnswer((_) async {});
+    when(
       () => secureSessionService.savePassengerId(any()),
     ).thenAnswer((_) async {});
   });
@@ -47,6 +50,7 @@ void main() {
         ).thenAnswer(
           (_) async => <String, dynamic>{
             'token': 'jwt-token',
+            'refreshToken': 'refresh-jwt-token',
             'user': <String, dynamic>{
               'id': 42,
               'name': 'Test Passenger',
@@ -75,10 +79,14 @@ void main() {
             passengerEmail: 'passenger@example.com',
             passengerPhone: '+639170000001',
             token: 'jwt-token',
+            refreshToken: 'refresh-jwt-token',
             needsVerification: true,
           ),
         );
         verify(() => secureSessionService.saveToken('jwt-token')).called(1);
+        verify(
+          () => secureSessionService.saveRefreshToken('refresh-jwt-token'),
+        ).called(1);
         verify(() => secureSessionService.savePassengerId('42')).called(1);
 
         expect(preferences.containsKey('jwt_token'), isFalse);
@@ -165,6 +173,7 @@ void main() {
       expect(credentials.passengerId, '42');
       expect(credentials.token, 'verified-jwt');
       verify(() => secureSessionService.saveToken('verified-jwt')).called(1);
+      verify(() => secureSessionService.saveRefreshToken('')).called(1);
       verify(() => secureSessionService.savePassengerId('42')).called(1);
       verifyNever(
         () => remoteDataSource.loginPassenger(
@@ -205,6 +214,7 @@ void main() {
 
     expect(result.isRight(), isTrue);
     verify(() => secureSessionService.saveToken('registered-jwt')).called(1);
+    verify(() => secureSessionService.saveRefreshToken('')).called(1);
     verify(() => secureSessionService.savePassengerId('42')).called(1);
   });
 }

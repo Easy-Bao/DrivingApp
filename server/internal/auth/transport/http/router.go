@@ -24,6 +24,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.Post(api.V1Prefix+"/auth/driver/register", router.handler.DriverRegister)
 	mux.Post(api.V1Prefix+"/auth/passenger/login", router.handler.PassengerLogin)
 	mux.Post(api.V1Prefix+"/auth/driver/login", router.handler.DriverLogin)
+	mux.Post(api.V1Prefix+"/auth/refresh", router.handler.RefreshToken)
 	mux.Post(api.V1Prefix+"/auth/passenger/otp", router.handler.RequestOTP)
 	mux.Post(api.V1Prefix+"/auth/passenger/verify-otp", router.handler.VerifyOTP)
 	mux.Post(api.V1Prefix+"/auth/passenger/forgot-password", router.handler.ForgotPassword)

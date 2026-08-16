@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 )
@@ -17,26 +18,44 @@ func NewAuthenticateService(repository domain.UserRepository, tokens domain.Toke
 }
 
 func (service *AuthenticateService) Execute(ctx context.Context, email, password string) (domain.User, string, error) {
-	return service.execute(ctx, email, password, "")
+	account, tokens, err := service.execute(ctx, email, password, "")
+	return account, tokens.AccessToken, err
 }
 
 func (service *AuthenticateService) ExecuteAs(ctx context.Context, email, password string, role domain.Role) (domain.User, string, error) {
+	account, tokens, err := service.execute(ctx, email, password, role)
+	return account, tokens.AccessToken, err
+}
+
+func (service *AuthenticateService) ExecuteSession(ctx context.Context, email, password string) (domain.User, SessionTokens, error) {
+	return service.execute(ctx, email, password, "")
+}
+
+func (service *AuthenticateService) ExecuteSessionAs(ctx context.Context, email, password string, role domain.Role) (domain.User, SessionTokens, error) {
 	return service.execute(ctx, email, password, role)
 }
 
-func (service *AuthenticateService) execute(ctx context.Context, email, password string, role domain.Role) (domain.User, string, error) {
+func (service *AuthenticateService) execute(ctx context.Context, email, password string, role domain.Role) (domain.User, SessionTokens, error) {
 	account, err := service.repository.FindByEmail(ctx, email)
 	if err != nil || !VerifyPassword(account.PasswordHash, password) {
-		return domain.User{}, "", domain.ErrInvalidCredentials
+		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if role != "" && account.Role != role {
-		return domain.User{}, "", domain.ErrInvalidCredentials
+		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if IsLegacyPasswordHash(account.PasswordHash) {
 		if upgradedHash, hashErr := HashPasswordWithError(password); hashErr == nil {
 			_ = service.repository.UpdatePassword(ctx, account.ID, upgradedHash)
 		}
 	}
-	token, err := issueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
-	return account, token, err
+	tokens, err := issueSessionTokens(service.tokens, strconv.Itoa(account.ID), account.Role)
+	return account, tokens, err
+}
+
+func (service *AuthenticateService) Refresh(rawToken string) (SessionTokens, error) {
+	identity, err := verifyRefreshToken(service.tokens, strings.TrimSpace(rawToken))
+	if err != nil {
+		return SessionTokens{}, err
+	}
+	return issueSessionTokens(service.tokens, identity.Subject, domain.Role(identity.Role))
 }

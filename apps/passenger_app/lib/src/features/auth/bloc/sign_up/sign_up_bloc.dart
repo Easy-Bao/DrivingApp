@@ -63,6 +63,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
             passengerEmail: user['email']?.toString() ?? normalizedEmail,
             passengerPhone: user['phone']?.toString() ?? normalizedPhone,
             token: response['token']?.toString() ?? '',
+            refreshToken: response['refreshToken']?.toString() ?? '',
           );
           if (credentials.passengerId.isEmpty || credentials.token.isEmpty) {
             emit(

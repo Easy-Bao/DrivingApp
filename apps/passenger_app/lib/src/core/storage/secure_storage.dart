@@ -8,6 +8,7 @@ class SecureStorage {
 
   Future<void> write(String key, String value) => switch (key) {
     StorageKeys.jwtToken => _secureSessionService.saveToken(value),
+    StorageKeys.refreshToken => _secureSessionService.saveRefreshToken(value),
     StorageKeys.passengerId => _secureSessionService.savePassengerId(value),
     StorageKeys.activeRideId => _secureSessionService.saveActiveRideId(value),
     _ => Future<void>.error(_unsupportedKey(key)),
@@ -15,6 +16,7 @@ class SecureStorage {
 
   Future<String?> read(String key) => switch (key) {
     StorageKeys.jwtToken => _secureSessionService.readToken(),
+    StorageKeys.refreshToken => _secureSessionService.readRefreshToken(),
     StorageKeys.passengerId => _secureSessionService.readPassengerId(),
     StorageKeys.activeRideId => _secureSessionService.readActiveRideId(),
     _ => Future<String?>.error(_unsupportedKey(key)),
@@ -22,6 +24,7 @@ class SecureStorage {
 
   Future<void> delete(String key) => switch (key) {
     StorageKeys.jwtToken => _secureSessionService.deleteToken(),
+    StorageKeys.refreshToken => _secureSessionService.deleteRefreshToken(),
     StorageKeys.passengerId => _secureSessionService.deletePassengerId(),
     StorageKeys.activeRideId => _secureSessionService.deleteActiveRideId(),
     _ => Future<void>.error(_unsupportedKey(key)),

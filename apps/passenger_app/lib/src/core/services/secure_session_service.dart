@@ -19,6 +19,18 @@ class SecureSessionService {
     await _storage.delete(key: StorageKeys.jwtToken);
   }
 
+  Future<void> saveRefreshToken(String token) async {
+    await _storage.write(key: StorageKeys.refreshToken, value: token);
+  }
+
+  Future<String?> readRefreshToken() async {
+    return _storage.read(key: StorageKeys.refreshToken);
+  }
+
+  Future<void> deleteRefreshToken() async {
+    await _storage.delete(key: StorageKeys.refreshToken);
+  }
+
   Future<void> savePassengerId(String passengerId) async {
     await _storage.write(key: StorageKeys.passengerId, value: passengerId);
   }

@@ -38,6 +38,10 @@ func (service *RegisterService) Driver(ctx context.Context, input RegisterInput)
 	return service.register(ctx, input, domain.Driver)
 }
 
+func (service *RegisterService) IssueRefreshToken(account domain.User) (string, error) {
+	return issueRefreshToken(service.tokens, intSubject(account.ID), account.Role)
+}
+
 func (service *RegisterService) PreparePassenger(ctx context.Context, input RegisterInput) (domain.PendingRegistration, error) {
 	normalized, err := normalizeInput(input, domain.Passenger)
 	if err != nil {

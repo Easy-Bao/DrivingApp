@@ -6,6 +6,7 @@ class AuthCredentials extends Equatable {
   final String passengerEmail;
   final String passengerPhone;
   final String token;
+  final String refreshToken;
   final bool needsVerification;
 
   const AuthCredentials({
@@ -14,6 +15,7 @@ class AuthCredentials extends Equatable {
     required this.passengerEmail,
     required this.passengerPhone,
     required this.token,
+    this.refreshToken = '',
     this.needsVerification = false,
   });
 
@@ -28,6 +30,7 @@ class AuthCredentials extends Equatable {
       passengerPhone:
           json['passengerPhone'] as String? ?? json['phone'] as String? ?? '',
       token: json['token'] as String? ?? '',
+      refreshToken: json['refreshToken'] as String? ?? '',
       needsVerification: json['needsVerification'] as bool? ?? false,
     );
   }
@@ -39,6 +42,7 @@ class AuthCredentials extends Equatable {
       'passengerEmail': passengerEmail,
       'passengerPhone': passengerPhone,
       'token': token,
+      'refreshToken': refreshToken,
       'needsVerification': needsVerification,
     };
   }
@@ -50,6 +54,7 @@ class AuthCredentials extends Equatable {
     passengerEmail,
     passengerPhone,
     token,
+    refreshToken,
     needsVerification,
   ];
 }

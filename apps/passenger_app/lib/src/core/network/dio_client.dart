@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:passenger_app/src/core/network/interceptors/auth_interceptor.dart';
@@ -12,6 +14,7 @@ class DioClient {
   static Dio create({
     required Uri baseUrl,
     required SecureSessionService sessionService,
+    FutureOr<void> Function()? onSessionExpired,
   }) {
     final dio = Dio(
       BaseOptions(
@@ -22,8 +25,23 @@ class DioClient {
       ),
     );
 
+    final refreshClient = Dio(
+      BaseOptions(
+        baseUrl: baseUrl.toString(),
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
+      ),
+    );
+
     dio.interceptors.add(
-      AuthInterceptor(sessionService, allowedBaseUri: baseUrl),
+      AuthInterceptor(
+        sessionService,
+        dio: dio,
+        refreshClient: refreshClient,
+        allowedBaseUri: baseUrl,
+        onSessionExpired: onSessionExpired,
+      ),
     );
     if (kDebugMode) {
       dio.interceptors.add(

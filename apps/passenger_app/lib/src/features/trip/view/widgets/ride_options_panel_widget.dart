@@ -380,7 +380,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                 ? widget.isLoadingFare
                       ? 'Calculating fare…'
                       : 'Fare unavailable'
-                : 'Book',
+                : 'Book directly',
           ),
         ),
       ],

@@ -46,6 +46,30 @@ func TestTokenManagerCarriesRoleAndRejectsUnexpectedHeader(t *testing.T) {
 	}
 }
 
+func TestTokenManagerSeparatesRefreshTokensFromAccessTokens(t *testing.T) {
+	manager := NewTokenManager("test-secret")
+	refreshToken, err := manager.IssueRefreshWithRole("user-7", "passenger")
+	if err != nil {
+		t.Fatalf("IssueRefreshWithRole() returned error: %v", err)
+	}
+
+	identity, err := manager.VerifyRefresh(refreshToken)
+	if err != nil || identity.Subject != "user-7" || identity.Role != "passenger" {
+		t.Fatalf("refresh identity = %#v, %v", identity, err)
+	}
+	if _, err := manager.Verify(refreshToken); err == nil {
+		t.Fatal("expected refresh token to be rejected as an access token")
+	}
+
+	accessToken, err := manager.IssueWithRole("user-7", "passenger")
+	if err != nil {
+		t.Fatalf("IssueWithRole() returned error: %v", err)
+	}
+	if _, err := manager.VerifyRefresh(accessToken); err == nil {
+		t.Fatal("expected access token to be rejected as a refresh token")
+	}
+}
+
 func TestValidateTokenSecretRequiresProductionStrength(t *testing.T) {
 	if err := ValidateTokenSecret("short-secret"); err == nil {
 		t.Fatal("expected short token secret to be rejected")

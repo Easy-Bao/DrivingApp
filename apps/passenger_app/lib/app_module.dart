@@ -56,6 +56,8 @@ class AppModule extends Module {
         (i) => DioClient.create(
           baseUrl: EnvConfig.apiBaseUri,
           sessionService: i.get<SecureSessionService>(),
+          onSessionExpired: () =>
+              i.get<SessionBloc>().add(const SessionGuestRequested()),
         ),
       )
       ..addLazySingleton<AuthRemoteDataSource>(

@@ -22,14 +22,22 @@ type TokenManager struct {
 }
 
 type Identity struct {
-	Subject string
-	Role    string
+	Subject   string
+	Role      string
+	TokenType string
 }
 
 const MinimumTokenSecretBytes = 32
 
+const (
+	AccessTokenLifetime  = 24 * time.Hour
+	RefreshTokenLifetime = 30 * 24 * time.Hour
+	accessTokenType      = "access"
+	refreshTokenType     = "refresh"
+)
+
 func NewTokenManager(secret string) *TokenManager {
-	return &TokenManager{secret: []byte(secret), lifetime: 24 * time.Hour}
+	return &TokenManager{secret: []byte(secret), lifetime: AccessTokenLifetime}
 }
 
 func (manager *TokenManager) Issue(subject string) (string, error) {
@@ -37,15 +45,33 @@ func (manager *TokenManager) Issue(subject string) (string, error) {
 }
 
 func (manager *TokenManager) IssueWithRole(subject, role string) (string, error) {
+	return manager.issue(subject, role, accessTokenType, manager.lifetime)
+}
+
+func (manager *TokenManager) IssueRefresh(subject string) (string, error) {
+	return manager.IssueRefreshWithRole(subject, "")
+}
+
+func (manager *TokenManager) IssueRefreshWithRole(subject, role string) (string, error) {
+	return manager.issue(subject, role, refreshTokenType, RefreshTokenLifetime)
+}
+
+func (manager *TokenManager) issue(subject, role, tokenType string, lifetime time.Duration) (string, error) {
 	if len(manager.secret) == 0 {
 		return "", fmt.Errorf("token secret is required")
 	}
 	header := encode([]byte(`{"alg":"HS256","typ":"JWT"}`))
 	claims, err := json.Marshal(struct {
-		Subject string `json:"sub"`
-		Role    string `json:"role,omitempty"`
-		Expires int64  `json:"exp"`
-	}{Subject: subject, Role: role, Expires: time.Now().Add(manager.lifetime).Unix()})
+		Subject   string `json:"sub"`
+		Role      string `json:"role,omitempty"`
+		Expires   int64  `json:"exp"`
+		TokenType string `json:"token_type"`
+	}{
+		Subject:   subject,
+		Role:      role,
+		Expires:   time.Now().Add(lifetime).Unix(),
+		TokenType: tokenType,
+	})
 	if err != nil {
 		return "", err
 	}
@@ -63,6 +89,28 @@ func (manager *TokenManager) Verify(rawToken string) (string, error) {
 }
 
 func (manager *TokenManager) VerifyIdentity(rawToken string) (Identity, error) {
+	identity, err := manager.verify(rawToken)
+	if err != nil {
+		return Identity{}, err
+	}
+	if identity.TokenType != "" && identity.TokenType != accessTokenType {
+		return Identity{}, ErrInvalidToken
+	}
+	return identity, nil
+}
+
+func (manager *TokenManager) VerifyRefresh(rawToken string) (Identity, error) {
+	identity, err := manager.verify(rawToken)
+	if err != nil {
+		return Identity{}, err
+	}
+	if identity.TokenType != refreshTokenType {
+		return Identity{}, ErrInvalidToken
+	}
+	return identity, nil
+}
+
+func (manager *TokenManager) verify(rawToken string) (Identity, error) {
 	if rawToken == "" {
 		return Identity{}, ErrMissingToken
 	}
@@ -91,14 +139,15 @@ func (manager *TokenManager) VerifyIdentity(rawToken string) (Identity, error) {
 		return Identity{}, ErrInvalidToken
 	}
 	var claims struct {
-		Subject string `json:"sub"`
-		Role    string `json:"role"`
-		Expires int64  `json:"exp"`
+		Subject   string `json:"sub"`
+		Role      string `json:"role"`
+		Expires   int64  `json:"exp"`
+		TokenType string `json:"token_type"`
 	}
 	if json.Unmarshal(payload, &claims) != nil || claims.Subject == "" || claims.Expires <= time.Now().Unix() {
 		return Identity{}, ErrInvalidToken
 	}
-	return Identity{Subject: claims.Subject, Role: claims.Role}, nil
+	return Identity{Subject: claims.Subject, Role: claims.Role, TokenType: claims.TokenType}, nil
 }
 
 func ValidateTokenSecret(secret string) error {

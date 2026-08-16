@@ -87,7 +87,12 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 		writeError(w, status, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"success": true, "data": map[string]any{"user": account, "token": token, "needsVerification": !account.IsVerified}})
+	refreshToken, err := handler.register.IssueRefreshToken(account)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "authentication service is unavailable")
+		return
+	}
+	writeJSON(w, http.StatusCreated, authSessionResponse(account, token, refreshToken, !account.IsVerified))
 }
 func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	handler.login(w, r, "")
@@ -101,17 +106,36 @@ func (handler *Handler) DriverLogin(w http.ResponseWriter, r *http.Request) {
 	handler.login(w, r, domain.Driver)
 }
 
+func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var input dto.RefreshToken
+	if !decode(w, r, &input) {
+		return
+	}
+	tokens, err := handler.authenticate.Refresh(input.Token)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "session expired or unauthorized")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"token":        tokens.AccessToken,
+			"refreshToken": tokens.RefreshToken,
+		},
+	})
+}
+
 func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domain.Role) {
 	var input dto.Credentials
 	if !decode(w, r, &input) {
 		return
 	}
-	account, token, err := handler.authenticate.ExecuteAs(r.Context(), input.Email, input.Password, role)
+	account, tokens, err := handler.authenticate.ExecuteSessionAs(r.Context(), input.Email, input.Password, role)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, domain.ErrInvalidCredentials.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"user": account, "token": token, "needsVerification": !account.IsVerified}})
+	writeJSON(w, http.StatusOK, authSessionResponse(account, tokens.AccessToken, tokens.RefreshToken, !account.IsVerified))
 }
 
 func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
@@ -146,7 +170,14 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"verified": true, "user": account, "token": token}})
+	refreshToken, err := handler.otp.IssueRefreshToken(account)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "authentication service is unavailable")
+		return
+	}
+	response := authSessionResponse(account, token, refreshToken, false)
+	response["data"].(map[string]any)["verified"] = true
+	writeJSON(w, http.StatusOK, response)
 }
 
 func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
@@ -197,4 +228,16 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 }
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})
+}
+
+func authSessionResponse(account domain.User, accessToken, refreshToken string, needsVerification bool) map[string]any {
+	data := map[string]any{
+		"user":              account,
+		"token":             accessToken,
+		"needsVerification": needsVerification,
+	}
+	if refreshToken != "" {
+		data["refreshToken"] = refreshToken
+	}
+	return map[string]any{"success": true, "data": data}
 }

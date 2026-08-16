@@ -143,12 +143,14 @@ class AuthRepository implements IAuthRepository {
       passengerEmail: passengerEmail.isEmpty ? fallbackEmail : passengerEmail,
       passengerPhone: _stringValue(passenger['phone']),
       token: token,
+      refreshToken: _stringValue(responseData['refreshToken']),
       needsVerification: responseData['needsVerification'] == true,
     );
   }
 
   Future<void> _persistSession(AuthCredentials credentials) async {
     await _secureSessionService.saveToken(credentials.token);
+    await _secureSessionService.saveRefreshToken(credentials.refreshToken);
     await _secureSessionService.savePassengerId(credentials.passengerId);
     await _preferences.setString('passenger_name', credentials.passengerName);
     await _preferences.setString('passenger_email', credentials.passengerEmail);
