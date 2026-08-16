@@ -54,6 +54,8 @@ class RideOptionsPanelWidget extends StatefulWidget {
 enum _RideOptionsPanelView { summary, customOffer, tripNote, fareDetails }
 
 class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
+  static const _viewTransitionDuration = Duration(milliseconds: 160);
+
   _RideOptionsPanelView _currentView = _RideOptionsPanelView.summary;
 
   FareResult? get _fareResult => widget.fareResult;
@@ -378,7 +380,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                 ? widget.isLoadingFare
                       ? 'Calculating fare…'
                       : 'Fare unavailable'
-                : 'Book directly',
+                : 'Book',
           ),
         ),
       ],
@@ -629,22 +631,15 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
               ),
             ),
             AnimatedSize(
-              duration: const Duration(milliseconds: 260),
+              duration: _viewTransitionDuration,
               curve: Curves.easeOutCubic,
               alignment: Alignment.topCenter,
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
+                duration: _viewTransitionDuration,
                 switchInCurve: Curves.easeOutCubic,
                 switchOutCurve: Curves.easeInCubic,
-                layoutBuilder: (currentChild, previousChildren) => ClipRect(
-                  child: Stack(
-                    alignment: Alignment.topCenter,
-                    children: [
-                      ...previousChildren,
-                      currentChild ?? const SizedBox.shrink(),
-                    ],
-                  ),
-                ),
+                layoutBuilder: (currentChild, _) =>
+                    ClipRect(child: currentChild ?? const SizedBox.shrink()),
                 transitionBuilder: (child, animation) => FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
