@@ -29,18 +29,38 @@ class PassengerShellLayout extends StatefulWidget {
   State<PassengerShellLayout> createState() => _PassengerShellLayoutState();
 }
 
-class _PassengerShellLayoutState extends State<PassengerShellLayout> {
+class _PassengerShellLayoutState extends State<PassengerShellLayout>
+    with SingleTickerProviderStateMixin {
+  static const _tabCount = 4;
+  static const _tabAnimationDuration = Duration(milliseconds: 280);
+  static const _swipeDistance = 64.0;
+
+  late final AnimationController _tabAnimationController;
   final List<int> _navigationHistory = [];
   String? _loadedInboxPassengerId;
+  double _horizontalDragDistance = 0;
+  int? _lastRenderedTabIndex;
+  double _tabTransitionDirection = 1;
 
   @override
   void initState() {
     super.initState();
+    _tabAnimationController = AnimationController(
+      vsync: this,
+      duration: _tabAnimationDuration,
+      value: 1,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(_loadInboxNotifications());
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _tabAnimationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInboxNotifications() async {
@@ -98,7 +118,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
         },
         child: Scaffold(
           extendBody: true,
-          body: widget.child,
+          body: _buildTabBody(context, sel),
           bottomNavigationBar: BlocBuilder<SessionBloc, SessionState>(
             builder: (context, sessionState) {
               final isAuthenticated = sessionState is AuthenticatedSession;
@@ -113,6 +133,58 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
               return Padding(
                 padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
                 child: _buildAuthenticatedTabBar(context, sel),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBody(BuildContext context, int selectedIndex) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
+      onHorizontalDragUpdate: (details) {
+        _horizontalDragDistance += details.primaryDelta ?? 0;
+      },
+      onHorizontalDragCancel: () => _horizontalDragDistance = 0,
+      onHorizontalDragEnd: (details) {
+        final dragDistance = _horizontalDragDistance;
+        _horizontalDragDistance = 0;
+        if (!BlocProvider.of<SessionBloc>(context).state.isAuthenticated) {
+          return;
+        }
+
+        final velocity = details.primaryVelocity ?? 0;
+        final hasEnoughDistance = dragDistance.abs() >= _swipeDistance;
+        final hasQuickFlick = velocity.abs() >= 500 && dragDistance.abs() >= 24;
+        if (!hasEnoughDistance && !hasQuickFlick) return;
+
+        final direction = dragDistance.abs() >= 1
+            ? (dragDistance < 0 ? 1 : -1)
+            : (velocity < 0 ? 1 : -1);
+        final nextIndex = selectedIndex + direction;
+        if (nextIndex < 0 || nextIndex >= _tabCount) return;
+        _navigateToIndex(nextIndex);
+      },
+      child: ClipRect(
+        child: ColoredBox(
+          color: AppTheme.surface,
+          child: AnimatedBuilder(
+            animation: _tabAnimationController,
+            child: widget.child,
+            builder: (context, child) {
+              final progress = Curves.easeOutCubic.transform(
+                _tabAnimationController.value,
+              );
+              return FractionalTranslation(
+                key: const ValueKey<String>('passenger-tab-transition'),
+                translation: Offset(
+                  _tabTransitionDirection * (1 - progress),
+                  0,
+                ),
+                child: child,
               );
             },
           ),
@@ -178,6 +250,12 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final newIndex = _calculateSelectedIndex(context);
+    final previousIndex = _lastRenderedTabIndex;
+    if (previousIndex != null && previousIndex != newIndex) {
+      _tabTransitionDirection = newIndex > previousIndex ? 1 : -1;
+      _startTabTransition();
+    }
+    _lastRenderedTabIndex = newIndex;
     if (_navigationHistory.isEmpty) {
       _navigationHistory.add(newIndex);
     } else if (_navigationHistory.last != newIndex) {
@@ -263,6 +341,10 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   }
 
   void _navigateToIndex(int index) {
+    final currentIndex = _calculateSelectedIndex(context);
+    if (currentIndex == index) return;
+    _tabTransitionDirection = index > currentIndex ? 1 : -1;
+
     switch (index) {
       case 0:
         context.goNamed(HomeRoutes.home);
@@ -279,8 +361,14 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     }
   }
 
+  void _startTabTransition() {
+    _tabAnimationController
+      ..stop()
+      ..value = 0;
+    unawaited(_tabAnimationController.forward());
+  }
+
   void _onItemTapped(int index, BuildContext context) {
-    if (index == _calculateSelectedIndex(context)) return;
     _navigateToIndex(index);
   }
 }
