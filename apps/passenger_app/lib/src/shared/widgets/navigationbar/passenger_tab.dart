@@ -5,51 +5,224 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
-import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
-import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/guest_action_bar_widget.dart';
 
+class PassengerTabNavigationCoordinator extends ChangeNotifier {
+  int? _selectedIndex;
+  final List<int> _navigationHistory = [];
+
+  int get selectedIndex => _selectedIndex ?? 0;
+
+  bool get canPop =>
+      _navigationHistory.length <= 1 &&
+      _navigationHistory.isNotEmpty &&
+      _navigationHistory.last == 0;
+
+  void initialize(int index) {
+    if (_selectedIndex != null) return;
+    _selectedIndex = index;
+    _navigationHistory.add(index);
+  }
+
+  void commit(int index) {
+    if (_selectedIndex == null) {
+      initialize(index);
+      notifyListeners();
+      return;
+    }
+    if (_selectedIndex == index) return;
+    _selectedIndex = index;
+    _navigationHistory.add(index);
+    notifyListeners();
+  }
+
+  int goBackToPreviousTab() {
+    if (_navigationHistory.length > 1) {
+      _navigationHistory.removeLast();
+      _selectedIndex = _navigationHistory.last;
+    } else {
+      _navigationHistory
+        ..clear()
+        ..add(0);
+      _selectedIndex = 0;
+    }
+    notifyListeners();
+    return selectedIndex;
+  }
+}
+
+class PassengerTabBranchContainer extends StatefulWidget {
+  final StatefulNavigationShell navigationShell;
+  final List<Widget> children;
+  final ValueChanged<int> onNavigationSettled;
+
+  const PassengerTabBranchContainer({
+    super.key,
+    required this.navigationShell,
+    required this.children,
+    required this.onNavigationSettled,
+  });
+
+  @override
+  State<PassengerTabBranchContainer> createState() =>
+      _PassengerTabBranchContainerState();
+}
+
+class _PassengerTabBranchContainerState
+    extends State<PassengerTabBranchContainer> {
+  static const _pageAnimationDuration = Duration(milliseconds: 280);
+
+  late final PageController _pageController;
+  int _activeIndex = 0;
+  int? _gestureStartIndex;
+  int? _previewIndex;
+  bool _isUserDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeIndex = widget.navigationShell.currentIndex;
+    _pageController = PageController(initialPage: _activeIndex);
+  }
+
+  @override
+  void didUpdateWidget(covariant PassengerTabBranchContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final targetIndex = widget.navigationShell.currentIndex;
+    if (_isUserDragging || targetIndex == _activeIndex) return;
+
+    _activeIndex = targetIndex;
+    widget.onNavigationSettled(targetIndex);
+    _animateToPage(targetIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppTheme.surface,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _handleScrollNotification,
+        child: PageView(
+          key: const ValueKey<String>('passenger-tab-page-view'),
+          controller: _pageController,
+          allowImplicitScrolling: true,
+          children: widget.children,
+          onPageChanged: (index) {
+            if (_isUserDragging) return;
+            _activeIndex = index;
+            widget.onNavigationSettled(index);
+          },
+        ),
+      ),
+    );
+  }
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollStartNotification &&
+        notification.dragDetails != null) {
+      _isUserDragging = true;
+      _gestureStartIndex = _activeIndex;
+      _previewIndex = null;
+      return false;
+    }
+
+    if (notification is ScrollUpdateNotification && _isUserDragging) {
+      _preloadAdjacentBranch();
+      return false;
+    }
+
+    if (notification is ScrollEndNotification && _isUserDragging) {
+      _finishUserDrag();
+      return false;
+    }
+
+    return false;
+  }
+
+  void _preloadAdjacentBranch() {
+    final startIndex = _gestureStartIndex;
+    final page = _pageController.hasClients ? _pageController.page : null;
+    if (startIndex == null || page == null) return;
+
+    final movement = page - startIndex;
+    if (movement.abs() < 0.01) return;
+
+    final direction = movement > 0 ? 1 : -1;
+    final adjacentIndex = startIndex + direction;
+    if (adjacentIndex < 0 || adjacentIndex >= widget.children.length) return;
+    if (_previewIndex == adjacentIndex) return;
+
+    _previewIndex = adjacentIndex;
+    widget.navigationShell.goBranch(adjacentIndex);
+  }
+
+  void _finishUserDrag() {
+    final settledIndex =
+        (_pageController.hasClients
+                ? (_pageController.page ?? _activeIndex)
+                : _activeIndex.toDouble())
+            .round()
+            .clamp(0, widget.children.length - 1);
+
+    _isUserDragging = false;
+    _gestureStartIndex = null;
+    _previewIndex = null;
+    _activeIndex = settledIndex;
+    widget.navigationShell.goBranch(settledIndex);
+    widget.onNavigationSettled(settledIndex);
+  }
+
+  void _animateToPage(int index) {
+    if (!_pageController.hasClients) return;
+    final currentPage = _pageController.page?.round();
+    if (currentPage == index) return;
+    unawaited(
+      _pageController.animateToPage(
+        index,
+        duration: _pageAnimationDuration,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+}
+
 class PassengerShellLayout extends StatefulWidget {
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
   final InboxCubit inboxCubit;
+  final PassengerTabNavigationCoordinator navigationCoordinator;
 
   const PassengerShellLayout({
     super.key,
-    required this.child,
+    required this.navigationShell,
     required this.inboxCubit,
+    required this.navigationCoordinator,
   });
 
   @override
   State<PassengerShellLayout> createState() => _PassengerShellLayoutState();
 }
 
-class _PassengerShellLayoutState extends State<PassengerShellLayout>
-    with SingleTickerProviderStateMixin {
-  static const _tabCount = 4;
-  static const _tabAnimationDuration = Duration(milliseconds: 280);
-  static const _swipeDistance = 64.0;
-
-  late final AnimationController _tabAnimationController;
-  final List<int> _navigationHistory = [];
+class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   String? _loadedInboxPassengerId;
-  double _horizontalDragDistance = 0;
-  int? _lastRenderedTabIndex;
-  double _tabTransitionDirection = 1;
 
   @override
   void initState() {
     super.initState();
-    _tabAnimationController = AnimationController(
-      vsync: this,
-      duration: _tabAnimationDuration,
-      value: 1,
+    widget.navigationCoordinator.initialize(
+      widget.navigationShell.currentIndex,
     );
+    widget.navigationCoordinator.addListener(_onNavigationChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(_loadInboxNotifications());
@@ -59,8 +232,12 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
 
   @override
   void dispose() {
-    _tabAnimationController.dispose();
+    widget.navigationCoordinator.removeListener(_onNavigationChanged);
     super.dispose();
+  }
+
+  void _onNavigationChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadInboxNotifications() async {
@@ -76,7 +253,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
 
   @override
   Widget build(BuildContext context) {
-    final sel = _calculateSelectedIndex(context);
+    final sel = widget.navigationCoordinator.selectedIndex;
     return BlocListener<SessionBloc, SessionState>(
       listenWhen: (_, current) =>
           current is AuthenticatedSession ||
@@ -96,29 +273,16 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
         }
       },
       child: PopScope(
-        canPop:
-            _navigationHistory.length <= 1 &&
-            _navigationHistory.isNotEmpty &&
-            _navigationHistory.last == 0,
+        canPop: widget.navigationCoordinator.canPop,
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
-          if (_navigationHistory.length > 1) {
-            setState(() {
-              _navigationHistory.removeLast();
-              final previousIndex = _navigationHistory.last;
-              _navigateToIndex(previousIndex);
-            });
-          } else {
-            setState(() {
-              _navigationHistory.clear();
-              _navigationHistory.add(0);
-              _navigateToIndex(0);
-            });
-          }
+          final previousIndex = widget.navigationCoordinator
+              .goBackToPreviousTab();
+          widget.navigationShell.goBranch(previousIndex);
         },
         child: Scaffold(
           extendBody: true,
-          body: _buildTabBody(context, sel),
+          body: widget.navigationShell,
           bottomNavigationBar: BlocBuilder<SessionBloc, SessionState>(
             builder: (context, sessionState) {
               final isAuthenticated = sessionState is AuthenticatedSession;
@@ -133,58 +297,6 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
               return Padding(
                 padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
                 child: _buildAuthenticatedTabBar(context, sel),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabBody(BuildContext context, int selectedIndex) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
-      onHorizontalDragUpdate: (details) {
-        _horizontalDragDistance += details.primaryDelta ?? 0;
-      },
-      onHorizontalDragCancel: () => _horizontalDragDistance = 0,
-      onHorizontalDragEnd: (details) {
-        final dragDistance = _horizontalDragDistance;
-        _horizontalDragDistance = 0;
-        if (!BlocProvider.of<SessionBloc>(context).state.isAuthenticated) {
-          return;
-        }
-
-        final velocity = details.primaryVelocity ?? 0;
-        final hasEnoughDistance = dragDistance.abs() >= _swipeDistance;
-        final hasQuickFlick = velocity.abs() >= 500 && dragDistance.abs() >= 24;
-        if (!hasEnoughDistance && !hasQuickFlick) return;
-
-        final direction = dragDistance.abs() >= 1
-            ? (dragDistance < 0 ? 1 : -1)
-            : (velocity < 0 ? 1 : -1);
-        final nextIndex = selectedIndex + direction;
-        if (nextIndex < 0 || nextIndex >= _tabCount) return;
-        _navigateToIndex(nextIndex);
-      },
-      child: ClipRect(
-        child: ColoredBox(
-          color: AppTheme.surface,
-          child: AnimatedBuilder(
-            animation: _tabAnimationController,
-            child: widget.child,
-            builder: (context, child) {
-              final progress = Curves.easeOutCubic.transform(
-                _tabAnimationController.value,
-              );
-              return FractionalTranslation(
-                key: const ValueKey<String>('passenger-tab-transition'),
-                translation: Offset(
-                  _tabTransitionDirection * (1 - progress),
-                  0,
-                ),
-                child: child,
               );
             },
           ),
@@ -246,23 +358,6 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
     );
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final newIndex = _calculateSelectedIndex(context);
-    final previousIndex = _lastRenderedTabIndex;
-    if (previousIndex != null && previousIndex != newIndex) {
-      _tabTransitionDirection = newIndex > previousIndex ? 1 : -1;
-      _startTabTransition();
-    }
-    _lastRenderedTabIndex = newIndex;
-    if (_navigationHistory.isEmpty) {
-      _navigationHistory.add(newIndex);
-    } else if (_navigationHistory.last != newIndex) {
-      _navigationHistory.add(newIndex);
-    }
-  }
-
   Widget _buildTabItem(
     BuildContext context, {
     required IconData icon,
@@ -276,7 +371,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => _onItemTapped(index, context),
+        onTap: () => _onItemTapped(index),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -302,74 +397,10 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
     );
   }
 
-  int _calculateSelectedIndex(BuildContext context) {
-    final GoRouterState state = GoRouterState.of(context);
-    final String location = state.uri.path;
-    final String? routeName = state.topRoute?.name;
-
-    if (routeName != null) {
-      if (routeName == HomeRoutes.home) {
-        return 0;
-      }
-      if (routeName == ActivityRoutes.activity) {
-        return 1;
-      }
-      if (routeName == InboxRoutes.inbox) {
-        return 2;
-      }
-      if (routeName == ProfileRoutes.account ||
-          routeName == ProfileRoutes.help) {
-        return 3;
-      }
-    }
-
-    if (location.startsWith(HomeRoutes.fullHomePath)) {
-      return 0;
-    }
-    if (location.startsWith(ActivityRoutes.fullActivityPath)) {
-      return 1;
-    }
-    if (location.startsWith(InboxRoutes.fullInboxPath)) {
-      return 2;
-    }
-    if (location.startsWith(ProfileRoutes.fullAccountPath) ||
-        location.startsWith(ProfileRoutes.fullHelpPath)) {
-      return 3;
-    }
-
-    return 0;
-  }
-
-  void _navigateToIndex(int index) {
-    final currentIndex = _calculateSelectedIndex(context);
-    if (currentIndex == index) return;
-    _tabTransitionDirection = index > currentIndex ? 1 : -1;
-
-    switch (index) {
-      case 0:
-        context.goNamed(HomeRoutes.home);
-        break;
-      case 1:
-        context.goNamed(ActivityRoutes.activity);
-        break;
-      case 2:
-        context.goNamed(InboxRoutes.inbox);
-        break;
-      case 3:
-        context.goNamed(ProfileRoutes.account);
-        break;
-    }
-  }
-
-  void _startTabTransition() {
-    _tabAnimationController
-      ..stop()
-      ..value = 0;
-    unawaited(_tabAnimationController.forward());
-  }
-
-  void _onItemTapped(int index, BuildContext context) {
-    _navigateToIndex(index);
+  void _onItemTapped(int index) {
+    if (widget.navigationCoordinator.selectedIndex == index) return;
+    widget.navigationCoordinator.commit(index);
+    widget.navigationShell.goBranch(index);
   }
 }
 

@@ -21,11 +21,13 @@ void main() {
     final sessionBloc = SessionBloc(sessionRepository: _SessionRepositoryStub())
       ..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
     final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
-    final router = _createRouter(inboxCubit);
+    final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final router = _createRouter(inboxCubit, navigationCoordinator);
     addTearDown(() async {
       router.dispose();
       await sessionBloc.close();
       await inboxCubit.close();
+      navigationCoordinator.dispose();
     });
 
     await tester.pumpWidget(
@@ -38,80 +40,118 @@ void main() {
 
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
 
+    // A first-use swipe must load the adjacent branch while the page is still
+    // following the finger, then return to the origin when released early.
+    final firstPreviewGesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey<String>('home-page'))),
+    );
+    await firstPreviewGesture.moveBy(const Offset(-100, 0));
+    await tester.pump();
+    expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
+    await firstPreviewGesture.moveBy(const Offset(100, 0));
+    await firstPreviewGesture.up();
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, HomeRoutes.fullHomePath);
+
     await tester.tap(find.text('Activity'));
     await tester.pump();
     expect(router.state.uri.path, ActivityRoutes.fullActivityPath);
-    final forwardTranslation = tester
-        .widget<FractionalTranslation>(
-          find.byKey(const ValueKey<String>('passenger-tab-transition')),
-        )
-        .translation
-        .dx;
-    expect(forwardTranslation, greaterThan(0));
-    expect(
-      find.byKey(const ValueKey<String>('passenger-tab-transition')),
-      findsOneWidget,
-    );
+    expect(find.byType(PageView), findsOneWidget);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
 
-    await tester.drag(
-      find.byKey(const ValueKey<String>('activity-page')),
-      const Offset(220, 0),
+    final cancelGesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey<String>('activity-page'))),
     );
+    await cancelGesture.moveBy(const Offset(100, 0));
     await tester.pump();
-    final backwardTranslation = tester
-        .widget<FractionalTranslation>(
-          find.byKey(const ValueKey<String>('passenger-tab-transition')),
-        )
-        .translation
-        .dx;
-    expect(backwardTranslation, lessThan(0));
+    expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
+    await cancelGesture.up();
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, ActivityRoutes.fullActivityPath);
+
+    final commitGesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey<String>('activity-page'))),
+    );
+    await commitGesture.moveBy(const Offset(500, 0));
+    await tester.pump();
+    expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
+    await commitGesture.up();
     await tester.pumpAndSettle();
     expect(router.state.uri.path, HomeRoutes.fullHomePath);
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
   });
 }
 
-GoRouter _createRouter(InboxCubit inboxCubit) {
+GoRouter _createRouter(
+  InboxCubit inboxCubit,
+  PassengerTabNavigationCoordinator navigationCoordinator,
+) {
   return GoRouter(
     initialLocation: HomeRoutes.fullHomePath,
     routes: [
-      ShellRoute(
-        builder: (context, state, child) =>
-            PassengerShellLayout(inboxCubit: inboxCubit, child: child),
-        routes: [
-          GoRoute(
-            name: HomeRoutes.home,
-            path: HomeRoutes.fullHomePath,
-            builder: (_, _) => const ColoredBox(
-              key: ValueKey<String>('home-page'),
-              color: Colors.white,
+      StatefulShellRoute(
+        builder: (context, state, navigationShell) => PassengerShellLayout(
+          inboxCubit: inboxCubit,
+          navigationCoordinator: navigationCoordinator,
+          navigationShell: navigationShell,
+        ),
+        navigatorContainerBuilder: (context, navigationShell, children) =>
+            PassengerTabBranchContainer(
+              navigationShell: navigationShell,
+              onNavigationSettled: navigationCoordinator.commit,
+              children: children,
             ),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: HomeRoutes.home,
+                path: HomeRoutes.fullHomePath,
+                builder: (_, _) => const ColoredBox(
+                  key: ValueKey<String>('home-page'),
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-          GoRoute(
-            name: ActivityRoutes.activity,
-            path: ActivityRoutes.fullActivityPath,
-            builder: (_, _) => const ColoredBox(
-              key: ValueKey<String>('activity-page'),
-              color: Colors.white,
-            ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: ActivityRoutes.activity,
+                path: ActivityRoutes.fullActivityPath,
+                builder: (_, _) => const ColoredBox(
+                  key: ValueKey<String>('activity-page'),
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-          GoRoute(
-            name: InboxRoutes.inbox,
-            path: InboxRoutes.fullInboxPath,
-            builder: (_, _) => const ColoredBox(
-              key: ValueKey<String>('inbox-page'),
-              color: Colors.white,
-            ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: InboxRoutes.inbox,
+                path: InboxRoutes.fullInboxPath,
+                builder: (_, _) => const ColoredBox(
+                  key: ValueKey<String>('inbox-page'),
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-          GoRoute(
-            name: ProfileRoutes.account,
-            path: ProfileRoutes.fullAccountPath,
-            builder: (_, _) => const ColoredBox(
-              key: ValueKey<String>('profile-page'),
-              color: Colors.white,
-            ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: ProfileRoutes.account,
+                path: ProfileRoutes.fullAccountPath,
+                builder: (_, _) => const ColoredBox(
+                  key: ValueKey<String>('profile-page'),
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         ],
       ),

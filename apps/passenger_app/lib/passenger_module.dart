@@ -99,6 +99,9 @@ class PassengerModule extends Module {
       ..addLazySingleton<InboxCubit>(
         (i) => InboxCubit(inboxRepository: i.get<IInboxRepository>()),
       )
+      ..addLazySingleton<PassengerTabNavigationCoordinator>(
+        (_) => PassengerTabNavigationCoordinator(),
+      )
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
           uri: EnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
@@ -153,16 +156,26 @@ class PassengerModule extends Module {
     ...SettingsModule.routes,
     ...LocationModule.routes,
 
-    ShellModularRoute(
-      builder: (context, GoRouterState state, child) => PassengerShellLayout(
-        inboxCubit: Modular.get<InboxCubit>(),
-        child: child,
-      ),
-      routes: [
-        ...HomeModule.shellRoutes,
-        ...ActivityModule.shellRoutes,
-        ...ProfileModule.shellRoutes,
-        ...InboxModule.shellRoutes,
+    StatefulShellModularRoute(
+      builder: (context, GoRouterState state, navigationShell) =>
+          PassengerShellLayout(
+            inboxCubit: Modular.get<InboxCubit>(),
+            navigationCoordinator:
+                Modular.get<PassengerTabNavigationCoordinator>(),
+            navigationShell: navigationShell,
+          ),
+      navigatorContainerBuilder: (context, navigationShell, children) =>
+          PassengerTabBranchContainer(
+            navigationShell: navigationShell,
+            onNavigationSettled:
+                Modular.get<PassengerTabNavigationCoordinator>().commit,
+            children: children,
+          ),
+      branches: [
+        ModularBranch(routes: HomeModule.shellRoutes),
+        ModularBranch(routes: ActivityModule.shellRoutes),
+        ModularBranch(routes: InboxModule.shellRoutes),
+        ModularBranch(routes: ProfileModule.shellRoutes),
       ],
     ),
   ];
