@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
@@ -49,87 +50,132 @@ class RideTripSummaryWidget extends StatelessWidget {
   }
 }
 
-class _TripLocationTimeline extends StatelessWidget {
+class _TripLocationTimeline extends MultiChildRenderObjectWidget {
   static const _routeGap = 38.0;
 
   final String pickupLabel;
   final String destinationName;
   final String destinationAddress;
 
-  const _TripLocationTimeline({
+  _TripLocationTimeline({
     required this.pickupLabel,
     required this.destinationName,
     required this.destinationAddress,
-  });
+  }) : super(
+         children: [
+           const _LocationIcon(icon: LucideIcons.locate_fixed),
+           _LocationDetails(label: 'Pickup', value: pickupLabel),
+           const _DashedRouteConnector(),
+           const _LocationIcon(icon: LucideIcons.map_pin),
+           _LocationDetails(
+             label: 'Destination',
+             value: destinationName,
+             subtitle: destinationAddress,
+           ),
+         ],
+       );
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(
-                width: 18,
-                child: Column(
-                  children: [
-                    _LocationIcon(icon: LucideIcons.locate_fixed),
-                    Expanded(child: _DashedRouteConnector()),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: _routeGap),
-                  child: _LocationDetails(label: 'Pickup', value: pickupLabel),
-                ),
-              ),
-            ],
-          ),
-        ),
-        _LocationRow(
-          icon: LucideIcons.map_pin,
-          label: 'Destination',
-          value: destinationName,
-          subtitle: destinationAddress,
-        ),
-      ],
-    );
+  RenderObject createRenderObject(BuildContext context) {
+    return _TripLocationTimelineRenderObject(routeGap: _routeGap);
   }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    covariant _TripLocationTimelineRenderObject renderObject,
+  ) {}
 }
 
-class _LocationRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final String? subtitle;
+class _TripLocationParentData extends ContainerBoxParentData<RenderBox> {}
 
-  const _LocationRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.subtitle,
-  });
+class _TripLocationTimelineRenderObject extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _TripLocationParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, _TripLocationParentData> {
+  static const _iconSize = 18.0;
+  static const _contentGap = 12.0;
+  static const _connectorWidth = 2.0;
+
+  final double routeGap;
+
+  _TripLocationTimelineRenderObject({required this.routeGap});
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _LocationIcon(icon: icon),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _LocationDetails(
-            label: label,
-            value: value,
-            subtitle: subtitle,
-          ),
-        ),
-      ],
+  void setupParentData(RenderObject child) {
+    if (child.parentData is! _TripLocationParentData) {
+      child.parentData = _TripLocationParentData();
+    }
+  }
+
+  RenderBox get _pickupIcon => firstChild!;
+
+  RenderBox get _pickupDetails => childAfter(_pickupIcon)!;
+
+  RenderBox get _connector => childAfter(_pickupDetails)!;
+
+  RenderBox get _destinationIcon => childAfter(_connector)!;
+
+  RenderBox get _destinationDetails => childAfter(_destinationIcon)!;
+
+  @override
+  void performLayout() {
+    final width = constraints.hasBoundedWidth
+        ? constraints.maxWidth
+        : constraints.minWidth;
+    final detailsWidth = width > _iconSize + _contentGap
+        ? width - _iconSize - _contentGap
+        : 0.0;
+    final detailsConstraints = BoxConstraints.tightFor(width: detailsWidth);
+
+    _pickupIcon.layout(
+      const BoxConstraints.tightFor(width: _iconSize, height: _iconSize),
+      parentUsesSize: true,
     );
+    _pickupDetails.layout(detailsConstraints, parentUsesSize: true);
+    _destinationIcon.layout(
+      const BoxConstraints.tightFor(width: _iconSize, height: _iconSize),
+      parentUsesSize: true,
+    );
+    _destinationDetails.layout(detailsConstraints, parentUsesSize: true);
+
+    final destinationY = _pickupDetails.size.height + routeGap;
+    final connectorHeight = (destinationY - _iconSize)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+    _connector.layout(
+      BoxConstraints.tightFor(width: _connectorWidth, height: connectorHeight),
+      parentUsesSize: true,
+    );
+
+    final totalHeight = destinationY + _destinationDetails.size.height;
+    size = constraints.constrain(Size(width, totalHeight));
+
+    _setOffset(_pickupIcon, Offset.zero);
+    _setOffset(_pickupDetails, const Offset(_iconSize + _contentGap, 0));
+    _setOffset(
+      _connector,
+      const Offset((_iconSize - _connectorWidth) / 2, _iconSize),
+    );
+    _setOffset(_destinationIcon, Offset(0, destinationY));
+    _setOffset(
+      _destinationDetails,
+      Offset(_iconSize + _contentGap, destinationY),
+    );
+  }
+
+  void _setOffset(RenderBox child, Offset offset) {
+    (child.parentData! as _TripLocationParentData).offset = offset;
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    defaultPaint(context, offset);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    return defaultHitTestChildren(result, position: position);
   }
 }
 
@@ -206,22 +252,9 @@ class _DashedRouteConnector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final height = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : 0.0;
-        return Center(
-          child: SizedBox(
-            width: 2,
-            height: height,
-            child: CustomPaint(
-              key: const ValueKey('trip-route-dashes'),
-              painter: _DashedRoutePainter(),
-            ),
-          ),
-        );
-      },
+    return CustomPaint(
+      key: const ValueKey('trip-route-dashes'),
+      painter: _DashedRoutePainter(),
     );
   }
 }
