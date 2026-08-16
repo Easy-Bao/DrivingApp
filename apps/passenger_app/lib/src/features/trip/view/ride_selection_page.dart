@@ -341,15 +341,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     setState(() {});
   }
 
-  void _useCalculatedFare() {
-    final minimumFare = _minimumFare;
-    if (minimumFare == null || !mounted) return;
-    setState(() {
-      _customFareController.text = minimumFare.toStringAsFixed(2);
-      _customFareError = null;
-    });
-  }
-
   Future<void> _handleBookPressed() async {
     final fare = _selectedFare;
     final minimumFare = _minimumFare;
@@ -579,7 +570,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                     fareError: _fareError,
                     onRetryFare: _retryFareCalculation,
                     onCustomFareChanged: _onCustomFareChanged,
-                    onUseCalculatedFare: _useCalculatedFare,
                     notesController: _notesController,
                     onNotesChanged: _onNotesChanged,
                     selectedTipAmount: _selectedTipAmount,

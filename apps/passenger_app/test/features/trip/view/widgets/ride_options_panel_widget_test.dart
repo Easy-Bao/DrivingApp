@@ -44,10 +44,6 @@ void main() {
           fareError: fareError,
           onRetryFare: onRetryFare,
           onCustomFareChanged: (_) {},
-          onUseCalculatedFare: () {
-            customFareController.text =
-                result?.totalFare.toStringAsFixed(2) ?? '';
-          },
           notesController: notesController,
           onNotesChanged: (_) {},
           selectedTipAmount: 0,
@@ -101,6 +97,7 @@ void main() {
     expect(find.text('Central Park'), findsOneWidget);
     expect(find.text('Calculated fare'), findsNothing);
     expect(find.text('Set your offer'), findsOneWidget);
+    expect(find.text('Book directly'), findsOneWidget);
     expect(find.text('Solo Ride'), findsNothing);
     expect(find.text('4.2 km'), findsNothing);
     expect(find.text('12 min'), findsNothing);
@@ -117,6 +114,8 @@ void main() {
 
     expect(find.text('Set your offer'), findsOneWidget);
     expect(find.text('Calculated minimum'), findsOneWidget);
+    expect(find.byKey(const ValueKey('custom-offer-label')), findsOneWidget);
+    expect(find.text('Use calculated fare'), findsNothing);
     expect(find.byKey(const ValueKey('custom-offer-input')), findsOneWidget);
 
     await tester.enterText(

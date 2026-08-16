@@ -20,7 +20,6 @@ class RideOptionsPanelWidget extends StatefulWidget {
   final String? fareError;
   final VoidCallback? onRetryFare;
   final ValueChanged<String> onCustomFareChanged;
-  final VoidCallback onUseCalculatedFare;
   final TextEditingController notesController;
   final ValueChanged<String> onNotesChanged;
   final int selectedTipAmount;
@@ -41,7 +40,6 @@ class RideOptionsPanelWidget extends StatefulWidget {
     required this.fareError,
     required this.onRetryFare,
     required this.onCustomFareChanged,
-    required this.onUseCalculatedFare,
     required this.notesController,
     required this.onNotesChanged,
     required this.selectedTipAmount,
@@ -85,11 +83,6 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
     if (_hasValidFare) {
       _showView(_RideOptionsPanelView.summary);
     }
-  }
-
-  void _restoreCalculatedFare() {
-    widget.onUseCalculatedFare();
-    _showView(_RideOptionsPanelView.summary);
   }
 
   Widget _buildFareStatus() {
@@ -385,7 +378,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                 ? widget.isLoadingFare
                       ? 'Calculating fare…'
                       : 'Fare unavailable'
-                : 'Find a driver',
+                : 'Book directly',
           ),
         ),
       ],
@@ -431,6 +424,16 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                 ),
               ),
               const Divider(height: 28),
+              const Text(
+                'Your offer',
+                key: ValueKey('custom-offer-label'),
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 key: const ValueKey('custom-offer-input'),
                 controller: widget.customFareController,
@@ -446,7 +449,6 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                   setState(() {});
                 },
                 decoration: InputDecoration(
-                  labelText: 'Your offer',
                   prefixText: '₱ ',
                   helperText: 'Enter a higher amount if you want to adjust it.',
                   errorText: widget.customFareError,
@@ -454,15 +456,6 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(color: AppTheme.borderSide),
                   ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: _restoreCalculatedFare,
-                  icon: const Icon(LucideIcons.rotate_ccw, size: 16),
-                  label: const Text('Use calculated fare'),
                 ),
               ),
             ],
