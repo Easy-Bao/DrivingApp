@@ -21,7 +21,10 @@ void main() {
     setUp: () {
       when(() => sessionRepository.restoreSession()).thenAnswer(
         (_) async => const Right<Failure, PassengerSession>(
-          PassengerSession.authenticated(passengerId: '42'),
+          PassengerSession.authenticated(
+            passengerId: '42',
+            passengerName: 'Avery Cruz',
+          ),
         ),
       );
     },
@@ -29,7 +32,10 @@ void main() {
     act: (bloc) => bloc.add(const SessionStarted()),
     expect: () => [
       const SessionLoading(),
-      const AuthenticatedSession(passengerId: '42'),
+      const AuthenticatedSession(
+        passengerId: '42',
+        passengerName: 'Avery Cruz',
+      ),
     ],
   );
 

@@ -1,40 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_core/shared_core.dart';
 
 class RideFareDetailsWidget extends StatelessWidget {
-  final String passengerLabel;
-  final String pickupLabel;
-  final String destinationName;
-  final String destinationAddress;
-  final String distance;
-  final String duration;
-  final double baseFare;
+  final String passengerName;
+  final FareResult fareResult;
+  final double offeredFare;
   final int tipAmount;
   final double totalFare;
-  final String notes;
   final VoidCallback onBackPressed;
 
   const RideFareDetailsWidget({
     super.key,
-    required this.passengerLabel,
-    required this.pickupLabel,
-    required this.destinationName,
-    required this.destinationAddress,
-    required this.distance,
-    required this.duration,
-    required this.baseFare,
+    required this.passengerName,
+    required this.fareResult,
+    required this.offeredFare,
     required this.tipAmount,
     required this.totalFare,
-    required this.notes,
     required this.onBackPressed,
   });
 
+  double get _customOfferAdjustment {
+    final adjustment = offeredFare - fareResult.totalFare;
+    return adjustment > 0 ? adjustment : 0;
+  }
+
   String _currency(double amount) => '₱${amount.toStringAsFixed(2)}';
 
-  Widget _detailRow(String label, String value) {
+  Widget _amountRow(String label, String value, {bool emphasize = false}) {
+    final valueStyle = TextStyle(
+      color: AppTheme.primaryColor,
+      fontSize: emphasize ? 14 : 13,
+      fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
+    );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,23 +43,20 @@ class RideFareDetailsWidget extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: AppTheme.primaryColor.withValues(alpha: 0.55),
-                fontSize: 12,
+                color: AppTheme.primaryColor.withValues(alpha: 0.58),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Flexible(
             child: Text(
               value,
               textAlign: TextAlign.end,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppTheme.primaryColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+              style: valueStyle,
             ),
           ),
         ],
@@ -68,15 +66,10 @@ class RideFareDetailsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final normalizedPassengerName = passengerName.trim();
+    return Padding(
       key: const ValueKey('fare-details'),
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-      decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderSide),
-      ),
+      padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -84,41 +77,71 @@ class RideFareDetailsWidget extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: onBackPressed,
-                tooltip: 'Back to fare summary',
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(LucideIcons.arrow_left, size: 18),
+                tooltip: 'Back to trip summary',
+                icon: const Icon(LucideIcons.arrow_left, size: 20),
               ),
-              const SizedBox(width: 2),
-              const Text(
-                'Fare details',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+              const SizedBox(width: 4),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Fare details',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'How your total is calculated',
+                      style: TextStyle(
+                        color: AppTheme.tertiaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const Divider(height: 12),
-          _detailRow('Passenger', passengerLabel),
-          _detailRow('Pickup', pickupLabel),
-          _detailRow(
-            'Destination',
-            destinationAddress.isEmpty
-                ? destinationName
-                : '$destinationName · $destinationAddress',
+          if (normalizedPassengerName.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _amountRow('Passenger', normalizedPassengerName),
+          ],
+          const Divider(height: 28),
+          Text(
+            'FARE CALCULATION',
+            style: TextStyle(
+              color: AppTheme.primaryColor.withValues(alpha: 0.5),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+            ),
           ),
-          if (distance.isNotEmpty) _detailRow('Distance', distance),
-          if (duration.isNotEmpty) _detailRow('Estimated time', duration),
           const SizedBox(height: 4),
-          const Divider(height: 12),
-          _detailRow('Ride fare', _currency(baseFare)),
-          _detailRow(
-            'Tip',
-            tipAmount == 0 ? 'Not now' : _currency(tipAmount.toDouble()),
+          _amountRow('Base fare', _currency(fareResult.baseFare)),
+          _amountRow('Distance', _currency(fareResult.distanceCharge)),
+          _amountRow('Time', _currency(fareResult.timeCharge)),
+          if (fareResult.surgeCharge > 0)
+            _amountRow('Surge', _currency(fareResult.surgeCharge)),
+          const Divider(height: 24),
+          _amountRow(
+            'Calculated fare',
+            _currency(fareResult.totalFare),
+            emphasize: true,
           ),
-          if (notes.isNotEmpty) _detailRow('Notes', notes),
-          const Divider(height: 16),
+          if (_customOfferAdjustment > 0)
+            _amountRow(
+              'Custom offer adjustment',
+              '+${_currency(_customOfferAdjustment)}',
+            ),
+          _amountRow(
+            'Tip',
+            tipAmount == 0 ? 'No tip added' : _currency(tipAmount.toDouble()),
+          ),
+          const Divider(height: 28),
           Row(
             children: [
               const Expanded(
@@ -126,7 +149,7 @@ class RideFareDetailsWidget extends StatelessWidget {
                   'Total fare',
                   style: TextStyle(
                     color: AppTheme.primaryColor,
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -135,7 +158,7 @@ class RideFareDetailsWidget extends StatelessWidget {
                 _currency(totalFare),
                 style: const TextStyle(
                   color: AppTheme.primaryColor,
-                  fontSize: 18,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
                 ),
               ),

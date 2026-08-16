@@ -39,6 +39,7 @@ class AppModule extends Module {
       ..addLazySingleton<SessionRepository>(
         (i) => SessionRepositoryImpl(
           secureSessionService: i.get<SecureSessionService>(),
+          preferences: i.get<SharedPreferences>(),
         ),
       )
       ..addLazySingleton<SessionBloc>(

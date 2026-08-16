@@ -19,11 +19,15 @@ final class GuestSession extends SessionState {
 
 final class AuthenticatedSession extends SessionState {
   final String passengerId;
+  final String passengerName;
 
-  const AuthenticatedSession({required this.passengerId});
+  const AuthenticatedSession({
+    required this.passengerId,
+    this.passengerName = '',
+  });
 
   @override
-  List<Object?> get props => [passengerId];
+  List<Object?> get props => [passengerId, passengerName];
 }
 
 final class SessionFailure extends SessionState {

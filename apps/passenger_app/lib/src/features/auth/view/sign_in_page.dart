@@ -71,6 +71,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
               BlocProvider.of<SessionBloc>(context).add(
                 SessionAuthenticatedRequested(
                   passengerId: state.credentials.passengerId,
+                  passengerName: state.credentials.passengerName,
                 ),
               );
               context.goNamed(HomeRoutes.home);

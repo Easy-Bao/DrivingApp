@@ -50,12 +50,10 @@ class RideSelectionPage extends StatefulWidget {
 }
 
 class _RideSelectionPageState extends State<RideSelectionPage> {
-  int _selectedIdx = 0;
   late int _selectedTipAmount;
-  late List<RideOptionData> _options;
   final TextEditingController _customFareController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  double? _minimumFare;
+  FareResult? _fareResult;
   String? _fareError;
   String? _customFareError;
   bool _isLoadingFare = true;
@@ -63,7 +61,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   Widget? _cachedMapView;
   RouteModel? _route;
   Future<RouteModel?>? _routeRequest;
-  bool _isShowingFareDetails = false;
   bool _isResolvingPickup = true;
   ({double lat, double lng})? _resolvedPickup;
 
@@ -78,19 +75,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     final position = LocationService.lastPosition;
     if (position == null) return null;
     return (lat: position.latitude, lng: position.longitude);
-  }
-
-  String get _rideTypeLabel {
-    final normalized = widget.rideType.trim();
-    if (normalized.isEmpty) return 'Solo Ride';
-    return normalized
-        .split(RegExp(r'[_-]+'))
-        .map(
-          (word) => word.isEmpty
-              ? word
-              : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
-        )
-        .join(' ');
   }
 
   String get _pickupLabel {
@@ -126,11 +110,10 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     return duration == null ? null : _parseDurationMinutes(duration);
   }
 
+  double? get _minimumFare => _fareResult?.totalFare;
+
   double get _baseFare {
-    if (_options.isEmpty) return 0;
-    final optionIndex = _selectedIdx.clamp(0, _options.length - 1).toInt();
-    final option = _options[optionIndex];
-    return double.tryParse(_customFareController.text) ?? option.fare;
+    return double.tryParse(_customFareController.text) ?? _minimumFare ?? 0;
   }
 
   double get _totalFare => _baseFare + _selectedTipAmount;
@@ -143,7 +126,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         ? widget.initialTipAmount
         : 0;
     _notesController.text = widget.initialNotes;
-    initializeRideOptionsData();
     if (_pickupCoordinate != null) {
       _isResolvingPickup = false;
       unawaited(_initializeTripDetails());
@@ -172,10 +154,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     await _initializeTripDetails();
   }
 
-  void initializeRideOptionsData() {
-    _options = const [];
-  }
-
   Future<void> _initializeTripDetails() async {
     if (mounted) {
       setState(() {
@@ -196,8 +174,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         setState(() {
           _isLoadingFare = false;
           _fareError = 'We couldn’t determine the route details for this trip.';
-          _options = const [];
-          _minimumFare = null;
+          _fareResult = null;
           _customFareController.clear();
         });
         return;
@@ -213,8 +190,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           _isLoadingFare = false;
           _fareError =
               'We couldn’t load the fare for this route. Please try again.';
-          _options = const [];
-          _minimumFare = null;
+          _fareResult = null;
           _customFareController.clear();
         });
       }
@@ -270,8 +246,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         throw StateError('Pickup location is unavailable.');
       }
       final datasource = Modular.get<BiddingRemoteDataSource>();
-      final pricingConfig = await datasource.fetchPricingConfig();
-      final res = await datasource.fetchFareEstimate(
+      final fareResult = await datasource.fetchFareEstimate(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,
         rideType: widget.rideType,
@@ -280,23 +255,10 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         destinationLatitude: widget.destination.latitude,
         destinationLongitude: widget.destination.longitude,
       );
-      final totalFare =
-          (res['total_fare'] as num?)?.toDouble() ??
-          ((res['fare_centavos'] as num?)?.toDouble() ?? 0) / 100;
-      if (totalFare > 0 && mounted) {
+      if (fareResult.totalFare > 0 && mounted) {
         setState(() {
-          _minimumFare = totalFare;
-          _customFareController.text = totalFare.toStringAsFixed(2);
-          _options = [
-            RideOptionData(
-              name: pricingConfig.serviceName,
-              subtitle: 'Private ride with a calculated minimum fare',
-              icon: LucideIcons.bike,
-              fare: totalFare,
-              eta: 'Estimated for this route',
-              badge: null,
-            ),
-          ];
+          _fareResult = fareResult;
+          _customFareController.text = fareResult.totalFare.toStringAsFixed(2);
           _fareError = null;
           _customFareError = null;
         });
@@ -304,8 +266,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         setState(() {
           _isLoadingFare = false;
           _fareError = 'We couldn’t calculate a fare for this route.';
-          _options = const [];
-          _minimumFare = null;
+          _fareResult = null;
           _customFareController.clear();
         });
       }
@@ -315,8 +276,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           _isLoadingFare = false;
           _fareError =
               'We couldn’t calculate a fare for this route. Please try again.';
-          _options = const [];
-          _minimumFare = null;
+          _fareResult = null;
           _customFareController.clear();
         });
       }
@@ -381,14 +341,13 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     setState(() {});
   }
 
-  void _showFareDetails() {
-    if (!mounted || _totalFare <= 0) return;
-    setState(() => _isShowingFareDetails = true);
-  }
-
-  void _hideFareDetails() {
-    if (!mounted) return;
-    setState(() => _isShowingFareDetails = false);
+  void _useCalculatedFare() {
+    final minimumFare = _minimumFare;
+    if (minimumFare == null || !mounted) return;
+    setState(() {
+      _customFareController.text = minimumFare.toStringAsFixed(2);
+      _customFareError = null;
+    });
   }
 
   Future<void> _handleBookPressed() async {
@@ -548,6 +507,10 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     }
     final defaultLat = pickup.lat;
     final defaultLng = pickup.lng;
+    final passengerName = switch (context.watch<SessionBloc>().state) {
+      AuthenticatedSession(:final passengerName) => passengerName,
+      _ => '',
+    };
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -605,34 +568,23 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                     maxHeight: MediaQuery.sizeOf(context).height * 0.68,
                   ),
                   child: RideOptionsPanelWidget(
-                    rideTypeLabel: _rideTypeLabel,
+                    passengerName: passengerName,
                     pickupLabel: _pickupLabel,
                     destinationName: widget.destination.name,
                     destinationAddress: widget.destination.fullAddress,
-                    distance: _distanceLabel,
-                    duration: _durationLabel,
-                    options: _options,
-                    selectedIndex: _selectedIdx,
-                    onOptionSelected: (idx) {
-                      setState(() {
-                        _selectedIdx = idx;
-                      });
-                    },
+                    fareResult: _fareResult,
                     customFareController: _customFareController,
-                    minimumFare: _minimumFare,
                     customFareError: _customFareError,
                     isLoadingFare: _isLoadingFare,
                     fareError: _fareError,
                     onRetryFare: _retryFareCalculation,
                     onCustomFareChanged: _onCustomFareChanged,
+                    onUseCalculatedFare: _useCalculatedFare,
                     notesController: _notesController,
                     onNotesChanged: _onNotesChanged,
                     selectedTipAmount: _selectedTipAmount,
                     onTipSelected: _onTipSelected,
                     totalFare: _totalFare,
-                    isShowingFareDetails: _isShowingFareDetails,
-                    onShowFareDetails: _showFareDetails,
-                    onHideFareDetails: _hideFareDetails,
                     onBookPressed: () => unawaited(_handleBookPressed()),
                   ),
                 );

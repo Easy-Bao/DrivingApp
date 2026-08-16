@@ -4,7 +4,7 @@ import 'package:shared_core/shared_core.dart';
 abstract class BiddingRemoteDataSource {
   Future<FareServiceModel> fetchPricingConfig();
 
-  Future<Map<String, dynamic>> fetchFareEstimate({
+  Future<FareResult> fetchFareEstimate({
     required double distanceKm,
     required double durationMinutes,
     required String rideType,
@@ -69,7 +69,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> fetchFareEstimate({
+  Future<FareResult> fetchFareEstimate({
     required double distanceKm,
     required double durationMinutes,
     required String rideType,
@@ -90,7 +90,7 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
         'destination_longitude': destinationLongitude,
       },
     );
-    return response.data ?? {};
+    return FareResult.fromJson(response.data ?? const <String, dynamic>{});
   }
 
   @override

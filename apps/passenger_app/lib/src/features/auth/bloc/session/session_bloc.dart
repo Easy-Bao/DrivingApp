@@ -39,7 +39,12 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
       emit(const SessionFailure('Passenger session is unavailable.'));
       return;
     }
-    emit(AuthenticatedSession(passengerId: passengerId));
+    emit(
+      AuthenticatedSession(
+        passengerId: passengerId,
+        passengerName: event.passengerName.trim(),
+      ),
+    );
   }
 
   void _onSessionGuestRequested(
@@ -64,7 +69,10 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
   SessionState _stateFor(PassengerSession session) {
     final passengerId = session.passengerId;
     if (session.isAuthenticated && passengerId != null) {
-      return AuthenticatedSession(passengerId: passengerId);
+      return AuthenticatedSession(
+        passengerId: passengerId,
+        passengerName: session.passengerName,
+      );
     }
     return const GuestSession();
   }

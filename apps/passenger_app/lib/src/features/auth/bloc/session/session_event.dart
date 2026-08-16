@@ -13,11 +13,15 @@ final class SessionStarted extends SessionEvent {
 
 final class SessionAuthenticatedRequested extends SessionEvent {
   final String passengerId;
+  final String passengerName;
 
-  const SessionAuthenticatedRequested({required this.passengerId});
+  const SessionAuthenticatedRequested({
+    required this.passengerId,
+    this.passengerName = '',
+  });
 
   @override
-  List<Object?> get props => [passengerId];
+  List<Object?> get props => [passengerId, passengerName];
 }
 
 final class SessionGuestRequested extends SessionEvent {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 
@@ -6,26 +7,22 @@ class RideTripSummaryWidget extends StatelessWidget {
   final String pickupLabel;
   final String destinationName;
   final String destinationAddress;
-  final String distance;
-  final String duration;
 
   const RideTripSummaryWidget({
     super.key,
     required this.pickupLabel,
     required this.destinationName,
     required this.destinationAddress,
-    required this.distance,
-    required this.duration,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.borderSide),
       ),
       child: Column(
@@ -34,46 +31,25 @@ class RideTripSummaryWidget extends StatelessWidget {
           Text(
             'TRIP DETAILS',
             style: TextStyle(
-              color: AppTheme.primaryColor.withValues(alpha: 0.45),
+              color: AppTheme.primaryColor.withValues(alpha: 0.5),
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           _LocationRow(
             icon: LucideIcons.locate_fixed,
             label: 'Pickup',
             value: pickupLabel,
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 10),
-            child: Container(width: 1, height: 12, color: AppTheme.borderSide),
-          ),
+          const _DashedRouteConnector(),
           _LocationRow(
             icon: LucideIcons.map_pin,
             label: 'Destination',
             value: destinationName,
             subtitle: destinationAddress,
           ),
-          if (distance.isNotEmpty || duration.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                if (distance.isNotEmpty)
-                  _TripStat(icon: LucideIcons.route, value: distance),
-                if (distance.isNotEmpty && duration.isNotEmpty)
-                  Container(
-                    width: 1,
-                    height: 16,
-                    margin: const EdgeInsets.symmetric(horizontal: 14),
-                    color: AppTheme.borderSide,
-                  ),
-                if (duration.isNotEmpty)
-                  _TripStat(icon: LucideIcons.clock, value: duration),
-              ],
-            ),
-          ],
         ],
       ),
     );
@@ -98,8 +74,11 @@ class _LocationRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppTheme.primaryColor),
-        const SizedBox(width: 10),
+        SizedBox(
+          width: 18,
+          child: Icon(icon, size: 18, color: AppTheme.primaryColor),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,6 +91,7 @@ class _LocationRow extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              const SizedBox(height: 2),
               Text(
                 value,
                 maxLines: 1,
@@ -122,16 +102,20 @@ class _LocationRow extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              if (subtitle != null && subtitle!.isNotEmpty)
+              if (subtitle case final address?
+                  when address.trim().isNotEmpty) ...[
+                const SizedBox(height: 2),
                 Text(
-                  subtitle!,
-                  maxLines: 1,
+                  address,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.55),
-                    fontSize: 11,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.58),
+                    fontSize: 12,
+                    height: 1.25,
                   ),
                 ),
+              ],
             ],
           ),
         ),
@@ -140,28 +124,60 @@ class _LocationRow extends StatelessWidget {
   }
 }
 
-class _TripStat extends StatelessWidget {
-  final IconData icon;
-  final String value;
-
-  const _TripStat({required this.icon, required this.value});
+class _DashedRouteConnector extends StatelessWidget {
+  const _DashedRouteConnector();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 15, color: AppTheme.primaryColor),
-        const SizedBox(width: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppTheme.primaryColor,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
+    return const Padding(
+      padding: EdgeInsets.only(left: 8, top: 6, bottom: 6),
+      child: SizedBox(
+        key: ValueKey('trip-route-dashes'),
+        width: 2,
+        height: 26,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [_RouteDash(), _RouteDash(), _RouteDash()],
         ),
-      ],
+      ),
     );
   }
+}
+
+class _RouteDash extends StatelessWidget {
+  const _RouteDash();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 2,
+      height: 4,
+      decoration: BoxDecoration(
+        color: AppTheme.tertiaryColor.withValues(alpha: 0.68),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+}
+
+@Preview(
+  group: 'Trip selection',
+  name: 'Long destination address',
+  size: Size(390, 280),
+)
+Widget rideTripSummaryLongAddressPreview() {
+  return MaterialApp(
+    theme: AppTheme.themeData,
+    home: const Scaffold(
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: RideTripSummaryWidget(
+          pickupLabel: 'Mountain View',
+          destinationName: 'Silicon Valley Corporate Catering',
+          destinationAddress:
+              '1390 Pear Avenue, Mountain View, California 94043, United States',
+        ),
+      ),
+    ),
+  );
 }

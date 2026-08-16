@@ -14,7 +14,7 @@ class RideTipSelectorWidget extends StatelessWidget {
   });
 
   String _labelFor(int amount) {
-    return amount == 0 ? 'Not now' : '₱$amount';
+    return amount == 0 ? 'No tip' : '₱$amount';
   }
 
   @override
@@ -23,13 +23,17 @@ class RideTipSelectorWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'TIP',
+          'Add a tip',
           style: TextStyle(
             color: AppTheme.primaryColor,
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w800,
-            letterSpacing: 1,
           ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'Optional, for excellent service.',
+          style: TextStyle(color: AppTheme.tertiaryColor, fontSize: 12),
         ),
         const SizedBox(height: 8),
         SingleChildScrollView(
