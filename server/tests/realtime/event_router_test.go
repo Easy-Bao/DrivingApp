@@ -22,3 +22,15 @@ func TestEventRouterDispatchesByBoundedContext(t *testing.T) {
 		t.Fatal("chat event was not dispatched")
 	}
 }
+
+func TestEventRouterDispatchesLegacyChatMessageType(t *testing.T) {
+	sink := &eventSink{}
+	router := ws.NewEventRouter()
+	router.Register("message", sink)
+	if err := router.Handle(context.Background(), []byte(`{"type":"message","room_id":"room-1"}`)); err != nil {
+		t.Fatalf("dispatch failed: %v", err)
+	}
+	if !sink.called {
+		t.Fatal("legacy chat event was not dispatched")
+	}
+}
