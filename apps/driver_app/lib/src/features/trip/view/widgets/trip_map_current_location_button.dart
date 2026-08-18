@@ -13,10 +13,10 @@ class TripMapCurrentLocationButton extends StatelessWidget {
       color: AppTheme.surface,
       elevation: 3,
       shadowColor: AppTheme.primaryColor.withValues(alpha: 0.22),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(24),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         child: SizedBox(
           width: 48,
           height: 48,

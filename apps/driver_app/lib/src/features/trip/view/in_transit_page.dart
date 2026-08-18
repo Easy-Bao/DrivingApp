@@ -49,40 +49,45 @@ class _InTransitPageState extends State<InTransitPage> {
   double? _passengerLng;
   AppMapController? _mapController;
   Timer? _trackingTimer;
+  late final LiveMapBloc _liveMapBloc;
+  bool _isTracking = false;
 
   @override
   void initState() {
     super.initState();
-    _loadRoute();
+    _liveMapBloc = Modular.get<LiveMapBloc>();
+    unawaited(_loadRoute());
   }
 
   @override
   void dispose() {
     _trackingTimer?.cancel();
+    unawaited(_liveMapBloc.close());
     super.dispose();
   }
 
-  void _startTracking(BuildContext context) {
-    final mapBloc = BlocProvider.of<LiveMapBloc>(context);
+  void _startTracking() {
     _trackingTimer?.cancel();
-    _trackingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
-      if (!mounted) return;
+    _trackingTimer = Timer.periodic(const Duration(seconds: 4), (timer) async {
+      if (!mounted || _isTracking) return;
+      _isTracking = true;
+
       try {
         final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId;
         if (rideId != null && rideId.isNotEmpty) {
           final location = await Modular.get<TelemetryRemoteDataSource>()
               .fetchPassengerLocation(rideId);
-          if (location['lat'] != null && location['lng'] != null) {
+          if (location['lat'] is num && location['lng'] is num) {
             _passengerLat = (location['lat'] as num).toDouble();
             _passengerLng = (location['lng'] as num).toDouble();
           }
         }
         final pos =
-            await LocationService.getCurrentPosition() ??
-            LocationService.lastPosition;
+            LocationService.lastPosition ??
+            await LocationService.getCurrentPosition();
         if (pos != null) {
           if (mounted) {
-            mapBloc.add(
+            _liveMapBloc.add(
               DispatchTelemetryLocationEvent(
                 lat: pos.latitude,
                 lng: pos.longitude,
@@ -90,7 +95,7 @@ class _InTransitPageState extends State<InTransitPage> {
             );
           }
           if (mounted) {
-            mapBloc.add(
+            _liveMapBloc.add(
               UpdateLocationsAndDrawRouteEvent(
                 driverLat: pos.latitude,
                 driverLng: pos.longitude,
@@ -102,15 +107,20 @@ class _InTransitPageState extends State<InTransitPage> {
             );
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // The next bounded refresh can recover from a transient location or
+        // telemetry failure without breaking the active trip screen.
+      } finally {
+        _isTracking = false;
+      }
     });
   }
 
   Future<void> _loadRoute() async {
     final rideCubit = BlocProvider.of<RideFlowCubit>(context);
     final pos =
-        await LocationService.getCurrentPosition() ??
-        LocationService.lastPosition;
+        LocationService.lastPosition ??
+        await LocationService.getCurrentPosition();
     if (!mounted) return;
     if (pos == null) return;
     final dLat = pos.latitude;
@@ -148,16 +158,16 @@ class _InTransitPageState extends State<InTransitPage> {
       setState(() {
         _isLoading = false;
       });
-      _triggerDrawRoute(context, dLat, dLng);
-      _startTracking(context);
+      _triggerDrawRoute(dLat, dLng);
+      _startTracking();
     }
   }
 
-  void _triggerDrawRoute(BuildContext context, double dLat, double dLng) {
+  void _triggerDrawRoute(double dLat, double dLng) {
     final destinationLat = _destLat;
     final destinationLng = _destLng;
     if (destinationLat == null || destinationLng == null) return;
-    BlocProvider.of<LiveMapBloc>(context).add(
+    _liveMapBloc.add(
       UpdateLocationsAndDrawRouteEvent(
         driverLat: dLat,
         driverLng: dLng,
@@ -169,14 +179,14 @@ class _InTransitPageState extends State<InTransitPage> {
     );
   }
 
-  void _onMapCreated(AppMapController controller, BuildContext context) {
+  void _onMapCreated(AppMapController controller) {
     _mapController = controller;
     final pos = LocationService.lastPosition;
     final defaultLat = pos?.latitude ?? _destLat;
     final defaultLng = pos?.longitude ?? _destLng;
     if (defaultLat == null || defaultLng == null) return;
 
-    BlocProvider.of<LiveMapBloc>(context).add(
+    _liveMapBloc.add(
       InitializeMapEvent(
         controller: controller,
         defaultLat: defaultLat,
@@ -185,15 +195,15 @@ class _InTransitPageState extends State<InTransitPage> {
     );
 
     if (!_isLoading) {
-      _triggerDrawRoute(context, defaultLat, defaultLng);
+      _triggerDrawRoute(defaultLat, defaultLng);
     }
   }
 
   Future<void> _recenterMap() async {
     final controller = _mapController;
     final position =
-        await LocationService.getCurrentPosition() ??
-        LocationService.lastPosition;
+        LocationService.lastPosition ??
+        await LocationService.getCurrentPosition();
     if (controller == null || position == null) return;
     await MapProvider.moveCamera(
       controller,
@@ -239,7 +249,7 @@ class _InTransitPageState extends State<InTransitPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<LiveMapBloc>.value(
-      value: Modular.get<LiveMapBloc>(),
+      value: _liveMapBloc,
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
@@ -265,28 +275,30 @@ class _InTransitPageState extends State<InTransitPage> {
                       latitude: defaultLat,
                       longitude: defaultLng,
                       zoom: 15.0,
-                      onMapCreated: (c) => _onMapCreated(c, context),
+                      onMapCreated: _onMapCreated,
                     ),
                   ),
                 ),
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: Row(
                       children: [
-                        GestureDetector(
-                          onTap: () => context.pop(),
-                          child: Container(
-                            padding: const EdgeInsets.all(11),
-                            decoration: BoxDecoration(
-                              color: AppTheme.neutralColor,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppTheme.borderSide),
-                            ),
-                            child: const Icon(
-                              LucideIcons.arrow_left,
-                              size: 18,
-                              color: AppTheme.primaryColor,
+                        Material(
+                          color: AppTheme.surface,
+                          shape: const CircleBorder(),
+                          elevation: 2,
+                          child: InkWell(
+                            onTap: () => context.pop(),
+                            customBorder: const CircleBorder(),
+                            child: const SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Icon(
+                                LucideIcons.arrow_left,
+                                size: 19,
+                                color: AppTheme.primaryColor,
+                              ),
                             ),
                           ),
                         ),
@@ -297,50 +309,63 @@ class _InTransitPageState extends State<InTransitPage> {
                   ),
                 ),
                 Positioned(
-                  top: 112,
-                  right: 20,
+                  top: 76,
+                  right: 16,
                   child: TripMapCurrentLocationButton(
                     onPressed: _mapController == null ? null : _recenterMap,
                   ),
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24),
+                  child: SafeArea(
+                    top: false,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryColor.withValues(
+                              alpha: 0.12,
+                            ),
+                            blurRadius: 22,
+                            offset: const Offset(0, -5),
+                          ),
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, -4),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        InTransitDestinationCardWidget(
-                          dropoffAddress: widget.dropoff,
-                        ),
-                        const SizedBox(height: 16),
-                        InTransitMetaRowWidget(
-                          distanceKm: widget.distance,
-                          durationText: widget.duration,
-                          fareAmount: widget.fare,
-                        ),
-                        const SizedBox(height: 16),
-                        const InTransitPassengerCardWidget(),
-                        const SizedBox(height: 24),
-                        InTransitCompleteButtonWidget(
-                          isCompletingTrip: _isCompletingTrip,
-                          onCompleteTripPressed: () => _completeTrip(context),
-                        ),
-                      ],
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: AppTheme.borderSide,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          InTransitDestinationCardWidget(
+                            dropoffAddress: widget.dropoff,
+                          ),
+                          const SizedBox(height: 8),
+                          InTransitMetaRowWidget(
+                            distanceKm: widget.distance,
+                            durationText: widget.duration,
+                            fareAmount: widget.fare,
+                          ),
+                          const SizedBox(height: 8),
+                          const InTransitPassengerCardWidget(),
+                          const SizedBox(height: 12),
+                          InTransitCompleteButtonWidget(
+                            isCompletingTrip: _isCompletingTrip,
+                            onCompleteTripPressed: () => _completeTrip(context),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

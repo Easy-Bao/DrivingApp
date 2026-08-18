@@ -22,25 +22,60 @@ class MapAnnotationService {
     final annotationManager = await mapCtrl.annotations
         .createPointAnnotationManager();
 
-    final markerColor = color != null
-        ? color.toARGB32()
-        : (isOrigin
-              ? AppTheme.primaryColor.toARGB32()
-              : AppTheme.accent.toARGB32());
-
     await annotationManager.create(
-      mapbox.PointAnnotationOptions(
-        geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-        image: await _createMarkerImage(Color(markerColor), label: label),
-        iconAnchor: mapbox.IconAnchor.BOTTOM,
-        iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 1.0,
-        symbolSortKey: isOrigin ? 10 : 20,
+      await _markerOptions(
+        lat,
+        lng,
+        label: label,
+        isOrigin: isOrigin,
+        color: color,
       ),
     );
     if (onTap != null) {
       annotationManager.tapEvents(onTap: (_) => onTap());
     }
     return annotationManager;
+  }
+
+  static Future<void> replaceMarker(
+    mapbox.PointAnnotationManager annotationManager,
+    double lat,
+    double lng, {
+    String? label,
+    bool isOrigin = false,
+    Color? color,
+  }) async {
+    await annotationManager.deleteAll();
+    await annotationManager.create(
+      await _markerOptions(
+        lat,
+        lng,
+        label: label,
+        isOrigin: isOrigin,
+        color: color,
+      ),
+    );
+  }
+
+  static Future<mapbox.PointAnnotationOptions> _markerOptions(
+    double lat,
+    double lng, {
+    String? label,
+    required bool isOrigin,
+    Color? color,
+  }) async {
+    final markerColor = color != null
+        ? color.toARGB32()
+        : (isOrigin
+              ? AppTheme.primaryColor.toARGB32()
+              : AppTheme.accent.toARGB32());
+    return mapbox.PointAnnotationOptions(
+      geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+      image: await _createMarkerImage(Color(markerColor), label: label),
+      iconAnchor: mapbox.IconAnchor.BOTTOM,
+      iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 1.0,
+      symbolSortKey: isOrigin ? 10 : 20,
+    );
   }
 
   static Future<Uint8List> _createMarkerImage(
@@ -181,6 +216,24 @@ class MapAnnotationService {
       ),
     );
     return annotationManager;
+  }
+
+  static Future<void> replacePolyline(
+    mapbox.PolylineAnnotationManager annotationManager,
+    List<List<double>> points, {
+    Color color = AppTheme.primaryColor,
+    double width = 4.0,
+  }) async {
+    final coordinates = points.map((p) => mapbox.Position(p[0], p[1])).toList();
+    await annotationManager.deleteAll();
+    await annotationManager.create(
+      mapbox.PolylineAnnotationOptions(
+        geometry: mapbox.LineString(coordinates: coordinates),
+        lineWidth: width,
+        lineColor: color.toARGB32(),
+        lineJoin: mapbox.LineJoin.ROUND,
+      ),
+    );
   }
 
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolylineSegment(

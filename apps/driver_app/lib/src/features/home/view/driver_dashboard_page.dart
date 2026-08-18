@@ -92,6 +92,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _locationAccessPoller?.cancel();
     _locationSubscription?.cancel();
     _pollGeneration++;
+    unawaited(_liveMapBloc?.close());
     super.dispose();
   }
 

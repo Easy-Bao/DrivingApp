@@ -20,9 +20,9 @@ class InTransitMetaRowWidget extends StatelessWidget {
     return Row(
       children: [
         _buildChip(LucideIcons.map_pin, '${distanceKm.toStringAsFixed(1)} km'),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         _buildChip(LucideIcons.clock, durationText),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         _buildChip(LucideIcons.banknote, '₱${fareAmount.toStringAsFixed(0)}'),
       ],
     );
@@ -31,22 +31,26 @@ class InTransitMetaRowWidget extends StatelessWidget {
   Widget _buildChip(IconData icon, String text) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        height: 42,
         decoration: BoxDecoration(
           color: AppTheme.neutralColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppTheme.borderSide),
         ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 14, color: AppTheme.tertiaryColor),
-            const SizedBox(height: 4),
-            Text(
-              text,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
+            Icon(icon, size: 13, color: AppTheme.tertiaryColor),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                text,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryColor,
+                ),
               ),
             ),
           ],

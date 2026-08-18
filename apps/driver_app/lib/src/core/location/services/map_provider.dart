@@ -326,6 +326,22 @@ class MapProvider {
     onTap: onTap,
   );
 
+  static Future<void> replaceMarker(
+    mapbox.PointAnnotationManager annotationManager,
+    double lat,
+    double lng, {
+    String? label,
+    bool isOrigin = false,
+    Color? color,
+  }) => MapAnnotationService.replaceMarker(
+    annotationManager,
+    lat,
+    lng,
+    label: label,
+    isOrigin: isOrigin,
+    color: color,
+  );
+
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
@@ -333,6 +349,18 @@ class MapProvider {
     double width = 4.0,
   }) => MapAnnotationService.addPolyline(
     controller,
+    points,
+    color: color,
+    width: width,
+  );
+
+  static Future<void> replacePolyline(
+    mapbox.PolylineAnnotationManager annotationManager,
+    List<List<double>> points, {
+    Color color = AppTheme.primaryColor,
+    double width = 4.0,
+  }) => MapAnnotationService.replacePolyline(
+    annotationManager,
     points,
     color: color,
     width: width,

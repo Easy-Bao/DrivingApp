@@ -51,6 +51,8 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
   double? _passengerLng;
   AppMapController? _mapController;
   Timer? _trackingTimer;
+  late final LiveMapBloc _liveMapBloc;
+  bool _isTrackingPassenger = false;
 
   int _unreadChatMessagesCount = 0;
   int _viewedPassengerMessagesCount = 0;
@@ -59,65 +61,72 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
   @override
   void initState() {
     super.initState();
-    _loadRoute();
+    _liveMapBloc = Modular.get<LiveMapBloc>();
+    unawaited(_loadRoute());
   }
 
   @override
   void dispose() {
     _trackingTimer?.cancel();
+    unawaited(_liveMapBloc.close());
     super.dispose();
   }
 
-  void _startTrackingPassenger(BuildContext context) {
+  void _startTrackingPassenger() {
     final cubit = BlocProvider.of<RideFlowCubit>(context);
-    final mapBloc = BlocProvider.of<LiveMapBloc>(context);
     _trackingTimer?.cancel();
-    _trackingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
-      if (!mounted) return;
-      await _updateUnreadMessagesCount(cubit);
-      final rideId = cubit.activeRideId;
-      if (rideId == null || rideId.isEmpty) return;
+    _trackingTimer = Timer.periodic(const Duration(seconds: 4), (timer) async {
+      if (!mounted || _isTrackingPassenger) return;
+      _isTrackingPassenger = true;
 
       try {
-        final loc = await Modular.get<TelemetryRemoteDataSource>()
-            .fetchPassengerLocation(rideId);
-        if (loc.isNotEmpty && loc['lat'] != null && loc['lng'] != null) {
-          final pLat = (loc['lat'] as num).toDouble();
-          final pLng = (loc['lng'] as num).toDouble();
-          if (mounted) {
-            setState(() {
-              _passengerLat = pLat;
-              _passengerLng = pLng;
-            });
-          }
-        }
-      } catch (_) {}
+        await _updateUnreadMessagesCount(cubit);
+        final rideId = cubit.activeRideId;
+        if (rideId == null || rideId.isEmpty) return;
 
-      try {
-        final pos =
-            await LocationService.getCurrentPosition() ??
-            LocationService.lastPosition;
-        if (pos != null) {
-          if (mounted) {
-            mapBloc.add(
-              DispatchTelemetryLocationEvent(
-                lat: pos.latitude,
-                lng: pos.longitude,
-              ),
-            );
+        try {
+          final loc = await Modular.get<TelemetryRemoteDataSource>()
+              .fetchPassengerLocation(rideId);
+          if (loc['lat'] is num && loc['lng'] is num) {
+            final pLat = (loc['lat'] as num).toDouble();
+            final pLng = (loc['lng'] as num).toDouble();
+            if (mounted && (pLat != _passengerLat || pLng != _passengerLng)) {
+              setState(() {
+                _passengerLat = pLat;
+                _passengerLng = pLng;
+              });
+            }
           }
-          if (mounted && _passengerLat != null && _passengerLng != null) {
-            mapBloc.add(
-              UpdateLocationsAndDrawRouteEvent(
-                driverLat: pos.latitude,
-                driverLng: pos.longitude,
-                passengerLat: _passengerLat!,
-                passengerLng: _passengerLng!,
-              ),
-            );
+        } catch (_) {}
+
+        try {
+          final pos =
+              LocationService.lastPosition ??
+              await LocationService.getCurrentPosition();
+          if (pos != null) {
+            if (mounted) {
+              _liveMapBloc.add(
+                DispatchTelemetryLocationEvent(
+                  lat: pos.latitude,
+                  lng: pos.longitude,
+                ),
+              );
+            }
+            if (mounted && _passengerLat != null && _passengerLng != null) {
+              _liveMapBloc.add(
+                UpdateLocationsAndDrawRouteEvent(
+                  driverLat: pos.latitude,
+                  driverLng: pos.longitude,
+                  passengerLat: _passengerLat!,
+                  passengerLng: _passengerLng!,
+                ),
+              );
+            }
           }
-        }
-      } catch (_) {}
+        } catch (_) {}
+      } finally {
+        _isTrackingPassenger = false;
+      }
     });
   }
 
@@ -138,17 +147,15 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
             .toList();
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
-        if (mounted) {
-          setState(() {
-            if (!_isInitialChatMessagesCountFetched) {
-              _viewedPassengerMessagesCount = currentPassengerMessagesCount;
-              _isInitialChatMessagesCountFetched = true;
-            } else if (currentPassengerMessagesCount >
-                _viewedPassengerMessagesCount) {
-              _unreadChatMessagesCount =
-                  currentPassengerMessagesCount - _viewedPassengerMessagesCount;
-            }
-          });
+        if (!_isInitialChatMessagesCountFetched) {
+          _viewedPassengerMessagesCount = currentPassengerMessagesCount;
+          _isInitialChatMessagesCountFetched = true;
+          return;
+        }
+        final unreadCount =
+            currentPassengerMessagesCount - _viewedPassengerMessagesCount;
+        if (mounted && unreadCount != _unreadChatMessagesCount) {
+          setState(() => _unreadChatMessagesCount = unreadCount);
         }
       });
     } catch (_) {}
@@ -156,8 +163,8 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
 
   Future<void> _loadRoute() async {
     final pos =
-        await LocationService.getCurrentPosition() ??
-        LocationService.lastPosition;
+        LocationService.lastPosition ??
+        await LocationService.getCurrentPosition();
     if (!mounted) return;
     if (pos == null) return;
 
@@ -178,14 +185,14 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
       _isLoading = false;
     });
 
-    _startTrackingPassenger(context);
+    _startTrackingPassenger();
   }
 
-  void _triggerDrawRoute(BuildContext context, double dLat, double dLng) {
+  void _triggerDrawRoute(double dLat, double dLng) {
     final passengerLat = _passengerLat;
     final passengerLng = _passengerLng;
     if (passengerLat == null || passengerLng == null) return;
-    BlocProvider.of<LiveMapBloc>(context).add(
+    _liveMapBloc.add(
       UpdateLocationsAndDrawRouteEvent(
         driverLat: dLat,
         driverLng: dLng,
@@ -195,14 +202,14 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
     );
   }
 
-  void _onMapCreated(AppMapController controller, BuildContext context) {
+  void _onMapCreated(AppMapController controller) {
     _mapController = controller;
     final pos = LocationService.lastPosition;
     final defaultLat = pos?.latitude ?? _passengerLat;
     final defaultLng = pos?.longitude ?? _passengerLng;
     if (defaultLat == null || defaultLng == null) return;
 
-    BlocProvider.of<LiveMapBloc>(context).add(
+    _liveMapBloc.add(
       InitializeMapEvent(
         controller: controller,
         defaultLat: defaultLat,
@@ -211,15 +218,15 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
     );
 
     if (!_isLoading) {
-      _triggerDrawRoute(context, defaultLat, defaultLng);
+      _triggerDrawRoute(defaultLat, defaultLng);
     }
   }
 
   Future<void> _recenterMap() async {
     final controller = _mapController;
     final position =
-        await LocationService.getCurrentPosition() ??
-        LocationService.lastPosition;
+        LocationService.lastPosition ??
+        await LocationService.getCurrentPosition();
     if (controller == null || position == null) return;
     await MapProvider.moveCamera(
       controller,
@@ -291,7 +298,7 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<LiveMapBloc>.value(
-      value: Modular.get<LiveMapBloc>(),
+      value: _liveMapBloc,
       child: Builder(
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
@@ -317,7 +324,7 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                       latitude: defaultLat,
                       longitude: defaultLng,
                       zoom: 15.0,
-                      onMapCreated: (c) => _onMapCreated(c, context),
+                      onMapCreated: _onMapCreated,
                     ),
                   ),
                 ),
@@ -331,102 +338,104 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: LayoutBuilder(
-                    builder: (ctx, constraints) {
-                      final isWide = constraints.maxWidth > 600.0;
-                      final rideState = BlocProvider.of<RideFlowCubit>(
-                        context,
-                      ).state;
-                      final passengerName = rideState is RideFlowEnRoutePickup
-                          ? rideState.passengerName
-                          : 'Passenger';
+                  child: SafeArea(
+                    top: false,
+                    child: LayoutBuilder(
+                      builder: (ctx, constraints) {
+                        final isWide = constraints.maxWidth > 600.0;
+                        final rideState = BlocProvider.of<RideFlowCubit>(
+                          context,
+                        ).state;
+                        final passengerName = rideState is RideFlowEnRoutePickup
+                            ? rideState.passengerName
+                            : 'Passenger';
 
-                      return ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: isWide ? 600.0 : double.infinity,
-                        ),
-                        child: EnRoutePickupPanelWidget(
-                          pickup: widget.pickup,
-                          dropoff: widget.dropoff,
-                          passengerName: passengerName,
-                          distance: widget.distance,
-                          fare: widget.fare,
-                          sliderValue: _sliderVal,
-                          isConfirmingArrival: _isConfirmingArrival,
-                          unreadChatMessagesCount: _unreadChatMessagesCount,
-                          onSliderChanged: (val) {
-                            setState(() {
-                              _sliderVal = val;
-                            });
-                          },
-                          onSliderCompleted: () => _confirmArrival(context),
-                          onCallPressed: () async {
-                            try {
-                              final rideCubit = BlocProvider.of<RideFlowCubit>(
-                                context,
-                              );
-                              final rideId = rideCubit.activeRideId ?? '';
-                              if (rideId.isNotEmpty) {
-                                final ride =
-                                    await Modular.get<TripRemoteDataSource>()
-                                        .getRideStatus(rideId);
-                                final passengerId =
-                                    ride['passenger_id'] as String?;
-                                if (passengerId != null &&
-                                    passengerId.isNotEmpty) {
-                                  final passenger =
-                                      await Modular.get<
-                                            PassengerRemoteDataSource
-                                          >()
-                                          .fetchPassengerProfile(passengerId);
-                                  final phone = passenger['phone'] as String?;
-                                  if (phone != null && phone.isNotEmpty) {
-                                    final uri = Uri.parse('tel:$phone');
-                                    if (await canLaunchUrl(uri)) {
-                                      await launchUrl(uri);
+                        return ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isWide ? 600.0 : double.infinity,
+                          ),
+                          child: EnRoutePickupPanelWidget(
+                            pickup: widget.pickup,
+                            dropoff: widget.dropoff,
+                            passengerName: passengerName,
+                            distance: widget.distance,
+                            fare: widget.fare,
+                            sliderValue: _sliderVal,
+                            isConfirmingArrival: _isConfirmingArrival,
+                            unreadChatMessagesCount: _unreadChatMessagesCount,
+                            onSliderChanged: (val) {
+                              setState(() {
+                                _sliderVal = val;
+                              });
+                            },
+                            onSliderCompleted: () => _confirmArrival(context),
+                            onCallPressed: () async {
+                              try {
+                                final rideCubit =
+                                    BlocProvider.of<RideFlowCubit>(context);
+                                final rideId = rideCubit.activeRideId ?? '';
+                                if (rideId.isNotEmpty) {
+                                  final ride =
+                                      await Modular.get<TripRemoteDataSource>()
+                                          .getRideStatus(rideId);
+                                  final passengerId =
+                                      ride['passenger_id'] as String?;
+                                  if (passengerId != null &&
+                                      passengerId.isNotEmpty) {
+                                    final passenger =
+                                        await Modular.get<
+                                              PassengerRemoteDataSource
+                                            >()
+                                            .fetchPassengerProfile(passengerId);
+                                    final phone = passenger['phone'] as String?;
+                                    if (phone != null && phone.isNotEmpty) {
+                                      final uri = Uri.parse('tel:$phone');
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(uri);
+                                      }
                                     }
                                   }
                                 }
-                              }
-                            } catch (_) {}
-                          },
-                          onChatPressed: () async {
-                            final rideId =
-                                BlocProvider.of<RideFlowCubit>(
-                                  context,
-                                ).activeRideId ??
-                                '';
-                            final state = BlocProvider.of<RideFlowCubit>(
-                              context,
-                            ).state;
-                            final pName = state is RideFlowEnRoutePickup
-                                ? state.passengerName
-                                : 'Passenger';
-                            final driverId =
-                                await Modular.get<SecureSessionService>()
-                                    .readDriverId() ??
-                                '';
-                            if (!context.mounted) return;
-                            setState(() {
-                              _unreadChatMessagesCount = 0;
-                            });
-                            await context.pushNamed(
-                              ChatRoutes.chat,
-                              extra: {
-                                'roomId': rideId,
-                                'userId': driverId,
-                                'peerName': pName,
-                              },
-                            );
-                            if (!context.mounted) return;
-                            _isInitialChatMessagesCountFetched = false;
-                            await _updateUnreadMessagesCount(
-                              BlocProvider.of<RideFlowCubit>(context),
-                            );
-                          },
-                        ),
-                      );
-                    },
+                              } catch (_) {}
+                            },
+                            onChatPressed: () async {
+                              final rideId =
+                                  BlocProvider.of<RideFlowCubit>(
+                                    context,
+                                  ).activeRideId ??
+                                  '';
+                              final state = BlocProvider.of<RideFlowCubit>(
+                                context,
+                              ).state;
+                              final pName = state is RideFlowEnRoutePickup
+                                  ? state.passengerName
+                                  : 'Passenger';
+                              final driverId =
+                                  await Modular.get<SecureSessionService>()
+                                      .readDriverId() ??
+                                  '';
+                              if (!context.mounted) return;
+                              setState(() {
+                                _unreadChatMessagesCount = 0;
+                              });
+                              await context.pushNamed(
+                                ChatRoutes.chat,
+                                extra: {
+                                  'roomId': rideId,
+                                  'userId': driverId,
+                                  'peerName': pName,
+                                },
+                              );
+                              if (!context.mounted) return;
+                              _isInitialChatMessagesCountFetched = false;
+                              await _updateUnreadMessagesCount(
+                                BlocProvider.of<RideFlowCubit>(context),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -442,19 +451,21 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              padding: const EdgeInsets.all(11),
-              decoration: BoxDecoration(
-                color: AppTheme.neutralColor,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.borderSide),
-              ),
-              child: const Icon(
-                LucideIcons.arrow_left,
-                size: 18,
-                color: AppTheme.primaryColor,
+          Material(
+            color: AppTheme.surface,
+            shape: const CircleBorder(),
+            elevation: 2,
+            child: InkWell(
+              onTap: () => context.pop(),
+              customBorder: const CircleBorder(),
+              child: const SizedBox(
+                width: 44,
+                height: 44,
+                child: Icon(
+                  LucideIcons.arrow_left,
+                  size: 19,
+                  color: AppTheme.primaryColor,
+                ),
               ),
             ),
           ),

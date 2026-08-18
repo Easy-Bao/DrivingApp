@@ -20,12 +20,11 @@ class InTransitStatusBadgeWidget extends StatelessWidget {
           Icon(LucideIcons.route, size: 13, color: Colors.white),
           SizedBox(width: 6),
           Text(
-            'IN TRANSIT',
+            'In transit',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w800,
               color: Colors.white,
-              letterSpacing: 0.5,
             ),
           ),
         ],

@@ -1,8 +1,6 @@
-export 'complete_trip_page.dart';
 export 'en_route_pickup_page.dart';
 export 'fare_summary_page.dart';
 export 'in_transit_page.dart';
-export 'rate_passenger_page.dart';
 export 'waiting_passenger_page.dart';
 export 'widgets/en_route_pickup_panel_widget.dart';
 export 'widgets/in_transit/in_transit_complete_button_widget.dart';

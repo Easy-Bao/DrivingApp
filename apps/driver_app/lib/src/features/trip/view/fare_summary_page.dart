@@ -1,7 +1,6 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -38,83 +37,86 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       _error = null;
     });
 
-    final cubit = BlocProvider.of<RideFlowCubit>(context);
-    final passengerId = cubit.activePassengerId;
-    final rideId = cubit.activeRideId;
-    final passengerName = cubit.activePassengerName;
-    double? fare;
     try {
-      fare = await cubit.confirmCashPayment();
-    } catch (_) {
-      if (mounted) {
+      final cubit = BlocProvider.of<RideFlowCubit>(context);
+      final fare = await cubit.confirmCashPayment();
+      if (!mounted) return;
+      if (fare == null) {
         setState(() {
           _isSubmitting = false;
-          _error =
-              'Unable to confirm payment. Check your connection and try again.';
+          _error = 'Payment could not be confirmed. Please try again.';
         });
+        return;
       }
-      return;
-    }
-    if (!mounted) return;
 
-    if (fare == null) {
-      setState(() {
-        _isSubmitting = false;
-        _error =
-            'Unable to confirm payment. Check your connection and try again.';
-      });
-      return;
-    }
-
-    if (passengerId == null || passengerId.isEmpty || rideId == null) {
       cubit.reset();
       context.goNamed(HomeRoutes.dashboard);
-      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _error = 'Payment could not be confirmed. Please try again.';
+      });
     }
-    cubit.reset();
-    context.pushReplacementNamed(
-      TripRoutes.ratePassenger,
-      extra: {
-        'rideId': rideId,
-        'passengerId': passengerId,
-        'passengerName': passengerName,
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: Column(
                 children: [
-                  _buildHeader(),
-                  const SizedBox(height: 18),
-                  _buildFareHero(),
-                  const SizedBox(height: 14),
-                  _buildSummaryCard(),
-                  const SizedBox(height: 10),
-                  _buildPaymentMethod(),
-                  if (_error != null) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppTheme.cancel,
-                        fontWeight: FontWeight.w600,
+                  _buildHeader(context),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildAmountCard(),
+                          const SizedBox(height: 12),
+                          _buildTripCard(),
+                          if (_error != null) ...[
+                            const SizedBox(height: 12),
+                            _buildError(),
+                          ],
+                        ],
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 20),
-                  _buildConfirmButton(),
-                  const SizedBox(height: 8),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSubmitting ? null : _confirmCashPayment,
+                      icon: _isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(LucideIcons.check, size: 18),
+                      label: Text(
+                        _isSubmitting
+                            ? 'Confirming payment…'
+                            : 'Confirm cash collected',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.complete,
+                        foregroundColor: Colors.white,
+                        shape: const StadiumBorder(),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -124,223 +126,265 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
+  Widget _buildHeader(BuildContext context) {
+    return Row(
       children: [
-        const Text(
-          'Fare Summary',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: AppTheme.primaryColor,
+        Material(
+          color: AppTheme.surface,
+          shape: const CircleBorder(),
+          elevation: 1,
+          child: InkWell(
+            onTap: () => context.goNamed(HomeRoutes.dashboard),
+            customBorder: const CircleBorder(),
+            child: const SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(LucideIcons.arrow_left, size: 19),
+            ),
           ),
         ),
-        const SizedBox(height: 3),
-        Text(
-          'Collect payment from passenger',
-          style: TextStyle(
-            fontSize: 13,
-            color: AppTheme.primaryColor.withValues(alpha: 0.5),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Cash collection',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              SizedBox(height: 1),
+              Text(
+                'Confirm after receiving payment',
+                style: TextStyle(fontSize: 12, color: AppTheme.tertiaryColor),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildFareHero() {
+  Widget _buildAmountCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 22),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppTheme.primaryColor,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Text(
-            'SERVER-CALCULATED FARE',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: Colors.white.withValues(alpha: 0.55),
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            '₱${widget.fare.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 44,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: const Icon(
+              LucideIcons.banknote,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  LucideIcons.banknote,
-                  size: 13,
-                  color: Colors.white.withValues(alpha: 0.7),
-                ),
-                const SizedBox(width: 6),
                 Text(
-                  'Cash',
+                  'Collect from passenger',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: Colors.white.withValues(alpha: 0.72),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '₱${widget.fare.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
           ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: const Text(
+              'Cash',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildTripCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.borderSide),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _line('Pickup', widget.pickup),
-          const SizedBox(height: 8),
-          _line('Drop-off', widget.dropoff),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(height: 1, color: AppTheme.borderSide),
+          const Text(
+            'Trip details',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primaryColor,
+            ),
           ),
-          _line('Distance', '${widget.distance.toStringAsFixed(1)} km'),
           const SizedBox(height: 12),
-          _line('Duration', widget.duration),
+          _buildPlace(
+            icon: LucideIcons.circle_dot,
+            label: 'Pickup',
+            address: widget.pickup,
+            color: AppTheme.complete,
+          ),
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(height: 1, color: AppTheme.borderSide),
-          ),
-          _line('Total', '₱${widget.fare.toStringAsFixed(2)}', isBold: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentMethod() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.secondaryColor.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Row(
-        children: [
-          Icon(LucideIcons.banknote, size: 18, color: AppTheme.primaryColor),
-          SizedBox(width: 12),
-          Text(
-            'Cash Payment',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
+            padding: EdgeInsets.only(left: 6, top: 5, bottom: 5),
+            child: SizedBox(
+              height: 12,
+              width: 1,
+              child: ColoredBox(color: AppTheme.borderSide),
             ),
           ),
+          _buildPlace(
+            icon: LucideIcons.map_pin,
+            label: 'Drop-off',
+            address: widget.dropoff,
+            color: AppTheme.accent,
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1),
+          ),
+          Row(
+            children: [
+              _buildMetric(
+                icon: LucideIcons.route,
+                value: '${widget.distance.toStringAsFixed(1)} km',
+              ),
+              const SizedBox(width: 8),
+              _buildMetric(icon: LucideIcons.clock, value: widget.duration),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildConfirmButton() {
-    final active = !_isSubmitting;
-    return GestureDetector(
-      onTap: active ? _confirmCashPayment : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        height: 56,
-        decoration: BoxDecoration(
-          color: active
-              ? AppTheme.complete
-              : AppTheme.complete.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: active
-              ? [
-                  BoxShadow(
-                    color: AppTheme.complete.withValues(alpha: 0.28),
-                    blurRadius: 18,
-                    offset: const Offset(0, 7),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: _isSubmitting
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(LucideIcons.hand_coins, color: Colors.white, size: 22),
-                    SizedBox(width: 10),
-                    Text(
-                      'Confirm Cash Collected',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _line(String label, String value, {bool isBold = false}) {
+  Widget _buildPlace({
+    required IconData icon,
+    required String label,
+    required String address,
+    required Color color,
+  }) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 10),
         Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-        ),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: TextStyle(
-              fontSize: isBold ? 18 : 14,
-              fontWeight: isBold ? FontWeight.w900 : FontWeight.w600,
-              color: AppTheme.primaryColor,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.tertiaryColor,
+                  letterSpacing: 0.7,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                address,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMetric({required IconData icon, required String value}) {
+    return Expanded(
+      child: Container(
+        height: 42,
+        decoration: BoxDecoration(
+          color: AppTheme.neutralColor,
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: AppTheme.tertiaryColor),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                value,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.cancel.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        _error!,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: AppTheme.cancel,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }

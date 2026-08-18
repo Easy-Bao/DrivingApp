@@ -17,7 +17,7 @@ class InTransitPassengerCardWidget extends StatelessWidget {
         : 'Passenger';
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.neutralColor,
         borderRadius: BorderRadius.circular(16),
@@ -26,19 +26,19 @@ class InTransitPassengerCardWidget extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
-              color: AppTheme.secondaryColor,
-              borderRadius: BorderRadius.circular(12),
+              color: AppTheme.secondarySurface,
+              shape: BoxShape.circle,
             ),
             child: const Icon(
               LucideIcons.user,
               color: AppTheme.primaryColor,
-              size: 18,
+              size: 16,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,17 +46,22 @@ class InTransitPassengerCardWidget extends StatelessWidget {
                 Text(
                   passengerName,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.primaryColor,
                   ),
                 ),
                 const Text(
-                  'Aboard',
-                  style: TextStyle(fontSize: 12, color: AppTheme.tertiaryColor),
+                  'Passenger onboard',
+                  style: TextStyle(fontSize: 11, color: AppTheme.tertiaryColor),
                 ),
               ],
             ),
+          ),
+          const Icon(
+            LucideIcons.user_round,
+            size: 16,
+            color: AppTheme.tertiaryColor,
           ),
         ],
       ),

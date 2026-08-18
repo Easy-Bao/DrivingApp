@@ -18,35 +18,27 @@ class InTransitCompleteButtonWidget extends StatelessWidget {
       onTap: isCompletingTrip ? null : onCompleteTripPressed,
       child: Container(
         width: double.infinity,
-        height: 68,
+        height: 52,
         decoration: BoxDecoration(
           color: AppTheme.complete,
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.complete.withValues(alpha: 0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 7),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(26),
         ),
         child: Center(
           child: isCompletingTrip
               ? const SizedBox(
-                  width: 24,
-                  height: 24,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: Colors.white,
                   ),
                 )
               : const Text(
-                  'COMPLETE TRIP',
+                  'Complete trip',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
-                    letterSpacing: 0.8,
                   ),
                 ),
         ),
