@@ -95,6 +95,32 @@ void main() {
       expect(bloc.state, isA<BookingInitial>());
       await bloc.close();
     });
+
+    blocTest<BookingBloc, BookingState>(
+      'clears a completed booking session so the next trip can start',
+      build: () => _makeBookingBloc(
+        driverRepo: driverRepo,
+        biddingDataSource: biddingDataSource,
+        secureSessionService: secureSessionService,
+      ),
+      act: (bloc) {
+        bloc
+          ..add(
+            const DriverMatchedEvent(
+              DriverMatchResult(
+                driverId: 'drv-01',
+                driverName: 'Manong Driver',
+                vehicleType: 'Sedan',
+                plateNumber: 'ABC 1234',
+                proposedFare: 100,
+              ),
+            ),
+          )
+          ..add(const ResetBookingEvent());
+      },
+      expect: () => [isA<BookingDriverMatched>(), isA<BookingInitial>()],
+      verify: (bloc) => expect(bloc.hasActiveBooking, isFalse),
+    );
   });
 
   group('BookingBloc — LocateNearestDriverEvent', () {

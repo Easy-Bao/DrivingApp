@@ -105,6 +105,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<StartOpenBookingEvent>(_onStartOpenBooking);
     on<AcceptBidOfferEvent>(_onAcceptBidOffer);
     on<CancelBookingEvent>(_onCancelBooking);
+    on<ResetBookingEvent>(_onResetBooking);
     on<UpdateOffersEvent>(_onUpdateOffers);
     on<DriverMatchedEvent>(_onDriverMatched);
   }
@@ -610,6 +611,23 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
     emit(BookingCanceled());
     _activeBidSessionId = null;
+  }
+
+  void _onResetBooking(ResetBookingEvent event, Emitter<BookingState> emit) {
+    _nearestSearchCancelled = true;
+    _cleanupSubscriptions();
+    _activeBidSessionId = null;
+    _pickupLat = null;
+    _pickupLng = null;
+    _pickupName = null;
+    _dropoffLat = null;
+    _dropoffLng = null;
+    _dropoffName = null;
+    _totalTrips = null;
+    _reviews = [];
+    _isLoadingReviews = false;
+    _isAutoAcceptingOffer = false;
+    emit(BookingInitial());
   }
 
   void _cleanupSubscriptions() {

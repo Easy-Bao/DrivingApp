@@ -12,6 +12,7 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_state.dart';
@@ -316,6 +317,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
             ),
           );
         } else if (state is TrackDriverCompleted) {
+          Modular.get<BookingBloc>().add(const ResetBookingEvent());
           unawaited(
             context.pushNamed(
               ActivityRoutes.passengerPayment,
@@ -323,6 +325,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
             ),
           );
         } else if (state is TrackDriverCanceled) {
+          Modular.get<BookingBloc>().add(const ResetBookingEvent());
           if (mounted) {
             context.goNamed(HomeRoutes.home);
           }

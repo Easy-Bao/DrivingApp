@@ -61,6 +61,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   Widget? _cachedMapView;
   RouteModel? _route;
   Future<RouteModel?>? _routeRequest;
+  Future<void>? _fareQuoteRequest;
   bool _isResolvingPickup = true;
   ({double lat, double lng})? _resolvedPickup;
 
@@ -229,6 +230,31 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   }
 
   Future<void> _fetchServerFareQuotes({
+    required double distanceKm,
+    required double durationMinutes,
+  }) async {
+    final activeRequest = _fareQuoteRequest;
+    if (activeRequest != null) {
+      await activeRequest;
+      return;
+    }
+
+    final request = _requestServerFareQuote(
+      distanceKm: distanceKm,
+      durationMinutes: durationMinutes,
+    );
+    _fareQuoteRequest = request;
+
+    try {
+      await request;
+    } finally {
+      if (identical(_fareQuoteRequest, request)) {
+        _fareQuoteRequest = null;
+      }
+    }
+  }
+
+  Future<void> _requestServerFareQuote({
     required double distanceKm,
     required double durationMinutes,
   }) async {

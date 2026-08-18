@@ -105,6 +105,11 @@ func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
+		if isFareCalculationRequest(request) {
+			next.ServeHTTP(writer, request)
+			return
+		}
+
 		scope, limit := limiter.scopeAndLimit(request.URL.Path)
 		key := fmt.Sprintf("rate:%s:%s:%d", scope, clientIP(request), windowKey(time.Now(), limiter.window))
 		count, err := limiter.store.Increment(request.Context(), key, limiter.window)
@@ -122,6 +127,22 @@ func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(writer, request)
 	})
+}
+
+// Fare quotes are intentionally coalesced by the client because a route can
+// cause several UI rebuilds. They remain behind the normal request-security
+// middleware, but are not charged against the shared API request budget.
+func isFareCalculationRequest(request *http.Request) bool {
+	if request.Method != http.MethodPost {
+		return false
+	}
+
+	switch request.URL.Path {
+	case "/api/v1/bids/fare", "/api/v1/fares/estimate", "/api/v1/fares/calculate-final":
+		return true
+	default:
+		return false
+	}
 }
 
 func (limiter *RateLimiter) scopeAndLimit(path string) (string, int64) {
