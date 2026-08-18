@@ -20,14 +20,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AppModule extends Module {
   final SharedPreferences _prefs;
+  final SecureSessionService _sessionService;
 
-  AppModule({required SharedPreferences prefs}) : _prefs = prefs;
+  AppModule({
+    required SharedPreferences prefs,
+    SecureSessionService? sessionService,
+  }) : _prefs = prefs,
+       _sessionService = sessionService ?? SecureSessionService();
 
   @override
   void binds(Injector i) {
     i
       ..addSingleton<SharedPreferences>((i) => _prefs)
-      ..addLazySingleton<SecureSessionService>((i) => SecureSessionService())
+      ..addLazySingleton<SecureSessionService>((i) => _sessionService)
       ..addLazySingleton<BackgroundTelemetryService>(
         (i) => BackgroundTelemetryService(apiBaseUri: EnvConfig.apiBaseUri),
       )

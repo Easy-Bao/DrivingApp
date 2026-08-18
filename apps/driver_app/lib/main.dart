@@ -3,7 +3,9 @@ import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
+import 'package:driver_app/src/features/location/location_routes.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,6 +17,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await BackgroundTelemetryService.stopExistingServiceForStartup();
   final prefs = await SharedPreferences.getInstance();
+  final sessionService = SecureSessionService();
+  final hasDriverSession = await _hasDriverSession(sessionService);
 
   await dotenv.load(fileName: '.env', isOptional: true);
 
@@ -39,14 +43,24 @@ void main() async {
   }
 
   await Modular.configure(
-    appModule: AppModule(prefs: prefs),
-    initialRoute: AuthRoutes.signinPath,
+    appModule: AppModule(prefs: prefs, sessionService: sessionService),
+    initialRoute: hasDriverSession
+        ? DriverLocationRoutes.fullGatePath
+        : AuthRoutes.signinPath,
     debugLogDiagnostics: true,
     debugLogDiagnosticsGoRouter: true,
     debugLogEventBus: true,
   );
 
   runApp(const AppWidget());
+}
+
+Future<bool> _hasDriverSession(SecureSessionService sessionService) async {
+  try {
+    return await sessionService.hasValidDriverSession();
+  } catch (_) {
+    return false;
+  }
 }
 
 class _ConfigurationErrorApp extends StatelessWidget {

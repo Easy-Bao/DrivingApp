@@ -23,6 +23,13 @@ class SecureSessionService {
     return _storage.read(key: StorageKeys.driverId);
   }
 
+  Future<bool> hasValidDriverSession() async {
+    final token = await readToken();
+    final driverId = await readDriverId();
+    return token?.trim().isNotEmpty == true &&
+        driverId?.trim().isNotEmpty == true;
+  }
+
   Future<void> saveDriverOnlineStatus(bool isOnline) async {
     await _storage.write(
       key: StorageKeys.driverOnlineStatus,
