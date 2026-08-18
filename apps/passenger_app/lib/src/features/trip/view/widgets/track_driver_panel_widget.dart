@@ -9,6 +9,8 @@ class TrackDriverPanelWidget extends StatelessWidget {
   final String statusTitle;
   final String statusSubtitle;
   final String etaText;
+  final String? driverName;
+  final String? vehicleSummary;
   final int unreadChatMessagesCount;
   final bool isCancellingTrip;
   final VoidCallback onCallDriverPressed;
@@ -21,6 +23,8 @@ class TrackDriverPanelWidget extends StatelessWidget {
     required this.statusTitle,
     required this.statusSubtitle,
     required this.etaText,
+    this.driverName,
+    this.vehicleSummary,
     required this.unreadChatMessagesCount,
     this.isCancellingTrip = false,
     required this.onCallDriverPressed,
@@ -30,37 +34,43 @@ class TrackDriverPanelWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedDriverName = driverName?.trim().isNotEmpty == true
+        ? driverName!.trim()
+        : ride.displayDriverName;
+    final resolvedVehicleSummary = vehicleSummary?.trim().isNotEmpty == true
+        ? vehicleSummary!.trim()
+        : ride.displayVehicleSummary;
+
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border.all(color: AppTheme.borderSide),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 30,
-            offset: const Offset(0, -10),
+            color: AppTheme.primaryColor.withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
             child: Container(
-              width: 40,
+              width: 32,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppTheme.darkSlate,
-                borderRadius: BorderRadius.circular(2),
+                color: AppTheme.borderSide,
+                borderRadius: BorderRadius.circular(99),
               ),
             ),
           ),
+          const SizedBox(height: 10),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Column(
@@ -71,79 +81,83 @@ class TrackDriverPanelWidget extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
-                        color: AppTheme.accent,
+                        color: AppTheme.primaryColor,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       statusSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: AppTheme.slate,
+                        color: AppTheme.tertiaryColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 10),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
+                  horizontal: 10,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppTheme.accent.withValues(alpha: 0.3),
-                  ),
+                  color: AppTheme.secondaryColor,
+                  borderRadius: BorderRadius.circular(99),
                 ),
                 child: Text(
                   etaText,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.background,
-              borderRadius: BorderRadius.circular(20),
+              color: AppTheme.neutralColor,
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppTheme.borderSide),
             ),
             child: Row(
               children: [
                 const AppNetworkImageWidget(
                   imageUrl: null,
-                  width: 50,
-                  height: 50,
+                  width: 38,
+                  height: 38,
                   fallbackIcon: LucideIcons.user,
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ride.displayDriverName,
+                        resolvedDriverName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.accent,
+                          color: AppTheme.primaryColor,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Text(
-                        ride.displayVehicleSummary,
+                        resolvedVehicleSummary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.mutedSand,
+                          fontSize: 11,
+                          color: AppTheme.tertiaryColor,
                         ),
                       ),
                     ],
@@ -152,107 +166,107 @@ class TrackDriverPanelWidget extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: _buildActionButton(
+                child: _ActionButton(
                   icon: LucideIcons.phone,
                   label: 'Call',
-                  backgroundColor: AppTheme.accent,
-                  foregroundColor: AppTheme.background,
+                  filled: true,
                   onTap: onCallDriverPressed,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: _buildActionButton(
+                child: _ActionButton(
                   icon: LucideIcons.message_circle,
                   label: 'Chat',
-                  backgroundColor: AppTheme.background,
-                  foregroundColor: AppTheme.accent,
                   badgeCount: unreadChatMessagesCount,
                   onTap: onChatDriverPressed,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          GestureDetector(
-            onTap: isCancellingTrip ? null : onCancelTripPressed,
-            child: Container(
-              width: double.infinity,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: AppTheme.cancel.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(
-                  color: AppTheme.cancel.withValues(alpha: 0.3),
-                ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 42,
+            child: TextButton(
+              onPressed: isCancellingTrip ? null : onCancelTripPressed,
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.cancel,
+                shape: const StadiumBorder(),
               ),
               child: isCancellingTrip
                   ? const SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: AppTheme.cancel,
                       ),
                     )
-                  : const Text(
-                      'Cancel Trip',
-                      style: TextStyle(
-                        color: AppTheme.cancel,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                    ),
+                  : const Text('Cancel trip'),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color backgroundColor,
-    required Color foregroundColor,
-    required VoidCallback onTap,
-    int badgeCount = 0,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 46,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(23),
-          border: backgroundColor == AppTheme.background
-              ? Border.all(color: AppTheme.borderSide)
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Badge(
-              label: Text('$badgeCount'),
-              isLabelVisible: badgeCount > 0,
-              backgroundColor: AppTheme.cancel,
-              child: Icon(icon, color: foregroundColor, size: 16),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: foregroundColor,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool filled;
+  final int badgeCount;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.filled = false,
+    this.badgeCount = 0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final background = filled ? AppTheme.primaryColor : AppTheme.neutralColor;
+    final foreground = filled ? Colors.white : AppTheme.primaryColor;
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          height: 44,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: filled ? null : Border.all(color: AppTheme.borderSide),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Badge(
+                isLabelVisible: badgeCount > 0,
+                label: Text('$badgeCount'),
+                backgroundColor: AppTheme.cancel,
+                child: Icon(icon, size: 16, color: foreground),
               ),
-            ),
-          ],
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: foreground,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

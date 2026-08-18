@@ -6,6 +6,7 @@ import 'package:passenger_app/src/core/location/repositories/map_native_service.
 import 'package:passenger_app/src/core/location/services/device_location_service.dart';
 import 'package:passenger_app/src/core/location/services/map_annotation_service.dart';
 import 'package:passenger_app/src/core/location/services/map_camera_service.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_core/shared_core.dart';
 
 export 'package:passenger_app/src/core/location/services/map_annotation_service.dart';
@@ -350,10 +351,26 @@ class MapProvider {
     onTap: onTap,
   );
 
+  static Future<void> replaceMarker(
+    mapbox.PointAnnotationManager annotationManager,
+    double lat,
+    double lng, {
+    String? label,
+    bool isOrigin = false,
+    Color? color,
+  }) => MapAnnotationService.replaceMarker(
+    annotationManager,
+    lat,
+    lng,
+    label: label,
+    isOrigin: isOrigin,
+    color: color,
+  );
+
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 4.0,
   }) => MapAnnotationService.addPolyline(
     controller,
@@ -362,10 +379,22 @@ class MapProvider {
     width: width,
   );
 
+  static Future<void> replacePolyline(
+    mapbox.PolylineAnnotationManager annotationManager,
+    List<List<double>> points, {
+    Color color = AppTheme.primaryColor,
+    double width = 4.0,
+  }) => MapAnnotationService.replacePolyline(
+    annotationManager,
+    points,
+    color: color,
+    width: width,
+  );
+
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolylineSegment(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 5.0,
   }) => MapAnnotationService.addAnimatedPolylineSegment(
     controller,
@@ -377,7 +406,7 @@ class MapProvider {
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 5.0,
     Duration step = const Duration(milliseconds: 45),
   }) => MapAnnotationService.addAnimatedPolyline(

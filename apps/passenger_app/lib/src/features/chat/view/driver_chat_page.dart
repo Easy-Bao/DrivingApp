@@ -359,6 +359,7 @@ class _DriverChatPageState extends State<DriverChatPage>
                       children: [
                         Expanded(
                           child: Container(
+                            height: 48,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             decoration: BoxDecoration(
                               color: AppTheme.neutralColor,
@@ -368,11 +369,15 @@ class _DriverChatPageState extends State<DriverChatPage>
                             child: TextField(
                               controller: _msgCtrl,
                               readOnly: state.isRoomLocked,
+                              textInputAction: TextInputAction.send,
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: AppTheme.primaryColor,
                               ),
                               decoration: InputDecoration(
+                                isDense: true,
+                                filled: false,
+                                fillColor: Colors.transparent,
                                 hintText: state.isRoomLocked
                                     ? state.lockReasonMessage
                                     : 'Type a message...',
@@ -389,7 +394,7 @@ class _DriverChatPageState extends State<DriverChatPage>
                                 errorBorder: InputBorder.none,
                                 focusedErrorBorder: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                  vertical: 11,
                                 ),
                               ),
                               onSubmitted: (_) =>

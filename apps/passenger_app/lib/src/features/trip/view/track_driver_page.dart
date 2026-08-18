@@ -18,6 +18,7 @@ import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_c
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/track_driver_panel_widget.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -35,10 +36,12 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   AppMapController? _mapController;
   bool _initialized = false;
   bool _routeDrawn = false;
+  bool _hasFittedInitialMap = false;
+  bool _isUpdatingMap = false;
+  bool _hasHandledTerminalState = false;
   RideStatus? _lastMapStatus;
   dynamic _passengerMarkerManager;
   dynamic _driverMarkerManager;
-  dynamic _destinationMarkerManager;
   dynamic _routeLineManager;
   StreamSubscription<Position>? _locationSubscription;
   LiveMapBloc? _liveMapBloc;
@@ -49,6 +52,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   Timer? _chatMessagesPollTimer;
   ChatRepository? _chatRepository;
   bool _isCancellingTrip = false;
+  bool _isPollingChat = false;
 
   @override
   void initState() {
@@ -71,24 +75,32 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
 
   @override
   void dispose() {
-    if (_locationSubscription != null) {
-      unawaited(_locationSubscription!.cancel());
-    }
-    unawaited(MapProvider.clearAnnotations(_routeLineManager));
+    unawaited(_locationSubscription?.cancel());
     _chatMessagesPollTimer?.cancel();
     unawaited(_chatRepository?.dispose());
+    unawaited(_liveMapBloc?.close());
+    for (final manager in [
+      _routeLineManager,
+      _passengerMarkerManager,
+      _driverMarkerManager,
+    ]) {
+      unawaited(MapProvider.clearAnnotations(manager));
+    }
     super.dispose();
   }
 
   void _startChatMessagesPolling() {
-    _chatMessagesPollTimer = Timer.periodic(const Duration(seconds: 2), (
+    _chatMessagesPollTimer = Timer.periodic(const Duration(seconds: 4), (
       timer,
     ) async {
       await _updateUnreadMessagesCount();
     });
+    unawaited(_updateUnreadMessagesCount());
   }
 
   Future<void> _updateUnreadMessagesCount() async {
+    if (_isPollingChat) return;
+    _isPollingChat = true;
     try {
       final chatRepository = _chatRepository;
       final passengerIdentifier = chatRepository?.currentUserId ?? '';
@@ -102,20 +114,26 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
             .toList();
         final currentDriverMessagesCount = driverChatMessagesList.length;
 
-        if (mounted) {
-          setState(() {
-            if (!_isInitialChatMessagesCountFetched) {
-              _viewedDriverMessagesCount = currentDriverMessagesCount;
-              _isInitialChatMessagesCountFetched = true;
-            } else if (currentDriverMessagesCount >
-                _viewedDriverMessagesCount) {
-              _unreadChatMessagesCount =
-                  currentDriverMessagesCount - _viewedDriverMessagesCount;
-            }
-          });
+        if (!mounted) return;
+        if (!_isInitialChatMessagesCountFetched) {
+          _viewedDriverMessagesCount = currentDriverMessagesCount;
+          _isInitialChatMessagesCountFetched = true;
+          return;
+        }
+
+        final unreadMessagesCount =
+            (currentDriverMessagesCount - _viewedDriverMessagesCount)
+                .clamp(0, currentDriverMessagesCount)
+                .toInt();
+        if (unreadMessagesCount != _unreadChatMessagesCount) {
+          setState(() => _unreadChatMessagesCount = unreadMessagesCount);
         }
       });
-    } catch (_) {}
+    } catch (_) {
+      // A later bounded refresh can recover from a transient chat failure.
+    } finally {
+      _isPollingChat = false;
+    }
   }
 
   void _onMapCreated(AppMapController controller) {
@@ -167,7 +185,9 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     List<List<double>>? routePoints,
     RideStatus status,
   ) async {
-    if (_mapController == null) return;
+    final mapController = _mapController;
+    if (mapController == null || _isUpdatingMap) return;
+    _isUpdatingMap = true;
     final passengerLat =
         LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
     final passengerLng =
@@ -176,63 +196,95 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     try {
       if (!_routeDrawn && routePoints != null && routePoints.isNotEmpty) {
         _routeDrawn = true;
-        _routeLineManager = await MapProvider.addAnimatedPolyline(
-          _mapController!,
+        _routeLineManager = await _upsertRoute(
+          _routeLineManager,
+          mapController,
           routePoints,
-          color: AppTheme.primaryColor.withValues(alpha: 0.6),
-          width: 5.0,
         );
-      }
-
-      if (_passengerMarkerManager != null) {
-        await MapProvider.clearAnnotations(_passengerMarkerManager);
-      }
-      if (_driverMarkerManager != null) {
-        await MapProvider.clearAnnotations(_driverMarkerManager);
-      }
-      if (_destinationMarkerManager != null) {
-        await MapProvider.clearAnnotations(_destinationMarkerManager);
       }
 
       final isInTransit = status == RideStatus.inTransit;
-      final primaryLat = isInTransit ? widget.ride.destLat : passengerLat;
-      final primaryLng = isInTransit ? widget.ride.destLng : passengerLng;
-      _passengerMarkerManager = await MapProvider.addMarker(
-        _mapController!,
-        primaryLat,
-        primaryLng,
+      final targetLat = isInTransit ? widget.ride.destLat : passengerLat;
+      final targetLng = isInTransit ? widget.ride.destLng : passengerLng;
+      _passengerMarkerManager = await _upsertMarker(
+        _passengerMarkerManager,
+        mapController,
+        targetLat,
+        targetLng,
         isOrigin: true,
-        label: isInTransit
-            ? 'Destination\n${widget.ride.destination}'
-            : 'Current location\nYou are here',
-        color: const Color(0xFF222222),
+        color: isInTransit ? AppTheme.accent : AppTheme.primaryColor,
       );
-      _driverMarkerManager = await MapProvider.addMarker(
-        _mapController!,
+      _driverMarkerManager = await _upsertMarker(
+        _driverMarkerManager,
+        mapController,
         driverLat,
         driverLng,
         isOrigin: false,
-        label: 'Your driver\n${widget.ride.driverName}',
-        color: const Color(0xFFE53935),
+        color: AppTheme.complete,
       );
-      if (isInTransit) {
-        _destinationMarkerManager = await MapProvider.addMarker(
-          _mapController!,
-          passengerLat,
-          passengerLng,
-          label: 'Passenger\nCurrent location',
-          color: AppTheme.secondaryColor,
+      if (!_hasFittedInitialMap) {
+        await MapProvider.fitBounds(
+          mapController,
+          [LatLng(targetLat, targetLng), LatLng(driverLat, driverLng)],
+          padding: 72.0,
+          maxZoom: 15.0,
         );
+        _hasFittedInitialMap = true;
       }
-
-      await MapProvider.fitBounds(_mapController!, [
-        LatLng(primaryLat, primaryLng),
-        LatLng(driverLat, driverLng),
-        if (isInTransit) LatLng(passengerLat, passengerLng),
-      ], padding: 80.0);
     } catch (error) {
       debugPrint('Error updating track map: $error');
+    } finally {
+      _isUpdatingMap = false;
     }
+  }
+
+  Future<dynamic> _upsertMarker(
+    dynamic annotationManager,
+    AppMapController mapController,
+    double lat,
+    double lng, {
+    required bool isOrigin,
+    required Color color,
+  }) async {
+    if (annotationManager == null) {
+      return MapProvider.addMarker(
+        mapController,
+        lat,
+        lng,
+        isOrigin: isOrigin,
+        color: color,
+      );
+    }
+    await MapProvider.replaceMarker(
+      annotationManager,
+      lat,
+      lng,
+      isOrigin: isOrigin,
+      color: color,
+    );
+    return annotationManager;
+  }
+
+  Future<dynamic> _upsertRoute(
+    dynamic annotationManager,
+    AppMapController mapController,
+    List<List<double>> routePoints,
+  ) async {
+    if (annotationManager == null) {
+      return MapProvider.addPolyline(
+        mapController,
+        routePoints,
+        color: AppTheme.primaryColor,
+        width: 4.0,
+      );
+    }
+    await MapProvider.replacePolyline(
+      annotationManager,
+      routePoints,
+      color: AppTheme.primaryColor,
+      width: 4.0,
+    );
+    return annotationManager;
   }
 
   Future<void> _handleCancelTrip() async {
@@ -317,14 +369,16 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
             ),
           );
         } else if (state is TrackDriverCompleted) {
+          if (_hasHandledTerminalState) return;
+          _hasHandledTerminalState = true;
           Modular.get<BookingBloc>().add(const ResetBookingEvent());
-          unawaited(
-            context.pushNamed(
-              ActivityRoutes.passengerPayment,
-              extra: widget.ride,
-            ),
+          context.pushReplacementNamed(
+            ActivityRoutes.passengerPayment,
+            extra: widget.ride,
           );
         } else if (state is TrackDriverCanceled) {
+          if (_hasHandledTerminalState) return;
+          _hasHandledTerminalState = true;
           Modular.get<BookingBloc>().add(const ResetBookingEvent());
           if (mounted) {
             context.goNamed(HomeRoutes.home);
@@ -359,29 +413,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        context.goNamed(HomeRoutes.home);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 15,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          LucideIcons.arrow_left,
-                          color: AppTheme.primaryColor,
-                          size: 20,
-                        ),
-                      ),
+                    AppBackButtonWidget(
+                      onPressed: () => context.goNamed(HomeRoutes.home),
                     ),
                     BlocBuilder<TrackDriverCubit, TrackDriverState>(
                       builder: (context, state) {
@@ -398,7 +431,9 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.1,
+                                ),
                                 blurRadius: 15,
                                 offset: const Offset(0, 4),
                               ),
@@ -407,12 +442,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
+                              const Icon(
                                 LucideIcons.clock,
                                 size: 14,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.6,
-                                ),
+                                color: AppTheme.tertiaryColor,
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -420,12 +453,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                                         state.status == RideStatus.inTransit
                                     ? 'TRIP TO'
                                     : 'ARRIVING IN',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.5,
-                                  ),
+                                  color: AppTheme.tertiaryColor,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -450,100 +481,118 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
 
             Align(
               alignment: Alignment.bottomCenter,
-              child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
-                builder: (context, state) {
-                  final isInTransit =
-                      state is TrackDriverInProgress &&
-                      state.status == RideStatus.inTransit;
-                  final hasArrived =
-                      state is TrackDriverInProgress &&
-                      state.status == RideStatus.arrived;
-                  final statusTitle = isInTransit
-                      ? 'You are on the trip'
-                      : hasArrived
-                      ? 'Driver has arrived'
-                      : state is TrackDriverInProgress
-                      ? 'Driver En Route'
-                      : 'Driver Assigned';
-                  final statusSubtitle = isInTransit
-                      ? 'Heading to ${widget.ride.destination}'
-                      : hasArrived
-                      ? 'Please meet your driver at pickup'
-                      : state is TrackDriverInProgress
-                      ? 'Heading towards pickup location'
-                      : 'Preparing to head to pickup';
-                  final etaText = state is TrackDriverInProgress
-                      ? state.eta
-                      : 'En Route';
+              child: SafeArea(
+                top: false,
+                child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
+                  builder: (context, state) {
+                    final isInTransit =
+                        state is TrackDriverInProgress &&
+                        state.status == RideStatus.inTransit;
+                    final hasArrived =
+                        state is TrackDriverInProgress &&
+                        state.status == RideStatus.arrived;
+                    final statusTitle = isInTransit
+                        ? 'You are on the trip'
+                        : hasArrived
+                        ? 'Driver has arrived'
+                        : state is TrackDriverInProgress
+                        ? 'Driver En Route'
+                        : 'Driver Assigned';
+                    final statusSubtitle = isInTransit
+                        ? 'Heading to ${widget.ride.destination}'
+                        : hasArrived
+                        ? 'Please meet your driver at pickup'
+                        : state is TrackDriverInProgress
+                        ? 'Heading towards pickup location'
+                        : 'Preparing to head to pickup';
+                    final etaText = state is TrackDriverInProgress
+                        ? hasArrived
+                              ? 'Meet up'
+                              : state.eta
+                        : 'En Route';
+                    final driverName = state is TrackDriverInProgress
+                        ? state.driverName
+                        : null;
+                    final vehicleSummary = state is TrackDriverInProgress
+                        ? [state.vehicleType, state.vehiclePlate]
+                              .where((value) => value.trim().isNotEmpty)
+                              .join(' • ')
+                        : null;
 
-                  return LayoutBuilder(
-                    builder: (ctx, constraints) {
-                      final isWide = constraints.maxWidth > 600.0;
-                      return ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: isWide ? 600.0 : double.infinity,
-                        ),
-                        child: TrackDriverPanelWidget(
-                          ride: widget.ride,
-                          statusTitle: statusTitle,
-                          statusSubtitle: statusSubtitle,
-                          etaText: etaText,
-                          unreadChatMessagesCount: _unreadChatMessagesCount,
-                          isCancellingTrip: _isCancellingTrip,
-                          onCallDriverPressed: () async {
-                            try {
-                              final activeRideId =
-                                  await Modular.get<SecureSessionService>()
-                                      .readActiveRideId() ??
-                                  widget.ride.id;
-                              if (activeRideId.isNotEmpty) {
-                                final driverProfile =
-                                    await Modular.get<BiddingRemoteDataSource>()
-                                        .fetchDriverStats(activeRideId);
-                                final phone = driverProfile['phone'] as String?;
+                    return LayoutBuilder(
+                      builder: (ctx, constraints) {
+                        final isWide = constraints.maxWidth > 600.0;
+                        return ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isWide ? 600.0 : double.infinity,
+                          ),
+                          child: TrackDriverPanelWidget(
+                            ride: widget.ride,
+                            statusTitle: statusTitle,
+                            statusSubtitle: statusSubtitle,
+                            etaText: etaText,
+                            driverName: driverName,
+                            vehicleSummary: vehicleSummary,
+                            unreadChatMessagesCount: _unreadChatMessagesCount,
+                            isCancellingTrip: _isCancellingTrip,
+                            onCallDriverPressed: () async {
+                              try {
+                                final activeRideId =
+                                    await Modular.get<SecureSessionService>()
+                                        .readActiveRideId() ??
+                                    widget.ride.id;
+                                if (activeRideId.isNotEmpty) {
+                                  final driverProfile =
+                                      await Modular.get<
+                                            BiddingRemoteDataSource
+                                          >()
+                                          .fetchDriverStats(activeRideId);
+                                  final phone =
+                                      driverProfile['phone'] as String?;
 
-                                if (phone != null && phone.isNotEmpty) {
-                                  final uri = Uri.parse('tel:$phone');
-                                  if (await canLaunchUrl(uri)) {
-                                    await launchUrl(uri);
+                                  if (phone != null && phone.isNotEmpty) {
+                                    final uri = Uri.parse('tel:$phone');
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(uri);
+                                    }
                                   }
                                 }
+                              } catch (_) {}
+                            },
+                            onChatDriverPressed: () async {
+                              final passengerId =
+                                  await Modular.get<SecureSessionService>()
+                                      .readPassengerId() ??
+                                  '';
+                              final dName = state is TrackDriverInProgress
+                                  ? (state.driverName.isNotEmpty
+                                        ? state.driverName
+                                        : widget.ride.displayDriverName)
+                                  : widget.ride.displayDriverName;
+                              if (context.mounted) {
+                                setState(() {
+                                  _unreadChatMessagesCount = 0;
+                                });
+                                await context.pushNamed(
+                                  ChatRoutes.driverChat,
+                                  extra: {
+                                    'roomId': widget.ride.id,
+                                    'userId': passengerId,
+                                    'peerId': widget.ride.driverId,
+                                    'peerName': dName,
+                                  },
+                                );
+                                _isInitialChatMessagesCountFetched = false;
+                                await _updateUnreadMessagesCount();
                               }
-                            } catch (_) {}
-                          },
-                          onChatDriverPressed: () async {
-                            final passengerId =
-                                await Modular.get<SecureSessionService>()
-                                    .readPassengerId() ??
-                                '';
-                            final dName = state is TrackDriverInProgress
-                                ? (state.driverName.isNotEmpty
-                                      ? state.driverName
-                                      : widget.ride.displayDriverName)
-                                : widget.ride.displayDriverName;
-                            if (context.mounted) {
-                              setState(() {
-                                _unreadChatMessagesCount = 0;
-                              });
-                              await context.pushNamed(
-                                ChatRoutes.driverChat,
-                                extra: {
-                                  'roomId': widget.ride.id,
-                                  'userId': passengerId,
-                                  'peerId': widget.ride.driverId,
-                                  'peerName': dName,
-                                },
-                              );
-                              _isInitialChatMessagesCountFetched = false;
-                              await _updateUnreadMessagesCount();
-                            }
-                          },
-                          onCancelTripPressed: _handleCancelTrip,
-                        ),
-                      );
-                    },
-                  );
-                },
+                            },
+                            onCancelTripPressed: _handleCancelTrip,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ],

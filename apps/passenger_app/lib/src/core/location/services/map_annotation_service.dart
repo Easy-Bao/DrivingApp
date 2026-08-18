@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/services/map_camera_service.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 
 class MapAnnotationService {
   MapAnnotationService._();
@@ -21,23 +22,57 @@ class MapAnnotationService {
     final annotationManager = await mapCtrl.annotations
         .createPointAnnotationManager();
 
-    final markerColor = color != null
-        ? color.toARGB32()
-        : (isOrigin ? 0xFF222222 : 0xFF607B8B);
-
     await annotationManager.create(
-      mapbox.PointAnnotationOptions(
-        geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-        image: await _createMarkerImage(Color(markerColor), label: label),
-        iconAnchor: mapbox.IconAnchor.BOTTOM,
-        iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 1.0,
-        symbolSortKey: isOrigin ? 10 : 20,
+      await _markerOptions(
+        lat,
+        lng,
+        label: label,
+        isOrigin: isOrigin,
+        color: color,
       ),
     );
     if (onTap != null) {
       annotationManager.tapEvents(onTap: (_) => onTap());
     }
     return annotationManager;
+  }
+
+  static Future<void> replaceMarker(
+    mapbox.PointAnnotationManager annotationManager,
+    double lat,
+    double lng, {
+    String? label,
+    bool isOrigin = false,
+    Color? color,
+  }) async {
+    await annotationManager.deleteAll();
+    await annotationManager.create(
+      await _markerOptions(
+        lat,
+        lng,
+        label: label,
+        isOrigin: isOrigin,
+        color: color,
+      ),
+    );
+  }
+
+  static Future<mapbox.PointAnnotationOptions> _markerOptions(
+    double lat,
+    double lng, {
+    String? label,
+    required bool isOrigin,
+    Color? color,
+  }) async {
+    final markerColor =
+        color ?? (isOrigin ? AppTheme.primaryColor : AppTheme.tertiaryColor);
+    return mapbox.PointAnnotationOptions(
+      geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+      image: await _createMarkerImage(markerColor, label: label),
+      iconAnchor: mapbox.IconAnchor.BOTTOM,
+      iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 1.0,
+      symbolSortKey: isOrigin ? 10 : 20,
+    );
   }
 
   static Future<Uint8List> _createMarkerImage(
@@ -52,7 +87,7 @@ class MapAnnotationService {
     const height = 104.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    final background = Paint()..color = Colors.white;
+    final background = Paint()..color = AppTheme.surface;
     final shadow = Paint()..color = const Color(0x22000000);
     final cardRect = RRect.fromRectAndRadius(
       const Rect.fromLTWH(8, 8, width - 16, 78),
@@ -78,7 +113,7 @@ class MapAnnotationService {
       width: 250,
       fontSize: 23,
       fontWeight: FontWeight.w700,
-      color: const Color(0xFF1A1D20),
+      color: AppTheme.primaryColor,
     );
     if (lines.length > 1) {
       _drawLabelText(
@@ -88,7 +123,7 @@ class MapAnnotationService {
         width: 250,
         fontSize: 18,
         fontWeight: FontWeight.w500,
-        color: const Color(0x991A1D20),
+        color: AppTheme.primaryColor.withValues(alpha: 0.6),
       );
     }
 
@@ -160,7 +195,7 @@ class MapAnnotationService {
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 4.0,
   }) async {
     final validPoints = points.where(_isValidPolylinePoint).toList();
@@ -191,6 +226,34 @@ class MapAnnotationService {
     return annotationManager;
   }
 
+  static Future<void> replacePolyline(
+    mapbox.PolylineAnnotationManager annotationManager,
+    List<List<double>> points, {
+    Color color = AppTheme.primaryColor,
+    double width = 4.0,
+  }) async {
+    final validPoints = points.where(_isValidPolylinePoint).toList();
+    if (validPoints.length < 2) {
+      throw ArgumentError.value(
+        points,
+        'points',
+        'at least two valid coordinates are required',
+      );
+    }
+    final coordinates = validPoints
+        .map((point) => mapbox.Position(point[0], point[1]))
+        .toList();
+    await annotationManager.deleteAll();
+    await annotationManager.create(
+      mapbox.PolylineAnnotationOptions(
+        geometry: mapbox.LineString(coordinates: coordinates),
+        lineWidth: width,
+        lineColor: color.toARGB32(),
+        lineJoin: mapbox.LineJoin.ROUND,
+      ),
+    );
+  }
+
   static bool _isValidPolylinePoint(List<double> point) {
     return point.length >= 2 &&
         point[0].isFinite &&
@@ -204,7 +267,7 @@ class MapAnnotationService {
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 5.0,
     Duration step = const Duration(milliseconds: 45),
   }) async {
@@ -250,7 +313,7 @@ class MapAnnotationService {
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolylineSegment(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = const Color(0xFF222222),
+    Color color = AppTheme.primaryColor,
     double width = 5.0,
   }) async {
     final mapCtrl = controller.native as mapbox.MapboxMap;

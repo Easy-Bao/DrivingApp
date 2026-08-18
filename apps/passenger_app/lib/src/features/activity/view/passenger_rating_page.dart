@@ -29,22 +29,17 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
   bool _isSubmitting = false;
   String? _error;
 
-  void _finishRating() {
-    unawaited(_submitRating());
-  }
-
   Future<void> _submitRating() async {
     if (_selectedStars == 0) {
-      if (mounted) {
-        setState(() => _error = 'Please select a rating.');
-      }
+      setState(() => _error = 'Choose a star rating before submitting.');
       return;
     }
+    if (_isSubmitting) return;
 
     setState(() {
       _isSubmitting = true;
+      _error = null;
     });
-
     try {
       final submitted = await Modular.get<BiddingRemoteDataSource>()
           .submitDriverReview(
@@ -54,83 +49,15 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
             comment: _feedbackController.text.trim(),
           );
       if (!submitted) throw StateError('review was not accepted');
-
-      if (mounted) {
-        context.goNamed(HomeRoutes.home);
-      }
+      if (mounted) context.goNamed(HomeRoutes.home);
     } catch (_) {
       if (mounted) {
         setState(
-          () => _error = 'Unable to submit your review. Please try again.',
+          () => _error = 'Unable to submit your rating. Please try again.',
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _checkForgottenItemsAndFinish() async {
-    final bool? confirmFinishRatingSession = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext checkBelongingsDialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          backgroundColor: AppTheme.surface,
-          title: const Row(
-            children: [
-              Icon(LucideIcons.triangle_alert, color: Colors.orange, size: 24),
-              SizedBox(width: 12),
-              Text(
-                'Check Your Belongings',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'Please take a moment to ensure you have not left any personal items behind in the vehicle.',
-            style: TextStyle(color: AppTheme.primaryColor, fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(checkBelongingsDialogContext).pop(false),
-              child: Text(
-                'Check Again',
-                style: TextStyle(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              onPressed: () =>
-                  Navigator.of(checkBelongingsDialogContext).pop(true),
-              child: const Text('All Good'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmFinishRatingSession == true && mounted) {
-      context.goNamed(HomeRoutes.home);
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -142,27 +69,22 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final driverName = widget.driverName.trim().isEmpty
+        ? 'Your driver'
+        : widget.driverName.trim();
     return Scaffold(
-      backgroundColor: AppTheme.surface,
-      appBar: AppBar(
-        backgroundColor: AppTheme.surface,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
+      backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 56,
+                    height: 56,
                     decoration: const BoxDecoration(
                       color: AppTheme.secondaryColor,
                       shape: BoxShape.circle,
@@ -170,166 +92,192 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                     child: const Icon(
                       LucideIcons.check,
                       color: AppTheme.primaryColor,
-                      size: 40,
+                      size: 28,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
                   const Text(
-                    'Ride Completed!',
+                    'Ride completed',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 23,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.primaryColor,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'How was your trip with your driver?',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    widget.driverName.trim().isEmpty
-                        ? 'Driver'
-                        : widget.driverName.trim(),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'How was your trip?',
                     style: TextStyle(
                       fontSize: 14,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                      fontWeight: FontWeight.w700,
+                      color: AppTheme.tertiaryColor,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 40),
-
-                  if (_error != null) ...[
-                    Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppTheme.cancel,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
                     ),
-                    const SizedBox(height: 12),
-                  ],
-
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppTheme.borderSide),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.secondaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            LucideIcons.user_round,
+                            size: 18,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                driverName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              const Text(
+                                'Your driver',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppTheme.tertiaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Rate your experience',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
+                      final isSelected = index < _selectedStars;
+                      return Material(
+                        color: Colors.transparent,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: () => setState(() {
                             _selectedStars = index + 1;
                             _error = null;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Icon(
-                            index < _selectedStars
-                                ? Icons.star
-                                : Icons.star_border,
-                            color: index < _selectedStars
-                                ? Colors.amber
-                                : AppTheme.borderSide,
-                            size: 40,
+                          }),
+                          customBorder: const CircleBorder(),
+                          child: SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(
+                              isSelected ? Icons.star : Icons.star_border,
+                              size: 30,
+                              color: isSelected
+                                  ? AppTheme.primaryColor
+                                  : AppTheme.borderSide,
+                            ),
                           ),
                         ),
                       );
                     }),
                   ),
-
-                  const SizedBox(height: 40),
-
+                  const SizedBox(height: 18),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
+                    width: double.infinity,
+                    height: 116,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: AppTheme.neutralColor,
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: AppTheme.borderSide),
                     ),
                     child: TextField(
                       controller: _feedbackController,
+                      minLines: 1,
                       maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Leave a feedback (optional)',
-                        hintStyle: TextStyle(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                          fontSize: 15,
-                        ),
+                      textCapitalization: TextCapitalization.sentences,
+                      style: const TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 14,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Leave feedback (optional)',
+                        isDense: true,
+                        filled: false,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
                         errorBorder: InputBorder.none,
                         focusedErrorBorder: InputBorder.none,
-                      ),
-                      style: const TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 15,
+                        contentPadding: EdgeInsets.only(top: 14),
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 48),
-
-                  GestureDetector(
-                    onTap: _isSubmitting ? null : _finishRating,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      decoration: BoxDecoration(
-                        color: _isSubmitting
-                            ? AppTheme.primaryColor.withValues(alpha: 0.5)
-                            : AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(32),
+                  if (_error != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppTheme.cancel,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
-                      alignment: Alignment.center,
+                    ),
+                  ],
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _submitRating,
+                      style: ElevatedButton.styleFrom(
+                        shape: const StadiumBorder(),
+                      ),
                       child: _isSubmitting
                           ? const SizedBox(
-                              height: 20,
                               width: 20,
+                              height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Submit Rating',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                          : const Text('Submit rating'),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: _isSubmitting ? null : _checkForgottenItemsAndFinish,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Skip for now',
-                        style: TextStyle(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => context.goNamed(HomeRoutes.home),
+                    child: const Text('Skip for now'),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
