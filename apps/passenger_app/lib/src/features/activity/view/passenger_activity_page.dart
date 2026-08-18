@@ -20,6 +20,8 @@ class PassengerActivityPage extends StatefulWidget {
 }
 
 class _PassengerActivityPageState extends State<PassengerActivityPage> {
+  static const int _activitySkeletonLimit = 5;
+
   bool _hasLoadedActivity = false;
 
   @override
@@ -41,8 +43,11 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                 return _buildGuestEmptyState();
               }
               if (state is ActivityLoading) {
-                return state.hasExistingRides
-                    ? _buildLoadingState(itemCount: state.existingRideCount)
+                final itemCount = state.existingRideCount
+                    .clamp(0, _activitySkeletonLimit)
+                    .toInt();
+                return itemCount > 0
+                    ? _buildLoadingState(itemCount: itemCount)
                     : _buildEmptyActivityState();
               }
               if (state is ActivityError) {
@@ -177,7 +182,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(width: 4, color: const Color(0xFFD25D38)),
+              Container(width: 4, color: AppTheme.inProgress),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
@@ -192,7 +197,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFFD25D38),
+                              color: AppTheme.inProgress,
                               letterSpacing: 0.5,
                             ),
                           ),

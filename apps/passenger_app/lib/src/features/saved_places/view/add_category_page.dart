@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -33,6 +34,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   double _lat = 0.0;
   double _lng = 0.0;
   AppMapController? _mapController;
+  mapbox.PointAnnotationManager? _pinAnnotationManager;
+  int _pinRequestId = 0;
 
   final List<IconData> _availableIcons = [
     LucideIcons.heart,
@@ -64,6 +67,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
   @override
   void dispose() {
+    _pinRequestId++;
+    unawaited(MapProvider.clearAnnotations(_pinAnnotationManager));
     _controller.dispose();
     super.dispose();
   }
@@ -80,12 +85,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       });
       if (_mapController != null) {
         await MapProvider.moveCamera(_mapController!, _lat, _lng, zoom: 14.0);
-        await MapProvider.addMarker(
-          _mapController!,
-          _lat,
-          _lng,
-          isOrigin: false,
-        );
+        await _syncPinnedMarker();
       }
     } else {
       if (!mounted) return;
@@ -98,7 +98,40 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
-    unawaited(MapProvider.addMarker(controller, _lat, _lng, isOrigin: false));
+    if (_isLocationPinned) {
+      unawaited(_syncPinnedMarker());
+    }
+  }
+
+  Future<void> _syncPinnedMarker() async {
+    final controller = _mapController;
+    if (!mounted || controller == null || !_isLocationPinned) return;
+
+    final requestId = ++_pinRequestId;
+    final existingManager = _pinAnnotationManager;
+    if (existingManager != null) {
+      await MapProvider.replaceMarker(
+        existingManager,
+        _lat,
+        _lng,
+        isOrigin: false,
+        color: AppTheme.primaryColor,
+      );
+      return;
+    }
+
+    final manager = await MapProvider.addMarker(
+      controller,
+      _lat,
+      _lng,
+      isOrigin: false,
+      color: AppTheme.primaryColor,
+    );
+    if (!mounted || requestId != _pinRequestId) {
+      await MapProvider.clearAnnotations(manager);
+      return;
+    }
+    _pinAnnotationManager = manager;
   }
 
   void _handleSave() {
@@ -180,7 +213,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         ),
         actions: [
           TextButton(
-            onPressed: _isLoadingLocation ? null : _handleSave,
+            onPressed: _isLoadingLocation || !_isLocationPinned
+                ? null
+                : _handleSave,
             child: Text(
               'Save',
               style: TextStyle(
@@ -216,7 +251,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                             ),
                           ),
                         )
-                      : _getMapView(),
+                      : _isLocationPinned
+                      ? _getMapView()
+                      : _buildLocationUnavailableState(),
                 ),
               ],
             ),
@@ -249,7 +286,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                       widget.initialPlace?.fullAddress ??
                           (_isLoadingLocation
                               ? 'Finding your location...'
-                              : 'Location pinned'),
+                              : _isLocationPinned
+                              ? 'Location pinned'
+                              : 'Location unavailable'),
                       style: const TextStyle(
                         color: AppTheme.primaryColor,
                         fontSize: 15,
@@ -349,6 +388,30 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLocationUnavailableState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.map_pin_off,
+            color: AppTheme.tertiaryColor,
+            size: 28,
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Location unavailable',
+            style: TextStyle(
+              color: AppTheme.primaryColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

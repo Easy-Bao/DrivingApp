@@ -9,8 +9,11 @@ import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
+import 'package:passenger_app/src/features/saved_places/view/saved_place_icon.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class SavedPlacePage extends StatefulWidget {
   const SavedPlacePage({super.key});
@@ -40,24 +43,24 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     if (selectedPlace == null || selectedPlace is! PlaceModel) return;
     if (!mounted) return;
 
-    if (existing != null) {
-      final index = cubit.state.places.indexWhere(
-        (p) => p.label.toLowerCase() == label.toLowerCase(),
-      );
-      if (index != -1) {
-        await cubit.removePlace(index);
-      }
-    }
-
     final newPlace = SavedPlace(
       label: label,
       iconName: iconName,
       latitude: selectedPlace.latitude,
       longitude: selectedPlace.longitude,
-      savedAddress: selectedPlace.name,
+      savedAddress: selectedPlace.fullAddress,
     );
-
-    await cubit.addPlace(newPlace);
+    final existingIndex = existing == null
+        ? -1
+        : cubit.state.places.indexWhere(
+            (place) =>
+                place.label.toLowerCase() == existing.label.toLowerCase(),
+          );
+    if (existingIndex == -1) {
+      await cubit.addPlace(newPlace);
+      return;
+    }
+    await cubit.replacePlace(existingIndex, newPlace);
   }
 
   Future<void> _openAddCategoryPage() async {
@@ -76,58 +79,67 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
 
   void _showPlaceOptions(SavedPlace place, int index) {
     unawaited(
-      showModalBottomSheet(
+      showModalBottomSheet<void>(
         context: context,
         backgroundColor: AppTheme.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        builder: (context) {
+        builder: (sheetContext) {
           return SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 48,
+                  width: 40,
                   height: 4,
+                  margin: const EdgeInsets.only(top: 12),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    color: AppTheme.borderSide,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 Text(
                   place.label,
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  place.savedAddress ?? '',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                if ((place.savedAddress ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      place.savedAddress!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                ],
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: AppTheme.borderSide),
                 ListTile(
                   leading: const Icon(
                     LucideIcons.pencil,
                     color: AppTheme.primaryColor,
                   ),
                   title: const Text(
-                    'Change Location',
+                    'Change location',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppTheme.primaryColor,
                     ),
                   ),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.of(sheetContext).pop();
                     unawaited(
                       _addOrUpdatePlace(
                         place.label,
@@ -138,21 +150,25 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(LucideIcons.trash_2, color: Colors.red),
+                  leading: const Icon(
+                    LucideIcons.trash_2,
+                    color: AppTheme.cancel,
+                  ),
                   title: const Text(
                     'Remove shortcut',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: Colors.red,
+                      color: AppTheme.cancel,
                     ),
                   ),
                   onTap: () async {
-                    Navigator.pop(context);
+                    Navigator.of(sheetContext).pop();
                     await BlocProvider.of<SavedPlacesCubit>(
                       context,
                     ).removePlace(index);
                   },
                 ),
+                const SizedBox(height: 8),
               ],
             ),
           );
@@ -166,168 +182,50 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
-          onPressed: () => context.pop(),
+        leading: Center(
+          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
         ),
         title: const Text(
           'Saved places',
           style: TextStyle(
             color: AppTheme.primaryColor,
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
-            letterSpacing: -1.0,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
           ),
         ),
         centerTitle: false,
         titleSpacing: 0,
       ),
       body: SafeArea(
+        top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 0.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 8),
               Text(
-                'Book these in one tap from Home',
+                'Quick destinations ready from Home.',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   color: AppTheme.primaryColor.withValues(alpha: 0.55),
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               Expanded(
                 child: BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
                   builder: (context, state) {
-                    if (state.isLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(
-                            AppTheme.primaryColor,
-                          ),
-                        ),
+                    final content = _buildSavedPlacesList(state);
+                    if (state.isLoading && state.places.isNotEmpty) {
+                      return Skeletonizer.zone(
+                        child: IgnorePointer(child: content),
                       );
                     }
-
-                    SavedPlace? homePlace;
-                    SavedPlace? workPlace;
-                    final List<SavedPlace> customPlaces = [];
-
-                    for (final p in state.places) {
-                      if (p.label.toLowerCase() == 'home') {
-                        homePlace = p;
-                      } else if (p.label.toLowerCase() == 'work') {
-                        workPlace = p;
-                      } else {
-                        customPlaces.add(p);
-                      }
-                    }
-
-                    int indexForPlace(SavedPlace? p) {
-                      if (p == null) return -1;
-                      return state.places.indexOf(p);
-                    }
-
-                    final listItems = <Widget>[
-                      _buildPlaceTile(
-                        icon: LucideIcons.house,
-                        label: 'Home',
-                        address:
-                            homePlace?.savedAddress ??
-                            'Move the map to select a location',
-                        onTap: () {
-                          if (homePlace == null) {
-                            unawaited(_addOrUpdatePlace('Home', 'house'));
-                          } else {
-                            _showPlaceOptions(
-                              homePlace,
-                              indexForPlace(homePlace),
-                            );
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildPlaceTile(
-                        icon: LucideIcons.briefcase,
-                        label: 'Work',
-                        address: workPlace?.savedAddress ?? 'Not set',
-                        onTap: () {
-                          if (workPlace == null) {
-                            unawaited(_addOrUpdatePlace('Work', 'briefcase'));
-                          } else {
-                            _showPlaceOptions(
-                              workPlace,
-                              indexForPlace(workPlace),
-                            );
-                          }
-                        },
-                      ),
-                      for (final place in customPlaces) ...[
-                        const SizedBox(height: 16),
-                        _buildPlaceTile(
-                          icon: savedPlaceIconFromName(place.iconName),
-                          label: place.label,
-                          address: place.savedAddress ?? 'Not set',
-                          onTap: () =>
-                              _showPlaceOptions(place, indexForPlace(place)),
-                        ),
-                      ],
-                      const SizedBox(height: 32),
-                      GestureDetector(
-                        onTap: _openAddCategoryPage,
-                        child: CustomPaint(
-                          painter: DashedBorderPainter(
-                            color: AppTheme.primaryColor.withValues(
-                              alpha: 0.15,
-                            ),
-                            borderRadius: 16.0,
-                            dashLength: 6.0,
-                            gap: 6.0,
-                            strokeWidth: 1.5,
-                          ),
-                          child: Container(
-                            height: 64,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16.0),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  LucideIcons.plus,
-                                  color: Color(0xFF8A4F35),
-                                  size: 20,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Add a new place',
-                                  style: TextStyle(
-                                    color: Color(0xFF8A4F35),
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 100),
-                    ];
-
-                    return ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: listItems.length,
-                      itemBuilder: (context, index) => listItems[index],
-                    );
+                    return content;
                   },
                 ),
               ),
@@ -338,38 +236,185 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     );
   }
 
+  Widget _buildSavedPlacesList(SavedPlacesState state) {
+    SavedPlace? homePlace;
+    SavedPlace? workPlace;
+    final customPlaces = <SavedPlace>[];
+
+    for (final place in state.places) {
+      if (place.label.toLowerCase() == 'home') {
+        homePlace = place;
+      } else if (place.label.toLowerCase() == 'work') {
+        workPlace = place;
+      } else {
+        customPlaces.add(place);
+      }
+    }
+
+    int indexForPlace(SavedPlace place) => state.places.indexOf(place);
+
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 32),
+      children: [
+        if (state.errorMessage != null) ...[
+          _buildLoadIssue(state.errorMessage!),
+          const SizedBox(height: 16),
+        ],
+        _buildSectionLabel('ESSENTIALS'),
+        const SizedBox(height: 10),
+        _buildPlaceTile(
+          icon: LucideIcons.house,
+          label: 'Home',
+          address: homePlace?.savedAddress ?? 'Choose a location',
+          isConfigured: homePlace != null,
+          onTap: () {
+            if (homePlace == null) {
+              unawaited(_addOrUpdatePlace('Home', 'house'));
+              return;
+            }
+            _showPlaceOptions(homePlace, indexForPlace(homePlace));
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildPlaceTile(
+          icon: LucideIcons.briefcase,
+          label: 'Work',
+          address: workPlace?.savedAddress ?? 'Choose a location',
+          isConfigured: workPlace != null,
+          onTap: () {
+            if (workPlace == null) {
+              unawaited(_addOrUpdatePlace('Work', 'briefcase'));
+              return;
+            }
+            _showPlaceOptions(workPlace, indexForPlace(workPlace));
+          },
+        ),
+        if (customPlaces.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _buildSectionLabel('OTHER PLACES'),
+          const SizedBox(height: 10),
+          for (final place in customPlaces) ...[
+            _buildPlaceTile(
+              icon: savedPlaceIconFromName(place.iconName),
+              label: place.label,
+              address: place.savedAddress ?? 'Location unavailable',
+              isConfigured: place.hasLocation,
+              onTap: () => _showPlaceOptions(place, indexForPlace(place)),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ],
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton.icon(
+            onPressed: _openAddCategoryPage,
+            icon: const Icon(LucideIcons.plus, size: 18),
+            label: const Text('Add a new place'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.primaryColor,
+              side: const BorderSide(color: AppTheme.borderSide),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadIssue(String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cancel.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            LucideIcons.circle_alert,
+            color: AppTheme.cancel,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.cancel,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => unawaited(
+              BlocProvider.of<SavedPlacesCubit>(context).loadPlaces(),
+            ),
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    return Text(
+      label,
+      style: TextStyle(
+        color: AppTheme.primaryColor.withValues(alpha: 0.42),
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.9,
+      ),
+    );
+  }
+
   Widget _buildPlaceTile({
     required IconData icon,
     required String label,
     required String address,
+    required bool isConfigured,
     required VoidCallback onTap,
   }) {
-    final bool isUnset = address == 'Not set';
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppTheme.neutralColor.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(16),
+          color: isConfigured
+              ? AppTheme.surface
+              : AppTheme.neutralColor.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: AppTheme.borderSide.withValues(alpha: 0.5),
-            width: 1.0,
+            color: isConfigured
+                ? AppTheme.borderSide
+                : AppTheme.borderSide.withValues(alpha: 0.7),
           ),
         ),
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
-              decoration: const BoxDecoration(
-                color: AppTheme.secondaryColor,
-                shape: BoxShape.circle,
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isConfigured
+                    ? AppTheme.secondaryColor
+                    : AppTheme.surface,
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: const Color(0xFF8A4F35), size: 22),
+              child: Icon(icon, color: AppTheme.primaryColor, size: 20),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,101 +434,25 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isUnset ? FontWeight.w600 : FontWeight.w500,
-                      color: isUnset
-                          ? AppTheme.primaryColor.withValues(alpha: 0.35)
-                          : AppTheme.primaryColor.withValues(alpha: 0.65),
+                      fontWeight: isConfigured
+                          ? FontWeight.w500
+                          : FontWeight.w600,
+                      color: isConfigured
+                          ? AppTheme.primaryColor.withValues(alpha: 0.58)
+                          : AppTheme.primaryColor.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
               ),
             ),
             Icon(
-              LucideIcons.chevron_right,
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-              size: 20,
+              isConfigured ? LucideIcons.pencil : LucideIcons.plus,
+              color: AppTheme.tertiaryColor,
+              size: isConfigured ? 16 : 18,
             ),
           ],
         ),
       ),
     );
-  }
-}
-
-class DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double gap;
-  final double dashLength;
-  final double borderRadius;
-
-  DashedBorderPainter({
-    required this.color,
-    this.strokeWidth = 1.0,
-    this.gap = 4.0,
-    this.dashLength = 6.0,
-    this.borderRadius = 16.0,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          Radius.circular(borderRadius),
-        ),
-      );
-
-    final dashPath = Path();
-    for (final pathMetric in path.computeMetrics()) {
-      double distance = 0.0;
-      bool draw = true;
-      while (distance < pathMetric.length) {
-        final length = draw ? dashLength : gap;
-        if (draw) {
-          dashPath.addPath(
-            pathMetric.extractPath(distance, distance + length),
-            Offset.zero,
-          );
-        }
-        distance += length;
-        draw = !draw;
-      }
-    }
-    canvas.drawPath(dashPath, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-IconData savedPlaceIconFromName(String iconName) {
-  switch (iconName) {
-    case 'house':
-      return LucideIcons.house;
-    case 'graduation_cap':
-      return LucideIcons.graduation_cap;
-    case 'briefcase':
-      return LucideIcons.briefcase;
-    case 'map_pin':
-      return LucideIcons.map_pin;
-    case 'heart':
-      return LucideIcons.heart;
-    case 'star':
-      return LucideIcons.star;
-    case 'coffee':
-      return LucideIcons.coffee;
-    case 'dumbbell':
-      return LucideIcons.dumbbell;
-    case 'shopping_cart':
-      return LucideIcons.shopping_cart;
-    default:
-      return LucideIcons.map_pin;
   }
 }

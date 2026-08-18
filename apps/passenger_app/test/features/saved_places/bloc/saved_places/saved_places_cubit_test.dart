@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
+import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
 
 class MockSavedPlacesRepository extends Mock
@@ -64,6 +65,87 @@ void main() {
           errorMessage: 'An unexpected error occurred. Please try again.',
         ),
       ],
+    );
+
+    blocTest<SavedPlacesCubit, SavedPlacesState>(
+      'keeps existing shortcuts visible when a refresh fails',
+      build: () {
+        when(
+          () => mockRepository.loadPlaces(),
+        ).thenThrow(Exception('Storage error'));
+        return SavedPlacesCubit(repository: mockRepository);
+      },
+      seed: () => const SavedPlacesState(
+        places: [
+          SavedPlace(
+            label: 'Home',
+            iconName: 'house',
+            latitude: 1,
+            longitude: 2,
+          ),
+        ],
+        isLoading: false,
+      ),
+      act: (cubit) => cubit.loadPlaces(),
+      expect: () => [
+        isA<SavedPlacesState>()
+            .having((state) => state.isLoading, 'is loading', isTrue)
+            .having((state) => state.places, 'places', hasLength(1)),
+        isA<SavedPlacesState>()
+            .having((state) => state.isLoading, 'is loading', isFalse)
+            .having((state) => state.places, 'places', hasLength(1))
+            .having((state) => state.errorMessage, 'error message', isNotNull),
+      ],
+    );
+
+    blocTest<SavedPlacesCubit, SavedPlacesState>(
+      'replaces a saved shortcut in place instead of removing and re-adding it',
+      build: () {
+        when(() => mockRepository.savePlaces(any())).thenAnswer((_) async {});
+        return SavedPlacesCubit(repository: mockRepository);
+      },
+      seed: () => const SavedPlacesState(
+        places: [
+          SavedPlace(
+            label: 'Home',
+            iconName: 'house',
+            latitude: 1,
+            longitude: 2,
+          ),
+          SavedPlace(
+            label: 'Work',
+            iconName: 'briefcase',
+            latitude: 3,
+            longitude: 4,
+          ),
+        ],
+        isLoading: false,
+      ),
+      act: (cubit) => cubit.replacePlace(
+        0,
+        const SavedPlace(
+          label: 'Home',
+          iconName: 'house',
+          latitude: 5,
+          longitude: 6,
+          savedAddress: 'Updated home',
+        ),
+      ),
+      expect: () => [
+        isA<SavedPlacesState>()
+            .having((state) => state.places, 'places', hasLength(2))
+            .having(
+              (state) => state.places.first.savedAddress,
+              'updated first address',
+              'Updated home',
+            )
+            .having(
+              (state) => state.places.last.label,
+              'second shortcut is retained',
+              'Work',
+            ),
+      ],
+      verify: (_) => verify(() => mockRepository.savePlaces(any())).called(1),
     );
   });
 }

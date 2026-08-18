@@ -251,7 +251,7 @@ class _MapPinPageState extends State<MapPinPage>
                   _pinAnimationController.value,
                 );
                 return Transform.translate(
-                  offset: Offset(0, -34 - (8 * lift)),
+                  offset: Offset(0, -39 - (8 * lift)),
                   child: child,
                 );
               },
@@ -291,7 +291,7 @@ class _MapPinPageState extends State<MapPinPage>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.12),
                     blurRadius: 24,
                     offset: const Offset(0, -4),
                   ),
@@ -307,7 +307,7 @@ class _MapPinPageState extends State<MapPinPage>
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: AppTheme.borderSide,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -316,15 +316,18 @@ class _MapPinPageState extends State<MapPinPage>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.neutralColor,
-                          shape: BoxShape.circle,
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondaryColor,
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(
-                          LucideIcons.map_pin,
-                          color: AppTheme.primaryColor,
-                          size: 22,
+                        child: const Center(
+                          child: Icon(
+                            LucideIcons.map_pin,
+                            color: AppTheme.primaryColor,
+                            size: 20,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -336,7 +339,7 @@ class _MapPinPageState extends State<MapPinPage>
                               _address,
                               style: const TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
                                 color: AppTheme.primaryColor,
                               ),
                               maxLines: 1,
@@ -361,10 +364,10 @@ class _MapPinPageState extends State<MapPinPage>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: ElevatedButton.styleFrom(
@@ -376,7 +379,7 @@ class _MapPinPageState extends State<MapPinPage>
                         elevation: 0,
                       ),
                       child: Text(
-                        _isGeocoding ? 'Locating...' : 'Set Pin Location',
+                        _isGeocoding ? 'Locating...' : 'Set location',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -417,9 +420,10 @@ class _TopButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: Ink(
         width: 46,
         height: 46,
         decoration: BoxDecoration(
@@ -428,14 +432,18 @@ class _TopButton extends StatelessWidget {
           border: Border.all(color: AppTheme.borderSide),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: AppTheme.primaryColor.withValues(alpha: 0.08),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Center(
-          child: Icon(icon, color: AppTheme.primaryColor, size: 20),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Center(
+            child: Icon(icon, color: AppTheme.primaryColor, size: 20),
+          ),
         ),
       ),
     );
@@ -448,8 +456,8 @@ class _CenterPin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SizedBox(
-      width: 52,
-      height: 68,
+      width: 64,
+      height: 78,
       child: CustomPaint(painter: _CenterPinPainter()),
     );
   }
@@ -460,17 +468,32 @@ class _CenterPinPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, 23);
-    final pinPath = Path()
-      ..addOval(Rect.fromCircle(center: center, radius: 22))
-      ..moveTo(center.dx - 10, 38)
-      ..lineTo(center.dx, size.height)
-      ..lineTo(center.dx + 10, 38)
+    final center = Offset(size.width / 2, 26);
+    final outerTail = Path()
+      ..moveTo(center.dx - 10, 41)
+      ..lineTo(center.dx, size.height - 2)
+      ..lineTo(center.dx + 10, 41)
       ..close();
+    final innerTail = Path()
+      ..moveTo(center.dx - 6, 40)
+      ..lineTo(center.dx, size.height - 9)
+      ..lineTo(center.dx + 6, 40)
+      ..close();
+    final shadowPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: 23))
+      ..addPath(outerTail, Offset.zero);
 
-    canvas.drawShadow(pinPath, Colors.black.withValues(alpha: 0.28), 5, true);
-    canvas.drawPath(pinPath, Paint()..color = AppTheme.primaryColor);
-    canvas.drawCircle(center, 9, Paint()..color = Colors.white);
+    canvas.drawShadow(
+      shadowPath,
+      AppTheme.primaryColor.withValues(alpha: 0.28),
+      5,
+      true,
+    );
+    canvas.drawPath(outerTail, Paint()..color = AppTheme.surface);
+    canvas.drawPath(innerTail, Paint()..color = AppTheme.primaryColor);
+    canvas.drawCircle(center, 23, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(center, 18, Paint()..color = AppTheme.primaryColor);
+    canvas.drawCircle(center, 9, Paint()..color = AppTheme.secondaryColor);
     canvas.drawCircle(center, 4, Paint()..color = AppTheme.primaryColor);
   }
 

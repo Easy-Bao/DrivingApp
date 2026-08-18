@@ -22,6 +22,8 @@ class PassengerViewAllActivityPage extends StatefulWidget {
 
 class _PassengerViewAllActivityPageState
     extends State<PassengerViewAllActivityPage> {
+  static const int _activitySkeletonLimit = 8;
+
   static const _monthAbbreviationsList = [
     'JAN',
     'FEB',
@@ -242,7 +244,11 @@ class _PassengerViewAllActivityPageState
         ],
       ),
       body: _isActivityDataLoading && _retrievedRidesList.isNotEmpty
-          ? _buildLoadingState(itemCount: _retrievedRidesList.length)
+          ? _buildLoadingState(
+              itemCount: _retrievedRidesList.length
+                  .clamp(1, _activitySkeletonLimit)
+                  .toInt(),
+            )
           : _networkErrorMessage.isNotEmpty
           ? Center(
               child: Padding(
@@ -320,7 +326,7 @@ class _PassengerViewAllActivityPageState
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF00897B),
+                                color: AppTheme.complete,
                               ),
                             ),
                         ],
@@ -343,7 +349,7 @@ class _PassengerViewAllActivityPageState
   }
 
   Widget _buildActivityCard(RideHistoryModel ride) {
-    final isTripCompleted = ride.status == 'completed';
+    final isTripCompleted = ride.status.toLowerCase() == 'completed';
     final dateStringParts = ride.date.split(',');
     final formattedActivityTime = dateStringParts.length > 1
         ? dateStringParts[1].trim()
@@ -411,8 +417,8 @@ class _PassengerViewAllActivityPageState
                       ),
                       decoration: BoxDecoration(
                         color: isTripCompleted
-                            ? const Color(0xFFE8F5E9)
-                            : const Color(0xFFFFEBEE),
+                            ? AppTheme.complete.withValues(alpha: 0.1)
+                            : AppTheme.cancel.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -421,8 +427,8 @@ class _PassengerViewAllActivityPageState
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: isTripCompleted
-                              ? const Color(0xFF2E7D32)
-                              : const Color(0xFFC62828),
+                              ? AppTheme.complete
+                              : AppTheme.cancel,
                         ),
                       ),
                     ),
@@ -435,14 +441,14 @@ class _PassengerViewAllActivityPageState
                       width: 42,
                       height: 42,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF0D47A1),
+                        color: AppTheme.secondaryColor,
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         driverInitials,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.primaryColor,
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
@@ -478,7 +484,11 @@ class _PassengerViewAllActivityPageState
                       ),
                     ),
                     if (isTripCompleted) ...[
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
+                      const Icon(
+                        Icons.star,
+                        color: AppTheme.secondaryColor,
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         driverRating,
@@ -508,7 +518,7 @@ class _PassengerViewAllActivityPageState
                               width: 8,
                               height: 8,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF1E88E5),
+                                color: AppTheme.tertiaryColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -520,7 +530,7 @@ class _PassengerViewAllActivityPageState
                             Container(
                               width: 8,
                               height: 8,
-                              color: const Color(0xFFB0BEC5),
+                              color: AppTheme.primaryColor,
                             ),
                           ],
                         ),

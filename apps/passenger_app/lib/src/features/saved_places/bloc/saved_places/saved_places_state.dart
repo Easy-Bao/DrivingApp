@@ -16,11 +16,14 @@ class SavedPlacesState extends Equatable {
     List<SavedPlace>? places,
     bool? isLoading,
     String? errorMessage,
+    bool clearErrorMessage = false,
   }) {
     return SavedPlacesState(
       places: places ?? this.places,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
     );
   }
 

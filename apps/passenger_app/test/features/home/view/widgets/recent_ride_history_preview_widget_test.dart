@@ -53,6 +53,38 @@ void main() {
       vehiclePlate: '',
       vehicleType: '',
     ),
+    RideHistoryModel(
+      id: 'ride-4',
+      pickup: 'Mountain View',
+      destination: 'Googleplex',
+      pickupLat: 0,
+      pickupLng: 0,
+      destLat: 0,
+      destLng: 0,
+      date: '2026-08-15',
+      price: '₱32.00',
+      status: 'completed',
+      driverId: 'driver-4',
+      driverName: 'Driver Four',
+      vehiclePlate: '',
+      vehicleType: '',
+    ),
+    RideHistoryModel(
+      id: 'ride-5',
+      pickup: 'Mountain View',
+      destination: 'Charleston Road',
+      pickupLat: 0,
+      pickupLng: 0,
+      destLat: 0,
+      destLng: 0,
+      date: '2026-08-14',
+      price: '₱33.00',
+      status: 'completed',
+      driverId: 'driver-5',
+      driverName: 'Driver Five',
+      vehiclePlate: '',
+      vehicleType: '',
+    ),
   ];
 
   testWidgets('renders all rides supplied by the activity history preview', (
@@ -64,7 +96,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
-            height: 500,
+            height: 180,
             child: RecentRideHistoryPreviewWidget(
               rides: rides,
               onRideTap: (ride) => selectedRideId = ride.id,
@@ -76,9 +108,16 @@ void main() {
 
     expect(find.text('2025 Garcia Avenue'), findsOneWidget);
     expect(find.text('Aikido of Mountain View'), findsOneWidget);
-    expect(find.text('Shoreline Park'), findsOneWidget);
 
     await tester.tap(find.text('Aikido of Mountain View'));
     expect(selectedRideId, 'ride-2');
+
+    await tester.scrollUntilVisible(
+      find.text('Charleston Road'),
+      120,
+      scrollable: find.byType(Scrollable),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Charleston Road'), findsOneWidget);
   });
 }

@@ -13,7 +13,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
       super(const SavedPlacesState());
 
   Future<void> loadPlaces() async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
       final rawPlaces = await _repository.loadPlaces();
@@ -26,7 +26,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
     } catch (error) {
       emit(
         SavedPlacesState(
-          places: const [],
+          places: state.places,
           isLoading: false,
           errorMessage: ErrorHandler.getErrorMessage(error),
         ),
@@ -36,7 +36,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
 
   Future<void> addPlace(SavedPlace place) async {
     final updated = [...state.places, place];
-    emit(state.copyWith(places: updated, errorMessage: null));
+    emit(state.copyWith(places: updated, clearErrorMessage: true));
     try {
       await _repository.savePlaces(updated);
     } catch (error) {
@@ -47,7 +47,18 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   Future<void> removePlace(int index) async {
     if (index < 0 || index >= state.places.length) return;
     final updated = [...state.places]..removeAt(index);
-    emit(state.copyWith(places: updated, errorMessage: null));
+    emit(state.copyWith(places: updated, clearErrorMessage: true));
+    try {
+      await _repository.savePlaces(updated);
+    } catch (error) {
+      emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(error)));
+    }
+  }
+
+  Future<void> replacePlace(int index, SavedPlace place) async {
+    if (index < 0 || index >= state.places.length) return;
+    final updated = [...state.places]..[index] = place;
+    emit(state.copyWith(places: updated, clearErrorMessage: true));
     try {
       await _repository.savePlaces(updated);
     } catch (error) {

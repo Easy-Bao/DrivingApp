@@ -24,7 +24,7 @@ import 'package:passenger_app/src/features/location/location_routes.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger_app/src/features/saved_places/view/saved_place_page.dart';
+import 'package:passenger_app/src/features/saved_places/view/saved_place_icon.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
@@ -40,6 +40,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const int _recentActivityPreviewLimit = 5;
+
   late final BookingBloc _bookingBloc;
 
   @override
@@ -128,7 +130,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildChipRow() {
     return BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
       builder: (context, state) {
-        if (state.isLoading) {
+        if (state.isLoading && state.places.isNotEmpty) {
           return const Skeletonizer.zone(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -342,9 +344,9 @@ class _HomePageState extends State<HomePage> {
     return BlocBuilder<ActivityBloc, ActivityState>(
       builder: (context, state) {
         if (state is ActivityLoading && state.hasExistingRides) {
-          final itemCount = state.existingRideCount > 3
-              ? 3
-              : state.existingRideCount;
+          final itemCount = state.existingRideCount
+              .clamp(1, _recentActivityPreviewLimit)
+              .toInt();
           return Skeletonizer.zone(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 20),
@@ -372,7 +374,9 @@ class _HomePageState extends State<HomePage> {
         if (state is! ActivityLoaded) {
           return RecentActivityEmptyStateWidget(isGuest: isGuest);
         }
-        final recentRides = state.past.take(3).toList(growable: false);
+        final recentRides = state.past
+            .take(_recentActivityPreviewLimit)
+            .toList(growable: false);
         if (recentRides.isEmpty) {
           return RecentActivityEmptyStateWidget(isGuest: isGuest);
         }
@@ -482,7 +486,7 @@ class _HomePageState extends State<HomePage> {
               width: 6,
               height: 6,
               decoration: const BoxDecoration(
-                color: Color(0xFF285A48),
+                color: AppTheme.complete,
                 shape: BoxShape.circle,
               ),
             ),
@@ -629,13 +633,13 @@ class _HomePageState extends State<HomePage> {
             ListTile(
               leading: const Icon(
                 LucideIcons.trash_2,
-                color: Colors.red,
+                color: AppTheme.cancel,
                 size: 20,
               ),
               title: const Text(
                 'Remove shortcut',
                 style: TextStyle(
-                  color: Colors.red,
+                  color: AppTheme.cancel,
                   fontWeight: FontWeight.w600,
                 ),
               ),

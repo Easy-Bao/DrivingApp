@@ -70,7 +70,7 @@ class MapAnnotationService {
       geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
       image: await _createMarkerImage(markerColor, label: label),
       iconAnchor: mapbox.IconAnchor.BOTTOM,
-      iconSize: label == null ? (isOrigin ? 0.8 : 0.9) : 1.0,
+      iconSize: label == null ? (isOrigin ? 0.78 : 0.82) : 1.0,
       symbolSortKey: isOrigin ? 10 : 20,
     );
   }
@@ -88,7 +88,8 @@ class MapAnnotationService {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final background = Paint()..color = AppTheme.surface;
-    final shadow = Paint()..color = const Color(0x22000000);
+    final shadow = Paint()
+      ..color = AppTheme.primaryColor.withValues(alpha: 0.12);
     final cardRect = RRect.fromRectAndRadius(
       const Rect.fromLTWH(8, 8, width - 16, 78),
       const Radius.circular(22),
@@ -103,7 +104,11 @@ class MapAnnotationService {
     canvas.drawPath(pointer, background);
 
     canvas.drawCircle(const Offset(48, 47), 20, Paint()..color = color);
-    canvas.drawCircle(const Offset(48, 47), 8, Paint()..color = Colors.white);
+    canvas.drawCircle(
+      const Offset(48, 47),
+      8,
+      Paint()..color = AppTheme.surface,
+    );
 
     final lines = label.split('\n');
     _drawLabelText(
@@ -161,31 +166,40 @@ class MapAnnotationService {
   }
 
   static Future<Uint8List> _createPinImage(Color color) async {
-    const size = 64.0;
+    const width = 64.0;
+    const height = 76.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    final paint = Paint()..color = color;
-    final outlinePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-    final pin = Path()
-      ..moveTo(size / 2, size - 2)
-      ..cubicTo(10, 39, 8, 32, 8, 24)
-      ..cubicTo(8, 11, 18, 2, size / 2, 2)
-      ..cubicTo(46, 2, 56, 11, 56, 24)
-      ..cubicTo(56, 32, 54, 39, size / 2, size - 2)
+    const center = Offset(width / 2, 26);
+    final outerTail = Path()
+      ..moveTo(center.dx - 10, 41)
+      ..lineTo(center.dx, height - 2)
+      ..lineTo(center.dx + 10, 41)
       ..close();
-    canvas.drawPath(pin, paint);
-    canvas.drawPath(pin, outlinePaint);
-    canvas.drawCircle(
-      const Offset(size / 2, 24),
-      8,
-      Paint()..color = Colors.white,
+    final innerTail = Path()
+      ..moveTo(center.dx - 6, 40)
+      ..lineTo(center.dx, height - 9)
+      ..lineTo(center.dx + 6, 40)
+      ..close();
+    final shadowPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: 23))
+      ..addPath(outerTail, Offset.zero);
+
+    canvas.drawShadow(
+      shadowPath,
+      AppTheme.primaryColor.withValues(alpha: 0.26),
+      5,
+      true,
     );
+    canvas.drawPath(outerTail, Paint()..color = AppTheme.surface);
+    canvas.drawPath(innerTail, Paint()..color = color);
+    canvas.drawCircle(center, 23, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(center, 18, Paint()..color = color);
+    canvas.drawCircle(center, 9, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(center, 4, Paint()..color = color);
     final image = await recorder.endRecording().toImage(
-      size.toInt(),
-      size.toInt(),
+      width.toInt(),
+      height.toInt(),
     );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
