@@ -82,7 +82,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      driver.name,
+                      driver.displayName,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -91,7 +91,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${driver.vehicleType} • ${driver.plateNumber}',
+                      driver.vehicleSummary,
                       style: TextStyle(
                         fontSize: 13,
                         color: AppTheme.primaryColor.withValues(alpha: 0.5),
@@ -417,7 +417,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      driver.name,
+                      driver.displayName,
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
@@ -426,7 +426,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${driver.vehicleType} • ${driver.plateNumber} • '
+                      '${driver.vehicleSummary} • '
                       '${driver.distanceKm.toStringAsFixed(1)} km away',
                       style: TextStyle(
                         fontSize: 12,

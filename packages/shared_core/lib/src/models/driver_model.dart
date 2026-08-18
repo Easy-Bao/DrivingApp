@@ -34,6 +34,21 @@ class DriverModel extends Equatable {
 
   bool get hasPassengerOnboard => (onboardPassengerCount ?? 0) > 0;
 
+  String get displayName {
+    final value = name.trim();
+    return value.isEmpty ? 'Driver' : value;
+  }
+
+  String get vehicleSummary {
+    final details = [
+      vehicleType.trim(),
+      plateNumber.trim(),
+    ].where((value) => value.isNotEmpty).toList();
+    return details.isEmpty
+        ? 'Vehicle details unavailable'
+        : details.join(' • ');
+  }
+
   factory DriverModel.fromJson(Map<String, dynamic> json) {
     return DriverModel(
       id: SafeParse.toStringValue(json['id'] ?? json['user_id']),

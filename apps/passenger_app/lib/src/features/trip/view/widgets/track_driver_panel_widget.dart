@@ -131,7 +131,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ride.driverName.isNotEmpty ? ride.driverName : 'Driver',
+                        ride.displayDriverName,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -140,7 +140,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${ride.vehicleType} • ${ride.vehiclePlate}',
+                        ride.displayVehicleSummary,
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppTheme.mutedSand,

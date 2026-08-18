@@ -97,7 +97,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   bool _initialized = false;
   DriverModel? _selectedDriver;
   List<DriverModel> _nearbyDrivers = [];
-  bool _showNearestDriverDetails = false;
   bool _isLeaving = false;
   bool _isNoDriverFound = false;
   String? _driverSearchError;
@@ -117,7 +116,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
 
   String _driverMarkerLabel(DriverModel driver) {
     final onboard = driver.onboardPassengerCount;
-    return '${driver.name}\n★ ${driver.rating.toStringAsFixed(1)} • '
+    return '${driver.displayName}\n★ ${driver.rating.toStringAsFixed(1)} • '
         '${driver.distanceKm.toStringAsFixed(1)} km • '
         '${onboard == null ? '—' : '$onboard/5'} passengers';
   }
@@ -181,9 +180,11 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
         backgroundColor: Colors.transparent,
         builder: (ctx) => DriverProfileDetailsSheet(
           driverId: driver.id,
-          driverName: driver.name,
-          vehicleType: driver.vehicleType,
-          plateNumber: driver.plateNumber,
+          driverName: driver.displayName,
+          vehicleType: driver.vehicleType.isEmpty
+              ? 'Vehicle details unavailable'
+              : driver.vehicleType,
+          plateNumber: driver.plateNumber.isEmpty ? '—' : driver.plateNumber,
           rating: driver.rating.toStringAsFixed(1),
           onboardPassengerCount: driver.onboardPassengerCount,
         ),
@@ -312,7 +313,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
       _driverSearchError = null;
       _nearbyDrivers = [];
       _selectedDriver = null;
-      _showNearestDriverDetails = false;
     });
   }
 
@@ -374,7 +374,8 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
               final nearbyDrivers = _uniqueNearbyDrivers(state);
               setState(() {
                 _nearbyDrivers = nearbyDrivers;
-                _selectedDriver = _selectedDriver != null &&
+                _selectedDriver =
+                    _selectedDriver != null &&
                         nearbyDrivers.any(
                           (driver) => driver.id == _selectedDriver!.id,
                         )
@@ -392,7 +393,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                     if (!mounted) return;
                     setState(() {
                       _selectedDriver = state.driver;
-                      _showNearestDriverDetails = true;
                     });
                   },
                 ),
@@ -408,7 +408,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                         if (!mounted) return;
                         setState(() {
                           _selectedDriver = nearby;
-                          _showNearestDriverDetails = true;
                         });
                       },
                     ),
@@ -614,7 +613,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                               : AppTheme.primaryColor,
                                         ),
                                         label: Text(
-                                          '${driver.name} (${driver.distanceKm.toStringAsFixed(1)}km)',
+                                          '${driver.displayName} (${driver.distanceKm.toStringAsFixed(1)}km)',
                                           style: TextStyle(
                                             fontSize: 12.0,
                                             fontWeight: isSelected
@@ -633,7 +632,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                           if (selected) {
                                             setState(() {
                                               _selectedDriver = driver;
-                                              _showNearestDriverDetails = true;
                                             });
                                           }
                                         },
@@ -656,7 +654,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                 onCloseDropdownPressed: () {
                                   setState(() {
                                     _selectedDriver = null;
-                                    _showNearestDriverDetails = false;
                                   });
                                 },
                               ),
@@ -725,7 +722,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                           } else if (state is BookingSearching) {
                             return FindingDriverSearchingPanelWidget(
                               message: state.isDirect
-                                  ? 'Waiting for ${state.targetDriver?.name ?? 'driver'}'
+                                  ? 'Waiting for ${state.targetDriver?.displayName ?? 'driver'}'
                                   : 'Finding your driver',
                               rideType: widget.rideType,
                               fare: widget.fare,
@@ -739,7 +736,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                             if (state.offers.isEmpty) {
                               return FindingDriverSearchingPanelWidget(
                                 message: state.isDirect
-                                    ? 'Waiting for ${state.targetDriver?.name ?? 'driver'}'
+                                    ? 'Waiting for ${state.targetDriver?.displayName ?? 'driver'}'
                                     : 'Finding your driver',
                                 rideType: widget.rideType,
                                 fare: widget.fare,

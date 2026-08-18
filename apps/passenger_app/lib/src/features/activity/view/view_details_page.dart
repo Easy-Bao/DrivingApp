@@ -302,9 +302,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          ride?.driverName.isNotEmpty == true
-                              ? ride!.driverName
-                              : 'Driver',
+                          ride?.displayDriverName ?? 'Driver',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -313,7 +311,8 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${ride?.vehicleType ?? 'Bao Bao'}  •  ${ride?.vehiclePlate ?? '—'}',
+                          ride?.displayVehicleSummary ??
+                              'Vehicle details unavailable',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.primaryColor.withValues(alpha: 0.4),

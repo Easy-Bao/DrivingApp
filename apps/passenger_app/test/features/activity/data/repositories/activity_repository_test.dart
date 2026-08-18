@@ -61,4 +61,36 @@ void main() {
       expect(failure.message, isNot(contains('database-password-leak')));
     }, (_) => fail('Expected a server failure.'));
   });
+
+  test(
+    'maps centavo fares and alternate driver fields from ride history',
+    () async {
+      when(() => remoteDataSource.fetchRideHistory('passenger-1')).thenAnswer(
+        (_) async => [
+          {
+            'id': 7,
+            'pickup_name': 'Pickup, City',
+            'dropoff_name': 'Destination, City',
+            'created_at': '2026-08-18T08:00:00Z',
+            'fare_centavos': 2817,
+            'status': 'completed',
+            'driver_id': 2,
+            'driverName': 'Demo Driver',
+            'vehicleType': 'Motorcycle',
+            'plateNumber': 'ABC-123',
+          },
+        ],
+      );
+
+      final result = await repository.fetchRideHistory('passenger-1');
+
+      result.fold((_) => fail('Expected ride history to load.'), (rides) {
+        expect(rides, hasLength(1));
+        expect(rides.single.price, '₱28.17');
+        expect(rides.single.driverName, 'Demo Driver');
+        expect(rides.single.vehicleType, 'Motorcycle');
+        expect(rides.single.vehiclePlate, 'ABC-123');
+      });
+    },
+  );
 }

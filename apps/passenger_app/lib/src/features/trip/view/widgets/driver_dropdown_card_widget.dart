@@ -133,7 +133,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      widget.driver.name,
+                                      widget.driver.displayName,
                                       style: const TextStyle(
                                         fontSize: 18.0,
                                         fontWeight: FontWeight.w900,
@@ -171,7 +171,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                               ),
                               const SizedBox(height: 4.0),
                               Text(
-                                '${widget.driver.vehicleType} • ${widget.driver.plateNumber}',
+                                widget.driver.vehicleSummary,
                                 style: TextStyle(
                                   fontSize: 13.0,
                                   fontWeight: FontWeight.w600,

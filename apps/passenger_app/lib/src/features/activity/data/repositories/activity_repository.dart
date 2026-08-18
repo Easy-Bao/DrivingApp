@@ -106,12 +106,12 @@ class ActivityRepository implements IActivityRepository {
       destLat: SafeParse.toDouble(raw['dropoff_latitude']),
       destLng: SafeParse.toDouble(raw['dropoff_longitude']),
       date: _formatCreatedAt(raw['created_at']),
-      price: _formatPrice(raw['fare']),
+      price: _formatPrice(raw['fare'], raw['fare_centavos']),
       status: SafeParse.toStringValue(raw['status'], 'unknown'),
       driverId: SafeParse.toStringValue(raw['driver_id']),
-      driverName: SafeParse.toStringValue(raw['driver_name']),
-      vehiclePlate: SafeParse.toStringValue(raw['plate_number']),
-      vehicleType: SafeParse.toStringValue(raw['vehicle_type']),
+      driverName: _firstNonEmpty(raw['driver_name'], raw['driverName']),
+      vehiclePlate: _firstNonEmpty(raw['plate_number'], raw['plateNumber']),
+      vehicleType: _firstNonEmpty(raw['vehicle_type'], raw['vehicleType']),
     );
   }
 
@@ -128,8 +128,16 @@ class ActivityRepository implements IActivityRepository {
     }
   }
 
-  String _formatPrice(dynamic price) {
-    final fareDouble = SafeParse.toDouble(price);
+  String _formatPrice(dynamic price, dynamic fareCentavos) {
+    final fareDouble = price != null
+        ? SafeParse.toDouble(price)
+        : SafeParse.toDouble(fareCentavos) / 100;
     return '₱${fareDouble.toStringAsFixed(2)}';
+  }
+
+  String _firstNonEmpty(Object? primary, Object? fallback) {
+    final primaryValue = SafeParse.toStringValue(primary).trim();
+    if (primaryValue.isNotEmpty) return primaryValue;
+    return SafeParse.toStringValue(fallback).trim();
   }
 }

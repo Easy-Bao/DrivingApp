@@ -36,6 +36,21 @@ class RideHistoryModel extends Equatable {
     this.driverRating,
   });
 
+  String get displayDriverName {
+    final value = driverName.trim();
+    return value.isEmpty ? 'Driver' : value;
+  }
+
+  String get displayVehicleSummary {
+    final details = [
+      vehicleType.trim(),
+      vehiclePlate.trim(),
+    ].where((value) => value.isNotEmpty).toList();
+    return details.isEmpty
+        ? 'Vehicle details unavailable'
+        : details.join(' • ');
+  }
+
   factory RideHistoryModel.fromJson(Map<String, dynamic> json) {
     return RideHistoryModel(
       id: SafeParse.toStringValue(json['id']),
