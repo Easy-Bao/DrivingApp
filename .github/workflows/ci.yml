@@ -18,81 +18,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  change_scope:
-    name: Detect Changed Areas
-    runs-on: ubuntu-latest
-    outputs:
-      mobile: ${{ steps.scope.outputs.mobile }}
-      backend: ${{ steps.scope.outputs.backend }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Classify changed paths
-        id: scope
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        shell: bash
-        run: |
-          mobile=false
-          backend=false
-
-          if [[ "${EVENT_NAME}" == "push" ]]; then
-            mobile=true
-            backend=true
-          else
-            while IFS= read -r file; do
-              case "${file}" in
-                apps/*|packages/*|assets/*|pubspec.yaml|pubspec.lock|melos.yaml|analysis_options.yaml)
-                  mobile=true
-                  ;;
-                server/*|Dockerfile|docker-compose.yml)
-                  backend=true
-                  ;;
-                scripts/*|justfile|.github/*)
-                  mobile=true
-                  backend=true
-                  ;;
-              esac
-            done < <(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")
-          fi
-
-          echo "mobile=${mobile}" >> "${GITHUB_OUTPUT}"
-          echo "backend=${backend}" >> "${GITHUB_OUTPUT}"
-
   repository-integrity:
     name: Repository Integrity
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Run repository guards
-        run: ./scripts/ci/quality_guard.sh
+      - name: Check whitespace errors
+        run: git diff --check
 
       - name: Scan for leaked secrets
-        uses: docker://ghcr.io/gitleaks/gitleaks:latest
-        with:
-          args: detect --source=. --verbose --redact
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: false
 
   mobile-quality-gate:
     name: Mobile Quality Gate
-    needs: change_scope
-    if: needs.change_scope.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare optional mobile environment assets
-        run: |
-          for app in driver_app passenger_app; do
-            printf '%s\n' '# CI placeholder; runtime configuration is injected during app builds.' > "apps/${app}/.env"
-          done
+        uses: actions/checkout@v6
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -100,20 +49,23 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install Melos
-        run: dart pub global activate melos
+      - name: Prepare Flutter environment assets
+        run: cp .env.example apps/driver_app/.env
+
+      - name: Prepare passenger environment asset
+        run: cp .env.example apps/passenger_app/.env
 
       - name: Install root dependencies
         run: flutter pub get
 
-      - name: Bootstrap workspace
-        run: melos bootstrap
+      - name: Bootstrap Melos workspace
+        run: dart run melos bootstrap
 
-      - name: Check formatting
+      - name: Check Dart formatting
         run: dart format --set-exit-if-changed apps packages
 
-      - name: Analyze workspace
-        run: melos run analyze
+      - name: Analyze Flutter workspace
+        run: dart run melos run analyze
 
       - name: Test driver app
         working-directory: apps/driver_app
@@ -125,34 +77,32 @@ jobs:
 
   backend-quality-gate:
     name: Backend Quality Gate
-    needs: change_scope
-    if: needs.change_scope.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: server/go.mod
+          cache: true
           cache-dependency-path: server/go.sum
 
-      - name: Install backend dependencies
-        run: ./scripts/ci/install_backend_dependencies.sh
-
-      - name: Prepare backend test environment
-        run: ./scripts/ci/prepare_backend_test_env.sh
+      - name: Download Go dependencies
+        run: go mod download
 
       - name: Generate Ent client
-        working-directory: server
         run: go generate ./ent/generate.go
 
-      - name: Vet backend
-        run: ./scripts/ci/typecheck_backend_services.sh
+      - name: Vet Go packages
+        run: go vet ./...
 
-      - name: Test backend
-        run: ./scripts/ci/test_backend_services.sh
+      - name: Test Go packages
+        run: go test ./...
 
   dependency-review:
     name: Dependency Security Review
@@ -160,7 +110,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Review dependency changes
         uses: actions/dependency-review-action@v4

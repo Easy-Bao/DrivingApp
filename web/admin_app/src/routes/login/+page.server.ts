@@ -35,7 +35,7 @@ export const actions: Actions = {
               ? 'The email or password is incorrect.'
               : error.status === 429
                 ? 'Too many sign-in attempts. Wait for the lockout to expire, then try again.'
-              : 'Owner sign-in is unavailable. Check the gateway and try again.',
+              : 'Owner sign-in is unavailable. Check the API and try again.',
         });
       }
       return fail(500, { email, message: 'Owner sign-in failed.' });

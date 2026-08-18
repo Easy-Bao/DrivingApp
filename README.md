@@ -37,6 +37,20 @@ Bootstrapping links all local packages together and installs their external depe
 melos bootstrap
 ```
 
+### Run the Go backend natively
+
+The default local backend workflow uses the host-installed PostgreSQL, Redis,
+and RabbitMQ services. Copy `.env.example` to `.env`, configure the native
+credentials, and run:
+
+```bash
+just server
+```
+
+All clients use the Go API through one public `API_BASE_URL`, normally
+`http://127.0.0.1:8000`. Docker Compose remains available through the explicit
+`just services-up` or `just docker-up` recipes.
+
 ---
 
 ## Melos Workspace Scripts

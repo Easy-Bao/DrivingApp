@@ -13,10 +13,10 @@ export class AdminApiError extends Error {
   }
 }
 
-function gatewayUrl(): string {
-  const configuredUrl = env.GATEWAY_URL?.trim();
+function apiBaseUrl(): string {
+  const configuredUrl = env.API_BASE_URL?.trim();
   if (!configuredUrl) {
-    throw new Error('Security Configuration Error: GATEWAY_URL is required.');
+    throw new Error('Security Configuration Error: API_BASE_URL is required.');
   }
   return configuredUrl.replace(/\/+$/, '');
 }
@@ -34,7 +34,7 @@ function errorDetails(body: unknown, fallback: string): { message: string; code:
 }
 
 /**
- * Calls the gateway from the SvelteKit server so the admin token never reaches
+ * Calls the API from the SvelteKit server so the admin token never reaches
  * browser JavaScript.
  */
 export async function adminApi<T>(
@@ -56,12 +56,12 @@ export async function adminApi<T>(
 
   let response: Response;
   try {
-    response = await fetcher(`${gatewayUrl()}${path}`, {
+    response = await fetcher(`${apiBaseUrl()}${path}`, {
       ...init,
       headers,
     });
   } catch {
-    throw new AdminApiError('The EasyRide gateway is unavailable.', 503, 'GATEWAY_UNAVAILABLE');
+    throw new AdminApiError('The EasyRide API is unavailable.', 503, 'API_UNAVAILABLE');
   }
 
   const contentType = response.headers.get('content-type') ?? '';

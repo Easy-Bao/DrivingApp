@@ -3,11 +3,9 @@ WORKDIR /src
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server ./
-RUN CGO_ENABLED=0 go build -o /out/core-api ./cmd/core-api && \
-    CGO_ENABLED=0 go build -o /out/realtime-service ./cmd/realtime-service
+RUN CGO_ENABLED=0 go build -o /out/api ./cmd/api
 
 FROM gcr.io/distroless/static-debian12
-COPY --from=build /out/core-api /app/core-api
-COPY --from=build /out/realtime-service /app/realtime-service
-EXPOSE 8080 8081
-ENTRYPOINT ["/app/core-api"]
+COPY --from=build /out/api /app/api
+EXPOSE 8000
+ENTRYPOINT ["/app/api"]

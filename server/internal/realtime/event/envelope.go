@@ -1,5 +1,5 @@
 // Package event defines the versioned, transport-neutral messages exchanged
-// between the core and realtime services.
+// between the application modules and realtime clients.
 package event
 
 import (

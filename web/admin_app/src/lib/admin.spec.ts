@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { isAdminSection, recordsFrom, unwrapData } from './admin';
 
 describe('admin data helpers', () => {
-  it('unwraps gateway data and recognizes the isolated Admin sections', () => {
+  it('unwraps API data and recognizes the isolated Admin sections', () => {
     expect(unwrapData({ data: { ok: true } })).toEqual({ ok: true });
     expect(recordsFrom({ data: { items: [{ id: 'case-1' }] } })).toEqual([
       { id: 'case-1' },

@@ -1,4 +1,9 @@
-# Justfile configuring development, build, test, and container recipes.
+# Justfile configuring native development, build, test, and Docker recipes.
+
+set dotenv-load
+set export
+
+api-base-url := env_var_or_default("API_BASE_URL", "http://127.0.0.1:8000")
 
 default:
     @just --list
@@ -17,19 +22,13 @@ analyze:
     flutter pub global run melos run analyze
 
 ci-guards:
-    @./scripts/ci/quality_guard.sh
+    git diff --check
 
-ci-backend-install:
-    @./scripts/ci/install_backend_dependencies.sh
-
-ci-backend-typecheck:
-    @./scripts/ci/typecheck_backend_services.sh
-
-ci-backend-test:
-    @./scripts/ci/test_backend_services.sh
-
-ci-backend: ci-backend-install ci-backend-typecheck ci-backend-test
+ci-backend:
+    cd server && go mod download
     cd server && go generate ./ent/generate.go
+    cd server && go vet ./...
+    cd server && go test ./...
 
 ci-flutter:
     flutter pub global run melos bootstrap
@@ -43,26 +42,49 @@ ci-local: ci-guards ci-flutter ci-backend
 bootstrap:
     flutter pub global run melos bootstrap
 
+# Docker-only database lifecycle helper.
 db-up:
     docker compose up -d postgres-db
-    @echo "PostgreSQL started on port 5432"
+    @echo "PostgreSQL container started; see POSTGRES_HOST_PORT in .env for the host port."
 
+# Docker-only database lifecycle helper.
 db-down:
     docker compose stop postgres-db
 
-# Start shared local infrastructure and wait for its health checks
+# Docker-only infrastructure helpers. Native dependencies are intentionally
+# not started by Just; start PostgreSQL, Redis, and RabbitMQ separately.
 infra-up:
     docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis rabbitmq
 
-# Idempotently apply the single Ent migration stream
-db-migrate: infra-up
+# Apply the single Ent migration stream to the configured native PostgreSQL.
+db-migrate:
+    cd server && go run ./cmd/migrate
+
+# Apply the migration stream to Docker Compose PostgreSQL instead.
+docker-db-migrate: infra-up
     @./scripts/database/migrate.sh
 
 test-services:
     cd server && go test ./...
 
-# Start every application and dependency through Docker Compose.
-start-all: services-up
+# Start the single Go application natively. PostgreSQL, Redis, and RabbitMQ
+# must already be running on the host; this recipe never enables or starts them.
+server:
+    cd server && go run ./cmd/api
+
+native-server: server
+
+# Backward-compatible local startup alias.
+start-all: server
+
+run-passenger:
+    cd apps/passenger_app && flutter run --dart-define=API_BASE_URL={{ api-base-url }}
+
+run-driver:
+    cd apps/driver_app && flutter run --dart-define=API_BASE_URL={{ api-base-url }}
+
+# Start every application and dependency through Docker Compose explicitly.
+docker-start-all: services-up
 
 # Docker-only service lifecycle for the whole team.
 services-up:
@@ -88,7 +110,7 @@ docker-down: services-down
 
 # Build or rebuild compose images
 docker-build:
-    docker compose build postgres-db redis rabbitmq core-api realtime-service api-gateway
+    docker compose build postgres-db redis rabbitmq api
 
 # View logs for all Docker services.
 docker-logs: services-logs

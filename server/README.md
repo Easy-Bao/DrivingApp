@@ -1,29 +1,56 @@
 # Go backend
 
-This directory contains the Go backend. `core-api`, `realtime-service`, and
-`api-gateway` are the three Go applications.
-Domain-owned schemas under `internal/*/schema` are composed into one generated
-Ent client.
+This directory contains the Go modular monolith. The `internal/*` packages
+own the business modules and their ports/adapters; `cmd/api` is the single
+long-running application process that composes HTTP, WebSocket, persistence,
+messaging, and infrastructure adapters.
 
-## Run locally without Docker
+The other commands are one-shot developer tools:
+
+- `cmd/migrate` applies the Ent migration stream.
+- `cmd/entgenerate` regenerates the Ent client.
+
+## Native local development (default)
+
+The native workflow expects PostgreSQL, Redis, and RabbitMQ to be installed and
+started separately. Just does not enable, start, or stop those services.
+
+1. Copy `.env.example` to `.env` and set the native database credentials,
+   `DATABASE_URL`, and a JWT secret.
+2. Start the configured native dependencies when you are ready to use them.
+3. Start the Go application:
+
+```sh
+just server
+```
+
+This runs the equivalent of:
 
 ```sh
 cd server
-go run ./cmd/core-api
-go run ./cmd/realtime-service
-go run ./api-gateway
+go run ./cmd/api
 ```
 
-`core-api` uses `CORE_API_PORT` and `MAPBOX_ACCESS_TOKEN`. The realtime process
-uses `JWT_SECRET`; clients authenticate WebSocket upgrades with an
-`Authorization: Bearer <token>` header.
+The public client URL is `API_BASE_URL`, normally `http://127.0.0.1:8000`.
+The API process owns REST, WebSocket, authentication, rides, location,
+realtime, chat, and admin routes.
 
-## Run on Windows with Docker Desktop
+To apply the Ent migration stream against native PostgreSQL:
 
-The Compose file starts the backend and its required services: PostgreSQL,
-Redis, RabbitMQ, `core-api`, `realtime-service`, and `api-gateway`. Only the
-gateway is the public API; the core and realtime services stay on Docker's
-internal network.
+```sh
+just db-migrate
+```
+
+## Optional Docker Compose workflow
+
+Docker Compose remains available for contributors who need the containerized
+environment. It is not used by `just server` or `just start-all`.
+
+### Run on Windows with Docker Desktop
+
+The Compose file starts PostgreSQL, Redis, RabbitMQ, the single `api` process,
+and the optional admin app. The API container is the public HTTP and WebSocket
+entrypoint.
 
 ### Prerequisites
 
@@ -37,16 +64,17 @@ internal network.
 ```powershell
 Copy-Item .env.example .env
 notepad .env
-docker compose up --build -d postgres-db redis rabbitmq core-api realtime-service api-gateway
+docker compose up --build -d postgres-db redis rabbitmq api
 docker compose ps
 Invoke-RestMethod http://localhost:8000/health
 ```
 
-Before starting, replace `JWT_SECRET` in `.env` with a private value of at
-least 32 characters. Add `MAPBOX_ACCESS_TOKEN` to enable location search and
-routing. SMTP values are only needed when testing verification emails.
+Before starting, set `POSTGRES_PASSWORD` and replace `JWT_SECRET` in `.env`
+with private values; the JWT secret must be at least 32 characters. Add
+`MAPBOX_ACCESS_TOKEN` to enable location search and routing. SMTP values are
+only needed when testing verification emails.
 
-The health command should return an object whose service is `api-gateway`.
+The health command should return an object whose service is `api`.
 API requests should use `http://localhost:8000/api/v1/...`.
 
 ### Optional admin web app
@@ -62,11 +90,11 @@ Then browse to `http://localhost:5173`.
 ### Everyday commands
 
 ```powershell
-# Follow backend logs
-docker compose logs -f api-gateway core-api realtime-service
+# Follow API logs
+docker compose logs -f api
 
 # Rebuild after server code changes
-docker compose up --build -d core-api realtime-service api-gateway
+docker compose up --build -d api
 
 # Stop containers but preserve the PostgreSQL database
 docker compose down
@@ -79,7 +107,7 @@ docker compose down --volumes
 
 | Service | Host port | Purpose |
 | --- | --- | --- |
-| API gateway | `8000` | Public API endpoint |
+| API | `8000` | Public HTTP and WebSocket endpoint |
 | Admin app (optional) | `5173` | Admin web interface |
 | PostgreSQL | `55432` | Direct database access for local tooling |
 | Redis | `6379` | Local cache/real-time inspection |

@@ -55,6 +55,9 @@ app.*.map.json
 *.env
 *.env.*
 
+# Versioned configuration templates are safe to share.
+!/.env.example
+
 #Metadata
 .metadata
 

@@ -6,15 +6,13 @@ readonly SCRIPT_NAME="$(basename "$0")"
 readonly REPOSITORY_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly ENV_FILE="$REPOSITORY_ROOT/.env"
 readonly DEFAULT_WAIT_TIMEOUT_SECONDS=120
-MOBILE_SERVICES=(
+SERVICES=(
   postgres-db
   redis
   rabbitmq
-  core-api
-  realtime-service
-  api-gateway
+  api
 )
-readonly MOBILE_SERVICES
+readonly SERVICES
 
 command_name=""
 build_images=1
@@ -30,16 +28,16 @@ Usage:
   ./scripts/script.sh --logs
 
 Commands:
-  --start       Build and start the mobile services.
-  --stop        Stop the mobile services without deleting volumes.
-  --restart     Stop, rebuild, and start the mobile services.
-  --status      Show the state of the mobile service containers.
-  --logs        Follow the mobile service logs.
+  --start       Build and start the API services.
+  --stop        Stop the API services without deleting volumes.
+  --restart     Stop, rebuild, and start the API services.
+  --status      Show the state of the API service containers.
+  --logs        Follow the API service logs.
   --no-build    Reuse existing images for --start or --restart.
   --help        Show this help.
 
-This launcher is Docker-only. Native Go, PostgreSQL, Redis, and RabbitMQ
-processes are intentionally not supported so the team uses one environment.
+This launcher is intentionally Docker-only. Native Go development is available
+through `just server`; this command does not start native dependencies.
 USAGE
 }
 
@@ -116,16 +114,16 @@ wait_for_gateway() {
   local health_url="http://127.0.0.1:${gateway_port}/health"
   local deadline=$((SECONDS + wait_timeout_seconds))
 
-  log "Waiting for the API gateway at $health_url ..."
+  log "Waiting for the API at $health_url ..."
   until curl --fail --silent --show-error --max-time 5 "$health_url" >/dev/null 2>&1; do
     if (( SECONDS >= deadline )); then
       compose ps --all
-      die "API gateway did not become ready within ${wait_timeout_seconds}s. Run './scripts/script.sh --logs' for details."
+      die "API did not become ready within ${wait_timeout_seconds}s. Run './scripts/script.sh --logs' for details."
     fi
     sleep 1
   done
 
-  log "API gateway is ready."
+  log "API is ready."
 }
 
 start_services() {
@@ -135,22 +133,22 @@ start_services() {
   local build_flag=()
   if (( build_images == 1 )); then
     build_flag=(--build)
-    log "Building Docker images and starting mobile services ..."
+    log "Building Docker images and starting API services ..."
   else
-    log "Starting mobile services with existing Docker images ..."
+    log "Starting API services with existing Docker images ..."
   fi
 
-  compose up -d "${build_flag[@]}" --wait --wait-timeout "$wait_timeout_seconds" "${MOBILE_SERVICES[@]}"
+  compose up -d "${build_flag[@]}" --wait --wait-timeout "$wait_timeout_seconds" "${SERVICES[@]}"
   wait_for_gateway
-  compose ps --all "${MOBILE_SERVICES[@]}"
+  compose ps --all "${SERVICES[@]}"
 }
 
 stop_services() {
   require_environment
   validate_compose_file
-  log "Stopping mobile services ..."
-  compose stop "${MOBILE_SERVICES[@]}"
-  compose ps --all "${MOBILE_SERVICES[@]}"
+  log "Stopping API services ..."
+  compose stop "${SERVICES[@]}"
+  compose ps --all "${SERVICES[@]}"
 }
 
 restart_services() {
@@ -161,13 +159,13 @@ restart_services() {
 show_status() {
   require_environment
   validate_compose_file
-  compose ps --all "${MOBILE_SERVICES[@]}"
+  compose ps --all "${SERVICES[@]}"
 }
 
 show_logs() {
   require_environment
   validate_compose_file
-  compose logs -f --tail=100 "${MOBILE_SERVICES[@]}"
+  compose logs -f --tail=100 "${SERVICES[@]}"
 }
 
 parse_arguments() {
@@ -203,7 +201,7 @@ parse_arguments() {
         [[ "$wait_timeout_seconds" =~ ^[1-9][0-9]*$ ]] || die "--wait-timeout must be a positive integer"
         ;;
       --no-docker)
-        die "This launcher is Docker-only; native mode is unsupported"
+        die "This launcher is Docker-only; use 'just server' for native mode"
         ;;
       --help|-h)
         usage
