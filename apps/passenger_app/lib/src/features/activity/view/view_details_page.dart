@@ -98,13 +98,13 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
   Future<void> _makeDriverCall() async {
     final retrievedRideData = _detailedRideData;
     if (retrievedRideData == null) return;
-    final driverId = retrievedRideData['driver_id'] as String?;
-    if (driverId == null || driverId.isEmpty) return;
+    final driverId = SafeParse.toStringValue(retrievedRideData['driver_id']);
+    if (driverId.isEmpty) return;
     try {
       final driverProfile = await Modular.get<BiddingRemoteDataSource>()
           .getDriverProfile(driverId);
-      final phone = driverProfile['phone'] as String?;
-      if (phone != null && phone.isNotEmpty) {
+      final phone = SafeParse.toStringValue(driverProfile['phone']);
+      if (phone.isNotEmpty) {
         final uri = Uri.parse('tel:$phone');
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri);
@@ -192,7 +192,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
-          child: AppBackButtonWidget(onPressed: () => context.pop()),
+          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
         ),
         title: const Text(
           'Ride details',

@@ -63,12 +63,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(
-                        24.0,
-                        24.0,
-                        24.0,
-                        16.0,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           const Text(
@@ -479,7 +474,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           const SliverPadding(
-            padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
             sliver: SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -593,6 +588,17 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      ride.displayDriverName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
                       ),
                     ),
                   ],

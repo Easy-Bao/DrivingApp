@@ -220,7 +220,7 @@ class _PassengerViewAllActivityPageState
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
-          child: AppBackButtonWidget(onPressed: () => context.pop()),
+          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
         ),
         title: const Text(
           'Trip history',
@@ -361,7 +361,7 @@ class _PassengerViewAllActivityPageState
 
     final totalTripPrice = _priceValue(ride.price);
 
-    final driverInitials = _formattedDriverInitials(ride.driverName);
+    final driverInitials = _formattedDriverInitials(ride.displayDriverName);
     final driverRating = _formattedDriverRating(ride);
 
     return Container(
@@ -450,13 +450,31 @@ class _PassengerViewAllActivityPageState
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        ride.driverName.isNotEmpty ? ride.driverName : 'Driver',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ride.displayDriverName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            ride.displayVehicleSummary,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.45,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     if (isTripCompleted) ...[
