@@ -10,6 +10,7 @@ import (
 
 type ridesRepositoryStub struct {
 	ride       domain.Ride
+	created    domain.Ride
 	updated    domain.Ride
 	session    domain.BidSession
 	updateNext string
@@ -24,8 +25,10 @@ func testPricingConfig(t *testing.T) PricingConfig {
 	return config
 }
 
-func (stub *ridesRepositoryStub) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
-	return domain.Ride{}, nil
+func (stub *ridesRepositoryStub) CreateRide(_ context.Context, ride domain.Ride) (domain.Ride, error) {
+	stub.created = ride
+	stub.created.ID = 12
+	return stub.created, nil
 }
 
 func (stub *ridesRepositoryStub) CreateBid(context.Context, domain.Bid) (domain.Bid, error) {
@@ -85,6 +88,23 @@ func (stub *ridesRepositoryStub) CancelOffer(context.Context, int, int) (domain.
 
 func (stub *ridesRepositoryStub) Session(context.Context, int) (domain.BidSession, error) {
 	return stub.session, nil
+}
+
+func TestCreateRideBuildsRequestedRide(t *testing.T) {
+	stub := &ridesRepositoryStub{}
+	service := NewService(stub, testPricingConfig(t))
+
+	ride, err := service.CreateRide(context.Background(), 2, 2500)
+	if err != nil {
+		t.Fatalf("CreateRide returned error: %v", err)
+	}
+	if ride.ID != 12 {
+		t.Fatalf("created ride id = %d, want 12", ride.ID)
+	}
+	if stub.created.PassengerID != 2 || stub.created.FareCentavos != 2500 ||
+		stub.created.Status != "requested" || stub.created.RideType != "Solo Ride" {
+		t.Fatalf("persisted ride = %#v", stub.created)
+	}
 }
 
 func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {

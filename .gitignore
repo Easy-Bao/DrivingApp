@@ -55,7 +55,7 @@ app.*.map.json
 *.env
 *.env.*
 
-# Versioned configuration templates are safe to share.
+# Keep the placeholder template tracked for CI and local setup.
 !/.env.example
 
 #Metadata

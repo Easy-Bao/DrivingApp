@@ -19,7 +19,7 @@ watch-flutter:
     dart run build_runner watch --delete-conflicting-outputs
 
 analyze:
-    flutter pub global run melos run analyze
+    dart run melos exec -- "flutter analyze --no-fatal-infos ."
 
 ci-guards:
     git diff --check
@@ -31,16 +31,17 @@ ci-backend:
     cd server && go test ./...
 
 ci-flutter:
-    flutter pub global run melos bootstrap
+    flutter pub get
+    dart run melos bootstrap
     dart format --set-exit-if-changed apps packages
-    flutter pub global run melos run analyze
+    dart run melos exec -- "flutter analyze --no-fatal-infos ."
     cd apps/driver_app && flutter test
     cd apps/passenger_app && flutter test
 
 ci-local: ci-guards ci-flutter ci-backend
 
 bootstrap:
-    flutter pub global run melos bootstrap
+    dart run melos bootstrap
 
 # Docker-only database lifecycle helper.
 db-up:

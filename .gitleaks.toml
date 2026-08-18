@@ -1,0 +1,20 @@
+title = "DriveApp secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Retired authentication test fixtures contained non-production test values."
+condition = "AND"
+commits = ["2f7c846c7af21f693cee643edab1afedbaa2bc0d"]
+paths = [
+  '''^server/auth-service/tests/(forgot_password|signup|signin)\.test\.ts$'''
+]
+
+[[allowlists]]
+description = "Retired driver integration fixture contained a non-production test value."
+condition = "AND"
+commits = ["345873fc11d8a5a4876fc75312d352ae377957bf"]
+paths = [
+  '''^server/driver-service/tests/integration/driver\.test\.ts$'''
+]

@@ -22,7 +22,9 @@ class AuthCredentials extends Equatable {
     return AuthCredentials(
       driverId: SafeParse.toStringValue(json['driverId'] ?? json['id']),
       driverName: SafeParse.toStringValue(json['driverName'] ?? json['name']),
-      driverEmail: SafeParse.toStringValue(json['driverEmail'] ?? json['email']),
+      driverEmail: SafeParse.toStringValue(
+        json['driverEmail'] ?? json['email'],
+      ),
       vehicleType: SafeParse.toStringValue(
         json['vehicleType'],
         'Vehicle type unavailable',
