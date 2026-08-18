@@ -30,6 +30,30 @@ void main() {
     expect(retryCount, 1);
   });
 
+  testWidgets('shows and retries a pickup location failure', (tester) async {
+    var retryCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HomeLocationRowWidget(
+            isAccessChecking: false,
+            hasLocationAccess: true,
+            isAddressLoading: false,
+            currentAddress: '',
+            locationErrorMessage: 'Unable to find your pickup location.',
+            onRequestLocation: () {},
+            onRetryAddress: () => retryCount++,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Unable to find your pickup location.'), findsOneWidget);
+    await tester.tap(find.byType(HomeLocationRowWidget));
+    expect(retryCount, 1);
+  });
+
   testWidgets('requests location access only when access is unavailable', (
     tester,
   ) async {

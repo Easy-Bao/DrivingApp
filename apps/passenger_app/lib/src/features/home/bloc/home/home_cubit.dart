@@ -44,7 +44,7 @@ class HomeCubit extends Cubit<HomeState> {
     final dataRevision = ++_dataRevision;
 
     if (state.currentAddress.isEmpty && state.recentLocations.isEmpty) {
-      emit(state.copyWith(isLoading: true));
+      emit(state.copyWith(isLoading: true, locationErrorMessage: ''));
     }
     try {
       final result = await _repository.loadHomeData(lat: lat, lng: lng);
@@ -53,33 +53,56 @@ class HomeCubit extends Cubit<HomeState> {
       result.fold(
         (failure) {
           dev.log('Error loading passenger home data: ${failure.message}');
-          emit(state.copyWith(isLoading: false));
+          emit(
+            state.copyWith(
+              isLoading: false,
+              locationErrorMessage: failure.message,
+            ),
+          );
         },
-        (homeData) => emit(
-          state.copyWith(
-            isLoading: false,
-            currentAddress: homeData.currentAddress,
-            recentLocations: homeData.recentLocations,
-          ),
-        ),
+        (homeData) {
+          final address = homeData.currentAddress.trim();
+          emit(
+            state.copyWith(
+              isLoading: false,
+              currentAddress: address,
+              locationErrorMessage: address.isEmpty
+                  ? 'Unable to find your pickup location. Tap to retry.'
+                  : '',
+              recentLocations: homeData.recentLocations,
+            ),
+          );
+        },
       );
     } catch (error) {
       dev.log('Error executing home data load: $error');
       if (isClosed || dataRevision != _dataRevision) return;
-      emit(state.copyWith(isLoading: false));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          locationErrorMessage:
+              'Unable to find your pickup location. Tap to retry.',
+        ),
+      );
     }
   }
 
   void updateAddress(String address) {
     _dataRevision++;
-    emit(state.copyWith(currentAddress: address));
+    emit(state.copyWith(currentAddress: address, locationErrorMessage: ''));
   }
 
   void clearLocation() {
     _dataRevision++;
     _lastLat = null;
     _lastLng = null;
-    emit(state.copyWith(isLoading: false, currentAddress: ''));
+    emit(
+      state.copyWith(
+        isLoading: false,
+        currentAddress: '',
+        locationErrorMessage: '',
+      ),
+    );
   }
 
   Future<void> startLocationTracking() async {
@@ -96,9 +119,19 @@ class HomeCubit extends Cubit<HomeState> {
         .watchCurrentLocation()
         .listen(
           (result) => result.fold(
-            (failure) => dev.log(
-              'Passenger location stream unavailable: ${failure.message}',
-            ),
+            (failure) {
+              dev.log(
+                'Passenger location stream unavailable: ${failure.message}',
+              );
+              if (!isClosed && state.currentAddress.isEmpty) {
+                emit(
+                  state.copyWith(
+                    isLoading: false,
+                    locationErrorMessage: failure.message,
+                  ),
+                );
+              }
+            },
             (location) =>
                 unawaited(_loadTrackedLocation(location, trackingRevision)),
           ),
@@ -111,14 +144,24 @@ class HomeCubit extends Cubit<HomeState> {
     final expectedRevision = trackingRevision ?? _trackingRevision;
     if (!_isActiveTrackingRevision(expectedRevision)) return;
 
+    if (state.currentAddress.isEmpty) {
+      emit(state.copyWith(isLoading: true, locationErrorMessage: ''));
+    }
+
     final result = await _currentLocationRepository.getCurrentLocation();
     if (!_isActiveTrackingRevision(expectedRevision)) return;
 
-    await result.fold(
-      (failure) async =>
-          dev.log('Passenger current location unavailable: ${failure.message}'),
-      (location) => _loadTrackedLocation(location, expectedRevision),
-    );
+    await result.fold((failure) async {
+      dev.log('Passenger current location unavailable: ${failure.message}');
+      if (!isClosed && _locationSubscription == null) {
+        emit(
+          state.copyWith(
+            isLoading: false,
+            locationErrorMessage: failure.message,
+          ),
+        );
+      }
+    }, (location) => _loadTrackedLocation(location, expectedRevision));
   }
 
   Future<void> stopLocationTracking({bool clearAddress = false}) async {

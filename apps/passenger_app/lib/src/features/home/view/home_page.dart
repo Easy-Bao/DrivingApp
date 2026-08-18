@@ -298,6 +298,7 @@ class _HomePageState extends State<HomePage> {
               hasLocationAccess: accessState is LocationAccessReady,
               isAddressLoading: homeState.isLoading,
               currentAddress: homeState.currentAddress,
+              locationErrorMessage: homeState.locationErrorMessage,
               onRequestLocation: _showLocationPrompt,
               onRetryAddress: () => unawaited(
                 BlocProvider.of<HomeCubit>(context).refreshCurrentLocation(),

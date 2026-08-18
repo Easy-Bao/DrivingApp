@@ -8,6 +8,7 @@ class HomeLocationRowWidget extends StatelessWidget {
     required this.hasLocationAccess,
     required this.isAddressLoading,
     required this.currentAddress,
+    this.locationErrorMessage = '',
     required this.onRequestLocation,
     required this.onRetryAddress,
     super.key,
@@ -17,6 +18,7 @@ class HomeLocationRowWidget extends StatelessWidget {
   final bool hasLocationAccess;
   final bool isAddressLoading;
   final String currentAddress;
+  final String locationErrorMessage;
   final VoidCallback onRequestLocation;
   final VoidCallback onRetryAddress;
 
@@ -29,6 +31,8 @@ class HomeLocationRowWidget extends StatelessWidget {
       content = const _LocationRowLabel(
         label: 'Turn on location to set pickup',
       );
+    } else if (currentAddress.isEmpty && locationErrorMessage.isNotEmpty) {
+      content = _LocationRowLabel(label: locationErrorMessage, expands: true);
     } else if (currentAddress.isEmpty) {
       content = const _LocationRowLabel(label: 'Finding your pickup location…');
     } else {

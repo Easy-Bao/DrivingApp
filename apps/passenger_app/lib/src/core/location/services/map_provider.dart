@@ -253,6 +253,11 @@ class MapProvider {
             mapbox.AttributionSettings(enabled: false),
           ),
         );
+        unawaited(
+          controller.scaleBar.updateSettings(
+            mapbox.ScaleBarSettings(enabled: false),
+          ),
+        );
 
         if (!interactive) {
           unawaited(

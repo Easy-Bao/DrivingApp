@@ -98,7 +98,34 @@ void main() {
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
       expect: () => [
         const HomeState(isLoading: true),
-        const HomeState(isLoading: false),
+        const HomeState(
+          isLoading: false,
+          locationErrorMessage: 'network error',
+        ),
+      ],
+    );
+
+    blocTest<HomeCubit, HomeState>(
+      'exposes an error when the server cannot resolve an otherwise successful location response',
+      build: () {
+        when(
+          () => repo.loadHomeData(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer(
+          (_) async =>
+              Right(HomeData(currentAddress: '', recentLocations: const [])),
+        );
+        return _makeCubit(repo, currentLocationRepo);
+      },
+      act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
+      expect: () => const [
+        HomeState(isLoading: true),
+        HomeState(
+          locationErrorMessage:
+              'Unable to find your pickup location. Tap to retry.',
+        ),
       ],
     );
   });
