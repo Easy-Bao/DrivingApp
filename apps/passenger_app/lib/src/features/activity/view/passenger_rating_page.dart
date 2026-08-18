@@ -35,7 +35,9 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
 
   Future<void> _submitRating() async {
     if (_selectedStars == 0) {
-      setState(() => _error = 'Please select a rating.');
+      if (mounted) {
+        setState(() => _error = 'Please select a rating.');
+      }
       return;
     }
 
@@ -148,11 +150,12 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -189,6 +192,18 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 6),
+                  Text(
+                    widget.driverName.trim().isEmpty
+                        ? 'Driver'
+                        : widget.driverName.trim(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 40),
 
                   if (_error != null) ...[
@@ -210,14 +225,15 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                         onTap: () {
                           setState(() {
                             _selectedStars = index + 1;
+                            _error = null;
                           });
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: Icon(
                             index < _selectedStars
-                                ? LucideIcons.star
-                                : LucideIcons.star,
+                                ? Icons.star
+                                : Icons.star_border,
                             color: index < _selectedStars
                                 ? Colors.amber
                                 : AppTheme.borderSide,
@@ -258,7 +274,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                     ),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 48),
 
                   GestureDetector(
                     onTap: _isSubmitting ? null : _finishRating,
@@ -293,7 +309,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                   ),
                   const SizedBox(height: 16),
                   GestureDetector(
-                    onTap: _checkForgottenItemsAndFinish,
+                    onTap: _isSubmitting ? null : _checkForgottenItemsAndFinish,
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 18),
