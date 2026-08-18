@@ -6,17 +6,18 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_state.dart';
-import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/widgets/home_location_row_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/public_driver_summary_card_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/recent_activity_empty_state_widget.dart';
+import 'package:passenger_app/src/features/home/view/widgets/recent_ride_history_preview_widget.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/location/location_routes.dart';
@@ -90,12 +91,23 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_loadSavedPlaces());
+      _loadRecentActivity();
       if (!mounted) return;
       if (BlocProvider.of<LocationAccessCubit>(context).state
           is LocationAccessReady) {
         unawaited(BlocProvider.of<HomeCubit>(context).startLocationTracking());
       }
     });
+  }
+
+  void _loadRecentActivity() {
+    final sessionState = BlocProvider.of<SessionBloc>(context).state;
+    if (sessionState case AuthenticatedSession(:final passengerId)) {
+      if (passengerId.trim().isEmpty) return;
+      BlocProvider.of<ActivityBloc>(
+        context,
+      ).add(LoadActivityEvent(passengerId: passengerId));
+    }
   }
 
   void _handleLocationAccess(
@@ -264,46 +276,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildLocationItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: AppTheme.primaryColor, size: 20),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 15,
-          color: AppTheme.primaryColor,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: AppTheme.primaryColor.withValues(alpha: 0.5),
-          fontSize: 13,
-        ),
-      ),
-      trailing: const Icon(
-        LucideIcons.chevron_right,
-        size: 16,
-        color: AppTheme.borderSide,
-      ),
-      onTap: onTap,
-    );
-  }
-
   Widget _buildLocationRow() {
     return BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
       builder: (context, accessState) {
@@ -367,19 +339,17 @@ class _HomePageState extends State<HomePage> {
       return sessionState is GuestSession || sessionState is SessionFailure;
     });
 
-    return BlocBuilder<HomeCubit, HomeState>(
-      buildWhen: (prev, curr) =>
-          prev.recentLocations != curr.recentLocations ||
-          prev.isLoading != curr.isLoading,
+    return BlocBuilder<ActivityBloc, ActivityState>(
       builder: (context, state) {
-        if (state.isLoading) {
+        if (state is ActivityLoading && state.hasExistingRides) {
+          final itemCount = state.existingRideCount > 3
+              ? 3
+              : state.existingRideCount;
           return Skeletonizer.zone(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 20),
               physics: const BouncingScrollPhysics(),
-              itemCount: state.recentLocations.isEmpty
-                  ? 3
-                  : state.recentLocations.length,
+              itemCount: itemCount,
               itemBuilder: (_, _) => const Padding(
                 padding: EdgeInsets.symmetric(vertical: 14, horizontal: 4),
                 child: Row(
@@ -396,40 +366,34 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
-        if (state.recentLocations.isEmpty) {
+        if (state is ActivityError) {
+          return _buildRecentActivityError();
+        }
+        if (state is! ActivityLoaded) {
           return RecentActivityEmptyStateWidget(isGuest: isGuest);
         }
-        return ListView.separated(
-          padding: const EdgeInsets.only(bottom: 20),
-          physics: const BouncingScrollPhysics(),
-          itemCount: state.recentLocations.length,
-          separatorBuilder: (_, _) =>
-              Divider(height: 1, color: Colors.grey[100]),
-          itemBuilder: (context, index) {
-            final location = state.recentLocations[index];
-            final title = location.title;
-            IconData icon;
-            if (title.contains('Luz') || title.contains('Plaza')) {
-              icon = LucideIcons.circle_play;
-            } else if (title.contains('Supermarket') ||
-                title.contains('Robinson')) {
-              icon = LucideIcons.store;
-            } else if (title.contains('Coffee') || title.contains("Bo's")) {
-              icon = LucideIcons.coffee;
-            } else if (title.contains('Capital') || title.contains('Gaisano')) {
-              icon = LucideIcons.shopping_bag;
-            } else {
-              icon = LucideIcons.map_pin;
-            }
-            return _buildLocationItem(
-              icon: icon,
-              title: title,
-              subtitle: location.subtitle,
-              onTap: () => _openActivityDetail(location),
-            );
-          },
+        final recentRides = state.past.take(3).toList(growable: false);
+        if (recentRides.isEmpty) {
+          return RecentActivityEmptyStateWidget(isGuest: isGuest);
+        }
+        return RecentRideHistoryPreviewWidget(
+          rides: recentRides,
+          onRideTap: (ride) => unawaited(
+            context.pushNamed(ActivityRoutes.activityViewDetails, extra: ride),
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildRecentActivityError() {
+    return Center(
+      child: TextButton.icon(
+        onPressed: _loadRecentActivity,
+        icon: const Icon(LucideIcons.refresh_cw, size: 16),
+        label: const Text('Retry activity'),
+        style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
+      ),
     );
   }
 
@@ -623,18 +587,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadSavedPlaces() async {
     if (!mounted) return;
     await BlocProvider.of<SavedPlacesCubit>(context).loadPlaces();
-  }
-
-  Future<void> _openActivityDetail(RecentLocation location) async {
-    await context.pushNamed(
-      TripRoutes.activityDetailMap,
-      extra: {
-        'title': location.title,
-        'subtitle': location.subtitle,
-        'lat': location.latitude,
-        'lng': location.longitude,
-      },
-    );
   }
 
   Future _showChipOptions(int index, String label) async {
