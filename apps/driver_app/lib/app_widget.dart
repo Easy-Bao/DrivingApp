@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:driver_app/src/core/location/location.dart';
+import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'package:driver_app/src/core/services/secure_session_service.dart';
@@ -22,18 +23,34 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_setBackgroundTelemetryVisibility(true));
+    });
   }
 
   @override
   void dispose() {
+    unawaited(_setBackgroundTelemetryVisibility(false));
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    unawaited(
+      _setBackgroundTelemetryVisibility(state == AppLifecycleState.resumed),
+    );
     if (state == AppLifecycleState.resumed) {
       unawaited(LocationService.refresh());
+    }
+  }
+
+  Future<void> _setBackgroundTelemetryVisibility(bool isVisible) async {
+    try {
+      await Modular.get<BackgroundTelemetryService>().setAppVisible(isVisible);
+    } catch (_) {
+      // The application can reach its first frame before service bindings are
+      // ready. A later lifecycle event or service configuration will sync it.
     }
   }
 

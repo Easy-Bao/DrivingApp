@@ -1,6 +1,4 @@
 abstract final class TripRoutes {
-  static const String rideAlert = 'RideAlert';
-  static const String rideAlertPath = 'dashboard/ride-alert';
   static const String enRoutePickup = 'EnRoutePickup';
   static const String enRoutePickupPath = 'ride/en-route';
   static const String waitingPassenger = 'WaitingPassenger';

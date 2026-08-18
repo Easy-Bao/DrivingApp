@@ -6,7 +6,6 @@ import 'package:driver_app/src/features/trip/view/en_route_pickup_page.dart';
 import 'package:driver_app/src/features/trip/view/fare_summary_page.dart';
 import 'package:driver_app/src/features/trip/view/in_transit_page.dart';
 import 'package:driver_app/src/features/trip/view/rate_passenger_page.dart';
-import 'package:driver_app/src/features/trip/view/ride_alert_page.dart';
 import 'package:driver_app/src/features/trip/view/waiting_passenger_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -14,14 +13,6 @@ class TripModule {
   TripModule._();
 
   static List<ModularRoute> routes = [
-    ChildRoute(
-      name: TripRoutes.rideAlert,
-      TripRoutes.rideAlertPath,
-      child: (context, GoRouterState state) =>
-          RideAlertPage(rideData: SafeRouteExtra.asMap(state.extra)),
-      transition: AppTransitions.modal.toTop,
-      transitionDuration: AppTransitions.modalDuration,
-    ),
     ChildRoute(
       name: TripRoutes.enRoutePickup,
       TripRoutes.enRoutePickupPath,

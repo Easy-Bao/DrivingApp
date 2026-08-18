@@ -77,7 +77,11 @@ class BackgroundTelemetryService {
   }
 
   Future<void> _configureService({required bool serviceWasStarted}) async {
-    final configuration = {'baseUrl': _apiBaseUri.toString()};
+    final configuration = <String, dynamic>{
+      'baseUrl': _apiBaseUri.toString(),
+      'appVisible':
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed,
+    };
     _service.invoke('configure', configuration);
     if (!serviceWasStarted) return;
 
@@ -151,6 +155,16 @@ class BackgroundTelemetryService {
       _service.invoke('stopService');
     }
   }
+
+  Future<void> setAppVisible(bool isVisible) async {
+    try {
+      if (await _service.isRunning()) {
+        _service.invoke('setAppVisible', {'visible': isVisible});
+      }
+    } catch (error) {
+      dev.log('Unable to update telemetry visibility: $error');
+    }
+  }
 }
 
 @pragma('vm:entry-point')
@@ -161,9 +175,11 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   Dio? telemetryClient;
   var sending = false;
   var pollingRideRequests = false;
+  var appIsVisible = false;
   var activeRequestIds = <String>{};
 
   service.on('configure').listen((event) {
+    appIsVisible = event?['appVisible'] == true;
     final baseUrl = event?['baseUrl'] as String?;
     final parsed = Uri.tryParse(baseUrl ?? '');
     if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
@@ -180,6 +196,9 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         receiveTimeout: const Duration(seconds: 10),
       ),
     );
+  });
+  service.on('setAppVisible').listen((event) {
+    appIsVisible = event?['visible'] == true;
   });
 
   Future<void> sendLocation() async {
@@ -240,7 +259,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
   Future<void> pollRideRequests() async {
     final client = telemetryClient;
-    if (pollingRideRequests || client == null) return;
+    if (appIsVisible || pollingRideRequests || client == null) return;
 
     final token = await storage.read(key: StorageKeys.jwtToken);
     final driverId = await storage.read(key: StorageKeys.driverId);

@@ -53,8 +53,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool? _pendingOnline;
   String? _submittingBidId;
   String? _completingTripId;
-  final Set<String> _announcedBidIds = <String>{};
-  bool _isShowingRideAlert = false;
+  bool _isPollingRideData = false;
+  int _pollGeneration = 0;
 
   @override
   void initState() {
@@ -91,6 +91,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
     _locationSubscription?.cancel();
+    _pollGeneration++;
     super.dispose();
   }
 
@@ -196,10 +197,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _startPolling() {
+    final pollGeneration = ++_pollGeneration;
     _locationSubscription?.cancel();
-    _locationSubscription = LocationService.getPositionStream().listen((
-      pos,
-    ) async {
+    _locationSubscription = LocationService.getPositionStream().listen((pos) {
       _liveMapBloc?.add(
         DispatchTelemetryLocationEvent(lat: pos.latitude, lng: pos.longitude),
       );
@@ -212,82 +212,78 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
 
     _rideTriggerTimer?.cancel();
-    _rideTriggerTimer = Timer.periodic(const Duration(seconds: 4), (
-      timer,
-    ) async {
-      if (!mounted) return;
-      final s = BlocProvider.of<DashboardCubit>(context).state;
-      if (!s.isOnline) {
+    _rideTriggerTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (!mounted ||
+          pollGeneration != _pollGeneration ||
+          !BlocProvider.of<DashboardCubit>(context).state.isOnline) {
         timer.cancel();
         return;
       }
-
-      try {
-        final driverId =
-            await Modular.get<SecureSessionService>().readDriverId() ?? '';
-        if (driverId.isEmpty) return;
-
-        final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
-          driverId,
-        );
-        List<Map<String, dynamic>> trips = list
-            .where((r) {
-              final status = r['status'] as String?;
-              return status == 'accepted' ||
-                  status == 'arrived' ||
-                  status == 'in_transit';
-            })
-            .map((r) => r as Map<String, dynamic>)
-            .toList();
-
-        final bidsList = await Modular.get<BiddingRemoteDataSource>()
-            .fetchActiveBids();
-        final List<Map<String, dynamic>> bids = bidsList
-            .map((b) => b as Map<String, dynamic>)
-            .toList();
-
-        if (mounted) {
-          final activeBidIds = bids
-              .map((bid) => driverValueAsString(bid['id']))
-              .whereType<String>()
-              .toSet();
-          _announcedBidIds.removeWhere(
-            (bidId) => !activeBidIds.contains(bidId),
-          );
-          Map<String, dynamic>? newBid;
-          for (final bid in bids) {
-            final bidId = driverValueAsString(bid['id']);
-            if (bidId != null && !_announcedBidIds.contains(bidId)) {
-              _announcedBidIds.add(bidId);
-              newBid = bid;
-              break;
-            }
-          }
-          trips.sort((a, b) {
-            const statusPriority = {
-              'in_transit': 0,
-              'arrived': 1,
-              'accepted': 2,
-            };
-            final aPriority = statusPriority[a['status']] ?? 3;
-            final bPriority = statusPriority[b['status']] ?? 3;
-            if (aPriority != bPriority) return aPriority.compareTo(bPriority);
-            return (a['created_at'] as String? ?? '').compareTo(
-              b['created_at'] as String? ?? '',
-            );
-          });
-          setState(() {
-            _activeTrips = trips;
-            _activeBids = bids;
-          });
-          if (newBid != null && !_isShowingRideAlert) {
-            unawaited(_showRideAlert(newBid));
-          }
-        }
-      } catch (error) {
-        debugPrint('Error polling: $error');
-      }
+      unawaited(_pollRideData(pollGeneration));
     });
+    unawaited(_pollRideData(pollGeneration));
+  }
+
+  Future<void> _pollRideData(int pollGeneration) async {
+    if (!mounted ||
+        pollGeneration != _pollGeneration ||
+        _isPollingRideData ||
+        !BlocProvider.of<DashboardCubit>(context).state.isOnline) {
+      return;
+    }
+
+    _isPollingRideData = true;
+    try {
+      final driverId =
+          await Modular.get<SecureSessionService>().readDriverId() ?? '';
+      if (driverId.isEmpty) return;
+
+      final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
+        driverId,
+      );
+      List<Map<String, dynamic>> trips = list
+          .where((r) {
+            final status = r['status'] as String?;
+            return status == 'accepted' ||
+                status == 'arrived' ||
+                status == 'in_transit';
+          })
+          .map((r) => r as Map<String, dynamic>)
+          .toList();
+
+      final bidsList = await Modular.get<BiddingRemoteDataSource>()
+          .fetchActiveBids();
+      final List<Map<String, dynamic>> bids = bidsList
+          .map((b) => b as Map<String, dynamic>)
+          .toList();
+
+      if (!mounted ||
+          pollGeneration != _pollGeneration ||
+          !BlocProvider.of<DashboardCubit>(context).state.isOnline) {
+        return;
+      }
+
+      trips.sort((a, b) {
+        const statusPriority = {'in_transit': 0, 'arrived': 1, 'accepted': 2};
+        final aPriority = statusPriority[a['status']] ?? 3;
+        final bPriority = statusPriority[b['status']] ?? 3;
+        if (aPriority != bPriority) return aPriority.compareTo(bPriority);
+        return (a['created_at'] as String? ?? '').compareTo(
+          b['created_at'] as String? ?? '',
+        );
+      });
+      setState(() {
+        _activeTrips = trips;
+        _activeBids = bids;
+      });
+    } catch (error) {
+      debugPrint('Error polling: $error');
+    } finally {
+      _isPollingRideData = false;
+      if (mounted && pollGeneration != _pollGeneration) {
+        unawaited(_pollRideData(_pollGeneration));
+      }
+    }
   }
 
   Future<void> _refreshOnlinePresence() async {
@@ -308,47 +304,18 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _stopPolling() {
+    _pollGeneration++;
     _locationSubscription?.cancel();
     _locationSubscription = null;
     _rideTriggerTimer?.cancel();
     _rideTriggerTimer = null;
     _presenceHeartbeatTimer?.cancel();
     _presenceHeartbeatTimer = null;
-    _announcedBidIds.clear();
     if (mounted) {
       setState(() {
         _activeTrips = [];
         _activeBids = [];
       });
-    }
-  }
-
-  Future<void> _showRideAlert(Map<String, dynamic> bid) async {
-    if (!mounted || _isShowingRideAlert) return;
-    final rideId = driverValueAsString(bid['id']);
-    final fare = driverFareInPesos(bid);
-    if (rideId == null || fare == null) return;
-
-    _isShowingRideAlert = true;
-    try {
-      await context.pushNamed(
-        TripRoutes.rideAlert,
-        extra: {
-          'id': rideId,
-          'pickup_name':
-              driverValueAsString(bid['pickup_name']) ??
-              'Pickup location unavailable',
-          'dropoff_name':
-              driverValueAsString(bid['dropoff_name']) ??
-              'Destination unavailable',
-          'distance': _distanceInKm(bid) ?? 0.0,
-          'fare': fare,
-          'duration':
-              '${((bid['duration_minutes'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)} min',
-        },
-      );
-    } finally {
-      _isShowingRideAlert = false;
     }
   }
 
