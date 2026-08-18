@@ -374,8 +374,11 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
               final nearbyDrivers = _uniqueNearbyDrivers(state);
               setState(() {
                 _nearbyDrivers = nearbyDrivers;
-                _selectedDriver = nearbyDrivers.length > 1
-                    ? (_selectedDriver ?? state.driver)
+                _selectedDriver = _selectedDriver != null &&
+                        nearbyDrivers.any(
+                          (driver) => driver.id == _selectedDriver!.id,
+                        )
+                    ? _selectedDriver
                     : null;
               });
               final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
@@ -630,6 +633,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                           if (selected) {
                                             setState(() {
                                               _selectedDriver = driver;
+                                              _showNearestDriverDetails = true;
                                             });
                                           }
                                         },
@@ -652,6 +656,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                 onCloseDropdownPressed: () {
                                   setState(() {
                                     _selectedDriver = null;
+                                    _showNearestDriverDetails = false;
                                   });
                                 },
                               ),
@@ -701,8 +706,8 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                               isCanceling: _isLeaving,
                             );
                           } else if (state is NearestDriverFound) {
-                            if (_nearbyDrivers.length <= 1 &&
-                                !_showNearestDriverDetails) {
+                            if (_selectedDriver != null ||
+                                _nearbyDrivers.length <= 1) {
                               return const SizedBox.shrink();
                             }
                             return FindingDriverNearestPanelWidget(
