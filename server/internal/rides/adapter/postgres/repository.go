@@ -69,7 +69,11 @@ func (repository *Repository) Get(ctx context.Context, id int) (domain.Ride, err
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	return fromRide(item), nil
+	rides, err := repository.hydrateDriverDetails(ctx, []domain.Ride{fromRide(item)})
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	return rides[0], nil
 }
 func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
 	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
@@ -105,7 +109,13 @@ func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
 	}
-	trip, err = trip.Update().SetStatus("assigned").SetDriverID(driverID).Save(ctx)
+	trip, err = trip.Update().
+		SetStatus("assigned").
+		SetDriverID(driverID).
+		SetDriverName(profile.Name).
+		SetVehicleType(profile.VehicleType).
+		SetPlateNumber(profile.PlateNumber).
+		Save(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
@@ -122,7 +132,8 @@ func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID i
 		return domain.Ride{}, err
 	}
 	defer transaction.Rollback()
-	if _, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(driverID), driverprofile.IsOnlineEQ(true)).Only(ctx); err != nil {
+	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(driverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
+	if err != nil {
 		return domain.Ride{}, domain.ErrDriverUnavailable
 	}
 	item, err := transaction.Ride.Query().Where(ride.IDEQ(rideID), ride.StatusEQ("requested")).Only(ctx)
@@ -136,7 +147,13 @@ func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID i
 	if active >= 5 {
 		return domain.Ride{}, domain.ErrDriverAtCapacity
 	}
-	updated, err := item.Update().SetDriverID(driverID).SetStatus("accepted").Save(ctx)
+	updated, err := item.Update().
+		SetDriverID(driverID).
+		SetStatus("accepted").
+		SetDriverName(profile.Name).
+		SetVehicleType(profile.VehicleType).
+		SetPlateNumber(profile.PlateNumber).
+		Save(ctx)
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -473,7 +490,7 @@ func (repository *Repository) DriverTrips(ctx context.Context, driverID int) ([]
 	for index := len(items) - 1; index >= 0; index-- {
 		result = append(result, fromRide(items[index]))
 	}
-	return result, nil
+	return repository.hydrateDriverDetails(ctx, result)
 }
 
 func (repository *Repository) PassengerRides(ctx context.Context, passengerID int) ([]domain.Ride, error) {
@@ -485,7 +502,7 @@ func (repository *Repository) PassengerRides(ctx context.Context, passengerID in
 	for index := len(items) - 1; index >= 0; index-- {
 		result = append(result, fromRide(items[index]))
 	}
-	return result, nil
+	return repository.hydrateDriverDetails(ctx, result)
 }
 
 func (repository *Repository) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
@@ -501,7 +518,57 @@ func (repository *Repository) PassengerRecentRides(ctx context.Context, passenge
 	for _, item := range items {
 		result = append(result, fromRide(item))
 	}
-	return result, nil
+	return repository.hydrateDriverDetails(ctx, result)
+}
+
+func (repository *Repository) hydrateDriverDetails(ctx context.Context, rides []domain.Ride) ([]domain.Ride, error) {
+	driverIDs := make([]int, 0)
+	seen := make(map[int]struct{})
+	for _, item := range rides {
+		if item.DriverID == nil {
+			continue
+		}
+		if _, exists := seen[*item.DriverID]; exists {
+			continue
+		}
+		seen[*item.DriverID] = struct{}{}
+		driverIDs = append(driverIDs, *item.DriverID)
+	}
+	if len(driverIDs) == 0 {
+		return rides, nil
+	}
+
+	profiles, err := repository.client.DriverProfile.Query().
+		Where(driverprofile.UserIDIn(driverIDs...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	profilesByUserID := make(map[int]*ent.DriverProfile, len(profiles))
+	for _, profile := range profiles {
+		profilesByUserID[profile.UserID] = profile
+	}
+
+	for index := range rides {
+		driverID := rides[index].DriverID
+		if driverID == nil {
+			continue
+		}
+		profile := profilesByUserID[*driverID]
+		if profile == nil {
+			continue
+		}
+		if rides[index].DriverName == "" {
+			rides[index].DriverName = profile.Name
+		}
+		if rides[index].VehicleType == "" {
+			rides[index].VehicleType = profile.VehicleType
+		}
+		if rides[index].PlateNumber == "" {
+			rides[index].PlateNumber = profile.PlateNumber
+		}
+	}
+	return rides, nil
 }
 
 func (repository *Repository) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
