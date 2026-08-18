@@ -161,84 +161,68 @@ void main() {
     },
   );
 
-  test('rolls back presence when background telemetry cannot start', () async {
-    final driverDataSource = MockDriverRemoteDataSource();
-    final telemetryDataSource = MockTelemetryRemoteDataSource();
-    final tripDataSource = MockTripRemoteDataSource();
-    final sessionService = MockSecureSessionService();
-    final backgroundService = MockBackgroundTelemetryService();
+  test(
+    'keeps the driver online when optional background telemetry cannot start',
+    () async {
+      final driverDataSource = MockDriverRemoteDataSource();
+      final telemetryDataSource = MockTelemetryRemoteDataSource();
+      final tripDataSource = MockTripRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+      final backgroundService = MockBackgroundTelemetryService();
 
-    when(
-      () => sessionService.readDriverId(),
-    ).thenAnswer((_) async => 'driver-42');
-    when(
-      () => telemetryDataSource.sendLocationUpdate(
-        driverId: 'driver-42',
-        lat: 7.828,
-        lng: 123.434,
-      ),
-    ).thenAnswer((_) async => true);
-    when(
-      () => driverDataSource.updateOnlineStatus(
-        driverId: 'driver-42',
+      when(
+        () => sessionService.readDriverId(),
+      ).thenAnswer((_) async => 'driver-42');
+      when(
+        () => telemetryDataSource.sendLocationUpdate(
+          driverId: 'driver-42',
+          lat: 7.828,
+          lng: 123.434,
+        ),
+      ).thenAnswer((_) async => true);
+      when(
+        () => driverDataSource.updateOnlineStatus(
+          driverId: 'driver-42',
+          isOnline: true,
+          lat: 7.828,
+          lng: 123.434,
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => sessionService.saveDriverOnlineStatus(true),
+      ).thenAnswer((_) async {});
+      when(
+        () => backgroundService.start(),
+      ).thenThrow(StateError('not configured'));
+
+      final repository = DashboardRepository(
+        remoteDataSource: tripDataSource,
+        driverRemoteDataSource: driverDataSource,
+        telemetryRemoteDataSource: telemetryDataSource,
+        sessionService: sessionService,
+        backgroundTelemetryService: backgroundService,
+      );
+
+      final result = await repository.updateOnlineStatus(
         isOnline: true,
         lat: 7.828,
         lng: 123.434,
-      ),
-    ).thenAnswer((_) async {});
-    when(
-      () => driverDataSource.updateOnlineStatus(
-        driverId: 'driver-42',
-        isOnline: false,
-        lat: 7.828,
-        lng: 123.434,
-      ),
-    ).thenAnswer((_) async {});
-    when(
-      () => telemetryDataSource.removeLocation(),
-    ).thenAnswer((_) async => true);
-    when(
-      () => sessionService.saveDriverOnlineStatus(false),
-    ).thenAnswer((_) async {});
-    when(
-      () => backgroundService.start(),
-    ).thenThrow(StateError('not configured'));
-    when(() => backgroundService.stop()).thenAnswer((_) async {});
+      );
 
-    final repository = DashboardRepository(
-      remoteDataSource: tripDataSource,
-      driverRemoteDataSource: driverDataSource,
-      telemetryRemoteDataSource: telemetryDataSource,
-      sessionService: sessionService,
-      backgroundTelemetryService: backgroundService,
-    );
-
-    final result = await repository.updateOnlineStatus(
-      isOnline: true,
-      lat: 7.828,
-      lng: 123.434,
-    );
-
-    expect(
-      result,
-      const Left<Failure, void>(
-        NetworkFailure(
-          'Unable to keep sharing your location. You are not online yet.',
+      expect(result, const Right<Failure, void>(null));
+      verify(() => backgroundService.start()).called(1);
+      verifyNever(
+        () => driverDataSource.updateOnlineStatus(
+          driverId: 'driver-42',
+          isOnline: false,
+          lat: 7.828,
+          lng: 123.434,
         ),
-      ),
-    );
-    verify(
-      () => driverDataSource.updateOnlineStatus(
-        driverId: 'driver-42',
-        isOnline: false,
-        lat: 7.828,
-        lng: 123.434,
-      ),
-    ).called(1);
-    verify(() => telemetryDataSource.removeLocation()).called(1);
-    verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
-    verify(() => backgroundService.stop()).called(1);
-  });
+      );
+      verifyNever(() => telemetryDataSource.removeLocation());
+      verify(() => sessionService.saveDriverOnlineStatus(true)).called(1);
+    },
+  );
 
   test('removes the driver location when going offline', () async {
     final driverDataSource = MockDriverRemoteDataSource();

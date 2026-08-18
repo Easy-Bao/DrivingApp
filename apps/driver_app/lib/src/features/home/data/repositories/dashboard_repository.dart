@@ -234,17 +234,10 @@ class DashboardRepository implements IDashboardRepository {
       try {
         await _backgroundTelemetryService?.start();
       } catch (error) {
-        dev.log('Unable to start background telemetry: $error');
-        await _clearOnlinePresence(
-          driverId: driverId,
-          lat: lat,
-          lng: lng,
-          markServerOffline: true,
-        );
-        return const Left(
-          NetworkFailure(
-            'Unable to keep sharing your location. You are not online yet.',
-          ),
+        // Foreground telemetry is already active, so an optional background
+        // service must never invalidate a live driver's availability.
+        dev.log(
+          'Optional background telemetry was unavailable; foreground telemetry remains active: $error',
         );
       }
 

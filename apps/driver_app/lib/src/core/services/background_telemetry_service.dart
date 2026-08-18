@@ -13,24 +13,34 @@ const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _backgroundRideRequestInterval = Duration(seconds: 4);
 const _notificationChannelId = 'easyride_driver_location';
 const _notificationId = 4801;
+const _backgroundTelemetryEnabled = bool.fromEnvironment(
+  'ENABLE_DRIVER_BACKGROUND_TELEMETRY',
+  defaultValue: false,
+);
 
 class BackgroundTelemetryService {
   final Uri _apiBaseUri;
   final FlutterBackgroundService _service;
+  final bool _isEnabled;
   bool _configured = false;
 
   BackgroundTelemetryService({
     required Uri apiBaseUri,
     FlutterBackgroundService? service,
+    bool? enabled,
   }) : _apiBaseUri = apiBaseUri,
-       _service = service ?? FlutterBackgroundService();
+       _service = service ?? FlutterBackgroundService(),
+       _isEnabled = enabled ?? _backgroundTelemetryEnabled;
+
+  bool get isEnabled => _isEnabled;
 
   static Future<void> stopExistingServiceForStartup() async {
+    if (!_backgroundTelemetryEnabled) return;
     await _stopRunningService(FlutterBackgroundService());
   }
 
   Future<void> initialize() async {
-    if (_configured) return;
+    if (!_isEnabled || _configured) return;
 
     // The Android plugin persists its callback handle. Stop an instance from
     // an older build before configuring this isolate, otherwise the old
@@ -62,6 +72,7 @@ class BackgroundTelemetryService {
   }
 
   Future<void> start() async {
+    if (!_isEnabled) return;
     await initialize();
     await _waitForResumedActivity();
     await _ensureLocationAccess();
@@ -151,12 +162,14 @@ class BackgroundTelemetryService {
   }
 
   Future<void> stop() async {
+    if (!_isEnabled) return;
     if (await _service.isRunning()) {
       _service.invoke('stopService');
     }
   }
 
   Future<void> setAppVisible(bool isVisible) async {
+    if (!_isEnabled) return;
     try {
       if (await _service.isRunning()) {
         _service.invoke('setAppVisible', {'visible': isVisible});
@@ -176,6 +189,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   var sending = false;
   var pollingRideRequests = false;
   var appIsVisible = false;
+  var isConfigured = false;
   var activeRequestIds = <String>{};
 
   service.on('configure').listen((event) {
@@ -183,6 +197,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     final baseUrl = event?['baseUrl'] as String?;
     final parsed = Uri.tryParse(baseUrl ?? '');
     if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
+      isConfigured = false;
       telemetryClient?.close(force: true);
       telemetryClient = null;
       return;
@@ -196,6 +211,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         receiveTimeout: const Duration(seconds: 10),
       ),
     );
+    isConfigured = true;
   });
   service.on('setAppVisible').listen((event) {
     appIsVisible = event?['visible'] == true;
@@ -203,7 +219,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
   Future<void> sendLocation() async {
     final client = telemetryClient;
-    if (sending || client == null) return;
+    if (!isConfigured || appIsVisible || sending || client == null) return;
 
     final token = await storage.read(key: StorageKeys.jwtToken);
     final driverId = await storage.read(key: StorageKeys.driverId);
@@ -259,7 +275,12 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
   Future<void> pollRideRequests() async {
     final client = telemetryClient;
-    if (appIsVisible || pollingRideRequests || client == null) return;
+    if (!isConfigured ||
+        appIsVisible ||
+        pollingRideRequests ||
+        client == null) {
+      return;
+    }
 
     final token = await storage.read(key: StorageKeys.jwtToken);
     final driverId = await storage.read(key: StorageKeys.driverId);
