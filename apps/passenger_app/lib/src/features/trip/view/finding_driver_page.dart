@@ -233,6 +233,13 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
     );
     if (distanceNum == null || durationNum == null) return;
 
+    // Once a direct request is sent, the passenger should see the focused
+    // waiting state rather than the previously selected driver card.
+    setState(() {
+      _selectedDriver = null;
+      _isViewingDriverProfile = false;
+    });
+
     final tripMetadata = BidSessionTrip(
       rideType: widget.rideType,
       fare: widget.fare,
@@ -545,119 +552,129 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                         constraints: BoxConstraints(
                           maxWidth: isWideScreen ? 600.0 : double.infinity,
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              child: GestureDetector(
-                                onTap: _handleCancel,
-                                child: Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.surface,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppTheme.borderSide,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        blurRadius: 15,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                        child: BlocBuilder<BookingBloc, BookingState>(
+                          builder: (context, state) {
+                            final showDriverDiscovery =
+                                state is NearestDriverFound;
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                  child: const Center(
-                                    child: Icon(
-                                      LucideIcons.arrow_left,
-                                      color: AppTheme.primaryColor,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (_nearbyDrivers.isNotEmpty)
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                  vertical: 4.0,
-                                ),
-                                child: Row(
-                                  children: _nearbyDrivers.map((driver) {
-                                    final isSelected =
-                                        _selectedDriver?.id == driver.id;
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                        right: 8.0,
-                                      ),
-                                      child: ChoiceChip(
-                                        avatar: Icon(
-                                          LucideIcons.map_pin,
-                                          size: 14.0,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : AppTheme.primaryColor,
+                                  child: GestureDetector(
+                                    onTap: _handleCancel,
+                                    child: Container(
+                                      width: 46,
+                                      height: 46,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.surface,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: AppTheme.borderSide,
                                         ),
-                                        label: Text(
-                                          '${driver.displayName} (${driver.distanceKm.toStringAsFixed(1)}km)',
-                                          style: TextStyle(
-                                            fontSize: 12.0,
-                                            fontWeight: isSelected
-                                                ? FontWeight.bold
-                                                : FontWeight.w500,
-                                            color: isSelected
-                                                ? Colors.white
-                                                : AppTheme.primaryColor,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            blurRadius: 15,
+                                            offset: const Offset(0, 4),
                                           ),
-                                        ),
-                                        selected: isSelected,
-                                        selectedColor: AppTheme.primaryColor,
-                                        backgroundColor: AppTheme.surface,
-                                        elevation: 2,
-                                        onSelected: (selected) {
-                                          if (selected) {
-                                            setState(() {
-                                              _selectedDriver = driver;
-                                              _isViewingDriverProfile = false;
-                                            });
-                                          }
-                                        },
+                                        ],
                                       ),
-                                    );
-                                  }).toList(),
+                                      child: const Center(
+                                        child: Icon(
+                                          LucideIcons.arrow_left,
+                                          color: AppTheme.primaryColor,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            if (_selectedDriver != null)
-                              DriverDropdownCardWidget(
-                                driver: _selectedDriver!,
-                                isNearestDriver:
-                                    _nearbyDrivers.isNotEmpty &&
-                                    _selectedDriver!.id ==
-                                        _nearbyDrivers.first.id,
-                                isProfileVisible: _isViewingDriverProfile,
-                                onViewFullProfilePressed: () =>
-                                    _showDriverProfile(_selectedDriver!),
-                                onProfileBackPressed: _hideDriverProfile,
-                                onSelectDriverPressed: () =>
-                                    _startDirectBooking(_selectedDriver!),
-                                onCloseDropdownPressed: () {
-                                  setState(() {
-                                    _selectedDriver = null;
-                                    _isViewingDriverProfile = false;
-                                  });
-                                },
-                              ),
-                          ],
+                                if (showDriverDiscovery &&
+                                    _nearbyDrivers.isNotEmpty)
+                                  SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: 4.0,
+                                    ),
+                                    child: Row(
+                                      children: _nearbyDrivers.map((driver) {
+                                        final isSelected =
+                                            _selectedDriver?.id == driver.id;
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 8.0,
+                                          ),
+                                          child: ChoiceChip(
+                                            avatar: Icon(
+                                              LucideIcons.map_pin,
+                                              size: 14.0,
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : AppTheme.primaryColor,
+                                            ),
+                                            label: Text(
+                                              '${driver.displayName} (${driver.distanceKm.toStringAsFixed(1)}km)',
+                                              style: TextStyle(
+                                                fontSize: 12.0,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w500,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : AppTheme.primaryColor,
+                                              ),
+                                            ),
+                                            selected: isSelected,
+                                            selectedColor:
+                                                AppTheme.primaryColor,
+                                            backgroundColor: AppTheme.surface,
+                                            elevation: 2,
+                                            onSelected: (selected) {
+                                              if (selected) {
+                                                setState(() {
+                                                  _selectedDriver = driver;
+                                                  _isViewingDriverProfile =
+                                                      false;
+                                                });
+                                              }
+                                            },
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                if (showDriverDiscovery &&
+                                    _selectedDriver != null)
+                                  DriverDropdownCardWidget(
+                                    driver: _selectedDriver!,
+                                    isNearestDriver:
+                                        _nearbyDrivers.isNotEmpty &&
+                                        _selectedDriver!.id ==
+                                            _nearbyDrivers.first.id,
+                                    isProfileVisible: _isViewingDriverProfile,
+                                    onViewFullProfilePressed: () =>
+                                        _showDriverProfile(_selectedDriver!),
+                                    onProfileBackPressed: _hideDriverProfile,
+                                    onSelectDriverPressed: () =>
+                                        _startDirectBooking(_selectedDriver!),
+                                    onCloseDropdownPressed: () {
+                                      setState(() {
+                                        _selectedDriver = null;
+                                        _isViewingDriverProfile = false;
+                                      });
+                                    },
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
