@@ -26,35 +26,38 @@ class CompleteTripPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const Spacer(),
-              _buildSuccessIcon(),
-              const SizedBox(height: 20),
-              const Text(
-                'Trip Completed!',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
-                ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                children: [
+                  _buildSuccessIcon(),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Trip Completed!',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Great job, driver!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSummaryCard(),
+                  const SizedBox(height: 24),
+                  _buildEndRideButton(context),
+                ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Great job, driver!',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                ),
-              ),
-              const SizedBox(height: 36),
-              _buildSummaryCard(),
-              const Spacer(),
-              _buildEndRideButton(context),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
         ),
       ),
@@ -63,16 +66,16 @@ class CompleteTripPage extends StatelessWidget {
 
   Widget _buildSuccessIcon() {
     return Container(
-      width: 90,
-      height: 90,
+      width: 76,
+      height: 76,
       decoration: BoxDecoration(
         color: AppTheme.complete.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Center(
         child: Container(
-          width: 62,
-          height: 62,
+          width: 54,
+          height: 54,
           decoration: BoxDecoration(
             color: AppTheme.complete,
             shape: BoxShape.circle,
@@ -85,7 +88,7 @@ class CompleteTripPage extends StatelessWidget {
 
   Widget _buildSummaryCard() {
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppTheme.neutralColor,
         borderRadius: BorderRadius.circular(24),
@@ -97,7 +100,7 @@ class CompleteTripPage extends StatelessWidget {
           const SizedBox(height: 14),
           _routeRow(LucideIcons.map_pin, 'Drop-off', dropoff),
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: AppTheme.borderSide),
           ),
           Row(
@@ -191,10 +194,10 @@ class CompleteTripPage extends StatelessWidget {
       ),
       child: Container(
         width: double.infinity,
-        height: 68,
+        height: 56,
         decoration: BoxDecoration(
           color: AppTheme.primaryColor,
-          borderRadius: BorderRadius.circular(34),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
               color: AppTheme.primaryColor.withValues(alpha: 0.28),
@@ -207,7 +210,7 @@ class CompleteTripPage extends StatelessWidget {
           child: Text(
             'COLLECT FARE',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: 0.8,

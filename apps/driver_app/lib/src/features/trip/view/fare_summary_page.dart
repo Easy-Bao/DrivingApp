@@ -41,7 +41,20 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     final cubit = BlocProvider.of<RideFlowCubit>(context);
     final passengerId = cubit.activePassengerId;
     final rideId = cubit.activeRideId;
-    final fare = await cubit.confirmCashPayment();
+    final passengerName = cubit.activePassengerName;
+    double? fare;
+    try {
+      fare = await cubit.confirmCashPayment();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _error =
+              'Unable to confirm payment. Check your connection and try again.';
+        });
+      }
+      return;
+    }
     if (!mounted) return;
 
     if (fare == null) {
@@ -54,15 +67,17 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     }
 
     if (passengerId == null || passengerId.isEmpty || rideId == null) {
+      cubit.reset();
       context.goNamed(HomeRoutes.dashboard);
       return;
     }
+    cubit.reset();
     context.pushReplacementNamed(
       TripRoutes.ratePassenger,
       extra: {
         'rideId': rideId,
         'passengerId': passengerId,
-        'passengerName': cubit.activePassengerName,
+        'passengerName': passengerName,
       },
     );
   }
@@ -72,33 +87,37 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              _buildHeader(),
-              const SizedBox(height: 28),
-              _buildFareHero(),
-              const SizedBox(height: 20),
-              _buildSummaryCard(),
-              const SizedBox(height: 12),
-              _buildPaymentMethod(),
-              if (_error != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppTheme.cancel,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              const Spacer(),
-              _buildConfirmButton(),
-              const SizedBox(height: 32),
-            ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 18),
+                  _buildFareHero(),
+                  const SizedBox(height: 14),
+                  _buildSummaryCard(),
+                  const SizedBox(height: 10),
+                  _buildPaymentMethod(),
+                  if (_error != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppTheme.cancel,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  _buildConfirmButton(),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -111,16 +130,16 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         const Text(
           'Fare Summary',
           style: TextStyle(
-            fontSize: 26,
+            fontSize: 24,
             fontWeight: FontWeight.w900,
             color: AppTheme.primaryColor,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(
           'Collect payment from passenger',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             color: AppTheme.primaryColor.withValues(alpha: 0.5),
           ),
         ),
@@ -131,7 +150,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   Widget _buildFareHero() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 30),
+      padding: const EdgeInsets.symmetric(vertical: 22),
       decoration: BoxDecoration(
         color: AppTheme.primaryColor,
         borderRadius: BorderRadius.circular(28),
@@ -141,24 +160,24 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           Text(
             'SERVER-CALCULATED FARE',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               color: Colors.white.withValues(alpha: 0.55),
               letterSpacing: 1.2,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Text(
             '₱${widget.fare.toStringAsFixed(2)}',
             style: const TextStyle(
-              fontSize: 52,
+              fontSize: 44,
               fontWeight: FontWeight.w900,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
@@ -190,7 +209,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
 
   Widget _buildSummaryCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.neutralColor,
         borderRadius: BorderRadius.circular(20),
@@ -199,17 +218,17 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       child: Column(
         children: [
           _line('Pickup', widget.pickup),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _line('Drop-off', widget.dropoff),
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
+            padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, color: AppTheme.borderSide),
           ),
           _line('Distance', '${widget.distance.toStringAsFixed(1)} km'),
           const SizedBox(height: 12),
           _line('Duration', widget.duration),
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
+            padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, color: AppTheme.borderSide),
           ),
           _line('Total', '₱${widget.fare.toStringAsFixed(2)}', isBold: true),
@@ -220,7 +239,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
 
   Widget _buildPaymentMethod() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.secondaryColor.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
@@ -249,12 +268,12 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: double.infinity,
-        height: 68,
+        height: 56,
         decoration: BoxDecoration(
           color: active
               ? AppTheme.complete
               : AppTheme.complete.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(34),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: active
               ? [
                   BoxShadow(
@@ -283,7 +302,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                     Text(
                       'Confirm Cash Collected',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                         letterSpacing: 0.3,

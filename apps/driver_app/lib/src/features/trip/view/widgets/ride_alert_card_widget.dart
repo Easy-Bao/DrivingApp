@@ -10,8 +10,9 @@ class RideAlertCardWidget extends StatelessWidget {
   final double fare;
   final String duration;
   final AnimationController timerController;
-  final VoidCallback onAcceptPressed;
-  final VoidCallback onDeclinePressed;
+  final bool isSubmitting;
+  final VoidCallback? onAcceptPressed;
+  final VoidCallback? onDeclinePressed;
 
   const RideAlertCardWidget({
     super.key,
@@ -23,6 +24,7 @@ class RideAlertCardWidget extends StatelessWidget {
     required this.timerController,
     required this.onAcceptPressed,
     required this.onDeclinePressed,
+    this.isSubmitting = false,
   });
 
   @override
@@ -33,13 +35,13 @@ class RideAlertCardWidget extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: AppTheme.primaryColor.withValues(alpha: 0.18),
             blurRadius: 40,
             offset: const Offset(0, -10),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -47,7 +49,7 @@ class RideAlertCardWidget extends StatelessWidget {
             child: Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 color: AppTheme.borderSide,
                 borderRadius: BorderRadius.circular(2),
@@ -59,8 +61,8 @@ class RideAlertCardWidget extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
+                  horizontal: 12,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
                   color: AppTheme.tertiaryColor.withValues(alpha: 0.15),
@@ -88,14 +90,14 @@ class RideAlertCardWidget extends StatelessWidget {
               Text(
                 '₱${fare.toStringAsFixed(2)}',
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
                   color: AppTheme.primaryColor,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           AnimatedBuilder(
             animation: timerController,
             builder: (context, _) {
@@ -105,17 +107,17 @@ class RideAlertCardWidget extends StatelessWidget {
                   value: 1.0 - timerController.value,
                   backgroundColor: AppTheme.neutralColor,
                   color: AppTheme.primaryColor,
-                  minHeight: 4,
+                  minHeight: 3,
                 ),
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppTheme.neutralColor,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: AppTheme.borderSide),
             ),
             child: Column(
@@ -127,12 +129,12 @@ class RideAlertCardWidget extends StatelessWidget {
                       size: 16,
                       color: AppTheme.primaryColor,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         pickup,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.primaryColor,
                         ),
@@ -146,7 +148,7 @@ class RideAlertCardWidget extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: SizedBox(
-                      height: 16,
+                      height: 12,
                       child: VerticalDivider(
                         width: 1,
                         color: AppTheme.borderSide,
@@ -161,12 +163,12 @@ class RideAlertCardWidget extends StatelessWidget {
                       size: 16,
                       color: AppTheme.tertiaryColor,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         dropoff,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.primaryColor.withValues(alpha: 0.6),
                         ),
@@ -175,10 +177,38 @@ class RideAlertCardWidget extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.route,
+                      size: 14,
+                      color: AppTheme.tertiaryColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${distance.toStringAsFixed(1)} km',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.tertiaryColor,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      duration,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.tertiaryColor,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -187,9 +217,9 @@ class RideAlertCardWidget extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.cancel,
                     side: const BorderSide(color: AppTheme.cancel, width: 1.5),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
                   child: const Text(
@@ -205,16 +235,28 @@ class RideAlertCardWidget extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text(
-                    'Accept Ride',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-                  ),
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Accept Ride',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
                 ),
               ),
             ],

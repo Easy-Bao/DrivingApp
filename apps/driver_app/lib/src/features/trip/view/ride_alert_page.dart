@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/trip/view/widgets/ride_alert_card_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -25,37 +26,42 @@ class _RideAlertPageState extends State<RideAlertPage>
   late final double _distance;
   late final double _fare;
   late final String _duration;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
 
-    final rideData = widget.rideData;
-    if (rideData == null) {
-      throw ArgumentError('Ride alert data must include a ride id.');
-    }
-    final rideId = rideData['id']?.toString().trim();
-    if (rideId == null || rideId.isEmpty) {
-      throw ArgumentError('Ride alert data must include a ride id.');
-    }
-    _rideId = rideId;
-    _pickup =
-        rideData['pickup_name'] as String? ?? 'Pickup location unavailable';
-    _dropoff = rideData['dropoff_name'] as String? ?? 'Destination unavailable';
-    _distance = (rideData['distance'] as num?)?.toDouble() ?? 0.0;
-    _fare = (rideData['fare'] as num?)?.toDouble() ?? 0.0;
-    _duration = rideData['duration'] as String? ?? 'Duration unavailable';
+    final rideData = widget.rideData ?? const <String, dynamic>{};
+    _rideId = _readText(rideData['id']);
+    _pickup = _readText(
+      rideData['pickup_name'],
+      fallback: 'Pickup location unavailable',
+    );
+    _dropoff = _readText(
+      rideData['dropoff_name'],
+      fallback: 'Destination unavailable',
+    );
+    _distance = _readNumber(rideData['distance']);
+    _fare = _readNumber(rideData['fare']);
+    _duration = _readText(
+      rideData['duration'],
+      fallback: 'Duration unavailable',
+    );
 
     _timerCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 15),
-    )..forward();
-    _autoDecline = Timer(const Duration(seconds: 15), () {
-      if (mounted) {
-        CustomToast.show(context, 'Ride request expired', isError: true);
-        context.pop();
-      }
-    });
+    );
+    if (_rideId.isNotEmpty) {
+      _timerCtrl.forward();
+      _autoDecline = Timer(const Duration(seconds: 15), () {
+        if (mounted) {
+          CustomToast.show(context, 'Ride request expired', isError: true);
+          context.pop();
+        }
+      });
+    }
   }
 
   @override
@@ -66,21 +72,43 @@ class _RideAlertPageState extends State<RideAlertPage>
   }
 
   Future<void> _accept() async {
+    if (_rideId.isEmpty || _isSubmitting) {
+      CustomToast.show(
+        context,
+        'Ride request is no longer available.',
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
     _autoDecline?.cancel();
 
-    final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
-      sessionId: _rideId,
-      offerPrice: _fare,
-      proposedFare: _fare,
-    );
+    var submitted = false;
+    try {
+      submitted = await Modular.get<BiddingRemoteDataSource>().placeBid(
+        sessionId: _rideId,
+        offerPrice: _fare,
+        proposedFare: _fare,
+      );
 
-    if (mounted) {
-      if (success) {
+      if (!mounted) return;
+      if (submitted) {
         CustomToast.show(context, 'Offer submitted! Waiting for passenger...');
+        context.pop();
       } else {
+        setState(() => _isSubmitting = false);
         CustomToast.show(context, 'Failed to submit offer.', isError: true);
       }
-      context.pop();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        CustomToast.show(
+          context,
+          'Unable to submit the offer. Please try again.',
+          isError: true,
+        );
+      }
     }
   }
 
@@ -92,32 +120,46 @@ class _RideAlertPageState extends State<RideAlertPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withValues(alpha: 0.4),
+      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.34),
       body: SafeArea(
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: LayoutBuilder(
-            builder: (ctx, constraints) {
-              final isWide = constraints.maxWidth > 600.0;
-              return ConstrainedBox(
+        child: LayoutBuilder(
+          builder: (ctx, constraints) {
+            final isWide = constraints.maxWidth > 600.0;
+            return Align(
+              alignment: Alignment.bottomCenter,
+              child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: isWide ? 600.0 : double.infinity,
+                  maxHeight: constraints.maxHeight * 0.76,
                 ),
-                child: RideAlertCardWidget(
-                  pickup: _pickup,
-                  dropoff: _dropoff,
-                  distance: _distance,
-                  fare: _fare,
-                  duration: _duration,
-                  timerController: _timerCtrl,
-                  onAcceptPressed: _accept,
-                  onDeclinePressed: _decline,
+                child: SingleChildScrollView(
+                  child: RideAlertCardWidget(
+                    pickup: _pickup,
+                    dropoff: _dropoff,
+                    distance: _distance,
+                    fare: _fare,
+                    duration: _duration,
+                    timerController: _timerCtrl,
+                    isSubmitting: _isSubmitting,
+                    onAcceptPressed: _accept,
+                    onDeclinePressed: _decline,
+                  ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
+}
+
+String _readText(Object? value, {String fallback = ''}) {
+  final text = value?.toString().trim();
+  return text == null || text.isEmpty ? fallback : text;
+}
+
+double _readNumber(Object? value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? 0;
 }

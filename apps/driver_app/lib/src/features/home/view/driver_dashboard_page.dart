@@ -91,7 +91,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
     _locationSubscription?.cancel();
-    _liveMapBloc?.close();
     super.dispose();
   }
 
@@ -567,7 +566,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       }
       if (!mounted) return;
 
-      context.pushNamed(
+      context.pushReplacementNamed(
         TripRoutes.fareSummary,
         extra: {
           'pickup': trip['pickup_name'] ?? 'Pickup',

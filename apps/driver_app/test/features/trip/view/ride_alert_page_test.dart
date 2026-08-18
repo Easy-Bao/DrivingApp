@@ -25,4 +25,14 @@ void main() {
     expect(find.text('Accept Ride'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 100));
   });
+
+  testWidgets('keeps malformed ride data inside a safe fallback state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: RideAlertPage()));
+
+    expect(find.text('New Ride Request'), findsOneWidget);
+    expect(find.text('Pickup location unavailable'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
