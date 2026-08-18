@@ -4,4 +4,3 @@ export 'package:shared_ui/src/transitions/custom_page_transition.dart';
 export 'package:shared_ui/src/widgets/app_network_image_widget.dart';
 export 'package:shared_ui/src/widgets/custom_toast.dart';
 export 'package:shared_ui/src/widgets/location_permission_page.dart';
-export 'package:shared_ui/src/widgets/skeleton_list_widget.dart';

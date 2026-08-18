@@ -29,6 +29,7 @@ import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -116,16 +117,34 @@ class _HomePageState extends State<HomePage> {
     return BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
       builder: (context, state) {
         if (state.isLoading) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: List.generate(
-                3,
-                (_) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _buildShimmerChip(),
-                ),
+          return const Skeletonizer.zone(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Bone.button(
+                      width: 90,
+                      height: 38,
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Bone.button(
+                      width: 90,
+                      height: 38,
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                    ),
+                  ),
+                  Bone.button(
+                    width: 90,
+                    height: 38,
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                  ),
+                ],
               ),
             ),
           );
@@ -354,12 +373,27 @@ class _HomePageState extends State<HomePage> {
           prev.isLoading != curr.isLoading,
       builder: (context, state) {
         if (state.isLoading) {
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 20),
-            itemCount: state.recentLocations.isEmpty
-                ? 3
-                : state.recentLocations.length,
-            itemBuilder: (_, _) => _buildShimmerListItem(),
+          return Skeletonizer.zone(
+            child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 20),
+              physics: const BouncingScrollPhysics(),
+              itemCount: state.recentLocations.isEmpty
+                  ? 3
+                  : state.recentLocations.length,
+              itemBuilder: (_, _) => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                child: Row(
+                  children: [
+                    Bone.square(
+                      size: 36,
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(child: Bone.multiText(lines: 2, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ),
           );
         }
         if (state.recentLocations.isEmpty) {
@@ -546,60 +580,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildShimmerChip() {
-    return Container(
-      width: 90,
-      height: 38,
-      decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-    );
-  }
-
-  Widget _buildShimmerListItem() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 13,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppTheme.neutralColor,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  height: 11,
-                  width: 140,
-                  decoration: BoxDecoration(
-                    color: AppTheme.neutralColor.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

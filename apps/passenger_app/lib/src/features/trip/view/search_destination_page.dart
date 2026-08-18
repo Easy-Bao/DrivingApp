@@ -9,7 +9,7 @@ import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class SearchDestinationPage extends StatefulWidget {
   final String? preselectedRideType;
@@ -624,14 +624,49 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                       child:
                                           (_isSearching ||
                                               (_isLoadingNearby && !hasQuery))
-                                          ? SkeletonListWidget(
-                                              padding: EdgeInsets.fromLTRB(
-                                                16,
-                                                4,
-                                                16,
-                                                bottomPadding + 16,
+                                          ? Skeletonizer.zone(
+                                              child: ListView.separated(
+                                                padding: EdgeInsets.fromLTRB(
+                                                  16,
+                                                  4,
+                                                  16,
+                                                  bottomPadding + 16,
+                                                ),
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(
+                                                      parent:
+                                                          BouncingScrollPhysics(),
+                                                    ),
+                                                itemCount: 8,
+                                                separatorBuilder: (_, _) =>
+                                                    const Divider(
+                                                      height: 1,
+                                                      color:
+                                                          AppTheme.borderSide,
+                                                    ),
+                                                itemBuilder: (_, _) =>
+                                                    const ListTile(
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 4,
+                                                          ),
+                                                      leading: Bone.circle(
+                                                        size: 44,
+                                                      ),
+                                                      title: Bone.text(
+                                                        width: 130,
+                                                        fontSize: 15,
+                                                      ),
+                                                      subtitle: Bone.text(
+                                                        width: 90,
+                                                        fontSize: 13,
+                                                      ),
+                                                      trailing: Bone.icon(
+                                                        size: 18,
+                                                      ),
+                                                    ),
                                               ),
-                                              itemCount: 8,
                                             )
                                           : displayList.isEmpty
                                           ? Center(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class HomeLocationRowWidget extends StatelessWidget {
   const HomeLocationRowWidget({
@@ -26,7 +27,15 @@ class HomeLocationRowWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final Widget content;
     if (isAccessChecking || isAddressLoading) {
-      content = const _LocationRowShimmer();
+      content = const Skeletonizer.zone(
+        child: Row(
+          children: [
+            Bone.icon(size: 14),
+            SizedBox(width: 6),
+            Bone.text(width: 140, fontSize: 13),
+          ],
+        ),
+      );
     } else if (!hasLocationAccess) {
       content = const _LocationRowLabel(
         label: 'Turn on location to set pickup',
@@ -78,28 +87,6 @@ class _LocationRowLabel extends StatelessWidget {
         const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
         const SizedBox(width: 6),
         if (expands) Expanded(child: labelWidget) else labelWidget,
-      ],
-    );
-  }
-}
-
-class _LocationRowShimmer extends StatelessWidget {
-  const _LocationRowShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
-        const SizedBox(width: 6),
-        Container(
-          width: 140,
-          height: 12,
-          decoration: BoxDecoration(
-            color: AppTheme.neutralColor,
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
       ],
     );
   }

@@ -10,7 +10,7 @@ import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class PassengerViewAllActivityPage extends StatefulWidget {
   const PassengerViewAllActivityPage({super.key});
@@ -159,6 +159,58 @@ class _PassengerViewAllActivityPageState
     );
   }
 
+  Widget _buildLoadingState() {
+    return Skeletonizer.zone(
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        physics: const BouncingScrollPhysics(),
+        itemCount: 6,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (index.isEven) ...[
+                  const Bone.text(width: 86, fontSize: 13),
+                  const SizedBox(height: 8),
+                ],
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.neutralColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppTheme.borderSide.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Bone.circle(size: 40),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Bone.text(width: 140, fontSize: 15),
+                            SizedBox(height: 8),
+                            Bone.text(width: 190, fontSize: 13),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Bone.text(width: 52, fontSize: 11),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -190,7 +242,7 @@ class _PassengerViewAllActivityPageState
         ],
       ),
       body: _isActivityDataLoading
-          ? const SkeletonListWidget()
+          ? _buildLoadingState()
           : _networkErrorMessage.isNotEmpty
           ? Center(
               child: Padding(

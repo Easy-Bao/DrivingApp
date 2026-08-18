@@ -11,7 +11,7 @@ import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/view/widgets/inbox_empty_state_widget.dart';
 import 'package:passenger_app/src/features/inbox/view/widgets/inbox_notification_card_widget.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class InboxPage extends StatefulWidget {
   const InboxPage({super.key});
@@ -40,6 +40,71 @@ class _InboxPageState extends State<InboxPage> {
     }
   }
 
+  Widget _buildLoadingState() {
+    return Skeletonizer.zone(
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Bone.text(width: 100, fontSize: 32),
+                  SizedBox(height: 4),
+                  Bone.text(width: 160, fontSize: 15),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildLoadingNotification(),
+                childCount: 5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingNotification() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.neutralColor.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.borderSide.withValues(alpha: 0.2)),
+        ),
+        child: const Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Bone.circle(size: 48),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Bone.text(width: 130, fontSize: 15),
+                  SizedBox(height: 4),
+                  Bone.text(width: 180, fontSize: 13),
+                ],
+              ),
+            ),
+            SizedBox(width: 12),
+            Bone.text(width: 48, fontSize: 11),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<InboxCubit>.value(
@@ -50,7 +115,7 @@ class _InboxPageState extends State<InboxPage> {
           child: BlocBuilder<InboxCubit, InboxState>(
             builder: (context, state) {
               if (state is InboxLoadingState || state is InboxInitialState) {
-                return const SkeletonListWidget(hasTrailingIcon: false);
+                return _buildLoadingState();
               }
 
               final notifications = state is InboxLoadedState

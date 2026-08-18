@@ -10,6 +10,7 @@ import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class PassengerActivityPage extends StatefulWidget {
   const PassengerActivityPage({super.key});
@@ -471,15 +472,63 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
   }
 
   Widget _buildLoadingState() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      itemCount: 4,
-      itemBuilder: (_, _) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        height: 140,
+    return Skeletonizer.zone(
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Bone.text(width: 120, fontSize: 32),
+                  SizedBox(height: 4),
+                  Bone.text(width: 190, fontSize: 15),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildLoadingRideCard(),
+                childCount: 4,
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 36)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingRideCard() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.neutralColor.withValues(alpha: 0.5),
+          color: AppTheme.neutralColor.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.borderSide.withValues(alpha: 0.2)),
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Bone.circle(size: 40),
+                SizedBox(width: 14),
+                Expanded(child: Bone.text(width: 150, fontSize: 15)),
+                SizedBox(width: 12),
+                Bone.text(width: 52, fontSize: 11),
+              ],
+            ),
+            SizedBox(height: 16),
+            Bone.multiText(lines: 2, fontSize: 13),
+          ],
         ),
       ),
     );
