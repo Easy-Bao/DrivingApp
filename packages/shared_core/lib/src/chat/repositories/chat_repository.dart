@@ -48,6 +48,36 @@ class ChatRepository implements IChatRepository {
   }
 
   @override
+  Future<Either<Failure, void>> initializeChatRoom({
+    required String roomId,
+    required String passengerId,
+    required String driverId,
+  }) async {
+    if (roomId.trim().isEmpty ||
+        passengerId.trim().isEmpty ||
+        driverId.trim().isEmpty) {
+      return const Left(ValidationFailure('Chat participants are required.'));
+    }
+
+    try {
+      final response = await clientDio.post<void>(
+        '/api/v1/chat/rooms',
+        data: {
+          'roomId': roomId,
+          'passengerId': passengerId,
+          'driverId': driverId,
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return const Right(null);
+      }
+      return const Left(ServerFailure('Unable to initialize chat room.'));
+    } catch (_) {
+      return const Left(NetworkFailure('Unable to initialize chat room.'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> sendChatMessage(String text) async {
     if (!isSessionConnected) {
       return const Left(NetworkFailure('Chat session is disconnected.'));

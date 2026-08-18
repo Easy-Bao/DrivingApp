@@ -75,6 +75,7 @@ class ChatCubit extends Cubit<ChatState> {
           );
 
           emit(state.copyWith(isConnecting: false, isConnected: true));
+          unawaited(_loadHistory(roomId));
         },
       );
     } catch (_) {
@@ -86,6 +87,15 @@ class ChatCubit extends Cubit<ChatState> {
         ),
       );
     }
+  }
+
+  Future<void> _loadHistory(String roomId) async {
+    final result = await _chatRepository.fetchRoomMessages(roomId);
+    if (isClosed) return;
+    result.fold(
+      (failure) => emit(state.copyWith(errorMessage: failure.message)),
+      (messages) => emit(state.copyWith(messages: messages)),
+    );
   }
 
   Future<bool> sendMessage(String text) async {

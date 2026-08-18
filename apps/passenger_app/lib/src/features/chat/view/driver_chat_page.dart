@@ -16,6 +16,7 @@ import 'package:shared_core/shared_core.dart';
 class DriverChatPage extends StatefulWidget {
   final String? roomId;
   final String? userId;
+  final String? peerId;
   final String? peerName;
   final String? token;
 
@@ -23,6 +24,7 @@ class DriverChatPage extends StatefulWidget {
     super.key,
     this.roomId,
     this.userId,
+    this.peerId,
     this.peerName,
     this.token,
   });
@@ -131,6 +133,15 @@ class _DriverChatPageState extends State<DriverChatPage>
   Future<void> _connectChat(String roomId, String userId) async {
     final token =
         widget.token ?? await Modular.get<SecureSessionService>().readToken();
+    final peerId = widget.peerId;
+    if (peerId != null && peerId.isNotEmpty) {
+      final initialized = await _chatCubit.initializeChatRoom(
+        roomId: roomId,
+        passengerId: userId,
+        driverId: peerId,
+      );
+      if (!initialized || !mounted) return;
+    }
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
       roomId: roomId,
       userId: userId,
@@ -140,6 +151,13 @@ class _DriverChatPageState extends State<DriverChatPage>
       wsUri: wsUri,
       token: token,
     );
+  }
+
+  Future<void> _retryConnection() async {
+    final roomId = widget.roomId;
+    final userId = widget.userId;
+    if (roomId == null || userId == null) return;
+    await _connectChat(roomId, userId);
   }
 
   @override
@@ -184,7 +202,10 @@ class _DriverChatPageState extends State<DriverChatPage>
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _chatCubit,
-      child: BlocBuilder<ChatCubit, ChatState>(
+      child: BlocConsumer<ChatCubit, ChatState>(
+        listener: (context, state) {
+          if (state.messages.isNotEmpty) _scrollDown();
+        },
         builder: (context, state) {
           final chatHistoryMessages = state.messages;
 
@@ -271,19 +292,23 @@ class _DriverChatPageState extends State<DriverChatPage>
               children: [
                 const Divider(height: 1, color: AppTheme.borderSide),
                 Expanded(
-                  child: ListView.builder(
-                    controller: _scrollCtrl,
-                    padding: const EdgeInsets.all(16),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount:
-                        chatHistoryMessages.length + (_driverTyping ? 1 : 0),
-                    itemBuilder: (ctx, i) {
-                      if (i == chatHistoryMessages.length && _driverTyping) {
-                        return _buildTyping();
-                      }
-                      return _buildBubble(chatHistoryMessages[i]);
-                    },
-                  ),
+                  child: chatHistoryMessages.isEmpty
+                      ? _buildEmptyState(state)
+                      : ListView.builder(
+                          controller: _scrollCtrl,
+                          padding: const EdgeInsets.all(16),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount:
+                              chatHistoryMessages.length +
+                              (_driverTyping ? 1 : 0),
+                          itemBuilder: (ctx, i) {
+                            if (i == chatHistoryMessages.length &&
+                                _driverTyping) {
+                              return _buildTyping();
+                            }
+                            return _buildBubble(chatHistoryMessages[i]);
+                          },
+                        ),
                 ),
                 if (!state.isRoomLocked)
                   SizedBox(
@@ -390,6 +415,48 @@ class _DriverChatPageState extends State<DriverChatPage>
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ChatState state) {
+    if (state.isConnecting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (!state.isConnected && state.errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                LucideIcons.message_circle_off,
+                color: AppTheme.cancel,
+                size: 32,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                state.errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.65),
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: _retryConnection,
+                child: const Text('Try again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Center(
+      child: Text(
+        'No messages yet. Start the conversation.',
+        style: TextStyle(color: AppTheme.primaryColor.withValues(alpha: 0.5)),
       ),
     );
   }

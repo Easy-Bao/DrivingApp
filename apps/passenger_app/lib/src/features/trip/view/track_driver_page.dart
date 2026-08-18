@@ -514,10 +514,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                                     .readPassengerId() ??
                                 '';
                             final dName = state is TrackDriverInProgress
-                                ? state.driverName
-                                : (widget.ride.driverName.isNotEmpty
-                                      ? widget.ride.driverName
-                                      : 'Driver');
+                                ? (state.driverName.isNotEmpty
+                                      ? state.driverName
+                                      : widget.ride.displayDriverName)
+                                : widget.ride.displayDriverName;
                             if (context.mounted) {
                               setState(() {
                                 _unreadChatMessagesCount = 0;
@@ -527,6 +527,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                                 extra: {
                                   'roomId': widget.ride.id,
                                   'userId': passengerId,
+                                  'peerId': widget.ride.driverId,
                                   'peerName': dName,
                                 },
                               );

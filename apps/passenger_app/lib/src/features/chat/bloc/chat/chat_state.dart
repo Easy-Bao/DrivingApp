@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:shared_core/shared_core.dart';
 
 class ChatState extends Equatable {
+  static const Object _unset = Object();
+
   final List<ChatMessage> messages;
   final bool isConnecting;
   final bool isConnected;
@@ -24,7 +26,7 @@ class ChatState extends Equatable {
     bool? isConnected,
     bool? isRoomLocked,
     String? lockReasonMessage,
-    String? errorMessage,
+    Object? errorMessage = _unset,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
@@ -32,7 +34,9 @@ class ChatState extends Equatable {
       isConnected: isConnected ?? this.isConnected,
       isRoomLocked: isRoomLocked ?? this.isRoomLocked,
       lockReasonMessage: lockReasonMessage ?? this.lockReasonMessage,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: identical(errorMessage, _unset)
+          ? this.errorMessage
+          : errorMessage as String?,
     );
   }
 

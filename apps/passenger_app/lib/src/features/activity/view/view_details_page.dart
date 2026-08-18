@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -73,33 +72,25 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
       return;
     }
 
-    final driverId = retrievedRideData['driver_id'] as String?;
-    if (driverId == null || driverId.isEmpty) return;
+    final driverId = SafeParse.toStringValue(retrievedRideData['driver_id']);
+    if (driverId.isEmpty) return;
 
     try {
-      final initializeRoomResponse = await Modular.get<Dio>().post<void>(
-        '/api/v1/chat/rooms',
-        data: {
-          'roomId': ride.id,
-          'driverId': driverId,
-          'passengerId': _passengerId,
-        },
-      );
-
-      if (initializeRoomResponse.statusCode == 201 ||
-          initializeRoomResponse.statusCode == 200) {
-        if (mounted) {
-          unawaited(
-            context.pushNamed(
-              ChatRoutes.driverChat,
-              extra: {
-                'roomId': ride.id,
-                'userId': _passengerId,
-                'peerName': retrievedRideData['driver_name'] ?? 'Driver',
-              },
-            ),
-          );
-        }
+      if (mounted) {
+        unawaited(
+          context.pushNamed(
+            ChatRoutes.driverChat,
+            extra: {
+              'roomId': ride.id,
+              'userId': _passengerId,
+              'peerId': driverId,
+              'peerName': SafeParse.toStringValue(
+                retrievedRideData['driver_name'],
+                'Driver',
+              ),
+            },
+          ),
+        );
       }
     } catch (_) {}
   }

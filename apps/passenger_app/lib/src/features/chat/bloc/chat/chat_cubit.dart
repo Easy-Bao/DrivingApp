@@ -15,6 +15,24 @@ class ChatCubit extends Cubit<ChatState> {
     : _chatRepository = chatRepository,
       super(const ChatState());
 
+  Future<bool> initializeChatRoom({
+    required String roomId,
+    required String passengerId,
+    required String driverId,
+  }) async {
+    final result = await _chatRepository.initializeChatRoom(
+      roomId: roomId,
+      passengerId: passengerId,
+      driverId: driverId,
+    );
+    return result.fold((failure) {
+      if (!isClosed) {
+        emit(state.copyWith(errorMessage: failure.message));
+      }
+      return false;
+    }, (_) => true);
+  }
+
   Future<void> connectToChatRoom({
     required String roomId,
     required Uri wsUri,
@@ -70,6 +88,7 @@ class ChatCubit extends Cubit<ChatState> {
           );
 
           emit(state.copyWith(isConnecting: false, isConnected: true));
+          unawaited(_loadHistory(roomId));
         },
       );
     } catch (_) {
@@ -81,6 +100,15 @@ class ChatCubit extends Cubit<ChatState> {
         ),
       );
     }
+  }
+
+  Future<void> _loadHistory(String roomId) async {
+    final result = await _chatRepository.fetchRoomMessages(roomId);
+    if (isClosed) return;
+    result.fold(
+      (failure) => emit(state.copyWith(errorMessage: failure.message)),
+      (messages) => emit(state.copyWith(messages: messages)),
+    );
   }
 
   Future<bool> sendMessage(String text) async {
