@@ -29,9 +29,13 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     LoadActivityEvent event,
     Emitter<ActivityState> emit,
   ) async {
-    if (state is! ActivityLoaded) {
-      emit(const ActivityLoading());
+    var existingRideCount = 0;
+    final currentState = state;
+    if (currentState is ActivityLoaded) {
+      existingRideCount =
+          currentState.past.length + currentState.upcoming.length;
     }
+    emit(ActivityLoading(existingRideCount: existingRideCount));
     await _fetchAndEmit(event.passengerId, emit);
   }
 

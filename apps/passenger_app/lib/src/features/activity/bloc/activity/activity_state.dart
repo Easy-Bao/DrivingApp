@@ -12,7 +12,14 @@ final class ActivityInitial extends ActivityState {
 }
 
 final class ActivityLoading extends ActivityState {
-  const ActivityLoading();
+  final int existingRideCount;
+
+  const ActivityLoading({this.existingRideCount = 0});
+
+  bool get hasExistingRides => existingRideCount > 0;
+
+  @override
+  List<Object?> get props => [existingRideCount];
 }
 
 final class ActivityLoaded extends ActivityState {

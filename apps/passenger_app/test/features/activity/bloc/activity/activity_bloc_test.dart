@@ -69,7 +69,11 @@ void main() {
       },
       act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
       expect: () => [
-        isA<ActivityLoading>(),
+        isA<ActivityLoading>().having(
+          (state) => state.existingRideCount,
+          'existing ride count',
+          0,
+        ),
         isA<ActivityLoaded>()
             .having((s) => s.past.length, 'past count', 1)
             .having((s) => s.past.first.id, 'past first id', 'ride-1')
@@ -88,7 +92,11 @@ void main() {
       },
       act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
       expect: () => [
-        isA<ActivityLoading>(),
+        isA<ActivityLoading>().having(
+          (state) => state.existingRideCount,
+          'existing ride count',
+          0,
+        ),
         isA<ActivityError>().having(
           (s) => s.message,
           'error message',
@@ -107,10 +115,39 @@ void main() {
       },
       act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
       expect: () => [
-        isA<ActivityLoading>(),
+        isA<ActivityLoading>().having(
+          (state) => state.existingRideCount,
+          'existing ride count',
+          0,
+        ),
         isA<ActivityLoaded>()
             .having((s) => s.past, 'past', isEmpty)
             .having((s) => s.upcoming, 'upcoming', isEmpty),
+      ],
+    );
+
+    blocTest<ActivityBloc, ActivityState>(
+      'reports existing rides while refreshing populated activity',
+      build: () {
+        when(
+          () => repo.fetchRideHistory(any()),
+        ).thenAnswer((_) async => const Right([]));
+        return _makeCubit(repo);
+      },
+      seed: () => const ActivityLoaded(
+        past: [completedRide],
+        upcoming: [requestedRide],
+      ),
+      act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
+      expect: () => [
+        isA<ActivityLoading>().having(
+          (state) => state.existingRideCount,
+          'existing ride count',
+          2,
+        ),
+        isA<ActivityLoaded>()
+            .having((state) => state.past, 'past', isEmpty)
+            .having((state) => state.upcoming, 'upcoming', isEmpty),
       ],
     );
   });

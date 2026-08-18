@@ -41,57 +41,22 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                 return _buildGuestEmptyState();
               }
               if (state is ActivityLoading) {
-                return _buildLoadingState();
+                return state.hasExistingRides
+                    ? _buildLoadingState(itemCount: state.existingRideCount)
+                    : _buildEmptyActivityState();
               }
               if (state is ActivityError) {
                 return _buildErrorState(state.message);
+              }
+              if (state is ActivityInitial) {
+                return _buildEmptyActivityState();
               }
               if (state is ActivityLoaded) {
                 final activeRides = state.upcoming;
                 final pastRides = state.past;
 
                 if (activeRides.isEmpty && pastRides.isEmpty) {
-                  return CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(
-                          24.0,
-                          0.0,
-                          24.0,
-                          16.0,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildListDelegate([
-                            const Text(
-                              'Activity',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.primaryColor,
-                                letterSpacing: -1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Tap a ride to see details',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                            ),
-                          ]),
-                        ),
-                      ),
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _buildEmptyState(isGuest: false),
-                      ),
-                    ],
-                  );
+                  return _buildEmptyActivityState();
                 }
 
                 return CustomScrollView(
@@ -471,7 +436,44 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildEmptyActivityState() {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              const Text(
+                'Activity',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryColor,
+                  letterSpacing: -1.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Tap a ride to see details',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                ),
+              ),
+            ]),
+          ),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _buildEmptyState(isGuest: false),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingState({required int itemCount}) {
     return Skeletonizer.zone(
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -494,7 +496,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _buildLoadingRideCard(),
-                childCount: 4,
+                childCount: itemCount,
               ),
             ),
           ),

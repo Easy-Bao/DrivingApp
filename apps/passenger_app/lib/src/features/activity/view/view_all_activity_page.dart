@@ -159,12 +159,12 @@ class _PassengerViewAllActivityPageState
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState({required int itemCount}) {
     return Skeletonizer.zone(
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         physics: const BouncingScrollPhysics(),
-        itemCount: 6,
+        itemCount: itemCount,
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -241,8 +241,8 @@ class _PassengerViewAllActivityPageState
           const SizedBox(width: 8),
         ],
       ),
-      body: _isActivityDataLoading
-          ? _buildLoadingState()
+      body: _isActivityDataLoading && _retrievedRidesList.isNotEmpty
+          ? _buildLoadingState(itemCount: _retrievedRidesList.length)
           : _networkErrorMessage.isNotEmpty
           ? Center(
               child: Padding(
