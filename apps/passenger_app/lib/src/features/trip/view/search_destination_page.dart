@@ -923,6 +923,10 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                               border: InputBorder.none,
                                               enabledBorder: InputBorder.none,
                                               focusedBorder: InputBorder.none,
+                                              disabledBorder: InputBorder.none,
+                                              errorBorder: InputBorder.none,
+                                              focusedErrorBorder:
+                                                  InputBorder.none,
                                               isDense: true,
                                               contentPadding: EdgeInsets.zero,
                                             ),

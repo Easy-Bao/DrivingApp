@@ -266,6 +266,11 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                           fontSize: 15,
                         ),
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
                       ),
                       style: const TextStyle(
                         color: AppTheme.primaryColor,

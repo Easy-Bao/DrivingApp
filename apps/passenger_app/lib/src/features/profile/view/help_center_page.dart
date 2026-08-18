@@ -155,6 +155,11 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                     color: AppTheme.primaryColor.withValues(alpha: 0.4),
                   ),
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
                   icon: Icon(
                     LucideIcons.search,
                     size: 18,
