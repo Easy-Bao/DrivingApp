@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:passenger_app/src/features/trip/view/widgets/driver_dropdown_card_widget.dart';
+import 'package:shared_core/shared_core.dart';
+
+const driver = DriverModel(
+  id: 'driver-1',
+  name: 'Demo Driver',
+  vehicleType: 'Sedan',
+  plateNumber: 'ABC-123',
+  rating: 4.8,
+  lat: 7.83,
+  lng: 123.44,
+  distanceKm: 0.4,
+  etaMinutes: 3,
+  score: 0.9,
+);
+
+void main() {
+  testWidgets('opens the driver profile inside the selected card', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: _DriverCardHarness()));
+
+    expect(find.text('View Full Profile'), findsOneWidget);
+
+    await tester.tap(find.text('View Full Profile'));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('Driver profile'), findsOneWidget);
+    expect(find.byKey(const ValueKey('driver-profile-back')), findsOneWidget);
+    expect(find.text('View Full Profile'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('driver-profile-back')));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('View Full Profile'), findsOneWidget);
+  });
+}
+
+class _DriverCardHarness extends StatefulWidget {
+  const _DriverCardHarness();
+
+  @override
+  State<_DriverCardHarness> createState() => _DriverCardHarnessState();
+}
+
+class _DriverCardHarnessState extends State<_DriverCardHarness> {
+  bool _isProfileVisible = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: DriverDropdownCardWidget(
+        driver: driver,
+        isNearestDriver: true,
+        isProfileVisible: _isProfileVisible,
+        onViewFullProfilePressed: () {
+          setState(() => _isProfileVisible = true);
+        },
+        onProfileBackPressed: () {
+          setState(() => _isProfileVisible = false);
+        },
+        onSelectDriverPressed: () {},
+        onCloseDropdownPressed: () {},
+      ),
+    );
+  }
+}

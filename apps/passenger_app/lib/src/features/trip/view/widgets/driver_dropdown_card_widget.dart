@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
 
 class DriverDropdownCardWidget extends StatefulWidget {
   final DriverModel driver;
   final bool isNearestDriver;
+  final bool isProfileVisible;
   final VoidCallback onViewFullProfilePressed;
+  final VoidCallback onProfileBackPressed;
   final VoidCallback onSelectDriverPressed;
   final VoidCallback onCloseDropdownPressed;
 
@@ -16,7 +19,9 @@ class DriverDropdownCardWidget extends StatefulWidget {
     super.key,
     required this.driver,
     required this.isNearestDriver,
+    this.isProfileVisible = false,
     required this.onViewFullProfilePressed,
+    required this.onProfileBackPressed,
     required this.onSelectDriverPressed,
     required this.onCloseDropdownPressed,
   });
@@ -96,288 +101,340 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 56.0,
-                          height: 56.0,
-                          decoration: BoxDecoration(
-                            color: AppTheme.secondaryColor.withValues(
-                              alpha: 0.2,
-                            ),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: widget.isNearestDriver
-                                  ? AppTheme.primaryColor
-                                  : Colors.transparent,
-                              width: 2.0,
-                            ),
-                          ),
-                          child: const Icon(
-                            LucideIcons.user,
-                            color: AppTheme.primaryColor,
-                            size: 28.0,
-                          ),
-                        ),
-                        const SizedBox(width: 14.0),
-                        Expanded(
-                          child: Column(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 160),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    layoutBuilder: (currentChild, _) => ClipRect(
+                      child: currentChild ?? const SizedBox.shrink(),
+                    ),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.12, 0),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    ),
+                    child: widget.isProfileVisible
+                        ? DriverProfileDetailsSheet(
+                            key: ValueKey('driver-profile-${widget.driver.id}'),
+                            driverId: widget.driver.id,
+                            driverName: widget.driver.displayName,
+                            vehicleType: widget.driver.vehicleType.isEmpty
+                                ? 'Vehicle details unavailable'
+                                : widget.driver.vehicleType,
+                            plateNumber: widget.driver.plateNumber.isEmpty
+                                ? '—'
+                                : widget.driver.plateNumber,
+                            rating: widget.driver.rating.toStringAsFixed(1),
+                            onboardPassengerCount:
+                                widget.driver.onboardPassengerCount,
+                            embedded: true,
+                            onBackPressed: widget.onProfileBackPressed,
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Flexible(
-                                    child: Text(
-                                      widget.driver.displayName,
-                                      style: const TextStyle(
-                                        fontSize: 18.0,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppTheme.primaryColor,
+                                  Container(
+                                    width: 56.0,
+                                    height: 56.0,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.secondaryColor.withValues(
+                                        alpha: 0.2,
                                       ),
-                                      overflow: TextOverflow.ellipsis,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: widget.isNearestDriver
+                                            ? AppTheme.primaryColor
+                                            : Colors.transparent,
+                                        width: 2.0,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      LucideIcons.user,
+                                      color: AppTheme.primaryColor,
+                                      size: 28.0,
                                     ),
                                   ),
-                                  if (widget.isNearestDriver) ...[
-                                    const SizedBox(width: 6.0),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0,
-                                        vertical: 3.0,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryColor.withValues(
-                                          alpha: 0.1,
+                                  const SizedBox(width: 14.0),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                widget.driver.displayName,
+                                                style: const TextStyle(
+                                                  fontSize: 18.0,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: AppTheme.primaryColor,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            if (widget.isNearestDriver) ...[
+                                              const SizedBox(width: 6.0),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8.0,
+                                                      vertical: 3.0,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryColor
+                                                      .withValues(alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        12.0,
+                                                      ),
+                                                ),
+                                                child: const Text(
+                                                  'Top Match',
+                                                  style: TextStyle(
+                                                    fontSize: 10.0,
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        AppTheme.primaryColor,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
-                                        borderRadius: BorderRadius.circular(
-                                          12.0,
+                                        const SizedBox(height: 4.0),
+                                        Text(
+                                          widget.driver.vehicleSummary,
+                                          style: TextStyle(
+                                            fontSize: 13.0,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.primaryColor
+                                                .withValues(alpha: 0.6),
+                                          ),
                                         ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: widget.onCloseDropdownPressed,
+                                    icon: const Icon(
+                                      LucideIcons.x,
+                                      size: 20.0,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14.0),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10.0,
+                                      vertical: 5.0,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: widget.driver.hasPassengerOnboard
+                                          ? Colors.amber.withValues(alpha: 0.15)
+                                          : Colors.green.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                      borderRadius: BorderRadius.circular(20.0),
+                                      border: Border.all(
+                                        color: widget.driver.hasPassengerOnboard
+                                            ? Colors.amber.shade700
+                                            : Colors.green.shade700,
+                                        width: 1.0,
                                       ),
-                                      child: const Text(
-                                        'Top Match',
-                                        style: TextStyle(
-                                          fontSize: 10.0,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          widget.driver.hasPassengerOnboard
+                                              ? LucideIcons.users
+                                              : LucideIcons.user_check,
+                                          size: 14.0,
+                                          color:
+                                              widget.driver.hasPassengerOnboard
+                                              ? Colors.amber.shade900
+                                              : Colors.green.shade900,
+                                        ),
+                                        const SizedBox(width: 6.0),
+                                        Text(
+                                          widget.driver.hasPassengerOnboard
+                                              ? 'Current passenger onboard'
+                                              : 'Available (No passenger)',
+                                          style: TextStyle(
+                                            fontSize: 11.0,
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                widget
+                                                    .driver
+                                                    .hasPassengerOnboard
+                                                ? Colors.amber.shade900
+                                                : Colors.green.shade900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star_rounded,
+                                        color: Colors.amber,
+                                        size: 16.0,
+                                      ),
+                                      const SizedBox(width: 4.0),
+                                      Text(
+                                        widget.driver.rating.toStringAsFixed(1),
+                                        style: const TextStyle(
+                                          fontSize: 13.0,
                                           fontWeight: FontWeight.bold,
                                           color: AppTheme.primaryColor,
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 8.0),
+                                      Text(
+                                        '${widget.driver.distanceKm.toStringAsFixed(1)} km away',
+                                        style: TextStyle(
+                                          fontSize: 12.0,
+                                          color: AppTheme.primaryColor
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 4.0),
-                              Text(
-                                widget.driver.vehicleSummary,
-                                style: TextStyle(
-                                  fontSize: 13.0,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.6,
+                              const SizedBox(height: 14.0),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12.0),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.neutralColor,
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  border: Border.all(
+                                    color: AppTheme.borderSide,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: widget.onCloseDropdownPressed,
-                          icon: const Icon(
-                            LucideIcons.x,
-                            size: 20.0,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14.0),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10.0,
-                            vertical: 5.0,
-                          ),
-                          decoration: BoxDecoration(
-                            color: widget.driver.hasPassengerOnboard
-                                ? Colors.amber.withValues(alpha: 0.15)
-                                : Colors.green.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20.0),
-                            border: Border.all(
-                              color: widget.driver.hasPassengerOnboard
-                                  ? Colors.amber.shade700
-                                  : Colors.green.shade700,
-                              width: 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                widget.driver.hasPassengerOnboard
-                                    ? LucideIcons.users
-                                    : LucideIcons.user_check,
-                                size: 14.0,
-                                color: widget.driver.hasPassengerOnboard
-                                    ? Colors.amber.shade900
-                                    : Colors.green.shade900,
-                              ),
-                              const SizedBox(width: 6.0),
-                              Text(
-                                widget.driver.hasPassengerOnboard
-                                    ? 'Current passenger onboard'
-                                    : 'Available (No passenger)',
-                                style: TextStyle(
-                                  fontSize: 11.0,
-                                  fontWeight: FontWeight.bold,
-                                  color: widget.driver.hasPassengerOnboard
-                                      ? Colors.amber.shade900
-                                      : Colors.green.shade900,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          LucideIcons.message_square_quote,
+                                          size: 14.0,
+                                          color: AppTheme.primaryColor
+                                              .withValues(alpha: 0.6),
+                                        ),
+                                        const SizedBox(width: 6.0),
+                                        Text(
+                                          'Recent Feedback',
+                                          style: TextStyle(
+                                            fontSize: 11.0,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.primaryColor
+                                                .withValues(alpha: 0.6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4.0),
+                                    Text(
+                                      widget.driver.recentFeedback ??
+                                          'Professional service and well-maintained vehicle.',
+                                      style: TextStyle(
+                                        fontSize: 12.0,
+                                        height: 1.35,
+                                        color: AppTheme.primaryColor.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              color: Colors.amber,
-                              size: 16.0,
-                            ),
-                            const SizedBox(width: 4.0),
-                            Text(
-                              widget.driver.rating.toStringAsFixed(1),
-                              style: const TextStyle(
-                                fontSize: 13.0,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(
-                              '${widget.driver.distanceKm.toStringAsFixed(1)} km away',
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14.0),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        color: AppTheme.neutralColor,
-                        borderRadius: BorderRadius.circular(16.0),
-                        border: Border.all(color: AppTheme.borderSide),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                LucideIcons.message_square_quote,
-                                size: 14.0,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.6,
-                                ),
-                              ),
-                              const SizedBox(width: 6.0),
-                              Text(
-                                'Recent Feedback',
-                                style: TextStyle(
-                                  fontSize: 11.0,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.6,
+                              const SizedBox(height: 16.0),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed:
+                                          widget.onViewFullProfilePressed,
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppTheme.primaryColor,
+                                        side: const BorderSide(
+                                          color: AppTheme.primaryColor,
+                                          width: 1.5,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12.0,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16.0,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'View Full Profile',
+                                        style: TextStyle(
+                                          fontSize: 13.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: 12.0),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: widget.onSelectDriverPressed,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.primaryColor,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12.0,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16.0,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Select Driver',
+                                        style: TextStyle(
+                                          fontSize: 13.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4.0),
-                          Text(
-                            widget.driver.recentFeedback ??
-                                'Professional service and well-maintained vehicle.',
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              height: 1.35,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.8,
-                              ),
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: widget.onViewFullProfilePressed,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.primaryColor,
-                              side: const BorderSide(
-                                color: AppTheme.primaryColor,
-                                width: 1.5,
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12.0,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.0),
-                              ),
-                            ),
-                            child: const Text(
-                              'View Full Profile',
-                              style: TextStyle(
-                                fontSize: 13.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12.0),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: widget.onSelectDriverPressed,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12.0,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.0),
-                              ),
-                            ),
-                            child: const Text(
-                              'Select Driver',
-                              style: TextStyle(
-                                fontSize: 13.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

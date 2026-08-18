@@ -17,7 +17,6 @@ import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_bids
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_nearest_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_searching_panel_widget.dart';
-import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
 
 class FindingDriverPage extends StatelessWidget {
@@ -102,6 +101,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   String? _driverSearchError;
   String? _acceptingOfferId;
   bool _locationUnavailable = false;
+  bool _isViewingDriverProfile = false;
 
   ({double lat, double lng})? get _pickupCoordinate {
     final latitude = widget.pickupLatitude;
@@ -172,24 +172,17 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
     }
   }
 
-  void _showDriverProfileSheet(DriverModel driver) {
-    unawaited(
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (ctx) => DriverProfileDetailsSheet(
-          driverId: driver.id,
-          driverName: driver.displayName,
-          vehicleType: driver.vehicleType.isEmpty
-              ? 'Vehicle details unavailable'
-              : driver.vehicleType,
-          plateNumber: driver.plateNumber.isEmpty ? '—' : driver.plateNumber,
-          rating: driver.rating.toStringAsFixed(1),
-          onboardPassengerCount: driver.onboardPassengerCount,
-        ),
-      ),
-    );
+  void _showDriverProfile(DriverModel driver) {
+    if (!mounted) return;
+    setState(() {
+      _selectedDriver = driver;
+      _isViewingDriverProfile = true;
+    });
+  }
+
+  void _hideDriverProfile() {
+    if (!mounted) return;
+    setState(() => _isViewingDriverProfile = false);
   }
 
   @override
@@ -313,6 +306,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
       _driverSearchError = null;
       _nearbyDrivers = [];
       _selectedDriver = null;
+      _isViewingDriverProfile = false;
     });
   }
 
@@ -393,6 +387,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                     if (!mounted) return;
                     setState(() {
                       _selectedDriver = state.driver;
+                      _isViewingDriverProfile = false;
                     });
                   },
                 ),
@@ -408,6 +403,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                         if (!mounted) return;
                         setState(() {
                           _selectedDriver = nearby;
+                          _isViewingDriverProfile = false;
                         });
                       },
                     ),
@@ -632,6 +628,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                           if (selected) {
                                             setState(() {
                                               _selectedDriver = driver;
+                                              _isViewingDriverProfile = false;
                                             });
                                           }
                                         },
@@ -647,13 +644,16 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                     _nearbyDrivers.isNotEmpty &&
                                     _selectedDriver!.id ==
                                         _nearbyDrivers.first.id,
+                                isProfileVisible: _isViewingDriverProfile,
                                 onViewFullProfilePressed: () =>
-                                    _showDriverProfileSheet(_selectedDriver!),
+                                    _showDriverProfile(_selectedDriver!),
+                                onProfileBackPressed: _hideDriverProfile,
                                 onSelectDriverPressed: () =>
                                     _startDirectBooking(_selectedDriver!),
                                 onCloseDropdownPressed: () {
                                   setState(() {
                                     _selectedDriver = null;
+                                    _isViewingDriverProfile = false;
                                   });
                                 },
                               ),
@@ -711,7 +711,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                               state: state,
                               fare: widget.fare,
                               onViewFullProfilePressed: () =>
-                                  _showDriverProfileSheet(state.driver),
+                                  _showDriverProfile(state.driver),
                               onBookDirectPressed: () =>
                                   _startDirectBooking(state.driver),
                               onSearchAllDriversPressed: _startOpenBooking,
