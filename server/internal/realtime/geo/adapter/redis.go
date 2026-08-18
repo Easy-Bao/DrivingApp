@@ -55,49 +55,50 @@ func (repository *RedisRepository) Remove(ctx context.Context, driverID string) 
 	return err
 }
 func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
-	locations, err := repository.client.GeoSearchLocation(ctx, driverLocationsKey, &redis.GeoSearchLocationQuery{
-		GeoSearchQuery: redis.GeoSearchQuery{
-			Longitude:  longitude,
-			Latitude:   latitude,
-			Radius:     radiusKm,
-			RadiusUnit: "km",
-		},
-		WithCoord: false,
+	// Only the member IDs are needed here. GeoSearchLocation expects a nested
+	// location response when using RESP3, but Redis returns a flat member list
+	// when coordinates are not requested. GeoSearch matches that response shape
+	// and keeps this lookup compatible with the native Redis/Valkey setup.
+	locationIDs, err := repository.client.GeoSearch(ctx, driverLocationsKey, &redis.GeoSearchQuery{
+		Longitude:  longitude,
+		Latitude:   latitude,
+		Radius:     radiusKm,
+		RadiusUnit: "km",
 	}).Result()
 	if err != nil {
 		return nil, err
 	}
-	if len(locations) == 0 {
+	if len(locationIDs) == 0 {
 		return []domain.DriverPoint{}, nil
 	}
 
-	keys := make([]string, 0, len(locations))
-	for _, location := range locations {
-		keys = append(keys, driverLocationKey(location.Name))
+	keys := make([]string, 0, len(locationIDs))
+	for _, locationID := range locationIDs {
+		keys = append(keys, driverLocationKey(locationID))
 	}
 	payloads, err := repository.client.MGet(ctx, keys...).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]domain.DriverPoint, 0, len(locations))
+	result := make([]domain.DriverPoint, 0, len(locationIDs))
 	staleLocations := make([]string, 0)
-	for index, location := range locations {
+	for index, locationID := range locationIDs {
 		if index >= len(payloads) {
-			staleLocations = append(staleLocations, location.Name)
+			staleLocations = append(staleLocations, locationID)
 			continue
 		}
 		rawPayload := payloads[index]
 		payload, ok := rawPayload.(string)
 		if !ok {
-			staleLocations = append(staleLocations, location.Name)
+			staleLocations = append(staleLocations, locationID)
 			continue
 		}
 		var point domain.DriverPoint
 		if json.Unmarshal([]byte(payload), &point) != nil ||
 			point.DriverID == "" ||
-			point.DriverID != location.Name {
-			staleLocations = append(staleLocations, location.Name)
+			point.DriverID != locationID {
+			staleLocations = append(staleLocations, locationID)
 			continue
 		}
 		result = append(result, point)
