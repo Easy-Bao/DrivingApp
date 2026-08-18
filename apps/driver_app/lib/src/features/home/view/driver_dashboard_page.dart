@@ -824,9 +824,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Widget _buildStatsRow(DashboardState state) {
     return DriverDashboardStatsRowWidget(
       isLoadingStats: state.isLoadingStats,
-      todayEarnings: state.todayEarnings,
-      todayTrips: state.todayTrips,
-      hoursOnline: state.hoursOnline,
+      earnings: state.earnings,
+      completedTrips: state.completedTrips,
     );
   }
 

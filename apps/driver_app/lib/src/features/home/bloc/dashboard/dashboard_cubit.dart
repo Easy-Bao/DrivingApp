@@ -25,47 +25,18 @@ class DashboardCubit extends Cubit<DashboardState> {
   Future<void> loadStats() async {
     emit(state.copyWith(isLoadingStats: true, errorMessage: null));
     try {
-      final results = await Future.wait([
-        _repository.getTodayEarnings(),
-        _repository.getTodayTrips(),
-        _repository.getHoursOnline(),
-      ]);
-
-      String? firstFailureMessage;
-      double todayEarnings = 0.0;
-      int todayTrips = 0;
-      double hoursOnline = 0.0;
-
-      results[0].fold(
-        (failure) => firstFailureMessage ??= failure.message,
-        (value) => todayEarnings = value as double,
-      );
-      results[1].fold(
-        (failure) => firstFailureMessage ??= failure.message,
-        (value) => todayTrips = value as int,
-      );
-      results[2].fold(
-        (failure) => firstFailureMessage ??= failure.message,
-        (value) => hoursOnline = value as double,
-      );
-
-      if (firstFailureMessage != null) {
-        emit(
+      final result = await _repository.getDashboardStats();
+      result.fold(
+        (failure) => emit(
+          state.copyWith(isLoadingStats: false, errorMessage: failure.message),
+        ),
+        (stats) => emit(
           state.copyWith(
             isLoadingStats: false,
-            errorMessage: firstFailureMessage,
+            earnings: stats.earnings,
+            completedTrips: stats.completedTrips,
+            errorMessage: null,
           ),
-        );
-        return;
-      }
-
-      emit(
-        state.copyWith(
-          isLoadingStats: false,
-          todayEarnings: todayEarnings,
-          todayTrips: todayTrips,
-          hoursOnline: hoursOnline,
-          errorMessage: null,
         ),
       );
     } catch (error) {

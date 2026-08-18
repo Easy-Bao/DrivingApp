@@ -6,6 +6,7 @@ import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
+import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
@@ -258,43 +259,46 @@ class DashboardRepository implements IDashboardRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, double>> getTodayEarnings() async {
-    try {
-      final driverId = await _getDriverId();
-      if (driverId.isEmpty) {
-        return const Left(CacheFailure('Driver ID is not registered.'));
-      }
-      final data = await _remoteDataSource.fetchStats(driverId);
-      return Right((data['todayEarnings'] as num?)?.toDouble() ?? 0.0);
-    } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+  num? _readFiniteNumber(Map<String, dynamic> values, List<String> keys) {
+    for (final key in keys) {
+      final value = values[key];
+      if (value is num && value.isFinite) return value;
     }
+    return null;
   }
 
   @override
-  Future<Either<Failure, int>> getTodayTrips() async {
+  Future<Either<Failure, DriverDashboardStats>> getDashboardStats() async {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
         return const Left(CacheFailure('Driver ID is not registered.'));
       }
       final data = await _remoteDataSource.fetchStats(driverId);
-      return Right((data['todayTrips'] as int?) ?? 0);
-    } catch (error) {
-      return Left(_mapExceptionToFailure(error));
-    }
-  }
-
-  @override
-  Future<Either<Failure, double>> getHoursOnline() async {
-    try {
-      final driverId = await _getDriverId();
-      if (driverId.isEmpty) {
-        return const Left(CacheFailure('Driver ID is not registered.'));
+      final earningsCentavos = _readFiniteNumber(data, const [
+        'today_earnings_centavos',
+        'total_fare_centavos',
+      ]);
+      final completedTrips = _readFiniteNumber(data, const [
+        'today_completed_trips',
+        'completed_trips',
+        'completedTrips',
+      ]);
+      if (earningsCentavos == null ||
+          earningsCentavos < 0 ||
+          completedTrips == null ||
+          completedTrips < 0 ||
+          completedTrips != completedTrips.roundToDouble()) {
+        throw DataParsingException(
+          message: 'Driver statistics response is incomplete.',
+        );
       }
-      final data = await _remoteDataSource.fetchStats(driverId);
-      return Right((data['hoursOnline'] as num?)?.toDouble() ?? 0.0);
+      return Right(
+        DriverDashboardStats(
+          earnings: earningsCentavos / 100,
+          completedTrips: completedTrips.toInt(),
+        ),
+      );
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }

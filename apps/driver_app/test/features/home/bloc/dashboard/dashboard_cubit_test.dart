@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
+import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
@@ -39,15 +40,11 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer((_) async => const Right(null));
-        when(
-          () => repo.getTodayEarnings(),
-        ).thenAnswer((_) async => const Right(385.50));
-        when(
-          () => repo.getTodayTrips(),
-        ).thenAnswer((_) async => const Right(7));
-        when(
-          () => repo.getHoursOnline(),
-        ).thenAnswer((_) async => const Right(4.5));
+        when(() => repo.getDashboardStats()).thenAnswer(
+          (_) async => const Right(
+            DriverDashboardStats(earnings: 385.50, completedTrips: 7),
+          ),
+        );
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadStats(),
@@ -55,11 +52,13 @@ void main() {
         const DashboardState(isLoadingStats: true),
         const DashboardState(
           isLoadingStats: false,
-          todayEarnings: 385.50,
-          todayTrips: 7,
-          hoursOnline: 4.5,
+          earnings: 385.50,
+          completedTrips: 7,
         ),
       ],
+      verify: (_) {
+        verify(() => repo.getDashboardStats()).called(1);
+      },
     );
 
     blocTest<DashboardCubit, DashboardState>(
@@ -73,13 +72,7 @@ void main() {
           ),
         ).thenAnswer((_) async => const Right(null));
         when(
-          () => repo.getTodayEarnings(),
-        ).thenAnswer((_) async => const Left(ServerFailure('network')));
-        when(
-          () => repo.getTodayTrips(),
-        ).thenAnswer((_) async => const Left(ServerFailure('network')));
-        when(
-          () => repo.getHoursOnline(),
+          () => repo.getDashboardStats(),
         ).thenAnswer((_) async => const Left(ServerFailure('network')));
         return _makeCubit(repo);
       },
@@ -98,15 +91,10 @@ void main() {
         when(
           () => repo.getPersistedOnlineStatus(),
         ).thenAnswer((_) async => const Right(true));
-        when(
-          () => repo.getTodayEarnings(),
-        ).thenAnswer((_) async => const Right(0.0));
-        when(
-          () => repo.getTodayTrips(),
-        ).thenAnswer((_) async => const Right(0));
-        when(
-          () => repo.getHoursOnline(),
-        ).thenAnswer((_) async => const Right(0.0));
+        when(() => repo.getDashboardStats()).thenAnswer(
+          (_) async =>
+              const Right(DriverDashboardStats(earnings: 0, completedTrips: 0)),
+        );
 
         final cubit = _makeCubit(repo);
         await cubit.initialize();

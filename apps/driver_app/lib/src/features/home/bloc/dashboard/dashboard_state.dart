@@ -7,9 +7,8 @@ class DashboardState extends Equatable {
   final bool isOnline;
   final bool isLoadingStats;
   final bool isLoadingHeatmap;
-  final double todayEarnings;
-  final int todayTrips;
-  final double hoursOnline;
+  final double earnings;
+  final int completedTrips;
   final List<HeatmapCell> surgeCells;
   final String? errorMessage;
 
@@ -17,9 +16,8 @@ class DashboardState extends Equatable {
     this.isOnline = false,
     this.isLoadingStats = false,
     this.isLoadingHeatmap = false,
-    this.todayEarnings = 0.0,
-    this.todayTrips = 0,
-    this.hoursOnline = 0.0,
+    this.earnings = 0.0,
+    this.completedTrips = 0,
     this.surgeCells = const [],
     this.errorMessage,
   });
@@ -28,9 +26,8 @@ class DashboardState extends Equatable {
     bool? isOnline,
     bool? isLoadingStats,
     bool? isLoadingHeatmap,
-    double? todayEarnings,
-    int? todayTrips,
-    double? hoursOnline,
+    double? earnings,
+    int? completedTrips,
     List<HeatmapCell>? surgeCells,
     Object? errorMessage = _unset,
   }) {
@@ -38,9 +35,8 @@ class DashboardState extends Equatable {
       isOnline: isOnline ?? this.isOnline,
       isLoadingStats: isLoadingStats ?? this.isLoadingStats,
       isLoadingHeatmap: isLoadingHeatmap ?? this.isLoadingHeatmap,
-      todayEarnings: todayEarnings ?? this.todayEarnings,
-      todayTrips: todayTrips ?? this.todayTrips,
-      hoursOnline: hoursOnline ?? this.hoursOnline,
+      earnings: earnings ?? this.earnings,
+      completedTrips: completedTrips ?? this.completedTrips,
       surgeCells: surgeCells ?? this.surgeCells,
       errorMessage: identical(errorMessage, _unset)
           ? this.errorMessage
@@ -53,9 +49,8 @@ class DashboardState extends Equatable {
     isOnline,
     isLoadingStats,
     isLoadingHeatmap,
-    todayEarnings,
-    todayTrips,
-    hoursOnline,
+    earnings,
+    completedTrips,
     surgeCells,
     errorMessage,
   ];

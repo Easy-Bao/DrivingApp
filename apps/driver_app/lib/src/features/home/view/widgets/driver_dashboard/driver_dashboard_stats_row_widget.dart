@@ -4,16 +4,14 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 class DriverDashboardStatsRowWidget extends StatelessWidget {
   final bool isLoadingStats;
-  final double todayEarnings;
-  final int todayTrips;
-  final double hoursOnline;
+  final double earnings;
+  final int completedTrips;
 
   const DriverDashboardStatsRowWidget({
     super.key,
     required this.isLoadingStats,
-    required this.todayEarnings,
-    required this.todayTrips,
-    required this.hoursOnline,
+    required this.earnings,
+    required this.completedTrips,
   });
 
   @override
@@ -26,8 +24,8 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
           children: [
             Expanded(
               child: _buildStatCard(
-                label: "Today's earnings",
-                value: '₱${todayEarnings.toStringAsFixed(0)}',
+                label: 'Earnings',
+                value: '₱${earnings.toStringAsFixed(0)}',
                 skeletonWidth: 84,
               ),
             ),
@@ -35,7 +33,7 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
             Expanded(
               child: _buildStatCard(
                 label: 'Trips completed',
-                value: '$todayTrips',
+                value: '$completedTrips',
                 skeletonWidth: 32,
               ),
             ),

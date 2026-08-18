@@ -1,5 +1,6 @@
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
+import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
 import 'package:fpdart/fpdart.dart';
 
 abstract class IDashboardRepository {
@@ -11,11 +12,7 @@ abstract class IDashboardRepository {
     required double lng,
   });
 
-  Future<Either<Failure, double>> getTodayEarnings();
-
-  Future<Either<Failure, int>> getTodayTrips();
-
-  Future<Either<Failure, double>> getHoursOnline();
+  Future<Either<Failure, DriverDashboardStats>> getDashboardStats();
 
   Future<Either<Failure, List<HeatmapCell>>> getSurgeHeatmap({
     required double lat,

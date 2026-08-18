@@ -6,6 +6,7 @@ import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
+import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
@@ -35,6 +36,43 @@ DioException _httpFailure({required int statusCode, Object? data}) {
 }
 
 void main() {
+  test(
+    'maps completed trip statistics from the server contract once',
+    () async {
+      final driverDataSource = MockDriverRemoteDataSource();
+      final telemetryDataSource = MockTelemetryRemoteDataSource();
+      final tripDataSource = MockTripRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+
+      when(
+        () => sessionService.readDriverId(),
+      ).thenAnswer((_) async => 'driver-42');
+      when(() => tripDataSource.fetchStats('driver-42')).thenAnswer(
+        (_) async => <String, dynamic>{
+          'total_fare_centavos': 2817,
+          'completed_trips': 1,
+        },
+      );
+
+      final repository = DashboardRepository(
+        remoteDataSource: tripDataSource,
+        driverRemoteDataSource: driverDataSource,
+        telemetryRemoteDataSource: telemetryDataSource,
+        sessionService: sessionService,
+      );
+
+      final result = await repository.getDashboardStats();
+
+      expect(
+        result,
+        const Right<Failure, DriverDashboardStats>(
+          DriverDashboardStats(earnings: 28.17, completedTrips: 1),
+        ),
+      );
+      verify(() => tripDataSource.fetchStats('driver-42')).called(1);
+    },
+  );
+
   test('publishes the initial driver location when going online', () async {
     final driverDataSource = MockDriverRemoteDataSource();
     final telemetryDataSource = MockTelemetryRemoteDataSource();
