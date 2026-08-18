@@ -35,7 +35,6 @@ class BackgroundTelemetryService {
   bool get isEnabled => _isEnabled;
 
   static Future<void> stopExistingServiceForStartup() async {
-    if (!_backgroundTelemetryEnabled) return;
     await _stopRunningService(FlutterBackgroundService());
   }
 
