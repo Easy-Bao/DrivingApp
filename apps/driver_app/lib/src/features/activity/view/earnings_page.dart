@@ -2,10 +2,11 @@ import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 
 enum _EarningsPeriod { daily, weekly, monthly }
 
@@ -264,33 +265,41 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               )
             : _errorMessage != null
             ? _buildErrorState()
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 100),
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _buildSummaryCard(),
-                  const SizedBox(height: 20),
-                  _buildPeriodTabs(),
-                  const SizedBox(height: 24),
-                  Text(
-                    _breakdownTitle,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final horizontalPadding = constraints.maxWidth < 360
+                      ? 16.0
+                      : 24.0;
+                  return ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      16,
+                      horizontalPadding,
+                      32,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBarChart(),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Completed rides reported by the server',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.48),
-                    ),
-                  ),
-                ],
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 720),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildSummaryCard(),
+                                const SizedBox(height: 18),
+                                _buildPeriodTabs(),
+                                const SizedBox(height: 18),
+                                _buildBarChart(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
       ),
     );
@@ -335,51 +344,118 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 
   Widget _buildSummaryCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor,
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _periodTitle,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: Colors.white.withValues(alpha: 0.5),
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '₱${_periodTotal.toStringAsFixed(0)}',
-            style: const TextStyle(
-              fontSize: 42,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Divider(color: Colors.white24, height: 1),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _miniStat('$_periodTripsCount', 'Trips')),
-              _summaryDivider(),
-              Expanded(
-                child: _miniStat(
-                  '${_driveHours.toStringAsFixed(1)}h',
-                  'Drive time',
-                ),
-              ),
-              _summaryDivider(),
-              Expanded(child: _miniStat('★ $_rating', 'Rating')),
-            ],
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.primaryDark, AppTheme.primaryColor],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.16),
+            blurRadius: 18,
+            offset: Offset(0, 8),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _periodTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white.withValues(alpha: 0.62),
+                      letterSpacing: 1.4,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.trending_up_rounded,
+                        size: 14,
+                        color: Colors.white.withValues(alpha: 0.82),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Completed rides',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.82),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '₱${_periodTotal.toStringAsFixed(0)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 42,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -1.2,
+              ),
+            ),
+            Text(
+              'Total earnings for this period',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withValues(alpha: 0.56),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(child: _miniStat('$_periodTripsCount', 'Trips')),
+                  _summaryDivider(),
+                  Expanded(
+                    child: _miniStat(
+                      '${_driveHours.toStringAsFixed(1)}h',
+                      'Drive time',
+                    ),
+                  ),
+                  _summaryDivider(),
+                  Expanded(child: _miniStat('★ $_rating', 'Rating')),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -422,96 +498,222 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 
   Widget _buildPeriodTabs() {
-    return Container(
-      height: 46,
-      decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: TabBar(
-        controller: _tabCtrl,
-        onTap: _selectPeriod,
-        indicator: BoxDecoration(
-          color: AppTheme.primaryColor,
-          borderRadius: BorderRadius.circular(12),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: SizedBox(
+          height: 44,
+          child: TabBar(
+            controller: _tabCtrl,
+            onTap: _selectPeriod,
+            indicator: BoxDecoration(
+              color: AppTheme.primaryColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            labelColor: Colors.white,
+            unselectedLabelColor: AppTheme.primaryColor.withValues(alpha: 0.5),
+            labelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: Colors.transparent,
+            tabs: const [
+              Tab(text: 'Daily'),
+              Tab(text: 'Weekly'),
+              Tab(text: 'Monthly'),
+            ],
+          ),
         ),
-        labelColor: Colors.white,
-        unselectedLabelColor: AppTheme.primaryColor.withValues(alpha: 0.5),
-        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        tabs: const [
-          Tab(text: 'Daily'),
-          Tab(text: 'Weekly'),
-          Tab(text: 'Monthly'),
-        ],
       ),
     );
   }
 
   Widget _buildBarChart() {
-    final maxAmount = _dailyData.fold<double>(
-      0,
-      (max, item) => item.amount > max ? item.amount : max,
-    );
-    final divisor = maxAmount > 0 ? maxAmount : 1.0;
-    return SizedBox(
-      height: 180,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: _dailyData.map((day) {
-          final barH = day.amount > 0 ? (day.amount / divisor) * 140 : 4.0;
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    '₱${day.amount.toInt()}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor.withValues(
-                        alpha: day.isCurrent ? 0.8 : 0.4,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _breakdownTitle,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Completed rides reported by the server',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  AnimatedContainer(
+                ),
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondarySurface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.bar_chart_rounded,
+                    size: 20,
+                    color: AppTheme.accent,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 208,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return BarChart(
+                    _barChartData(constraints.maxWidth),
                     duration: const Duration(milliseconds: 600),
-                    curve: Curves.easeOutBack,
-                    height: barH,
-                    decoration: BoxDecoration(
-                      color: day.isCurrent
-                          ? AppTheme.primaryColor
-                          : AppTheme.primaryColor.withValues(alpha: 0.12),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    day.day,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: day.isCurrent
-                          ? AppTheme.primaryColor
-                          : AppTheme.primaryColor.withValues(alpha: 0.38),
-                    ),
-                  ),
-                ],
+                    curve: Curves.easeOutCubic,
+                  );
+                },
               ),
             ),
-          );
-        }).toList(),
+          ],
+        ),
       ),
+    );
+  }
+
+  BarChartData _barChartData(double availableWidth) {
+    final chartDays = _dailyData.isEmpty
+        ? const [_EarnDay('—', 0)]
+        : _dailyData;
+    final maxAmount = chartDays.fold<double>(0, (max, item) {
+      final amount = item.amount;
+      if (!amount.isFinite || amount <= max) return max;
+      return amount;
+    });
+    final maxY = maxAmount > 0 ? maxAmount * 1.25 : 1.0;
+    final placeholderHeight = maxAmount > 0 ? maxAmount * 0.025 : 0.025;
+    final barWidth = (availableWidth / (chartDays.length * 2.2))
+        .clamp(14.0, 34.0)
+        .toDouble();
+
+    return BarChartData(
+      minY: 0,
+      maxY: maxY,
+      alignment: BarChartAlignment.spaceEvenly,
+      groupsSpace: 12,
+      backgroundColor: Colors.transparent,
+      borderData: FlBorderData(show: false),
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        horizontalInterval: maxY / 4,
+        getDrawingHorizontalLine: (value) => FlLine(
+          color: AppTheme.borderSide.withValues(alpha: 0.72),
+          strokeWidth: 1,
+        ),
+      ),
+      titlesData: FlTitlesData(
+        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 28,
+            getTitlesWidget: (value, meta) {
+              final index = value.round();
+              if (index < 0 || index >= chartDays.length) {
+                return const SizedBox.shrink();
+              }
+              final day = chartDays[index];
+              return SideTitleWidget(
+                meta: meta,
+                space: 8,
+                child: Text(
+                  day.day,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: day.isCurrent
+                        ? AppTheme.primaryColor
+                        : AppTheme.primaryColor.withValues(alpha: 0.42),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+      barTouchData: BarTouchData(enabled: false),
+      barGroups: [
+        for (var index = 0; index < chartDays.length; index++)
+          _buildBarGroup(
+            chartDays[index],
+            index,
+            maxAmount,
+            placeholderHeight,
+            barWidth,
+          ),
+      ],
+    );
+  }
+
+  BarChartGroupData _buildBarGroup(
+    _EarnDay day,
+    int index,
+    double maxAmount,
+    double placeholderHeight,
+    double barWidth,
+  ) {
+    final amount = day.amount.isFinite && day.amount > 0 ? day.amount : 0.0;
+    final barValue = amount > 0 ? amount : placeholderHeight;
+    return BarChartGroupData(
+      x: index,
+      barRods: [
+        BarChartRodData(
+          toY: barValue,
+          width: barWidth,
+          color: day.isCurrent
+              ? AppTheme.primaryColor
+              : AppTheme.primaryColor.withValues(alpha: 0.16),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+          label: BarChartRodLabel(
+            show: true,
+            text: '₱${day.amount.toInt()}',
+            style: TextStyle(
+              color: AppTheme.primaryColor.withValues(
+                alpha: day.isCurrent ? 0.82 : 0.48,
+              ),
+              fontSize: 8,
+              fontWeight: FontWeight.w700,
+            ),
+            offset: const Offset(0, 8),
+          ),
+          backDrawRodData: BackgroundBarChartRodData(
+            show: maxAmount > 0,
+            toY: maxAmount,
+            color: AppTheme.primaryColor.withValues(alpha: 0.05),
+          ),
+        ),
+      ],
     );
   }
 }

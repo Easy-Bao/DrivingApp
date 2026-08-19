@@ -2,6 +2,7 @@ import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/view/earnings_page.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -66,10 +67,25 @@ void main() {
       MaterialApp(theme: AppTheme.themeData, home: const DriverEarningsPage()),
     );
     await tester.pumpAndSettle();
+    expect(find.byType(BarChart), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'initial layout failed');
 
     for (final period in ['Daily', 'Weekly', 'Monthly']) {
       await tester.tap(find.text(period));
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: '$period initial chart animation frame failed',
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: '$period mid chart animation frame failed',
+      );
       await tester.pumpAndSettle();
+      expect(find.byType(BarChart), findsOneWidget);
       expect(tester.takeException(), isNull, reason: '$period layout failed');
     }
   });
