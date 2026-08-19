@@ -20,6 +20,7 @@ class DriverAccountPage extends StatefulWidget {
 
 class _DriverAccountPageState extends State<DriverAccountPage> {
   String _name = '';
+  String _email = '';
   String _vehicleType = '';
   String _plateNumber = '';
   String _rating = '—';
@@ -43,6 +44,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     if (!mounted) return;
     setState(() {
       _name = prefs.getString('driver_name') ?? '';
+      _email = prefs.getString('driver_email') ?? '';
       _vehicleType = prefs.getString('vehicle_type') ?? '';
       _plateNumber = prefs.getString('plate_number') ?? '';
       _rating = prefs.getString('rating') ?? '—';
@@ -159,28 +161,48 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
       ),
       body: SafeArea(
         top: false,
-        child: RefreshIndicator(
-          color: AppTheme.primaryColor,
-          onRefresh: _fetchUpdatedData,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            children: [
-              _buildProfileCard(),
-              const SizedBox(height: 20),
-              _buildSectionLabel('PERFORMANCE'),
-              const SizedBox(height: 12),
-              _buildStatsCard(),
-              const SizedBox(height: 24),
-              _buildSectionLabel('DRIVER ACCOUNT'),
-              const SizedBox(height: 12),
-              ..._buildAccountItems(context).map(_buildMenuTile),
-              const SizedBox(height: 24),
-              _buildLogoutButton(context),
-            ],
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
+            return RefreshIndicator(
+              color: AppTheme.primaryColor,
+              onRefresh: _fetchUpdatedData,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  12,
+                  horizontalPadding,
+                  28,
+                ),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 720),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildProfileCard(),
+                          const SizedBox(height: 18),
+                          _buildSectionLabel('Performance'),
+                          const SizedBox(height: 8),
+                          _buildStatsCard(),
+                          const SizedBox(height: 20),
+                          _buildSectionLabel('Account settings'),
+                          const SizedBox(height: 8),
+                          ..._buildAccountItems(context).map(_buildMenuTile),
+                          const SizedBox(height: 12),
+                          _buildLogoutButton(context),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -188,65 +210,145 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
 
   Widget _buildProfileCard() {
     final displayName = _name.isEmpty ? 'Driver' : _name;
-    final vehicle = [
-      if (_vehicleType.isNotEmpty) _vehicleType,
-      if (_plateNumber.isNotEmpty) _plateNumber,
-    ].join('  •  ');
     final initial = displayName.substring(0, 1).toUpperCase();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: AppTheme.secondaryColor,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              initial,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: AppTheme.primaryColor,
-              ),
-            ),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.primaryDark, AppTheme.primaryColor],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.14),
+            blurRadius: 16,
+            offset: const Offset(0, 7),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  vehicle.isEmpty ? 'Vehicle details unavailable' : vehicle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _ratingBadge(),
         ],
       ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondaryColor,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        _email.isEmpty ? 'Driver account' : _email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.62),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _ratingBadge(),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _profileMeta(
+                      'Vehicle',
+                      _vehicleType.isEmpty ? 'Unavailable' : _vehicleType,
+                    ),
+                  ),
+                  _profileDivider(),
+                  Expanded(
+                    child: _profileMeta(
+                      'Plate number',
+                      _plateNumber.isEmpty ? 'Unavailable' : _plateNumber,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _profileMeta(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: Colors.white.withValues(alpha: 0.48),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _profileDivider() {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      color: Colors.white24,
     );
   }
 
@@ -261,7 +363,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        '★ $rating',
+        '$rating rating',
         style: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w800,
@@ -272,21 +374,18 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   }
 
   Widget _buildStatsCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
-      ),
-      child: Row(
-        children: [
-          _statItem('$_completedTrips', 'Completed'),
-          _statDivider(),
-          _statItem('₱${_lifetimeEarnings.toStringAsFixed(0)}', 'Lifetime'),
-          _statDivider(),
-          _statItem('$_totalTrips', 'Total rides'),
-        ],
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            _statItem('$_completedTrips', 'Completed trips'),
+            _statDivider(),
+            _statItem('$_totalTrips', 'Total trips'),
+            _statDivider(),
+            _statItem('₱${_lifetimeEarnings.toStringAsFixed(0)}', 'Lifetime'),
+          ],
+        ),
       ),
     );
   }
