@@ -41,6 +41,15 @@ void main() {
       find.byKey(const ValueKey('driver-trip-route-dashes')),
       findsOneWidget,
     );
+    expect(
+      tester
+          .renderObject<RenderBox>(
+            find.byKey(const ValueKey('driver-trip-route-dashes')),
+          )
+          .size
+          .height,
+      24,
+    );
     expect(find.text('Ana Maria'), findsOneWidget);
     expect(find.text('+63 917 555 0101'), findsOneWidget);
     expect(find.text('4.8 rating'), findsOneWidget);

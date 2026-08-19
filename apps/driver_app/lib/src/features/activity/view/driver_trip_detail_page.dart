@@ -326,29 +326,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
               ],
             ),
             const SizedBox(height: 14),
-            _buildRouteStop(
-              icon: Icons.circle,
-              label: 'Pickup',
-              value: fromName,
-              color: AppTheme.complete,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 5),
-              child: SizedBox(
-                width: 2,
-                height: 18,
-                child: CustomPaint(
-                  key: const ValueKey('driver-trip-route-dashes'),
-                  painter: _DashedRoutePainter(),
-                ),
-              ),
-            ),
-            _buildRouteStop(
-              icon: Icons.location_on,
-              label: 'Drop-off',
-              value: toName,
-              color: AppTheme.accent,
-            ),
+            _buildRouteTimeline(fromName: fromName, toName: toName),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 14),
               child: Divider(height: 1),
@@ -368,44 +346,66 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     );
   }
 
-  Widget _buildRouteStop({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
+  Widget _buildRouteTimeline({
+    required String fromName,
+    required String toName,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 12,
-          child: Icon(icon, size: icon == Icons.circle ? 9 : 15, color: color),
+        Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Column(
+            children: [
+              const Icon(Icons.circle, size: 9, color: AppTheme.complete),
+              SizedBox(
+                width: 2,
+                height: 24,
+                child: CustomPaint(
+                  key: const ValueKey('driver-trip-route-dashes'),
+                  painter: _DashedRoutePainter(),
+                ),
+              ),
+              const Icon(Icons.location_on, size: 15, color: AppTheme.accent),
+            ],
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.42),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
+              _buildRouteLocation('Pickup', fromName),
+              const SizedBox(height: 14),
+              _buildRouteLocation('Drop-off', toName),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRouteLocation(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.primaryColor.withValues(alpha: 0.42),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.primaryColor,
           ),
         ),
       ],
