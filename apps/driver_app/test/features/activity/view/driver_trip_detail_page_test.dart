@@ -46,6 +46,11 @@ void main() {
     );
     expect(find.text('Ride type'), findsOneWidget);
     expect(find.text('Solo'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.text('Ride type')).textAlign,
+      TextAlign.center,
+    );
+    expect(tester.widget<Text>(find.text('Solo')).textAlign, TextAlign.center);
     expect(find.text('RIDE TYPE'), findsNothing);
     expect(find.text('TOTAL FARE'), findsNothing);
     expect(tester.takeException(), isNull);

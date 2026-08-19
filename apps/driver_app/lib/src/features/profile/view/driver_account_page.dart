@@ -29,7 +29,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   int _completedTrips = 0;
   double _lifetimeEarnings = 0;
   double _averageRating = 0;
-  bool _isRefreshing = false;
   bool _isLoggingOut = false;
 
   @override
@@ -52,7 +51,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   }
 
   Future<void> _fetchUpdatedData() async {
-    if (mounted) setState(() => _isRefreshing = true);
     try {
       final driverId =
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
@@ -106,8 +104,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
       });
     } catch (error) {
       debugPrint('Unable to refresh driver account: $error');
-    } finally {
-      if (mounted) setState(() => _isRefreshing = false);
     }
   }
 
@@ -144,20 +140,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         automaticallyImplyLeading: false,
         backgroundColor: AppTheme.background,
         title: const Text('Account'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh account',
-            onPressed: _isRefreshing ? null : _fetchUpdatedData,
-            icon: _isRefreshing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(LucideIcons.refresh_cw),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: SafeArea(
         top: false,
