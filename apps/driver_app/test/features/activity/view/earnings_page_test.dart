@@ -68,6 +68,14 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(BarChart), findsOneWidget);
+    expect(find.text('Completed rides reported by the server'), findsNothing);
+    expect(find.text('Drive time'), findsNothing);
+    final verticalScrollables = find.byWidgetPredicate(
+      (widget) => widget is Scrollable && widget.axis == Axis.vertical,
+    );
+    expect(verticalScrollables, findsOneWidget);
+    final scrollState = tester.state<ScrollableState>(verticalScrollables);
+    expect(scrollState.position.maxScrollExtent, 0);
     expect(tester.takeException(), isNull, reason: 'initial layout failed');
 
     for (final period in ['Daily', 'Weekly', 'Monthly']) {

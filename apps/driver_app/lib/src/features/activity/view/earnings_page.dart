@@ -25,7 +25,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   _EarningsPeriod _selectedPeriod = _EarningsPeriod.weekly;
   double _periodTotal = 0;
   int _periodTripsCount = 0;
-  double _driveHours = 0;
   String _rating = '—';
   List<Map<String, dynamic>> _completedTrips = const [];
   List<_EarnDay> _dailyData = const [];
@@ -111,7 +110,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   void _applySummary(_EarningsSummary summary) {
     _periodTotal = summary.total;
     _periodTripsCount = summary.tripsCount;
-    _driveHours = summary.driveHours;
     _dailyData = summary.days;
   }
 
@@ -156,7 +154,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
 
     final amounts = List<double>.filled(days.length, 0);
     var tripsCount = 0;
-    var driveMinutes = 0.0;
 
     for (final trip in trips) {
       final tripDate = _tripDate(trip);
@@ -176,11 +173,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         };
         amounts[index] += fare;
       }
-
-      final duration = trip['duration_minutes'];
-      if (duration is num && duration.isFinite && duration >= 0) {
-        driveMinutes += duration.toDouble();
-      }
     }
 
     final summaryDays = [
@@ -190,7 +182,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     return _EarningsSummary(
       total: amounts.fold(0, (sum, amount) => sum + amount),
       tripsCount: tripsCount,
-      driveHours: driveMinutes / 60,
       days: summaryDays,
     );
   }
@@ -242,6 +233,12 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     }
   }
 
+  String get _breakdownDescription => switch (_selectedPeriod) {
+    _EarningsPeriod.daily => 'Your earnings from completed rides today.',
+    _EarningsPeriod.weekly => 'See how your total builds each day.',
+    _EarningsPeriod.monthly => 'See how your total builds each week.',
+  };
+
   @override
   void dispose() {
     _tabCtrl.dispose();
@@ -273,9 +270,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                   return ListView(
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
-                      16,
+                      12,
                       horizontalPadding,
-                      32,
+                      16,
                     ),
                     physics: const BouncingScrollPhysics(),
                     children: [
@@ -288,9 +285,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 _buildSummaryCard(),
-                                const SizedBox(height: 18),
-                                _buildPeriodTabs(),
-                                const SizedBox(height: 18),
+                                const SizedBox(height: 12),
                                 _buildBarChart(),
                               ],
                             ),
@@ -351,7 +346,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           end: Alignment.bottomRight,
           colors: [AppTheme.primaryDark, AppTheme.primaryColor],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: AppTheme.primaryColor.withValues(alpha: 0.16),
@@ -361,98 +356,50 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _periodTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white.withValues(alpha: 0.62),
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.trending_up_rounded,
-                        size: 14,
-                        color: Colors.white.withValues(alpha: 0.82),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        'Completed rides',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.82),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            Text(
+              _periodTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Colors.white.withValues(alpha: 0.62),
+                letterSpacing: 1.4,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
             Text(
               '₱${_periodTotal.toStringAsFixed(0)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 42,
+                fontSize: 36,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
                 letterSpacing: -1.2,
               ),
             ),
             Text(
-              'Total earnings for this period',
+              'Earnings from your completed rides',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: Colors.white.withValues(alpha: 0.56),
               ),
             ),
-            const SizedBox(height: 18),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(child: _miniStat('$_periodTripsCount', 'Trips')),
-                  _summaryDivider(),
-                  Expanded(
-                    child: _miniStat(
-                      '${_driveHours.toStringAsFixed(1)}h',
-                      'Drive time',
-                    ),
-                  ),
-                  _summaryDivider(),
-                  Expanded(child: _miniStat('★ $_rating', 'Rating')),
-                ],
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _miniStat('$_periodTripsCount', 'Completed trips'),
+                ),
+                _summaryDivider(),
+                Expanded(child: _miniStat(_rating, 'Driver rating')),
+              ],
             ),
           ],
         ),
@@ -463,9 +410,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   Widget _summaryDivider() {
     return Container(
       width: 1,
-      height: 32,
+      height: 28,
       color: Colors.white24,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 12),
     );
   }
 
@@ -478,7 +425,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            fontSize: 17,
+            fontSize: 16,
             fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
@@ -488,7 +435,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w500,
             color: Colors.white.withValues(alpha: 0.5),
           ),
@@ -498,33 +445,29 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 
   Widget _buildPeriodTabs() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: SizedBox(
-          height: 44,
-          child: TabBar(
-            controller: _tabCtrl,
-            onTap: _selectPeriod,
-            indicator: BoxDecoration(
-              color: AppTheme.primaryColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            labelColor: Colors.white,
-            unselectedLabelColor: AppTheme.primaryColor.withValues(alpha: 0.5),
-            labelStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            tabs: const [
-              Tab(text: 'Daily'),
-              Tab(text: 'Weekly'),
-              Tab(text: 'Monthly'),
-            ],
-          ),
+    return SizedBox(
+      height: 32,
+      child: TabBar(
+        controller: _tabCtrl,
+        onTap: _selectPeriod,
+        indicator: const UnderlineTabIndicator(
+          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
         ),
+        indicatorPadding: const EdgeInsets.symmetric(horizontal: 18),
+        labelColor: AppTheme.primaryColor,
+        unselectedLabelColor: AppTheme.primaryColor.withValues(alpha: 0.45),
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        tabs: const [
+          Tab(text: 'Daily'),
+          Tab(text: 'Weekly'),
+          Tab(text: 'Monthly'),
+        ],
       ),
     );
   }
@@ -532,64 +475,47 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   Widget _buildBarChart() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final chartHeight = constraints.maxWidth < 360 ? 150.0 : 166.0;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _breakdownTitle,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Completed rides reported by the server',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ],
+                Text(
+                  _breakdownTitle,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondarySurface,
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 2),
+                Text(
+                  _breakdownDescription,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
                   ),
-                  child: const Icon(
-                    Icons.bar_chart_rounded,
-                    size: 20,
-                    color: AppTheme.accent,
+                ),
+                const SizedBox(height: 6),
+                _buildPeriodTabs(),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: chartHeight,
+                  child: LayoutBuilder(
+                    builder: (context, chartConstraints) {
+                      return BarChart(
+                        _barChartData(chartConstraints.maxWidth),
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeOutCubic,
+                      );
+                    },
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 208,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return BarChart(
-                    _barChartData(constraints.maxWidth),
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -614,7 +540,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       minY: 0,
       maxY: maxY,
       alignment: BarChartAlignment.spaceEvenly,
-      groupsSpace: 12,
+      groupsSpace: 8,
       backgroundColor: Colors.transparent,
       borderData: FlBorderData(show: false),
       gridData: FlGridData(
@@ -635,7 +561,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 28,
+            reservedSize: 24,
             getTitlesWidget: (value, meta) {
               final index = value.round();
               if (index < 0 || index >= chartDays.length) {
@@ -644,7 +570,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               final day = chartDays[index];
               return SideTitleWidget(
                 meta: meta,
-                space: 8,
+                space: 5,
                 child: Text(
                   day.day,
                   maxLines: 1,
@@ -705,7 +631,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               fontSize: 8,
               fontWeight: FontWeight.w700,
             ),
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 6),
           ),
           backDrawRodData: BackgroundBarChartRodData(
             show: maxAmount > 0,
@@ -721,13 +647,11 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
 class _EarningsSummary {
   final double total;
   final int tripsCount;
-  final double driveHours;
   final List<_EarnDay> days;
 
   const _EarningsSummary({
     required this.total,
     required this.tripsCount,
-    required this.driveHours,
     required this.days,
   });
 }
