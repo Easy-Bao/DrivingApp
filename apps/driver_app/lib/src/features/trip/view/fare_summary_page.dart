@@ -129,18 +129,14 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
-        Material(
-          color: AppTheme.surface,
-          shape: const CircleBorder(),
-          elevation: 1,
-          child: InkWell(
-            onTap: () => context.goNamed(HomeRoutes.dashboard),
-            customBorder: const CircleBorder(),
-            child: const SizedBox(
-              width: 44,
-              height: 44,
-              child: Icon(LucideIcons.arrow_left, size: 19),
-            ),
+        IconButton(
+          onPressed: () => context.goNamed(HomeRoutes.dashboard),
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          padding: EdgeInsets.zero,
+          icon: const Icon(
+            LucideIcons.arrow_left,
+            size: 21,
+            color: AppTheme.primaryColor,
           ),
         ),
         const SizedBox(width: 12),

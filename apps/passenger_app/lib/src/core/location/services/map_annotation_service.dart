@@ -70,7 +70,7 @@ class MapAnnotationService {
       geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
       image: await _createMarkerImage(markerColor, label: label),
       iconAnchor: mapbox.IconAnchor.BOTTOM,
-      iconSize: label == null ? (isOrigin ? 0.78 : 0.82) : 1.0,
+      iconSize: label == null ? (isOrigin ? 1.08 : 1.16) : 1.0,
       symbolSortKey: isOrigin ? 10 : 20,
     );
   }

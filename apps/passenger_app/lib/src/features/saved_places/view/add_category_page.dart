@@ -255,6 +255,25 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                       ? _getMapView()
                       : _buildLocationUnavailableState(),
                 ),
+                if (!_isLoadingLocation && _isLocationPinned)
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: MapZoomControlsWidget(
+                      onZoomIn: () {
+                        final controller = _mapController;
+                        if (controller != null) {
+                          unawaited(MapProvider.zoomIn(controller));
+                        }
+                      },
+                      onZoomOut: () {
+                        final controller = _mapController;
+                        if (controller != null) {
+                          unawaited(MapProvider.zoomOut(controller));
+                        }
+                      },
+                    ),
+                  ),
               ],
             ),
             Padding(

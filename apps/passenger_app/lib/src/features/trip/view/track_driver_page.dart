@@ -20,6 +20,7 @@ import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_
 import 'package:passenger_app/src/features/trip/view/widgets/track_driver_panel_widget.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActivityTrackDriverPage extends StatefulWidget {
@@ -413,7 +414,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    AppBackButtonWidget(
+                    AppBackButtonWidget.plain(
                       onPressed: () => context.goNamed(HomeRoutes.home),
                     ),
                     BlocBuilder<TrackDriverCubit, TrackDriverState>(
@@ -593,6 +594,18 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                     );
                   },
                 ),
+              ),
+            ),
+            Positioned(
+              top: MediaQuery.paddingOf(context).top + 76,
+              right: 16,
+              child: MapZoomControlsWidget(
+                onZoomIn: _mapController == null
+                    ? null
+                    : () => unawaited(MapProvider.zoomIn(_mapController!)),
+                onZoomOut: _mapController == null
+                    ? null
+                    : () => unawaited(MapProvider.zoomOut(_mapController!)),
               ),
             ),
           ],

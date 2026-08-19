@@ -24,8 +24,8 @@ class TrackRepository implements ITrackRepository {
         endLat,
         endLng,
       );
-      if (route != null && route.polylinePoints.isNotEmpty) {
-        return route.polylinePoints;
+      if (route != null && route.hasGeometry) {
+        return route.validPolylinePoints;
       }
       return null;
     } catch (error) {

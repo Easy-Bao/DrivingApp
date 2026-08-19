@@ -10,6 +10,7 @@ import 'package:rxdart/rxdart.dart';
 
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
+import 'package:shared_core/shared_core.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';
@@ -169,7 +170,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           targetLat,
           targetLng,
         );
-        final routePoints = route?.polylinePoints;
+        final routePoints = route?.validPolylinePoints;
         if (routePoints != null && routePoints.length >= 2) {
           _routePolylineManager = await _upsertRoute(
             _routePolylineManager,

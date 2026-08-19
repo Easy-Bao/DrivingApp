@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_core/shared_core.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';
@@ -111,10 +112,10 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.riderLat,
       event.riderLng,
     );
-    if (route != null && route.polylinePoints.isNotEmpty) {
+    if (route != null && route.hasGeometry) {
       await MapProvider.addPolyline(
         _mapController!,
-        route.polylinePoints,
+        route.validPolylinePoints,
         color: const Color(0xFF222222),
         width: 5.0,
       );

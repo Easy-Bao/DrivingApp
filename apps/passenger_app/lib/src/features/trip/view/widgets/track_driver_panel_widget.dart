@@ -140,6 +140,16 @@ class TrackDriverPanelWidget extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Text(
+                        'Your Driver',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.tertiaryColor,
+                          letterSpacing: 0.7,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
                       Text(
                         resolvedDriverName,
                         maxLines: 1,

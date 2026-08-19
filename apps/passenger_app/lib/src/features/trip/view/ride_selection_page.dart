@@ -541,6 +541,24 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
               ),
             ),
           ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 72,
+            right: 16,
+            child: MapZoomControlsWidget(
+              onZoomIn: () {
+                final controller = _mapController;
+                if (controller != null) {
+                  unawaited(MapProvider.zoomIn(controller));
+                }
+              },
+              onZoomOut: () {
+                final controller = _mapController;
+                if (controller != null) {
+                  unawaited(MapProvider.zoomOut(controller));
+                }
+              },
+            ),
+          ),
 
           SafeArea(
             child: Padding(

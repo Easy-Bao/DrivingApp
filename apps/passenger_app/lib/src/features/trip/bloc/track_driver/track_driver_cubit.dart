@@ -49,22 +49,27 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
     double progress = 0.0;
     var pickupRouteRequested = false;
+    DateTime? pickupRouteLastAttempt;
     var destinationRouteActive = false;
+    DateTime? destinationRouteLastAttempt;
+    var trackingCompleted = false;
 
-    _ticker = Timer.periodic(const Duration(seconds: 2), (timer) async {
-      if (isClosed) return;
-      if (_isSyncing) return;
+    Future<void> syncTracking() async {
+      if (isClosed || _isSyncing || trackingCompleted || activeRideId.isEmpty) {
+        return;
+      }
 
       _isSyncing = true;
-      if (activeRideId.isNotEmpty) {
+      try {
         final result = await _repository.getRideStatusUpdate(activeRideId);
         await result.fold(
           (failure) async {
             dev.log('Error fetching status update: ${failure.message}');
           },
           (rideUpdate) async {
+            if (isClosed) return;
             if (rideUpdate.status == RideStatus.completed) {
-              timer.cancel();
+              trackingCompleted = true;
               emit(
                 TrackDriverCompleted(
                   driverId: rideUpdate.driverId ?? '',
@@ -75,7 +80,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               );
               await session.saveActiveRideId('');
               await _stopBackgroundTelemetry();
-              _isSyncing = false;
               return;
             }
 
@@ -100,10 +104,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               );
             }
 
-            if (!locationFetched) {
-              _isSyncing = false;
-              return;
-            }
+            if (!locationFetched) return;
 
             final targetLat =
                 rideUpdate.destinationLat ??
@@ -111,51 +112,98 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             final targetLng =
                 rideUpdate.destinationLng ??
                 (destinationLng == 0 ? null : destinationLng);
+            final now = DateTime.now();
             if (rideUpdate.status != RideStatus.inTransit &&
-                !pickupRouteRequested) {
-              routePoints = await _repository.getRoutePolyline(
+                !pickupRouteRequested &&
+                _canRetryRoute(pickupRouteLastAttempt, now)) {
+              pickupRouteLastAttempt = now;
+              final candidate = await _repository.getRoutePolyline(
                 startLat: driverLat!,
                 startLng: driverLng!,
                 endLat: endLat,
                 endLng: endLng,
               );
-              pickupRouteRequested = true;
+              if (_hasRouteGeometry(candidate)) {
+                routePoints = candidate;
+                pickupRouteRequested = true;
+              }
             }
             if (rideUpdate.status == RideStatus.inTransit &&
                 !destinationRouteActive &&
                 targetLat != null &&
-                targetLng != null) {
-              routePoints = await _repository.getRoutePolyline(
+                targetLng != null &&
+                _canRetryRoute(destinationRouteLastAttempt, now)) {
+              destinationRouteLastAttempt = now;
+              routePoints = null;
+              final candidate = await _repository.getRoutePolyline(
                 startLat: driverLat!,
                 startLng: driverLng!,
                 endLat: targetLat,
                 endLng: targetLng,
               );
-              progress = 0;
-              destinationRouteActive = true;
+              if (_hasRouteGeometry(candidate)) {
+                routePoints = candidate;
+                progress = 0;
+                destinationRouteActive = true;
+              }
             }
 
             final eta = _getEtaLabel(rideUpdate.status);
 
-            emit(
-              TrackDriverInProgress(
-                driverLat: driverLat!,
-                driverLng: driverLng!,
-                progress: progress,
-                eta: eta,
-                routePoints: routePoints,
-                status: rideUpdate.status,
-                driverName: rideUpdate.driverName,
-                vehiclePlate: rideUpdate.vehiclePlate,
-                vehicleType: rideUpdate.vehicleType,
-              ),
-            );
+            if (!isClosed) {
+              emit(
+                TrackDriverInProgress(
+                  driverLat: driverLat!,
+                  driverLng: driverLng!,
+                  progress: progress,
+                  eta: eta,
+                  routePoints: routePoints,
+                  status: rideUpdate.status,
+                  driverName: rideUpdate.driverName,
+                  vehiclePlate: rideUpdate.vehiclePlate,
+                  vehicleType: rideUpdate.vehicleType,
+                ),
+              );
+            }
           },
         );
+      } catch (error, stackTrace) {
+        dev.log(
+          'Error synchronizing driver tracking',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      } finally {
+        _isSyncing = false;
       }
+    }
 
-      _isSyncing = false;
-    });
+    await syncTracking();
+    if (!trackingCompleted && !isClosed) {
+      _ticker = Timer.periodic(
+        const Duration(seconds: 2),
+        (_) => unawaited(syncTracking()),
+      );
+    }
+  }
+
+  bool _canRetryRoute(DateTime? lastAttempt, DateTime now) {
+    return lastAttempt == null ||
+        now.difference(lastAttempt) >= const Duration(seconds: 8);
+  }
+
+  bool _hasRouteGeometry(List<List<double>>? points) {
+    return points != null &&
+        points.where((point) {
+              return point.length >= 2 &&
+                  point[0].isFinite &&
+                  point[1].isFinite &&
+                  point[0] >= -180 &&
+                  point[0] <= 180 &&
+                  point[1] >= -90 &&
+                  point[1] <= 90;
+            }).length >=
+            2;
   }
 
   Future<void> cancelTrip() async {

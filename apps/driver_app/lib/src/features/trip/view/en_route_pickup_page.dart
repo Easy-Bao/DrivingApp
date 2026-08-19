@@ -185,6 +185,7 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
       _isLoading = false;
     });
 
+    _triggerDrawRoute(pos.latitude, pos.longitude);
     _startTrackingPassenger();
   }
 
@@ -330,10 +331,28 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                 ),
                 SafeArea(child: _buildHeader(context)),
                 Positioned(
-                  top: 112,
+                  top: MediaQuery.paddingOf(context).top + 72,
                   right: 20,
-                  child: TripMapCurrentLocationButton(
-                    onPressed: _mapController == null ? null : _recenterMap,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TripMapCurrentLocationButton(
+                        onPressed: _mapController == null ? null : _recenterMap,
+                      ),
+                      const SizedBox(height: 12),
+                      MapZoomControlsWidget(
+                        onZoomIn: _mapController == null
+                            ? null
+                            : () => unawaited(
+                                MapProvider.zoomIn(_mapController!),
+                              ),
+                        onZoomOut: _mapController == null
+                            ? null
+                            : () => unawaited(
+                                MapProvider.zoomOut(_mapController!),
+                              ),
+                      ),
+                    ],
                   ),
                 ),
                 Align(

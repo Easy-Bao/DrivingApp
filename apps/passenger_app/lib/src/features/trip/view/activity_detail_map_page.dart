@@ -6,8 +6,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:passenger_app/src/shared/widgets/map_zoom_controls_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class ActivityDetailMapPage extends StatefulWidget {
   final String placeName;
@@ -140,7 +140,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
           ),
           Positioned(
             right: 16,
-            bottom: 260,
+            top: MediaQuery.paddingOf(context).top + 72,
             child: MapZoomControlsWidget(
               onZoomIn: () {
                 if (_mapController != null) {
