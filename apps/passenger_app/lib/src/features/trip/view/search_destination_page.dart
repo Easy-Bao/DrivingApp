@@ -8,7 +8,6 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class SearchDestinationPage extends StatefulWidget {
@@ -556,26 +555,6 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                     ),
                   ),
                 ),
-                if (t < 0.5)
-                  Positioned(
-                    right: 16,
-                    top: MediaQuery.paddingOf(context).top + 72,
-                    child: Opacity(
-                      opacity: (1.0 - t * 2.0).clamp(0.0, 1.0),
-                      child: MapZoomControlsWidget(
-                        onZoomIn: () {
-                          if (_mapController != null) {
-                            unawaited(MapProvider.zoomIn(_mapController!));
-                          }
-                        },
-                        onZoomOut: () {
-                          if (_mapController != null) {
-                            unawaited(MapProvider.zoomOut(_mapController!));
-                          }
-                        },
-                      ),
-                    ),
-                  ),
                 if (t > 0.01)
                   Positioned(
                     left: containerLeft,

@@ -18,7 +18,6 @@ import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_near
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_searching_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverPage extends StatelessWidget {
   final String rideType;
@@ -103,7 +102,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   String? _acceptingOfferId;
   bool _locationUnavailable = false;
   bool _isViewingDriverProfile = false;
-  AppMapController? _mapController;
 
   ({double lat, double lng})? get _pickupCoordinate {
     final latitude = widget.pickupLatitude;
@@ -195,7 +193,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   }
 
   void _onMapCreated(AppMapController controller, BuildContext context) {
-    _mapController = controller;
     if (!_initialized) {
       _initialized = true;
       final pickup = _pickupCoordinate;
@@ -482,24 +479,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                         onMapCreated: (controller) =>
                             _onMapCreated(controller, context),
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    top: MediaQuery.paddingOf(context).top + 72,
-                    right: 16,
-                    child: MapZoomControlsWidget(
-                      onZoomIn: () {
-                        final controller = _mapController;
-                        if (controller != null) {
-                          unawaited(MapProvider.zoomIn(controller));
-                        }
-                      },
-                      onZoomOut: () {
-                        final controller = _mapController;
-                        if (controller != null) {
-                          unawaited(MapProvider.zoomOut(controller));
-                        }
-                      },
                     ),
                   ),
                   BlocBuilder<BookingBloc, BookingState>(
