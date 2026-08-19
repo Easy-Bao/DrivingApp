@@ -12,9 +12,11 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/bidoffer"
 	"github.com/Easy-Bao/DrivingApp/server/ent/bidsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
+	"github.com/Easy-Bao/DrivingApp/server/ent/user"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 )
 
@@ -491,7 +493,11 @@ func (repository *Repository) DriverTrips(ctx context.Context, driverID int) ([]
 	for index := len(items) - 1; index >= 0; index-- {
 		result = append(result, fromRide(items[index]))
 	}
-	return repository.hydrateDriverDetails(ctx, result)
+	hydrated, err := repository.hydrateDriverDetails(ctx, result)
+	if err != nil {
+		return nil, err
+	}
+	return repository.hydratePassengerDetails(ctx, hydrated)
 }
 
 func (repository *Repository) PassengerRides(ctx context.Context, passengerID int) ([]domain.Ride, error) {
@@ -567,6 +573,86 @@ func (repository *Repository) hydrateDriverDetails(ctx context.Context, rides []
 		}
 		if rides[index].PlateNumber == "" {
 			rides[index].PlateNumber = profile.PlateNumber
+		}
+	}
+	return rides, nil
+}
+
+func (repository *Repository) hydratePassengerDetails(ctx context.Context, rides []domain.Ride) ([]domain.Ride, error) {
+	passengerIDs := make([]int, 0)
+	seen := make(map[int]struct{})
+	for _, item := range rides {
+		if item.PassengerID <= 0 {
+			continue
+		}
+		if _, exists := seen[item.PassengerID]; exists {
+			continue
+		}
+		seen[item.PassengerID] = struct{}{}
+		passengerIDs = append(passengerIDs, item.PassengerID)
+	}
+	if len(passengerIDs) == 0 {
+		return rides, nil
+	}
+
+	users, err := repository.client.User.Query().Where(user.IDIn(passengerIDs...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	usersByID := make(map[int]*ent.User, len(users))
+	for _, account := range users {
+		usersByID[account.ID] = account
+	}
+
+	profiles, err := repository.client.PassengerProfile.Query().Where(
+		passengerprofile.UserIDIn(passengerIDs...),
+	).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	profilesByUserID := make(map[int]*ent.PassengerProfile, len(profiles))
+	for _, profile := range profiles {
+		profilesByUserID[profile.UserID] = profile
+	}
+
+	reviews, err := repository.client.PassengerReview.Query().Where(
+		passengerreview.PassengerIDIn(passengerIDs...),
+	).Order(passengerreview.ByCreatedAt(entsql.OrderDesc())).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	type reviewSummary struct {
+		totalRating float64
+		count       int
+		feedback    string
+	}
+	reviewSummaries := make(map[int]reviewSummary, len(passengerIDs))
+	for _, item := range reviews {
+		summary := reviewSummaries[item.PassengerID]
+		summary.totalRating += item.Rating
+		summary.count++
+		if summary.feedback == "" {
+			summary.feedback = strings.TrimSpace(item.Comment)
+		}
+		reviewSummaries[item.PassengerID] = summary
+	}
+
+	for index := range rides {
+		passengerID := rides[index].PassengerID
+		account := usersByID[passengerID]
+		profile := profilesByUserID[passengerID]
+		if profile != nil {
+			rides[index].PassengerName = profile.Name
+		}
+		if rides[index].PassengerName == "" && account != nil {
+			rides[index].PassengerName = account.Name
+		}
+		if account != nil {
+			rides[index].PassengerPhone = account.Phone
+		}
+		if summary, exists := reviewSummaries[passengerID]; exists && summary.count > 0 {
+			rides[index].PassengerRating = summary.totalRating / float64(summary.count)
+			rides[index].PassengerFeedback = summary.feedback
 		}
 	}
 	return rides, nil

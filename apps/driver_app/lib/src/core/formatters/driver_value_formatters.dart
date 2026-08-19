@@ -19,3 +19,10 @@ String? driverValueAsString(Object? value) {
   final normalized = value.toString().trim();
   return normalized.isEmpty ? null : normalized;
 }
+
+String driverSentenceCase(Object? value, [String fallback = '—']) {
+  final normalized = driverValueAsString(value);
+  if (normalized == null) return fallback;
+  final lowerCased = normalized.toLowerCase();
+  return '${lowerCased.substring(0, 1).toUpperCase()}${lowerCased.substring(1)}';
+}

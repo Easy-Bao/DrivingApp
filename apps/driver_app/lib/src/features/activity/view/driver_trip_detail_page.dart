@@ -1,11 +1,8 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
-
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -13,6 +10,7 @@ import 'package:shared_ui/shared_ui.dart';
 
 class DriverTripDetailPage extends StatefulWidget {
   final Map<String, dynamic> trip;
+
   const DriverTripDetailPage({super.key, required this.trip});
 
   @override
@@ -20,55 +18,25 @@ class DriverTripDetailPage extends StatefulWidget {
 }
 
 class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
-  bool _isLoading = true;
-  Map<String, dynamic>? _passenger;
-  String? _errorMessage;
+  String get _passengerName =>
+      driverValueAsString(widget.trip['passenger_name']) ?? 'Passenger';
 
-  @override
-  void initState() {
-    super.initState();
-    _loadPassengerProfile();
-  }
+  String get _passengerPhone =>
+      driverValueAsString(widget.trip['passenger_phone']) ??
+      'Phone unavailable';
 
-  Future<void> _loadPassengerProfile() async {
-    final passengerId = driverValueAsString(widget.trip['passenger_id']);
-    if (passengerId == null || passengerId.isEmpty) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'No passenger associated with this trip.';
-      });
-      return;
-    }
+  String? get _passengerFeedback =>
+      driverValueAsString(widget.trip['passenger_feedback']);
 
-    try {
-      final profile = await Modular.get<PassengerRemoteDataSource>()
-          .fetchPassengerProfile(passengerId);
-      if (profile.isNotEmpty) {
-        setState(() {
-          _passenger = profile;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Passenger profile not found.';
-        });
-      }
-    } catch (error) {
-      setState(() {
-        _passenger = {
-          'name': widget.trip['passenger_name'] as String? ?? 'Passenger',
-        };
-        _isLoading = false;
-        _errorMessage = null;
-      });
-    }
+  double? get _passengerRating {
+    final value = widget.trip['passenger_rating'];
+    if (value is num && value.isFinite && value > 0) return value.toDouble();
+    return double.tryParse(driverValueAsString(value) ?? '');
   }
 
   Future<void> _contactPassenger() async {
     final passengerId = driverValueAsString(widget.trip['passenger_id']);
     final tripId = driverValueAsString(widget.trip['id']);
-
     if (passengerId == null || tripId == null) return;
 
     final driverId =
@@ -83,40 +51,36 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
             passengerId: passengerId,
           );
 
+      if (!mounted) return;
       if (initialized) {
-        if (mounted) {
-          context.pushNamed(
-            ChatRoutes.chat,
-            extra: {
-              'roomId': tripId,
-              'userId': driverId,
-              'peerName': _passenger?['name'] ?? 'Passenger',
-            },
-          );
-        }
+        context.pushNamed(
+          ChatRoutes.chat,
+          extra: {
+            'roomId': tripId,
+            'userId': driverId,
+            'peerName': _passengerName,
+          },
+        );
       } else {
-        if (mounted) {
-          CustomToast.show(
-            context,
-            'Failed to initialize chat channel.',
-            isError: true,
-          );
-        }
-      }
-    } catch (error) {
-      if (mounted) {
         CustomToast.show(
           context,
-          'Connection failed to start chat.',
+          'Failed to initialize chat channel.',
           isError: true,
         );
       }
+    } catch (_) {
+      if (!mounted) return;
+      CustomToast.show(
+        context,
+        'Connection failed to start chat.',
+        isError: true,
+      );
     }
   }
 
   String _formatDate(String isoString) {
     try {
-      final dt = DateTime.parse(isoString).toLocal();
+      final date = DateTime.parse(isoString).toLocal();
       const months = [
         'Jan',
         'Feb',
@@ -131,376 +95,448 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         'Nov',
         'Dec',
       ];
-      return '${months[dt.month - 1]} ${dt.day}, ${dt.year} at ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      return '${months[date.month - 1]} ${date.day}, ${date.year} at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } catch (_) {
-      return 'Past Trip';
+      return 'Past trip';
     }
+  }
+
+  String _formatDistance() {
+    final value = widget.trip['distance_km'];
+    if (value is num && value.isFinite && value > 0) {
+      return '${value.toStringAsFixed(1)} km';
+    }
+    return '—';
+  }
+
+  String _formatDuration() {
+    final value = widget.trip['duration_minutes'];
+    if (value is num && value.isFinite && value > 0) {
+      return '${value.round()} min';
+    }
+    return '—';
   }
 
   @override
   Widget build(BuildContext context) {
-    final status = widget.trip['status'] as String? ?? 'completed';
+    final status = (driverValueAsString(widget.trip['status']) ?? 'completed')
+        .toLowerCase();
     final isCompleted = status == 'completed';
+    final isCanceled = status == 'canceled' || status == 'cancelled';
     final statusColor = isCompleted ? AppTheme.complete : AppTheme.cancel;
-    final statusLabel = isCompleted ? 'Completed' : 'Canceled';
-    final fromName = widget.trip['pickup_name'] as String? ?? 'Pickup';
-    final toName = widget.trip['dropoff_name'] as String? ?? 'Dropoff';
-    final fareAmt = driverFareInPesos(widget.trip);
-    final rideType = widget.trip['ride_type'] as String? ?? 'Solo Ride';
-    final dateStr = _formatDate(widget.trip['created_at'] as String? ?? '');
+    final statusLabel = isCompleted
+        ? 'Completed'
+        : isCanceled
+        ? 'Canceled'
+        : driverSentenceCase(status, 'Past trip');
+    final fromName =
+        driverValueAsString(widget.trip['pickup_name']) ?? 'Pickup';
+    final toName =
+        driverValueAsString(widget.trip['dropoff_name']) ?? 'Drop-off';
+    final fare = driverFareInPesos(widget.trip);
+    final rideType = driverSentenceCase(widget.trip['ride_type'], 'Solo ride');
+    final dateValue =
+        driverValueAsString(widget.trip['completed_at']) ??
+        driverValueAsString(widget.trip['created_at']) ??
+        '';
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: AppTheme.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
-          ),
+          tooltip: 'Back',
+          icon: const Icon(LucideIcons.arrow_left),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Trip Details',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: AppTheme.primaryColor,
-          ),
-        ),
+        title: const Text('Trip details'),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  dateStr,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: statusColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.neutralColor,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.borderSide),
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                12,
+                horizontalPadding,
+                32,
               ),
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              physics: const BouncingScrollPhysics(),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Column(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              shape: BoxShape.circle,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Past trip',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.tertiaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  _formatDate(dateValue),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.42,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Container(
-                            width: 1,
-                            height: 32,
-                            color: AppTheme.borderSide,
-                          ),
-                          const Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color: AppTheme.tertiaryColor,
-                          ),
+                          const SizedBox(width: 8),
+                          _buildStatusChip(statusLabel, statusColor),
                         ],
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              fromName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              toName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 12),
+                      _buildTripSummaryCard(
+                        fromName: fromName,
+                        toName: toName,
+                        rideType: rideType,
+                        fare: fare,
+                        distance: _formatDistance(),
+                        duration: _formatDuration(),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Passenger profile',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.tertiaryColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildPassengerCard(),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _contactPassenger,
+                        icon: const Icon(LucideIcons.message_square, size: 18),
+                        label: const Text('Contact passenger'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Divider(height: 1, color: AppTheme.borderSide),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTripSummaryCard({
+    required String fromName,
+    required String toName,
+    required String rideType,
+    required double? fare,
+    required String distance,
+    required String duration,
+  }) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Trip route',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'RIDE TYPE',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            rideType,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                        ],
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Total fare',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.42),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'TOTAL FARE',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            fareAmt == null
-                                ? '—'
-                                : '₱${fareAmt.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      fare == null ? '—' : '₱${fare.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryColor,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _buildRouteStop(
+              icon: Icons.circle,
+              label: 'Pickup',
+              value: fromName,
+              color: AppTheme.complete,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 5),
+              child: Container(
+                width: 2,
+                height: 18,
+                color: AppTheme.borderSide,
               ),
             ),
-            const SizedBox(height: 32),
-
-            const Text(
-              'PASSENGER PROFILE',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.tertiaryColor,
-                letterSpacing: 0.8,
-              ),
+            _buildRouteStop(
+              icon: Icons.location_on,
+              label: 'Drop-off',
+              value: toName,
+              color: AppTheme.accent,
             ),
-            const SizedBox(height: 16),
-
-            _buildPassengerSection(),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Divider(height: 1),
+            ),
+            Row(
+              children: [
+                Expanded(child: _buildTripMetric('Ride type', rideType)),
+                _buildMetricDivider(),
+                Expanded(child: _buildTripMetric('Distance', distance)),
+                _buildMetricDivider(),
+                Expanded(child: _buildTripMetric('Duration', duration)),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPassengerSection() {
-    if (_isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(color: AppTheme.primaryColor),
-        ),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppTheme.cancel.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.15)),
-        ),
-        child: Center(
-          child: Text(
-            _errorMessage!,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.cancel,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final passengerRating = _passenger?['rating'];
-    final rating = passengerRating is num && passengerRating > 0
-        ? passengerRating.toStringAsFixed(1)
-        : '—';
-
-    return Column(
+  Widget _buildRouteStop({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppTheme.neutralColor,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppTheme.borderSide),
-          ),
-          child: Row(
+        SizedBox(
+          width: 12,
+          child: Icon(icon, size: icon == Icons.circle ? 9 : 15, color: color),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor,
-                  borderRadius: BorderRadius.circular(16),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.42),
                 ),
-                child: const Icon(
-                  LucideIcons.user,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                   color: AppTheme.primaryColor,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _passenger?['name'] ?? 'Passenger',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _passenger?['phone'] ?? 'Unknown phone',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppTheme.complete.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '★ $rating',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.complete,
-                  ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 24),
+      ],
+    );
+  }
 
-        GestureDetector(
-          onTap: _contactPassenger,
-          child: Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  LucideIcons.message_square,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Contact Passenger (Lost & Found)',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
+  Widget _buildTripMetric(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.primaryColor.withValues(alpha: 0.42),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.primaryColor,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMetricDivider() {
+    return Container(width: 1, height: 28, color: AppTheme.borderSide);
+  }
+
+  Widget _buildPassengerCard() {
+    final rating = _passengerRating;
+    final initial = _passengerName.substring(0, 1).toUpperCase();
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondaryColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _passengerName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        _passengerPhone,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (rating != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.complete.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${rating.toStringAsFixed(1)} rating',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.complete,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Text(
+              _passengerFeedback ?? 'No feedback shared yet.',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.primaryColor.withValues(alpha: 0.62),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

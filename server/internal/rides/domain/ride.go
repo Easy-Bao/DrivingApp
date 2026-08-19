@@ -21,6 +21,10 @@ type Ride struct {
 	VehicleType          string  `json:"vehicle_type,omitempty"`
 	PlateNumber          string  `json:"plate_number,omitempty"`
 	DriverRating         float64 `json:"driver_rating,omitempty"`
+	PassengerName        string  `json:"passenger_name,omitempty"`
+	PassengerPhone       string  `json:"passenger_phone,omitempty"`
+	PassengerRating      float64 `json:"passenger_rating,omitempty"`
+	PassengerFeedback    string  `json:"passenger_feedback,omitempty"`
 	CompletedAt          *string `json:"completed_at,omitempty"`
 	PaymentStatus        string  `json:"payment_status"`
 	CommissionCentavos   int64   `json:"commission_centavos"`

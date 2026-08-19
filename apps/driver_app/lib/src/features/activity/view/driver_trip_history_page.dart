@@ -200,7 +200,9 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     final map = <String, List<dynamic>>{};
     for (final t in trips) {
       final dateStr = _formatDate(
-        t['completed_at'] as String? ?? t['created_at'] as String? ?? '',
+        driverValueAsString(t['completed_at']) ??
+            driverValueAsString(t['created_at']) ??
+            '',
       );
       map.putIfAbsent(dateStr, () => []).add(t);
     }
@@ -293,110 +295,206 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
   }
 
   Widget _buildTripCard(dynamic trip) {
-    final status = trip['status'] as String? ?? 'completed';
+    final status = (driverValueAsString(trip['status']) ?? 'completed')
+        .toLowerCase();
     final isCompleted = status == 'completed';
     final statusColor = isCompleted ? AppTheme.complete : AppTheme.cancel;
-    final statusLabel = isCompleted ? 'Completed' : 'Canceled';
-    final fromName = trip['pickup_name'] as String? ?? 'Pickup';
-    final toName = trip['dropoff_name'] as String? ?? 'Dropoff';
+    final statusLabel = isCompleted
+        ? 'Completed'
+        : driverSentenceCase(status, 'Canceled');
+    final fromName = driverValueAsString(trip['pickup_name']) ?? 'Pickup';
+    final toName = driverValueAsString(trip['dropoff_name']) ?? 'Drop-off';
     final fareAmt = driverFareInPesos(Map<String, dynamic>.from(trip as Map));
+    final rideType = driverSentenceCase(trip['ride_type'], 'Solo ride');
+    final distance =
+        trip['distance_km'] is num &&
+            (trip['distance_km'] as num).isFinite &&
+            (trip['distance_km'] as num) > 0
+        ? '${(trip['distance_km'] as num).toStringAsFixed(1)} km'
+        : '—';
 
-    return GestureDetector(
-      onTap: () => context.pushNamed(
-        ActivityRoutes.tripDetail,
-        extra: trip as Map<String, dynamic>,
-      ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.borderSide),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Column(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Container(width: 1, height: 22, color: AppTheme.borderSide),
-                  const Icon(
-                    Icons.location_on,
-                    size: 12,
-                    color: AppTheme.tertiaryColor,
-                  ),
-                ],
-              ),
+          onTap: () => context.pushNamed(
+            ActivityRoutes.tripDetail,
+            extra: trip as Map<String, dynamic>,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.borderSide),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    fromName,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    toName,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  fareAmt == null ? '—' : '₱${fareAmt.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: statusColor,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatTripTime(trip),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      ),
                     ),
-                  ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        statusLabel,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.circle,
+                            size: 9,
+                            color: AppTheme.complete,
+                          ),
+                          Container(
+                            width: 2,
+                            height: 24,
+                            color: AppTheme.borderSide,
+                          ),
+                          const Icon(
+                            Icons.location_on,
+                            size: 15,
+                            color: AppTheme.accent,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fromName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            toName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: _tripMeta('Ride type', rideType)),
+                    Container(width: 1, height: 28, color: AppTheme.borderSide),
+                    Expanded(child: _tripMeta('Distance', distance)),
+                    Container(width: 1, height: 28, color: AppTheme.borderSide),
+                    Expanded(
+                      child: _tripMeta(
+                        'Fare',
+                        fareAmt == null
+                            ? '—'
+                            : '₱${fareAmt.toStringAsFixed(2)}',
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  String _formatTripTime(dynamic trip) {
+    final rawDate =
+        driverValueAsString(trip['completed_at']) ??
+        driverValueAsString(trip['created_at']);
+    if (rawDate == null) return 'Past trip';
+    try {
+      final date = DateTime.parse(rawDate).toLocal();
+      final hour = date.hour == 0
+          ? 12
+          : date.hour > 12
+          ? date.hour - 12
+          : date.hour;
+      final period = date.hour >= 12 ? 'PM' : 'AM';
+      return '$hour:${date.minute.toString().padLeft(2, '0')} $period';
+    } catch (_) {
+      return 'Past trip';
+    }
+  }
+
+  Widget _tripMeta(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryColor.withValues(alpha: 0.42),
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ],
       ),
     );
   }
