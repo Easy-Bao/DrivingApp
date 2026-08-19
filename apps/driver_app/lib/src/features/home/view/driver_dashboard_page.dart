@@ -44,6 +44,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Timer? _presenceHeartbeatTimer;
   Timer? _locationAccessPoller;
   StreamSubscription<Position>? _locationSubscription;
+  StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
+  RealtimeWebSocketClient? _realtimeClient;
   List<Map<String, dynamic>> _activeBids = [];
   List<Map<String, dynamic>> _activeTrips = [];
   LiveMapBloc? _liveMapBloc;
@@ -61,6 +63,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _liveMapBloc = Modular.get<LiveMapBloc>();
+    _realtimeClient = Modular.get<RealtimeWebSocketClient>();
+    _realtimeEventsSubscription = _realtimeClient!.events.listen(
+      _handleRealtimeEvent,
+    );
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -91,6 +97,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
     _locationSubscription?.cancel();
+    _realtimeEventsSubscription?.cancel();
+    final realtimeClient = _realtimeClient;
+    if (realtimeClient != null) {
+      unawaited(realtimeClient.stop());
+    }
     _pollGeneration++;
     unawaited(_liveMapBloc?.close());
     super.dispose();
@@ -211,6 +222,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       const Duration(seconds: 20),
       (_) => unawaited(_refreshOnlinePresence()),
     );
+    unawaited(_startRealtimeUpdates());
 
     _rideTriggerTimer?.cancel();
     _rideTriggerTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
@@ -223,6 +235,69 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       unawaited(_pollRideData(pollGeneration));
     });
     unawaited(_pollRideData(pollGeneration));
+  }
+
+  Future<void> _startRealtimeUpdates() async {
+    final realtimeClient = _realtimeClient;
+    if (realtimeClient == null) return;
+    try {
+      await realtimeClient.start();
+    } catch (error) {
+      dev.log('Unable to start driver ride realtime updates: $error');
+    }
+  }
+
+  void _handleRealtimeEvent(RealtimeEvent event) {
+    if (!mounted || event is! RideMatchedEvent) return;
+    if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) return;
+
+    final rawRide = event.envelope.payload['ride'];
+    if (rawRide is! Map) {
+      unawaited(_pollRideData(_pollGeneration));
+      return;
+    }
+
+    final ride = Map<String, dynamic>.from(rawRide);
+    final rideId =
+        driverValueAsString(ride['id']) ?? event.envelope.scope.rideId;
+    if (rideId == null) return;
+
+    final status = driverValueAsString(ride['status']) ?? 'accepted';
+    if (!{'accepted', 'arrived', 'in_transit'}.contains(status)) return;
+    ride['id'] = rideId;
+    ride['status'] = status;
+
+    final updatedTrips = List<Map<String, dynamic>>.from(_activeTrips);
+    final existingIndex = updatedTrips.indexWhere(
+      (trip) => driverValueAsString(trip['id']) == rideId,
+    );
+    if (existingIndex >= 0) {
+      updatedTrips[existingIndex] = {
+        ...updatedTrips[existingIndex],
+        ...ride,
+      };
+    } else {
+      updatedTrips.insert(0, ride);
+    }
+    _sortActiveTrips(updatedTrips);
+
+    setState(() => _activeTrips = updatedTrips);
+  }
+
+  void _sortActiveTrips(List<Map<String, dynamic>> trips) {
+    trips.sort((a, b) {
+      const statusPriority = {
+        'in_transit': 0,
+        'arrived': 1,
+        'accepted': 2,
+      };
+      final aPriority = statusPriority[a['status']] ?? 3;
+      final bPriority = statusPriority[b['status']] ?? 3;
+      if (aPriority != bPriority) return aPriority.compareTo(bPriority);
+      return (a['created_at'] as String? ?? '').compareTo(
+        b['created_at'] as String? ?? '',
+      );
+    });
   }
 
   Future<void> _pollRideData(int pollGeneration) async {
@@ -239,9 +314,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverId.isEmpty) return;
 
-      final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
-        driverId,
-      );
+      final results = await Future.wait<List<dynamic>>([
+        Modular.get<TripRemoteDataSource>().fetchTripHistory(driverId),
+        Modular.get<BiddingRemoteDataSource>().fetchActiveBids(),
+      ]);
+      final list = results[0];
       List<Map<String, dynamic>> trips = list
           .where((r) {
             final status = r['status'] as String?;
@@ -252,8 +329,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           .map((r) => r as Map<String, dynamic>)
           .toList();
 
-      final bidsList = await Modular.get<BiddingRemoteDataSource>()
-          .fetchActiveBids();
+      final bidsList = results[1];
       final List<Map<String, dynamic>> bids = bidsList
           .map((b) => b as Map<String, dynamic>)
           .toList();
@@ -264,15 +340,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         return;
       }
 
-      trips.sort((a, b) {
-        const statusPriority = {'in_transit': 0, 'arrived': 1, 'accepted': 2};
-        final aPriority = statusPriority[a['status']] ?? 3;
-        final bPriority = statusPriority[b['status']] ?? 3;
-        if (aPriority != bPriority) return aPriority.compareTo(bPriority);
-        return (a['created_at'] as String? ?? '').compareTo(
-          b['created_at'] as String? ?? '',
-        );
-      });
+      _sortActiveTrips(trips);
       setState(() {
         _activeTrips = trips;
         _activeBids = bids;
@@ -312,6 +380,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _rideTriggerTimer = null;
     _presenceHeartbeatTimer?.cancel();
     _presenceHeartbeatTimer = null;
+    final realtimeClient = _realtimeClient;
+    if (realtimeClient != null) {
+      unawaited(realtimeClient.stop());
+    }
     if (mounted) {
       setState(() {
         _activeTrips = [];

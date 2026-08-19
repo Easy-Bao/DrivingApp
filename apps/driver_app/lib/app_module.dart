@@ -17,6 +17,7 @@ import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_d
 import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_core/shared_core.dart';
 
 class AppModule extends Module {
   final SharedPreferences _prefs;
@@ -38,6 +39,14 @@ class AppModule extends Module {
       )
       ..addLazySingleton<SecureStorage>(
         (i) => SecureStorage(i.get<SecureSessionService>()),
+      )
+      ..addLazySingleton<RealtimeWebSocketClient>(
+        (i) => RealtimeWebSocketClient(
+          uri: EnvConfig.webSocketBaseUri.replace(
+            path: '/api/v1/realtime/ws',
+          ),
+          tokenProvider: i.get<SecureSessionService>().readToken,
+        ),
       )
       ..addLazySingleton<Dio>(
         (i) => DioClient.create(
