@@ -334,10 +334,13 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
             ),
             Padding(
               padding: const EdgeInsets.only(left: 5),
-              child: Container(
+              child: SizedBox(
                 width: 2,
                 height: 18,
-                color: AppTheme.borderSide,
+                child: CustomPaint(
+                  key: const ValueKey('driver-trip-route-dashes'),
+                  painter: _DashedRoutePainter(),
+                ),
               ),
             ),
             _buildRouteStop(
@@ -547,4 +550,33 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
       ),
     );
   }
+}
+
+class _DashedRoutePainter extends CustomPainter {
+  static const _dashHeight = 4.0;
+  static const _gapHeight = 5.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppTheme.tertiaryColor.withValues(alpha: 0.68);
+
+    var top = 0.0;
+    while (top < size.height) {
+      final bottom = (top + _dashHeight).clamp(0.0, size.height).toDouble();
+      if (bottom > top) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(0, top, size.width, bottom - top),
+            Radius.circular(size.width / 2),
+          ),
+          paint,
+        );
+      }
+      top += _dashHeight + _gapHeight;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRoutePainter oldDelegate) => false;
 }

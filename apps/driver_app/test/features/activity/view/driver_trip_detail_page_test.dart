@@ -37,6 +37,10 @@ void main() {
 
     expect(find.text('Trip route'), findsOneWidget);
     expect(find.text('Passenger profile'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('driver-trip-route-dashes')),
+      findsOneWidget,
+    );
     expect(find.text('Ana Maria'), findsOneWidget);
     expect(find.text('+63 917 555 0101'), findsOneWidget);
     expect(find.text('4.8 rating'), findsOneWidget);
