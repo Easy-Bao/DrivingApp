@@ -70,6 +70,8 @@ void main() {
     expect(find.byType(BarChart), findsOneWidget);
     expect(find.text('Completed rides reported by the server'), findsNothing);
     expect(find.text('Drive time'), findsNothing);
+    expect(find.text('Driver rating'), findsNothing);
+    expect(find.text('Average per trip'), findsOneWidget);
     final verticalScrollables = find.byWidgetPredicate(
       (widget) => widget is Scrollable && widget.axis == Axis.vertical,
     );

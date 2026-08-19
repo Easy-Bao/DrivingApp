@@ -6,7 +6,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 enum _EarningsPeriod { daily, weekly, monthly }
 
@@ -25,7 +24,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   _EarningsPeriod _selectedPeriod = _EarningsPeriod.weekly;
   double _periodTotal = 0;
   int _periodTripsCount = 0;
-  String _rating = '—';
   List<Map<String, dynamic>> _completedTrips = const [];
   List<_EarnDay> _dailyData = const [];
 
@@ -50,13 +48,10 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
 
     final secureSession = Modular.get<SecureSessionService>();
     final driverId = await secureSession.readDriverId() ?? '';
-    final prefs = await SharedPreferences.getInstance();
-    final rating = prefs.getString('rating') ?? '—';
 
     if (driverId.isEmpty) {
       if (mounted) {
         setState(() {
-          _rating = rating;
           _isLoading = false;
           _errorMessage = 'Your driver session is unavailable.';
         });
@@ -71,7 +66,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     result.fold(
       (failure) {
         setState(() {
-          _rating = rating;
           _isLoading = false;
           _errorMessage = failure.message;
         });
@@ -88,7 +82,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             .toList();
         final summary = _buildSummary(_selectedPeriod, completedTrips);
         setState(() {
-          _rating = rating;
           _completedTrips = completedTrips;
           _applySummary(summary);
           _isLoading = false;
@@ -238,6 +231,10 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     _EarningsPeriod.weekly => 'See how your total builds each day.',
     _EarningsPeriod.monthly => 'See how your total builds each week.',
   };
+
+  String get _averageFareLabel => _periodTripsCount == 0
+      ? '—'
+      : '₱${(_periodTotal / _periodTripsCount).toStringAsFixed(2)}';
 
   @override
   void dispose() {
@@ -398,7 +395,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                   child: _miniStat('$_periodTripsCount', 'Completed trips'),
                 ),
                 _summaryDivider(),
-                Expanded(child: _miniStat(_rating, 'Driver rating')),
+                Expanded(
+                  child: _miniStat(_averageFareLabel, 'Average per trip'),
+                ),
               ],
             ),
           ],
