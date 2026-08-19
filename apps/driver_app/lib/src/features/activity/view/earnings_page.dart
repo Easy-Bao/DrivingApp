@@ -367,11 +367,16 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           const SizedBox(height: 16),
           Row(
             children: [
-              _miniStat('$_periodTripsCount', 'Trips'),
+              Expanded(child: _miniStat('$_periodTripsCount', 'Trips')),
               _summaryDivider(),
-              _miniStat('${_driveHours.toStringAsFixed(1)}h', 'Drive time'),
+              Expanded(
+                child: _miniStat(
+                  '${_driveHours.toStringAsFixed(1)}h',
+                  'Drive time',
+                ),
+              ),
               _summaryDivider(),
-              _miniStat('★ $_rating', 'Rating'),
+              Expanded(child: _miniStat('★ $_rating', 'Rating')),
             ],
           ),
         ],
@@ -384,7 +389,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       width: 1,
       height: 32,
       color: Colors.white24,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
     );
   }
 
@@ -394,6 +399,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       children: [
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w800,
@@ -402,6 +409,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         ),
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w500,
@@ -460,6 +469,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                 children: [
                   Text(
                     '₱${day.amount.toInt()}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w700,
@@ -485,6 +496,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                   const SizedBox(height: 6),
                   Text(
                     day.day,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
