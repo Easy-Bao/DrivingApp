@@ -62,6 +62,9 @@ class AuthRepository implements IAuthRepository {
       }
 
       await _secureSessionService.saveToken(token);
+      await _secureSessionService.saveRefreshToken(
+        _stringValue(authenticationData['refreshToken']),
+      );
       await _secureSessionService.saveDriverId(driverId);
 
       final prefs = await SharedPreferences.getInstance();

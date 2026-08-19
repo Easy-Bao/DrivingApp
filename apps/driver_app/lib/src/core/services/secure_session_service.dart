@@ -15,6 +15,14 @@ class SecureSessionService {
     return _storage.read(key: StorageKeys.jwtToken);
   }
 
+  Future<void> saveRefreshToken(String token) async {
+    await _storage.write(key: StorageKeys.refreshToken, value: token);
+  }
+
+  Future<String?> readRefreshToken() async {
+    return _storage.read(key: StorageKeys.refreshToken);
+  }
+
   Future<void> saveDriverId(String driverId) async {
     await _storage.write(key: StorageKeys.driverId, value: driverId);
   }

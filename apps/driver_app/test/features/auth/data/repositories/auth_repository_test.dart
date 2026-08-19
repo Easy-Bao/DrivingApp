@@ -28,6 +28,9 @@ void main() {
 
     when(() => secureSessionService.saveToken(any())).thenAnswer((_) async {});
     when(
+      () => secureSessionService.saveRefreshToken(any()),
+    ).thenAnswer((_) async {});
+    when(
       () => secureSessionService.saveDriverId(any()),
     ).thenAnswer((_) async {});
   });
@@ -41,6 +44,7 @@ void main() {
     ).thenAnswer(
       (_) async => <String, dynamic>{
         'token': 'jwt-token',
+        'refreshToken': 'refresh-jwt-token',
         'user': <String, dynamic>{
           'id': 42,
           'name': 'Test Driver',
@@ -66,6 +70,9 @@ void main() {
     expect(credentials.driverName, 'Test Driver');
     expect(credentials.rating, 4.75);
     verify(() => secureSessionService.saveToken('jwt-token')).called(1);
+    verify(
+      () => secureSessionService.saveRefreshToken('refresh-jwt-token'),
+    ).called(1);
     verify(() => secureSessionService.saveDriverId('42')).called(1);
   });
 

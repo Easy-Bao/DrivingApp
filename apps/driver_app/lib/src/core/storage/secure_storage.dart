@@ -10,5 +10,11 @@ class SecureStorage {
 
   Future<String?> readToken() => _secureSessionService.readToken();
 
+  Future<void> saveRefreshToken(String token) =>
+      _secureSessionService.saveRefreshToken(token);
+
+  Future<String?> readRefreshToken() =>
+      _secureSessionService.readRefreshToken();
+
   Future<void> clearSession() => _secureSessionService.clearSession();
 }

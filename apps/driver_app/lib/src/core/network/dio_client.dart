@@ -22,8 +22,22 @@ class DioClient {
       ),
     );
 
+    final refreshClient = Dio(
+      BaseOptions(
+        baseUrl: baseUrl.toString(),
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
+      ),
+    );
+
     dio.interceptors.add(
-      AuthInterceptor(sessionService, allowedBaseUri: baseUrl),
+      AuthInterceptor(
+        sessionService,
+        dio: dio,
+        refreshClient: refreshClient,
+        allowedBaseUri: baseUrl,
+      ),
     );
     if (kDebugMode) {
       dio.interceptors.add(

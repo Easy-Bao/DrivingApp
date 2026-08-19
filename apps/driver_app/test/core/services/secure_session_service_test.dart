@@ -13,6 +13,12 @@ void main() {
   setUp(() {
     storage = MockFlutterSecureStorage();
     sessionService = SecureSessionService(storage: storage);
+    when(
+      () => storage.write(
+        key: any(named: 'key'),
+        value: any(named: 'value'),
+      ),
+    ).thenAnswer((_) async {});
   });
 
   test(
@@ -38,5 +44,21 @@ void main() {
     ).thenAnswer((_) async => '');
 
     expect(await sessionService.hasValidDriverSession(), isFalse);
+  });
+
+  test('persists and reads the refresh token', () async {
+    when(
+      () => storage.read(key: StorageKeys.refreshToken),
+    ).thenAnswer((_) async => 'refresh-jwt-token');
+
+    await sessionService.saveRefreshToken('refresh-jwt-token');
+
+    verify(
+      () => storage.write(
+        key: StorageKeys.refreshToken,
+        value: 'refresh-jwt-token',
+      ),
+    ).called(1);
+    expect(await sessionService.readRefreshToken(), 'refresh-jwt-token');
   });
 }
