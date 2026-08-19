@@ -359,7 +359,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                     const SizedBox(height: 4.0),
                                     Text(
                                       widget.driver.recentFeedback ??
-                                          'Professional service and well-maintained vehicle.',
+                                          'No passenger feedback yet.',
                                       style: TextStyle(
                                         fontSize: 12.0,
                                         height: 1.35,
@@ -377,55 +377,59 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                               Row(
                                 children: [
                                   Expanded(
-                                    child: OutlinedButton(
-                                      onPressed:
-                                          widget.onViewFullProfilePressed,
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: AppTheme.primaryColor,
-                                        side: const BorderSide(
-                                          color: AppTheme.primaryColor,
-                                          width: 1.5,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12.0,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16.0,
+                                    child: SizedBox(
+                                      height: 48.0,
+                                      child: OutlinedButton(
+                                        onPressed:
+                                            widget.onViewFullProfilePressed,
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor:
+                                              AppTheme.primaryColor,
+                                          side: const BorderSide(
+                                            color: AppTheme.primaryColor,
+                                            width: 1.5,
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16.0,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      child: const Text(
-                                        'View Full Profile',
-                                        style: TextStyle(
-                                          fontSize: 13.0,
-                                          fontWeight: FontWeight.bold,
+                                        child: const Text(
+                                          'View Full Profile',
+                                          style: TextStyle(
+                                            fontSize: 13.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 12.0),
                                   Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: widget.onSelectDriverPressed,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppTheme.primaryColor,
-                                        foregroundColor: Colors.white,
-                                        elevation: 0,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12.0,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16.0,
+                                    child: SizedBox(
+                                      height: 48.0,
+                                      child: ElevatedButton(
+                                        onPressed: widget.onSelectDriverPressed,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              AppTheme.primaryColor,
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          padding: EdgeInsets.zero,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16.0,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      child: const Text(
-                                        'Select Driver',
-                                        style: TextStyle(
-                                          fontSize: 13.0,
-                                          fontWeight: FontWeight.bold,
+                                        child: const Text(
+                                          'Select Driver',
+                                          style: TextStyle(
+                                            fontSize: 13.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),

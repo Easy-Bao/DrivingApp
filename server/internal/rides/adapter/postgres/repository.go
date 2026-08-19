@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	entsql "entgo.io/ent/dialect/sql"
@@ -629,13 +630,66 @@ func (repository *Repository) OnlineDrivers(ctx context.Context) ([]domain.Onlin
 	if err != nil {
 		return nil, err
 	}
-	result := make([]domain.OnlineDriver, 0, len(items))
+	driverIDs := make([]int, 0, len(items))
 	for _, item := range items {
-		active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(item.UserID), ride.StatusIn("accepted", "arrived", "in_transit")).Count(ctx)
+		driverIDs = append(driverIDs, item.UserID)
+	}
+
+	activePassengerCounts := make(map[int]int, len(driverIDs))
+	if len(driverIDs) > 0 {
+		activeRides, err := repository.client.Ride.Query().Where(
+			ride.DriverIDIn(driverIDs...),
+			ride.StatusIn("accepted", "arrived", "in_transit"),
+		).All(ctx)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, domain.OnlineDriver{ID: item.UserID, UserID: item.UserID, Name: item.Name, VehicleType: item.VehicleType, PlateNumber: item.PlateNumber, Rating: item.Rating, OnboardPassengerCount: active})
+		for _, activeRide := range activeRides {
+			activePassengerCounts[activeRide.DriverID]++
+		}
+	}
+
+	type reviewSummary struct {
+		totalRating float64
+		count       int
+		feedback    string
+	}
+	reviewSummaries := make(map[int]reviewSummary, len(driverIDs))
+	if len(driverIDs) > 0 {
+		reviews, err := repository.client.Review.Query().Where(
+			review.DriverIDIn(driverIDs...),
+		).Order(review.ByID(entsql.OrderDesc())).All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range reviews {
+			summary := reviewSummaries[item.DriverID]
+			summary.totalRating += item.Rating
+			summary.count++
+			if summary.feedback == "" {
+				summary.feedback = strings.TrimSpace(item.Comment)
+			}
+			reviewSummaries[item.DriverID] = summary
+		}
+	}
+
+	result := make([]domain.OnlineDriver, 0, len(items))
+	for _, item := range items {
+		summary := reviewSummaries[item.UserID]
+		rating := item.Rating
+		if summary.count > 0 {
+			rating = summary.totalRating / float64(summary.count)
+		}
+		result = append(result, domain.OnlineDriver{
+			ID:                    item.UserID,
+			UserID:                item.UserID,
+			Name:                  item.Name,
+			VehicleType:           item.VehicleType,
+			PlateNumber:           item.PlateNumber,
+			Rating:                rating,
+			OnboardPassengerCount: activePassengerCounts[item.UserID],
+			RecentFeedback:        summary.feedback,
+		})
 	}
 	return result, nil
 }

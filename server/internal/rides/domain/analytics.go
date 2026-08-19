@@ -40,6 +40,7 @@ type OnlineDriver struct {
 	PlateNumber           string  `json:"plate_number"`
 	Rating                float64 `json:"rating"`
 	OnboardPassengerCount int     `json:"onboard_passenger_count"`
+	RecentFeedback        string  `json:"recent_feedback,omitempty"`
 }
 
 type PublicDriverSummary struct {
