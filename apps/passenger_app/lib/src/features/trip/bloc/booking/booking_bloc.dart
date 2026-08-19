@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
@@ -53,29 +52,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       _ => null,
     };
     return sessionId == null || sessionId.isEmpty ? null : sessionId;
-  }
-
-  Future<String> _resolvePickupName() async {
-    final providedName = _pickupName?.trim();
-    if (providedName != null &&
-        providedName.isNotEmpty &&
-        providedName != 'Current Location') {
-      return providedName;
-    }
-
-    final lat = _pickupLat;
-    final lng = _pickupLng;
-    if (lat == null || lng == null) return providedName ?? 'Current Location';
-
-    try {
-      final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
-      final resolvedName = place?.fullAddress.trim();
-      return resolvedName == null || resolvedName.isEmpty
-          ? providedName ?? 'Current Location'
-          : resolvedName;
-    } catch (_) {
-      return providedName ?? 'Current Location';
-    }
   }
 
   BookingBloc({
@@ -129,6 +105,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _nearestSearchCancelled = false;
     _noDriverNotificationSent = false;
     _isAutoAcceptingOffer = false;
+    _totalTrips = null;
+    _reviews = const [];
+    _isLoadingReviews = false;
     emit(
       FindingNearestDriver(
         trip: event.trip,
@@ -192,76 +171,34 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         closestDriver = d;
       }
     }
-    try {
-      final stats = await _biddingDataSource.fetchDriverStats(closestDriver.id);
-      final totalTrips = stats['totalTrips'] ?? stats['total_trips'];
-      _totalTrips = (totalTrips as num?)?.toInt();
-    } catch (error) {
-      dev.log('Unable to load driver stats: $error');
-      _totalTrips = null;
-    }
+    _isLoadingReviews = true;
+    emit(
+      NearestDriverFound(
+        driver: closestDriver,
+        nearbyDrivers: nearbyDrivers,
+        totalTrips: null,
+        reviews: const [],
+        isLoadingReviews: true,
+        trip: event.trip,
+        pickupLat: event.pickupLat,
+        pickupLng: event.pickupLng,
+      ),
+    );
 
-    try {
-      _isLoadingReviews = true;
-      emit(
-        NearestDriverFound(
-          driver: closestDriver,
-          nearbyDrivers: nearbyDrivers,
-          totalTrips: _totalTrips,
-          reviews: const [],
-          isLoadingReviews: true,
-          trip: event.trip,
-          pickupLat: event.pickupLat,
-          pickupLng: event.pickupLng,
-        ),
-      );
-
-      final rawReviews = await _biddingDataSource.fetchDriverReviews(
-        closestDriver.id,
-      );
-      final List<Map<String, dynamic>> processedReviews = [];
-      for (final r in rawReviews) {
-        if (r is Map<String, dynamic>) {
-          final createdAtStr = r['createdAt'] ?? r['created_at'];
-          var dateFormatted = '';
-          if (createdAtStr != null) {
-            try {
-              final parsedDate = DateTime.parse(createdAtStr.toString());
-              final months = [
-                'Jan',
-                'Feb',
-                'Mar',
-                'Apr',
-                'May',
-                'Jun',
-                'Jul',
-                'Aug',
-                'Sep',
-                'Oct',
-                'Nov',
-                'Dec',
-              ];
-              dateFormatted =
-                  '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
-            } catch (error) {
-              dev.log('Failed to parse review date: $error');
-            }
-          }
-          processedReviews.add({
-            'passengerName': r['passengerName'] ?? r['passenger_name'],
-            'comment': r['comment'],
-            'rating': (r['rating'] as num?)?.toDouble(),
-            'date': dateFormatted,
-          });
-        }
-      }
-      _reviews = processedReviews;
-    } catch (error) {
-      dev.log('Failed to process reviews: $error');
-      _reviews = const [];
-    } finally {
-      _isLoadingReviews = false;
-    }
+    int? loadedTotalTrips;
+    List<Map<String, dynamic>> loadedReviews = const [];
+    await Future.wait<void>([
+      _loadDriverTripCount(closestDriver.id).then((value) {
+        loadedTotalTrips = value;
+      }),
+      _loadDriverReviews(closestDriver.id).then((value) {
+        loadedReviews = value;
+      }),
+    ]);
+    if (isClosed || _nearestSearchCancelled) return;
+    _totalTrips = loadedTotalTrips;
+    _reviews = loadedReviews;
+    _isLoadingReviews = false;
 
     emit(
       NearestDriverFound(
@@ -275,6 +212,63 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         pickupLng: event.pickupLng,
       ),
     );
+  }
+
+  Future<int?> _loadDriverTripCount(String driverId) async {
+    try {
+      final stats = await _biddingDataSource.fetchDriverStats(driverId);
+      final totalTrips = stats['totalTrips'] ?? stats['total_trips'];
+      return (totalTrips as num?)?.toInt();
+    } catch (error) {
+      dev.log('Unable to load driver stats: $error');
+      return null;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _loadDriverReviews(String driverId) async {
+    try {
+      final rawReviews = await _biddingDataSource.fetchDriverReviews(driverId);
+      final processedReviews = <Map<String, dynamic>>[];
+      for (final review in rawReviews.whereType<Map<String, dynamic>>()) {
+        processedReviews.add({
+          'passengerName': review['passengerName'] ?? review['passenger_name'],
+          'comment': review['comment'],
+          'rating': (review['rating'] as num?)?.toDouble(),
+          'date': _formatReviewDate(
+            review['createdAt'] ?? review['created_at'],
+          ),
+        });
+      }
+      return processedReviews;
+    } catch (error) {
+      dev.log('Failed to process reviews: $error');
+      return const [];
+    }
+  }
+
+  String _formatReviewDate(Object? value) {
+    if (value == null) return '';
+    try {
+      final date = DateTime.parse(value.toString());
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    } catch (error) {
+      dev.log('Failed to parse review date: $error');
+      return '';
+    }
   }
 
   void _notifyNoDriverFound() {
@@ -320,8 +314,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
-    _pickupName = event.trip.pickupAddress ?? 'Current Location';
-    _pickupName = await _resolvePickupName();
+    _pickupName = _pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
@@ -366,8 +359,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
-    _pickupName = event.trip.pickupAddress ?? 'Current Location';
-    _pickupName = await _resolvePickupName();
+    _pickupName = _pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
@@ -394,6 +386,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     } catch (error) {
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
+  }
+
+  String _pickupNameForTrip(BidSessionTrip trip) {
+    final pickupName = trip.pickupAddress?.trim();
+    return pickupName == null || pickupName.isEmpty
+        ? 'Current Location'
+        : pickupName;
   }
 
   void _subscribeToSession(String sessionId) {

@@ -66,7 +66,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
     if (ride == null || ride.id.isEmpty) return;
     if (mounted) {
       setState(() => _createdRide = ride);
-      _autoNav = Timer(const Duration(seconds: 4), _goToTracking);
+      _autoNav = Timer(const Duration(seconds: 1), _goToTracking);
     }
   }
 
@@ -317,7 +317,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
               ),
               const SizedBox(height: 12),
               Text(
-                'Auto-redirecting in a moment...',
+                'Opening live tracking…',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppTheme.primaryColor.withValues(alpha: 0.4),
