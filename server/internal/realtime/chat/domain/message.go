@@ -6,10 +6,11 @@ import (
 )
 
 var (
-	ErrForbidden      = errors.New("chat room access denied")
-	ErrInvalidRoom    = errors.New("invalid chat room")
-	ErrRoomConflict   = errors.New("chat room participants conflict")
-	ErrInvalidMessage = errors.New("invalid chat message")
+	ErrForbidden       = errors.New("chat room access denied")
+	ErrInvalidRoom     = errors.New("invalid chat room")
+	ErrRoomConflict    = errors.New("chat room participants conflict")
+	ErrRoomUnavailable = errors.New("chat room authorization is unavailable")
+	ErrInvalidMessage  = errors.New("invalid chat message")
 )
 
 type Message struct {

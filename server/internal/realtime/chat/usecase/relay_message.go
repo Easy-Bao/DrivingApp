@@ -7,6 +7,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
+	geodomain "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 )
 
 const (
@@ -16,9 +17,10 @@ const (
 )
 
 type Service struct {
-	publisher domain.Publisher
-	history   domain.HistoryRepository
-	events    EventPublisher
+	publisher   domain.Publisher
+	history     domain.HistoryRepository
+	events      EventPublisher
+	assignments geodomain.RideAssignmentLookup
 }
 
 type EventPublisher interface {
@@ -35,6 +37,13 @@ func NewService(publisher domain.Publisher, history ...domain.HistoryRepository)
 
 func (service *Service) WithEventPublisher(publisher EventPublisher) *Service {
 	service.events = publisher
+	return service
+}
+
+func (service *Service) WithRideAssignmentLookup(
+	lookup geodomain.RideAssignmentLookup,
+) *Service {
+	service.assignments = lookup
 	return service
 }
 func (service *Service) Relay(ctx context.Context, message domain.Message) error {
@@ -114,6 +123,15 @@ func (service *Service) CreateRoom(ctx context.Context, roomID, passengerID, dri
 		if (existingPassengerID != "" || existingDriverID != "") &&
 			(existingPassengerID != passengerID || existingDriverID != driverID) {
 			return domain.ErrRoomConflict
+		}
+		if existingPassengerID == "" && existingDriverID == "" && service.assignments != nil {
+			assignment, found, err := service.assignments.ForRide(ctx, roomID)
+			if err != nil {
+				return domain.ErrRoomUnavailable
+			}
+			if !found || assignment.PassengerID != passengerID || assignment.DriverID != driverID {
+				return domain.ErrForbidden
+			}
 		}
 	}
 	return service.history.CreateRoom(ctx, roomID, passengerID, driverID)

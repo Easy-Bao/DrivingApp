@@ -9,12 +9,26 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
+	geodomain "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 )
 
 type chatHistory struct {
 	messages    []domain.Message
 	passengerID string
 	driverID    string
+}
+
+type chatAssignmentLookup struct {
+	assignment geodomain.RideAssignment
+	found      bool
+}
+
+func (lookup chatAssignmentLookup) ForDriver(context.Context, string) (geodomain.RideAssignment, bool, error) {
+	return lookup.assignment, lookup.found, nil
+}
+
+func (lookup chatAssignmentLookup) ForRide(context.Context, string) (geodomain.RideAssignment, bool, error) {
+	return lookup.assignment, lookup.found, nil
 }
 
 func (history *chatHistory) CreateRoom(
@@ -53,6 +67,36 @@ func TestChatCreateRoomDoesNotReplaceParticipants(t *testing.T) {
 	}
 	if history.passengerID != "passenger-1" || history.driverID != "driver-1" {
 		t.Fatalf("room participants changed to %q/%q", history.passengerID, history.driverID)
+	}
+}
+
+func TestChatCreateRoomRequiresTheAssignedRideParticipants(t *testing.T) {
+	history := &chatHistory{}
+	service := usecase.NewService(chatadapter.NewHub(), history).
+		WithRideAssignmentLookup(chatAssignmentLookup{
+			assignment: geodomain.RideAssignment{
+				RideID:      "ride-1",
+				PassengerID: "passenger-1",
+				DriverID:    "driver-1",
+			},
+			found: true,
+		})
+
+	if err := service.CreateRoom(
+		context.Background(),
+		"ride-1",
+		"passenger-1",
+		"driver-2",
+	); err != domain.ErrForbidden {
+		t.Fatalf("create room error = %v, want %v", err, domain.ErrForbidden)
+	}
+	if err := service.CreateRoom(
+		context.Background(),
+		"ride-1",
+		"passenger-1",
+		"driver-1",
+	); err != nil {
+		t.Fatalf("assigned participants could not create room: %v", err)
 	}
 }
 
