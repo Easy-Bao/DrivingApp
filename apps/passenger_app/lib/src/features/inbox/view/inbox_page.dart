@@ -6,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
@@ -183,8 +184,9 @@ class _InboxPageState extends State<InboxPage> {
                             ),
                             child: InboxNotificationCardWidget(
                               notification: notification,
-                              onTap: () =>
-                                  _inboxCubit.markNotificationAsRead(index),
+                              onTap: () => unawaited(
+                                _openNotification(notification, index),
+                              ),
                             ),
                           );
                         }, childCount: notifications.length),
@@ -229,6 +231,30 @@ class _InboxPageState extends State<InboxPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _openNotification(
+    InboxNotification notification,
+    int index,
+  ) async {
+    _inboxCubit.markNotificationAsRead(index);
+    if (notification.type != 'chat' ||
+        notification.isExpired ||
+        notification.roomId == null ||
+        notification.userId == null ||
+        notification.peerId == null) {
+      return;
+    }
+    if (!mounted) return;
+    await context.pushNamed(
+      ChatRoutes.driverChat,
+      extra: {
+        'roomId': notification.roomId,
+        'userId': notification.userId,
+        'peerId': notification.peerId,
+        'peerName': notification.peerName ?? 'Driver',
+      },
     );
   }
 }

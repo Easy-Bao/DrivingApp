@@ -60,17 +60,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
             LocationService.lastPosition ??
             await LocationService.getCurrentPosition();
         if (position != null) {
-          final restored = await dashboardCubit.refreshOnlinePresence(
+          await dashboardCubit.refreshOnlinePresence(
             lat: position.latitude,
             lng: position.longitude,
           );
-          if (!restored) {
-            await dashboardCubit.toggleOnline(
-              requestedOnline: true,
-              lat: position.latitude,
-              lng: position.longitude,
-            );
-          }
         }
       }
       if (!mounted) return;

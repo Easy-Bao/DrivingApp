@@ -170,14 +170,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       lng: lng,
     );
     return updateResult.fold((failure) {
-      emit(
-        state.copyWith(
-          isOnline: false,
-          isLoadingHeatmap: false,
-          surgeCells: const [],
-          errorMessage: ErrorHandler.getErrorMessage(failure),
-        ),
-      );
+      emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)));
       return false;
     }, (_) => true);
   }

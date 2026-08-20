@@ -36,6 +36,8 @@ class InboxCubit extends Cubit<InboxState> {
   }
 
   void addLocalNotification(InboxNotification notification) {
+    _removeExpiredLocalNotifications();
+    if (notification.isExpired) return;
     _localNotifications.removeWhere((item) => item.id == notification.id);
     _localNotifications.insert(0, notification);
     final currentNotifications = state is InboxLoadedState
@@ -47,14 +49,20 @@ class InboxCubit extends Cubit<InboxState> {
   List<InboxNotification> _mergeLocalNotifications(
     List<InboxNotification> remoteNotifications,
   ) {
+    _removeExpiredLocalNotifications();
     final notifications = [
       ..._localNotifications,
-      ...remoteNotifications.where(
-        (remote) => !_localNotifications.any((local) => local.id == remote.id),
-      ),
+      ...remoteNotifications.where((remote) {
+        return !remote.isExpired &&
+            !_localNotifications.any((local) => local.id == remote.id);
+      }),
     ];
     notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return notifications;
+  }
+
+  void _removeExpiredLocalNotifications() {
+    _localNotifications.removeWhere((notification) => notification.isExpired);
   }
 
   void markNotificationAsRead(int index) {

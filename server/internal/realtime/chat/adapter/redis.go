@@ -22,8 +22,23 @@ func NewRedisRepository(client *redis.Client) *RedisRepository {
 }
 
 func (repository *RedisRepository) CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error {
-	_, err := repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.HSet(ctx, roomKey(roomID), map[string]any{"passenger_id": passengerID, "driver_id": driverID, "locked": "0"})
+	// A room is a fixed 24-hour conversation window. Re-opening the same ride
+	// must not reset its lock state or extend its expiry.
+	exists, err := repository.client.Exists(ctx, roomKey(roomID)).Result()
+	if err != nil {
+		return err
+	}
+	if exists > 0 {
+		return nil
+	}
+	createdAt := time.Now().UTC().Format(time.RFC3339Nano)
+	_, err = repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.HSet(ctx, roomKey(roomID), map[string]any{
+			"passenger_id": passengerID,
+			"driver_id":    driverID,
+			"locked":       "0",
+			"created_at":   createdAt,
+		})
 		pipe.Expire(ctx, roomKey(roomID), chatRoomTTL)
 		pipe.Expire(ctx, messagesKey(roomID), chatRoomTTL)
 		return nil
@@ -42,7 +57,6 @@ func (repository *RedisRepository) Append(ctx context.Context, message domain.Me
 	_, err = repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.RPush(ctx, messagesKey(message.RoomID), payload)
 		pipe.LTrim(ctx, messagesKey(message.RoomID), -maxHistoryEntries, -1)
-		pipe.Expire(ctx, messagesKey(message.RoomID), chatRoomTTL)
 		return nil
 	})
 	return err

@@ -44,7 +44,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     on<InitializeMapEvent>(_onInitializeMap);
     on<UpdateLocationsAndDrawRouteEvent>(
       _onUpdateLocationsAndDrawRoute,
-      transformer: (events, mapper) => events.exhaustMap(mapper),
+      // Keep location snapshots ordered so a slow route request cannot let a
+      // newer driver position disappear behind an exhausted stream.
+      transformer: (events, mapper) => events.asyncExpand(mapper),
     );
     on<ClearMapEvent>(_onClearMap);
 

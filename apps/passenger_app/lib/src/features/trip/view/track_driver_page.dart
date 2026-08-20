@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
@@ -22,6 +21,22 @@ import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+class _MapUpdateRequest {
+  final double driverLat;
+  final double driverLng;
+  final List<List<double>>? routePoints;
+  final RideStatus status;
+  final String driverName;
+
+  const _MapUpdateRequest({
+    required this.driverLat,
+    required this.driverLng,
+    required this.routePoints,
+    required this.status,
+    required this.driverName,
+  });
+}
+
 class ActivityTrackDriverPage extends StatefulWidget {
   final RideHistoryModel ride;
 
@@ -37,6 +52,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   bool _initialized = false;
   bool _hasFittedInitialMap = false;
   bool _isUpdatingMap = false;
+  _MapUpdateRequest? _pendingMapUpdate;
   bool _hasHandledTerminalState = false;
   DateTime? _lastCameraFitAt;
   dynamic _passengerMarkerManager;
@@ -184,7 +200,17 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     String driverName,
   ) async {
     final mapController = _mapController;
-    if (mapController == null || _isUpdatingMap) return;
+    final request = _MapUpdateRequest(
+      driverLat: driverLat,
+      driverLng: driverLng,
+      routePoints: routePoints,
+      status: status,
+      driverName: driverName,
+    );
+    if (mapController == null || _isUpdatingMap) {
+      _pendingMapUpdate = request;
+      return;
+    }
     _isUpdatingMap = true;
     final passengerLat = widget.ride.pickupLat;
     final passengerLng = widget.ride.pickupLng;
@@ -193,9 +219,12 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       final isInTransit = status == RideStatus.inTransit;
       final targetLat = isInTransit ? widget.ride.destLat : passengerLat;
       final targetLng = isInTransit ? widget.ride.destLng : passengerLng;
+      final validRoutePoints = routePoints
+          ?.where(_isValidRoutePoint)
+          .toList(growable: false);
       final effectiveRoutePoints =
-          routePoints != null && routePoints.length >= 2
-          ? routePoints
+          validRoutePoints != null && validRoutePoints.length >= 2
+          ? validRoutePoints
           : <List<double>>[
               [driverLng, driverLat],
               [targetLng, targetLat],
@@ -225,11 +254,11 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         color: AppTheme.complete,
         label: switch (status) {
           RideStatus.arrived =>
-            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nYour driver has arrived',
+            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nAt pickup',
           RideStatus.inTransit =>
             '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nOn the trip',
           _ =>
-            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nDriver location',
+            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nHeading to pickup',
         },
         animate: true,
       );
@@ -250,7 +279,30 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       debugPrint('Error updating track map: $error');
     } finally {
       _isUpdatingMap = false;
+      final pending = _pendingMapUpdate;
+      _pendingMapUpdate = null;
+      if (pending != null && mounted) {
+        unawaited(
+          _updateMapElements(
+            pending.driverLat,
+            pending.driverLng,
+            pending.routePoints,
+            pending.status,
+            pending.driverName,
+          ),
+        );
+      }
     }
+  }
+
+  bool _isValidRoutePoint(List<double> point) {
+    return point.length >= 2 &&
+        point[0].isFinite &&
+        point[1].isFinite &&
+        point[0] >= -180 &&
+        point[0] <= 180 &&
+        point[1] >= -90 &&
+        point[1] <= 90;
   }
 
   Future<dynamic> _upsertMarker(
@@ -431,55 +483,6 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                   children: [
                     AppBackButtonWidget(
                       onPressed: () => context.goNamed(HomeRoutes.home),
-                    ),
-                    BlocBuilder<TrackDriverCubit, TrackDriverState>(
-                      builder: (context, state) {
-                        final statusLabel = state is! TrackDriverInProgress
-                            ? 'To Pickup'
-                            : switch (state.status) {
-                                RideStatus.arrived => 'Arrived',
-                                RideStatus.inTransit => 'On Trip',
-                                _ => 'To Pickup',
-                              };
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.1,
-                                ),
-                                blurRadius: 15,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                LucideIcons.navigation,
-                                size: 14,
-                                color: AppTheme.complete,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                statusLabel,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
                     ),
                   ],
                 ),

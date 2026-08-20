@@ -32,10 +32,11 @@ class ProfileModule {
     ChildRoute(
       name: ProfileRoutes.help,
       ProfileRoutes.helpPath,
-      child: (context, GoRouterState state) => BlocProvider<SavedPlacesCubit>(
-        create: (_) => Modular.get<SavedPlacesCubit>(),
-        child: const SavedPlacePage(),
-      ),
+      child: (context, GoRouterState state) =>
+          BlocProvider<SavedPlacesCubit>.value(
+            value: Modular.get<SavedPlacesCubit>(),
+            child: const SavedPlacePage(),
+          ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

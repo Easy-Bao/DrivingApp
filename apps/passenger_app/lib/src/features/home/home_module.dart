@@ -50,12 +50,11 @@ class HomeModule {
               return cubit;
             },
           ),
-          BlocProvider(
-            create: (_) {
-              final cubit = Modular.get<SavedPlacesCubit>();
-              unawaited(cubit.loadPlaces());
-              return cubit;
-            },
+          // The cubit is a module singleton shared by Home and Profile.
+          // Passing it by value keeps route disposal from closing the
+          // singleton while a saved-place flow is still in progress.
+          BlocProvider<SavedPlacesCubit>.value(
+            value: Modular.get<SavedPlacesCubit>(),
           ),
         ],
         child: const HomePage(),

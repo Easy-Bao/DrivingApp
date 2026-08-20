@@ -246,7 +246,7 @@ void main() {
     );
 
     blocTest<DashboardCubit, DashboardState>(
-      'failed presence refresh invalidates a restored online preference',
+      'failed presence refresh preserves the driver online preference',
       build: () {
         when(
           () => repo.updateOnlineStatus(isOnline: true, lat: lat, lng: lng),
@@ -258,7 +258,9 @@ void main() {
       seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
       act: (cubit) => cubit.refreshOnlinePresence(lat: lat, lng: lng),
       expect: () => [
-        const DashboardState(
+        DashboardState(
+          isOnline: true,
+          surgeCells: mockCells,
           errorMessage: 'Check your connection and try again.',
         ),
       ],

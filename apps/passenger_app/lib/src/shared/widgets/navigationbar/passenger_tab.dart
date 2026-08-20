@@ -274,14 +274,22 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
       event.envelope.payload['text'],
       'You have a new message from your driver.',
     );
+    final roomId = event.envelope.scope.roomId?.trim() ?? '';
+    if (roomId.isEmpty) return;
+    final receivedAt = event.envelope.occurredAt.toLocal();
     widget.inboxCubit.addLocalNotification(
       InboxNotification(
         id: event.envelope.id,
         title: 'New Message From Your Driver',
         message: message,
-        timestamp: event.envelope.occurredAt.toLocal(),
+        timestamp: receivedAt,
         type: 'chat',
         isRead: false,
+        roomId: roomId,
+        userId: passengerId,
+        peerId: senderId,
+        peerName: 'Driver',
+        expiresAt: receivedAt.add(const Duration(hours: 24)),
       ),
     );
   }

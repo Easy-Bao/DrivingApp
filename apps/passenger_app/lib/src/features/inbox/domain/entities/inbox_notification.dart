@@ -8,6 +8,11 @@ class InboxNotification extends Equatable {
   final DateTime timestamp;
   final String type;
   final bool isRead;
+  final String? roomId;
+  final String? peerId;
+  final String? peerName;
+  final String? userId;
+  final DateTime? expiresAt;
 
   const InboxNotification({
     required this.id,
@@ -16,7 +21,15 @@ class InboxNotification extends Equatable {
     required this.timestamp,
     required this.type,
     required this.isRead,
+    this.roomId,
+    this.peerId,
+    this.peerName,
+    this.userId,
+    this.expiresAt,
   });
+
+  bool get isExpired =>
+      expiresAt != null && !expiresAt!.isAfter(DateTime.now());
 
   InboxNotification copyWith({
     String? id,
@@ -25,6 +38,11 @@ class InboxNotification extends Equatable {
     DateTime? timestamp,
     String? type,
     bool? isRead,
+    String? roomId,
+    String? peerId,
+    String? peerName,
+    String? userId,
+    DateTime? expiresAt,
   }) {
     return InboxNotification(
       id: id ?? this.id,
@@ -33,6 +51,11 @@ class InboxNotification extends Equatable {
       timestamp: timestamp ?? this.timestamp,
       type: type ?? this.type,
       isRead: isRead ?? this.isRead,
+      roomId: roomId ?? this.roomId,
+      peerId: peerId ?? this.peerId,
+      peerName: peerName ?? this.peerName,
+      userId: userId ?? this.userId,
+      expiresAt: expiresAt ?? this.expiresAt,
     );
   }
 
@@ -48,6 +71,11 @@ class InboxNotification extends Equatable {
           DateTime.now(),
       type: SafeParse.toStringValue(json['type'], 'system'),
       isRead: _toBool(json['isRead'] ?? json['is_read']),
+      roomId: _nullableString(json['roomId'] ?? json['room_id']),
+      peerId: _nullableString(json['peerId'] ?? json['peer_id']),
+      peerName: _nullableString(json['peerName'] ?? json['peer_name']),
+      userId: _nullableString(json['userId'] ?? json['user_id']),
+      expiresAt: _parseDate(json['expiresAt'] ?? json['expires_at']),
     );
   }
 
@@ -59,11 +87,38 @@ class InboxNotification extends Equatable {
       'timestamp': timestamp.toIso8601String(),
       'type': type,
       'isRead': isRead,
+      if (roomId != null) 'roomId': roomId,
+      if (peerId != null) 'peerId': peerId,
+      if (peerName != null) 'peerName': peerName,
+      if (userId != null) 'userId': userId,
+      if (expiresAt != null) 'expiresAt': expiresAt!.toIso8601String(),
     };
   }
 
   @override
-  List<Object?> get props => [id, title, message, timestamp, type, isRead];
+  List<Object?> get props => [
+    id,
+    title,
+    message,
+    timestamp,
+    type,
+    isRead,
+    roomId,
+    peerId,
+    peerName,
+    userId,
+    expiresAt,
+  ];
+}
+
+String? _nullableString(Object? value) {
+  final normalized = SafeParse.toStringValue(value).trim();
+  return normalized.isEmpty ? null : normalized;
+}
+
+DateTime? _parseDate(Object? value) {
+  final normalized = SafeParse.toStringValue(value).trim();
+  return normalized.isEmpty ? null : DateTime.tryParse(normalized);
 }
 
 bool _toBool(Object? value) {

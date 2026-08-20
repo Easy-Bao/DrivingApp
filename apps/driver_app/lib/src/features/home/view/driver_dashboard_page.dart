@@ -187,8 +187,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         lat: position.latitude,
         lng: position.longitude,
       );
-      if (!mounted || !presenceRestored) return;
-      _publishCurrentLocation();
+      if (!mounted || !cubit.state.isOnline) return;
+      if (presenceRestored) _publishCurrentLocation();
+      // Keep the heartbeat alive after a transient refresh failure; the next
+      // tick can reconcile the server without changing the driver's intent.
       _startPolling();
     } catch (error) {
       dev.log('Unable to restore online driver telemetry: $error');

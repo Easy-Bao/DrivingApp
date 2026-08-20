@@ -70,7 +70,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               trackingCompleted = true;
               emit(
                 TrackDriverCompleted(
-                  driverId: rideUpdate.driverId ?? '',
+                  driverId: rideUpdate.driverId ?? driverId,
                   driverName: rideUpdate.driverName.isNotEmpty
                       ? rideUpdate.driverName
                       : 'Driver',
@@ -85,9 +85,17 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             double? driverLng;
             bool locationFetched = false;
 
-            final driverId = rideUpdate.driverId;
-            if (driverId != null && driverId.isNotEmpty) {
-              final locResult = await _repository.fetchDriverLocation(driverId);
+            // Status responses can omit the driver id after the initial
+            // assignment. Keep the route anchored to the ride's assigned
+            // driver instead of silently dropping every map update.
+            final assignedDriverId =
+                rideUpdate.driverId?.trim().isNotEmpty == true
+                ? rideUpdate.driverId!.trim()
+                : driverId.trim();
+            if (assignedDriverId.isNotEmpty) {
+              final locResult = await _repository.fetchDriverLocation(
+                assignedDriverId,
+              );
               locResult.fold(
                 (failure) {
                   dev.log(
