@@ -275,8 +275,9 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                               .fetchPassengerProfile(
                                                 passengerId,
                                               );
-                                      final phone =
-                                          passenger['phone'] as String?;
+                                      final phone = driverValueAsString(
+                                        passenger['phone'],
+                                      );
                                       if (phone != null && phone.isNotEmpty) {
                                         final uri = Uri.parse('tel:$phone');
                                         if (await canLaunchUrl(uri)) {

@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class InTransitPage extends StatefulWidget {
@@ -75,9 +76,11 @@ class _InTransitPageState extends State<InTransitPage> {
         if (rideId != null && rideId.isNotEmpty) {
           final location = await Modular.get<TelemetryRemoteDataSource>()
               .fetchPassengerLocation(rideId);
-          if (location['lat'] is num && location['lng'] is num) {
-            _passengerLat = (location['lat'] as num).toDouble();
-            _passengerLng = (location['lng'] as num).toDouble();
+          final passengerLat = SafeParse.toNullableDouble(location['lat']);
+          final passengerLng = SafeParse.toNullableDouble(location['lng']);
+          if (passengerLat != null && passengerLng != null) {
+            _passengerLat = passengerLat;
+            _passengerLng = passengerLng;
           }
         }
         final pos =
@@ -115,49 +118,55 @@ class _InTransitPageState extends State<InTransitPage> {
   }
 
   Future<void> _loadRoute() async {
-    final rideCubit = BlocProvider.of<RideFlowCubit>(context);
-    final pos =
-        LocationService.lastPosition ??
-        await LocationService.getCurrentPosition();
-    if (!mounted) return;
-    if (pos == null) return;
-    final dLat = pos.latitude;
-    final dLng = pos.longitude;
-
-    final rideState = rideCubit.state;
-    if (rideState is RideFlowInTransit) {
-      _destLat = rideState.destLat;
-      _destLng = rideState.destLng;
-    } else {
-      final places = await MapProvider.searchPlaces(widget.dropoff);
-      if (places.isNotEmpty) {
-        _destLat = places.first.latitude;
-        _destLng = places.first.longitude;
-      }
-    }
-    if (rideState is RideFlowInTransit) {
-      _passengerLat = rideState.passengerLat;
-      _passengerLng = rideState.passengerLng;
-    }
-
-    final rideId = rideCubit.activeRideId;
-    if (_passengerLat == null && rideId != null && rideId.isNotEmpty) {
-      try {
-        final location = await Modular.get<TelemetryRemoteDataSource>()
-            .fetchPassengerLocation(rideId);
-        if (location['lat'] is num && location['lng'] is num) {
-          _passengerLat = (location['lat'] as num).toDouble();
-          _passengerLng = (location['lng'] as num).toDouble();
+    try {
+      final rideCubit = BlocProvider.of<RideFlowCubit>(context);
+      final rideState = rideCubit.state;
+      // Resolve the destination before waiting on driver location so a
+      // delayed permission response cannot prevent the destination leg from
+      // being rendered.
+      if (rideState is RideFlowInTransit) {
+        _destLat = rideState.destLat;
+        _destLng = rideState.destLng;
+      } else {
+        final places = await MapProvider.searchPlaces(widget.dropoff);
+        if (places.isNotEmpty) {
+          _destLat = places.first.latitude;
+          _destLng = places.first.longitude;
         }
-      } catch (_) {}
-    }
+      }
+      if (rideState is RideFlowInTransit) {
+        _passengerLat = rideState.passengerLat;
+        _passengerLng = rideState.passengerLng;
+      }
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      _triggerDrawRoute(dLat, dLng);
+      final rideId = rideCubit.activeRideId;
+      if (_passengerLat == null && rideId != null && rideId.isNotEmpty) {
+        try {
+          final location = await Modular.get<TelemetryRemoteDataSource>()
+              .fetchPassengerLocation(rideId);
+          final passengerLat = SafeParse.toNullableDouble(location['lat']);
+          final passengerLng = SafeParse.toNullableDouble(location['lng']);
+          if (passengerLat != null && passengerLng != null) {
+            _passengerLat = passengerLat;
+            _passengerLng = passengerLng;
+          }
+        } catch (_) {}
+      }
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      final pos =
+          LocationService.lastPosition ??
+          await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      if (pos != null) {
+        _triggerDrawRoute(pos.latitude, pos.longitude);
+      }
       _startTracking();
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      debugPrint('Unable to load destination route: $error\n$stackTrace');
     }
   }
 
@@ -240,8 +249,10 @@ class _InTransitPageState extends State<InTransitPage> {
           final transitState = rideCubitState is RideFlowInTransit
               ? rideCubitState
               : null;
-          final defaultLat = position?.latitude ?? transitState?.destLat;
-          final defaultLng = position?.longitude ?? transitState?.destLng;
+          final defaultLat =
+              position?.latitude ?? transitState?.destLat ?? _destLat;
+          final defaultLng =
+              position?.longitude ?? transitState?.destLng ?? _destLng;
           if (defaultLat == null || defaultLng == null) {
             return const Scaffold(
               body: Center(child: Text('Destination location is unavailable.')),

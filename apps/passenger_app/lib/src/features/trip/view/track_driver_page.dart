@@ -557,10 +557,11 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                                             BiddingRemoteDataSource
                                           >()
                                           .getDriverProfile(driverId);
-                                  final phone =
-                                      driverProfile['phone'] as String?;
+                                  final phone = SafeParse.toStringValue(
+                                    driverProfile['phone'],
+                                  ).trim();
 
-                                  if (phone != null && phone.isNotEmpty) {
+                                  if (phone.isNotEmpty) {
                                     final uri = Uri.parse('tel:$phone');
                                     if (await canLaunchUrl(uri)) {
                                       await launchUrl(uri);
