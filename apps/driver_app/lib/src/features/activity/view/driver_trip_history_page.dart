@@ -298,62 +298,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.circle,
-                            size: 9,
-                            color: AppTheme.complete,
-                          ),
-                          Container(
-                            width: 2,
-                            height: 24,
-                            color: AppTheme.borderSide,
-                          ),
-                          const Icon(
-                            Icons.location_on,
-                            size: 15,
-                            color: AppTheme.accent,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            fromName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            toName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                CompactRouteTimelineWidget(pickup: fromName, dropoff: toName),
                 const SizedBox(height: 14),
                 const Divider(height: 1),
                 const SizedBox(height: 12),

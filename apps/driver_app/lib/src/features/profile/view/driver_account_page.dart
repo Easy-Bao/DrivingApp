@@ -486,7 +486,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           child: Text(
             value.isEmpty ? 'Unavailable' : value,
             textAlign: TextAlign.end,
-            maxLines: 2,
+            maxLines: 3,
+            softWrap: true,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontWeight: FontWeight.w700,

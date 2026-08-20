@@ -64,8 +64,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     if (pId.isEmpty) return;
 
     try {
-      final profile = await Modular.get<PassengerRemoteDataSource>()
+      final response = await Modular.get<PassengerRemoteDataSource>()
           .fetchPassengerProfile(pId);
+      final profile = _profilePayload(response);
       final values = <String, String>{
         for (final key in cachedValues.keys)
           key: _profileValue(profile[key], cachedValues[key] ?? ''),
@@ -84,6 +85,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   String _profileValue(Object? value, String fallback) {
     final normalized = value?.toString().trim() ?? '';
     return normalized.isEmpty ? fallback : normalized;
+  }
+
+  Map<String, dynamic> _profilePayload(Map<String, dynamic> response) {
+    final nested = response['profile'] ?? response['user'] ?? response['data'];
+    if (nested is Map) return Map<String, dynamic>.from(nested);
+    return response;
   }
 
   void _applyProfileValues(Map<String, String> values) {

@@ -22,27 +22,29 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 LucideIcons.shield_check,
                 size: 18,
                 color: AppTheme.primaryColor,
               ),
-              SizedBox(width: 8),
-              Text(
-                'Drivers Online Now',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Drivers Nearby (${summaries.length})',
+                  style: const TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'These drivers can accept a ride. Compare their ratings before you request one.',
+            'Available drivers can accept your request. Ratings help you choose after matching.',
             style: TextStyle(
               color: AppTheme.primaryColor.withValues(alpha: 0.55),
               fontSize: 12,
