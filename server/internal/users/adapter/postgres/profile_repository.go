@@ -15,9 +15,13 @@ func NewProfileRepository(client *ent.Client) *ProfileRepository {
 	return &ProfileRepository{client: client}
 }
 func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
+	account, err := repository.client.User.Get(ctx, userID)
+	if err != nil {
+		return domain.Profile{}, err
+	}
 	profile, err := repository.client.DriverProfile.Query().Where(driverprofile.UserIDEQ(userID)).Only(ctx)
 	if err == nil {
-		return domain.Profile{ID: profile.ID, UserID: profile.UserID, Role: "driver", Name: profile.Name, VehicleType: profile.VehicleType, PlateNumber: profile.PlateNumber, Rating: profile.Rating, IsOnline: profile.IsOnline}, nil
+		return domain.Profile{ID: profile.ID, UserID: profile.UserID, Role: "driver", Name: profile.Name, Phone: account.Phone, Email: account.Email, VehicleType: profile.VehicleType, PlateNumber: profile.PlateNumber, Rating: profile.Rating, IsOnline: profile.IsOnline}, nil
 	}
 	if !ent.IsNotFound(err) {
 		return domain.Profile{}, err
@@ -26,21 +30,25 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 	if err != nil {
 		return domain.Profile{}, err
 	}
-	return domain.Profile{ID: passengerProfile.ID, UserID: passengerProfile.UserID, Role: "passenger", Name: passengerProfile.Name, PreferredRideType: passengerProfile.PreferredRideType}, nil
+	return domain.Profile{ID: passengerProfile.ID, UserID: passengerProfile.UserID, Role: "passenger", Name: passengerProfile.Name, Phone: account.Phone, Email: account.Email, PreferredRideType: passengerProfile.PreferredRideType}, nil
 }
 func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
+	account, err := repository.client.User.UpdateOneID(profile.UserID).SetName(profile.Name).SetPhone(profile.Phone).SetEmail(profile.Email).Save(ctx)
+	if err != nil {
+		return domain.Profile{}, err
+	}
 	if profile.Role == "driver" {
 		updated, err := repository.client.DriverProfile.UpdateOneID(profile.ID).SetName(profile.Name).SetVehicleType(profile.VehicleType).SetPlateNumber(profile.PlateNumber).SetIsOnline(profile.IsOnline).Save(ctx)
 		if err != nil {
 			return domain.Profile{}, err
 		}
-		return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "driver", Name: updated.Name, VehicleType: updated.VehicleType, PlateNumber: updated.PlateNumber, Rating: updated.Rating, IsOnline: updated.IsOnline}, nil
+		return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "driver", Name: updated.Name, Phone: account.Phone, Email: account.Email, VehicleType: updated.VehicleType, PlateNumber: updated.PlateNumber, Rating: updated.Rating, IsOnline: updated.IsOnline}, nil
 	}
 	updated, err := repository.client.PassengerProfile.UpdateOneID(profile.ID).SetName(profile.Name).SetPreferredRideType(profile.PreferredRideType).Save(ctx)
 	if err != nil {
 		return domain.Profile{}, err
 	}
-	return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "passenger", Name: updated.Name, PreferredRideType: updated.PreferredRideType}, nil
+	return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "passenger", Name: updated.Name, Phone: account.Phone, Email: account.Email, PreferredRideType: updated.PreferredRideType}, nil
 }
 
 func (repository *ProfileRepository) Notifications(ctx context.Context, userID int) ([]domain.Notification, error) {

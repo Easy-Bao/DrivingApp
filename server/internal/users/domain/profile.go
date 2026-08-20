@@ -5,6 +5,8 @@ type Profile struct {
 	UserID            int     `json:"user_id"`
 	Role              string  `json:"role"`
 	Name              string  `json:"name"`
+	Phone             string  `json:"phone,omitempty"`
+	Email             string  `json:"email,omitempty"`
 	PreferredRideType string  `json:"preferred_ride_type,omitempty"`
 	VehicleType       string  `json:"vehicle_type,omitempty"`
 	PlateNumber       string  `json:"plate_number,omitempty"`
