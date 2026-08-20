@@ -70,6 +70,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       currentUserId: passengerIdentifier,
       clientDio: Modular.get<Dio>(),
     );
+    unawaited(_updateUnreadMessagesCount());
   }
 
   @override
@@ -428,17 +429,17 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    AppBackButtonWidget.plain(
+                    AppBackButtonWidget(
                       onPressed: () => context.goNamed(HomeRoutes.home),
                     ),
                     BlocBuilder<TrackDriverCubit, TrackDriverState>(
                       builder: (context, state) {
                         final statusLabel = state is! TrackDriverInProgress
-                            ? 'En Route'
+                            ? 'To Pickup'
                             : switch (state.status) {
                                 RideStatus.arrived => 'Arrived',
                                 RideStatus.inTransit => 'On Trip',
-                                _ => 'En Route',
+                                _ => 'To Pickup',
                               };
                         return Container(
                           padding: const EdgeInsets.symmetric(
@@ -498,26 +499,26 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                         state is TrackDriverInProgress &&
                         state.status == RideStatus.arrived;
                     final statusTitle = isInTransit
-                        ? 'On the trip'
+                        ? 'On The Trip'
                         : hasArrived
-                        ? 'Driver has arrived'
+                        ? 'Driver Has Arrived'
                         : state is TrackDriverInProgress
-                        ? 'Driver is en route'
+                        ? 'Driver Is Heading To Pickup'
                         : 'Driver Assigned';
                     final statusSubtitle = isInTransit
                         ? 'Heading to ${widget.ride.destination}'
                         : hasArrived
                         ? 'Please meet your driver at pickup'
                         : state is TrackDriverInProgress
-                        ? 'Heading towards pickup location'
+                        ? 'Heading to the pickup location'
                         : 'Preparing to head to pickup';
                     final etaText = state is TrackDriverInProgress
                         ? hasArrived
-                              ? 'Meet up'
+                              ? 'Meet Up'
                               : isInTransit
                               ? 'On Trip'
-                              : 'En Route'
-                        : 'En Route';
+                              : 'To Pickup'
+                        : 'To Pickup';
                     final driverName = state is TrackDriverInProgress
                         ? state.driverName
                         : null;

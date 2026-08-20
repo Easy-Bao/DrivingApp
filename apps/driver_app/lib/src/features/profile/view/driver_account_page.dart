@@ -446,14 +446,18 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         title: const Text('Vehicle Information'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _detailRow('Vehicle Type', _vehicleType),
-            const SizedBox(height: 12),
-            _detailRow('Plate Number', _plateNumber),
-          ],
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 340),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _detailRow('Vehicle Type', _vehicleType),
+              const SizedBox(height: 12),
+              _detailRow('Plate Number', _plateNumber),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -467,14 +471,27 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
 
   Widget _detailRow(String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.tertiaryColor)),
-        Text(
-          value.isEmpty ? 'Unavailable' : value,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            color: AppTheme.primaryColor,
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: const TextStyle(color: AppTheme.tertiaryColor),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value.isEmpty ? 'Unavailable' : value,
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryColor,
+            ),
           ),
         ),
       ],

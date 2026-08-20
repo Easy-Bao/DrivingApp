@@ -39,7 +39,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
   late final AnimationController _dropdownAnimationController;
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
-  List<String> _recentFeedbacks = const [];
+  List<Map<String, dynamic>> _recentReviews = const [];
   bool _isLoadingFeedback = true;
 
   @override
@@ -71,35 +71,197 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
     try {
       final rawReviews = await Modular.get<BiddingRemoteDataSource>()
           .fetchDriverReviews(widget.driver.id, page: 1, limit: 6);
-      final feedbacks = rawReviews
+      final reviews = rawReviews
           .whereType<Map>()
-          .map(
-            (review) => SafeParse.toStringValue(
+          .map((review) {
+            final comment = SafeParse.toStringValue(
               review['comment'] ?? review['feedback'] ?? review['message'],
-            ).trim(),
-          )
-          .where((comment) => comment.isNotEmpty)
-          .take(6)
-          .toList(growable: false);
+            ).trim();
+            return <String, dynamic>{
+              'passengerName': SafeParse.toStringValue(
+                review['passengerName'] ?? review['passenger_name'],
+              ).trim(),
+              'comment': comment,
+              'rating': SafeParse.toNullableDouble(review['rating']) ?? 0,
+              'date': _formatReviewDate(
+                review['createdAt'] ?? review['created_at'],
+              ),
+            };
+          })
+          .where((review) => (review['comment'] as String).isNotEmpty)
+          .take(6);
       if (!mounted) return;
       setState(() {
-        _recentFeedbacks =
-            feedbacks.isEmpty &&
+        _recentReviews =
+            reviews.isEmpty &&
                 widget.driver.recentFeedback?.trim().isNotEmpty == true
-            ? [widget.driver.recentFeedback!.trim()]
-            : feedbacks;
+            ? [
+                {
+                  'passengerName': 'Passenger',
+                  'comment': widget.driver.recentFeedback!.trim(),
+                  'rating': widget.driver.rating,
+                  'date': '',
+                },
+              ]
+            : reviews.toList(growable: false);
         _isLoadingFeedback = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _recentFeedbacks =
-            widget.driver.recentFeedback?.trim().isNotEmpty == true
-            ? [widget.driver.recentFeedback!.trim()]
+        _recentReviews = widget.driver.recentFeedback?.trim().isNotEmpty == true
+            ? [
+                {
+                  'passengerName': 'Passenger',
+                  'comment': widget.driver.recentFeedback!.trim(),
+                  'rating': widget.driver.rating,
+                  'date': '',
+                },
+              ]
             : const [];
         _isLoadingFeedback = false;
       });
     }
+  }
+
+  String _formatReviewDate(Object? value) {
+    if (value == null) return '';
+    final parsed = DateTime.tryParse(value.toString());
+    if (parsed == null) return '';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
+  }
+
+  Widget _buildRecentFeedbackList() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppTheme.neutralColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: _isLoadingFeedback
+          ? const Skeletonizer(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Bone.text(words: 5),
+                  SizedBox(height: 7),
+                  Bone.text(words: 4),
+                  SizedBox(height: 7),
+                  Bone.text(words: 6),
+                ],
+              ),
+            )
+          : _recentReviews.isEmpty
+          ? Text(
+              'No passenger feedback yet.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.primaryColor.withValues(alpha: 0.65),
+              ),
+            )
+          : ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 126),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: _recentReviews.length > 3
+                    ? const BouncingScrollPhysics()
+                    : const NeverScrollableScrollPhysics(),
+                itemCount: _recentReviews.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (_, index) =>
+                    _buildReviewRow(_recentReviews[index]),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildReviewRow(Map<String, dynamic> review) {
+    final passengerName = (review['passengerName'] as String?)?.trim();
+    final comment = review['comment'] as String? ?? '';
+    final date = review['date'] as String? ?? '';
+    final rating = (review['rating'] as num?)?.toDouble() ?? 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                passengerName == null || passengerName.isEmpty
+                    ? 'Passenger'
+                    : passengerName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ),
+            if (date.isNotEmpty)
+              Text(
+                date,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.42),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Row(
+          children: [
+            ...List.generate(5, (index) {
+              final filled = rating >= index + 1;
+              return Icon(
+                filled ? Icons.star_rounded : Icons.star_border_rounded,
+                size: 12,
+                color: filled
+                    ? Colors.amber
+                    : AppTheme.primaryColor.withValues(alpha: 0.2),
+              );
+            }),
+            const SizedBox(width: 4),
+            Text(
+              rating.toStringAsFixed(1),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryColor.withValues(alpha: 0.58),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Text(
+          '“$comment”',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            height: 1.25,
+            color: AppTheme.primaryColor.withValues(alpha: 0.78),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -364,93 +526,19 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                 ],
                               ),
                               const SizedBox(height: 10.0),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 11.0,
-                                  vertical: 9.0,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.neutralColor,
-                                  borderRadius: BorderRadius.circular(16.0),
-                                  border: Border.all(
-                                    color: AppTheme.borderSide,
+                              const SizedBox(height: 4),
+                              Text(
+                                'Recent Feedback',
+                                style: TextStyle(
+                                  fontSize: 11.0,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.6,
                                   ),
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          LucideIcons.message_square_quote,
-                                          size: 14.0,
-                                          color: AppTheme.primaryColor
-                                              .withValues(alpha: 0.6),
-                                        ),
-                                        const SizedBox(width: 6.0),
-                                        Text(
-                                          'Recent Feedback',
-                                          style: TextStyle(
-                                            fontSize: 11.0,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppTheme.primaryColor
-                                                .withValues(alpha: 0.6),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6.0),
-                                    if (_isLoadingFeedback)
-                                      const Skeletonizer(
-                                        child: Column(
-                                          children: [
-                                            Bone.text(words: 5),
-                                            SizedBox(height: 5),
-                                            Bone.text(words: 4),
-                                            SizedBox(height: 5),
-                                            Bone.text(words: 6),
-                                          ],
-                                        ),
-                                      )
-                                    else if (_recentFeedbacks.isEmpty)
-                                      Text(
-                                        'No passenger feedback yet.',
-                                        style: TextStyle(
-                                          fontSize: 12.0,
-                                          color: AppTheme.primaryColor
-                                              .withValues(alpha: 0.65),
-                                        ),
-                                      )
-                                    else
-                                      ConstrainedBox(
-                                        constraints: const BoxConstraints(
-                                          maxHeight: 108,
-                                        ),
-                                        child: ListView.separated(
-                                          shrinkWrap: true,
-                                          physics: _recentFeedbacks.length > 3
-                                              ? const BouncingScrollPhysics()
-                                              : const NeverScrollableScrollPhysics(),
-                                          itemCount: _recentFeedbacks.length,
-                                          separatorBuilder: (_, _) =>
-                                              const SizedBox(height: 6),
-                                          itemBuilder: (context, index) => Text(
-                                            '“${_recentFeedbacks[index]}”',
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 12.0,
-                                              height: 1.3,
-                                              color: AppTheme.primaryColor
-                                                  .withValues(alpha: 0.8),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
                               ),
+                              const SizedBox(height: 6),
+                              _buildRecentFeedbackList(),
                               const SizedBox(height: 12.0),
                               Row(
                                 children: [

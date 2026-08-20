@@ -212,7 +212,9 @@ class DriverRepository implements IDriverRepository {
 
     return DriverModel(
       id: driverId,
-      name: _stringValue(data['name']),
+      name: _stringValue(
+        data['name'] ?? data['driver_name'] ?? data['driverName'],
+      ),
       vehicleType: _stringValue(data['vehicleType'] ?? data['vehicle_type']),
       plateNumber: _stringValue(data['plateNumber'] ?? data['plate_number']),
       rating: SafeParse.toNullableDouble(data['rating']) ?? 0,

@@ -217,11 +217,11 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   String _getEtaLabel(RideStatus status) {
     switch (status) {
       case RideStatus.accepted:
-        return 'En-route';
+        return 'To Pickup';
       case RideStatus.arrived:
         return 'Arrived';
       case RideStatus.inTransit:
-        return 'In-transit';
+        return 'On Trip';
       default:
         return 'Calculating...';
     }

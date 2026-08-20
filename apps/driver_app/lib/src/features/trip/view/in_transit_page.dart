@@ -267,13 +267,31 @@ class _InTransitPageState extends State<InTransitPage> {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: Row(
                       children: [
-                        IconButton(
-                          tooltip: 'Back',
-                          onPressed: () => context.pop(),
-                          icon: const Icon(
-                            LucideIcons.arrow_left,
-                            size: 20,
-                            color: AppTheme.primaryColor,
+                        SizedBox(
+                          width: 46,
+                          height: 46,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppTheme.borderSide),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              tooltip: 'Back',
+                              onPressed: () => context.pop(),
+                              icon: const Icon(
+                                LucideIcons.arrow_left,
+                                size: 20,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 14),

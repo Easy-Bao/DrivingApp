@@ -6,7 +6,6 @@ import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_d
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverTripDetailPage extends StatefulWidget {
@@ -100,22 +99,6 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     } catch (_) {
       return 'Past trip';
     }
-  }
-
-  String _formatDistance() {
-    final value = widget.trip['distance_km'];
-    if (value is num && value.isFinite && value > 0) {
-      return DistanceFormatter.fromKilometers(value);
-    }
-    return '—';
-  }
-
-  String _formatDuration() {
-    final value = widget.trip['duration_minutes'];
-    if (value is num && value.isFinite && value > 0) {
-      return '${value.round()} min';
-    }
-    return '—';
   }
 
   @override
@@ -214,8 +197,6 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                         toName: toName,
                         rideType: rideType,
                         fare: fare,
-                        distance: _formatDistance(),
-                        duration: _formatDuration(),
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -279,8 +260,6 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     required String toName,
     required String rideType,
     required double? fare,
-    required String distance,
-    required String duration,
   }) {
     return Card(
       child: Padding(
@@ -335,10 +314,6 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
             Row(
               children: [
                 Expanded(child: _buildTripMetric('Ride type', rideType)),
-                _buildMetricDivider(),
-                Expanded(child: _buildTripMetric('Distance', distance)),
-                _buildMetricDivider(),
-                Expanded(child: _buildTripMetric('Duration', duration)),
               ],
             ),
           ],
@@ -448,10 +423,6 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         ),
       ],
     );
-  }
-
-  Widget _buildMetricDivider() {
-    return Container(width: 1, height: 28, color: AppTheme.borderSide);
   }
 
   Widget _buildPassengerCard() {

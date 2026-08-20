@@ -633,7 +633,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             offset: const Offset(0, 6),
           ),
           backDrawRodData: BackgroundBarChartRodData(
-            show: maxAmount > 0,
+            show: false,
             toY: maxAmount,
             color: AppTheme.primaryColor.withValues(alpha: 0.05),
           ),

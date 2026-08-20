@@ -52,7 +52,9 @@ class DriverModel extends Equatable {
   factory DriverModel.fromJson(Map<String, dynamic> json) {
     return DriverModel(
       id: SafeParse.toStringValue(json['id'] ?? json['user_id']),
-      name: SafeParse.toStringValue(json['name']),
+      name: SafeParse.toStringValue(
+        json['name'] ?? json['driver_name'] ?? json['driverName'],
+      ),
       vehicleType: SafeParse.toStringValue(
         json['vehicleType'] ?? json['vehicle_type'],
       ),

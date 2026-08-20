@@ -963,7 +963,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Widget _buildActiveTripCard(Map<String, dynamic> trip, int queueIndex) {
     final status = trip['status'] as String? ?? 'accepted';
-    String statusLabel = 'En Route';
+    String statusLabel = 'To Pickup';
     Color statusColor = AppTheme.inProgress;
     if (status == 'arrived') {
       statusLabel = 'Waiting Passenger';

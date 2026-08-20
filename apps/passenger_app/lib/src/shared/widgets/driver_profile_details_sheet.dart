@@ -78,10 +78,13 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           stats['completed_trips'] ??
           stats['totalTrips'] ??
           stats['total_trips'];
-      if (completedTrips is num) {
+      final completedTripsValue = num.tryParse(
+        completedTrips?.toString() ?? '',
+      );
+      if (completedTripsValue != null) {
         if (mounted) {
           setState(() {
-            _completedTripsCount = completedTrips.toInt();
+            _completedTripsCount = completedTripsValue.toInt();
           });
         }
       }
@@ -149,9 +152,10 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     }
 
     return {
-      'passengerName': r['passengerName'] ?? r['passenger_name'],
-      'comment': r['comment'],
-      'rating': (r['rating'] as num?)?.toDouble(),
+      'passengerName':
+          r['passengerName']?.toString() ?? r['passenger_name']?.toString(),
+      'comment': r['comment']?.toString() ?? r['feedback']?.toString() ?? '',
+      'rating': num.tryParse(r['rating']?.toString() ?? '')?.toDouble(),
       'date': dateFormatted,
     };
   }
