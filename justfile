@@ -4,6 +4,7 @@ set dotenv-load
 set export
 
 api-base-url := env_var_or_default("API_BASE_URL", "http://127.0.0.1:8000")
+api-port := env_var_or_default("API_PORT", env_var_or_default("GATEWAY_PORT", "8000"))
 
 default:
     @just --list
@@ -71,18 +72,42 @@ test-services:
 # Start the single Go application natively. PostgreSQL, Redis, and RabbitMQ
 # must already be running on the host; this recipe never enables or starts them.
 server:
+    @port="{{ api-port }}"; \
+    port_in_use() { \
+        if command -v lsof >/dev/null 2>&1 && lsof -nP -t -iTCP:"$$1" -sTCP:LISTEN >/dev/null 2>&1; then return 0; fi; \
+        if command -v fuser >/dev/null 2>&1 && fuser -n tcp "$$1" >/dev/null 2>&1; then return 0; fi; \
+        return 1; \
+    }; \
+    stop_port() { \
+        if command -v lsof >/dev/null 2>&1; then \
+            pids="$$(lsof -nP -t -iTCP:"$$1" -sTCP:LISTEN 2>/dev/null || true)"; \
+            if [ -n "$$pids" ]; then \
+                for pid in $$pids; do kill -TERM "$$pid" 2>/dev/null || true; done; \
+                return; \
+            fi; \
+        fi; \
+        if command -v fuser >/dev/null 2>&1; then fuser -k -TERM -n tcp "$$1" >/dev/null 2>&1 || true; fi; \
+    }; \
+    if port_in_use "$$port"; then \
+        echo "Stopping the existing process on TCP port $$port"; \
+        stop_port "$$port"; \
+        for attempt in 1 2 3 4 5; do \
+            if ! port_in_use "$$port"; then \
+                break; \
+            fi; \
+            sleep 1; \
+        done; \
+        if port_in_use "$$port"; then \
+            echo "TCP port $$port is still in use; refusing to start the API."; \
+            exit 1; \
+        fi; \
+    fi
     cd server && go run ./cmd/api
 
 native-server: server
 
 # Backward-compatible local startup alias.
 start-all: server
-
-run-passenger:
-    cd apps/passenger_app && flutter run --dart-define=API_BASE_URL={{ api-base-url }}
-
-run-driver:
-    cd apps/driver_app && flutter run --dart-define=API_BASE_URL={{ api-base-url }}
 
 # Start every application and dependency through Docker Compose explicitly.
 docker-start-all: services-up
