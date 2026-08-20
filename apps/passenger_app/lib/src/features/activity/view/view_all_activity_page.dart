@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -224,9 +223,6 @@ class _PassengerViewAllActivityPageState
                 );
                 final groupedRideItems =
                     _groupedActivityRides[groupingDateKey]!;
-                final dailyCompletedRidesTotal =
-                    _calculateDailyCompletedTotalSum(groupedRideItems);
-
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -235,30 +231,14 @@ class _PassengerViewAllActivityPageState
                         vertical: 12,
                         horizontal: 4,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            groupingDateKey,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.4,
-                              ),
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          if (dailyCompletedRidesTotal > 0)
-                            Text(
-                              '₱${dailyCompletedRidesTotal.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.complete,
-                              ),
-                            ),
-                        ],
+                      child: Text(
+                        groupingDateKey,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                     ...groupedRideItems.map(
@@ -283,31 +263,14 @@ class _PassengerViewAllActivityPageState
     final formattedActivityTime = dateStringParts.length > 1
         ? dateStringParts[1].trim()
         : '';
-
-    final estimatedDistanceInKm =
-        _calculateCoordinatesDistanceInKm(
-          ride.pickupLat,
-          ride.pickupLng,
-          ride.destLat,
-          ride.destLng,
-        ) *
-        1.3;
-    final estimatedDurationInMinutes = (estimatedDistanceInKm * 2.5).round();
-
     final totalTripPrice = _priceValue(ride.price);
-
-    final driverInitials = _formattedDriverInitials(ride.displayDriverName);
-    final driverRating = _formattedDriverRating(ride);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor.withValues(alpha: 0.2),
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.borderSide.withValues(alpha: 0.2),
-          width: 1.0,
-        ),
+        border: Border.all(color: AppTheme.borderSide),
       ),
       child: Material(
         color: Colors.transparent,
@@ -351,7 +314,7 @@ class _PassengerViewAllActivityPageState
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        isTripCompleted ? 'completed' : 'cancelled',
+                        isTripCompleted ? 'Completed' : 'Cancelled',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
@@ -364,207 +327,40 @@ class _PassengerViewAllActivityPageState
                   ],
                 ),
                 const SizedBox(height: 12),
+                CompactRouteTimelineWidget(
+                  pickup: ride.pickup,
+                  dropoff: ride.destination,
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 1, color: AppTheme.borderSide),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.secondaryColor,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        driverInitials,
-                        style: const TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            ride.displayDriverName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            ride.displayVehicleSummary,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.45,
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: _tripMeta(
+                        'Ride Type',
+                        ride.vehicleType.toLowerCase().contains('share')
+                            ? 'Shared Ride'
+                            : 'Solo Ride',
                       ),
                     ),
-                    if (isTripCompleted) ...[
-                      const Icon(
-                        Icons.star,
-                        color: AppTheme.secondaryColor,
-                        size: 16,
+                    Container(width: 1, height: 28, color: AppTheme.borderSide),
+                    Expanded(
+                      child: _tripMeta(
+                        'Fare',
+                        '₱${totalTripPrice.toStringAsFixed(2)}',
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        driverRating,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                if (isTripCompleted) ...[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 4,
-                          left: 16,
-                          right: 16,
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppTheme.tertiaryColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Container(
-                              width: 2,
-                              height: 24,
-                              color: AppTheme.outlineBorderColor,
-                            ),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              ride.pickup,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.8,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              ride.destination,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.8,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  const Divider(height: 1, color: AppTheme.borderSide),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(
-                        LucideIcons.route,
-                        size: 16,
-                        color: AppTheme.tertiaryColor,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        DistanceFormatter.fromKilometers(estimatedDistanceInKm),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Icon(
-                        LucideIcons.clock,
-                        size: 16,
-                        color: AppTheme.tertiaryColor,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '$estimatedDurationInMinutes min',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(height: 1, color: AppTheme.borderSide),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Fare',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      Text(
-                        '₱${totalTripPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
+                if (!isTripCompleted) ...[
+                  const SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
+                    padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      'Passenger cancelled before pickup',
+                      'Trip cancelled before reaching the destination.',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryColor.withValues(alpha: 0.5),
                       ),
@@ -579,34 +375,34 @@ class _PassengerViewAllActivityPageState
     );
   }
 
-  double _calculateCoordinatesDistanceInKm(
-    double startLatitude,
-    double startLongitude,
-    double endLatitude,
-    double endLongitude,
-  ) {
-    const degreesToRadiansMultiplier = 0.017453292519943295;
-    final haversineInterimValue =
-        0.5 -
-        cos((endLatitude - startLatitude) * degreesToRadiansMultiplier) / 2 +
-        cos(startLatitude * degreesToRadiansMultiplier) *
-            cos(endLatitude * degreesToRadiansMultiplier) *
-            (1 -
-                cos(
-                  (endLongitude - startLongitude) * degreesToRadiansMultiplier,
-                )) /
-            2;
-    return 12742 * asin(sqrt(haversineInterimValue));
-  }
-
-  double _calculateDailyCompletedTotalSum(List<RideHistoryModel> ridesForDate) {
-    double dailySum = 0.0;
-    for (final ride in ridesForDate) {
-      if (ride.status == 'completed') {
-        dailySum += _priceValue(ride.price);
-      }
-    }
-    return dailySum;
+  Widget _tripMeta(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryColor.withValues(alpha: 0.42),
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   double _priceValue(String price) {
@@ -659,20 +455,6 @@ class _PassengerViewAllActivityPageState
         });
       }
     }
-  }
-
-  String _formattedDriverInitials(String driverName) {
-    if (driverName.isEmpty) return 'D';
-    final nameParts = driverName.trim().split(' ');
-    if (nameParts.length > 1) {
-      return '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase();
-    }
-    return nameParts[0][0].toUpperCase();
-  }
-
-  String _formattedDriverRating(RideHistoryModel ride) {
-    final rating = ride.driverRating;
-    return rating == null || rating <= 0 ? '—' : rating.toStringAsFixed(1);
   }
 
   String _getGroupingDateKey(RideHistoryModel ride) {

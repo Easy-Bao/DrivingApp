@@ -6,7 +6,9 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class ActivityDetailMapPage extends StatefulWidget {
   final String placeName;
@@ -28,8 +30,6 @@ class ActivityDetailMapPage extends StatefulWidget {
 
 class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
   AppMapController? _mapController;
-  String _distance = '—';
-  String _duration = '—';
   String _fullAddress = '';
   bool _isLoading = true;
 
@@ -59,11 +59,6 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
     if (!mounted) return;
     setState(() {
       _fullAddress = place?.fullAddress ?? widget.placeSubtitle;
-      if (route != null) {
-        _distance = DistanceFormatter.fromKilometers(route.distanceKm);
-        final mins = route.estimatedTime.inMinutes;
-        _duration = mins < 60 ? '$mins min' : '${mins ~/ 60}h ${mins % 60}m';
-      }
       _isLoading = false;
     });
 
@@ -114,28 +109,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            child: GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 15,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  LucideIcons.arrow_left,
-                  color: AppTheme.primaryColor,
-                  size: 20,
-                ),
-              ),
-            ),
+            child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
           ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -215,36 +189,11 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.neutralColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.borderSide),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildStat(
-                            LucideIcons.navigation,
-                            'Distance',
-                            _isLoading ? '...' : _distance,
-                          ),
-                        ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: AppTheme.borderSide,
-                        ),
-                        Expanded(
-                          child: _buildStat(
-                            LucideIcons.clock,
-                            'Estimated Time',
-                            _isLoading ? '...' : _duration,
-                          ),
-                        ),
-                      ],
-                    ),
+                  CompactRouteTimelineWidget(
+                    pickup: 'Current Location',
+                    dropoff: widget.placeName,
+                    pickupLabel: 'From',
+                    dropoffLabel: 'Destination',
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
@@ -289,32 +238,6 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStat(IconData icon, String label, String value) {
-    return Column(
-      children: [
-        Icon(icon, size: 18, color: AppTheme.tertiaryColor),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppTheme.primaryColor.withValues(alpha: 0.5),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }

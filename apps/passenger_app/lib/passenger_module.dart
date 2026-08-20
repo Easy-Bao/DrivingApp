@@ -160,6 +160,7 @@ class PassengerModule extends Module {
       builder: (context, GoRouterState state, navigationShell) =>
           PassengerShellLayout(
             inboxCubit: Modular.get<InboxCubit>(),
+            realtimeClient: Modular.get<RealtimeWebSocketClient>(),
             navigationCoordinator:
                 Modular.get<PassengerTabNavigationCoordinator>(),
             navigationShell: navigationShell,

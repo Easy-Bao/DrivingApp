@@ -45,8 +45,8 @@ void main() {
       ),
     );
 
-    await tester.ensureVisible(find.text('Log out'));
-    await tester.tap(find.text('Log out'));
+    await tester.ensureVisible(find.text('Log Out'));
+    await tester.tap(find.text('Log Out'));
     await tester.pump();
 
     verify(() => sessionBloc.add(const SessionLogoutRequested())).called(1);

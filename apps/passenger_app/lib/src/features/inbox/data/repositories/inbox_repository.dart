@@ -52,7 +52,9 @@ class InboxRepository implements IInboxRepository {
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       return Right(list);
     } catch (error) {
-      return Left(ServerFailure('Failed to fetch notifications: $error'));
+      return const Left(
+        ServerFailure('Notifications are temporarily unavailable.'),
+      );
     }
   }
 

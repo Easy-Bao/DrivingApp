@@ -443,30 +443,24 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   }
 
   void _showVehicleDetails(BuildContext context) {
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Vehicle Information',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 20),
-              _detailRow('Vehicle Type', _vehicleType),
-              const SizedBox(height: 12),
-              _detailRow('Plate Number', _plateNumber),
-            ],
-          ),
+      builder: (context) => AlertDialog(
+        title: const Text('Vehicle Information'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _detailRow('Vehicle Type', _vehicleType),
+            const SizedBox(height: 12),
+            _detailRow('Plate Number', _plateNumber),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Done'),
+          ),
+        ],
       ),
     );
   }

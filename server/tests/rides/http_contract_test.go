@@ -108,7 +108,7 @@ func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 	}
 }
 
-func TestDriverAnalyticsRejectsAnotherDriversIdentity(t *testing.T) {
+func TestDriverAnalyticsKeepsTripsPrivateButAllowsAggregateStats(t *testing.T) {
 	config, err := ridesusecase.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
@@ -120,23 +120,22 @@ func TestDriverAnalyticsRejectsAnotherDriversIdentity(t *testing.T) {
 	}
 
 	mux := chi.NewRouter()
-	rideshttp.NewRouter(ridesusecase.NewService(nil, config), verifier).RegisterRoutes(mux)
+	rideshttp.NewRouter(ridesusecase.NewService(analyticsRepository{}, config), verifier).RegisterRoutes(mux)
 
-	for _, path := range []string{
-		api.V1Prefix + "/drivers/8/stats",
-		api.V1Prefix + "/drivers/8/trips",
-	} {
-		t.Run(path, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, path, nil)
-			request.Header.Set("Authorization", "Bearer "+accessToken)
-			response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/8/stats", nil)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("stats status = %d, want %d", response.Code, http.StatusOK)
+	}
 
-			mux.ServeHTTP(response, request)
-
-			if response.Code != http.StatusForbidden {
-				t.Fatalf("status = %d, want %d", response.Code, http.StatusForbidden)
-			}
-		})
+	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/8/trips", nil)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	response = httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusForbidden {
+		t.Fatalf("trips status = %d, want %d", response.Code, http.StatusForbidden)
 	}
 }
 

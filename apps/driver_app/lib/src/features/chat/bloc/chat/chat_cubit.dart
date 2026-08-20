@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as dev;
-
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_data_source.dart';
 import 'package:driver_app/src/features/chat/bloc/chat/chat_state.dart';
@@ -153,10 +151,25 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       final resolved = await _roomRemoteDataSource.resolveRoom(roomId);
       if (resolved) {
-        await connectToChatRoom(roomId: roomId, wsUri: wsUri, token: token);
+        await _chatSubscription?.cancel();
+        await _chatRepository.terminateChatConnection();
+        if (!isClosed) {
+          emit(
+            state.copyWith(
+              isConnected: false,
+              isRoomLocked: true,
+              lockReasonMessage: 'This chat is closed.',
+              errorMessage: null,
+            ),
+          );
+        }
+      } else if (!isClosed) {
+        emit(state.copyWith(errorMessage: 'We could not close this chat.'));
       }
     } catch (_) {
-      dev.log('Unable to resolve chat room.');
+      if (!isClosed) {
+        emit(state.copyWith(errorMessage: 'We could not close this chat.'));
+      }
     }
   }
 

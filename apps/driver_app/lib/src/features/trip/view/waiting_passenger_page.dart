@@ -200,22 +200,13 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Material(
-                            color: AppTheme.surface,
-                            shape: const CircleBorder(),
-                            elevation: 1,
-                            child: InkWell(
-                              onTap: () => context.pop(),
-                              customBorder: const CircleBorder(),
-                              child: const SizedBox(
-                                width: 44,
-                                height: 44,
-                                child: Icon(
-                                  LucideIcons.arrow_left,
-                                  size: 19,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
+                          IconButton(
+                            tooltip: 'Back',
+                            onPressed: () => context.pop(),
+                            icon: const Icon(
+                              LucideIcons.arrow_left,
+                              size: 20,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
                           const Spacer(),

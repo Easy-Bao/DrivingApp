@@ -474,35 +474,50 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
   }
 
   Widget _buildLoadingState({required int itemCount}) {
-    return Skeletonizer.zone(
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Bone.text(width: 120, fontSize: 32),
-                  SizedBox(height: 4),
-                  Bone.text(width: 190, fontSize: 15),
-                ],
-              ),
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        const SliverPadding(
+          padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Activity',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryColor,
+                    letterSpacing: -1.5,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Tap a ride to see details',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.tertiaryColor,
+                  ),
+                ),
+              ],
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            sliver: SliverList(
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: Skeletonizer.sliver(
+            child: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _buildLoadingRideCard(),
                 childCount: itemCount,
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 36)),
-        ],
-      ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 36)),
+      ],
     );
   }
 

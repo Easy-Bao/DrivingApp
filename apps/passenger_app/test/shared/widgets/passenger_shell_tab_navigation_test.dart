@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,12 +23,22 @@ void main() {
     final sessionBloc = SessionBloc(sessionRepository: _SessionRepositoryStub())
       ..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
     final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+    final realtimeClient = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://localhost/realtime'),
+      tokenProvider: () async => 'test-token',
+      connector: _RealtimeSocketConnectorStub(),
+    );
     final navigationCoordinator = PassengerTabNavigationCoordinator();
-    final router = _createRouter(inboxCubit, navigationCoordinator);
+    final router = _createRouter(
+      inboxCubit,
+      realtimeClient,
+      navigationCoordinator,
+    );
     addTearDown(() async {
       router.dispose();
       await sessionBloc.close();
       await inboxCubit.close();
+      await realtimeClient.dispose();
       navigationCoordinator.dispose();
     });
 
@@ -87,6 +99,7 @@ void main() {
 
 GoRouter _createRouter(
   InboxCubit inboxCubit,
+  RealtimeWebSocketClient realtimeClient,
   PassengerTabNavigationCoordinator navigationCoordinator,
 ) {
   return GoRouter(
@@ -95,6 +108,7 @@ GoRouter _createRouter(
       StatefulShellRoute(
         builder: (context, state, navigationShell) => PassengerShellLayout(
           inboxCubit: inboxCubit,
+          realtimeClient: realtimeClient,
           navigationCoordinator: navigationCoordinator,
           navigationShell: navigationShell,
         ),
@@ -180,4 +194,22 @@ class _InboxRepositoryStub implements IInboxRepository {
   ) async {
     return const Right(<InboxNotification>[]);
   }
+}
+
+class _RealtimeSocketConnectorStub implements RealtimeSocketConnector {
+  @override
+  Future<RealtimeSocket> connect(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async => _RealtimeSocketStub();
+}
+
+class _RealtimeSocketStub implements RealtimeSocket {
+  final _messages = StreamController<Object?>();
+
+  @override
+  Stream<Object?> get messages => _messages.stream;
+
+  @override
+  Future<void> close() => _messages.close();
 }

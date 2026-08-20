@@ -47,7 +47,7 @@ func (handler *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := handler.service.Upload(r.Context(), id, documentType, content)
 	if err != nil {
-		writeError(w, 500, err.Error())
+		writeError(w, 500, "The document could not be uploaded.")
 		return
 	}
 	writeJSON(w, 201, item)
@@ -60,7 +60,7 @@ func (handler *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := handler.service.Status(r.Context(), id)
 	if err != nil {
-		writeError(w, 500, err.Error())
+		writeError(w, 500, "Document status is temporarily unavailable.")
 		return
 	}
 	writeJSON(w, 200, map[string]any{"documents": items})

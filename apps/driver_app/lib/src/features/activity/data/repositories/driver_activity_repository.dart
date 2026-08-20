@@ -19,7 +19,9 @@ class DriverActivityRepository implements IDriverActivityRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return ServerFailure(error.message);
+      return const ServerFailure(
+        'Driver trip history is temporarily unavailable. Please try again.',
+      );
     }
     if (error is DataParsingException) {
       return ValidationFailure(error.message);
@@ -27,7 +29,9 @@ class DriverActivityRepository implements IDriverActivityRepository {
     if (error is CacheException) {
       return CacheFailure(error.message);
     }
-    return ServerFailure('Unexpected system error: $error');
+    return const ServerFailure(
+      'Driver trip history is temporarily unavailable. Please try again.',
+    );
   }
 
   @override

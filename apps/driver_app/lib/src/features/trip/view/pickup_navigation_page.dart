@@ -418,22 +418,13 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
-          Material(
-            color: AppTheme.surface,
-            shape: const CircleBorder(),
-            elevation: 2,
-            child: InkWell(
-              onTap: () => context.pop(),
-              customBorder: const CircleBorder(),
-              child: const SizedBox(
-                width: 44,
-                height: 44,
-                child: Icon(
-                  LucideIcons.arrow_left,
-                  size: 19,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
+          IconButton(
+            tooltip: 'Back',
+            onPressed: () => context.pop(),
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              size: 20,
+              color: AppTheme.primaryColor,
             ),
           ),
           const SizedBox(width: 14),

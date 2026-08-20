@@ -6,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class DriverProfileDetailsSheet extends StatefulWidget {
   final String driverId;
@@ -35,6 +36,7 @@ class DriverProfileDetailsSheet extends StatefulWidget {
 }
 
 class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
+  static const _reviewPageSize = 3;
   late final ScrollController _scrollController;
   bool _isLoadingStats = true;
   bool _isLoadingMore = false;
@@ -68,8 +70,14 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     try {
       final statsData = await Modular.get<BiddingRemoteDataSource>()
           .fetchDriverStats(widget.driverId);
+      final stats = statsData['data'] is Map
+          ? Map<String, dynamic>.from(statsData['data'] as Map)
+          : statsData;
       final completedTrips =
-          statsData['completedTrips'] ?? statsData['completed_trips'];
+          stats['completedTrips'] ??
+          stats['completed_trips'] ??
+          stats['totalTrips'] ??
+          stats['total_trips'];
       if (completedTrips is num) {
         if (mounted) {
           setState(() {
@@ -86,8 +94,12 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     final List<Map<String, dynamic>> dynamicReviews = [];
     try {
       final rawReviews = await Modular.get<BiddingRemoteDataSource>()
-          .fetchDriverReviews(widget.driverId, page: _currentPage, limit: 5);
-      if (rawReviews.length < 5) {
+          .fetchDriverReviews(
+            widget.driverId,
+            page: _currentPage,
+            limit: _reviewPageSize,
+          );
+      if (rawReviews.length < _reviewPageSize) {
         _hasMore = false;
       }
       for (final r in rawReviews) {
@@ -155,8 +167,12 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     final List<Map<String, dynamic>> nextReviews = [];
     try {
       final rawReviews = await Modular.get<BiddingRemoteDataSource>()
-          .fetchDriverReviews(widget.driverId, page: nextPage, limit: 5);
-      if (rawReviews.length < 5) {
+          .fetchDriverReviews(
+            widget.driverId,
+            page: nextPage,
+            limit: _reviewPageSize,
+          );
+      if (rawReviews.length < _reviewPageSize) {
         _hasMore = false;
       }
       for (final r in rawReviews) {
@@ -345,8 +361,30 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Widget _buildReviews() {
     if (_isLoadingStats) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      return Skeletonizer.zone(
+        child: ListView.separated(
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _reviewPageSize,
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          itemBuilder: (_, _) => Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.neutralColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.borderSide),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Bone.text(width: 140, fontSize: 14),
+                SizedBox(height: 8),
+                Bone.text(width: 110, fontSize: 12),
+                SizedBox(height: 8),
+                Bone.multiText(lines: 2, fontSize: 13),
+              ],
+            ),
+          ),
+        ),
       );
     }
     if (_driverReviewsList.isEmpty) {

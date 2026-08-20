@@ -17,6 +17,7 @@ import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_bids
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_nearest_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_searching_panel_widget.dart';
+import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
 
 class FindingDriverPage extends StatelessWidget {
@@ -390,6 +391,16 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
               });
               final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
               liveMapBloc.add(const ClearMapAnnotationsEvent());
+              final nearbyCount = nearbyDrivers.length;
+              liveMapBloc.add(
+                AddMapMarkerEvent(
+                  lat: state.pickupLat,
+                  lng: state.pickupLng,
+                  label:
+                      '$nearbyCount ${nearbyCount == 1 ? 'Driver' : 'Drivers'} Nearby',
+                  isOrigin: true,
+                ),
+              );
               liveMapBloc.add(
                 AddMapMarkerEvent(
                   lat: state.driver.lat,
@@ -570,35 +581,8 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                     horizontal: 16,
                                     vertical: 8,
                                   ),
-                                  child: GestureDetector(
-                                    onTap: _handleCancel,
-                                    child: Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.surface,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: AppTheme.borderSide,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.08,
-                                            ),
-                                            blurRadius: 15,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Center(
-                                        child: Icon(
-                                          LucideIcons.arrow_left,
-                                          color: AppTheme.primaryColor,
-                                          size: 20,
-                                        ),
-                                      ),
-                                    ),
+                                  child: AppBackButtonWidget.plain(
+                                    onPressed: _handleCancel,
                                   ),
                                 ),
                                 if (showDriverDiscovery &&

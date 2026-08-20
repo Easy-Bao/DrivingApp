@@ -43,8 +43,12 @@ class TrackRepository implements ITrackRepository {
       return const Left(ServerFailure('No status data returned from server.'));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(
+        ServerFailure(
+          'Ride status is temporarily unavailable. Please try again.',
+        ),
+      );
     }
   }
 
@@ -67,8 +71,12 @@ class TrackRepository implements ITrackRepository {
       );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(
+        ServerFailure(
+          'Driver location is temporarily unavailable. Please try again.',
+        ),
+      );
     }
   }
 
@@ -90,8 +98,12 @@ class TrackRepository implements ITrackRepository {
       );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
-    } catch (error) {
-      return Left(ServerFailure(error.toString()));
+    } catch (_) {
+      return const Left(
+        ServerFailure(
+          'The ride status could not be updated. Please try again.',
+        ),
+      );
     }
   }
 }

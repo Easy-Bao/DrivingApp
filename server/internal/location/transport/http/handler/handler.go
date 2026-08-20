@@ -116,9 +116,9 @@ func writeServiceError(writer http.ResponseWriter, err error) {
 		errors.Is(err, usecase.ErrInvalidCoordinates),
 		errors.Is(err, usecase.ErrInvalidNearbyPage),
 		errors.Is(err, usecase.ErrInvalidRouteOptions):
-		writeError(writer, http.StatusBadRequest, err.Error())
+		writeError(writer, http.StatusBadRequest, "The location request is invalid.")
 	default:
-		writeError(writer, http.StatusBadGateway, "location provider unavailable")
+		writeError(writer, http.StatusBadGateway, "Nearby locations are temporarily unavailable.")
 	}
 }
 

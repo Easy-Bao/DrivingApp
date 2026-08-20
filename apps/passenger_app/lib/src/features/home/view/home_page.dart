@@ -43,6 +43,7 @@ class _HomePageState extends State<HomePage> {
   static const int _recentActivityPreviewLimit = 5;
 
   late final BookingBloc _bookingBloc;
+  bool _isSavedPlaceFlowOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -403,19 +404,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAddPlaceChip() {
     return GestureDetector(
-      onTap: () async {
-        final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-        final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
-        if (selectedPlace == null || selectedPlace is! PlaceModel) return;
-        if (!mounted) return;
-        final newPlace = await context.pushNamed<SavedPlace>(
-          HomeRoutes.addCategory,
-          extra: {'place': selectedPlace},
-        );
-        if (newPlace != null && mounted) {
-          await cubit.addPlace(newPlace);
-        }
-      },
+      onTap: _openNewSavedPlaceFlow,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
@@ -448,6 +437,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _openNewSavedPlaceFlow() async {
+    if (_isSavedPlaceFlowOpen) return;
+    _isSavedPlaceFlowOpen = true;
+    try {
+      final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+      final selectedPlace = await context.pushNamed<PlaceModel>(
+        TripRoutes.mapPin,
+      );
+      if (selectedPlace == null || !mounted) return;
+      final newPlace = await context.pushNamed<SavedPlace>(
+        HomeRoutes.addCategory,
+        extra: {'place': selectedPlace},
+      );
+      if (newPlace != null && mounted) {
+        await cubit.addPlace(newPlace);
+      }
+    } finally {
+      _isSavedPlaceFlowOpen = false;
+    }
+  }
+
   Widget _buildSavedPlaceChip(SavedPlace place) {
     final hasLocation = place.hasLocation;
     return AnimatedContainer(
@@ -455,10 +465,12 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
         color: hasLocation
-            ? AppTheme.secondaryColor.withValues(alpha: 0.25)
-            : AppTheme.surface,
+            ? AppTheme.activeControlBackground
+            : AppTheme.interactiveSurface,
         border: Border.all(
-          color: hasLocation ? AppTheme.secondaryColor : AppTheme.borderSide,
+          color: hasLocation
+              ? AppTheme.activeControlBackground
+              : AppTheme.borderSide,
           width: hasLocation ? 1.5 : 1.0,
         ),
         borderRadius: BorderRadius.circular(24),
@@ -469,15 +481,19 @@ class _HomePageState extends State<HomePage> {
           Icon(
             _iconFromName(place.iconName),
             size: 16,
-            color: AppTheme.primaryColor,
+            color: hasLocation
+                ? AppTheme.activeControlForeground
+                : AppTheme.primaryColor,
           ),
           const SizedBox(width: 8),
           Text(
             place.label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
+              color: hasLocation
+                  ? AppTheme.activeControlForeground
+                  : AppTheme.primaryColor,
             ),
           ),
           if (hasLocation) ...[
@@ -485,8 +501,10 @@ class _HomePageState extends State<HomePage> {
             Container(
               width: 6,
               height: 6,
-              decoration: const BoxDecoration(
-                color: AppTheme.complete,
+              decoration: BoxDecoration(
+                color: hasLocation
+                    ? AppTheme.activeControlForeground
+                    : AppTheme.complete,
                 shape: BoxShape.circle,
               ),
             ),

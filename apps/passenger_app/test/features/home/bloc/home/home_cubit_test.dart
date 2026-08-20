@@ -100,7 +100,8 @@ void main() {
         const HomeState(isLoading: true),
         const HomeState(
           isLoading: false,
-          locationErrorMessage: 'network error',
+          locationErrorMessage:
+              'The service is temporarily unavailable. Please try again.',
         ),
       ],
     );

@@ -229,7 +229,9 @@ class _DriverChatPageState extends State<DriverChatPage>
                   ),
               ],
               leading: Center(
-                child: AppBackButtonWidget(onPressed: () => context.pop()),
+                child: AppBackButtonWidget.plain(
+                  onPressed: () => context.pop(),
+                ),
               ),
               title: Row(
                 children: [
@@ -404,17 +406,23 @@ class _DriverChatPageState extends State<DriverChatPage>
                         ),
                         const SizedBox(width: 12),
                         Container(
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryColor,
+                          decoration: BoxDecoration(
+                            color: state.isRoomLocked
+                                ? AppTheme.neutralColor
+                                : AppTheme.primaryColor,
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
                             icon: const Icon(
                               LucideIcons.send_horizontal,
-                              color: Colors.white,
                               size: 20,
                             ),
-                            onPressed: () => unawaited(_send(_msgCtrl.text)),
+                            color: state.isRoomLocked
+                                ? AppTheme.tertiaryColor
+                                : AppTheme.activeControlForeground,
+                            onPressed: state.isRoomLocked
+                                ? null
+                                : () => unawaited(_send(_msgCtrl.text)),
                           ),
                         ),
                       ],

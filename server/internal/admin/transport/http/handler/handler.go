@@ -36,7 +36,7 @@ func (handler *Handler) Stats(w http.ResponseWriter, r *http.Request) {
 	}
 	stats, err := handler.service.DashboardStats(r.Context())
 	if err != nil {
-		writeError(w, 500, err.Error())
+		writeError(w, 500, "Dashboard statistics are temporarily unavailable.")
 		return
 	}
 	writeJSON(w, 200, stats)

@@ -26,6 +26,10 @@ type HistoryRepository interface {
 	Resolve(ctx context.Context, roomID string) error
 }
 
+type RoomParticipantsRepository interface {
+	RoomParticipants(ctx context.Context, roomID string) (passengerID, driverID string, err error)
+}
+
 type RoomAccessRepository interface {
 	IsMember(ctx context.Context, roomID, userID string) (bool, error)
 }

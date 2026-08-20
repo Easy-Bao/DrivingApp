@@ -3,8 +3,10 @@ package usecase
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
 )
 
 const (
@@ -16,6 +18,11 @@ const (
 type Service struct {
 	publisher domain.Publisher
 	history   domain.HistoryRepository
+	events    EventPublisher
+}
+
+type EventPublisher interface {
+	Publish(ctx context.Context, envelope event.Envelope) error
 }
 
 func NewService(publisher domain.Publisher, history ...domain.HistoryRepository) *Service {
@@ -24,6 +31,11 @@ func NewService(publisher domain.Publisher, history ...domain.HistoryRepository)
 		repository = history[0]
 	}
 	return &Service{publisher: publisher, history: repository}
+}
+
+func (service *Service) WithEventPublisher(publisher EventPublisher) *Service {
+	service.events = publisher
+	return service
 }
 func (service *Service) Relay(ctx context.Context, message domain.Message) error {
 	if !validRoomID(message.RoomID) || !validParticipantID(message.SenderID) || len(message.Body) == 0 || len(message.Body) > maxMessageBytes {
@@ -43,7 +55,45 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 			return err
 		}
 	}
-	return service.publisher.Publish(message)
+	if err := service.publisher.Publish(message); err != nil {
+		return err
+	}
+	service.publishRealtimeMessage(ctx, message)
+	return nil
+}
+
+func (service *Service) publishRealtimeMessage(ctx context.Context, message domain.Message) {
+	if service.events == nil || service.history == nil {
+		return
+	}
+	participants, ok := service.history.(domain.RoomParticipantsRepository)
+	if !ok {
+		return
+	}
+	passengerID, driverID, err := participants.RoomParticipants(ctx, message.RoomID)
+	if err != nil || passengerID == "" || driverID == "" {
+		return
+	}
+	occurredAt, err := time.Parse(time.RFC3339Nano, message.CreatedAt)
+	if err != nil {
+		occurredAt = time.Now().UTC()
+	}
+	envelope, err := event.New(
+		event.NewID(),
+		event.ChatMessageCreated,
+		occurredAt,
+		event.Scope{RoomID: message.RoomID, PassengerID: passengerID, DriverID: driverID},
+		map[string]any{
+			"room_id":    message.RoomID,
+			"sender_id":  message.SenderID,
+			"text":       message.Body,
+			"created_at": occurredAt.UTC().Format(time.RFC3339Nano),
+		},
+	)
+	if err != nil {
+		return
+	}
+	_ = service.events.Publish(ctx, envelope)
 }
 
 func (service *Service) CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error {

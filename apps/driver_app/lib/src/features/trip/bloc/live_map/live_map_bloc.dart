@@ -180,15 +180,18 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           targetLng,
         );
         final routePoints = route?.validPolylinePoints;
-        if (routePoints != null && routePoints.length >= 2) {
-          _routePolylineManager = await _upsertRoute(
-            _routePolylineManager,
-            mapController,
-            routePoints,
-          );
-        } else {
-          await _clearAnnotations(_routePolylineManager);
-        }
+        final effectiveRoutePoints =
+            routePoints != null && routePoints.length >= 2
+            ? routePoints
+            : <List<double>>[
+                [event.driverLng, event.driverLat],
+                [targetLng, targetLat],
+              ];
+        _routePolylineManager = await _upsertRoute(
+          _routePolylineManager,
+          mapController,
+          effectiveRoutePoints,
+        );
         _routeTargetKey = targetKey;
         _lastRouteUpdateAt = DateTime.now();
       }

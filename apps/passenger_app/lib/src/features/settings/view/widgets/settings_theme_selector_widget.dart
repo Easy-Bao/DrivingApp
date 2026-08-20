@@ -97,8 +97,8 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryColor.withValues(alpha: 0.08)
-              : AppTheme.neutralColor.withValues(alpha: 0.25),
+              ? AppTheme.activeControlBackground
+              : AppTheme.interactiveSurface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
@@ -113,14 +113,16 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.primaryColor
-                    : AppTheme.primaryColor.withValues(alpha: 0.08),
+                    ? AppTheme.activeControlForeground
+                    : AppTheme.neutralColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
                 size: 18,
-                color: isSelected ? Colors.white : AppTheme.primaryColor,
+                color: isSelected
+                    ? AppTheme.activeControlBackground
+                    : AppTheme.primaryColor,
               ),
             ),
             const SizedBox(width: 14),
@@ -130,10 +132,12 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
+                      color: isSelected
+                          ? AppTheme.activeControlForeground
+                          : AppTheme.primaryColor,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -141,7 +145,11 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      color: isSelected
+                          ? AppTheme.activeControlForeground.withValues(
+                              alpha: 0.72,
+                            )
+                          : AppTheme.primaryColor.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -151,13 +159,13 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.activeControlBackground,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   LucideIcons.check,
                   size: 14,
-                  color: Colors.white,
+                  color: AppTheme.activeControlForeground,
                 ),
               ),
           ],

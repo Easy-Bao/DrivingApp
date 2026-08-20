@@ -79,7 +79,11 @@ void main() {
       act: (cubit) => cubit.loadStats(),
       expect: () => [
         const DashboardState(isLoadingStats: true),
-        const DashboardState(isLoadingStats: false, errorMessage: 'network'),
+        const DashboardState(
+          isLoadingStats: false,
+          errorMessage:
+              'The service is temporarily unavailable. Please try again.',
+        ),
       ],
     );
   });
@@ -167,7 +171,11 @@ void main() {
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [
         const DashboardState(isOnline: true, isLoadingHeatmap: true),
-        const DashboardState(isOnline: true, errorMessage: 'map error'),
+        const DashboardState(
+          isOnline: true,
+          errorMessage:
+              'The service is temporarily unavailable. Please try again.',
+        ),
       ],
     );
 
@@ -218,7 +226,9 @@ void main() {
       },
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [
-        const DashboardState(errorMessage: 'location unavailable'),
+        const DashboardState(
+          errorMessage: 'Check your connection and try again.',
+        ),
       ],
     );
 
@@ -248,7 +258,9 @@ void main() {
       seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
       act: (cubit) => cubit.refreshOnlinePresence(lat: lat, lng: lng),
       expect: () => [
-        const DashboardState(errorMessage: 'presence unavailable'),
+        const DashboardState(
+          errorMessage: 'Check your connection and try again.',
+        ),
       ],
     );
 

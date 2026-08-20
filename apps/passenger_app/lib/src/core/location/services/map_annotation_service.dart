@@ -88,7 +88,7 @@ class MapAnnotationService {
   }) async {
     final startLat = annotation.geometry.coordinates.lat.toDouble();
     final startLng = annotation.geometry.coordinates.lng.toDouble();
-    const frameCount = 8;
+    const frameCount = 18;
     for (var frame = 1; frame <= frameCount; frame++) {
       final progress = Curves.easeInOut.transform(frame / frameCount);
       annotation.geometry = mapbox.Point(
@@ -99,7 +99,7 @@ class MapAnnotationService {
       );
       await annotationManager.update(annotation);
       if (frame < frameCount) {
-        await Future<void>.delayed(const Duration(milliseconds: 35));
+        await Future<void>.delayed(const Duration(milliseconds: 20));
       }
     }
   }

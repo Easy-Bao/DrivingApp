@@ -23,6 +23,8 @@ class SavedPlacePage extends StatefulWidget {
 }
 
 class _SavedPlacePageState extends State<SavedPlacePage> {
+  bool _isPlaceFlowOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,42 +40,56 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     String iconName, {
     SavedPlace? existing,
   }) async {
-    final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-    final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
-    if (selectedPlace == null || selectedPlace is! PlaceModel) return;
-    if (!mounted) return;
+    if (_isPlaceFlowOpen) return;
+    _isPlaceFlowOpen = true;
+    try {
+      final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+      final selectedPlace = await context.pushNamed<PlaceModel>(
+        TripRoutes.mapPin,
+      );
+      if (selectedPlace == null || !mounted) return;
 
-    final newPlace = SavedPlace(
-      label: label,
-      iconName: iconName,
-      latitude: selectedPlace.latitude,
-      longitude: selectedPlace.longitude,
-      savedAddress: selectedPlace.fullAddress,
-    );
-    final existingIndex = existing == null
-        ? -1
-        : cubit.state.places.indexWhere(
-            (place) =>
-                place.label.toLowerCase() == existing.label.toLowerCase(),
-          );
-    if (existingIndex == -1) {
-      await cubit.addPlace(newPlace);
-      return;
+      final newPlace = SavedPlace(
+        label: label,
+        iconName: iconName,
+        latitude: selectedPlace.latitude,
+        longitude: selectedPlace.longitude,
+        savedAddress: selectedPlace.fullAddress,
+      );
+      final existingIndex = existing == null
+          ? -1
+          : cubit.state.places.indexWhere(
+              (place) =>
+                  place.label.toLowerCase() == existing.label.toLowerCase(),
+            );
+      if (existingIndex == -1) {
+        await cubit.addPlace(newPlace);
+      } else {
+        await cubit.replacePlace(existingIndex, newPlace);
+      }
+    } finally {
+      _isPlaceFlowOpen = false;
     }
-    await cubit.replacePlace(existingIndex, newPlace);
   }
 
   Future<void> _openAddCategoryPage() async {
-    final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-    final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
-    if (selectedPlace == null || selectedPlace is! PlaceModel) return;
-    if (!mounted) return;
-    final newPlace = await context.pushNamed<SavedPlace>(
-      HomeRoutes.addCategory,
-      extra: {'place': selectedPlace},
-    );
-    if (newPlace != null && mounted) {
-      await cubit.addPlace(newPlace);
+    if (_isPlaceFlowOpen) return;
+    _isPlaceFlowOpen = true;
+    try {
+      final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+      final selectedPlace = await context.pushNamed<PlaceModel>(
+        TripRoutes.mapPin,
+      );
+      if (selectedPlace == null || !mounted) return;
+      final newPlace = await context.pushNamed<SavedPlace>(
+        HomeRoutes.addCategory,
+        extra: {'place': selectedPlace},
+      );
+      if (newPlace != null && mounted) {
+        await cubit.addPlace(newPlace);
+      }
+    } finally {
+      _isPlaceFlowOpen = false;
     }
   }
 

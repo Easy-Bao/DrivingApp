@@ -120,7 +120,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
-          child: AppBackButtonWidget(
+          child: AppBackButtonWidget.plain(
             onPressed: () => Navigator.of(context).maybePop(),
           ),
         ),

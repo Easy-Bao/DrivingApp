@@ -12,7 +12,6 @@ import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_
 import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_meta_row_widget.dart';
 import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_passenger_card_widget.dart';
 import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_status_badge_widget.dart';
-import 'package:driver_app/src/features/trip/view/widgets/trip_map_current_location_button.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,7 +46,6 @@ class _InTransitPageState extends State<InTransitPage> {
   double? _destLng;
   double? _passengerLat;
   double? _passengerLng;
-  AppMapController? _mapController;
   Timer? _trackingTimer;
   late final LiveMapBloc _liveMapBloc;
   bool _isTracking = false;
@@ -180,7 +178,6 @@ class _InTransitPageState extends State<InTransitPage> {
   }
 
   void _onMapCreated(AppMapController controller) {
-    _mapController = controller;
     final pos = LocationService.lastPosition;
     final defaultLat = pos?.latitude ?? _destLat;
     final defaultLng = pos?.longitude ?? _destLng;
@@ -197,20 +194,6 @@ class _InTransitPageState extends State<InTransitPage> {
     if (!_isLoading) {
       _triggerDrawRoute(defaultLat, defaultLng);
     }
-  }
-
-  Future<void> _recenterMap() async {
-    final controller = _mapController;
-    final position =
-        LocationService.lastPosition ??
-        await LocationService.getCurrentPosition();
-    if (controller == null || position == null) return;
-    await MapProvider.moveCamera(
-      controller,
-      position.latitude,
-      position.longitude,
-      zoom: 16,
-    );
   }
 
   Future<void> _completeTrip(BuildContext context) async {
@@ -284,40 +267,19 @@ class _InTransitPageState extends State<InTransitPage> {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: Row(
                       children: [
-                        Material(
-                          color: AppTheme.surface,
-                          shape: const CircleBorder(),
-                          elevation: 2,
-                          child: InkWell(
-                            onTap: () => context.pop(),
-                            customBorder: const CircleBorder(),
-                            child: const SizedBox(
-                              width: 44,
-                              height: 44,
-                              child: Icon(
-                                LucideIcons.arrow_left,
-                                size: 19,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
+                        IconButton(
+                          tooltip: 'Back',
+                          onPressed: () => context.pop(),
+                          icon: const Icon(
+                            LucideIcons.arrow_left,
+                            size: 20,
+                            color: AppTheme.primaryColor,
                           ),
                         ),
                         const SizedBox(width: 14),
                         const InTransitStatusBadgeWidget(),
                       ],
                     ),
-                  ),
-                ),
-                Positioned(
-                  top: MediaQuery.paddingOf(context).top + 72,
-                  right: 16,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TripMapCurrentLocationButton(
-                        onPressed: _mapController == null ? null : _recenterMap,
-                      ),
-                    ],
                   ),
                 ),
                 Align(

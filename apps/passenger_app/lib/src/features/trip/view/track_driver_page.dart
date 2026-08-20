@@ -180,6 +180,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     double driverLng,
     List<List<double>>? routePoints,
     RideStatus status,
+    String driverName,
   ) async {
     final mapController = _mapController;
     if (mapController == null || _isUpdatingMap) return;
@@ -188,17 +189,21 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     final passengerLng = widget.ride.pickupLng;
 
     try {
-      if (routePoints != null && routePoints.length >= 2) {
-        _routeLineManager = await _upsertRoute(
-          _routeLineManager,
-          mapController,
-          routePoints,
-        );
-      }
-
       final isInTransit = status == RideStatus.inTransit;
       final targetLat = isInTransit ? widget.ride.destLat : passengerLat;
       final targetLng = isInTransit ? widget.ride.destLng : passengerLng;
+      final effectiveRoutePoints =
+          routePoints != null && routePoints.length >= 2
+          ? routePoints
+          : <List<double>>[
+              [driverLng, driverLat],
+              [targetLng, targetLat],
+            ];
+      _routeLineManager = await _upsertRoute(
+        _routeLineManager,
+        mapController,
+        effectiveRoutePoints,
+      );
       _passengerMarkerManager = await _upsertMarker(
         _passengerMarkerManager,
         mapController,
@@ -217,7 +222,14 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         driverLng,
         isOrigin: false,
         color: AppTheme.complete,
-        label: 'Driver\nCurrent Location',
+        label: switch (status) {
+          RideStatus.arrived =>
+            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nYour driver has arrived',
+          RideStatus.inTransit =>
+            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nOn the trip',
+          _ =>
+            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nDriver location',
+        },
         animate: true,
       );
       final now = DateTime.now();
@@ -365,6 +377,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
               state.driverLng,
               state.routePoints,
               state.status,
+              state.driverName,
             ),
           );
         } else if (state is TrackDriverCompleted) {
@@ -420,9 +433,13 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                     ),
                     BlocBuilder<TrackDriverCubit, TrackDriverState>(
                       builder: (context, state) {
-                        final eta = state is TrackDriverInProgress
-                            ? state.eta
-                            : 'Calculating...';
+                        final statusLabel = state is! TrackDriverInProgress
+                            ? 'En Route'
+                            : switch (state.status) {
+                                RideStatus.arrived => 'Arrived',
+                                RideStatus.inTransit => 'On Trip',
+                                _ => 'En Route',
+                              };
                         return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -445,28 +462,15 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                LucideIcons.clock,
+                                LucideIcons.navigation,
                                 size: 14,
-                                color: AppTheme.tertiaryColor,
+                                color: AppTheme.complete,
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                state is TrackDriverInProgress &&
-                                        state.status == RideStatus.inTransit
-                                    ? 'Trip to'
-                                    : 'Arriving in',
+                                statusLabel,
                                 style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.tertiaryColor,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                eta,
-                                style: const TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w900,
                                   color: AppTheme.primaryColor,
                                 ),
@@ -494,11 +498,11 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                         state is TrackDriverInProgress &&
                         state.status == RideStatus.arrived;
                     final statusTitle = isInTransit
-                        ? 'You are on the trip'
+                        ? 'On the trip'
                         : hasArrived
                         ? 'Driver has arrived'
                         : state is TrackDriverInProgress
-                        ? 'Driver En Route'
+                        ? 'Driver is en route'
                         : 'Driver Assigned';
                     final statusSubtitle = isInTransit
                         ? 'Heading to ${widget.ride.destination}'
@@ -510,7 +514,9 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                     final etaText = state is TrackDriverInProgress
                         ? hasArrived
                               ? 'Meet up'
-                              : state.eta
+                              : isInTransit
+                              ? 'On Trip'
+                              : 'En Route'
                         : 'En Route';
                     final driverName = state is TrackDriverInProgress
                         ? state.driverName
@@ -536,19 +542,17 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                             driverName: driverName,
                             vehicleSummary: vehicleSummary,
                             unreadChatMessagesCount: _unreadChatMessagesCount,
+                            showContactActions: !isInTransit,
                             isCancellingTrip: _isCancellingTrip,
                             onCallDriverPressed: () async {
                               try {
-                                final activeRideId =
-                                    await Modular.get<SecureSessionService>()
-                                        .readActiveRideId() ??
-                                    widget.ride.id;
-                                if (activeRideId.isNotEmpty) {
+                                final driverId = widget.ride.driverId.trim();
+                                if (driverId.isNotEmpty) {
                                   final driverProfile =
                                       await Modular.get<
                                             BiddingRemoteDataSource
                                           >()
-                                          .fetchDriverStats(activeRideId);
+                                          .getDriverProfile(driverId);
                                   final phone =
                                       driverProfile['phone'] as String?;
 

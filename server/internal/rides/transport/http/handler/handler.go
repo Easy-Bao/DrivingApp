@@ -88,7 +88,7 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := handler.service.UpdateStatus(r.Context(), rideID, actorID, input.Status)
 	if err != nil {
-		errorJSON(w, 409, err.Error())
+		errorJSON(w, 409, safeRideError(err))
 		return
 	}
 	jsonJSON(w, 200, item)
@@ -107,7 +107,7 @@ func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
 	}
 	ride, err := handler.service.SettleCash(r.Context(), rideID, driverID)
 	if err != nil {
-		errorJSON(w, rideErrorStatus(err), err.Error())
+		errorJSON(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	jsonJSON(w, http.StatusOK, ride)
@@ -130,7 +130,7 @@ func (handler *Handler) SubmitBid(w http.ResponseWriter, r *http.Request) {
 	}
 	bid, err := handler.service.SubmitBid(r.Context(), rideID, driverID, input.FareCentavos)
 	if err != nil {
-		errorJSON(w, rideErrorStatus(err), err.Error())
+		errorJSON(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	jsonJSON(w, 201, bid)
@@ -189,15 +189,14 @@ func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := handler.service.PassengerRides(r.Context(), targetID)
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, 500, "Your trip history is temporarily unavailable.")
 		return
 	}
 	jsonJSON(w, 200, items)
 }
 
 func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := handler.identity(r)
-	if !ok {
+	if _, ok := handler.identity(r); !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
@@ -206,13 +205,9 @@ func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 400, "invalid driver id")
 		return
 	}
-	if driverID != actorID {
-		errorJSON(w, 403, "forbidden")
-		return
-	}
 	stats, err := handler.service.DriverStats(r.Context(), driverID)
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, 500, "Driver statistics are temporarily unavailable.")
 		return
 	}
 	// Keep both naming styles while clients finish their API contract cutover.
@@ -236,7 +231,7 @@ func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := handler.service.DriverTrips(r.Context(), driverID)
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, 500, "Driver trip history is temporarily unavailable.")
 		return
 	}
 	jsonJSON(w, 200, items)
@@ -258,7 +253,7 @@ func (handler *Handler) DriverReviews(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := handler.service.DriverReviews(r.Context(), driverID, limit, queryInt(r, "offset", 0))
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, 500, "Driver reviews are temporarily unavailable.")
 		return
 	}
 	jsonJSON(w, 200, items)
@@ -282,7 +277,7 @@ func (handler *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := handler.service.CreateReview(r.Context(), domain.Review{RideID: input.RideID, DriverID: driverID, PassengerID: passengerID, Rating: input.Rating, Comment: input.Comment})
 	if err != nil {
-		errorJSON(w, 400, err.Error())
+		errorJSON(w, 400, safeRideError(err))
 		return
 	}
 	jsonJSON(w, 201, item)
@@ -306,7 +301,7 @@ func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Req
 	}
 	item, err := handler.service.CreatePassengerReview(r.Context(), domain.PassengerReview{RideID: input.RideID, DriverID: driverID, PassengerID: passengerID, Rating: input.Rating, Comment: input.Comment})
 	if err != nil {
-		errorJSON(w, 400, err.Error())
+		errorJSON(w, 400, safeRideError(err))
 		return
 	}
 	jsonJSON(w, 201, item)
@@ -418,7 +413,7 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	}
 	session, err := handler.service.CreateSession(r.Context(), domain.BidSession{PassengerID: passengerID, RideType: input.RideType, PickupLatitude: input.PickupLatitude, PickupLongitude: input.PickupLongitude, PickupName: input.PickupName, DropoffLatitude: input.DropoffLatitude, DropoffLongitude: input.DropoffLongitude, DropoffName: input.DropoffName, PassengerNote: strings.TrimSpace(input.PassengerNote), DistanceKm: input.DistanceKm, DurationMinutes: input.DurationMinutes, TargetDriverID: input.TargetDriverID, CustomFareCentavos: input.CustomFareCentavos})
 	if err != nil {
-		errorJSON(w, rideErrorStatus(err), err.Error())
+		errorJSON(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	jsonJSON(w, 201, session)
@@ -432,7 +427,7 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 	}
 	sessions, err := handler.service.ActiveSessions(r.Context(), &driverID)
 	if err != nil {
-		errorJSON(w, 500, err.Error())
+		errorJSON(w, 500, "Incoming ride requests are temporarily unavailable.")
 		return
 	}
 	jsonJSON(w, 200, sessions)
@@ -507,7 +502,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 	}
 	offer, err := handler.service.PlaceOffer(r.Context(), domain.BidOffer{SessionID: sessionID, DriverID: driverID, DriverName: input.DriverName, PlateNumber: input.PlateNumber, VehicleType: input.VehicleType, ProposedFareCentavos: fare})
 	if err != nil {
-		errorJSON(w, 409, err.Error())
+		errorJSON(w, 409, safeRideError(err))
 		return
 	}
 	jsonJSON(w, 201, offer)
@@ -627,6 +622,22 @@ func safeRideError(err error) string {
 		return "The custom offer cannot be lower than the calculated minimum fare."
 	case errors.Is(err, domain.ErrRouteUnavailable):
 		return "The route service is temporarily unavailable."
+	case errors.Is(err, domain.ErrActiveBooking):
+		return "You already have an active ride."
+	case errors.Is(err, domain.ErrDriverAtCapacity):
+		return "This driver cannot accept another passenger right now."
+	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
+		return "You do not have access to this ride."
+	case errors.Is(err, domain.ErrDriverUnavailable):
+		return "This driver is no longer available."
+	case errors.Is(err, domain.ErrDuplicateBid):
+		return "You already sent an offer for this ride."
+	case errors.Is(err, domain.ErrInvalidStatusTransition):
+		return "That ride status cannot be changed right now."
+	case errors.Is(err, domain.ErrReviewNotAllowed):
+		return "Reviews are available after a completed ride."
+	case errors.Is(err, domain.ErrReviewAlreadySubmitted):
+		return "You already submitted a review for this ride."
 	default:
 		return "The ride request could not be completed."
 	}

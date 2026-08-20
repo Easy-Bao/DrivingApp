@@ -210,25 +210,14 @@ class _AccountPageState extends State<AccountPage> {
     List<_AccountMenuItem> items, {
     required bool compact,
   }) {
-    return Material(
-      color: AppTheme.surface,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.borderSide),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var index = 0; index < items.length; index++) ...[
-              _buildMenuTile(items[index], compact: compact),
-              if (index != items.length - 1)
-                const Divider(height: 1, indent: 48, endIndent: 12),
-            ],
-          ],
-        ),
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          _buildMenuTile(items[index], compact: compact),
+          if (index != items.length - 1) const SizedBox(height: 8),
+        ],
+      ],
     );
   }
 

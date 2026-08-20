@@ -40,7 +40,9 @@ class DriverRepository implements IDriverRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return ServerFailure('Server returned status code ${error.statusCode}.');
+      return const ServerFailure(
+        'Driver availability is temporarily unavailable. Please try again.',
+      );
     }
     if (error is DataParsingException) {
       return ValidationFailure(error.message);

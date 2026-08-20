@@ -92,7 +92,7 @@ void main() {
   ) async {
     await tester.pumpWidget(buildPanel());
 
-    expect(find.text('TRIP DETAILS'), findsOneWidget);
+    expect(find.text('Trip Details'), findsOneWidget);
     expect(find.text('Current location'), findsOneWidget);
     expect(find.text('Central Park'), findsOneWidget);
     expect(find.text('Calculated fare'), findsNothing);
@@ -179,7 +179,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Back to trip summary'));
     await tester.pumpAndSettle();
-    expect(find.text('TRIP DETAILS'), findsOneWidget);
+    expect(find.text('Trip Details'), findsOneWidget);
   });
 
   testWidgets('selects a tip from the summary', (tester) async {

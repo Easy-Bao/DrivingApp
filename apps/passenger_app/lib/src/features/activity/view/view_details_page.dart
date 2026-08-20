@@ -10,6 +10,7 @@ import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActivityViewDetailsPage extends StatefulWidget {
@@ -180,9 +181,9 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
       statusLabel = 'Canceled';
       statusSubtitle = 'Trip canceled';
     } else {
-      statusColor = const Color(0xFFD25D38);
-      statusLabel = 'On the Way';
-      statusSubtitle = 'Arriving in 6 min';
+      statusColor = AppTheme.complete;
+      statusLabel = 'In Progress';
+      statusSubtitle = 'Trip is in progress';
     }
 
     return Scaffold(
@@ -403,60 +404,11 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                     padding: EdgeInsets.symmetric(vertical: 16.0),
                     child: Divider(height: 1, color: AppTheme.borderSide),
                   ),
-                  Row(
-                    children: [
-                      Column(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.tertiaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          Container(
-                            width: 1,
-                            height: 20,
-                            color: AppTheme.outlineBorderColor,
-                          ),
-                          Container(
-                            width: 8,
-                            height: 8,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              ride?.pickup ?? 'Pickup Location',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              ride?.destination ?? 'Destination Location',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  CompactRouteTimelineWidget(
+                    pickup: ride?.pickup ?? 'Pickup Location',
+                    dropoff: ride?.destination ?? 'Destination Location',
+                    pickupLabel: 'Pickup',
+                    dropoffLabel: 'Drop-off',
                   ),
                 ],
               ),

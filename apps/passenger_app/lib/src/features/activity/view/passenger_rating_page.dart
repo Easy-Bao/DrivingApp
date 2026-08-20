@@ -75,222 +75,225 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
-              child: Column(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.star_rounded,
-                      color: Colors.amber,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Step 2 of 2',
-                    style: TextStyle(
-                      color: AppTheme.tertiaryColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Rate $driverName',
-                    key: const ValueKey('rating-driver-name'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'How was your ride with $driverName?',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.tertiaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppTheme.borderSide),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.secondaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            LucideIcons.user_round,
-                            size: 18,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                driverName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                              const SizedBox(height: 1),
-                              const Text(
-                                'Driver for This Trip',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.tertiaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Rate Your Experience',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      final isSelected = index < _selectedStars;
-                      return Material(
-                        color: Colors.transparent,
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          onTap: () => setState(() {
-                            _selectedStars = index + 1;
-                            _error = null;
-                          }),
-                          customBorder: const CircleBorder(),
-                          child: SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: Icon(
-                              isSelected ? Icons.star : Icons.star_border,
-                              size: 30,
-                              color: isSelected
-                                  ? AppTheme.primaryColor
-                                  : AppTheme.borderSide,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    width: double.infinity,
-                    height: 116,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppTheme.borderSide),
-                    ),
-                    child: TextField(
-                      controller: _feedbackController,
-                      minLines: 1,
-                      maxLines: 4,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: const TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 14,
+        child: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Leave feedback (optional)',
-                        isDense: true,
-                        filled: false,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        focusedErrorBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.only(top: 14),
+                      child: const Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 28,
                       ),
                     ),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppTheme.cancel,
-                        fontSize: 12,
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Step 2 of 2',
+                      style: TextStyle(
+                        color: AppTheme.tertiaryColor,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submitRating,
-                      style: ElevatedButton.styleFrom(
-                        shape: const StadiumBorder(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Rate $driverName',
+                      key: const ValueKey('rating-driver-name'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryColor,
                       ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Submit Rating'),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  TextButton(
-                    onPressed: _isSubmitting
-                        ? null
-                        : () => context.goNamed(HomeRoutes.home),
-                    child: const Text('Skip for Now'),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'How was your ride with $driverName?',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.tertiaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppTheme.borderSide),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: const BoxDecoration(
+                              color: AppTheme.secondaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              LucideIcons.user_round,
+                              size: 18,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  driverName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                const Text(
+                                  'Driver for This Trip',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.tertiaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Rate Your Experience',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        final isSelected = index < _selectedStars;
+                        return Material(
+                          color: Colors.transparent,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap: () => setState(() {
+                              _selectedStars = index + 1;
+                              _error = null;
+                            }),
+                            customBorder: const CircleBorder(),
+                            child: SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: Icon(
+                                isSelected ? Icons.star : Icons.star_border,
+                                size: 30,
+                                color: isSelected
+                                    ? AppTheme.primaryColor
+                                    : AppTheme.borderSide,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 18),
+                    Container(
+                      width: double.infinity,
+                      height: 116,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppTheme.borderSide),
+                      ),
+                      child: TextField(
+                        controller: _feedbackController,
+                        minLines: 1,
+                        maxLines: 4,
+                        textCapitalization: TextCapitalization.sentences,
+                        style: const TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontSize: 14,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Leave feedback (optional)',
+                          isDense: true,
+                          filled: false,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.only(top: 14),
+                        ),
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppTheme.cancel,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitRating,
+                        style: ElevatedButton.styleFrom(
+                          shape: const StadiumBorder(),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Submit Rating'),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => context.goNamed(HomeRoutes.home),
+                      child: const Text('Skip for Now'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

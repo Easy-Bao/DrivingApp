@@ -12,6 +12,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
   final String? driverName;
   final String? vehicleSummary;
   final int unreadChatMessagesCount;
+  final bool showContactActions;
   final bool isCancellingTrip;
   final VoidCallback onCallDriverPressed;
   final VoidCallback onChatDriverPressed;
@@ -26,6 +27,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
     this.driverName,
     this.vehicleSummary,
     required this.unreadChatMessagesCount,
+    this.showContactActions = true,
     this.isCancellingTrip = false,
     required this.onCallDriverPressed,
     required this.onChatDriverPressed,
@@ -176,56 +178,65 @@ class TrackDriverPanelWidget extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _ActionButton(
-                  icon: LucideIcons.phone,
-                  label: 'Call Driver',
-                  filled: true,
-                  onTap: onCallDriverPressed,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Semantics(
-                button: true,
-                label: 'Chat with driver',
-                child: Badge(
-                  isLabelVisible: unreadChatMessagesCount > 0,
-                  label: Text('$unreadChatMessagesCount'),
-                  backgroundColor: AppTheme.cancel,
-                  child: IconButton(
-                    tooltip: 'Chat with driver',
-                    onPressed: onChatDriverPressed,
-                    icon: const Icon(LucideIcons.message_circle),
+          if (showContactActions) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    icon: LucideIcons.phone,
+                    label: 'Call Driver',
+                    filled: true,
+                    onTap: onCallDriverPressed,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 42,
-            child: TextButton(
-              onPressed: isCancellingTrip ? null : onCancelTripPressed,
-              style: TextButton.styleFrom(
-                foregroundColor: AppTheme.cancel,
-                shape: const StadiumBorder(),
-              ),
-              child: isCancellingTrip
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppTheme.cancel,
+                const SizedBox(width: 10),
+                Semantics(
+                  button: true,
+                  label: 'Chat with driver',
+                  child: Badge(
+                    isLabelVisible: unreadChatMessagesCount > 0,
+                    label: Text('$unreadChatMessagesCount'),
+                    backgroundColor: AppTheme.cancel,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppTheme.interactiveSurface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.borderSide),
                       ),
-                    )
-                  : const Text('Cancel Trip'),
+                      child: IconButton(
+                        tooltip: 'Chat with driver',
+                        onPressed: onChatDriverPressed,
+                        icon: const Icon(LucideIcons.message_circle),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 42,
+              child: TextButton(
+                onPressed: isCancellingTrip ? null : onCancelTripPressed,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.cancel,
+                  shape: const StadiumBorder(),
+                ),
+                child: isCancellingTrip
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.cancel,
+                        ),
+                      )
+                    : const Text('Cancel Trip'),
+              ),
+            ),
+          ],
         ],
       ),
     );

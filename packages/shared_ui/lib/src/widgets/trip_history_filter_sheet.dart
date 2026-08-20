@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
@@ -7,11 +9,41 @@ Future<TripHistoryFilter?> showTripHistoryFilterSheet({
   required BuildContext context,
   required TripHistoryFilter selectedFilter,
 }) {
-  return showModalBottomSheet<TripHistoryFilter>(
+  final overlayBox =
+      Overlay.of(context).context.findRenderObject() as RenderBox;
+  final mediaQuery = MediaQuery.of(context);
+  final menuWidth = math.min(340.0, overlayBox.size.width - 24.0);
+  final left = math.max(12.0, overlayBox.size.width - menuWidth - 12.0);
+  return showMenu<TripHistoryFilter>(
     context: context,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => TripHistoryFilterSheet(selectedFilter: selectedFilter),
+    position: RelativeRect.fromLTRB(
+      left,
+      mediaQuery.padding.top + kToolbarHeight - 4,
+      12,
+      math.max(12.0, overlayBox.size.height - mediaQuery.padding.top - 60),
+    ),
+    constraints: BoxConstraints.tightFor(width: menuWidth),
+    color: Theme.of(context).colorScheme.surface,
+    elevation: 10,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+    items: [
+      PopupMenuItem<TripHistoryFilter>(
+        enabled: false,
+        height: 68,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        child: _FilterMenuHeader(),
+      ),
+      for (final filter in TripHistoryFilter.values)
+        PopupMenuItem<TripHistoryFilter>(
+          value: filter,
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          child: _FilterMenuOption(
+            filter: filter,
+            selectedFilter: selectedFilter,
+          ),
+        ),
+    ],
   );
 }
 
@@ -110,6 +142,112 @@ class TripHistoryFilterSheet extends StatelessWidget {
               icon: LucideIcons.circle_x,
               title: 'Cancelled Trips',
               description: 'Trips cancelled before completion',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterMenuHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Filter Trips',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Choose which trips appear in your history.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colors.onSurface.withValues(alpha: 0.55),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FilterMenuOption extends StatelessWidget {
+  final TripHistoryFilter filter;
+  final TripHistoryFilter selectedFilter;
+
+  const _FilterMenuOption({
+    required this.filter,
+    required this.selectedFilter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final selected = filter == selectedFilter;
+    final title = switch (filter) {
+      TripHistoryFilter.all => 'All Trips',
+      TripHistoryFilter.completed => 'Completed Trips',
+      TripHistoryFilter.cancelled => 'Cancelled Trips',
+    };
+    final description = switch (filter) {
+      TripHistoryFilter.all => 'Completed and cancelled trips',
+      TripHistoryFilter.completed => 'Trips that reached the destination',
+      TripHistoryFilter.cancelled => 'Trips cancelled before completion',
+    };
+    final icon = switch (filter) {
+      TripHistoryFilter.all => LucideIcons.list,
+      TripHistoryFilter.completed => LucideIcons.circle_check,
+      TripHistoryFilter.cancelled => LucideIcons.circle_x,
+    };
+    final foreground = selected ? colors.onPrimary : colors.onSurface;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: selected ? colors.primary : colors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Row(
+          children: [
+            Icon(icon, size: 17, color: foreground),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: foreground,
+                    ),
+                  ),
+                  Text(
+                    description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color:
+                          foreground.withValues(alpha: selected ? 0.72 : 0.55),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selected ? LucideIcons.check : LucideIcons.chevron_right,
+              size: 16,
+              color: foreground.withValues(alpha: selected ? 1 : 0.35),
             ),
           ],
         ),

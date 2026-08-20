@@ -61,7 +61,7 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 			if errors.Is(err, domain.ErrOTPUnavailable) {
 				status = http.StatusServiceUnavailable
 			}
-			writeError(w, status, err.Error())
+			writeError(w, status, safeAuthError(err))
 			return
 		}
 		writeJSON(w, http.StatusAccepted, map[string]any{
@@ -84,7 +84,7 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 		if errors.Is(err, domain.ErrEmailTaken) {
 			status = http.StatusConflict
 		}
-		writeError(w, status, err.Error())
+		writeError(w, status, safeAuthError(err))
 		return
 	}
 	refreshToken, err := handler.register.IssueRefreshToken(account)
@@ -132,7 +132,7 @@ func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domai
 	}
 	account, tokens, err := handler.authenticate.ExecuteSessionAs(r.Context(), input.Email, input.Password, role)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, domain.ErrInvalidCredentials.Error())
+		writeError(w, http.StatusUnauthorized, "email or password is incorrect")
 		return
 	}
 	writeJSON(w, http.StatusOK, authSessionResponse(account, tokens.AccessToken, tokens.RefreshToken, !account.IsVerified))
@@ -148,7 +148,7 @@ func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := handler.otp.RequestVerification(r.Context(), input.Email); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
 	writeJSON(w, http.StatusAccepted, map[string]any{"success": true, "data": map[string]bool{"sent": true}})
@@ -167,7 +167,7 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	account, token, err := handler.otp.VerifyPassenger(r.Context(), input.Email, input.Code)
 
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
 	refreshToken, err := handler.otp.IssueRefreshToken(account)
@@ -190,7 +190,7 @@ func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := handler.otp.RequestPasswordReset(r.Context(), input.Email); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"success": true}})
@@ -206,7 +206,7 @@ func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := handler.otp.ResetPassword(r.Context(), input.Email, input.Code, input.NewPassword); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
@@ -228,6 +228,27 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 }
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})
+}
+
+func safeAuthError(err error) string {
+	switch {
+	case errors.Is(err, domain.ErrEmailTaken):
+		return "That email is already registered."
+	case errors.Is(err, domain.ErrInvalidCredentials):
+		return "The email or password is incorrect."
+	case errors.Is(err, domain.ErrInvalidRole):
+		return "Choose a valid account type."
+	case errors.Is(err, domain.ErrOTPRequired):
+		return "Enter the verification code to continue."
+	case errors.Is(err, domain.ErrInvalidOTP):
+		return "That verification code is invalid or expired."
+	case errors.Is(err, domain.ErrOTPUnavailable):
+		return "Verification is temporarily unavailable. Please try again."
+	case errors.Is(err, domain.ErrPendingRegistrationNotFound):
+		return "Your registration could not be found. Please start again."
+	default:
+		return "We could not complete that request. Please try again."
+	}
 }
 
 func authSessionResponse(account domain.User, accessToken, refreshToken string, needsVerification bool) map[string]any {

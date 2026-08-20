@@ -100,7 +100,7 @@ void main() {
         isA<ActivityError>().having(
           (s) => s.message,
           'error message',
-          'network error',
+          'The service is temporarily unavailable. Please try again.',
         ),
       ],
     );

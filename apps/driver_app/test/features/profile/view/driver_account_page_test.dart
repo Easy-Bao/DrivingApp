@@ -55,9 +55,9 @@ void main() {
     expect(find.text('bao@example.com'), findsOneWidget);
     expect(find.text('Motorcycle'), findsOneWidget);
     expect(find.text('XYZ-123'), findsOneWidget);
-    expect(find.text('4.8 rating'), findsOneWidget);
+    expect(find.text('4.8'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
-    expect(find.text('Account settings'), findsOneWidget);
+    expect(find.text('Account Settings'), findsOneWidget);
     expect(find.byTooltip('Refresh account'), findsNothing);
     expect(tester.takeException(), isNull);
   });

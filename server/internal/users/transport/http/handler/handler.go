@@ -71,7 +71,7 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	profile, err := handler.service.Update(r.Context(), input)
 	if err != nil {
-		writeError(w, 400, err.Error())
+		writeError(w, 400, "We could not update your profile. Check the details and try again.")
 		return
 	}
 	writeJSON(w, 200, profile)
@@ -123,7 +123,7 @@ func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := handler.service.Notifications(r.Context(), targetID)
 	if err != nil {
-		writeError(w, 500, err.Error())
+		writeError(w, 500, "Notifications are temporarily unavailable.")
 		return
 	}
 	writeJSON(w, 200, items)

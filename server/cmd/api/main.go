@@ -182,7 +182,8 @@ func main() {
 	passengerhomehttp.NewRouter(passengerHomeQuery, verifier).RegisterRoutes(router)
 
 	chatHistory := chatadapter.NewRedisRepository(redisClient)
-	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory)
+	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory).
+		WithEventPublisher(eventadapter.NewRedisPublisher(redisClient))
 	eventHub := stream.NewHub()
 	eventSubscriber := eventadapter.NewRedisSubscriber(redisClient)
 	go func() {

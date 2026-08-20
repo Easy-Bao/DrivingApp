@@ -98,10 +98,17 @@ class PickupNavigationPanelWidget extends StatelessWidget {
                   isLabelVisible: unreadChatMessagesCount > 0,
                   label: Text('$unreadChatMessagesCount'),
                   backgroundColor: AppTheme.cancel,
-                  child: IconButton(
-                    tooltip: 'Chat with passenger',
-                    onPressed: onChatPressed,
-                    icon: const Icon(LucideIcons.message_circle),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppTheme.interactiveSurface,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.borderSide),
+                    ),
+                    child: IconButton(
+                      tooltip: 'Chat with passenger',
+                      onPressed: onChatPressed,
+                      icon: const Icon(LucideIcons.message_circle),
+                    ),
                   ),
                 ),
               ),

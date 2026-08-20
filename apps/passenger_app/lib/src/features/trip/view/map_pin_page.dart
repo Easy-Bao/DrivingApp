@@ -166,30 +166,6 @@ class _MapPinPageState extends State<MapPinPage>
     }
   }
 
-  Future<void> _relocate() async {
-    if (await LocationService.getAccessState() != LocationAccessState.ready ||
-        !mounted) {
-      return;
-    }
-
-    final pos = await LocationService.getCurrentPosition();
-    if (pos != null && _mapController != null && mounted) {
-      _hasUserPannedMap = false;
-      _isProgrammaticCameraMove = true;
-      try {
-        await MapProvider.moveCamera(
-          _mapController!,
-          pos.latitude,
-          pos.longitude,
-          zoom: 16.0,
-        );
-      } finally {
-        _isProgrammaticCameraMove = false;
-      }
-      unawaited(_reverseGeocode(pos.latitude, pos.longitude));
-    }
-  }
-
   void _confirmLocation() {
     if (_centerLat == null || _centerLng == null) return;
     final result = PlaceModel(
@@ -262,18 +238,11 @@ class _MapPinPageState extends State<MapPinPage>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: SizedBox(
                 height: 52,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _TopButton(
-                      icon: LucideIcons.arrow_left,
-                      onTap: () => context.pop(),
-                    ),
-                    _TopButton(
-                      icon: LucideIcons.locate_fixed,
-                      onTap: _relocate,
-                    ),
-                  ],
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppBackButtonWidget.plain(
+                    onPressed: () => context.pop(),
+                  ),
                 ),
               ),
             ),
@@ -391,43 +360,6 @@ class _MapPinPageState extends State<MapPinPage>
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TopButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _TopButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      shape: const CircleBorder(),
-      child: Ink(
-        width: 46,
-        height: 46,
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppTheme.borderSide),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.08),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Center(
-            child: Icon(icon, color: AppTheme.primaryColor, size: 20),
-          ),
-        ),
       ),
     );
   }

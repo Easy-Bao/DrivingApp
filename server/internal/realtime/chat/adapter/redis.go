@@ -85,5 +85,13 @@ func (repository *RedisRepository) IsMember(ctx context.Context, roomID, userID 
 	return fields["passenger_id"] == userID || fields["driver_id"] == userID, nil
 }
 
+func (repository *RedisRepository) RoomParticipants(ctx context.Context, roomID string) (string, string, error) {
+	fields, err := repository.client.HGetAll(ctx, roomKey(roomID)).Result()
+	if err != nil {
+		return "", "", err
+	}
+	return fields["passenger_id"], fields["driver_id"], nil
+}
+
 func roomKey(roomID string) string     { return fmt.Sprintf("chat:room:%s", roomID) }
 func messagesKey(roomID string) string { return fmt.Sprintf("chat:room:%s:messages", roomID) }

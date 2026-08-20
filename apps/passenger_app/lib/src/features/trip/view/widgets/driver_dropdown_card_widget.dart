@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class DriverDropdownCardWidget extends StatefulWidget {
   final DriverModel driver;
@@ -36,6 +39,8 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
   late final AnimationController _dropdownAnimationController;
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
+  List<String> _recentFeedbacks = const [];
+  bool _isLoadingFeedback = true;
 
   @override
   void initState() {
@@ -59,6 +64,42 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
     );
 
     unawaited(_dropdownAnimationController.forward());
+    unawaited(_loadRecentFeedback());
+  }
+
+  Future<void> _loadRecentFeedback() async {
+    try {
+      final rawReviews = await Modular.get<BiddingRemoteDataSource>()
+          .fetchDriverReviews(widget.driver.id, page: 1, limit: 6);
+      final feedbacks = rawReviews
+          .whereType<Map>()
+          .map(
+            (review) => SafeParse.toStringValue(
+              review['comment'] ?? review['feedback'] ?? review['message'],
+            ).trim(),
+          )
+          .where((comment) => comment.isNotEmpty)
+          .take(6)
+          .toList(growable: false);
+      if (!mounted) return;
+      setState(() {
+        _recentFeedbacks =
+            feedbacks.isEmpty &&
+                widget.driver.recentFeedback?.trim().isNotEmpty == true
+            ? [widget.driver.recentFeedback!.trim()]
+            : feedbacks;
+        _isLoadingFeedback = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _recentFeedbacks =
+            widget.driver.recentFeedback?.trim().isNotEmpty == true
+            ? [widget.driver.recentFeedback!.trim()]
+            : const [];
+        _isLoadingFeedback = false;
+      });
+    }
   }
 
   @override
@@ -359,20 +400,54 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4.0),
-                                    Text(
-                                      widget.driver.recentFeedback ??
-                                          'No passenger feedback yet.',
-                                      style: TextStyle(
-                                        fontSize: 12.0,
-                                        height: 1.35,
-                                        color: AppTheme.primaryColor.withValues(
-                                          alpha: 0.8,
+                                    const SizedBox(height: 6.0),
+                                    if (_isLoadingFeedback)
+                                      const Skeletonizer(
+                                        child: Column(
+                                          children: [
+                                            Bone.text(words: 5),
+                                            SizedBox(height: 5),
+                                            Bone.text(words: 4),
+                                            SizedBox(height: 5),
+                                            Bone.text(words: 6),
+                                          ],
+                                        ),
+                                      )
+                                    else if (_recentFeedbacks.isEmpty)
+                                      Text(
+                                        'No passenger feedback yet.',
+                                        style: TextStyle(
+                                          fontSize: 12.0,
+                                          color: AppTheme.primaryColor
+                                              .withValues(alpha: 0.65),
+                                        ),
+                                      )
+                                    else
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxHeight: 108,
+                                        ),
+                                        child: ListView.separated(
+                                          shrinkWrap: true,
+                                          physics: _recentFeedbacks.length > 3
+                                              ? const BouncingScrollPhysics()
+                                              : const NeverScrollableScrollPhysics(),
+                                          itemCount: _recentFeedbacks.length,
+                                          separatorBuilder: (_, _) =>
+                                              const SizedBox(height: 6),
+                                          itemBuilder: (context, index) => Text(
+                                            '“${_recentFeedbacks[index]}”',
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 12.0,
+                                              height: 1.3,
+                                              color: AppTheme.primaryColor
+                                                  .withValues(alpha: 0.8),
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
                                   ],
                                 ),
                               ),

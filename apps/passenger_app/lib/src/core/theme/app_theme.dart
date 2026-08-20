@@ -8,6 +8,9 @@ class AppTheme {
   static const Color tertiaryColor = Color(0xFF6C757D);
   static const Color neutralColor = Color(0xFFF1F3F5);
   static const Color surface = Color(0xFFFFFFFF);
+  static const Color interactiveSurface = surface;
+  static const Color activeControlBackground = primaryColor;
+  static const Color activeControlForeground = surface;
   static const Color background = Color(0xFFF8F9FA);
   static const Color borderSide = Color(0xFFDEE2E6);
   static const Color accent = primaryColor;

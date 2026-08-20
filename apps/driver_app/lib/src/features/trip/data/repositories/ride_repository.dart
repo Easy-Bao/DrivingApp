@@ -20,7 +20,9 @@ class RideRepository implements IRideRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return ServerFailure(error.message);
+      return const ServerFailure(
+        'Ride information is temporarily unavailable. Please try again.',
+      );
     }
     if (error is DataParsingException) {
       return ValidationFailure(error.message);
@@ -28,7 +30,9 @@ class RideRepository implements IRideRepository {
     if (error is CacheException) {
       return CacheFailure(error.message);
     }
-    return ServerFailure('Unexpected system error: $error');
+    return const ServerFailure(
+      'Ride information is temporarily unavailable. Please try again.',
+    );
   }
 
   @override
@@ -69,7 +73,9 @@ class RideRepository implements IRideRepository {
       );
       return Right(result);
     } catch (error) {
-      return Left(ServerFailure('Failed to optimize route sequence: $error'));
+      return const Left(
+        ServerFailure('The route could not be optimized. Please try again.'),
+      );
     }
   }
 }

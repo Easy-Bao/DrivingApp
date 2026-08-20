@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as dev;
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/chat/bloc/chat/chat_state.dart';
 import 'package:shared_core/shared_core.dart';
@@ -135,12 +133,28 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       final result = await _chatRepository.resolveChatRoom(roomId);
       await result.fold(
-        (failure) async =>
-            dev.log('Unable to resolve chat room: ${failure.runtimeType}'),
-        (_) => connectToChatRoom(roomId: roomId, wsUri: wsUri, token: token),
+        (failure) async => emit(
+          state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+        ),
+        (_) async {
+          await _chatSubscription?.cancel();
+          await _chatRepository.terminateChatConnection();
+          if (!isClosed) {
+            emit(
+              state.copyWith(
+                isConnected: false,
+                isRoomLocked: true,
+                lockReasonMessage: 'This chat is closed.',
+                errorMessage: null,
+              ),
+            );
+          }
+        },
       );
     } catch (_) {
-      dev.log('Unable to resolve chat room.');
+      if (!isClosed) {
+        emit(state.copyWith(errorMessage: 'We could not close this chat.'));
+      }
     }
   }
 

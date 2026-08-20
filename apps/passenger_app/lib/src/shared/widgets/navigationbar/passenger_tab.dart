@@ -9,8 +9,10 @@ import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
+import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/guest_action_bar_widget.dart';
+import 'package:shared_core/shared_core.dart';
 
 class PassengerTabNavigationCoordinator extends ChangeNotifier {
   int? _selectedIndex;
@@ -200,12 +202,14 @@ class _PassengerTabBranchContainerState
 class PassengerShellLayout extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
   final InboxCubit inboxCubit;
+  final RealtimeWebSocketClient realtimeClient;
   final PassengerTabNavigationCoordinator navigationCoordinator;
 
   const PassengerShellLayout({
     super.key,
     required this.navigationShell,
     required this.inboxCubit,
+    required this.realtimeClient,
     required this.navigationCoordinator,
   });
 
@@ -215,6 +219,8 @@ class PassengerShellLayout extends StatefulWidget {
 
 class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   String? _loadedInboxPassengerId;
+  String? _activePassengerId;
+  StreamSubscription<RealtimeEvent>? _realtimeSubscription;
 
   @override
   void initState() {
@@ -223,6 +229,9 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
       widget.navigationShell.currentIndex,
     );
     widget.navigationCoordinator.addListener(_onNavigationChanged);
+    _realtimeSubscription = widget.realtimeClient.events.listen(
+      _handleRealtimeEvent,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(_loadInboxNotifications());
@@ -233,6 +242,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   @override
   void dispose() {
     widget.navigationCoordinator.removeListener(_onNavigationChanged);
+    unawaited(_realtimeSubscription?.cancel());
     super.dispose();
   }
 
@@ -242,13 +252,38 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
 
   Future<void> _loadInboxNotifications() async {
     final sessionState = BlocProvider.of<SessionBloc>(context).state;
-    if (sessionState is! AuthenticatedSession ||
-        sessionState.passengerId == _loadedInboxPassengerId ||
-        widget.inboxCubit.isClosed) {
+    if (sessionState is! AuthenticatedSession || widget.inboxCubit.isClosed) {
       return;
     }
+    _activePassengerId = sessionState.passengerId;
+    unawaited(widget.realtimeClient.start());
+    if (sessionState.passengerId == _loadedInboxPassengerId) return;
     _loadedInboxPassengerId = sessionState.passengerId;
     await widget.inboxCubit.loadNotifications(sessionState.passengerId);
+  }
+
+  void _handleRealtimeEvent(RealtimeEvent event) {
+    final passengerId = _activePassengerId;
+    if (passengerId == null || event is! ChatMessageCreatedEvent) return;
+    if (event.envelope.scope.passengerId != passengerId) return;
+    final senderId = SafeParse.toStringValue(
+      event.envelope.payload['sender_id'],
+    );
+    if (senderId.isEmpty || senderId == passengerId) return;
+    final message = SafeParse.toStringValue(
+      event.envelope.payload['text'],
+      'You have a new message from your driver.',
+    );
+    widget.inboxCubit.addLocalNotification(
+      InboxNotification(
+        id: event.envelope.id,
+        title: 'New Message From Your Driver',
+        message: message,
+        timestamp: event.envelope.occurredAt.toLocal(),
+        type: 'chat',
+        isRead: false,
+      ),
+    );
   }
 
   @override
@@ -265,6 +300,8 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
             unawaited(_loadInboxNotifications());
           case GuestSession() || SessionFailure():
             _loadedInboxPassengerId = null;
+            _activePassengerId = null;
+            unawaited(widget.realtimeClient.stop());
             if (!widget.inboxCubit.isClosed) {
               widget.inboxCubit.clearSessionData();
             }
