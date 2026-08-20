@@ -1,118 +1,271 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
+import 'dart:async';
 
-import 'package:driver_app/src/features/home/home_routes.dart';
-import 'package:driver_app/src/features/activity/activity_routes.dart';
-import 'package:driver_app/src/features/profile/profile_routes.dart';
+import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
+class DriverTabNavigationCoordinator extends ChangeNotifier {
+  int? _selectedIndex;
+  final List<int> _navigationHistory = [];
+
+  int get selectedIndex => _selectedIndex ?? 0;
+
+  bool get canPop =>
+      _navigationHistory.length <= 1 &&
+      _navigationHistory.isNotEmpty &&
+      _navigationHistory.last == 0;
+
+  void initialize(int index) {
+    if (_selectedIndex != null) return;
+    _selectedIndex = index;
+    _navigationHistory.add(index);
+  }
+
+  void commit(int index) {
+    if (_selectedIndex == null) {
+      initialize(index);
+      notifyListeners();
+      return;
+    }
+    if (_selectedIndex == index) return;
+    _selectedIndex = index;
+    _navigationHistory.add(index);
+    notifyListeners();
+  }
+
+  int goBackToPreviousTab() {
+    if (_navigationHistory.length > 1) {
+      _navigationHistory.removeLast();
+      _selectedIndex = _navigationHistory.last;
+    } else {
+      _navigationHistory
+        ..clear()
+        ..add(0);
+      _selectedIndex = 0;
+    }
+    notifyListeners();
+    return selectedIndex;
+  }
+}
+
+class DriverTabBranchContainer extends StatefulWidget {
+  final StatefulNavigationShell navigationShell;
+  final List<Widget> children;
+  final ValueChanged<int> onNavigationSettled;
+
+  const DriverTabBranchContainer({
+    super.key,
+    required this.navigationShell,
+    required this.children,
+    required this.onNavigationSettled,
+  });
+
+  @override
+  State<DriverTabBranchContainer> createState() =>
+      _DriverTabBranchContainerState();
+}
+
+class _DriverTabBranchContainerState extends State<DriverTabBranchContainer> {
+  static const _pageAnimationDuration = Duration(milliseconds: 280);
+
+  late final PageController _pageController;
+  int _activeIndex = 0;
+  int? _gestureStartIndex;
+  int? _previewIndex;
+  bool _isUserDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeIndex = widget.navigationShell.currentIndex;
+    _pageController = PageController(initialPage: _activeIndex);
+  }
+
+  @override
+  void didUpdateWidget(covariant DriverTabBranchContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final targetIndex = widget.navigationShell.currentIndex;
+    if (_isUserDragging || targetIndex == _activeIndex) return;
+
+    _activeIndex = targetIndex;
+    widget.onNavigationSettled(targetIndex);
+    _animateToPage(targetIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppTheme.background,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _handleScrollNotification,
+        child: PageView(
+          key: const ValueKey<String>('driver-tab-page-view'),
+          controller: _pageController,
+          allowImplicitScrolling: true,
+          children: widget.children,
+          onPageChanged: (index) {
+            if (_isUserDragging) return;
+            _activeIndex = index;
+            widget.onNavigationSettled(index);
+          },
+        ),
+      ),
+    );
+  }
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollStartNotification &&
+        notification.dragDetails != null) {
+      _isUserDragging = true;
+      _gestureStartIndex = _activeIndex;
+      _previewIndex = null;
+      return false;
+    }
+
+    if (notification is ScrollUpdateNotification && _isUserDragging) {
+      _preloadAdjacentBranch();
+      return false;
+    }
+
+    if (notification is ScrollEndNotification && _isUserDragging) {
+      _finishUserDrag();
+      return false;
+    }
+
+    return false;
+  }
+
+  void _preloadAdjacentBranch() {
+    final startIndex = _gestureStartIndex;
+    final page = _pageController.hasClients ? _pageController.page : null;
+    if (startIndex == null || page == null) return;
+
+    final movement = page - startIndex;
+    if (movement.abs() < 0.01) return;
+
+    final adjacentIndex = startIndex + (movement > 0 ? 1 : -1);
+    if (adjacentIndex < 0 || adjacentIndex >= widget.children.length) return;
+    if (_previewIndex == adjacentIndex) return;
+
+    _previewIndex = adjacentIndex;
+    widget.navigationShell.goBranch(adjacentIndex);
+  }
+
+  void _finishUserDrag() {
+    final settledIndex =
+        (_pageController.hasClients
+                ? (_pageController.page ?? _activeIndex)
+                : _activeIndex.toDouble())
+            .round()
+            .clamp(0, widget.children.length - 1);
+
+    _isUserDragging = false;
+    _gestureStartIndex = null;
+    _previewIndex = null;
+    _activeIndex = settledIndex;
+    widget.navigationShell.goBranch(settledIndex);
+    widget.onNavigationSettled(settledIndex);
+  }
+
+  void _animateToPage(int index) {
+    if (!_pageController.hasClients) return;
+    if (_pageController.page?.round() == index) return;
+    unawaited(
+      _pageController.animateToPage(
+        index,
+        duration: _pageAnimationDuration,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+}
+
 class DriverShellLayout extends StatefulWidget {
-  final Widget child;
-  const DriverShellLayout({super.key, required this.child});
+  final StatefulNavigationShell navigationShell;
+  final DriverTabNavigationCoordinator navigationCoordinator;
+
+  const DriverShellLayout({
+    super.key,
+    required this.navigationShell,
+    required this.navigationCoordinator,
+  });
 
   @override
   State<DriverShellLayout> createState() => _DriverShellLayoutState();
 }
 
 class _DriverShellLayoutState extends State<DriverShellLayout> {
-  final List<int> _navigationHistory = [];
+  @override
+  void initState() {
+    super.initState();
+    widget.navigationCoordinator.initialize(
+      widget.navigationShell.currentIndex,
+    );
+    widget.navigationCoordinator.addListener(_onNavigationChanged);
+  }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final newIndex = _calcIndex(context);
-    if (_navigationHistory.isEmpty) {
-      _navigationHistory.add(newIndex);
-    } else if (_navigationHistory.last != newIndex) {
-      _navigationHistory.add(newIndex);
-    }
+  void dispose() {
+    widget.navigationCoordinator.removeListener(_onNavigationChanged);
+    super.dispose();
   }
 
-  int _calcIndex(BuildContext context) {
-    final loc = GoRouterState.of(context).uri.path;
-    if (loc.startsWith(HomeRoutes.fullDashboardPath)) return 0;
-    if (loc.startsWith(ActivityRoutes.fullTripHistoryPath)) return 1;
-    if (loc.startsWith(ProfileRoutes.fullEarningsPath)) return 2;
-    if (loc.startsWith(ProfileRoutes.fullAccountPath)) return 3;
-    return 0;
-  }
-
-  void _onTap(int i, BuildContext ctx) {
-    if (i == _calcIndex(ctx)) return;
-    _navigateToIndex(i);
-  }
-
-  void _navigateToIndex(int index) {
-    switch (index) {
-      case 0:
-        context.goNamed(HomeRoutes.dashboard);
-        break;
-      case 1:
-        context.goNamed(ActivityRoutes.tripHistory);
-        break;
-      case 2:
-        context.goNamed(ProfileRoutes.earnings);
-        break;
-      case 3:
-        context.goNamed(ProfileRoutes.account);
-        break;
-    }
+  void _onNavigationChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final sel = _calcIndex(context);
+    final selectedIndex = widget.navigationCoordinator.selectedIndex;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return PopScope(
-      canPop:
-          _navigationHistory.length <= 1 &&
-          _navigationHistory.isNotEmpty &&
-          _navigationHistory.last == 0,
+      canPop: widget.navigationCoordinator.canPop,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (_navigationHistory.length > 1) {
-          setState(() {
-            _navigationHistory.removeLast();
-            final previousIndex = _navigationHistory.last;
-            _navigateToIndex(previousIndex);
-          });
-        } else {
-          setState(() {
-            _navigationHistory.clear();
-            _navigationHistory.add(0);
-            _navigateToIndex(0);
-          });
-        }
+        final previousIndex = widget.navigationCoordinator
+            .goBackToPreviousTab();
+        widget.navigationShell.goBranch(previousIndex);
       },
       child: Scaffold(
-        extendBody: false,
-        body: widget.child,
-        bottomNavigationBar: SafeArea(
-          top: false,
+        extendBody: true,
+        body: widget.navigationShell,
+        bottomNavigationBar: Padding(
+          padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
           child: Container(
-            height: 76,
+            height: 58,
             decoration: BoxDecoration(
               color: AppTheme.surface,
-              border: Border(
-                top: BorderSide(
-                  color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
-                  width: 1,
-                ),
+              borderRadius: BorderRadius.circular(29),
+              border: Border.all(
+                color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Row(
               children: [
                 _tab(
-                  context,
                   LucideIcons.layout_dashboard,
                   'Dashboard',
                   0,
-                  sel == 0,
+                  selectedIndex,
                 ),
-                _tab(context, LucideIcons.history, 'Trips', 1, sel == 1),
-                _tab(context, LucideIcons.wallet, 'Earnings', 2, sel == 2),
-                _tab(context, LucideIcons.user, 'Account', 3, sel == 3),
+                _tab(LucideIcons.history, 'Trips', 1, selectedIndex),
+                _tab(LucideIcons.wallet, 'Earnings', 2, selectedIndex),
+                _tab(LucideIcons.user, 'Account', 3, selectedIndex),
               ],
             ),
           ),
@@ -121,37 +274,27 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
     );
   }
 
-  Widget _tab(
-    BuildContext ctx,
-    IconData icon,
-    String label,
-    int idx,
-    bool isSel,
-  ) {
+  Widget _tab(IconData icon, String label, int index, int selectedIndex) {
+    final isSelected = selectedIndex == index;
+    final color = isSelected
+        ? AppTheme.selectedItemColor
+        : AppTheme.unselectedItemColor;
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => _onTap(idx, ctx),
+        onTap: () => _onItemTapped(index),
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 22,
-                color: isSel
-                    ? AppTheme.selectedItemColor
-                    : AppTheme.unselectedItemColor,
-              ),
-              const SizedBox(height: 4),
+              Icon(icon, size: 18, color: color),
+              const SizedBox(height: 3),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
-                  color: isSel
-                      ? AppTheme.selectedItemColor
-                      : AppTheme.unselectedItemColor,
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: color,
                 ),
               ),
             ],
@@ -159,5 +302,11 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
         ),
       ),
     );
+  }
+
+  void _onItemTapped(int index) {
+    if (widget.navigationCoordinator.selectedIndex == index) return;
+    widget.navigationCoordinator.commit(index);
+    widget.navigationShell.goBranch(index);
   }
 }

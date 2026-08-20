@@ -44,17 +44,64 @@ class MapAnnotationService {
     String? label,
     bool isOrigin = false,
     Color? color,
+    bool animate = false,
   }) async {
-    await annotationManager.deleteAll();
-    await annotationManager.create(
-      await _markerOptions(
-        lat,
-        lng,
-        label: label,
-        isOrigin: isOrigin,
-        color: color,
-      ),
+    final options = await _markerOptions(
+      lat,
+      lng,
+      label: label,
+      isOrigin: isOrigin,
+      color: color,
     );
+    final annotations = await annotationManager.getAnnotations();
+    if (annotations.isEmpty) {
+      await annotationManager.create(options);
+      return;
+    }
+
+    final annotation = annotations.first;
+    annotation.image = options.image;
+    annotation.iconAnchor = options.iconAnchor;
+    annotation.iconSize = options.iconSize;
+    annotation.symbolSortKey = options.symbolSortKey;
+    if (animate) {
+      await _animateMarker(
+        annotationManager,
+        annotation,
+        targetLat: lat,
+        targetLng: lng,
+      );
+    } else {
+      annotation.geometry = options.geometry;
+      await annotationManager.update(annotation);
+    }
+    if (annotations.length > 1) {
+      await annotationManager.deleteMulti(annotations.skip(1).toList());
+    }
+  }
+
+  static Future<void> _animateMarker(
+    mapbox.PointAnnotationManager annotationManager,
+    mapbox.PointAnnotation annotation, {
+    required double targetLat,
+    required double targetLng,
+  }) async {
+    final startLat = annotation.geometry.coordinates.lat.toDouble();
+    final startLng = annotation.geometry.coordinates.lng.toDouble();
+    const frameCount = 8;
+    for (var frame = 1; frame <= frameCount; frame++) {
+      final progress = Curves.easeInOut.transform(frame / frameCount);
+      annotation.geometry = mapbox.Point(
+        coordinates: mapbox.Position(
+          ui.lerpDouble(startLng, targetLng, progress)!,
+          ui.lerpDouble(startLat, targetLat, progress)!,
+        ),
+      );
+      await annotationManager.update(annotation);
+      if (frame < frameCount) {
+        await Future<void>.delayed(const Duration(milliseconds: 35));
+      }
+    }
   }
 
   static Future<mapbox.PointAnnotationOptions> _markerOptions(
@@ -64,8 +111,7 @@ class MapAnnotationService {
     required bool isOrigin,
     Color? color,
   }) async {
-    final markerColor =
-        color ?? (isOrigin ? AppTheme.primaryColor : AppTheme.tertiaryColor);
+    final markerColor = color ?? AppTheme.complete;
     return mapbox.PointAnnotationOptions(
       geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
       image: await _createMarkerImage(markerColor, label: label),
@@ -257,15 +303,27 @@ class MapAnnotationService {
     final coordinates = validPoints
         .map((point) => mapbox.Position(point[0], point[1]))
         .toList();
-    await annotationManager.deleteAll();
-    await annotationManager.create(
-      mapbox.PolylineAnnotationOptions(
-        geometry: mapbox.LineString(coordinates: coordinates),
-        lineWidth: width,
-        lineColor: color.toARGB32(),
-        lineJoin: mapbox.LineJoin.ROUND,
-      ),
-    );
+    final annotations = await annotationManager.getAnnotations();
+    if (annotations.isEmpty) {
+      await annotationManager.create(
+        mapbox.PolylineAnnotationOptions(
+          geometry: mapbox.LineString(coordinates: coordinates),
+          lineWidth: width,
+          lineColor: color.toARGB32(),
+          lineJoin: mapbox.LineJoin.ROUND,
+        ),
+      );
+      return;
+    }
+    final annotation = annotations.first;
+    annotation.geometry = mapbox.LineString(coordinates: coordinates);
+    annotation.lineWidth = width;
+    annotation.lineColor = color.toARGB32();
+    annotation.lineJoin = mapbox.LineJoin.ROUND;
+    await annotationManager.update(annotation);
+    if (annotations.length > 1) {
+      await annotationManager.deleteMulti(annotations.skip(1).toList());
+    }
   }
 
   static bool _isValidPolylinePoint(List<double> point) {

@@ -175,6 +175,26 @@ func (_u *BidSessionUpdate) SetNillableDropoffName(v *string) *BidSessionUpdate 
 	return _u
 }
 
+// SetPassengerNote sets the "passenger_note" field.
+func (_u *BidSessionUpdate) SetPassengerNote(v string) *BidSessionUpdate {
+	_u.mutation.SetPassengerNote(v)
+	return _u
+}
+
+// SetNillablePassengerNote sets the "passenger_note" field if the given value is not nil.
+func (_u *BidSessionUpdate) SetNillablePassengerNote(v *string) *BidSessionUpdate {
+	if v != nil {
+		_u.SetPassengerNote(*v)
+	}
+	return _u
+}
+
+// ClearPassengerNote clears the value of the "passenger_note" field.
+func (_u *BidSessionUpdate) ClearPassengerNote() *BidSessionUpdate {
+	_u.mutation.ClearPassengerNote()
+	return _u
+}
+
 // SetDistanceKm sets the "distance_km" field.
 func (_u *BidSessionUpdate) SetDistanceKm(v float64) *BidSessionUpdate {
 	_u.mutation.ResetDistanceKm()
@@ -373,6 +393,11 @@ func (_u *BidSessionUpdate) check() error {
 			return &ValidationError{Name: "passenger_id", err: fmt.Errorf(`ent: validator failed for field "BidSession.passenger_id": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PassengerNote(); ok {
+		if err := bidsession.PassengerNoteValidator(v); err != nil {
+			return &ValidationError{Name: "passenger_note", err: fmt.Errorf(`ent: validator failed for field "BidSession.passenger_note": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.OfferedFareCentavos(); ok {
 		if err := bidsession.OfferedFareCentavosValidator(v); err != nil {
 			return &ValidationError{Name: "offered_fare_centavos", err: fmt.Errorf(`ent: validator failed for field "BidSession.offered_fare_centavos": %w`, err)}
@@ -431,6 +456,12 @@ func (_u *BidSessionUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.DropoffName(); ok {
 		_spec.SetField(bidsession.FieldDropoffName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.PassengerNote(); ok {
+		_spec.SetField(bidsession.FieldPassengerNote, field.TypeString, value)
+	}
+	if _u.mutation.PassengerNoteCleared() {
+		_spec.ClearField(bidsession.FieldPassengerNote, field.TypeString)
 	}
 	if value, ok := _u.mutation.DistanceKm(); ok {
 		_spec.SetField(bidsession.FieldDistanceKm, field.TypeFloat64, value)
@@ -641,6 +672,26 @@ func (_u *BidSessionUpdateOne) SetNillableDropoffName(v *string) *BidSessionUpda
 	if v != nil {
 		_u.SetDropoffName(*v)
 	}
+	return _u
+}
+
+// SetPassengerNote sets the "passenger_note" field.
+func (_u *BidSessionUpdateOne) SetPassengerNote(v string) *BidSessionUpdateOne {
+	_u.mutation.SetPassengerNote(v)
+	return _u
+}
+
+// SetNillablePassengerNote sets the "passenger_note" field if the given value is not nil.
+func (_u *BidSessionUpdateOne) SetNillablePassengerNote(v *string) *BidSessionUpdateOne {
+	if v != nil {
+		_u.SetPassengerNote(*v)
+	}
+	return _u
+}
+
+// ClearPassengerNote clears the value of the "passenger_note" field.
+func (_u *BidSessionUpdateOne) ClearPassengerNote() *BidSessionUpdateOne {
+	_u.mutation.ClearPassengerNote()
 	return _u
 }
 
@@ -855,6 +906,11 @@ func (_u *BidSessionUpdateOne) check() error {
 			return &ValidationError{Name: "passenger_id", err: fmt.Errorf(`ent: validator failed for field "BidSession.passenger_id": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PassengerNote(); ok {
+		if err := bidsession.PassengerNoteValidator(v); err != nil {
+			return &ValidationError{Name: "passenger_note", err: fmt.Errorf(`ent: validator failed for field "BidSession.passenger_note": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.OfferedFareCentavos(); ok {
 		if err := bidsession.OfferedFareCentavosValidator(v); err != nil {
 			return &ValidationError{Name: "offered_fare_centavos", err: fmt.Errorf(`ent: validator failed for field "BidSession.offered_fare_centavos": %w`, err)}
@@ -930,6 +986,12 @@ func (_u *BidSessionUpdateOne) sqlSave(ctx context.Context) (_node *BidSession, 
 	}
 	if value, ok := _u.mutation.DropoffName(); ok {
 		_spec.SetField(bidsession.FieldDropoffName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.PassengerNote(); ok {
+		_spec.SetField(bidsession.FieldPassengerNote, field.TypeString, value)
+	}
+	if _u.mutation.PassengerNoteCleared() {
+		_spec.ClearField(bidsession.FieldPassengerNote, field.TypeString)
 	}
 	if value, ok := _u.mutation.DistanceKm(); ok {
 		_spec.SetField(bidsession.FieldDistanceKm, field.TypeFloat64, value)

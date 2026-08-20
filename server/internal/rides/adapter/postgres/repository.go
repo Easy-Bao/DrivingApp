@@ -246,6 +246,7 @@ func (repository *Repository) CreateSession(ctx context.Context, value domain.Bi
 		SetDropoffLatitude(value.DropoffLatitude).
 		SetDropoffLongitude(value.DropoffLongitude).
 		SetDropoffName(value.DropoffName).
+		SetPassengerNote(value.PassengerNote).
 		SetDistanceKm(value.DistanceKm).
 		SetDurationMinutes(value.DurationMinutes).
 		SetOfferedFareCentavos(value.OfferedFareCentavos).
@@ -580,8 +581,12 @@ func (repository *Repository) hydrateDriverDetails(ctx context.Context, rides []
 
 func (repository *Repository) hydratePassengerDetails(ctx context.Context, rides []domain.Ride) ([]domain.Ride, error) {
 	passengerIDs := make([]int, 0)
+	rideIDs := make([]int, 0, len(rides))
 	seen := make(map[int]struct{})
 	for _, item := range rides {
+		if item.ID > 0 {
+			rideIDs = append(rideIDs, item.ID)
+		}
 		if item.PassengerID <= 0 {
 			continue
 		}
@@ -615,26 +620,17 @@ func (repository *Repository) hydratePassengerDetails(ctx context.Context, rides
 		profilesByUserID[profile.UserID] = profile
 	}
 
-	reviews, err := repository.client.PassengerReview.Query().Where(
-		passengerreview.PassengerIDIn(passengerIDs...),
-	).Order(passengerreview.ByCreatedAt(entsql.OrderDesc())).All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	type reviewSummary struct {
-		totalRating float64
-		count       int
-		feedback    string
-	}
-	reviewSummaries := make(map[int]reviewSummary, len(passengerIDs))
-	for _, item := range reviews {
-		summary := reviewSummaries[item.PassengerID]
-		summary.totalRating += item.Rating
-		summary.count++
-		if summary.feedback == "" {
-			summary.feedback = strings.TrimSpace(item.Comment)
+	reviewsByRideID := make(map[int]*ent.Review, len(rideIDs))
+	if len(rideIDs) > 0 {
+		reviews, reviewErr := repository.client.Review.Query().Where(
+			review.RideIDIn(rideIDs...),
+		).All(ctx)
+		if reviewErr != nil {
+			return nil, reviewErr
 		}
-		reviewSummaries[item.PassengerID] = summary
+		for _, item := range reviews {
+			reviewsByRideID[item.RideID] = item
+		}
 	}
 
 	for index := range rides {
@@ -650,9 +646,9 @@ func (repository *Repository) hydratePassengerDetails(ctx context.Context, rides
 		if account != nil {
 			rides[index].PassengerPhone = account.Phone
 		}
-		if summary, exists := reviewSummaries[passengerID]; exists && summary.count > 0 {
-			rides[index].PassengerRating = summary.totalRating / float64(summary.count)
-			rides[index].PassengerFeedback = summary.feedback
+		if tripReview := reviewsByRideID[rides[index].ID]; tripReview != nil {
+			rides[index].PassengerRating = tripReview.Rating
+			rides[index].PassengerFeedback = strings.TrimSpace(tripReview.Comment)
 		}
 	}
 	return rides, nil
@@ -670,11 +666,57 @@ func (repository *Repository) DriverReviews(ctx context.Context, driverID, limit
 	if err != nil {
 		return nil, err
 	}
+	passengerIDs := make([]int, 0, len(items))
+	seenPassengerIDs := make(map[int]struct{}, len(items))
+	for _, item := range items {
+		if item.PassengerID <= 0 {
+			continue
+		}
+		if _, exists := seenPassengerIDs[item.PassengerID]; exists {
+			continue
+		}
+		seenPassengerIDs[item.PassengerID] = struct{}{}
+		passengerIDs = append(passengerIDs, item.PassengerID)
+	}
+	passengerNames, err := repository.passengerNames(ctx, passengerIDs)
+	if err != nil {
+		return nil, err
+	}
 	result := make([]domain.Review, 0, len(items))
 	for index := len(items) - 1; index >= 0; index-- {
-		result = append(result, fromReview(items[index]))
+		item := fromReview(items[index])
+		if strings.TrimSpace(item.PassengerName) == "" {
+			item.PassengerName = passengerNames[item.PassengerID]
+		}
+		result = append(result, item)
 	}
 	return result, nil
+}
+
+func (repository *Repository) passengerNames(ctx context.Context, passengerIDs []int) (map[int]string, error) {
+	names := make(map[int]string, len(passengerIDs))
+	if len(passengerIDs) == 0 {
+		return names, nil
+	}
+	accounts, err := repository.client.User.Query().Where(user.IDIn(passengerIDs...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, account := range accounts {
+		names[account.ID] = strings.TrimSpace(account.Name)
+	}
+	profiles, err := repository.client.PassengerProfile.Query().Where(
+		passengerprofile.UserIDIn(passengerIDs...),
+	).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, profile := range profiles {
+		if name := strings.TrimSpace(profile.Name); name != "" {
+			names[profile.UserID] = name
+		}
+	}
+	return names, nil
 }
 
 func (repository *Repository) CreateReview(ctx context.Context, value domain.Review) (domain.Review, error) {
@@ -686,6 +728,9 @@ func (repository *Repository) CreateReview(ctx context.Context, value domain.Rev
 		return domain.Review{}, err
 	} else if exists {
 		return domain.Review{}, domain.ErrReviewAlreadySubmitted
+	}
+	if names, nameErr := repository.passengerNames(ctx, []int{value.PassengerID}); nameErr == nil {
+		value.PassengerName = names[value.PassengerID]
 	}
 	item, err := repository.client.Review.Create().SetRideID(value.RideID).SetDriverID(value.DriverID).SetPassengerID(value.PassengerID).SetPassengerName(value.PassengerName).SetRating(value.Rating).SetComment(value.Comment).Save(ctx)
 	if err != nil {
@@ -805,7 +850,7 @@ func fromSession(item *ent.BidSession) domain.BidSession {
 		value := item.AcceptedDriverID
 		acceptedDriverID = &value
 	}
-	return domain.BidSession{ID: item.ID, PassengerID: item.PassengerID, RideType: item.RideType, PickupLatitude: item.PickupLatitude, PickupLongitude: item.PickupLongitude, PickupName: item.PickupName, DropoffLatitude: item.DropoffLatitude, DropoffLongitude: item.DropoffLongitude, DropoffName: item.DropoffName, DistanceKm: item.DistanceKm, DurationMinutes: item.DurationMinutes, OfferedFareCentavos: item.OfferedFareCentavos, Status: item.Status, TargetDriverID: targetDriverID, AcceptedDriverID: acceptedDriverID, ExpiresAt: item.ExpiresAt, CreatedAt: item.CreatedAt}
+	return domain.BidSession{ID: item.ID, PassengerID: item.PassengerID, RideType: item.RideType, PickupLatitude: item.PickupLatitude, PickupLongitude: item.PickupLongitude, PickupName: item.PickupName, DropoffLatitude: item.DropoffLatitude, DropoffLongitude: item.DropoffLongitude, DropoffName: item.DropoffName, PassengerNote: item.PassengerNote, DistanceKm: item.DistanceKm, DurationMinutes: item.DurationMinutes, OfferedFareCentavos: item.OfferedFareCentavos, Status: item.Status, TargetDriverID: targetDriverID, AcceptedDriverID: acceptedDriverID, ExpiresAt: item.ExpiresAt, CreatedAt: item.CreatedAt}
 }
 
 func fromOffer(item *ent.BidOffer) domain.BidOffer {

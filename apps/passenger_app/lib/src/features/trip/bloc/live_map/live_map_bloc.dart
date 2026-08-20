@@ -3,6 +3,7 @@ import 'dart:developer' as dev;
 import 'dart:ui' show Color;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:rxdart/rxdart.dart';
@@ -15,6 +16,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final BiddingRemoteDataSource _biddingDataSource;
 
   AppMapController? _mapController;
+  mapbox.PointAnnotationManager? _riderMarkerManager;
+  mapbox.PointAnnotationManager? _driverMarkerManager;
+  mapbox.PolylineAnnotationManager? _routePolylineManager;
   final List<dynamic> _markerManagers = [];
   final List<AddMapMarkerEvent> _pendingMarkers = [];
   DrawDriverToRiderRouteEvent? _pendingRoute;
@@ -57,6 +61,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     InitializeMapEvent event,
     Emitter<LiveMapState> emit,
   ) async {
+    if (!identical(_mapController, event.controller)) {
+      await _clearAllMarkers();
+    }
     _mapController = event.controller;
     emit(LiveMapReady(event.defaultLat, event.defaultLng));
     final pendingMarkers = List<AddMapMarkerEvent>.from(_pendingMarkers);
@@ -81,25 +88,30 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       return;
     }
 
-    await _clearAllMarkers();
+    if (_riderMarkerManager == null && _markerManagers.isNotEmpty) {
+      for (final manager in _markerManagers) {
+        await MapProvider.clearAnnotations(manager);
+      }
+      _markerManagers.clear();
+    }
 
-    final riderManager = await MapProvider.addMarker(
+    _riderMarkerManager = await _upsertMarker(
+      _riderMarkerManager,
       _mapController!,
       event.riderLat,
       event.riderLng,
       isOrigin: true,
       label: 'You',
     );
-    _markerManagers.add(riderManager);
-
-    final driverManager = await MapProvider.addMarker(
+    _driverMarkerManager = await _upsertMarker(
+      _driverMarkerManager,
       _mapController!,
       event.driverLat,
       event.driverLng,
       label: 'Driver',
       color: const Color(0xFF1565C0),
+      animate: true,
     );
-    _markerManagers.add(driverManager);
 
     await MapProvider.fitBounds(_mapController!, [
       LatLng(event.riderLat, event.riderLng),
@@ -113,7 +125,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.riderLng,
     );
     if (route != null && route.hasGeometry) {
-      await MapProvider.addPolyline(
+      _routePolylineManager = await _upsertPolyline(
+        _routePolylineManager,
         _mapController!,
         route.validPolylinePoints,
         color: const Color(0xFF222222),
@@ -162,6 +175,12 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   }
 
   Future<void> _clearAllMarkers() async {
+    await MapProvider.clearAnnotations(_riderMarkerManager);
+    await MapProvider.clearAnnotations(_driverMarkerManager);
+    await MapProvider.clearAnnotations(_routePolylineManager);
+    _riderMarkerManager = null;
+    _driverMarkerManager = null;
+    _routePolylineManager = null;
     for (final manager in _markerManagers) {
       try {
         await MapProvider.clearAnnotations(manager);
@@ -170,6 +189,62 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       }
     }
     _markerManagers.clear();
+  }
+
+  Future<mapbox.PointAnnotationManager> _upsertMarker(
+    mapbox.PointAnnotationManager? manager,
+    AppMapController controller,
+    double lat,
+    double lng, {
+    String? label,
+    bool isOrigin = false,
+    Color? color,
+    bool animate = false,
+  }) async {
+    if (manager == null) {
+      return MapProvider.addMarker(
+        controller,
+        lat,
+        lng,
+        label: label,
+        isOrigin: isOrigin,
+        color: color,
+      );
+    }
+    await MapProvider.replaceMarker(
+      manager,
+      lat,
+      lng,
+      label: label,
+      isOrigin: isOrigin,
+      color: color,
+      animate: animate,
+    );
+    return manager;
+  }
+
+  Future<mapbox.PolylineAnnotationManager> _upsertPolyline(
+    mapbox.PolylineAnnotationManager? manager,
+    AppMapController controller,
+    List<List<double>> points, {
+    required Color color,
+    required double width,
+  }) async {
+    if (manager == null) {
+      return MapProvider.addPolyline(
+        controller,
+        points,
+        color: color,
+        width: width,
+      );
+    }
+    await MapProvider.replacePolyline(
+      manager,
+      points,
+      color: color,
+      width: width,
+    );
+    return manager;
   }
 
   Future<void> _onFitMapToCoordinates(

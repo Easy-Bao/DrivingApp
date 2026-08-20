@@ -29,6 +29,8 @@ const (
 	FieldDropoffLongitude = "dropoff_longitude"
 	// FieldDropoffName holds the string denoting the dropoff_name field in the database.
 	FieldDropoffName = "dropoff_name"
+	// FieldPassengerNote holds the string denoting the passenger_note field in the database.
+	FieldPassengerNote = "passenger_note"
 	// FieldDistanceKm holds the string denoting the distance_km field in the database.
 	FieldDistanceKm = "distance_km"
 	// FieldDurationMinutes holds the string denoting the duration_minutes field in the database.
@@ -60,6 +62,7 @@ var Columns = []string{
 	FieldDropoffLatitude,
 	FieldDropoffLongitude,
 	FieldDropoffName,
+	FieldPassengerNote,
 	FieldDistanceKm,
 	FieldDurationMinutes,
 	FieldOfferedFareCentavos,
@@ -85,6 +88,8 @@ var (
 	PassengerIDValidator func(int) error
 	// DefaultRideType holds the default value on creation for the "ride_type" field.
 	DefaultRideType string
+	// PassengerNoteValidator is a validator for the "passenger_note" field. It is called by the builders before save.
+	PassengerNoteValidator func(string) error
 	// OfferedFareCentavosValidator is a validator for the "offered_fare_centavos" field. It is called by the builders before save.
 	OfferedFareCentavosValidator func(int64) error
 	// DefaultStatus holds the default value on creation for the "status" field.
@@ -139,6 +144,11 @@ func ByDropoffLongitude(opts ...sql.OrderTermOption) OrderOption {
 // ByDropoffName orders the results by the dropoff_name field.
 func ByDropoffName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDropoffName, opts...).ToFunc()
+}
+
+// ByPassengerNote orders the results by the passenger_note field.
+func ByPassengerNote(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPassengerNote, opts...).ToFunc()
 }
 
 // ByDistanceKm orders the results by the distance_km field.

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 
 class FareSummaryPage extends StatefulWidget {
   final String pickup;
@@ -281,7 +282,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
             children: [
               _buildMetric(
                 icon: LucideIcons.route,
-                value: '${widget.distance.toStringAsFixed(1)} km',
+                value: DistanceFormatter.fromKilometers(widget.distance),
               ),
               const SizedBox(width: 8),
               _buildMetric(icon: LucideIcons.clock, value: widget.duration),

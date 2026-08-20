@@ -1,7 +1,7 @@
 import 'package:go_router_modular/go_router_modular.dart';
 
 import 'package:driver_app/src/features/trip/trip_routes.dart';
-import 'package:driver_app/src/features/trip/view/en_route_pickup_page.dart';
+import 'package:driver_app/src/features/trip/view/pickup_navigation_page.dart';
 import 'package:driver_app/src/features/trip/view/fare_summary_page.dart';
 import 'package:driver_app/src/features/trip/view/in_transit_page.dart';
 import 'package:driver_app/src/features/trip/view/waiting_passenger_page.dart';
@@ -12,11 +12,11 @@ class TripModule {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: TripRoutes.enRoutePickup,
-      TripRoutes.enRoutePickupPath,
+      name: TripRoutes.pickupNavigation,
+      TripRoutes.pickupNavigationPath,
       child: (context, GoRouterState state) {
         final data = SafeRouteExtra.asMap(state.extra);
-        return EnRoutePickupPage(
+        return PickupNavigationPage(
           pickup: data['pickup'] as String,
           dropoff: data['dropoff'] as String,
           distance: (data['distance'] as num).toDouble(),

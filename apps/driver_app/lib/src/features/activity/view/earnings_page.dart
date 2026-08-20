@@ -6,6 +6,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 enum _EarningsPeriod { daily, weekly, monthly }
 
@@ -67,7 +68,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       (failure) {
         setState(() {
           _isLoading = false;
-          _errorMessage = failure.message;
+          _errorMessage = ErrorHandler.getErrorMessage(failure);
         });
       },
       (trips) {
@@ -207,11 +208,11 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   String get _periodTitle {
     switch (_selectedPeriod) {
       case _EarningsPeriod.daily:
-        return 'TODAY';
+        return 'Today';
       case _EarningsPeriod.weekly:
-        return 'THIS WEEK';
+        return 'This Week';
       case _EarningsPeriod.monthly:
-        return 'THIS MONTH';
+        return 'This Month';
     }
   }
 
@@ -253,11 +254,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       ),
       body: SafeArea(
         top: false,
-        child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppTheme.primaryColor),
-              )
-            : _errorMessage != null
+        child: _errorMessage != null
             ? _buildErrorState()
             : LayoutBuilder(
                 builder: (context, constraints) {
@@ -276,15 +273,18 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                       Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 720),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildSummaryCard(),
-                                const SizedBox(height: 12),
-                                _buildBarChart(),
-                              ],
+                          child: Skeletonizer(
+                            enabled: _isLoading && _completedTrips.isNotEmpty,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildSummaryCard(),
+                                  const SizedBox(height: 12),
+                                  _buildBarChart(),
+                                ],
+                              ),
                             ),
                           ),
                         ),

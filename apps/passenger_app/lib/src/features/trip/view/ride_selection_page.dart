@@ -86,7 +86,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   String get _distanceLabel {
     final route = _route;
     if (route != null && route.distanceKm > 0) {
-      return '${route.distanceKm.toStringAsFixed(1)} km';
+      return DistanceFormatter.fromKilometers(route.distanceKm);
     }
     return widget.distance ?? '';
   }
@@ -427,6 +427,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           'pickupAddress': widget.pickupAddress,
           'pickupLat': _pickupCoordinate?.lat,
           'pickupLng': _pickupCoordinate?.lng,
+          'passengerNote': _notesController.text.trim(),
         },
       ),
     );
@@ -539,24 +540,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
               child: SizedBox.expand(
                 child: _buildMapView(defaultLat, defaultLng),
               ),
-            ),
-          ),
-          Positioned(
-            top: MediaQuery.paddingOf(context).top + 72,
-            right: 16,
-            child: MapZoomControlsWidget(
-              onZoomIn: () {
-                final controller = _mapController;
-                if (controller != null) {
-                  unawaited(MapProvider.zoomIn(controller));
-                }
-              },
-              onZoomOut: () {
-                final controller = _mapController;
-                if (controller != null) {
-                  unawaited(MapProvider.zoomOut(controller));
-                }
-              },
             ),
           ),
 

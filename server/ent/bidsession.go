@@ -33,6 +33,8 @@ type BidSession struct {
 	DropoffLongitude float64 `json:"dropoff_longitude,omitempty"`
 	// DropoffName holds the value of the "dropoff_name" field.
 	DropoffName string `json:"dropoff_name,omitempty"`
+	// PassengerNote holds the value of the "passenger_note" field.
+	PassengerNote string `json:"passenger_note,omitempty"`
 	// DistanceKm holds the value of the "distance_km" field.
 	DistanceKm float64 `json:"distance_km,omitempty"`
 	// DurationMinutes holds the value of the "duration_minutes" field.
@@ -61,7 +63,7 @@ func (*BidSession) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case bidsession.FieldID, bidsession.FieldPassengerID, bidsession.FieldOfferedFareCentavos, bidsession.FieldTargetDriverID, bidsession.FieldAcceptedDriverID:
 			values[i] = new(sql.NullInt64)
-		case bidsession.FieldRideType, bidsession.FieldPickupName, bidsession.FieldDropoffName, bidsession.FieldStatus:
+		case bidsession.FieldRideType, bidsession.FieldPickupName, bidsession.FieldDropoffName, bidsession.FieldPassengerNote, bidsession.FieldStatus:
 			values[i] = new(sql.NullString)
 		case bidsession.FieldExpiresAt, bidsession.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -133,6 +135,12 @@ func (_m *BidSession) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field dropoff_name", values[i])
 			} else if value.Valid {
 				_m.DropoffName = value.String
+			}
+		case bidsession.FieldPassengerNote:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field passenger_note", values[i])
+			} else if value.Valid {
+				_m.PassengerNote = value.String
 			}
 		case bidsession.FieldDistanceKm:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -241,6 +249,9 @@ func (_m *BidSession) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("dropoff_name=")
 	builder.WriteString(_m.DropoffName)
+	builder.WriteString(", ")
+	builder.WriteString("passenger_note=")
+	builder.WriteString(_m.PassengerNote)
 	builder.WriteString(", ")
 	builder.WriteString("distance_km=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DistanceKm))

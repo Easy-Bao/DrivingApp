@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 
@@ -7,6 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class DriverTripHistoryPage extends StatefulWidget {
   const DriverTripHistoryPage({super.key});
@@ -102,98 +107,26 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     }
   }
 
-  void _displayDriverTripHistoryFilterModalBottomSheet(BuildContext context) {
-    showModalBottomSheet<void>(
+  Future<void> _displayDriverTripHistoryFilterModalBottomSheet(
+    BuildContext context,
+  ) async {
+    final selectedFilter = switch (_selectedTripStatusFilter) {
+      'COMPLETED' => TripHistoryFilter.completed,
+      'CANCELLED' => TripHistoryFilter.cancelled,
+      _ => TripHistoryFilter.all,
+    };
+    final result = await showTripHistoryFilterSheet(
       context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext modalContext) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Filter Trip History',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: const Text('All Trips'),
-                leading: Icon(
-                  LucideIcons.list,
-                  color: _selectedTripStatusFilter == 'ALL'
-                      ? AppTheme.primaryColor
-                      : AppTheme.tertiaryColor,
-                ),
-                trailing: _selectedTripStatusFilter == 'ALL'
-                    ? const Icon(
-                        LucideIcons.check,
-                        color: AppTheme.primaryColor,
-                      )
-                    : null,
-                onTap: () {
-                  setState(() {
-                    _selectedTripStatusFilter = 'ALL';
-                  });
-                  Navigator.of(modalContext).pop();
-                },
-              ),
-              ListTile(
-                title: const Text('Completed Trips'),
-                leading: Icon(
-                  LucideIcons.circle_check,
-                  color: _selectedTripStatusFilter == 'COMPLETED'
-                      ? AppTheme.primaryColor
-                      : AppTheme.tertiaryColor,
-                ),
-                trailing: _selectedTripStatusFilter == 'COMPLETED'
-                    ? const Icon(
-                        LucideIcons.check,
-                        color: AppTheme.primaryColor,
-                      )
-                    : null,
-                onTap: () {
-                  setState(() {
-                    _selectedTripStatusFilter = 'COMPLETED';
-                  });
-                  Navigator.of(modalContext).pop();
-                },
-              ),
-              ListTile(
-                title: const Text('Cancelled Trips'),
-                leading: Icon(
-                  LucideIcons.circle_x,
-                  color: _selectedTripStatusFilter == 'CANCELLED'
-                      ? AppTheme.primaryColor
-                      : AppTheme.tertiaryColor,
-                ),
-                trailing: _selectedTripStatusFilter == 'CANCELLED'
-                    ? const Icon(
-                        LucideIcons.check,
-                        color: AppTheme.primaryColor,
-                      )
-                    : null,
-                onTap: () {
-                  setState(() {
-                    _selectedTripStatusFilter = 'CANCELLED';
-                  });
-                  Navigator.of(modalContext).pop();
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
+      selectedFilter: selectedFilter,
     );
+    if (!mounted || result == null) return;
+    setState(() {
+      _selectedTripStatusFilter = switch (result) {
+        TripHistoryFilter.all => 'ALL',
+        TripHistoryFilter.completed => 'COMPLETED',
+        TripHistoryFilter.cancelled => 'CANCELLED',
+      };
+    });
   }
 
   Map<String, List<dynamic>> _groupByDate(List<dynamic> trips) {
@@ -232,17 +165,14 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.funnel, color: AppTheme.primaryColor),
-            onPressed: () =>
-                _displayDriverTripHistoryFilterModalBottomSheet(context),
+            onPressed: () => unawaited(
+              _displayDriverTripHistoryFilterModalBottomSheet(context),
+            ),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
-            )
-          : _filteredTripsList.isEmpty
+      body: _filteredTripsList.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -264,32 +194,35 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
-              physics: const BouncingScrollPhysics(),
-              itemCount: grouped.keys.length,
-              itemBuilder: (context, groupIndex) {
-                final date = grouped.keys.elementAt(groupIndex);
-                final trips = grouped[date]!;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20, bottom: 12),
-                      child: Text(
-                        date,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                          letterSpacing: 0.5,
+          : Skeletonizer(
+              enabled: _isLoading,
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
+                physics: const BouncingScrollPhysics(),
+                itemCount: grouped.keys.length,
+                itemBuilder: (context, groupIndex) {
+                  final date = grouped.keys.elementAt(groupIndex);
+                  final trips = grouped[date]!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20, bottom: 12),
+                        child: Text(
+                          date,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
-                    ),
-                    ...trips.map(_buildTripCard),
-                  ],
-                );
-              },
+                      ...trips.map(_buildTripCard),
+                    ],
+                  );
+                },
+              ),
             ),
     );
   }
@@ -310,7 +243,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         trip['distance_km'] is num &&
             (trip['distance_km'] as num).isFinite &&
             (trip['distance_km'] as num) > 0
-        ? '${(trip['distance_km'] as num).toStringAsFixed(1)} km'
+        ? DistanceFormatter.fromKilometers(trip['distance_km'] as num)
         : '—';
 
     return Padding(

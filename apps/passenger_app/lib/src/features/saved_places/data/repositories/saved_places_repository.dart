@@ -14,11 +14,29 @@ class SavedPlacesRepository implements ISavedPlacesRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_storageKey);
+      if (raw == null || raw.trim().isEmpty) {
+        return const [];
+      }
 
-      final decoded = jsonDecode(raw ?? '') as List<dynamic>;
-      return decoded.cast<Map<String, dynamic>>().toList();
+      final decoded = jsonDecode(raw);
+      if (decoded is! List<dynamic>) {
+        await prefs.remove(_storageKey);
+        return const [];
+      }
+
+      final places = <Map<String, dynamic>>[];
+      for (final item in decoded) {
+        if (item is! Map) {
+          await prefs.remove(_storageKey);
+          return const [];
+        }
+        places.add(Map<String, dynamic>.from(item));
+      }
+      return places;
     } catch (error) {
-      throw const CacheFailure('Failed to load saved places from cache.');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+      return const [];
     }
   }
 

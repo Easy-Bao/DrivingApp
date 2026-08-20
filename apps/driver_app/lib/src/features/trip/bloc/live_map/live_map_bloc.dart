@@ -27,6 +27,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   UpdateLocationsAndDrawRouteEvent? _pendingRouteUpdate;
   String? _routeTargetKey;
   DateTime? _lastRouteUpdateAt;
+  DateTime? _lastCameraFitAt;
   bool _hasFittedCamera = false;
 
   final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
@@ -82,6 +83,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       await _clearAllAnnotations();
       _routeTargetKey = null;
       _lastRouteUpdateAt = null;
+      _lastCameraFitAt = null;
       _hasFittedCamera = false;
     }
     _mapController = event.controller;
@@ -114,7 +116,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         event.driverLat,
         event.driverLng,
         isOrigin: true,
-        color: AppTheme.primaryColor,
+        color: AppTheme.complete,
+        label: 'Driver\nCurrent Location',
+        animate: true,
       );
 
       if (event.routeTargetLat == null &&
@@ -126,6 +130,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           event.passengerLat!,
           event.passengerLng!,
           color: AppTheme.complete,
+          label: 'Pickup\nPassenger Wait Point',
         );
       } else {
         await _clearAnnotations(_passengerMarkerManager);
@@ -138,12 +143,16 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           targetLat,
           targetLng,
           color: AppTheme.accent,
+          label: 'Drop-off\nTrip Destination',
         );
       } else {
         await _clearAnnotations(_destinationMarkerManager);
       }
 
-      if (!_hasFittedCamera) {
+      final now = DateTime.now();
+      if (!_hasFittedCamera ||
+          _lastCameraFitAt == null ||
+          now.difference(_lastCameraFitAt!) >= const Duration(seconds: 8)) {
         await MapProvider.fitBounds(
           mapController,
           [
@@ -154,6 +163,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           maxZoom: 15.0,
         );
         _hasFittedCamera = true;
+        _lastCameraFitAt = now;
       }
 
       final targetKey = '$targetLat:$targetLng';
@@ -161,8 +171,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       final shouldRefreshRoute =
           _routeTargetKey != targetKey ||
           lastRouteUpdateAt == null ||
-          DateTime.now().difference(lastRouteUpdateAt) >=
-              const Duration(seconds: 12);
+          now.difference(lastRouteUpdateAt) >= const Duration(seconds: 6);
       if (shouldRefreshRoute) {
         final route = await MapProvider.getRoute(
           event.driverLat,
@@ -210,6 +219,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     await _clearAllAnnotations();
     _routeTargetKey = null;
     _lastRouteUpdateAt = null;
+    _lastCameraFitAt = null;
     _hasFittedCamera = false;
   }
 
@@ -220,6 +230,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
     double lng, {
     bool isOrigin = false,
     Color? color,
+    String? label,
+    bool animate = false,
   }) async {
     if (annotationManager == null) {
       return MapProvider.addMarker(
@@ -228,6 +240,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         lng,
         isOrigin: isOrigin,
         color: color,
+        label: label,
       );
     }
     await MapProvider.replaceMarker(
@@ -236,6 +249,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       lng,
       isOrigin: isOrigin,
       color: color,
+      label: label,
+      animate: animate,
     );
     return annotationManager;
   }

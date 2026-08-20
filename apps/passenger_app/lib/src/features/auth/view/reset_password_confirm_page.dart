@@ -165,7 +165,7 @@ class _ResetPasswordConfirmPageContentState
                             const Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'NEW PASSWORD',
+                                'New Password',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
@@ -251,7 +251,7 @@ class _ResetPasswordConfirmPageContentState
                             const Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'CONFIRM PASSWORD',
+                                'Confirm Password',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,

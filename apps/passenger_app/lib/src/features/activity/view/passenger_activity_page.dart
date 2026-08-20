@@ -118,7 +118,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                         sliver: SliverList(
                           delegate: SliverChildListDelegate([
                             Text(
-                              'PAST RIDES',
+                              'Past Rides',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w900,
@@ -193,7 +193,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            'ON THE WAY',
+                            'On the Way',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w900,

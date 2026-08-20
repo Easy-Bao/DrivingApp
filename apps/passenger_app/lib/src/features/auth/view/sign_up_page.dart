@@ -204,7 +204,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                             const Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'FULL NAME',
+                                'Full Name',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
@@ -273,7 +273,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                             const Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'PHONE NUMBER',
+                                'Phone Number',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
@@ -343,7 +343,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                             const Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'EMAIL ADDRESS',
+                                'Email Address',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
@@ -419,7 +419,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                             const Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'PASSWORD',
+                                'Password',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,

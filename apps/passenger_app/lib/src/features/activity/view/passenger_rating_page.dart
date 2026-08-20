@@ -85,29 +85,41 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                   Container(
                     width: 56,
                     height: 56,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.secondaryColor,
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      LucideIcons.check,
-                      color: AppTheme.primaryColor,
+                      Icons.star_rounded,
+                      color: Colors.amber,
                       size: 28,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   const Text(
-                    'Ride completed',
+                    'Step 2 of 2',
                     style: TextStyle(
+                      color: AppTheme.tertiaryColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Rate $driverName',
+                    key: const ValueKey('rating-driver-name'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
                       fontSize: 23,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.primaryColor,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'How was your trip?',
-                    style: TextStyle(
+                  Text(
+                    'How was your ride with $driverName?',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
                       fontSize: 14,
                       color: AppTheme.tertiaryColor,
                     ),
@@ -156,7 +168,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                               ),
                               const SizedBox(height: 1),
                               const Text(
-                                'Your driver',
+                                'Driver for This Trip',
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: AppTheme.tertiaryColor,
@@ -170,7 +182,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                   ),
                   const SizedBox(height: 18),
                   const Text(
-                    'Rate your experience',
+                    'Rate Your Experience',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -268,7 +280,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Submit rating'),
+                          : const Text('Submit Rating'),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -276,7 +288,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                     onPressed: _isSubmitting
                         ? null
                         : () => context.goNamed(HomeRoutes.home),
-                    child: const Text('Skip for now'),
+                    child: const Text('Skip for Now'),
                   ),
                 ],
               ),

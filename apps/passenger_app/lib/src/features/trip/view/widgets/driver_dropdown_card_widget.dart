@@ -78,11 +78,11 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
         opacity: _fadeAnimation,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520.0),
+            constraints: const BoxConstraints(maxWidth: 440.0),
             child: Container(
               margin: EdgeInsets.symmetric(
-                horizontal: isCompactScreen ? 16.0 : 24.0,
-                vertical: 12.0,
+                horizontal: isCompactScreen ? 12.0 : 20.0,
+                vertical: 8.0,
               ),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
@@ -100,7 +100,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(14.0),
                 child: AnimatedSize(
                   duration: const Duration(milliseconds: 160),
                   curve: Curves.easeOutCubic,
@@ -147,8 +147,8 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Container(
-                                    width: 56.0,
-                                    height: 56.0,
+                                    width: 44.0,
+                                    height: 44.0,
                                     decoration: BoxDecoration(
                                       color: AppTheme.secondaryColor.withValues(
                                         alpha: 0.2,
@@ -164,10 +164,10 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                     child: const Icon(
                                       LucideIcons.user,
                                       color: AppTheme.primaryColor,
-                                      size: 28.0,
+                                      size: 21.0,
                                     ),
                                   ),
-                                  const SizedBox(width: 14.0),
+                                  const SizedBox(width: 11.0),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -179,7 +179,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                               child: Text(
                                                 widget.driver.displayName,
                                                 style: const TextStyle(
-                                                  fontSize: 18.0,
+                                                  fontSize: 16.0,
                                                   fontWeight: FontWeight.w900,
                                                   color: AppTheme.primaryColor,
                                                 ),
@@ -219,7 +219,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                         Text(
                                           widget.driver.vehicleSummary,
                                           style: TextStyle(
-                                            fontSize: 13.0,
+                                            fontSize: 11.0,
                                             fontWeight: FontWeight.w600,
                                             color: AppTheme.primaryColor
                                                 .withValues(alpha: 0.6),
@@ -238,7 +238,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 14.0),
+                              const SizedBox(height: 10.0),
                               Row(
                                 children: [
                                   Container(
@@ -276,8 +276,8 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                         const SizedBox(width: 6.0),
                                         Text(
                                           widget.driver.hasPassengerOnboard
-                                              ? 'Current passenger onboard'
-                                              : 'Available (No passenger)',
+                                              ? 'Passenger Onboard'
+                                              : 'Available',
                                           style: TextStyle(
                                             fontSize: 11.0,
                                             fontWeight: FontWeight.bold,
@@ -311,7 +311,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                       ),
                                       const SizedBox(width: 8.0),
                                       Text(
-                                        '${widget.driver.distanceKm.toStringAsFixed(1)} km away',
+                                        '${DistanceFormatter.fromKilometers(widget.driver.distanceKm)} away',
                                         style: TextStyle(
                                           fontSize: 12.0,
                                           color: AppTheme.primaryColor
@@ -322,10 +322,13 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 14.0),
+                              const SizedBox(height: 10.0),
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.all(12.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 11.0,
+                                  vertical: 9.0,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppTheme.neutralColor,
                                   borderRadius: BorderRadius.circular(16.0),
@@ -373,12 +376,12 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 16.0),
+                              const SizedBox(height: 12.0),
                               Row(
                                 children: [
                                   Expanded(
                                     child: SizedBox(
-                                      height: 48.0,
+                                      height: 44.0,
                                       child: OutlinedButton(
                                         onPressed:
                                             widget.onViewFullProfilePressed,
@@ -390,11 +393,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                             width: 1.5,
                                           ),
                                           padding: EdgeInsets.zero,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              16.0,
-                                            ),
-                                          ),
+                                          shape: const StadiumBorder(),
                                         ),
                                         child: const Text(
                                           'View Full Profile',
@@ -409,7 +408,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                   const SizedBox(width: 12.0),
                                   Expanded(
                                     child: SizedBox(
-                                      height: 48.0,
+                                      height: 44.0,
                                       child: ElevatedButton(
                                         onPressed: widget.onSelectDriverPressed,
                                         style: ElevatedButton.styleFrom(
@@ -418,11 +417,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                           foregroundColor: Colors.white,
                                           elevation: 0,
                                           padding: EdgeInsets.zero,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              16.0,
-                                            ),
-                                          ),
+                                          shape: const StadiumBorder(),
                                         ),
                                         child: const Text(
                                           'Select Driver',

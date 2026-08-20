@@ -28,7 +28,10 @@ class DashboardCubit extends Cubit<DashboardState> {
       final result = await _repository.getDashboardStats();
       result.fold(
         (failure) => emit(
-          state.copyWith(isLoadingStats: false, errorMessage: failure.message),
+          state.copyWith(
+            isLoadingStats: false,
+            errorMessage: ErrorHandler.getErrorMessage(failure),
+          ),
         ),
         (stats) => emit(
           state.copyWith(
@@ -70,7 +73,7 @@ class DashboardCubit extends Cubit<DashboardState> {
             isOnline: false,
             isLoadingHeatmap: false,
             surgeCells: const [],
-            errorMessage: failure.message,
+            errorMessage: ErrorHandler.getErrorMessage(failure),
           ),
         ),
         (_) {},
@@ -103,7 +106,7 @@ class DashboardCubit extends Cubit<DashboardState> {
             state.copyWith(
               isLoadingHeatmap: false,
               surgeCells: const [],
-              errorMessage: failure.message,
+              errorMessage: ErrorHandler.getErrorMessage(failure),
             ),
           );
         },
@@ -141,7 +144,7 @@ class DashboardCubit extends Cubit<DashboardState> {
           isOnline: false,
           isLoadingHeatmap: false,
           surgeCells: const [],
-          errorMessage: failure.message,
+          errorMessage: ErrorHandler.getErrorMessage(failure),
         ),
       ),
       (_) => emit(
@@ -172,7 +175,7 @@ class DashboardCubit extends Cubit<DashboardState> {
           isOnline: false,
           isLoadingHeatmap: false,
           surgeCells: const [],
-          errorMessage: failure.message,
+          errorMessage: ErrorHandler.getErrorMessage(failure),
         ),
       );
       return false;

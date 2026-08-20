@@ -27,7 +27,9 @@ class ChatCubit extends Cubit<ChatState> {
     );
     return result.fold((failure) {
       if (!isClosed) {
-        emit(state.copyWith(errorMessage: failure.message));
+        emit(
+          state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+        );
       }
       return false;
     }, (_) => true);
@@ -53,7 +55,7 @@ class ChatCubit extends Cubit<ChatState> {
             state.copyWith(
               isConnecting: false,
               isConnected: false,
-              errorMessage: failure.message,
+              errorMessage: ErrorHandler.getErrorMessage(failure),
             ),
           );
         },
@@ -62,8 +64,11 @@ class ChatCubit extends Cubit<ChatState> {
           _chatSubscription = _chatRepository.chatEventsStream.listen(
             (eitherEvent) {
               eitherEvent.fold(
-                (failure) =>
-                    emit(state.copyWith(errorMessage: failure.message)),
+                (failure) => emit(
+                  state.copyWith(
+                    errorMessage: ErrorHandler.getErrorMessage(failure),
+                  ),
+                ),
                 (chatEvent) {
                   if (chatEvent is ChatHistoryReceived) {
                     emit(state.copyWith(messages: chatEvent.messages));
@@ -106,7 +111,9 @@ class ChatCubit extends Cubit<ChatState> {
     final result = await _chatRepository.fetchRoomMessages(roomId);
     if (isClosed) return;
     result.fold(
-      (failure) => emit(state.copyWith(errorMessage: failure.message)),
+      (failure) => emit(
+        state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+      ),
       (messages) => emit(state.copyWith(messages: messages)),
     );
   }

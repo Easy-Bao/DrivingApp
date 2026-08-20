@@ -51,18 +51,23 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     Emitter<ActivityState> emit,
   ) async {
     final result = await _repository.fetchRideHistory(passengerId);
-    result.fold((failure) => emit(ActivityError(message: failure.message)), (
-      rides,
-    ) {
-      final past = rides
-          .where((r) => _pastStatuses.contains(RideStatus.fromString(r.status)))
-          .toList();
-      final upcoming = rides
-          .where(
-            (r) => _upcomingStatuses.contains(RideStatus.fromString(r.status)),
-          )
-          .toList();
-      emit(ActivityLoaded(past: past, upcoming: upcoming));
-    });
+    result.fold(
+      (failure) =>
+          emit(ActivityError(message: ErrorHandler.getErrorMessage(failure))),
+      (rides) {
+        final past = rides
+            .where(
+              (r) => _pastStatuses.contains(RideStatus.fromString(r.status)),
+            )
+            .toList();
+        final upcoming = rides
+            .where(
+              (r) =>
+                  _upcomingStatuses.contains(RideStatus.fromString(r.status)),
+            )
+            .toList();
+        emit(ActivityLoaded(past: past, upcoming: upcoming));
+      },
+    );
   }
 }

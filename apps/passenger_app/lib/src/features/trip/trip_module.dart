@@ -142,6 +142,7 @@ class TripModule {
           pickupLatitude: (data['pickupLat'] as num?)?.toDouble(),
           pickupLongitude: (data['pickupLng'] as num?)?.toDouble(),
           pickupAddress: data['pickupAddress'] as String?,
+          passengerNote: data['passengerNote'] as String? ?? '',
         );
       },
       transition: AppTransitions.modal.toTop,

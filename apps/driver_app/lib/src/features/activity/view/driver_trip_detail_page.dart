@@ -6,6 +6,7 @@ import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_d
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverTripDetailPage extends StatefulWidget {
@@ -104,7 +105,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   String _formatDistance() {
     final value = widget.trip['distance_km'];
     if (value is num && value.isFinite && value > 0) {
-      return '${value.toStringAsFixed(1)} km';
+      return DistanceFormatter.fromKilometers(value);
     }
     return '—';
   }

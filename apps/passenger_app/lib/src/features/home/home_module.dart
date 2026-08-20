@@ -8,7 +8,6 @@ import 'package:passenger_app/src/features/home/bloc/public_driver_summary/publi
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/home_page.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
-import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/view/add_category_page.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -22,14 +21,9 @@ class HomeModule {
       HomeRoutes.addCategoryPath,
       child: (context, GoRouterState state) {
         final extra = SafeRouteExtra.asMap(state.extra);
-        final onSave = extra['onSave'] as Function(SavedPlace)?;
         final place = extra['place'] as PlaceModel?;
         final initialLabel = extra['initialLabel'] as String?;
-        return AddCategoryPage(
-          onSave: onSave ?? (_) {},
-          initialPlace: place,
-          initialLabel: initialLabel,
-        );
+        return AddCategoryPage(initialPlace: place, initialLabel: initialLabel);
       },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,

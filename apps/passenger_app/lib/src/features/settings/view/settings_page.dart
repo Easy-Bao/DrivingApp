@@ -138,7 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 28),
 
-                  _buildSectionHeader('PREFERENCES'),
+                  _buildSectionHeader('Preferences'),
                   const SizedBox(height: 12),
                   _buildSettingsRow(
                     icon: LucideIcons.palette,

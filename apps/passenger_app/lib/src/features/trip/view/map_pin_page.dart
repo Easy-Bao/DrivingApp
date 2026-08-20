@@ -7,7 +7,6 @@ import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class MapPinPage extends StatefulWidget {
   const MapPinPage({super.key});
@@ -389,22 +388,6 @@ class _MapPinPageState extends State<MapPinPage>
                   ),
                 ],
               ),
-            ),
-          ),
-          Positioned(
-            right: 16,
-            top: MediaQuery.paddingOf(context).top + 72,
-            child: MapZoomControlsWidget(
-              onZoomIn: () {
-                if (_mapController != null) {
-                  unawaited(MapProvider.zoomIn(_mapController!));
-                }
-              },
-              onZoomOut: () {
-                if (_mapController != null) {
-                  unawaited(MapProvider.zoomOut(_mapController!));
-                }
-              },
             ),
           ),
         ],

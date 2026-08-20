@@ -76,6 +76,20 @@ func (_c *BidSessionCreate) SetDropoffName(v string) *BidSessionCreate {
 	return _c
 }
 
+// SetPassengerNote sets the "passenger_note" field.
+func (_c *BidSessionCreate) SetPassengerNote(v string) *BidSessionCreate {
+	_c.mutation.SetPassengerNote(v)
+	return _c
+}
+
+// SetNillablePassengerNote sets the "passenger_note" field if the given value is not nil.
+func (_c *BidSessionCreate) SetNillablePassengerNote(v *string) *BidSessionCreate {
+	if v != nil {
+		_c.SetPassengerNote(*v)
+	}
+	return _c
+}
+
 // SetDistanceKm sets the "distance_km" field.
 func (_c *BidSessionCreate) SetDistanceKm(v float64) *BidSessionCreate {
 	_c.mutation.SetDistanceKm(v)
@@ -236,6 +250,11 @@ func (_c *BidSessionCreate) check() error {
 	if _, ok := _c.mutation.DropoffName(); !ok {
 		return &ValidationError{Name: "dropoff_name", err: errors.New(`ent: missing required field "BidSession.dropoff_name"`)}
 	}
+	if v, ok := _c.mutation.PassengerNote(); ok {
+		if err := bidsession.PassengerNoteValidator(v); err != nil {
+			return &ValidationError{Name: "passenger_note", err: fmt.Errorf(`ent: validator failed for field "BidSession.passenger_note": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.DistanceKm(); !ok {
 		return &ValidationError{Name: "distance_km", err: errors.New(`ent: missing required field "BidSession.distance_km"`)}
 	}
@@ -316,6 +335,10 @@ func (_c *BidSessionCreate) createSpec() (*BidSession, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DropoffName(); ok {
 		_spec.SetField(bidsession.FieldDropoffName, field.TypeString, value)
 		_node.DropoffName = value
+	}
+	if value, ok := _c.mutation.PassengerNote(); ok {
+		_spec.SetField(bidsession.FieldPassengerNote, field.TypeString, value)
+		_node.PassengerNote = value
 	}
 	if value, ok := _c.mutation.DistanceKm(); ok {
 		_spec.SetField(bidsession.FieldDistanceKm, field.TypeFloat64, value)

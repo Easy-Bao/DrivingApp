@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 class InboxCubit extends Cubit<InboxState> {
   final IInboxRepository inboxRepository;
@@ -28,7 +29,7 @@ class InboxCubit extends Cubit<InboxState> {
     if (isClosed || requestRevision != _sessionRevision) return;
 
     result.fold(
-      (failure) => emit(InboxErrorState(failure.message)),
+      (failure) => emit(InboxErrorState(ErrorHandler.getErrorMessage(failure))),
       (notifications) =>
           emit(InboxLoadedState(_mergeLocalNotifications(notifications))),
     );

@@ -317,19 +317,6 @@ class _InTransitPageState extends State<InTransitPage> {
                       TripMapCurrentLocationButton(
                         onPressed: _mapController == null ? null : _recenterMap,
                       ),
-                      const SizedBox(height: 12),
-                      MapZoomControlsWidget(
-                        onZoomIn: _mapController == null
-                            ? null
-                            : () => unawaited(
-                                MapProvider.zoomIn(_mapController!),
-                              ),
-                        onZoomOut: _mapController == null
-                            ? null
-                            : () => unawaited(
-                                MapProvider.zoomOut(_mapController!),
-                              ),
-                      ),
                     ],
                   ),
                 ),

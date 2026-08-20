@@ -1,6 +1,7 @@
 import 'package:driver_app/src/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_core/shared_core.dart';
 
 part 'forgot_password_event.dart';
 part 'forgot_password_state.dart';
@@ -29,7 +30,8 @@ class ForgotPasswordBloc
     final result = await _resetPasswordUseCase.execute(email: normalizedEmail);
 
     result.fold(
-      (failure) => emit(ForgotPasswordFailure(failure.message)),
+      (failure) =>
+          emit(ForgotPasswordFailure(ErrorHandler.getErrorMessage(failure))),
       (_) => emit(const ForgotPasswordSuccess()),
     );
   }

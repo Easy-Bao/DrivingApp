@@ -7,7 +7,6 @@ import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class ActivityDetailMapPage extends StatefulWidget {
   final String placeName;
@@ -61,7 +60,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
     setState(() {
       _fullAddress = place?.fullAddress ?? widget.placeSubtitle;
       if (route != null) {
-        _distance = '${route.distanceKm.toStringAsFixed(1)} km';
+        _distance = DistanceFormatter.fromKilometers(route.distanceKm);
         final mins = route.estimatedTime.inMinutes;
         _duration = mins < 60 ? '$mins min' : '${mins ~/ 60}h ${mins % 60}m';
       }
@@ -136,22 +135,6 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                   size: 20,
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            right: 16,
-            top: MediaQuery.paddingOf(context).top + 72,
-            child: MapZoomControlsWidget(
-              onZoomIn: () {
-                if (_mapController != null) {
-                  unawaited(MapProvider.zoomIn(_mapController!));
-                }
-              },
-              onZoomOut: () {
-                if (_mapController != null) {
-                  unawaited(MapProvider.zoomOut(_mapController!));
-                }
-              },
             ),
           ),
           Align(
@@ -256,7 +239,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                         Expanded(
                           child: _buildStat(
                             LucideIcons.clock,
-                            'ETA',
+                            'Estimated Time',
                             _isLoading ? '...' : _duration,
                           ),
                         ),

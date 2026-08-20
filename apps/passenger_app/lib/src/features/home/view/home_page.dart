@@ -408,13 +408,13 @@ class _HomePageState extends State<HomePage> {
         final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
         if (selectedPlace == null || selectedPlace is! PlaceModel) return;
         if (!mounted) return;
-        await context.pushNamed(
+        final newPlace = await context.pushNamed<SavedPlace>(
           HomeRoutes.addCategory,
-          extra: {
-            'onSave': (SavedPlace newPlace) => cubit.addPlace(newPlace),
-            'place': selectedPlace,
-          },
+          extra: {'place': selectedPlace},
         );
+        if (newPlace != null && mounted) {
+          await cubit.addPlace(newPlace);
+        }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -575,14 +575,18 @@ class _HomePageState extends State<HomePage> {
       final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
       if (selectedPlace == null || selectedPlace is! PlaceModel) return;
       if (!mounted) return;
-      await context.pushNamed(
+      final updatedPlace = await context.pushNamed<SavedPlace>(
         HomeRoutes.addCategory,
-        extra: {
-          'onSave': (SavedPlace newPlace) => cubit.addPlace(newPlace),
-          'place': selectedPlace,
-          'initialLabel': place.label,
-        },
+        extra: {'place': selectedPlace, 'initialLabel': place.label},
       );
+      if (updatedPlace != null && mounted) {
+        final existingIndex = cubit.state.places.indexOf(place);
+        if (existingIndex >= 0) {
+          await cubit.replacePlace(existingIndex, updatedPlace);
+        } else {
+          await cubit.addPlace(updatedPlace);
+        }
+      }
     }
   }
 

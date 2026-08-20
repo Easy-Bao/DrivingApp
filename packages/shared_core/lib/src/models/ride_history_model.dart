@@ -105,6 +105,42 @@ class RideHistoryModel extends Equatable {
     };
   }
 
+  RideHistoryModel copyWith({
+    String? id,
+    String? pickup,
+    String? destination,
+    double? pickupLat,
+    double? pickupLng,
+    double? destLat,
+    double? destLng,
+    String? date,
+    String? price,
+    String? status,
+    String? driverId,
+    String? driverName,
+    String? vehiclePlate,
+    String? vehicleType,
+    double? driverRating,
+  }) {
+    return RideHistoryModel(
+      id: id ?? this.id,
+      pickup: pickup ?? this.pickup,
+      destination: destination ?? this.destination,
+      pickupLat: pickupLat ?? this.pickupLat,
+      pickupLng: pickupLng ?? this.pickupLng,
+      destLat: destLat ?? this.destLat,
+      destLng: destLng ?? this.destLng,
+      date: date ?? this.date,
+      price: price ?? this.price,
+      status: status ?? this.status,
+      driverId: driverId ?? this.driverId,
+      driverName: driverName ?? this.driverName,
+      vehiclePlate: vehiclePlate ?? this.vehiclePlate,
+      vehicleType: vehicleType ?? this.vehicleType,
+      driverRating: driverRating ?? this.driverRating,
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,

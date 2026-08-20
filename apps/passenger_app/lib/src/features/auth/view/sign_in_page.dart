@@ -131,7 +131,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                           const Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'EMAIL ADDRESS',
+                              'Email Address',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -215,7 +215,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                           const Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'PASSWORD',
+                              'Password',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,

@@ -35,174 +35,199 @@ class _AccountPageState extends State<AccountPage> {
           return Scaffold(
             backgroundColor: AppTheme.surface,
             body: SafeArea(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 0.0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxHeight < 650;
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      compact ? 4 : 10,
+                      20,
+                      MediaQuery.paddingOf(context).bottom + 76,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.secondaryColor,
-                            shape: BoxShape.circle,
+                        const Text(
+                          'Account',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.primaryColor,
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            initials,
-                            style: const TextStyle(
-                              color: Color(0xFF8A4F35),
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
+                        ),
+                        SizedBox(height: compact ? 12 : 18),
+                        _buildProfileSummary(context, state, initials),
+                        SizedBox(height: compact ? 16 : 22),
+                        _buildSectionTitle('Places and Safety'),
+                        const SizedBox(height: 7),
+                        _buildMenuGroup([
+                          _AccountMenuItem(
+                            icon: LucideIcons.map_pin,
+                            title: 'Saved Places',
+                            subtitle: 'Home, work, and favorite destinations',
+                            onTap: () => context.pushNamed(ProfileRoutes.help),
+                          ),
+                          _AccountMenuItem(
+                            icon: LucideIcons.shield,
+                            title: 'Safety Center',
+                            subtitle: 'Ride safety tools and guidance',
+                            onTap: () => CustomToast.show(
+                              context,
+                              'Safety Center is coming soon.',
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                state.name.isNotEmpty ? state.name : 'User',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                state.phone.isNotEmpty
-                                    ? state.phone
-                                    : 'No Phone Number',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.5,
+                        ], compact: compact),
+                        SizedBox(height: compact ? 14 : 20),
+                        _buildSectionTitle('Support'),
+                        const SizedBox(height: 7),
+                        _buildMenuGroup([
+                          _AccountMenuItem(
+                            icon: LucideIcons.message_circle_question_mark,
+                            title: 'Help Center',
+                            subtitle: 'Get help with rides and payments',
+                            onTap: () =>
+                                context.pushNamed(ProfileRoutes.helpCenter),
+                          ),
+                          _AccountMenuItem(
+                            icon: LucideIcons.settings,
+                            title: 'Settings',
+                            subtitle: 'Notifications and app preferences',
+                            onTap: () =>
+                                context.pushNamed(SettingsRoutes.settings),
+                          ),
+                        ], compact: compact),
+                        const Spacer(),
+                        OutlinedButton.icon(
+                          onPressed: _isLoggingOut
+                              ? null
+                              : () => _handleLogout(context),
+                          icon: _isLoggingOut
+                              ? const SizedBox(
+                                  width: 17,
+                                  height: 17,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppTheme.cancel,
                                   ),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                                )
+                              : const Icon(LucideIcons.log_out, size: 17),
+                          label: Text(
+                            _isLoggingOut ? 'Logging Out…' : 'Log Out',
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            LucideIcons.pencil,
-                            color: AppTheme.primaryColor,
-                            size: 20,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.cancel,
+                            side: BorderSide(
+                              color: AppTheme.cancel.withValues(alpha: 0.24),
+                            ),
+                            backgroundColor: AppTheme.cancel.withValues(
+                              alpha: 0.05,
+                            ),
+                            shape: const StadiumBorder(),
                           ),
-                          onPressed: () async {
-                            await context.pushNamed(ProfileRoutes.profileInfo);
-                            if (context.mounted) {
-                              unawaited(
-                                BlocProvider.of<ProfileCubit>(
-                                  context,
-                                ).loadProfile(),
-                              );
-                            }
-                          },
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 24),
-                    _buildSectionTitle('PLACES AND SAFETY'),
-                    const SizedBox(height: 12),
-                    _buildMenuTile(
-                      icon: LucideIcons.map_pin,
-                      title: 'Saved places',
-                      onTap: () => context.pushNamed(ProfileRoutes.help),
-                    ),
-                    _buildMenuTile(
-                      icon: LucideIcons.shield,
-                      title: 'Safety center',
-                      onTap: () {
-                        CustomToast.show(
-                          context,
-                          'Safety center is coming soon.',
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    _buildSectionTitle('SUPPORT'),
-                    const SizedBox(height: 12),
-                    _buildMenuTile(
-                      icon: LucideIcons.message_circle_question_mark,
-                      title: 'Help center',
-                      onTap: () => context.pushNamed(ProfileRoutes.helpCenter),
-                    ),
-                    _buildMenuTile(
-                      icon: LucideIcons.settings,
-                      title: 'Settings',
-                      onTap: () => context.pushNamed(SettingsRoutes.settings),
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    InkWell(
-                      onTap: _isLoggingOut
-                          ? null
-                          : () => _handleLogout(context),
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16.0,
-                          horizontal: 16.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.red.withValues(alpha: 0.1),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            if (_isLoggingOut)
-                              const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.red,
-                                ),
-                              )
-                            else
-                              const Icon(
-                                LucideIcons.log_out,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                            const SizedBox(width: 16),
-                            const Text(
-                              'Log out',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 36),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildProfileSummary(
+    BuildContext context,
+    ProfileState state,
+    String initials,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: const BoxDecoration(
+            color: AppTheme.secondaryColor,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            initials,
+            style: const TextStyle(
+              color: AppTheme.primaryColor,
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                state.name.isNotEmpty ? state.name : 'Passenger',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                state.phone.isNotEmpty ? state.phone : 'No Phone Number',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.tertiaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'Edit Profile',
+          icon: const Icon(
+            LucideIcons.pencil,
+            color: AppTheme.primaryColor,
+            size: 18,
+          ),
+          onPressed: () async {
+            await context.pushNamed(ProfileRoutes.profileInfo);
+            if (!context.mounted) return;
+            unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuGroup(
+    List<_AccountMenuItem> items, {
+    required bool compact,
+  }) {
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppTheme.borderSide),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var index = 0; index < items.length; index++) ...[
+              _buildMenuTile(items[index], compact: compact),
+              if (index != items.length - 1)
+                const Divider(height: 1, indent: 48, endIndent: 12),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -225,47 +250,52 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Widget _buildMenuTile({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-          decoration: BoxDecoration(
-            color: AppTheme.neutralColor.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppTheme.borderSide.withValues(alpha: 0.2),
-              width: 1.0,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: AppTheme.primaryColor, size: 20),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
+  Widget _buildMenuTile(_AccountMenuItem item, {required bool compact}) {
+    return InkWell(
+      onTap: item.onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: compact ? 8 : 10,
+        ),
+        child: Row(
+          children: [
+            Icon(item.icon, color: AppTheme.primaryColor, size: 17),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
-                ),
+                  if (!compact) ...[
+                    const SizedBox(height: 1),
+                    Text(
+                      item.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.tertiaryColor,
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              Icon(
-                LucideIcons.chevron_right,
-                color: AppTheme.primaryColor.withValues(alpha: 0.25),
-                size: 18,
-              ),
-            ],
-          ),
+            ),
+            Icon(
+              LucideIcons.chevron_right,
+              color: AppTheme.primaryColor.withValues(alpha: 0.25),
+              size: 15,
+            ),
+          ],
         ),
       ),
     );
@@ -300,4 +330,18 @@ class _AccountPageState extends State<AccountPage> {
     setState(() => _isLoggingOut = true);
     BlocProvider.of<SessionBloc>(context).add(const SessionLogoutRequested());
   }
+}
+
+class _AccountMenuItem {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _AccountMenuItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 }

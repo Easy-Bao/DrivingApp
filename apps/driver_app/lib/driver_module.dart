@@ -49,6 +49,9 @@ class DriverModule extends Module {
       ..addLazySingleton<DashboardCubit>(
         (i) => DashboardCubit(repository: i.get<IDashboardRepository>()),
       )
+      ..addLazySingleton<DriverTabNavigationCoordinator>(
+        (_) => DriverTabNavigationCoordinator(),
+      )
       ..addFactory<LiveMapBloc>(
         (i) => LiveMapBloc(
           telemetryDataSource: i.get<TelemetryRemoteDataSource>(),
@@ -72,13 +75,25 @@ class DriverModule extends Module {
     ...ProfileModule.routes,
     ...DriverLocationModule.routes,
 
-    ShellModularRoute(
-      builder: (context, GoRouterState state, child) =>
-          DriverShellLayout(child: child),
-      routes: [
-        ...HomeModule.shellRoutes,
-        ...ActivityModule.shellRoutes,
-        ...ProfileModule.shellRoutes,
+    StatefulShellModularRoute(
+      builder: (context, GoRouterState state, navigationShell) =>
+          DriverShellLayout(
+            navigationShell: navigationShell,
+            navigationCoordinator:
+                Modular.get<DriverTabNavigationCoordinator>(),
+          ),
+      navigatorContainerBuilder: (context, navigationShell, children) =>
+          DriverTabBranchContainer(
+            navigationShell: navigationShell,
+            onNavigationSettled:
+                Modular.get<DriverTabNavigationCoordinator>().commit,
+            children: children,
+          ),
+      branches: [
+        ModularBranch(routes: HomeModule.shellRoutes),
+        ModularBranch(routes: ActivityModule.shellRoutes),
+        ModularBranch(routes: ProfileModule.earningsShellRoutes),
+        ModularBranch(routes: ProfileModule.accountShellRoutes),
       ],
     ),
   ];

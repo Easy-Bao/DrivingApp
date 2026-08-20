@@ -1,8 +1,10 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
-class EnRoutePickupPanelWidget extends StatelessWidget {
+class PickupNavigationPanelWidget extends StatelessWidget {
   final String pickup;
   final String dropoff;
   final String passengerName;
@@ -16,7 +18,7 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
   final VoidCallback onCallPressed;
   final VoidCallback onChatPressed;
 
-  const EnRoutePickupPanelWidget({
+  const PickupNavigationPanelWidget({
     super.key,
     required this.pickup,
     required this.dropoff,
@@ -74,7 +76,7 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          _routeCard(),
+          CompactRouteTimelineWidget(pickup: pickup, dropoff: dropoff),
           const SizedBox(height: 10),
           _passengerRow(),
           const SizedBox(height: 10),
@@ -83,18 +85,24 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
               Expanded(
                 child: _actionButton(
                   icon: LucideIcons.phone,
-                  label: 'Call',
+                  label: 'Call Passenger',
                   filled: true,
                   onPressed: onCallPressed,
                 ),
               ),
               const SizedBox(width: 10),
-              Expanded(
-                child: _actionButton(
-                  icon: LucideIcons.message_circle,
-                  label: 'Chat',
-                  badgeCount: unreadChatMessagesCount,
-                  onPressed: onChatPressed,
+              Semantics(
+                button: true,
+                label: 'Chat with passenger',
+                child: Badge(
+                  isLabelVisible: unreadChatMessagesCount > 0,
+                  label: Text('$unreadChatMessagesCount'),
+                  backgroundColor: AppTheme.cancel,
+                  child: IconButton(
+                    tooltip: 'Chat with passenger',
+                    onPressed: onChatPressed,
+                    icon: const Icon(LucideIcons.message_circle),
+                  ),
                 ),
               ),
             ],
@@ -119,7 +127,7 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
           Icon(LucideIcons.navigation, size: 13, color: AppTheme.complete),
           SizedBox(width: 6),
           Text(
-            'To pickup',
+            'To Pickup',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
@@ -128,85 +136,6 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _routeCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSide),
-      ),
-      child: Column(
-        children: [
-          _routeLine(
-            icon: LucideIcons.circle_dot,
-            label: 'PICKUP',
-            value: pickup,
-            accent: AppTheme.primaryColor,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 6, top: 4, bottom: 4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                width: 1,
-                height: 10,
-                color: AppTheme.borderSide,
-              ),
-            ),
-          ),
-          _routeLine(
-            icon: LucideIcons.map_pin,
-            label: 'DESTINATION',
-            value: dropoff,
-            accent: AppTheme.tertiaryColor,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _routeLine({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color accent,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: accent),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.tertiaryColor.withValues(alpha: 0.8),
-                  letterSpacing: 0.7,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -247,7 +176,7 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
             ),
           ),
           Text(
-            '${distance.toStringAsFixed(1)} km',
+            DistanceFormatter.fromKilometers(distance),
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -264,7 +193,6 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
     required String label,
     required VoidCallback onPressed,
     bool filled = false,
-    int badgeCount = 0,
   }) {
     final background = filled ? AppTheme.primaryColor : AppTheme.neutralColor;
     final foreground = filled ? Colors.white : AppTheme.primaryColor;
@@ -283,12 +211,7 @@ class EnRoutePickupPanelWidget extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Badge(
-                isLabelVisible: badgeCount > 0,
-                label: Text('$badgeCount'),
-                backgroundColor: AppTheme.cancel,
-                child: Icon(icon, size: 16, color: foreground),
-              ),
+              Icon(icon, size: 16, color: foreground),
               const SizedBox(width: 7),
               Text(
                 label,

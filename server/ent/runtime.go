@@ -81,16 +81,20 @@ func init() {
 	bidsessionDescRideType := bidsessionFields[1].Descriptor()
 	// bidsession.DefaultRideType holds the default value on creation for the ride_type field.
 	bidsession.DefaultRideType = bidsessionDescRideType.Default.(string)
+	// bidsessionDescPassengerNote is the schema descriptor for passenger_note field.
+	bidsessionDescPassengerNote := bidsessionFields[8].Descriptor()
+	// bidsession.PassengerNoteValidator is a validator for the "passenger_note" field. It is called by the builders before save.
+	bidsession.PassengerNoteValidator = bidsessionDescPassengerNote.Validators[0].(func(string) error)
 	// bidsessionDescOfferedFareCentavos is the schema descriptor for offered_fare_centavos field.
-	bidsessionDescOfferedFareCentavos := bidsessionFields[10].Descriptor()
+	bidsessionDescOfferedFareCentavos := bidsessionFields[11].Descriptor()
 	// bidsession.OfferedFareCentavosValidator is a validator for the "offered_fare_centavos" field. It is called by the builders before save.
 	bidsession.OfferedFareCentavosValidator = bidsessionDescOfferedFareCentavos.Validators[0].(func(int64) error)
 	// bidsessionDescStatus is the schema descriptor for status field.
-	bidsessionDescStatus := bidsessionFields[11].Descriptor()
+	bidsessionDescStatus := bidsessionFields[12].Descriptor()
 	// bidsession.DefaultStatus holds the default value on creation for the status field.
 	bidsession.DefaultStatus = bidsessionDescStatus.Default.(string)
 	// bidsessionDescCreatedAt is the schema descriptor for created_at field.
-	bidsessionDescCreatedAt := bidsessionFields[15].Descriptor()
+	bidsessionDescCreatedAt := bidsessionFields[16].Descriptor()
 	// bidsession.DefaultCreatedAt holds the default value on creation for the created_at field.
 	bidsession.DefaultCreatedAt = bidsessionDescCreatedAt.Default.(func() time.Time)
 	driverdocumentFields := schema.DriverDocument{}.Fields()

@@ -68,13 +68,13 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
     if (selectedPlace == null || selectedPlace is! PlaceModel) return;
     if (!mounted) return;
-    await context.pushNamed(
+    final newPlace = await context.pushNamed<SavedPlace>(
       HomeRoutes.addCategory,
-      extra: {
-        'onSave': (SavedPlace newPlace) => cubit.addPlace(newPlace),
-        'place': selectedPlace,
-      },
+      extra: {'place': selectedPlace},
     );
+    if (newPlace != null && mounted) {
+      await cubit.addPlace(newPlace);
+    }
   }
 
   void _showPlaceOptions(SavedPlace place, int index) {
@@ -261,7 +261,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           _buildLoadIssue(state.errorMessage!),
           const SizedBox(height: 16),
         ],
-        _buildSectionLabel('ESSENTIALS'),
+        _buildSectionLabel('Essentials'),
         const SizedBox(height: 10),
         _buildPlaceTile(
           icon: LucideIcons.house,
@@ -292,7 +292,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         ),
         if (customPlaces.isNotEmpty) ...[
           const SizedBox(height: 24),
-          _buildSectionLabel('OTHER PLACES'),
+          _buildSectionLabel('Other Places'),
           const SizedBox(height: 10),
           for (final place in customPlaces) ...[
             _buildPlaceTile(
@@ -317,7 +317,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               foregroundColor: AppTheme.primaryColor,
               side: const BorderSide(color: AppTheme.borderSide),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(28),
               ),
               textStyle: const TextStyle(fontWeight: FontWeight.w700),
             ),

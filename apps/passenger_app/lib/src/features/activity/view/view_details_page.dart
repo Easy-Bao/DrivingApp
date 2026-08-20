@@ -173,15 +173,15 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
 
     if (status == 'completed') {
       statusColor = AppTheme.complete;
-      statusLabel = 'COMPLETED';
+      statusLabel = 'Completed';
       statusSubtitle = 'Trip finished';
     } else if (status == 'canceled' || status == 'cancelled') {
       statusColor = AppTheme.cancel;
-      statusLabel = 'CANCELED';
+      statusLabel = 'Canceled';
       statusSubtitle = 'Trip canceled';
     } else {
       statusColor = const Color(0xFFD25D38);
-      statusLabel = 'ON THE WAY';
+      statusLabel = 'On the Way';
       statusSubtitle = 'Arriving in 6 min';
     }
 

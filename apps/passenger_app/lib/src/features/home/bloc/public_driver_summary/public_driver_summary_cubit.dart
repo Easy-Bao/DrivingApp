@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_public_driver_summary_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 class PublicDriverSummaryCubit extends Cubit<PublicDriverSummaryState> {
   final IPublicDriverSummaryRepository _repository;
@@ -20,7 +21,7 @@ class PublicDriverSummaryCubit extends Cubit<PublicDriverSummaryState> {
       (failure) => emit(
         state.copyWith(
           status: PublicDriverSummaryStatus.failure,
-          errorMessage: failure.message,
+          errorMessage: ErrorHandler.getErrorMessage(failure),
         ),
       ),
       (summaries) => emit(

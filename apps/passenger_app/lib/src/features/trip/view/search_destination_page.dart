@@ -582,8 +582,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                   ),
                                   child: Text(
                                     hasQuery
-                                        ? 'SEARCH RESULTS'
-                                        : 'NEARBY PLACES',
+                                        ? 'Search Results'
+                                        : 'Nearby Places',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w800,
@@ -1085,7 +1085,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     if (distanceKm < 0.1) {
       return '${(distanceKm * 1000).round()} m away';
     }
-    return '${distanceKm.toStringAsFixed(1)} km away';
+    return '${DistanceFormatter.fromKilometers(distanceKm)} away';
   }
 
   String _formatPlaceDistance(PlaceModel place) {

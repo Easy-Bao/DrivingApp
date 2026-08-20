@@ -9,7 +9,7 @@ class ProfileModule {
 
   static List<ModularRoute> routes = [];
 
-  static List<ModularRoute> shellRoutes = [
+  static List<ModularRoute> earningsShellRoutes = [
     ChildRoute(
       name: ProfileRoutes.earnings,
       ProfileRoutes.earningsPath,
@@ -17,6 +17,9 @@ class ProfileModule {
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),
+  ];
+
+  static List<ModularRoute> accountShellRoutes = [
     ChildRoute(
       name: ProfileRoutes.account,
       ProfileRoutes.accountPath,

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color primaryColor = Color(0xFF1A1D20);
+  static const Color primaryColor = Color(0xFF100E11);
   static const Color secondaryColor = Color(0xFFE3E2C3);
   static const Color tertiaryColor = Color(0xFF6C757D);
   static const Color neutralColor = Color(0xFFF1F3F5);
@@ -17,9 +17,9 @@ class AppTheme {
 
   static const Color complete = Color(0xFF198754);
   static const Color cancel = Color(0xFFDC3545);
-  static const Color inProgress = Color(0xFF1A1D20);
+  static const Color inProgress = primaryColor;
 
-  static const Color selectedItemColor = Color(0xFF1A1D20);
+  static const Color selectedItemColor = primaryColor;
   static const Color unselectedItemColor = Color(0xFF6C757D);
   static const Color outlineBorderColor = Color(0xFFE9ECEF);
 
@@ -134,10 +134,8 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(56),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(36),
-          ),
+          minimumSize: const Size.fromHeight(52),
+          shape: const StadiumBorder(),
           elevation: 0,
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),

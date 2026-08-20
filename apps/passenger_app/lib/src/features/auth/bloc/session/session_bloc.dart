@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 part 'session_event.dart';
 part 'session_state.dart';
@@ -25,7 +26,7 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
     emit(const SessionLoading());
     final result = await _sessionRepository.restoreSession();
     result.fold(
-      (failure) => emit(SessionFailure(failure.message)),
+      (failure) => emit(SessionFailure(ErrorHandler.getErrorMessage(failure))),
       (session) => emit(_stateFor(session)),
     );
   }
@@ -61,7 +62,7 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
     emit(const SessionLoading());
     final result = await _sessionRepository.clearSession();
     result.fold(
-      (failure) => emit(SessionFailure(failure.message)),
+      (failure) => emit(SessionFailure(ErrorHandler.getErrorMessage(failure))),
       (session) => emit(_stateFor(session)),
     );
   }

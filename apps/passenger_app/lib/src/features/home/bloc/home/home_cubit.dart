@@ -56,7 +56,7 @@ class HomeCubit extends Cubit<HomeState> {
           emit(
             state.copyWith(
               isLoading: false,
-              locationErrorMessage: failure.message,
+              locationErrorMessage: ErrorHandler.getErrorMessage(failure),
             ),
           );
         },
@@ -127,7 +127,7 @@ class HomeCubit extends Cubit<HomeState> {
                 emit(
                   state.copyWith(
                     isLoading: false,
-                    locationErrorMessage: failure.message,
+                    locationErrorMessage: ErrorHandler.getErrorMessage(failure),
                   ),
                 );
               }
@@ -157,7 +157,7 @@ class HomeCubit extends Cubit<HomeState> {
         emit(
           state.copyWith(
             isLoading: false,
-            locationErrorMessage: failure.message,
+            locationErrorMessage: ErrorHandler.getErrorMessage(failure),
           ),
         );
       }

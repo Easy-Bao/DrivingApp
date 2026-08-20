@@ -8,6 +8,7 @@ class BidSessionTrip extends Equatable {
   final String distance;
   final String duration;
   final String? pickupAddress;
+  final String passengerNote;
 
   const BidSessionTrip({
     required this.rideType,
@@ -16,6 +17,7 @@ class BidSessionTrip extends Equatable {
     required this.distance,
     required this.duration,
     this.pickupAddress,
+    this.passengerNote = '',
   });
 
   @override
@@ -26,5 +28,6 @@ class BidSessionTrip extends Equatable {
     distance,
     duration,
     pickupAddress,
+    passengerNote,
   ];
 }

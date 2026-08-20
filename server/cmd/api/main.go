@@ -196,7 +196,11 @@ func main() {
 	chatEventHandler := chatws.NewEventHandler(chatService)
 	events.Register("CHAT_MESSAGE", chatEventHandler)
 	events.Register("message", chatEventHandler)
-	router.Handle(api.V1Prefix+"/chat/ws", ws.NewHandlerWithSink(ws.NewHub(), verifier, events, chatService))
+	router.Handle(
+		api.V1Prefix+"/chat/ws",
+		ws.NewHandlerWithSink(ws.NewHub(), verifier, events, chatService).
+			WithAllowedOrigins(securityConfig.AllowedOrigins),
+	)
 	router.Handle(api.V1Prefix+"/realtime/ws", stream.NewHandler(eventHub, verifier, securityConfig.AllowedOrigins))
 	geoh.NewRouter(geoService, verifier).RegisterRoutes(router)
 	chath.NewRouter(chatService, verifier).RegisterRoutes(router)

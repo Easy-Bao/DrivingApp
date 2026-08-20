@@ -62,7 +62,7 @@ void main() {
         const SavedPlacesState(
           places: [],
           isLoading: false,
-          errorMessage: 'An unexpected error occurred. Please try again.',
+          errorMessage: 'Something went wrong. Please try again.',
         ),
       ],
     );

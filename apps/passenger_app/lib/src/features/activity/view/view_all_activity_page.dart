@@ -10,6 +10,7 @@ import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class PassengerViewAllActivityPage extends StatefulWidget {
@@ -25,18 +26,18 @@ class _PassengerViewAllActivityPageState
   static const int _activitySkeletonLimit = 8;
 
   static const _monthAbbreviationsList = [
-    'JAN',
-    'FEB',
-    'MAR',
-    'APR',
-    'MAY',
-    'JUN',
-    'JUL',
-    'AUG',
-    'SEP',
-    'OCT',
-    'NOV',
-    'DEC',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   List<RideHistoryModel> _retrievedRidesList = [];
   bool _isActivityDataLoading = true;
@@ -66,99 +67,27 @@ class _PassengerViewAllActivityPageState
   }
 
   void _displayTripHistoryFilterModalBottomSheet(BuildContext context) {
-    unawaited(
-      showModalBottomSheet<void>(
-        context: context,
-        backgroundColor: AppTheme.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (BuildContext modalContext) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Filter Trip History',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  title: const Text('All Trips'),
-                  leading: Icon(
-                    LucideIcons.list,
-                    color: _selectedStatusFilter == 'ALL'
-                        ? AppTheme.primaryColor
-                        : AppTheme.tertiaryColor,
-                  ),
-                  trailing: _selectedStatusFilter == 'ALL'
-                      ? const Icon(
-                          LucideIcons.check,
-                          color: AppTheme.primaryColor,
-                        )
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedStatusFilter = 'ALL';
-                    });
-                    Navigator.of(modalContext).pop();
-                  },
-                ),
-                ListTile(
-                  title: const Text('Completed Trips'),
-                  leading: Icon(
-                    LucideIcons.circle_check,
-                    color: _selectedStatusFilter == 'COMPLETED'
-                        ? AppTheme.primaryColor
-                        : AppTheme.tertiaryColor,
-                  ),
-                  trailing: _selectedStatusFilter == 'COMPLETED'
-                      ? const Icon(
-                          LucideIcons.check,
-                          color: AppTheme.primaryColor,
-                        )
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedStatusFilter = 'COMPLETED';
-                    });
-                    Navigator.of(modalContext).pop();
-                  },
-                ),
-                ListTile(
-                  title: const Text('Cancelled Trips'),
-                  leading: Icon(
-                    LucideIcons.circle_x,
-                    color: _selectedStatusFilter == 'CANCELLED'
-                        ? AppTheme.primaryColor
-                        : AppTheme.tertiaryColor,
-                  ),
-                  trailing: _selectedStatusFilter == 'CANCELLED'
-                      ? const Icon(
-                          LucideIcons.check,
-                          color: AppTheme.primaryColor,
-                        )
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedStatusFilter = 'CANCELLED';
-                    });
-                    Navigator.of(modalContext).pop();
-                  },
-                ),
-                const SizedBox(height: 12),
-              ],
-            ),
-          );
-        },
-      ),
+    unawaited(_selectTripHistoryFilter(context));
+  }
+
+  Future<void> _selectTripHistoryFilter(BuildContext context) async {
+    final selectedFilter = switch (_selectedStatusFilter) {
+      'COMPLETED' => TripHistoryFilter.completed,
+      'CANCELLED' => TripHistoryFilter.cancelled,
+      _ => TripHistoryFilter.all,
+    };
+    final result = await showTripHistoryFilterSheet(
+      context: context,
+      selectedFilter: selectedFilter,
     );
+    if (!mounted || result == null) return;
+    setState(() {
+      _selectedStatusFilter = switch (result) {
+        TripHistoryFilter.all => 'ALL',
+        TripHistoryFilter.completed => 'COMPLETED',
+        TripHistoryFilter.cancelled => 'CANCELLED',
+      };
+    });
   }
 
   Widget _buildLoadingState({required int itemCount}) {
@@ -310,7 +239,7 @@ class _PassengerViewAllActivityPageState
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            groupingDateKey.toUpperCase(),
+                            groupingDateKey,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
@@ -581,7 +510,7 @@ class _PassengerViewAllActivityPageState
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${estimatedDistanceInKm.toStringAsFixed(1)} km',
+                        DistanceFormatter.fromKilometers(estimatedDistanceInKm),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -702,7 +631,7 @@ class _PassengerViewAllActivityPageState
             (failure) {
               setState(() {
                 _retrievedRidesList = const [];
-                _networkErrorMessage = failure.message;
+                _networkErrorMessage = ErrorHandler.getErrorMessage(failure);
                 _isActivityDataLoading = false;
               });
             },
@@ -725,7 +654,7 @@ class _PassengerViewAllActivityPageState
     } catch (exceptionError) {
       if (mounted) {
         setState(() {
-          _networkErrorMessage = exceptionError.toString();
+          _networkErrorMessage = ErrorHandler.getErrorMessage(exceptionError);
           _isActivityDataLoading = false;
         });
       }

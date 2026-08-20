@@ -2,6 +2,7 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:shared_core/shared_core.dart';
 
 class InTransitMetaRowWidget extends StatelessWidget {
   final double distanceKm;
@@ -19,7 +20,10 @@ class InTransitMetaRowWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _buildChip(LucideIcons.map_pin, '${distanceKm.toStringAsFixed(1)} km'),
+        _buildChip(
+          LucideIcons.map_pin,
+          DistanceFormatter.fromKilometers(distanceKm),
+        ),
         const SizedBox(width: 8),
         _buildChip(LucideIcons.clock, durationText),
         const SizedBox(width: 8),

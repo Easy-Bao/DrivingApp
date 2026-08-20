@@ -112,7 +112,7 @@ class RideFareDetailsWidget extends StatelessWidget {
           ],
           const Divider(height: 28),
           Text(
-            'FARE CALCULATION',
+            'Fare Calculation',
             style: TextStyle(
               color: AppTheme.primaryColor.withValues(alpha: 0.5),
               fontSize: 10,

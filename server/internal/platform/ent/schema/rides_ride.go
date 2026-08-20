@@ -51,6 +51,7 @@ func (BidSession) Fields() []ent.Field {
 		field.Float("dropoff_latitude"),
 		field.Float("dropoff_longitude"),
 		field.String("dropoff_name"),
+		field.String("passenger_note").Optional().MaxLen(160),
 		field.Float("distance_km"),
 		field.Float("duration_minutes"),
 		field.Int64("offered_fare_centavos").NonNegative(),

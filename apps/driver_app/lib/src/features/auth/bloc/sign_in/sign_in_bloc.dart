@@ -2,6 +2,7 @@ import 'package:driver_app/src/features/auth/domain/usecases/sign_in_use_case.da
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_core/shared_core.dart';
 
 part 'sign_in_event.dart';
 part 'sign_in_state.dart';
@@ -41,7 +42,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     );
 
     result.fold(
-      (failure) => emit(SignInFailure(failure.message)),
+      (failure) => emit(SignInFailure(ErrorHandler.getErrorMessage(failure))),
       (credentials) => emit(SignInSuccess(credentials)),
     );
   }

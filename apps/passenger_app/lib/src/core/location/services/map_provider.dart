@@ -327,12 +327,6 @@ class MapProvider {
     maxZoom: maxZoom,
   );
 
-  static Future<void> zoomIn(AppMapController controller) =>
-      MapCameraService.zoomIn(controller);
-
-  static Future<void> zoomOut(AppMapController controller) =>
-      MapCameraService.zoomOut(controller);
-
   static Future<mapbox.PointAnnotationManager> addMarker(
     AppMapController controller,
     double lat,
@@ -358,6 +352,7 @@ class MapProvider {
     String? label,
     bool isOrigin = false,
     Color? color,
+    bool animate = false,
   }) => MapAnnotationService.replaceMarker(
     annotationManager,
     lat,
@@ -365,6 +360,7 @@ class MapProvider {
     label: label,
     isOrigin: isOrigin,
     color: color,
+    animate: animate,
   );
 
   static Future<mapbox.PolylineAnnotationManager> addPolyline(

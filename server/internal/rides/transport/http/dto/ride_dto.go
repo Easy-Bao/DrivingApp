@@ -45,6 +45,7 @@ type BidSessionRequest struct {
 	DropoffLatitude    float64 `json:"dropoff_latitude"`
 	DropoffLongitude   float64 `json:"dropoff_longitude"`
 	DropoffName        string  `json:"dropoff_name"`
+	PassengerNote      string  `json:"passenger_note"`
 	DistanceKm         float64 `json:"distance_km"`
 	DurationMinutes    float64 `json:"duration_minutes"`
 	TargetDriverID     *int    `json:"target_driver_id"`

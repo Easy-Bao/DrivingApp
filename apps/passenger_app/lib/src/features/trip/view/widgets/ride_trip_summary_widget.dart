@@ -30,7 +30,7 @@ class RideTripSummaryWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'TRIP DETAILS',
+            'Trip Details',
             style: TextStyle(
               color: AppTheme.primaryColor.withValues(alpha: 0.5),
               fontSize: 10,

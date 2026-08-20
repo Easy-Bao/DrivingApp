@@ -146,42 +146,40 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
-            return RefreshIndicator(
-              color: AppTheme.primaryColor,
-              onRefresh: _fetchUpdatedData,
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  12,
-                  horizontalPadding,
-                  28,
-                ),
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                children: [
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 720),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildProfileCard(),
-                          const SizedBox(height: 18),
-                          _buildSectionLabel('Performance'),
-                          const SizedBox(height: 8),
-                          _buildStatsCard(),
-                          const SizedBox(height: 20),
-                          _buildSectionLabel('Account settings'),
-                          const SizedBox(height: 8),
-                          ..._buildAccountItems(context).map(_buildMenuTile),
-                          const SizedBox(height: 12),
-                          _buildLogoutButton(context),
-                        ],
+            final compact = constraints.maxHeight < 650;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                compact ? 6 : 12,
+                horizontalPadding,
+                MediaQuery.paddingOf(context).bottom + 78,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildProfileSummary(compact: compact),
+                      SizedBox(height: compact ? 10 : 14),
+                      _buildVehicleSummary(compact: compact),
+                      SizedBox(height: compact ? 12 : 18),
+                      _buildSectionLabel('Performance'),
+                      const SizedBox(height: 6),
+                      _buildStatsCard(compact: compact),
+                      SizedBox(height: compact ? 12 : 18),
+                      _buildSectionLabel('Account Settings'),
+                      const SizedBox(height: 6),
+                      _buildSettingsGroup(
+                        _buildAccountItems(context),
+                        compact: compact,
                       ),
-                    ),
+                      const Spacer(),
+                      SizedBox(height: compact ? 6 : 10),
+                      _buildLogoutButton(context),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -190,124 +188,105 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     );
   }
 
-  Widget _buildProfileCard() {
+  Widget _buildProfileSummary({required bool compact}) {
     final displayName = _name.isEmpty ? 'Driver' : _name;
     final initial = displayName.substring(0, 1).toUpperCase();
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.primaryDark, AppTheme.primaryColor],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.14),
-            blurRadius: 16,
-            offset: const Offset(0, 7),
+    return Row(
+      children: [
+        Container(
+          width: compact ? 46 : 52,
+          height: compact ? 46 : 52,
+          decoration: const BoxDecoration(
+            color: AppTheme.secondaryColor,
+            shape: BoxShape.circle,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        _email.isEmpty ? 'Driver account' : _email,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.62),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _ratingBadge(),
-              ],
+          alignment: Alignment.center,
+          child: Text(
+            initial,
+            style: TextStyle(
+              fontSize: compact ? 18 : 21,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.primaryColor,
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _profileMeta(
-                      'Vehicle',
-                      _vehicleType.isEmpty ? 'Unavailable' : _vehicleType,
-                    ),
-                  ),
-                  _profileDivider(),
-                  Expanded(
-                    child: _profileMeta(
-                      'Plate number',
-                      _plateNumber.isEmpty ? 'Unavailable' : _plateNumber,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: compact ? 17 : 19,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _email.isEmpty ? 'Driver Account' : _email,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.tertiaryColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        _ratingBadge(),
+      ],
     );
   }
 
-  Widget _profileMeta(String label, String value) {
+  Widget _buildVehicleSummary({required bool compact}) {
+    return Row(
+      children: [
+        const Icon(
+          LucideIcons.car_front,
+          size: 17,
+          color: AppTheme.primaryColor,
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: _vehicleDetail(
+            'Vehicle',
+            _vehicleType.isEmpty ? 'Unavailable' : _vehicleType,
+          ),
+        ),
+        Container(
+          width: 1,
+          height: compact ? 30 : 34,
+          margin: const EdgeInsets.symmetric(horizontal: 14),
+          color: AppTheme.borderSide,
+        ),
+        Expanded(
+          child: _vehicleDetail(
+            'Plate Number',
+            _plateNumber.isEmpty ? 'Unavailable' : _plateNumber,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _vehicleDetail(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: Colors.white.withValues(alpha: 0.48),
+            color: AppTheme.tertiaryColor,
           ),
         ),
         const SizedBox(height: 2),
@@ -318,19 +297,10 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppTheme.primaryColor,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _profileDivider() {
-    return Container(
-      width: 1,
-      height: 28,
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      color: Colors.white24,
     );
   }
 
@@ -339,35 +309,45 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         ? _averageRating.toStringAsFixed(1)
         : _rating;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(12),
+        color: AppTheme.secondarySurface,
+        borderRadius: BorderRadius.circular(99),
       ),
-      child: Text(
-        '$rating rating',
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
-          color: Colors.white,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+          const SizedBox(width: 3),
+          Text(
+            rating,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatsCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            _statItem('$_completedTrips', 'Completed trips'),
-            _statDivider(),
-            _statItem('$_totalTrips', 'Total trips'),
-            _statDivider(),
-            _statItem('₱${_lifetimeEarnings.toStringAsFixed(0)}', 'Lifetime'),
-          ],
-        ),
+  Widget _buildStatsCard({required bool compact}) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: compact ? 9 : 12),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: Row(
+        children: [
+          _statItem('$_completedTrips', 'Completed'),
+          _statDivider(),
+          _statItem('$_totalTrips', 'Total Trips'),
+          _statDivider(),
+          _statItem('₱${_lifetimeEarnings.toStringAsFixed(0)}', 'Lifetime'),
+        ],
       ),
     );
   }
@@ -379,17 +359,19 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w900,
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
               color: AppTheme.primaryColor.withValues(alpha: 0.48),
             ),
@@ -400,20 +382,46 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   }
 
   Widget _statDivider() {
-    return Container(width: 1, height: 32, color: AppTheme.borderSide);
+    return Container(width: 1, height: 28, color: AppTheme.borderSide);
+  }
+
+  Widget _buildSettingsGroup(
+    List<_DriverAccountMenuItem> items, {
+    required bool compact,
+  }) {
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppTheme.borderSide),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var index = 0; index < items.length; index++) ...[
+              _buildMenuTile(items[index], compact: compact),
+              if (index != items.length - 1)
+                const Divider(height: 1, indent: 48, endIndent: 12),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   List<_DriverAccountMenuItem> _buildAccountItems(BuildContext context) {
     return [
       _DriverAccountMenuItem(
         icon: LucideIcons.car_front,
-        title: 'Vehicle information',
+        title: 'Vehicle Information',
         subtitle: 'Review your registered vehicle',
         onTap: () => _showVehicleDetails(context),
       ),
       _DriverAccountMenuItem(
         icon: LucideIcons.message_circle_question_mark,
-        title: 'Help center',
+        title: 'Help Center',
         subtitle: 'Support and frequently asked questions',
         onTap: () => _showHelpCenter(context),
       ),
@@ -445,7 +453,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Vehicle information',
+                'Vehicle Information',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -453,9 +461,9 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                 ),
               ),
               const SizedBox(height: 20),
-              _detailRow('Vehicle type', _vehicleType),
+              _detailRow('Vehicle Type', _vehicleType),
               const SizedBox(height: 12),
-              _detailRow('Plate number', _plateNumber),
+              _detailRow('Plate Number', _plateNumber),
             ],
           ),
         ),
@@ -483,7 +491,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Help center'),
+        title: const Text('Help Center'),
         content: const Text(
           'For ride, payment, or account support, contact the BaoRide operations team from your driver support channel.',
         ),
@@ -509,67 +517,52 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     );
   }
 
-  Widget _buildMenuTile(_DriverAccountMenuItem item) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: item.onTap,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppTheme.borderSide),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondarySurface,
-                    borderRadius: BorderRadius.circular(12),
+  Widget _buildMenuTile(_DriverAccountMenuItem item, {required bool compact}) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: item.onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: compact ? 8 : 10,
+        ),
+        child: Row(
+          children: [
+            Icon(item.icon, size: 17, color: AppTheme.primaryColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
-                  child: Icon(
-                    item.icon,
-                    size: 18,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryColor,
-                        ),
+                  if (!compact) ...[
+                    const SizedBox(height: 1),
+                    Text(
+                      item.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.48),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.subtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.48),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  LucideIcons.chevron_right,
-                  size: 16,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                ),
-              ],
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
+            Icon(
+              LucideIcons.chevron_right,
+              size: 15,
+              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+            ),
+          ],
         ),
       ),
     );
@@ -588,7 +581,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
               ),
             )
           : const Icon(LucideIcons.log_out, size: 17),
-      label: Text(_isLoggingOut ? 'Logging out…' : 'Log out'),
+      label: Text(_isLoggingOut ? 'Logging Out…' : 'Log Out'),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppTheme.cancel,
         side: BorderSide(color: AppTheme.cancel.withValues(alpha: 0.25)),

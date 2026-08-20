@@ -10,11 +10,12 @@ import (
 )
 
 type Handler struct {
-	hub          *Hub
-	authenticate Authenticator
-	sink         EventSink
-	rooms        RoomAuthorizer
-	upgrader     websocket.Upgrader
+	hub            *Hub
+	authenticate   Authenticator
+	sink           EventSink
+	rooms          RoomAuthorizer
+	allowedOrigins map[string]struct{}
+	upgrader       websocket.Upgrader
 }
 
 type Authenticator interface {
@@ -30,13 +31,13 @@ type RoomAuthorizer interface {
 }
 
 func NewHandler(hub *Hub, authenticate Authenticator) *Handler {
-	return &Handler{
-		hub:          hub,
-		authenticate: authenticate,
-		upgrader: websocket.Upgrader{
-			CheckOrigin: func(*http.Request) bool { return false },
-		},
+	handler := &Handler{
+		hub:            hub,
+		authenticate:   authenticate,
+		allowedOrigins: make(map[string]struct{}),
 	}
+	handler.upgrader = websocket.Upgrader{CheckOrigin: handler.originAllowed}
+	return handler
 }
 
 func NewHandlerWithSink(hub *Hub, authenticate Authenticator, sink EventSink, rooms ...RoomAuthorizer) *Handler {
@@ -46,6 +47,25 @@ func NewHandlerWithSink(hub *Hub, authenticate Authenticator, sink EventSink, ro
 		handler.rooms = rooms[0]
 	}
 	return handler
+}
+
+func (handler *Handler) WithAllowedOrigins(origins []string) *Handler {
+	handler.allowedOrigins = make(map[string]struct{}, len(origins))
+	for _, origin := range origins {
+		if trimmed := strings.TrimSpace(origin); trimmed != "" {
+			handler.allowedOrigins[trimmed] = struct{}{}
+		}
+	}
+	return handler
+}
+
+func (handler *Handler) originAllowed(request *http.Request) bool {
+	origin := strings.TrimSpace(request.Header.Get("Origin"))
+	if origin == "" {
+		return true
+	}
+	_, allowed := handler.allowedOrigins[origin]
+	return allowed
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {

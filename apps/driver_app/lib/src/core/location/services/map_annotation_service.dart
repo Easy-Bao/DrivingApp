@@ -44,17 +44,64 @@ class MapAnnotationService {
     String? label,
     bool isOrigin = false,
     Color? color,
+    bool animate = false,
   }) async {
-    await annotationManager.deleteAll();
-    await annotationManager.create(
-      await _markerOptions(
-        lat,
-        lng,
-        label: label,
-        isOrigin: isOrigin,
-        color: color,
-      ),
+    final options = await _markerOptions(
+      lat,
+      lng,
+      label: label,
+      isOrigin: isOrigin,
+      color: color,
     );
+    final annotations = await annotationManager.getAnnotations();
+    if (annotations.isEmpty) {
+      await annotationManager.create(options);
+      return;
+    }
+
+    final annotation = annotations.first;
+    annotation.image = options.image;
+    annotation.iconAnchor = options.iconAnchor;
+    annotation.iconSize = options.iconSize;
+    annotation.symbolSortKey = options.symbolSortKey;
+    if (animate) {
+      await _animateMarker(
+        annotationManager,
+        annotation,
+        targetLat: lat,
+        targetLng: lng,
+      );
+    } else {
+      annotation.geometry = options.geometry;
+      await annotationManager.update(annotation);
+    }
+    if (annotations.length > 1) {
+      await annotationManager.deleteMulti(annotations.skip(1).toList());
+    }
+  }
+
+  static Future<void> _animateMarker(
+    mapbox.PointAnnotationManager annotationManager,
+    mapbox.PointAnnotation annotation, {
+    required double targetLat,
+    required double targetLng,
+  }) async {
+    final startLat = annotation.geometry.coordinates.lat.toDouble();
+    final startLng = annotation.geometry.coordinates.lng.toDouble();
+    const frameCount = 8;
+    for (var frame = 1; frame <= frameCount; frame++) {
+      final progress = Curves.easeInOut.transform(frame / frameCount);
+      annotation.geometry = mapbox.Point(
+        coordinates: mapbox.Position(
+          ui.lerpDouble(startLng, targetLng, progress)!,
+          ui.lerpDouble(startLat, targetLat, progress)!,
+        ),
+      );
+      await annotationManager.update(annotation);
+      if (frame < frameCount) {
+        await Future<void>.delayed(const Duration(milliseconds: 35));
+      }
+    }
   }
 
   static Future<mapbox.PointAnnotationOptions> _markerOptions(
@@ -64,11 +111,7 @@ class MapAnnotationService {
     required bool isOrigin,
     Color? color,
   }) async {
-    final markerColor = color != null
-        ? color.toARGB32()
-        : (isOrigin
-              ? AppTheme.primaryColor.toARGB32()
-              : AppTheme.accent.toARGB32());
+    final markerColor = (color ?? AppTheme.complete).toARGB32();
     return mapbox.PointAnnotationOptions(
       geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
       image: await _createMarkerImage(Color(markerColor), label: label),
@@ -164,31 +207,40 @@ class MapAnnotationService {
   }
 
   static Future<Uint8List> _createPinImage(Color color) async {
-    const size = 64.0;
+    const width = 64.0;
+    const height = 76.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    final paint = Paint()..color = color;
-    final outlinePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-    final pin = Path()
-      ..moveTo(size / 2, size - 2)
-      ..cubicTo(10, 39, 8, 32, 8, 24)
-      ..cubicTo(8, 11, 18, 2, size / 2, 2)
-      ..cubicTo(46, 2, 56, 11, 56, 24)
-      ..cubicTo(56, 32, 54, 39, size / 2, size - 2)
+    const center = Offset(width / 2, 26);
+    final outerTail = Path()
+      ..moveTo(center.dx - 10, 41)
+      ..lineTo(center.dx, height - 2)
+      ..lineTo(center.dx + 10, 41)
       ..close();
-    canvas.drawPath(pin, paint);
-    canvas.drawPath(pin, outlinePaint);
-    canvas.drawCircle(
-      const Offset(size / 2, 24),
-      8,
-      Paint()..color = Colors.white,
+    final innerTail = Path()
+      ..moveTo(center.dx - 6, 40)
+      ..lineTo(center.dx, height - 9)
+      ..lineTo(center.dx + 6, 40)
+      ..close();
+    final shadowPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: 23))
+      ..addPath(outerTail, Offset.zero);
+
+    canvas.drawShadow(
+      shadowPath,
+      AppTheme.primaryColor.withValues(alpha: 0.26),
+      5,
+      true,
     );
+    canvas.drawPath(outerTail, Paint()..color = AppTheme.surface);
+    canvas.drawPath(innerTail, Paint()..color = color);
+    canvas.drawCircle(center, 23, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(center, 18, Paint()..color = color);
+    canvas.drawCircle(center, 9, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(center, 4, Paint()..color = color);
     final image = await recorder.endRecording().toImage(
-      size.toInt(),
-      size.toInt(),
+      width.toInt(),
+      height.toInt(),
     );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
@@ -225,15 +277,27 @@ class MapAnnotationService {
     double width = 4.0,
   }) async {
     final coordinates = points.map((p) => mapbox.Position(p[0], p[1])).toList();
-    await annotationManager.deleteAll();
-    await annotationManager.create(
-      mapbox.PolylineAnnotationOptions(
-        geometry: mapbox.LineString(coordinates: coordinates),
-        lineWidth: width,
-        lineColor: color.toARGB32(),
-        lineJoin: mapbox.LineJoin.ROUND,
-      ),
-    );
+    final annotations = await annotationManager.getAnnotations();
+    if (annotations.isEmpty) {
+      await annotationManager.create(
+        mapbox.PolylineAnnotationOptions(
+          geometry: mapbox.LineString(coordinates: coordinates),
+          lineWidth: width,
+          lineColor: color.toARGB32(),
+          lineJoin: mapbox.LineJoin.ROUND,
+        ),
+      );
+      return;
+    }
+    final annotation = annotations.first;
+    annotation.geometry = mapbox.LineString(coordinates: coordinates);
+    annotation.lineWidth = width;
+    annotation.lineColor = color.toARGB32();
+    annotation.lineJoin = mapbox.LineJoin.ROUND;
+    await annotationManager.update(annotation);
+    if (annotations.length > 1) {
+      await annotationManager.deleteMulti(annotations.skip(1).toList());
+    }
   }
 
   static Future<mapbox.PolylineAnnotationManager> addAnimatedPolylineSegment(

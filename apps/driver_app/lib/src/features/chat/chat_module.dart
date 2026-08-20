@@ -15,6 +15,7 @@ class ChatModule {
         return DriverChatPage(
           roomId: extra['roomId'] as String?,
           userId: extra['userId'] as String?,
+          peerId: extra['peerId'] as String?,
           peerName: extra['peerName'] as String?,
         );
       },

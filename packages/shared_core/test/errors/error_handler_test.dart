@@ -13,4 +13,25 @@ void main() {
     );
     expect(message, isNot(contains('database')));
   });
+
+  test('maps infrastructure failures to safe user-facing messages', () {
+    expect(
+      ErrorHandler.getErrorMessage(
+        const CacheFailure('sqlite table passenger_saved_places is missing'),
+      ),
+      'Saved information is unavailable right now. Please try again.',
+    );
+    expect(
+      ErrorHandler.getErrorMessage(
+        const NetworkFailure('SocketException: connection refused'),
+      ),
+      'Check your connection and try again.',
+    );
+    expect(
+      ErrorHandler.getErrorMessage(
+        const ValidationFailure('unexpected field passenger_internal_id'),
+      ),
+      isNot(contains('passenger_internal_id')),
+    );
+  });
 }

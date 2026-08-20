@@ -20,7 +20,6 @@ import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_
 import 'package:passenger_app/src/features/trip/view/widgets/track_driver_panel_widget.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActivityTrackDriverPage extends StatefulWidget {
@@ -36,11 +35,10 @@ class ActivityTrackDriverPage extends StatefulWidget {
 class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   AppMapController? _mapController;
   bool _initialized = false;
-  bool _routeDrawn = false;
   bool _hasFittedInitialMap = false;
   bool _isUpdatingMap = false;
   bool _hasHandledTerminalState = false;
-  RideStatus? _lastMapStatus;
+  DateTime? _lastCameraFitAt;
   dynamic _passengerMarkerManager;
   dynamic _driverMarkerManager;
   dynamic _routeLineManager;
@@ -141,11 +139,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     _mapController = controller;
     if (!_initialized) {
       _initialized = true;
-      _routeDrawn = false;
-      final passengerLat =
-          LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
-      final passengerLng =
-          LocationService.lastPosition?.longitude ?? widget.ride.pickupLng;
+      final passengerLat = widget.ride.pickupLat;
+      final passengerLng = widget.ride.pickupLng;
 
       if (_locationSubscription != null) {
         unawaited(_locationSubscription!.cancel());
@@ -189,14 +184,11 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     final mapController = _mapController;
     if (mapController == null || _isUpdatingMap) return;
     _isUpdatingMap = true;
-    final passengerLat =
-        LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
-    final passengerLng =
-        LocationService.lastPosition?.longitude ?? widget.ride.pickupLng;
+    final passengerLat = widget.ride.pickupLat;
+    final passengerLng = widget.ride.pickupLng;
 
     try {
-      if (!_routeDrawn && routePoints != null && routePoints.isNotEmpty) {
-        _routeDrawn = true;
+      if (routePoints != null && routePoints.length >= 2) {
         _routeLineManager = await _upsertRoute(
           _routeLineManager,
           mapController,
@@ -213,7 +205,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         targetLat,
         targetLng,
         isOrigin: true,
-        color: isInTransit ? AppTheme.accent : AppTheme.primaryColor,
+        color: isInTransit ? AppTheme.accent : AppTheme.complete,
+        label: isInTransit
+            ? 'Drop-off\n${widget.ride.destination}'
+            : 'Pickup\n${widget.ride.pickup}',
       );
       _driverMarkerManager = await _upsertMarker(
         _driverMarkerManager,
@@ -222,8 +217,13 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         driverLng,
         isOrigin: false,
         color: AppTheme.complete,
+        label: 'Driver\nCurrent Location',
+        animate: true,
       );
-      if (!_hasFittedInitialMap) {
+      final now = DateTime.now();
+      if (!_hasFittedInitialMap ||
+          _lastCameraFitAt == null ||
+          now.difference(_lastCameraFitAt!) >= const Duration(seconds: 8)) {
         await MapProvider.fitBounds(
           mapController,
           [LatLng(targetLat, targetLng), LatLng(driverLat, driverLng)],
@@ -231,6 +231,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
           maxZoom: 15.0,
         );
         _hasFittedInitialMap = true;
+        _lastCameraFitAt = now;
       }
     } catch (error) {
       debugPrint('Error updating track map: $error');
@@ -246,6 +247,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     double lng, {
     required bool isOrigin,
     required Color color,
+    required String label,
+    bool animate = false,
   }) async {
     if (annotationManager == null) {
       return MapProvider.addMarker(
@@ -254,6 +257,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         lng,
         isOrigin: isOrigin,
         color: color,
+        label: label,
       );
     }
     await MapProvider.replaceMarker(
@@ -262,6 +266,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       lng,
       isOrigin: isOrigin,
       color: color,
+      label: label,
+      animate: animate,
     );
     return annotationManager;
   }
@@ -347,20 +353,12 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
 
   @override
   Widget build(BuildContext context) {
-    final passengerLat =
-        LocationService.lastPosition?.latitude ?? widget.ride.pickupLat;
-    final passengerLng =
-        LocationService.lastPosition?.longitude ?? widget.ride.pickupLng;
+    final passengerLat = widget.ride.pickupLat;
+    final passengerLng = widget.ride.pickupLng;
 
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
         if (state is TrackDriverInProgress) {
-          if (_lastMapStatus != state.status) {
-            _routeDrawn = false;
-            _lastMapStatus = state.status;
-            unawaited(MapProvider.clearAnnotations(_routeLineManager));
-            _routeLineManager = null;
-          }
           unawaited(
             _updateMapElements(
               state.driverLat,
@@ -375,7 +373,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
           Modular.get<BookingBloc>().add(const ResetBookingEvent());
           context.pushReplacementNamed(
             ActivityRoutes.passengerPayment,
-            extra: widget.ride,
+            extra: widget.ride.copyWith(
+              driverId: state.driverId,
+              driverName: state.driverName,
+            ),
           );
         } else if (state is TrackDriverCanceled) {
           if (_hasHandledTerminalState) return;
@@ -452,8 +453,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                               Text(
                                 state is TrackDriverInProgress &&
                                         state.status == RideStatus.inTransit
-                                    ? 'TRIP TO'
-                                    : 'ARRIVING IN',
+                                    ? 'Trip to'
+                                    : 'Arriving in',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -594,18 +595,6 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                     );
                   },
                 ),
-              ),
-            ),
-            Positioned(
-              top: MediaQuery.paddingOf(context).top + 76,
-              right: 16,
-              child: MapZoomControlsWidget(
-                onZoomIn: _mapController == null
-                    ? null
-                    : () => unawaited(MapProvider.zoomIn(_mapController!)),
-                onZoomOut: _mapController == null
-                    ? null
-                    : () => unawaited(MapProvider.zoomOut(_mapController!)),
               ),
             ),
           ],

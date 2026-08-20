@@ -182,18 +182,24 @@ class TrackDriverPanelWidget extends StatelessWidget {
               Expanded(
                 child: _ActionButton(
                   icon: LucideIcons.phone,
-                  label: 'Call',
+                  label: 'Call Driver',
                   filled: true,
                   onTap: onCallDriverPressed,
                 ),
               ),
               const SizedBox(width: 10),
-              Expanded(
-                child: _ActionButton(
-                  icon: LucideIcons.message_circle,
-                  label: 'Chat',
-                  badgeCount: unreadChatMessagesCount,
-                  onTap: onChatDriverPressed,
+              Semantics(
+                button: true,
+                label: 'Chat with driver',
+                child: Badge(
+                  isLabelVisible: unreadChatMessagesCount > 0,
+                  label: Text('$unreadChatMessagesCount'),
+                  backgroundColor: AppTheme.cancel,
+                  child: IconButton(
+                    tooltip: 'Chat with driver',
+                    onPressed: onChatDriverPressed,
+                    icon: const Icon(LucideIcons.message_circle),
+                  ),
                 ),
               ),
             ],
@@ -217,7 +223,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
                         color: AppTheme.cancel,
                       ),
                     )
-                  : const Text('Cancel trip'),
+                  : const Text('Cancel Trip'),
             ),
           ),
         ],
@@ -230,7 +236,6 @@ class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool filled;
-  final int badgeCount;
   final VoidCallback onTap;
 
   const _ActionButton({
@@ -238,7 +243,6 @@ class _ActionButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.filled = false,
-    this.badgeCount = 0,
   });
 
   @override
@@ -260,12 +264,7 @@ class _ActionButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Badge(
-                isLabelVisible: badgeCount > 0,
-                label: Text('$badgeCount'),
-                backgroundColor: AppTheme.cancel,
-                child: Icon(icon, size: 16, color: foreground),
-              ),
+              Icon(icon, size: 16, color: foreground),
               const SizedBox(width: 7),
               Text(
                 label,

@@ -18,9 +18,16 @@ import 'package:go_router_modular/go_router_modular.dart';
 class DriverChatPage extends StatefulWidget {
   final String? roomId;
   final String? userId;
+  final String? peerId;
   final String? peerName;
 
-  const DriverChatPage({super.key, this.roomId, this.userId, this.peerName});
+  const DriverChatPage({
+    super.key,
+    this.roomId,
+    this.userId,
+    this.peerId,
+    this.peerName,
+  });
 
   @override
   State<DriverChatPage> createState() => _DriverChatPageState();
@@ -122,6 +129,15 @@ class _DriverChatPageState extends State<DriverChatPage>
 
   Future<void> _connectChat(String roomId, String userId) async {
     final token = await Modular.get<SecureSessionService>().readToken();
+    final passengerId = widget.peerId?.trim() ?? '';
+    if (passengerId.isNotEmpty) {
+      final initialized = await _chatCubit.initializeChatRoom(
+        roomId: roomId,
+        driverId: userId,
+        passengerId: passengerId,
+      );
+      if (!initialized || !mounted) return;
+    }
     final wsUri = ApiEndpoints.buildChatWebSocketUri(
       roomId: roomId,
       userId: userId,

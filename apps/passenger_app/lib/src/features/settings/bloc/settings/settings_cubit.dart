@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/settings/bloc/settings/settings_state.dart';
 import 'package:passenger_app/src/features/settings/domain/repositories/i_settings_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
   final ISettingsRepository settingsRepository;
@@ -13,7 +14,8 @@ class SettingsCubit extends Cubit<SettingsState> {
     final result = await settingsRepository.fetchUserSettings();
 
     result.fold(
-      (failure) => emit(SettingsErrorState(failure.message)),
+      (failure) =>
+          emit(SettingsErrorState(ErrorHandler.getErrorMessage(failure))),
       (settings) => emit(SettingsLoadedState(settings)),
     );
   }

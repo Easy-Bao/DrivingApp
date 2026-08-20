@@ -20,6 +20,39 @@ class ChatCubit extends Cubit<ChatState> {
        _roomRemoteDataSource = roomRemoteDataSource,
        super(const ChatState());
 
+  Future<bool> initializeChatRoom({
+    required String roomId,
+    required String driverId,
+    required String passengerId,
+  }) async {
+    try {
+      final initialized = await _roomRemoteDataSource.initializeRoom(
+        roomId: roomId,
+        driverId: driverId,
+        passengerId: passengerId,
+      );
+      if (!initialized && !isClosed) {
+        emit(
+          state.copyWith(
+            isConnecting: false,
+            errorMessage: 'Chat is unavailable right now. Please try again.',
+          ),
+        );
+      }
+      return initialized;
+    } catch (_) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            isConnecting: false,
+            errorMessage: 'Chat is unavailable right now. Please try again.',
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
   Future<void> connectToChatRoom({
     required String roomId,
     required Uri wsUri,
@@ -40,7 +73,7 @@ class ChatCubit extends Cubit<ChatState> {
             state.copyWith(
               isConnecting: false,
               isConnected: false,
-              errorMessage: failure.message,
+              errorMessage: ErrorHandler.getErrorMessage(failure),
             ),
           );
         },
@@ -49,8 +82,11 @@ class ChatCubit extends Cubit<ChatState> {
           _chatSubscription = _chatRepository.chatEventsStream.listen(
             (eitherEvent) {
               eitherEvent.fold(
-                (failure) =>
-                    emit(state.copyWith(errorMessage: failure.message)),
+                (failure) => emit(
+                  state.copyWith(
+                    errorMessage: ErrorHandler.getErrorMessage(failure),
+                  ),
+                ),
                 (chatEvent) {
                   if (chatEvent is ChatHistoryReceived) {
                     emit(state.copyWith(messages: chatEvent.messages));
@@ -93,7 +129,9 @@ class ChatCubit extends Cubit<ChatState> {
     final result = await _chatRepository.fetchRoomMessages(roomId);
     if (isClosed) return;
     result.fold(
-      (failure) => emit(state.copyWith(errorMessage: failure.message)),
+      (failure) => emit(
+        state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+      ),
       (messages) => emit(state.copyWith(messages: messages)),
     );
   }

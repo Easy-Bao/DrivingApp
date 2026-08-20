@@ -332,6 +332,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'duration_minutes': event.durationMinutes,
         'target_driver_id': targetDriverId,
         'custom_fare_centavos': (event.trip.fare * 100).round(),
+        'passenger_note': event.trip.passengerNote,
       });
       final sessionId = _sessionIdFromResponse(response);
       if (sessionId == null || sessionId.isEmpty) {
@@ -376,6 +377,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'distance_km': event.distanceKm,
         'duration_minutes': event.durationMinutes,
         'custom_fare_centavos': (event.trip.fare * 100).round(),
+        'passenger_note': event.trip.passengerNote,
       });
       final sessionId = _sessionIdFromResponse(response);
       if (sessionId == null || sessionId.isEmpty) {

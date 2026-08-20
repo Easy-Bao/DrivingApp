@@ -11,16 +11,10 @@ import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class AddCategoryPage extends StatefulWidget {
-  final Function(SavedPlace) onSave;
   final PlaceModel? initialPlace;
   final String? initialLabel;
 
-  const AddCategoryPage({
-    super.key,
-    required this.onSave,
-    this.initialPlace,
-    this.initialLabel,
-  });
+  const AddCategoryPage({super.key, this.initialPlace, this.initialLabel});
 
   @override
   State<AddCategoryPage> createState() => _AddCategoryPageState();
@@ -164,8 +158,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       savedAddress: widget.initialPlace?.fullAddress ?? label,
     );
 
-    widget.onSave(newPlace);
-    context.pop();
+    context.pop(newPlace);
   }
 
   String _iconNameFromData(IconData icon) {
@@ -255,25 +248,6 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                       ? _getMapView()
                       : _buildLocationUnavailableState(),
                 ),
-                if (!_isLoadingLocation && _isLocationPinned)
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: MapZoomControlsWidget(
-                      onZoomIn: () {
-                        final controller = _mapController;
-                        if (controller != null) {
-                          unawaited(MapProvider.zoomIn(controller));
-                        }
-                      },
-                      onZoomOut: () {
-                        final controller = _mapController;
-                        if (controller != null) {
-                          unawaited(MapProvider.zoomOut(controller));
-                        }
-                      },
-                    ),
-                  ),
               ],
             ),
             Padding(

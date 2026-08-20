@@ -11,14 +11,14 @@ class RideFlowInitial extends RideFlowState {
   const RideFlowInitial();
 }
 
-class RideFlowEnRoutePickup extends RideFlowState {
+class RideFlowNavigatingToPickup extends RideFlowState {
   final String passengerName;
   final double? pickupLat;
   final double? pickupLng;
   final double? destLat;
   final double? destLng;
 
-  const RideFlowEnRoutePickup({
+  const RideFlowNavigatingToPickup({
     required this.passengerName,
     this.pickupLat,
     this.pickupLng,

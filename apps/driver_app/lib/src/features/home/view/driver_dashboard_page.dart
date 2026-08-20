@@ -43,6 +43,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Timer? _rideTriggerTimer;
   Timer? _presenceHeartbeatTimer;
   Timer? _locationAccessPoller;
+  Timer? _requestCountdownTimer;
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   RealtimeWebSocketClient? _realtimeClient;
@@ -75,6 +76,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       vsync: this,
       duration: const Duration(milliseconds: 520),
     );
+    _requestCountdownTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _refreshRequestCountdowns(),
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -96,6 +101,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _rideTriggerTimer?.cancel();
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
+    _requestCountdownTimer?.cancel();
     _locationSubscription?.cancel();
     _realtimeEventsSubscription?.cancel();
     final realtimeClient = _realtimeClient;
@@ -272,10 +278,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       (trip) => driverValueAsString(trip['id']) == rideId,
     );
     if (existingIndex >= 0) {
-      updatedTrips[existingIndex] = {
-        ...updatedTrips[existingIndex],
-        ...ride,
-      };
+      updatedTrips[existingIndex] = {...updatedTrips[existingIndex], ...ride};
     } else {
       updatedTrips.insert(0, ride);
     }
@@ -286,11 +289,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   void _sortActiveTrips(List<Map<String, dynamic>> trips) {
     trips.sort((a, b) {
-      const statusPriority = {
-        'in_transit': 0,
-        'arrived': 1,
-        'accepted': 2,
-      };
+      const statusPriority = {'in_transit': 0, 'arrived': 1, 'accepted': 2};
       final aPriority = statusPriority[a['status']] ?? 3;
       final bPriority = statusPriority[b['status']] ?? 3;
       if (aPriority != bPriority) return aPriority.compareTo(bPriority);
@@ -505,10 +504,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               (activeBid) => driverValueAsString(activeBid['id']) == sessionId,
             );
           });
-          CustomToast.show(
-            context,
-            'Offer submitted! Waiting for passenger...',
-          );
         } else {
           CustomToast.show(context, 'Failed to submit offer.', isError: true);
         }
@@ -539,7 +534,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
     final status = trip['status'] as String?;
-    String routeName = TripRoutes.enRoutePickup;
+    String routeName = TripRoutes.pickupNavigation;
     if (status == 'arrived') {
       routeName = TripRoutes.waitingPassenger;
     } else if (status == 'in_transit') {
@@ -550,6 +545,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       rideId: rideId,
       status: driverValueAsString(trip['status']) ?? 'accepted',
       passengerName: driverValueAsString(trip['passenger_name']) ?? 'Passenger',
+      passengerId: driverValueAsString(trip['passenger_id']),
       distanceKm: (trip['distance_km'] as num?)?.toDouble(),
       pickupLat: SafeParse.toNullableDouble(trip['pickup_latitude']),
       pickupLng: SafeParse.toNullableDouble(trip['pickup_longitude']),
@@ -586,6 +582,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         status: driverValueAsString(trip['status']) ?? 'accepted',
         passengerName:
             driverValueAsString(trip['passenger_name']) ?? 'Passenger',
+        passengerId: driverValueAsString(trip['passenger_id']),
         distanceKm: (trip['distance_km'] as num?)?.toDouble(),
         pickupLat: SafeParse.toNullableDouble(trip['pickup_latitude']),
         pickupLng: SafeParse.toNullableDouble(trip['pickup_longitude']),
@@ -726,20 +723,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                             const SizedBox(height: 24),
                           ],
                           if (_activeBids.isNotEmpty) ...[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _buildSectionLabel('Incoming request'),
-                                const Text(
-                                  '0:12',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.accent,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            _buildSectionLabel('Incoming Requests'),
                             const SizedBox(height: 10),
                             ..._activeBids.map(_buildPoolBidCard),
                           ],
@@ -1073,7 +1057,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               ),
               const SizedBox(width: 8),
               Text(
-                trip['passenger_name'] ?? 'Passenger',
+                driverValueAsString(trip['passenger_name']) ?? '—',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -1082,27 +1066,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(
-                LucideIcons.map_pin,
-                size: 14,
-                color: AppTheme.primaryColor.withValues(alpha: 0.6),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'To: ${trip['dropoff_name']}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          const SizedBox(height: 10),
+          CompactRouteTimelineWidget(
+            pickup: driverValueAsString(trip['pickup_name']) ?? '—',
+            dropoff: driverValueAsString(trip['dropoff_name']) ?? '—',
           ),
           const SizedBox(height: 14),
           if (status == 'in_transit')
@@ -1116,9 +1083,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: const StadiumBorder(),
                         elevation: 0,
                       ),
                       child: const Text(
@@ -1142,9 +1107,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.complete,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: const StadiumBorder(),
                         elevation: 0,
                       ),
                       child: isCompleting
@@ -1177,9 +1140,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: const StadiumBorder(),
                   elevation: 0,
                 ),
                 child: const Text(
@@ -1193,6 +1154,29 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
   }
 
+  void _refreshRequestCountdowns() {
+    if (!mounted || _activeBids.isEmpty) return;
+    final activeBids = _activeBids.where((bid) {
+      final remaining = _remainingBidSeconds(bid);
+      return remaining == null || remaining > 0;
+    }).toList();
+    setState(() => _activeBids = activeBids);
+  }
+
+  int? _remainingBidSeconds(Map<String, dynamic> bid) {
+    final rawExpiry = driverValueAsString(bid['expires_at']);
+    final expiresAt = rawExpiry == null ? null : DateTime.tryParse(rawExpiry);
+    if (expiresAt == null) return null;
+    final seconds = expiresAt.difference(DateTime.now()).inSeconds;
+    return seconds.clamp(0, 3599).toInt();
+  }
+
+  String _formatCountdown(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainder = seconds % 60;
+    return '$minutes:${remainder.toString().padLeft(2, '0')}';
+  }
+
   Widget _buildPoolBidCard(Map<String, dynamic> bid) {
     final pickup = bid['pickup_name']?.toString() ?? '—';
     final dropoff = bid['dropoff_name']?.toString() ?? '—';
@@ -1200,13 +1184,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final distance = _distanceInKm(bid);
     final bidId = driverValueAsString(bid['id']);
     final isSubmitting = bidId != null && _submittingBidId == bidId;
+    final remainingSeconds = _remainingBidSeconds(bid);
+    final passengerNote = driverValueAsString(bid['passenger_note']);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.borderSide),
         boxShadow: [
           BoxShadow(
@@ -1220,32 +1206,38 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                LucideIcons.map_pin,
-                color: AppTheme.secondaryColor,
-                size: 20,
+              const Text(
+                'Ride Request',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryColor,
+                ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.neutralColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    const Icon(LucideIcons.clock_3, size: 14),
+                    const SizedBox(width: 5),
                     Text(
-                      'Pickup',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      pickup,
+                      remainingSeconds == null
+                          ? '—'
+                          : _formatCountdown(remainingSeconds),
+                      key: ValueKey('request-countdown-$bidId'),
                       style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
                         color: AppTheme.primaryColor,
                       ),
                     ),
@@ -1254,52 +1246,44 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                LucideIcons.navigation,
-                color: AppTheme.secondaryColor,
-                size: 20,
+          const SizedBox(height: 12),
+          CompactRouteTimelineWidget(pickup: pickup, dropoff: dropoff),
+          if (passengerNote != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: AppTheme.neutralColor,
+                borderRadius: BorderRadius.circular(14),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Drop-off',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                      ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(LucideIcons.message_square_text, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      passengerNote,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, height: 1.3),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      dropoff,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
+            ),
+          ],
+          const SizedBox(height: 12),
           const Divider(height: 1, color: AppTheme.borderSide),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 distance == null
                     ? 'Distance unavailable'
-                    : '${distance.toStringAsFixed(1)} km away',
+                    : '${DistanceFormatter.fromKilometers(distance)} away',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -1316,7 +1300,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -1331,11 +1315,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           });
                         },
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     side: const BorderSide(color: AppTheme.borderSide),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
+                    shape: const StadiumBorder(),
                   ),
                   child: const Text(
                     'Decline',
@@ -1356,10 +1338,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: const StadiumBorder(),
                   ),
                   child: isSubmitting
                       ? const SizedBox(

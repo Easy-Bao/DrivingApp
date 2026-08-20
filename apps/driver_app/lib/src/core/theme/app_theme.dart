@@ -3,28 +3,28 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color primaryColor = Color(0xFF524646);
-  static const Color primaryDark = Color(0xFF3B3030);
-  static const Color secondaryColor = Color(0xFFD2AE8B);
-  static const Color tertiaryColor = Color(0xFF756A68);
-  static const Color neutralColor = Color(0xFFF4EFEC);
+  static const Color primaryColor = Color(0xFF100E11);
+  static const Color primaryDark = Color(0xFF100E11);
+  static const Color secondaryColor = Color(0xFFE3E2C3);
+  static const Color tertiaryColor = Color(0xFF6C757D);
+  static const Color neutralColor = Color(0xFFF1F3F5);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color background = Color(0xFFFBF8F6);
-  static const Color borderSide = Color(0xFFE4DCD8);
-  static const Color secondarySurface = Color(0xFFF3E5D9);
-  static const Color accent = Color(0xFFA56A4C);
+  static const Color background = Color(0xFFF8F9FA);
+  static const Color borderSide = Color(0xFFDEE2E6);
+  static const Color secondarySurface = Color(0xFFF5F5EF);
+  static const Color accent = primaryColor;
 
   static const Color mutedSand = secondaryColor;
   static const Color slate = tertiaryColor;
   static const Color darkSlate = tertiaryColor;
 
-  static const Color complete = Color(0xFF2F7D5A);
-  static const Color cancel = Color(0xFFB84C4C);
+  static const Color complete = Color(0xFF198754);
+  static const Color cancel = Color(0xFFDC3545);
   static const Color inProgress = primaryColor;
 
   static const Color selectedItemColor = primaryColor;
-  static const Color unselectedItemColor = Color(0xFF8A7E7B);
-  static const Color outlineBorderColor = Color(0xFFE9E1DD);
+  static const Color unselectedItemColor = Color(0xFF6C757D);
+  static const Color outlineBorderColor = Color(0xFFE9ECEF);
 
   static ThemeData get themeData {
     return ThemeData(
@@ -189,7 +189,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor: Color(0x1F524646),
+        indicatorColor: Color(0x1F100E11),
         height: 70,
         labelTextStyle: WidgetStatePropertyAll(
           TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
@@ -233,17 +233,15 @@ class AppTheme {
       ),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: primaryColor,
-        selectionColor: Color(0x40524646),
+        selectionColor: Color(0x40100E11),
         selectionHandleColor: primaryColor,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(56),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          minimumSize: const Size.fromHeight(52),
+          shape: const StadiumBorder(),
           elevation: 0,
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
@@ -251,11 +249,9 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryColor,
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size.fromHeight(50),
           side: const BorderSide(color: borderSide),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: const StadiumBorder(),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),
       ),

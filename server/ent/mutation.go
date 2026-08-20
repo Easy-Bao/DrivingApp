@@ -2180,6 +2180,7 @@ type BidSessionMutation struct {
 	dropoff_longitude        *float64
 	adddropoff_longitude     *float64
 	dropoff_name             *string
+	passenger_note           *string
 	distance_km              *float64
 	adddistance_km           *float64
 	duration_minutes         *float64
@@ -2685,6 +2686,55 @@ func (m *BidSessionMutation) ResetDropoffName() {
 	m.dropoff_name = nil
 }
 
+// SetPassengerNote sets the "passenger_note" field.
+func (m *BidSessionMutation) SetPassengerNote(s string) {
+	m.passenger_note = &s
+}
+
+// PassengerNote returns the value of the "passenger_note" field in the mutation.
+func (m *BidSessionMutation) PassengerNote() (r string, exists bool) {
+	v := m.passenger_note
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPassengerNote returns the old "passenger_note" field's value of the BidSession entity.
+// If the BidSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BidSessionMutation) OldPassengerNote(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPassengerNote is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPassengerNote requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPassengerNote: %w", err)
+	}
+	return oldValue.PassengerNote, nil
+}
+
+// ClearPassengerNote clears the value of the "passenger_note" field.
+func (m *BidSessionMutation) ClearPassengerNote() {
+	m.passenger_note = nil
+	m.clearedFields[bidsession.FieldPassengerNote] = struct{}{}
+}
+
+// PassengerNoteCleared returns if the "passenger_note" field was cleared in this mutation.
+func (m *BidSessionMutation) PassengerNoteCleared() bool {
+	_, ok := m.clearedFields[bidsession.FieldPassengerNote]
+	return ok
+}
+
+// ResetPassengerNote resets all changes to the "passenger_note" field.
+func (m *BidSessionMutation) ResetPassengerNote() {
+	m.passenger_note = nil
+	delete(m.clearedFields, bidsession.FieldPassengerNote)
+}
+
 // SetDistanceKm sets the "distance_km" field.
 func (m *BidSessionMutation) SetDistanceKm(f float64) {
 	m.distance_km = &f
@@ -3135,7 +3185,7 @@ func (m *BidSessionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BidSessionMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 17)
 	if m.passenger_id != nil {
 		fields = append(fields, bidsession.FieldPassengerID)
 	}
@@ -3159,6 +3209,9 @@ func (m *BidSessionMutation) Fields() []string {
 	}
 	if m.dropoff_name != nil {
 		fields = append(fields, bidsession.FieldDropoffName)
+	}
+	if m.passenger_note != nil {
+		fields = append(fields, bidsession.FieldPassengerNote)
 	}
 	if m.distance_km != nil {
 		fields = append(fields, bidsession.FieldDistanceKm)
@@ -3208,6 +3261,8 @@ func (m *BidSessionMutation) Field(name string) (ent.Value, bool) {
 		return m.DropoffLongitude()
 	case bidsession.FieldDropoffName:
 		return m.DropoffName()
+	case bidsession.FieldPassengerNote:
+		return m.PassengerNote()
 	case bidsession.FieldDistanceKm:
 		return m.DistanceKm()
 	case bidsession.FieldDurationMinutes:
@@ -3249,6 +3304,8 @@ func (m *BidSessionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldDropoffLongitude(ctx)
 	case bidsession.FieldDropoffName:
 		return m.OldDropoffName(ctx)
+	case bidsession.FieldPassengerNote:
+		return m.OldPassengerNote(ctx)
 	case bidsession.FieldDistanceKm:
 		return m.OldDistanceKm(ctx)
 	case bidsession.FieldDurationMinutes:
@@ -3329,6 +3386,13 @@ func (m *BidSessionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDropoffName(v)
+		return nil
+	case bidsession.FieldPassengerNote:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPassengerNote(v)
 		return nil
 	case bidsession.FieldDistanceKm:
 		v, ok := value.(float64)
@@ -3539,6 +3603,9 @@ func (m *BidSessionMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *BidSessionMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(bidsession.FieldPassengerNote) {
+		fields = append(fields, bidsession.FieldPassengerNote)
+	}
 	if m.FieldCleared(bidsession.FieldTargetDriverID) {
 		fields = append(fields, bidsession.FieldTargetDriverID)
 	}
@@ -3559,6 +3626,9 @@ func (m *BidSessionMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *BidSessionMutation) ClearField(name string) error {
 	switch name {
+	case bidsession.FieldPassengerNote:
+		m.ClearPassengerNote()
+		return nil
 	case bidsession.FieldTargetDriverID:
 		m.ClearTargetDriverID()
 		return nil
@@ -3596,6 +3666,9 @@ func (m *BidSessionMutation) ResetField(name string) error {
 		return nil
 	case bidsession.FieldDropoffName:
 		m.ResetDropoffName()
+		return nil
+	case bidsession.FieldPassengerNote:
+		m.ResetPassengerNote()
 		return nil
 	case bidsession.FieldDistanceKm:
 		m.ResetDistanceKm()

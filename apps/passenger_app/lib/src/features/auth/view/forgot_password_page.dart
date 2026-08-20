@@ -120,7 +120,7 @@ class _ForgotPasswordPageContentState
                         ),
                         const SizedBox(height: 40),
                         const Text(
-                          'EMAIL ADDRESS',
+                          'Email Address',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,

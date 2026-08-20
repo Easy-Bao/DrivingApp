@@ -94,6 +94,11 @@ func DropoffName(v string) predicate.BidSession {
 	return predicate.BidSession(sql.FieldEQ(FieldDropoffName, v))
 }
 
+// PassengerNote applies equality check predicate on the "passenger_note" field. It's identical to PassengerNoteEQ.
+func PassengerNote(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldEQ(FieldPassengerNote, v))
+}
+
 // DistanceKm applies equality check predicate on the "distance_km" field. It's identical to DistanceKmEQ.
 func DistanceKm(v float64) predicate.BidSession {
 	return predicate.BidSession(sql.FieldEQ(FieldDistanceKm, v))
@@ -527,6 +532,81 @@ func DropoffNameEqualFold(v string) predicate.BidSession {
 // DropoffNameContainsFold applies the ContainsFold predicate on the "dropoff_name" field.
 func DropoffNameContainsFold(v string) predicate.BidSession {
 	return predicate.BidSession(sql.FieldContainsFold(FieldDropoffName, v))
+}
+
+// PassengerNoteEQ applies the EQ predicate on the "passenger_note" field.
+func PassengerNoteEQ(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldEQ(FieldPassengerNote, v))
+}
+
+// PassengerNoteNEQ applies the NEQ predicate on the "passenger_note" field.
+func PassengerNoteNEQ(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldNEQ(FieldPassengerNote, v))
+}
+
+// PassengerNoteIn applies the In predicate on the "passenger_note" field.
+func PassengerNoteIn(vs ...string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldIn(FieldPassengerNote, vs...))
+}
+
+// PassengerNoteNotIn applies the NotIn predicate on the "passenger_note" field.
+func PassengerNoteNotIn(vs ...string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldNotIn(FieldPassengerNote, vs...))
+}
+
+// PassengerNoteGT applies the GT predicate on the "passenger_note" field.
+func PassengerNoteGT(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldGT(FieldPassengerNote, v))
+}
+
+// PassengerNoteGTE applies the GTE predicate on the "passenger_note" field.
+func PassengerNoteGTE(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldGTE(FieldPassengerNote, v))
+}
+
+// PassengerNoteLT applies the LT predicate on the "passenger_note" field.
+func PassengerNoteLT(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldLT(FieldPassengerNote, v))
+}
+
+// PassengerNoteLTE applies the LTE predicate on the "passenger_note" field.
+func PassengerNoteLTE(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldLTE(FieldPassengerNote, v))
+}
+
+// PassengerNoteContains applies the Contains predicate on the "passenger_note" field.
+func PassengerNoteContains(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldContains(FieldPassengerNote, v))
+}
+
+// PassengerNoteHasPrefix applies the HasPrefix predicate on the "passenger_note" field.
+func PassengerNoteHasPrefix(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldHasPrefix(FieldPassengerNote, v))
+}
+
+// PassengerNoteHasSuffix applies the HasSuffix predicate on the "passenger_note" field.
+func PassengerNoteHasSuffix(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldHasSuffix(FieldPassengerNote, v))
+}
+
+// PassengerNoteIsNil applies the IsNil predicate on the "passenger_note" field.
+func PassengerNoteIsNil() predicate.BidSession {
+	return predicate.BidSession(sql.FieldIsNull(FieldPassengerNote))
+}
+
+// PassengerNoteNotNil applies the NotNil predicate on the "passenger_note" field.
+func PassengerNoteNotNil() predicate.BidSession {
+	return predicate.BidSession(sql.FieldNotNull(FieldPassengerNote))
+}
+
+// PassengerNoteEqualFold applies the EqualFold predicate on the "passenger_note" field.
+func PassengerNoteEqualFold(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldEqualFold(FieldPassengerNote, v))
+}
+
+// PassengerNoteContainsFold applies the ContainsFold predicate on the "passenger_note" field.
+func PassengerNoteContainsFold(v string) predicate.BidSession {
+	return predicate.BidSession(sql.FieldContainsFold(FieldPassengerNote, v))
 }
 
 // DistanceKmEQ applies the EQ predicate on the "distance_km" field.

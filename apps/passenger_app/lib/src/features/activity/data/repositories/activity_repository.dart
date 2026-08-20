@@ -5,18 +5,18 @@ import 'package:passenger_app/src/features/trip/data/datasources/passenger_remot
 import 'package:shared_core/shared_core.dart';
 
 const List<String> _monthAbbreviations = <String>[
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 String _shortenAddress(String fullAddress) {

@@ -1,4 +1,5 @@
 import 'package:driver_app/src/core/location/location.dart';
+import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
@@ -8,29 +9,27 @@ import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver_app/src/features/trip/view/widgets/en_route_pickup_panel_widget.dart';
-import 'package:driver_app/src/features/trip/view/widgets/trip_map_current_location_button.dart';
+import 'package:driver_app/src/features/trip/view/widgets/pickup_navigation_panel_widget.dart';
 import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-class EnRoutePickupPage extends StatefulWidget {
+class PickupNavigationPage extends StatefulWidget {
   final String pickup;
   final String dropoff;
   final double distance;
   final double fare;
   final String duration;
 
-  const EnRoutePickupPage({
+  const PickupNavigationPage({
     super.key,
     required this.pickup,
     required this.dropoff,
@@ -40,19 +39,18 @@ class EnRoutePickupPage extends StatefulWidget {
   });
 
   @override
-  State<EnRoutePickupPage> createState() => _EnRoutePickupPageState();
+  State<PickupNavigationPage> createState() => _PickupNavigationPageState();
 }
 
-class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
+class _PickupNavigationPageState extends State<PickupNavigationPage> {
   double _sliderVal = 0;
   bool _isLoading = true;
   bool _isConfirmingArrival = false;
-  double? _passengerLat;
-  double? _passengerLng;
-  AppMapController? _mapController;
+  double? _pickupLat;
+  double? _pickupLng;
   Timer? _trackingTimer;
   late final LiveMapBloc _liveMapBloc;
-  bool _isTrackingPassenger = false;
+  bool _isRefreshingRoute = false;
 
   int _unreadChatMessagesCount = 0;
   int _viewedPassengerMessagesCount = 0;
@@ -72,32 +70,17 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
     super.dispose();
   }
 
-  void _startTrackingPassenger() {
+  void _startRouteTracking() {
     final cubit = BlocProvider.of<RideFlowCubit>(context);
     _trackingTimer?.cancel();
     _trackingTimer = Timer.periodic(const Duration(seconds: 4), (timer) async {
-      if (!mounted || _isTrackingPassenger) return;
-      _isTrackingPassenger = true;
+      if (!mounted || _isRefreshingRoute) return;
+      _isRefreshingRoute = true;
 
       try {
         await _updateUnreadMessagesCount(cubit);
         final rideId = cubit.activeRideId;
         if (rideId == null || rideId.isEmpty) return;
-
-        try {
-          final loc = await Modular.get<TelemetryRemoteDataSource>()
-              .fetchPassengerLocation(rideId);
-          if (loc['lat'] is num && loc['lng'] is num) {
-            final pLat = (loc['lat'] as num).toDouble();
-            final pLng = (loc['lng'] as num).toDouble();
-            if (mounted && (pLat != _passengerLat || pLng != _passengerLng)) {
-              setState(() {
-                _passengerLat = pLat;
-                _passengerLng = pLng;
-              });
-            }
-          }
-        } catch (_) {}
 
         try {
           final pos =
@@ -112,20 +95,20 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                 ),
               );
             }
-            if (mounted && _passengerLat != null && _passengerLng != null) {
+            if (mounted && _pickupLat != null && _pickupLng != null) {
               _liveMapBloc.add(
                 UpdateLocationsAndDrawRouteEvent(
                   driverLat: pos.latitude,
                   driverLng: pos.longitude,
-                  passengerLat: _passengerLat!,
-                  passengerLng: _passengerLng!,
+                  passengerLat: _pickupLat!,
+                  passengerLng: _pickupLng!,
                 ),
               );
             }
           }
         } catch (_) {}
       } finally {
-        _isTrackingPassenger = false;
+        _isRefreshingRoute = false;
       }
     });
   }
@@ -169,14 +152,14 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
     if (pos == null) return;
 
     final rideState = BlocProvider.of<RideFlowCubit>(context).state;
-    if (rideState is RideFlowEnRoutePickup) {
-      _passengerLat = rideState.pickupLat;
-      _passengerLng = rideState.pickupLng;
+    if (rideState is RideFlowNavigatingToPickup) {
+      _pickupLat = rideState.pickupLat;
+      _pickupLng = rideState.pickupLng;
     } else {
       final places = await MapProvider.searchPlaces(widget.pickup);
       if (places.isNotEmpty) {
-        _passengerLat = places.first.latitude;
-        _passengerLng = places.first.longitude;
+        _pickupLat = places.first.latitude;
+        _pickupLng = places.first.longitude;
       }
     }
 
@@ -186,28 +169,27 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
     });
 
     _triggerDrawRoute(pos.latitude, pos.longitude);
-    _startTrackingPassenger();
+    _startRouteTracking();
   }
 
   void _triggerDrawRoute(double dLat, double dLng) {
-    final passengerLat = _passengerLat;
-    final passengerLng = _passengerLng;
-    if (passengerLat == null || passengerLng == null) return;
+    final pickupLat = _pickupLat;
+    final pickupLng = _pickupLng;
+    if (pickupLat == null || pickupLng == null) return;
     _liveMapBloc.add(
       UpdateLocationsAndDrawRouteEvent(
         driverLat: dLat,
         driverLng: dLng,
-        passengerLat: passengerLat,
-        passengerLng: passengerLng,
+        passengerLat: pickupLat,
+        passengerLng: pickupLng,
       ),
     );
   }
 
   void _onMapCreated(AppMapController controller) {
-    _mapController = controller;
     final pos = LocationService.lastPosition;
-    final defaultLat = pos?.latitude ?? _passengerLat;
-    final defaultLng = pos?.longitude ?? _passengerLng;
+    final defaultLat = pos?.latitude ?? _pickupLat;
+    final defaultLng = pos?.longitude ?? _pickupLng;
     if (defaultLat == null || defaultLng == null) return;
 
     _liveMapBloc.add(
@@ -223,29 +205,15 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
     }
   }
 
-  Future<void> _recenterMap() async {
-    final controller = _mapController;
-    final position =
-        LocationService.lastPosition ??
-        await LocationService.getCurrentPosition();
-    if (controller == null || position == null) return;
-    await MapProvider.moveCamera(
-      controller,
-      position.latitude,
-      position.longitude,
-      zoom: 16,
-    );
-  }
-
   Future<void> _confirmArrival(BuildContext context) async {
     if (_isConfirmingArrival) return;
     final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowEnRoutePickup
+    final passengerName = state is RideFlowNavigatingToPickup
         ? state.passengerName
         : 'Passenger';
-    final pickupState = state is RideFlowEnRoutePickup ? state : null;
-    final pickupLat = pickupState?.pickupLat ?? _passengerLat;
-    final pickupLng = pickupState?.pickupLng ?? _passengerLng;
+    final pickupState = state is RideFlowNavigatingToPickup ? state : null;
+    final pickupLat = pickupState?.pickupLat ?? _pickupLat;
+    final pickupLng = pickupState?.pickupLng ?? _pickupLng;
     if (pickupLat == null || pickupLng == null) return;
 
     setState(() => _isConfirmingArrival = true);
@@ -304,7 +272,7 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
           final position = LocationService.lastPosition;
-          final pickupState = rideCubitState is RideFlowEnRoutePickup
+          final pickupState = rideCubitState is RideFlowNavigatingToPickup
               ? rideCubitState
               : null;
           final defaultLat = position?.latitude ?? pickupState?.pickupLat;
@@ -330,31 +298,6 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                   ),
                 ),
                 SafeArea(child: _buildHeader(context)),
-                Positioned(
-                  top: MediaQuery.paddingOf(context).top + 72,
-                  right: 20,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TripMapCurrentLocationButton(
-                        onPressed: _mapController == null ? null : _recenterMap,
-                      ),
-                      const SizedBox(height: 12),
-                      MapZoomControlsWidget(
-                        onZoomIn: _mapController == null
-                            ? null
-                            : () => unawaited(
-                                MapProvider.zoomIn(_mapController!),
-                              ),
-                        onZoomOut: _mapController == null
-                            ? null
-                            : () => unawaited(
-                                MapProvider.zoomOut(_mapController!),
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: SafeArea(
@@ -365,7 +308,8 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                         final rideState = BlocProvider.of<RideFlowCubit>(
                           context,
                         ).state;
-                        final passengerName = rideState is RideFlowEnRoutePickup
+                        final passengerName =
+                            rideState is RideFlowNavigatingToPickup
                             ? rideState.passengerName
                             : 'Passenger';
 
@@ -373,7 +317,7 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                           constraints: BoxConstraints(
                             maxWidth: isWide ? 600.0 : double.infinity,
                           ),
-                          child: EnRoutePickupPanelWidget(
+                          child: PickupNavigationPanelWidget(
                             pickup: widget.pickup,
                             dropoff: widget.dropoff,
                             passengerName: passengerName,
@@ -397,8 +341,9 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                                   final ride =
                                       await Modular.get<TripRemoteDataSource>()
                                           .getRideStatus(rideId);
-                                  final passengerId =
-                                      ride['passenger_id'] as String?;
+                                  final passengerId = driverValueAsString(
+                                    ride['passenger_id'],
+                                  );
                                   if (passengerId != null &&
                                       passengerId.isNotEmpty) {
                                     final passenger =
@@ -426,7 +371,7 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                               final state = BlocProvider.of<RideFlowCubit>(
                                 context,
                               ).state;
-                              final pName = state is RideFlowEnRoutePickup
+                              final pName = state is RideFlowNavigatingToPickup
                                   ? state.passengerName
                                   : 'Passenger';
                               final driverId =
@@ -442,6 +387,9 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                                 extra: {
                                   'roomId': rideId,
                                   'userId': driverId,
+                                  'peerId': BlocProvider.of<RideFlowCubit>(
+                                    context,
+                                  ).activePassengerId,
                                   'peerName': pName,
                                 },
                               );
@@ -504,7 +452,7 @@ class _EnRoutePickupPageState extends State<EnRoutePickupPage> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'EN ROUTE TO PICKUP',
+                  'En Route to Pickup',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,

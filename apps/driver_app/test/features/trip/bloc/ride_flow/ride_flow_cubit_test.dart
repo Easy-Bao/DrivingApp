@@ -56,7 +56,7 @@ void main() {
 
   group('RideFlowCubit — acceptRide()', () {
     blocTest<RideFlowCubit, RideFlowState>(
-      'emits RideFlowEnRoutePickup with correct data',
+      'emits RideFlowNavigatingToPickup with correct data',
       build: () => _makeCubit(mockTripRemoteDataSource, mockSessionService),
       act: (cubit) => cubit.acceptRide(
         rideId: 'test-ride-id',
@@ -65,7 +65,7 @@ void main() {
         pickupLng: 123.43,
       ),
       expect: () => [
-        const RideFlowEnRoutePickup(
+        const RideFlowNavigatingToPickup(
           passengerName: 'Juan Dela Cruz',
           pickupLat: 7.82,
           pickupLng: 123.43,

@@ -66,7 +66,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       );
     } else {
       emit(
-        RideFlowEnRoutePickup(
+        RideFlowNavigatingToPickup(
           passengerName: passengerName,
           pickupLat: pickupLat,
           pickupLng: pickupLng,
@@ -110,7 +110,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       }
 
       emit(
-        RideFlowEnRoutePickup(
+        RideFlowNavigatingToPickup(
           passengerName: passengerName,
           pickupLat: pickupLat,
           pickupLng: pickupLng,

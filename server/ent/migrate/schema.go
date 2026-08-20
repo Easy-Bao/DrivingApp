@@ -67,6 +67,7 @@ var (
 		{Name: "dropoff_latitude", Type: field.TypeFloat64},
 		{Name: "dropoff_longitude", Type: field.TypeFloat64},
 		{Name: "dropoff_name", Type: field.TypeString},
+		{Name: "passenger_note", Type: field.TypeString, Nullable: true, Size: 160},
 		{Name: "distance_km", Type: field.TypeFloat64},
 		{Name: "duration_minutes", Type: field.TypeFloat64},
 		{Name: "offered_fare_centavos", Type: field.TypeInt64},

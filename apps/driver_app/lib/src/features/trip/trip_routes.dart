@@ -1,6 +1,6 @@
 abstract final class TripRoutes {
-  static const String enRoutePickup = 'EnRoutePickup';
-  static const String enRoutePickupPath = 'ride/en-route';
+  static const String pickupNavigation = 'PickupNavigation';
+  static const String pickupNavigationPath = 'ride/pickup-navigation';
   static const String waitingPassenger = 'WaitingPassenger';
   static const String waitingPassengerPath = 'ride/waiting';
   static const String inTransit = 'InTransit';

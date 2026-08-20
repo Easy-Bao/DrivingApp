@@ -28,6 +28,7 @@ class FindingDriverPage extends StatelessWidget {
   final String? pickupAddress;
   final double? pickupLatitude;
   final double? pickupLongitude;
+  final String passengerNote;
 
   const FindingDriverPage({
     super.key,
@@ -39,6 +40,7 @@ class FindingDriverPage extends StatelessWidget {
     this.pickupAddress,
     this.pickupLatitude,
     this.pickupLongitude,
+    this.passengerNote = '',
   });
 
   @override
@@ -57,6 +59,7 @@ class FindingDriverPage extends StatelessWidget {
         pickupAddress: pickupAddress,
         pickupLatitude: pickupLatitude,
         pickupLongitude: pickupLongitude,
+        passengerNote: passengerNote,
       ),
     );
   }
@@ -71,6 +74,7 @@ class FindingDriverPageContent extends StatefulWidget {
   final String? pickupAddress;
   final double? pickupLatitude;
   final double? pickupLongitude;
+  final String passengerNote;
 
   const FindingDriverPageContent({
     super.key,
@@ -82,6 +86,7 @@ class FindingDriverPageContent extends StatefulWidget {
     this.pickupAddress,
     this.pickupLatitude,
     this.pickupLongitude,
+    this.passengerNote = '',
   });
 
   @override
@@ -106,18 +111,14 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
   ({double lat, double lng})? get _pickupCoordinate {
     final latitude = widget.pickupLatitude;
     final longitude = widget.pickupLongitude;
-    if (latitude != null && longitude != null) {
-      return (lat: latitude, lng: longitude);
-    }
-    final position = LocationService.lastPosition;
-    if (position == null) return null;
-    return (lat: position.latitude, lng: position.longitude);
+    if (latitude == null || longitude == null) return null;
+    return (lat: latitude, lng: longitude);
   }
 
   String _driverMarkerLabel(DriverModel driver) {
     final onboard = driver.onboardPassengerCount;
     return '${driver.displayName}\n★ ${driver.rating.toStringAsFixed(1)} • '
-        '${driver.distanceKm.toStringAsFixed(1)} km • '
+        '${DistanceFormatter.fromKilometers(driver.distanceKm)} • '
         '${onboard == null ? '—' : '$onboard/5'} passengers';
   }
 
@@ -166,6 +167,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
             distance: widget.distance,
             duration: widget.duration,
             pickupAddress: widget.pickupAddress,
+            passengerNote: widget.passengerNote,
           ),
         ),
       );
@@ -247,6 +249,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
       distance: widget.distance,
       duration: widget.duration,
       pickupAddress: widget.pickupAddress,
+      passengerNote: widget.passengerNote,
     );
 
     BlocProvider.of<BookingBloc>(context).add(
@@ -282,6 +285,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
       distance: widget.distance,
       duration: widget.duration,
       pickupAddress: widget.pickupAddress,
+      passengerNote: widget.passengerNote,
     );
 
     BlocProvider.of<BookingBloc>(context).add(
@@ -340,6 +344,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
           distance: widget.distance,
           duration: widget.duration,
           pickupAddress: widget.pickupAddress,
+          passengerNote: widget.passengerNote,
         ),
       ),
     );
@@ -621,7 +626,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                                   : AppTheme.primaryColor,
                                             ),
                                             label: Text(
-                                              '${driver.displayName} (${driver.distanceKm.toStringAsFixed(1)}km)',
+                                              '${driver.displayName} (${DistanceFormatter.fromKilometers(driver.distanceKm)})',
                                               style: TextStyle(
                                                 fontSize: 12.0,
                                                 fontWeight: isSelected
@@ -734,7 +739,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                               onSearchAllDriversPressed: _startOpenBooking,
                               onCancelRidePressed: _handleCancel,
                               isCanceling: _isLeaving,
-                              compact: false,
                             );
                           } else if (state is BookingSearching) {
                             return FindingDriverSearchingPanelWidget(

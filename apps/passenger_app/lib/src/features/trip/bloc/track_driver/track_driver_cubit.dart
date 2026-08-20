@@ -48,9 +48,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     List<List<double>>? routePoints;
 
     double progress = 0.0;
-    var pickupRouteRequested = false;
     DateTime? pickupRouteLastAttempt;
-    var destinationRouteActive = false;
     DateTime? destinationRouteLastAttempt;
     var trackingCompleted = false;
 
@@ -114,7 +112,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 (destinationLng == 0 ? null : destinationLng);
             final now = DateTime.now();
             if (rideUpdate.status != RideStatus.inTransit &&
-                !pickupRouteRequested &&
                 _canRetryRoute(pickupRouteLastAttempt, now)) {
               pickupRouteLastAttempt = now;
               final candidate = await _repository.getRoutePolyline(
@@ -125,16 +122,13 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               );
               if (_hasRouteGeometry(candidate)) {
                 routePoints = candidate;
-                pickupRouteRequested = true;
               }
             }
             if (rideUpdate.status == RideStatus.inTransit &&
-                !destinationRouteActive &&
                 targetLat != null &&
                 targetLng != null &&
                 _canRetryRoute(destinationRouteLastAttempt, now)) {
               destinationRouteLastAttempt = now;
-              routePoints = null;
               final candidate = await _repository.getRoutePolyline(
                 startLat: driverLat!,
                 startLng: driverLng!,
@@ -144,7 +138,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               if (_hasRouteGeometry(candidate)) {
                 routePoints = candidate;
                 progress = 0;
-                destinationRouteActive = true;
               }
             }
 
@@ -189,7 +182,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
   bool _canRetryRoute(DateTime? lastAttempt, DateTime now) {
     return lastAttempt == null ||
-        now.difference(lastAttempt) >= const Duration(seconds: 8);
+        now.difference(lastAttempt) >= const Duration(seconds: 6);
   }
 
   bool _hasRouteGeometry(List<List<double>>? points) {
