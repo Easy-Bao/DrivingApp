@@ -496,19 +496,6 @@ class _HomePageState extends State<HomePage> {
                   : AppTheme.primaryColor,
             ),
           ),
-          if (hasLocation) ...[
-            const SizedBox(width: 6),
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: hasLocation
-                    ? AppTheme.activeControlForeground
-                    : AppTheme.complete,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
         ],
       ),
     );

@@ -26,12 +26,12 @@ void main() {
       ),
     );
 
-    expect(find.text('Available driver ratings'), findsOneWidget);
+    expect(find.text('Drivers Online Now'), findsOneWidget);
     expect(find.text('Nearby Driver'), findsOneWidget);
     expect(find.text('4.8'), findsOneWidget);
     expect(
       find.text(
-        'Ratings are visible now; exact driver locations stay private until you book.',
+        'These drivers can accept a ride. Compare their ratings before you request one.',
       ),
       findsOneWidget,
     );

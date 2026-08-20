@@ -31,7 +31,7 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
               ),
               SizedBox(width: 8),
               Text(
-                'Available driver ratings',
+                'Drivers Online Now',
                 style: TextStyle(
                   color: AppTheme.primaryColor,
                   fontSize: 15,
@@ -42,7 +42,7 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Ratings are visible now; exact driver locations stay private until you book.',
+            'These drivers can accept a ride. Compare their ratings before you request one.',
             style: TextStyle(
               color: AppTheme.primaryColor.withValues(alpha: 0.55),
               fontSize: 12,
