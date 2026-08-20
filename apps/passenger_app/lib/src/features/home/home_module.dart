@@ -23,7 +23,12 @@ class HomeModule {
         final extra = SafeRouteExtra.asMap(state.extra);
         final place = extra['place'] as PlaceModel?;
         final initialLabel = extra['initialLabel'] as String?;
-        return AddCategoryPage(initialPlace: place, initialLabel: initialLabel);
+        final initialIconName = extra['initialIconName'] as String?;
+        return AddCategoryPage(
+          initialPlace: place,
+          initialLabel: initialLabel,
+          initialIconName: initialIconName,
+        );
       },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,

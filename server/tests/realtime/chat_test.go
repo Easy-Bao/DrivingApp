@@ -17,7 +17,16 @@ type chatHistory struct {
 	driverID    string
 }
 
-func (history *chatHistory) CreateRoom(context.Context, string, string, string) error { return nil }
+func (history *chatHistory) CreateRoom(
+	_ context.Context,
+	_ string,
+	passengerID string,
+	driverID string,
+) error {
+	history.passengerID = passengerID
+	history.driverID = driverID
+	return nil
+}
 func (history *chatHistory) Append(_ context.Context, message domain.Message) error {
 	history.messages = append(history.messages, message)
 	return nil
@@ -28,6 +37,23 @@ func (history *chatHistory) Messages(context.Context, string) ([]domain.Message,
 func (history *chatHistory) Resolve(context.Context, string) error { return nil }
 func (history *chatHistory) RoomParticipants(context.Context, string) (string, string, error) {
 	return history.passengerID, history.driverID, nil
+}
+
+func TestChatCreateRoomDoesNotReplaceParticipants(t *testing.T) {
+	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
+	service := usecase.NewService(chatadapter.NewHub(), history)
+
+	if err := service.CreateRoom(
+		context.Background(),
+		"ride-1",
+		"passenger-2",
+		"driver-2",
+	); err != domain.ErrRoomConflict {
+		t.Fatalf("create room error = %v, want %v", err, domain.ErrRoomConflict)
+	}
+	if history.passengerID != "passenger-1" || history.driverID != "driver-1" {
+		t.Fatalf("room participants changed to %q/%q", history.passengerID, history.driverID)
+	}
 }
 
 type chatEventPublisher struct {

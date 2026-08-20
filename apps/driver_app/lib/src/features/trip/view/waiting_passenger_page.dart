@@ -5,6 +5,7 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 
+import 'package:dio/dio.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
@@ -47,12 +48,14 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   bool _isStartingTrip = false;
   bool _isPollingChat = false;
   Timer? _chatPollTimer;
+  ChatRepository? _chatRepository;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     final cubit = BlocProvider.of<RideFlowCubit>(context);
+    unawaited(_initializeChatRepository(cubit));
     _chatPollTimer = Timer.periodic(
       const Duration(seconds: 4),
       (_) => unawaited(_updateUnreadMessagesCount(cubit)),
@@ -60,9 +63,22 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     unawaited(_updateUnreadMessagesCount(cubit));
   }
 
+  Future<void> _initializeChatRepository(RideFlowCubit cubit) async {
+    final driverIdentifier =
+        await Modular.get<SecureSessionService>().readDriverId() ?? '';
+    if (!mounted || driverIdentifier.isEmpty) return;
+    _chatRepository = ChatRepository(
+      remoteDataSource: WebSocketChatRemoteDataSource(),
+      currentUserId: driverIdentifier,
+      clientDio: Modular.get<Dio>(),
+    );
+    unawaited(_updateUnreadMessagesCount(cubit));
+  }
+
   @override
   void dispose() {
     _chatPollTimer?.cancel();
+    unawaited(_chatRepository?.dispose());
     super.dispose();
   }
 
@@ -77,7 +93,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverIdentifier.isEmpty) return;
 
-      final chatRepo = Modular.get<ChatRepository>();
+      final chatRepo = _chatRepository;
+      if (chatRepo == null) return;
       final result = await chatRepo.fetchRoomMessages(rideId);
       result.fold((_) => null, (List<ChatMessage> messages) {
         final passengerChatMessagesList = messages
@@ -91,7 +108,9 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
           return;
         }
         final unreadCount =
-            currentPassengerMessagesCount - _viewedPassengerMessagesCount;
+            (currentPassengerMessagesCount - _viewedPassengerMessagesCount)
+                .clamp(0, currentPassengerMessagesCount)
+                .toInt();
         if (mounted && unreadCount != _unreadChatMessagesCount) {
           setState(() => _unreadChatMessagesCount = unreadCount);
         }
@@ -200,19 +219,33 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          IconButton(
-                            tooltip: 'Back',
-                            onPressed: () => context.pop(),
-                            icon: const Icon(
-                              LucideIcons.arrow_left,
-                              size: 20,
-                              color: AppTheme.primaryColor,
+                          SizedBox(
+                            width: 46,
+                            height: 46,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppTheme.borderSide),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                tooltip: 'Back',
+                                onPressed: () => context.pop(),
+                                icon: const Icon(
+                                  LucideIcons.arrow_left,
+                                  size: 20,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
                             ),
                           ),
-                          const Spacer(),
-                          _buildStatusBadge(),
-                          const Spacer(),
-                          const SizedBox(width: 44),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -311,31 +344,6 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
             );
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppTheme.complete.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(LucideIcons.map_pin_check, size: 13, color: AppTheme.complete),
-          SizedBox(width: 6),
-          Text(
-            'Arrived',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.complete,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -12,6 +12,7 @@ import 'package:passenger_app/src/features/chat/bloc/chat/chat_cubit.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class DriverChatPage extends StatefulWidget {
   final String? roomId;
@@ -203,8 +204,18 @@ class _DriverChatPageState extends State<DriverChatPage>
     return BlocProvider.value(
       value: _chatCubit,
       child: BlocConsumer<ChatCubit, ChatState>(
+        listenWhen: (previous, current) =>
+            previous.messages != current.messages ||
+            previous.isRoomLocked != current.isRoomLocked ||
+            (previous.errorMessage != current.errorMessage &&
+                current.errorMessage != null),
         listener: (context, state) {
           if (state.messages.isNotEmpty) _scrollDown();
+          if (state.isRoomLocked) {
+            CustomToast.show(context, 'This chat is now closed.');
+          } else if (state.errorMessage != null) {
+            CustomToast.show(context, state.errorMessage!, isError: true);
+          }
         },
         builder: (context, state) {
           final chatHistoryMessages = state.messages;

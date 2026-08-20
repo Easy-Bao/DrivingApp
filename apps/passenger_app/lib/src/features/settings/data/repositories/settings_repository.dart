@@ -24,8 +24,12 @@ class SettingsRepository implements ISettingsRepository {
           preferredThemeMode: themeMode,
         ),
       );
-    } catch (error) {
-      return Left(CacheFailure('Failed to load settings: $error'));
+    } catch (_) {
+      return const Left(
+        CacheFailure(
+          'Unable to load your settings right now. Please try again.',
+        ),
+      );
     }
   }
 
@@ -39,8 +43,12 @@ class SettingsRepository implements ISettingsRepository {
       await prefs.setBool(_locationSharingKey, settings.locationSharingEnabled);
       await prefs.setString(_themeModeKey, settings.preferredThemeMode);
       return const Right(null);
-    } catch (error) {
-      return Left(CacheFailure('Failed to save settings: $error'));
+    } catch (_) {
+      return const Left(
+        CacheFailure(
+          'Unable to save your settings right now. Please try again.',
+        ),
+      );
     }
   }
 }

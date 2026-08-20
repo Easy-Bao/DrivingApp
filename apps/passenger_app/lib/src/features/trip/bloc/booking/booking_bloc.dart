@@ -149,7 +149,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     if (nearbyDrivers.isEmpty) {
       if (!lastLookupSucceeded && lastFailure != null) {
-        emit(BookingFailure(lastFailure!.message));
+        emit(BookingFailure(ErrorHandler.getErrorMessage(lastFailure!)));
         return;
       }
       if (!_nearestSearchCancelled) {
@@ -158,7 +158,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       if (isClosed || _nearestSearchCancelled) return;
       emit(
         BookingFailure(
-          lastFailure?.message ?? 'No drivers nearby. Please try again.',
+          lastFailure == null
+              ? 'No drivers nearby. Please try again.'
+              : ErrorHandler.getErrorMessage(lastFailure!),
           isNoDriverFound: true,
         ),
       );

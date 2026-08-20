@@ -49,13 +49,16 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       );
       if (selectedPlace == null || !mounted) return;
 
-      final newPlace = SavedPlace(
-        label: label,
-        iconName: iconName,
-        latitude: selectedPlace.latitude,
-        longitude: selectedPlace.longitude,
-        savedAddress: selectedPlace.fullAddress,
+      final configuredPlace = await context.pushNamed<SavedPlace>(
+        HomeRoutes.addCategory,
+        extra: {
+          'place': selectedPlace,
+          'initialLabel': label,
+          'initialIconName': iconName,
+        },
       );
+      if (configuredPlace == null || !mounted) return;
+
       final existingIndex = existing == null
           ? -1
           : cubit.state.places.indexWhere(
@@ -63,9 +66,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                   place.label.toLowerCase() == existing.label.toLowerCase(),
             );
       if (existingIndex == -1) {
-        await cubit.addPlace(newPlace);
+        await cubit.addPlace(configuredPlace);
       } else {
-        await cubit.replacePlace(existingIndex, newPlace);
+        await cubit.replacePlace(existingIndex, configuredPlace);
       }
     } finally {
       _isPlaceFlowOpen = false;

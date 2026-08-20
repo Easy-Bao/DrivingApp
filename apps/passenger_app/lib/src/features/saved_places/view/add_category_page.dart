@@ -13,8 +13,14 @@ import 'package:shared_ui/shared_ui.dart';
 class AddCategoryPage extends StatefulWidget {
   final PlaceModel? initialPlace;
   final String? initialLabel;
+  final String? initialIconName;
 
-  const AddCategoryPage({super.key, this.initialPlace, this.initialLabel});
+  const AddCategoryPage({
+    super.key,
+    this.initialPlace,
+    this.initialLabel,
+    this.initialIconName,
+  });
 
   @override
   State<AddCategoryPage> createState() => _AddCategoryPageState();
@@ -48,6 +54,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     final defaultLabel = widget.initialLabel ?? widget.initialPlace?.name;
     if (defaultLabel != null) {
       _controller.text = defaultLabel;
+    }
+    if (widget.initialIconName != null) {
+      selectedIcon = _iconDataFromName(widget.initialIconName!);
     }
     if (widget.initialPlace != null) {
       _lat = widget.initialPlace!.latitude;
@@ -170,6 +179,27 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     if (icon == LucideIcons.house) return 'house';
     if (icon == LucideIcons.briefcase) return 'briefcase';
     return 'map_pin';
+  }
+
+  IconData _iconDataFromName(String name) {
+    switch (name) {
+      case 'heart':
+        return LucideIcons.heart;
+      case 'users':
+        return LucideIcons.users;
+      case 'graduation_cap':
+        return LucideIcons.graduation_cap;
+      case 'store':
+        return LucideIcons.store;
+      case 'star':
+        return LucideIcons.star;
+      case 'house':
+        return LucideIcons.house;
+      case 'briefcase':
+        return LucideIcons.briefcase;
+      default:
+        return LucideIcons.map_pin;
+    }
   }
 
   Widget? _cachedMapView;

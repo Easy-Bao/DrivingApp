@@ -103,6 +103,19 @@ func (service *Service) CreateRoom(ctx context.Context, roomID, passengerID, dri
 	if service.history == nil {
 		return nil
 	}
+	if participants, ok := service.history.(domain.RoomParticipantsRepository); ok {
+		existingPassengerID, existingDriverID, err := participants.RoomParticipants(
+			ctx,
+			roomID,
+		)
+		if err != nil {
+			return err
+		}
+		if (existingPassengerID != "" || existingDriverID != "") &&
+			(existingPassengerID != passengerID || existingDriverID != driverID) {
+			return domain.ErrRoomConflict
+		}
+	}
 	return service.history.CreateRoom(ctx, roomID, passengerID, driverID)
 }
 

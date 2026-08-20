@@ -7,6 +7,7 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ProfileInfoPage extends StatefulWidget {
@@ -45,10 +46,51 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   Future<void> _loadProfile() async {
     final session = Modular.get<SecureSessionService>();
+    final prefs = await SharedPreferences.getInstance();
     final pId = await session.readPassengerId() ?? '';
+    final cachedValues = <String, String>{
+      'name': prefs.getString('passenger_name') ?? '',
+      'phone': prefs.getString('passenger_phone') ?? '',
+      'email': prefs.getString('passenger_email') ?? '',
+      'address': prefs.getString('passenger_address') ?? '',
+    };
+
+    if (!mounted) return;
     setState(() {
       _passengerId = pId;
+      _applyProfileValues(cachedValues);
     });
+
+    if (pId.isEmpty) return;
+
+    try {
+      final profile = await Modular.get<PassengerRemoteDataSource>()
+          .fetchPassengerProfile(pId);
+      final values = <String, String>{
+        for (final key in cachedValues.keys)
+          key: _profileValue(profile[key], cachedValues[key] ?? ''),
+      };
+      await prefs.setString('passenger_name', values['name']!);
+      await prefs.setString('passenger_phone', values['phone']!);
+      await prefs.setString('passenger_email', values['email']!);
+      await prefs.setString('passenger_address', values['address']!);
+      if (!mounted) return;
+      setState(() => _applyProfileValues(values));
+    } catch (_) {
+      // Cached values remain visible when the profile service is unavailable.
+    }
+  }
+
+  String _profileValue(Object? value, String fallback) {
+    final normalized = value?.toString().trim() ?? '';
+    return normalized.isEmpty ? fallback : normalized;
+  }
+
+  void _applyProfileValues(Map<String, String> values) {
+    _nameController.text = values['name'] ?? '';
+    _phoneController.text = values['phone'] ?? '';
+    _emailController.text = values['email'] ?? '';
+    _addressController.text = values['address'] ?? '';
   }
 
   Future<void> _toggleEdit() async {
@@ -91,6 +133,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               'name': name,
               'phone': phone,
               'email': email,
+              'address': _addressController.text.trim(),
             });
         if (updated.isNotEmpty) {
           if (!mounted) return;
@@ -100,7 +143,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         if (!mounted) return;
         CustomToast.show(
           context,
-          'Failed to update profile: $error',
+          'We could not update your profile. Please try again.',
           isError: true,
         );
       }

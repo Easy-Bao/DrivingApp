@@ -1,4 +1,6 @@
+import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
+import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +52,28 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         return;
       }
 
+      final dashboardCubit = Modular.get<DashboardCubit>();
+      final wasOnline = dashboardCubit.state.isOnline;
       cubit.reset();
+      if (wasOnline) {
+        final position =
+            LocationService.lastPosition ??
+            await LocationService.getCurrentPosition();
+        if (position != null) {
+          final restored = await dashboardCubit.refreshOnlinePresence(
+            lat: position.latitude,
+            lng: position.longitude,
+          );
+          if (!restored) {
+            await dashboardCubit.toggleOnline(
+              requestedOnline: true,
+              lat: position.latitude,
+              lng: position.longitude,
+            );
+          }
+        }
+      }
+      if (!mounted) return;
       context.goNamed(HomeRoutes.dashboard);
     } catch (_) {
       if (!mounted) return;

@@ -4,6 +4,7 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
@@ -55,17 +56,33 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   int _unreadChatMessagesCount = 0;
   int _viewedPassengerMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
+  ChatRepository? _chatRepository;
 
   @override
   void initState() {
     super.initState();
     _liveMapBloc = Modular.get<LiveMapBloc>();
+    unawaited(_initializeChatRepository());
     unawaited(_loadRoute());
+  }
+
+  Future<void> _initializeChatRepository() async {
+    final driverIdentifier =
+        await Modular.get<SecureSessionService>().readDriverId() ?? '';
+    if (!mounted || driverIdentifier.isEmpty) return;
+    _chatRepository = ChatRepository(
+      remoteDataSource: WebSocketChatRemoteDataSource(),
+      currentUserId: driverIdentifier,
+      clientDio: Modular.get<Dio>(),
+    );
+    final cubit = BlocProvider.of<RideFlowCubit>(context);
+    unawaited(_updateUnreadMessagesCount(cubit));
   }
 
   @override
   void dispose() {
     _trackingTimer?.cancel();
+    unawaited(_chatRepository?.dispose());
     unawaited(_liveMapBloc.close());
     super.dispose();
   }
@@ -122,7 +139,8 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverIdentifier.isEmpty) return;
 
-      final chatRepo = Modular.get<ChatRepository>();
+      final chatRepo = _chatRepository;
+      if (chatRepo == null) return;
       final result = await chatRepo.fetchRoomMessages(rideId);
       result.fold((_) => null, (List<ChatMessage> messages) {
         final passengerChatMessagesList = messages
@@ -136,7 +154,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
           return;
         }
         final unreadCount =
-            currentPassengerMessagesCount - _viewedPassengerMessagesCount;
+            (currentPassengerMessagesCount - _viewedPassengerMessagesCount)
+                .clamp(0, currentPassengerMessagesCount)
+                .toInt();
         if (mounted && unreadCount != _unreadChatMessagesCount) {
           setState(() => _unreadChatMessagesCount = unreadCount);
         }
@@ -418,40 +438,31 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
-          IconButton(
-            tooltip: 'Back',
-            onPressed: () => context.pop(),
-            icon: const Icon(
-              LucideIcons.arrow_left,
-              size: 20,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.complete.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  LucideIcons.navigation,
-                  size: 13,
-                  color: AppTheme.complete,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'En Route to Pickup',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.complete,
-                    letterSpacing: 0.5,
+          SizedBox(
+            width: 46,
+            height: 46,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.borderSide),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
                   ),
+                ],
+              ),
+              child: IconButton(
+                tooltip: 'Back',
+                onPressed: () => context.pop(),
+                icon: const Icon(
+                  LucideIcons.arrow_left,
+                  size: 20,
+                  color: AppTheme.primaryColor,
                 ),
-              ],
+              ),
             ),
           ),
         ],

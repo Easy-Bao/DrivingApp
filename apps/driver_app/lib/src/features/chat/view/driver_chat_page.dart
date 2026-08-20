@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class DriverChatPage extends StatefulWidget {
   final String? roomId;
@@ -191,7 +192,20 @@ class _DriverChatPageState extends State<DriverChatPage>
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _chatCubit,
-      child: BlocBuilder<ChatCubit, ChatState>(
+      child: BlocConsumer<ChatCubit, ChatState>(
+        listenWhen: (previous, current) =>
+            previous.messages != current.messages ||
+            previous.isRoomLocked != current.isRoomLocked ||
+            (previous.errorMessage != current.errorMessage &&
+                current.errorMessage != null),
+        listener: (context, state) {
+          if (state.messages.isNotEmpty) _scrollDown();
+          if (state.isRoomLocked) {
+            CustomToast.show(context, 'This chat is now closed.');
+          } else if (state.errorMessage != null) {
+            CustomToast.show(context, state.errorMessage!, isError: true);
+          }
+        },
         builder: (context, state) {
           final chatHistoryMessages = state.messages;
 

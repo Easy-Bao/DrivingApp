@@ -193,11 +193,11 @@ void main() {
       ),
       expect: () => [
         isA<FindingNearestDriver>(),
-        isA<BookingFailure>()
+            isA<BookingFailure>()
             .having(
               (state) => state.message,
               'message',
-              'Unable to check nearby drivers.',
+              'Check your connection and try again.',
             )
             .having(
               (state) => state.isNoDriverFound,

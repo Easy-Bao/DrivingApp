@@ -8,6 +8,7 @@ import (
 var (
 	ErrForbidden      = errors.New("chat room access denied")
 	ErrInvalidRoom    = errors.New("invalid chat room")
+	ErrRoomConflict   = errors.New("chat room participants conflict")
 	ErrInvalidMessage = errors.New("invalid chat message")
 )
 

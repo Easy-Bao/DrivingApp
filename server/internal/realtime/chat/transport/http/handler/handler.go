@@ -52,6 +52,8 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 		status := http.StatusInternalServerError
 		if err == domain.ErrInvalidRoom {
 			status = http.StatusBadRequest
+		} else if err == domain.ErrRoomConflict {
+			status = http.StatusConflict
 		}
 		writeError(writer, status, "could not create chat room")
 		return
