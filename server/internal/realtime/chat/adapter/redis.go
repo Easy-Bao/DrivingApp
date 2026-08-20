@@ -40,7 +40,6 @@ func (repository *RedisRepository) CreateRoom(ctx context.Context, roomID, passe
 			"created_at":   createdAt,
 		})
 		pipe.Expire(ctx, roomKey(roomID), chatRoomTTL)
-		pipe.Expire(ctx, messagesKey(roomID), chatRoomTTL)
 		return nil
 	})
 	return err
@@ -54,9 +53,22 @@ func (repository *RedisRepository) Append(ctx context.Context, message domain.Me
 	if err != nil {
 		return err
 	}
+	roomTTL, err := repository.client.TTL(ctx, roomKey(message.RoomID)).Result()
+	if err != nil {
+		return err
+	}
+	if roomTTL == time.Duration(-2) {
+		return domain.ErrRoomUnavailable
+	}
+	if roomTTL < 0 {
+		roomTTL = chatRoomTTL
+	}
 	_, err = repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.RPush(ctx, messagesKey(message.RoomID), payload)
 		pipe.LTrim(ctx, messagesKey(message.RoomID), -maxHistoryEntries, -1)
+		// The list does not exist until RPush runs, so its TTL must be applied
+		// in the same transaction using the room's remaining lifetime.
+		pipe.Expire(ctx, messagesKey(message.RoomID), roomTTL)
 		return nil
 	})
 	return err
