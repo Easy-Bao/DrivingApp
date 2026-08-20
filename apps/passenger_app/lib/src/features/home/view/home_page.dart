@@ -452,6 +452,10 @@ class _HomePageState extends State<HomePage> {
       );
       if (newPlace != null && mounted) {
         await cubit.addPlace(newPlace);
+        final error = cubit.state.errorMessage;
+        if (mounted && error != null) {
+          CustomToast.show(context, error, isError: true);
+        }
       }
     } finally {
       _isSavedPlaceFlowOpen = false;
@@ -590,6 +594,10 @@ class _HomePageState extends State<HomePage> {
           await cubit.replacePlace(existingIndex, updatedPlace);
         } else {
           await cubit.addPlace(updatedPlace);
+        }
+        final error = cubit.state.errorMessage;
+        if (mounted && error != null) {
+          CustomToast.show(context, error, isError: true);
         }
       }
     }

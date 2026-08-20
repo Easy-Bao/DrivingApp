@@ -41,12 +41,13 @@ class ProfileCubit extends Cubit<ProfileState> {
       final passengerId = await _secureSessionService.readPassengerId() ?? '';
       if (passengerId.isEmpty) return;
 
-      final profile = await _remoteDataSource.fetchPassengerProfile(
+      final response = await _remoteDataSource.fetchPassengerProfile(
         passengerId,
       );
-      final name = profile['name'] as String? ?? cachedName;
-      final phone = profile['phone'] as String? ?? cachedPhone;
-      final email = profile['email'] as String? ?? cachedEmail;
+      final profile = _profilePayload(response);
+      final name = _profileValue(profile['name'], cachedName);
+      final phone = _profileValue(profile['phone'], cachedPhone);
+      final email = _profileValue(profile['email'], cachedEmail);
 
       await prefs.setString('passenger_name', name);
       await prefs.setString('passenger_phone', phone);
@@ -64,5 +65,16 @@ class ProfileCubit extends Cubit<ProfileState> {
         ),
       );
     }
+  }
+
+  Map<String, dynamic> _profilePayload(Map<String, dynamic> response) {
+    final nested = response['profile'] ?? response['user'] ?? response['data'];
+    if (nested is Map) return Map<String, dynamic>.from(nested);
+    return response;
+  }
+
+  String _profileValue(Object? value, String fallback) {
+    final normalized = SafeParse.toStringValue(value).trim();
+    return normalized.isEmpty ? fallback : normalized;
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
+import 'package:shared_core/shared_core.dart';
 
 class SavedPlaceModel extends SavedPlace {
   const SavedPlaceModel({
@@ -19,12 +20,15 @@ class SavedPlaceModel extends SavedPlace {
   };
 
   factory SavedPlaceModel.fromJson(Map<String, dynamic> json) {
+    final label = SafeParse.toStringValue(json['label']).trim();
+    final iconName = SafeParse.toStringValue(json['iconName']).trim();
+    final savedAddress = SafeParse.toStringValue(json['savedAddress']).trim();
     return SavedPlaceModel(
-      label: json['label'] as String,
-      iconName: json['iconName'] as String,
-      savedAddress: json['savedAddress'] as String?,
-      latitude: (json['latitude'] as num?)?.toDouble(),
-      longitude: (json['longitude'] as num?)?.toDouble(),
+      label: label.isEmpty ? 'Saved Place' : label,
+      iconName: iconName.isEmpty ? 'map_pin' : iconName,
+      savedAddress: savedAddress.isEmpty ? null : savedAddress,
+      latitude: SafeParse.toNullableDouble(json['latitude']),
+      longitude: SafeParse.toNullableDouble(json['longitude']),
     );
   }
 

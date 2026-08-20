@@ -13,6 +13,7 @@ import 'package:passenger_app/src/features/saved_places/view/saved_place_icon.da
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class SavedPlacePage extends StatefulWidget {
@@ -70,6 +71,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       } else {
         await cubit.replacePlace(existingIndex, configuredPlace);
       }
+      final error = cubit.state.errorMessage;
+      if (mounted && error != null) {
+        CustomToast.show(context, error, isError: true);
+      }
     } finally {
       _isPlaceFlowOpen = false;
     }
@@ -90,6 +95,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       );
       if (newPlace != null && mounted) {
         await cubit.addPlace(newPlace);
+        final error = cubit.state.errorMessage;
+        if (mounted && error != null) {
+          CustomToast.show(context, error, isError: true);
+        }
       }
     } finally {
       _isPlaceFlowOpen = false;

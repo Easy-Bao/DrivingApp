@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/chat/view/driver_chat_page.dart';
@@ -12,11 +13,16 @@ class ChatModule {
       ChatRoutes.chatPath,
       child: (context, GoRouterState state) {
         final extra = SafeRouteExtra.asMap(state.extra);
+        final roomId = _asNonEmptyString(extra['roomId']);
+        final userId = _asNonEmptyString(extra['userId']);
+        if (roomId == null || userId == null) {
+          return const _ChatUnavailablePage();
+        }
         return DriverChatPage(
-          roomId: extra['roomId'] as String?,
-          userId: extra['userId'] as String?,
-          peerId: extra['peerId'] as String?,
-          peerName: extra['peerName'] as String?,
+          roomId: roomId,
+          userId: userId,
+          peerId: _asNonEmptyString(extra['peerId']),
+          peerName: _asNonEmptyString(extra['peerName']),
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -25,4 +31,29 @@ class ChatModule {
   ];
 
   static List<ModularRoute> shellRoutes = [];
+}
+
+String? _asNonEmptyString(Object? value) {
+  if (value is! String) return null;
+  final text = value.trim();
+  return text.isEmpty ? null : text;
+}
+
+class _ChatUnavailablePage extends StatelessWidget {
+  const _ChatUnavailablePage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'This conversation is unavailable. Return to the trip and try again.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
 }
