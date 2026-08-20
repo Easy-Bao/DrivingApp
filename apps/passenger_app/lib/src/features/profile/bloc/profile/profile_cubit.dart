@@ -45,9 +45,18 @@ class ProfileCubit extends Cubit<ProfileState> {
         passengerId,
       );
       final profile = _profilePayload(response);
-      final name = _profileValue(profile['name'], cachedName);
-      final phone = _profileValue(profile['phone'], cachedPhone);
-      final email = _profileValue(profile['email'], cachedEmail);
+      final name = _profileValue(
+        profile['name'] ?? profile['full_name'] ?? profile['fullName'],
+        cachedName,
+      );
+      final phone = _profileValue(
+        profile['phone'] ?? profile['phone_number'] ?? profile['phoneNumber'],
+        cachedPhone,
+      );
+      final email = _profileValue(
+        profile['email'] ?? profile['email_address'] ?? profile['emailAddress'],
+        cachedEmail,
+      );
 
       await prefs.setString('passenger_name', name);
       await prefs.setString('passenger_phone', phone);

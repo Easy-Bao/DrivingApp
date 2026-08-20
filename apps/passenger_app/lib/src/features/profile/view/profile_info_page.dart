@@ -68,8 +68,26 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           .fetchPassengerProfile(pId);
       final profile = _profilePayload(response);
       final values = <String, String>{
-        for (final key in cachedValues.keys)
-          key: _profileValue(profile[key], cachedValues[key] ?? ''),
+        'name': _profileValue(
+          profile['name'] ?? profile['full_name'] ?? profile['fullName'],
+          cachedValues['name'] ?? '',
+        ),
+        'phone': _profileValue(
+          profile['phone'] ?? profile['phone_number'] ?? profile['phoneNumber'],
+          cachedValues['phone'] ?? '',
+        ),
+        'email': _profileValue(
+          profile['email'] ??
+              profile['email_address'] ??
+              profile['emailAddress'],
+          cachedValues['email'] ?? '',
+        ),
+        'address': _profileValue(
+          profile['address'] ??
+              profile['home_address'] ??
+              profile['homeAddress'],
+          cachedValues['address'] ?? '',
+        ),
       };
       await prefs.setString('passenger_name', values['name']!);
       await prefs.setString('passenger_phone', values['phone']!);
