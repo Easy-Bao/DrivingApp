@@ -99,6 +99,17 @@ func (repository *RedisRepository) IsMember(ctx context.Context, roomID, userID 
 	return fields["passenger_id"] == userID || fields["driver_id"] == userID, nil
 }
 
+func (repository *RedisRepository) IsLocked(ctx context.Context, roomID string) (bool, error) {
+	value, err := repository.client.HGet(ctx, roomKey(roomID), "locked").Result()
+	if err == redis.Nil {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return value == "1", nil
+}
+
 func (repository *RedisRepository) RoomParticipants(ctx context.Context, roomID string) (string, string, error) {
 	fields, err := repository.client.HGetAll(ctx, roomKey(roomID)).Result()
 	if err != nil {

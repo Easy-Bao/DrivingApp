@@ -16,6 +16,7 @@ type chatHistory struct {
 	messages    []domain.Message
 	passengerID string
 	driverID    string
+	locked      bool
 }
 
 type chatAssignmentLookup struct {
@@ -51,6 +52,12 @@ func (history *chatHistory) Messages(context.Context, string) ([]domain.Message,
 func (history *chatHistory) Resolve(context.Context, string) error { return nil }
 func (history *chatHistory) RoomParticipants(context.Context, string) (string, string, error) {
 	return history.passengerID, history.driverID, nil
+}
+func (history *chatHistory) IsMember(context.Context, string, string) (bool, error) {
+	return true, nil
+}
+func (history *chatHistory) IsLocked(context.Context, string) (bool, error) {
+	return history.locked, nil
 }
 
 func TestChatCreateRoomDoesNotReplaceParticipants(t *testing.T) {
@@ -97,6 +104,23 @@ func TestChatCreateRoomRequiresTheAssignedRideParticipants(t *testing.T) {
 		"driver-1",
 	); err != nil {
 		t.Fatalf("assigned participants could not create room: %v", err)
+	}
+}
+
+func TestChatRelayRejectsResolvedRoom(t *testing.T) {
+	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1", locked: true}
+	service := usecase.NewService(chatadapter.NewHub(), history)
+
+	err := service.Relay(context.Background(), domain.Message{
+		RoomID:   "ride-1",
+		SenderID: "driver-1",
+		Body:     "This message must not be stored.",
+	})
+	if err != domain.ErrRoomLocked {
+		t.Fatalf("relay error = %v, want %v", err, domain.ErrRoomLocked)
+	}
+	if len(history.messages) != 0 {
+		t.Fatalf("resolved room stored %d messages", len(history.messages))
 	}
 }
 

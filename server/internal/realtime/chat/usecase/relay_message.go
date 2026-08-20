@@ -50,6 +50,15 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 	if !validRoomID(message.RoomID) || !validParticipantID(message.SenderID) || len(message.Body) == 0 || len(message.Body) > maxMessageBytes {
 		return domain.ErrInvalidMessage
 	}
+	if locks, ok := service.history.(domain.RoomLockRepository); ok {
+		locked, err := locks.IsLocked(ctx, message.RoomID)
+		if err != nil {
+			return err
+		}
+		if locked {
+			return domain.ErrRoomLocked
+		}
+	}
 	if access, ok := service.history.(domain.RoomAccessRepository); ok {
 		member, err := access.IsMember(ctx, message.RoomID, message.SenderID)
 		if err != nil {
@@ -124,6 +133,17 @@ func (service *Service) CreateRoom(ctx context.Context, roomID, passengerID, dri
 			(existingPassengerID != passengerID || existingDriverID != driverID) {
 			return domain.ErrRoomConflict
 		}
+		if existingPassengerID != "" || existingDriverID != "" {
+			if locks, ok := service.history.(domain.RoomLockRepository); ok {
+				locked, err := locks.IsLocked(ctx, roomID)
+				if err != nil {
+					return err
+				}
+				if locked {
+					return domain.ErrRoomLocked
+				}
+			}
+		}
 		if existingPassengerID == "" && existingDriverID == "" && service.assignments != nil {
 			assignment, found, err := service.assignments.ForRide(ctx, roomID)
 			if err != nil {
@@ -165,7 +185,20 @@ func (service *Service) CanAccessRoom(ctx context.Context, roomID, userID string
 	if !ok {
 		return false, nil
 	}
-	return access.IsMember(ctx, roomID, userID)
+	member, err := access.IsMember(ctx, roomID, userID)
+	if err != nil || !member {
+		return member, err
+	}
+	if locks, ok := service.history.(domain.RoomLockRepository); ok {
+		locked, err := locks.IsLocked(ctx, roomID)
+		if err != nil {
+			return false, err
+		}
+		if locked {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func (service *Service) MessagesForUser(ctx context.Context, roomID, userID string) ([]domain.Message, error) {

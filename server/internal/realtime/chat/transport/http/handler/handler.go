@@ -54,6 +54,8 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 			status = http.StatusBadRequest
 		} else if err == domain.ErrRoomConflict {
 			status = http.StatusConflict
+		} else if err == domain.ErrRoomLocked {
+			status = http.StatusConflict
 		} else if err == domain.ErrForbidden {
 			status = http.StatusForbidden
 		} else if err == domain.ErrRoomUnavailable {
