@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 import 'package:driver_app/src/features/trip/trip_routes.dart';
@@ -15,13 +16,16 @@ class TripModule {
       name: TripRoutes.pickupNavigation,
       TripRoutes.pickupNavigationPath,
       child: (context, GoRouterState state) {
-        final data = SafeRouteExtra.asMap(state.extra);
+        final data = _DriverTripRouteData.tryParse(
+          SafeRouteExtra.asMap(state.extra),
+        );
+        if (data == null) return _tripDataUnavailable();
         return PickupNavigationPage(
-          pickup: data['pickup'] as String,
-          dropoff: data['dropoff'] as String,
-          distance: (data['distance'] as num).toDouble(),
-          fare: (data['fare'] as num).toDouble(),
-          duration: data['duration'] as String,
+          pickup: data.pickup,
+          dropoff: data.dropoff,
+          distance: data.distance,
+          fare: data.fare,
+          duration: data.duration,
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -31,13 +35,16 @@ class TripModule {
       name: TripRoutes.waitingPassenger,
       TripRoutes.waitingPassengerPath,
       child: (context, GoRouterState state) {
-        final data = SafeRouteExtra.asMap(state.extra);
+        final data = _DriverTripRouteData.tryParse(
+          SafeRouteExtra.asMap(state.extra),
+        );
+        if (data == null) return _tripDataUnavailable();
         return WaitingPassengerPage(
-          pickup: data['pickup'] as String,
-          dropoff: data['dropoff'] as String,
-          distance: (data['distance'] as num).toDouble(),
-          fare: (data['fare'] as num).toDouble(),
-          duration: data['duration'] as String,
+          pickup: data.pickup,
+          dropoff: data.dropoff,
+          distance: data.distance,
+          fare: data.fare,
+          duration: data.duration,
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -47,13 +54,16 @@ class TripModule {
       name: TripRoutes.inTransit,
       TripRoutes.inTransitPath,
       child: (context, GoRouterState state) {
-        final data = SafeRouteExtra.asMap(state.extra);
+        final data = _DriverTripRouteData.tryParse(
+          SafeRouteExtra.asMap(state.extra),
+        );
+        if (data == null) return _tripDataUnavailable();
         return InTransitPage(
-          pickup: data['pickup'] as String,
-          dropoff: data['dropoff'] as String,
-          distance: (data['distance'] as num).toDouble(),
-          fare: (data['fare'] as num).toDouble(),
-          duration: data['duration'] as String,
+          pickup: data.pickup,
+          dropoff: data.dropoff,
+          distance: data.distance,
+          fare: data.fare,
+          duration: data.duration,
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -63,13 +73,16 @@ class TripModule {
       name: TripRoutes.fareSummary,
       TripRoutes.fareSummaryPath,
       child: (context, GoRouterState state) {
-        final data = SafeRouteExtra.asMap(state.extra);
+        final data = _DriverTripRouteData.tryParse(
+          SafeRouteExtra.asMap(state.extra),
+        );
+        if (data == null) return _tripDataUnavailable();
         return FareSummaryPage(
-          pickup: data['pickup'] as String,
-          dropoff: data['dropoff'] as String,
-          distance: (data['distance'] as num).toDouble(),
-          fare: (data['fare'] as num).toDouble(),
-          duration: data['duration'] as String,
+          pickup: data.pickup,
+          dropoff: data.dropoff,
+          distance: data.distance,
+          fare: data.fare,
+          duration: data.duration,
         );
       },
       transition: AppTransitions.modal.toTop,
@@ -79,3 +92,62 @@ class TripModule {
 
   static List<ModularRoute> shellRoutes = [];
 }
+
+class _DriverTripRouteData {
+  const _DriverTripRouteData({
+    required this.pickup,
+    required this.dropoff,
+    required this.distance,
+    required this.fare,
+    required this.duration,
+  });
+
+  final String pickup;
+  final String dropoff;
+  final double distance;
+  final double fare;
+  final String duration;
+
+  static _DriverTripRouteData? tryParse(Map<String, dynamic> data) {
+    final pickup = _asNonEmptyString(data['pickup']);
+    final dropoff = _asNonEmptyString(data['dropoff']);
+    final distance = _asDouble(data['distance']);
+    final fare = _asDouble(data['fare']);
+    final duration = _asNonEmptyString(data['duration']);
+    if (pickup == null ||
+        dropoff == null ||
+        distance == null ||
+        fare == null ||
+        duration == null ||
+        !distance.isFinite ||
+        distance < 0 ||
+        !fare.isFinite ||
+        fare < 0) {
+      return null;
+    }
+    return _DriverTripRouteData(
+      pickup: pickup,
+      dropoff: dropoff,
+      distance: distance,
+      fare: fare,
+      duration: duration,
+    );
+  }
+}
+
+String? _asNonEmptyString(Object? value) {
+  if (value is! String) return null;
+  final result = value.trim();
+  return result.isEmpty ? null : result;
+}
+
+double? _asDouble(Object? value) {
+  if (value is num) return value.toDouble();
+  return value is String ? double.tryParse(value) : null;
+}
+
+Widget _tripDataUnavailable() => const Scaffold(
+  body: Center(
+    child: Text('Trip details are unavailable. Please return and try again.'),
+  ),
+);

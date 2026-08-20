@@ -165,31 +165,38 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   }
 
   Future<void> _loadRoute() async {
-    final pos =
-        LocationService.lastPosition ??
-        await LocationService.getCurrentPosition();
-    if (!mounted) return;
-    if (pos == null) return;
-
-    final rideState = BlocProvider.of<RideFlowCubit>(context).state;
-    if (rideState is RideFlowNavigatingToPickup) {
-      _pickupLat = rideState.pickupLat;
-      _pickupLng = rideState.pickupLng;
-    } else {
-      final places = await MapProvider.searchPlaces(widget.pickup);
-      if (places.isNotEmpty) {
-        _pickupLat = places.first.latitude;
-        _pickupLng = places.first.longitude;
+    try {
+      // Resolve the fixed pickup point before asking for the driver's current
+      // position. A location permission delay must not leave the map blank or
+      // prevent the route from being drawn once telemetry becomes available.
+      final rideState = BlocProvider.of<RideFlowCubit>(context).state;
+      if (rideState is RideFlowNavigatingToPickup) {
+        _pickupLat = rideState.pickupLat;
+        _pickupLng = rideState.pickupLng;
+      } else {
+        final places = await MapProvider.searchPlaces(widget.pickup);
+        if (places.isNotEmpty) {
+          _pickupLat = places.first.latitude;
+          _pickupLng = places.first.longitude;
+        }
       }
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      final pos =
+          LocationService.lastPosition ??
+          await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      if (pos != null) {
+        _triggerDrawRoute(pos.latitude, pos.longitude);
+      }
+      _startRouteTracking();
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      debugPrint('Unable to load pickup route: $error\n$stackTrace');
     }
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
-
-    _triggerDrawRoute(pos.latitude, pos.longitude);
-    _startRouteTracking();
   }
 
   void _triggerDrawRoute(double dLat, double dLng) {
@@ -371,7 +378,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                               PassengerRemoteDataSource
                                             >()
                                             .fetchPassengerProfile(passengerId);
-                                    final phone = passenger['phone'] as String?;
+                                    final phone = driverValueAsString(
+                                      passenger['phone'],
+                                    );
                                     if (phone != null && phone.isNotEmpty) {
                                       final uri = Uri.parse('tel:$phone');
                                       if (await canLaunchUrl(uri)) {
