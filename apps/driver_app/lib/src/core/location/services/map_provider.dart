@@ -183,10 +183,12 @@ class MapProvider {
           );
           return <PlaceModel>[];
         },
-        (pois) => pois.where((place) {
-          final distance = place.distanceKm;
-          return distance != null && distance <= nearbyRadiusKm;
-        }).toList(),
+        (pois) => NearbyPlaceResolver.withinRadius(
+          places: pois,
+          latitude: lat,
+          longitude: lng,
+          radiusKm: nearbyRadiusKm,
+        ),
       );
     } catch (_) {
       debugPrint('MapProvider.getNearbyPOIs error.');

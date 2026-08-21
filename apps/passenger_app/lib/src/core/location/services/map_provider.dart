@@ -183,30 +183,12 @@ class MapProvider {
           );
           return <PlaceModel>[];
         },
-        (pois) => pois
-            .map((place) {
-              final distance =
-                  place.distanceKm ??
-                  MapNativeService.calculateHaversine(
-                    lat,
-                    lng,
-                    place.latitude,
-                    place.longitude,
-                  );
-              if (distance > nearbyRadiusKm) return null;
-              if (place.distanceKm != null) return place;
-              return PlaceModel(
-                id: place.id,
-                name: place.name,
-                fullAddress: place.fullAddress,
-                latitude: place.latitude,
-                longitude: place.longitude,
-                category: place.category,
-                distanceKm: distance,
-              );
-            })
-            .whereType<PlaceModel>()
-            .toList(),
+        (pois) => NearbyPlaceResolver.withinRadius(
+          places: pois,
+          latitude: lat,
+          longitude: lng,
+          radiusKm: nearbyRadiusKm,
+        ),
       );
     } catch (_) {
       debugPrint('MapProvider.getNearbyPOIs error.');

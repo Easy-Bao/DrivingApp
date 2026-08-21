@@ -26,12 +26,12 @@ void main() {
       ),
     );
 
-    expect(find.text('Drivers Online Now'), findsOneWidget);
+    expect(find.text('Drivers Nearby (1)'), findsOneWidget);
     expect(find.text('Nearby Driver'), findsOneWidget);
     expect(find.text('4.8'), findsOneWidget);
     expect(
       find.text(
-        'These drivers can accept a ride. Compare their ratings before you request one.',
+        'Available drivers can accept your request. Ratings help you choose after matching.',
       ),
       findsOneWidget,
     );

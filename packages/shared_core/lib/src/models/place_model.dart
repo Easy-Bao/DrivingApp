@@ -96,6 +96,34 @@ class PlaceModel extends Equatable {
     };
   }
 
+  PlaceModel copyWith({
+    String? id,
+    String? name,
+    String? fullAddress,
+    double? latitude,
+    double? longitude,
+    String? category,
+    double? distanceKm,
+    String? matchType,
+    double? distanceMeters,
+    double? confidence,
+    Map<String, String>? context,
+  }) {
+    return PlaceModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      fullAddress: fullAddress ?? this.fullAddress,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      category: category ?? this.category,
+      distanceKm: distanceKm ?? this.distanceKm,
+      matchType: matchType ?? this.matchType,
+      distanceMeters: distanceMeters ?? this.distanceMeters,
+      confidence: confidence ?? this.confidence,
+      context: context ?? this.context,
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,

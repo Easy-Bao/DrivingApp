@@ -13,6 +13,7 @@ export 'src/fare/models/fare_service_model.dart';
 export 'src/location/api/clients/i_location_api_client.dart';
 export 'src/location/api/clients/location_api_client.dart';
 export 'src/location/errors/place_failure.dart';
+export 'src/location/nearby_place_resolver.dart';
 export 'src/models/driver_model.dart';
 export 'src/models/fare_result_model.dart';
 export 'src/models/notification_model.dart';
