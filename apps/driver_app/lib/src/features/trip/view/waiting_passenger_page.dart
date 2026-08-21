@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 
@@ -140,31 +139,23 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 
     setState(() => _isStartingTrip = true);
     try {
-      var destinationLat = state.destLat;
-      var destinationLng = state.destLng;
-      if (destinationLat == null || destinationLng == null) {
-        final places = await MapProvider.searchPlaces(widget.dropoff);
-        if (places.isEmpty) {
-          _showError('The destination could not be located.');
-          return;
-        }
-        destinationLat = places.first.latitude;
-        destinationLng = places.first.longitude;
-      }
-
-      if (!mounted) return;
-
-      final started = await BlocProvider.of<RideFlowCubit>(context).startRide(
+      final rideCubit = BlocProvider.of<RideFlowCubit>(context);
+      final started = await rideCubit.startRide(
         passengerName: state.passengerName,
-        destLat: destinationLat,
-        destLng: destinationLng,
+        destLat: state.destLat,
+        destLng: state.destLng,
         distanceKm: widget.distance,
         passengerLat: state.pickupLat,
         passengerLng: state.pickupLng,
       );
 
       if (mounted && !started) {
-        _showError('Unable to start the trip right now. Please try again.');
+        final errorState = rideCubit.state;
+        _showError(
+          errorState is RideFlowError
+              ? errorState.message
+              : 'Unable to Start The Trip Right Now. Please Try Again.',
+        );
       }
       if (mounted && started) {
         context.pushReplacementNamed(
@@ -179,8 +170,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
         );
       }
     } catch (error) {
-      dev.log('Unable to resolve trip destination: $error');
-      _showError('Unable to start the trip right now. Please try again.');
+      dev.log('Unable to start trip: $error');
+      _showError('Unable To Start The Trip Right Now. Please Try Again.');
     } finally {
       if (mounted) setState(() => _isStartingTrip = false);
     }

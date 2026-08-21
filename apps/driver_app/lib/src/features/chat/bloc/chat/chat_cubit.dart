@@ -24,12 +24,27 @@ class ChatCubit extends Cubit<ChatState> {
     required String passengerId,
   }) async {
     try {
-      final initialized = await _roomRemoteDataSource.initializeRoom(
+      final initializationStatus = await _roomRemoteDataSource.initializeRoom(
         roomId: roomId,
         driverId: driverId,
         passengerId: passengerId,
       );
-      if (!initialized && !isClosed) {
+      if (initializationStatus == ChatRoomInitializationStatus.resolved) {
+        if (!isClosed) {
+          emit(
+            state.copyWith(
+              isConnecting: false,
+              isConnected: false,
+              isRoomLocked: true,
+              lockReasonMessage: 'This chat has already been resolved.',
+              errorMessage: null,
+            ),
+          );
+        }
+        return false;
+      }
+      if (initializationStatus == ChatRoomInitializationStatus.unavailable &&
+          !isClosed) {
         emit(
           state.copyWith(
             isConnecting: false,
@@ -37,7 +52,7 @@ class ChatCubit extends Cubit<ChatState> {
           ),
         );
       }
-      return initialized;
+      return initializationStatus == ChatRoomInitializationStatus.opened;
     } catch (_) {
       if (!isClosed) {
         emit(

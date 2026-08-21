@@ -189,8 +189,20 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   }) async {
     _waitTimer?.cancel();
 
-    if (destLat == null || destLng == null) {
-      emit(const RideFlowError('The destination coordinates are unavailable.'));
+    var resolvedDestLat = destLat;
+    var resolvedDestLng = destLng;
+    if (resolvedDestLat == null || resolvedDestLng == null) {
+      final recoveredDestination = await _loadActiveRideDestination();
+      resolvedDestLat = recoveredDestination?.$1;
+      resolvedDestLng = recoveredDestination?.$2;
+    }
+
+    if (!_isValidCoordinatePair(resolvedDestLat, resolvedDestLng)) {
+      emit(
+        const RideFlowError(
+          'The destination coordinates are unavailable. Please try again.',
+        ),
+      );
       return false;
     }
 
@@ -218,14 +230,62 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     emit(
       RideFlowInTransit(
         passengerName: passengerName,
-        destLat: destLat,
-        destLng: destLng,
+        destLat: resolvedDestLat,
+        destLng: resolvedDestLng,
         distanceKm: distanceKm,
         passengerLat: passengerLat,
         passengerLng: passengerLng,
       ),
     );
     return true;
+  }
+
+  Future<(double, double)?> _loadActiveRideDestination() async {
+    final rideId = _activeRideId;
+    if (rideId == null || rideId.isEmpty) return null;
+
+    try {
+      final ride = await _tripRemoteDataSource.getRideStatus(rideId);
+      final latitude = _readCoordinate(ride, const [
+        'dropoff_latitude',
+        'dropoffLatitude',
+        'destination_latitude',
+      ]);
+      final longitude = _readCoordinate(ride, const [
+        'dropoff_longitude',
+        'dropoffLongitude',
+        'destination_longitude',
+      ]);
+      if (_isValidCoordinatePair(latitude, longitude)) {
+        return (latitude!, longitude!);
+      }
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to recover the active ride destination',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+    return null;
+  }
+
+  double? _readCoordinate(Map<String, dynamic> ride, List<String> keys) {
+    for (final key in keys) {
+      final value = SafeParse.toNullableDouble(ride[key]);
+      if (value != null) return value;
+    }
+    return null;
+  }
+
+  bool _isValidCoordinatePair(double? latitude, double? longitude) {
+    return latitude != null &&
+        longitude != null &&
+        latitude.isFinite &&
+        longitude.isFinite &&
+        latitude >= -90 &&
+        latitude <= 90 &&
+        longitude >= -180 &&
+        longitude <= 180;
   }
 
   Future<Map<String, dynamic>?> _loadCompletedRide() async {

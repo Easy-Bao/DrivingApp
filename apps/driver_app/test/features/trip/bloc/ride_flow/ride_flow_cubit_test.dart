@@ -107,6 +107,52 @@ void main() {
         ),
       ],
     );
+
+    test(
+      'recovers missing destination coordinates from the active ride',
+      () async {
+        when(
+          () => mockTripRemoteDataSource.getRideStatus('test-ride-id'),
+        ).thenAnswer(
+          (_) async => {'dropoff_latitude': 7.85, 'dropoff_longitude': 123.45},
+        );
+
+        final cubit = _makeCubit(mockTripRemoteDataSource, mockSessionService);
+        cubit.resumeRide(
+          rideId: 'test-ride-id',
+          status: 'arrived',
+          passengerName: 'Juan Dela Cruz',
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+        );
+
+        final started = await cubit.startRide(
+          passengerName: 'Juan Dela Cruz',
+          destLat: null,
+          destLng: null,
+          distanceKm: 3.2,
+          passengerLat: 7.82,
+          passengerLng: 123.43,
+        );
+
+        expect(started, isTrue);
+        expect(
+          cubit.state,
+          const RideFlowInTransit(
+            passengerName: 'Juan Dela Cruz',
+            destLat: 7.85,
+            destLng: 123.45,
+            distanceKm: 3.2,
+            passengerLat: 7.82,
+            passengerLng: 123.43,
+          ),
+        );
+        verify(
+          () => mockTripRemoteDataSource.getRideStatus('test-ride-id'),
+        ).called(1);
+        await cubit.close();
+      },
+    );
   });
 
   group('RideFlowCubit — resumed destination continuity', () {

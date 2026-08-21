@@ -6,7 +6,6 @@ import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_d
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class DriverTripDetailPage extends StatefulWidget {
   final Map<String, dynamic> trip;
@@ -18,6 +17,10 @@ class DriverTripDetailPage extends StatefulWidget {
 }
 
 class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
+  bool _isContactingPassenger = false;
+  bool _chatResolved = false;
+  String? _chatFeedbackMessage;
+
   String get _passengerName =>
       driverValueAsString(widget.trip['passenger_name']) ?? 'Passenger';
 
@@ -35,16 +38,35 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   }
 
   Future<void> _contactPassenger() async {
+    if (_isContactingPassenger || _chatResolved) return;
+
     final passengerId = driverValueAsString(widget.trip['passenger_id']);
     final tripId = driverValueAsString(widget.trip['id']);
-    if (passengerId == null || tripId == null) return;
+    if (passengerId == null || tripId == null) {
+      _showChatFeedback('Chat Unavailable. Please Try Again.');
+      return;
+    }
+
+    setState(() {
+      _isContactingPassenger = true;
+      _chatFeedbackMessage = null;
+      _chatResolved = false;
+    });
 
     final driverId =
         await Modular.get<SecureSessionService>().readDriverId() ?? '';
-    if (driverId.isEmpty) return;
+    if (driverId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isContactingPassenger = false;
+          _chatFeedbackMessage = 'Chat Unavailable. Please Sign In Again.';
+        });
+      }
+      return;
+    }
 
     try {
-      final initialized = await Modular.get<ChatRoomRemoteDataSource>()
+      final initializationStatus = await Modular.get<ChatRoomRemoteDataSource>()
           .initializeRoom(
             roomId: tripId,
             driverId: driverId,
@@ -52,30 +74,36 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
           );
 
       if (!mounted) return;
-      if (initialized) {
-        context.pushNamed(
-          ChatRoutes.chat,
-          extra: {
-            'roomId': tripId,
-            'userId': driverId,
-            'peerName': _passengerName,
-          },
-        );
-      } else {
-        CustomToast.show(
-          context,
-          'Failed to initialize chat channel.',
-          isError: true,
-        );
+      switch (initializationStatus) {
+        case ChatRoomInitializationStatus.opened:
+          await context.pushNamed(
+            ChatRoutes.chat,
+            extra: {
+              'roomId': tripId,
+              'userId': driverId,
+              'peerId': passengerId,
+              'peerName': _passengerName,
+            },
+          );
+        case ChatRoomInitializationStatus.resolved:
+          setState(() {
+            _chatResolved = true;
+            _chatFeedbackMessage = 'This Chat Has Already Been Resolved.';
+          });
+        case ChatRoomInitializationStatus.unavailable:
+          _showChatFeedback('Chat Unavailable Right Now. Please Try Again.');
       }
     } catch (_) {
       if (!mounted) return;
-      CustomToast.show(
-        context,
-        'Connection failed to start chat.',
-        isError: true,
-      );
+      _showChatFeedback('Chat Unavailable Right Now. Please Try Again.');
+    } finally {
+      if (mounted) setState(() => _isContactingPassenger = false);
     }
+  }
+
+  void _showChatFeedback(String message) {
+    if (!mounted) return;
+    setState(() => _chatFeedbackMessage = message);
   }
 
   String _formatDate(String isoString) {
@@ -210,11 +238,31 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                       ),
                       const SizedBox(height: 8),
                       _buildPassengerCard(),
+                      if (_chatFeedbackMessage != null) ...[
+                        const SizedBox(height: 12),
+                        _buildChatFeedback(),
+                      ],
                       const SizedBox(height: 16),
                       FilledButton.icon(
-                        onPressed: _contactPassenger,
-                        icon: const Icon(LucideIcons.message_square, size: 18),
-                        label: const Text('Contact passenger'),
+                        onPressed: _isContactingPassenger || _chatResolved
+                            ? null
+                            : _contactPassenger,
+                        icon: _isContactingPassenger
+                            ? const SizedBox.square(
+                                dimension: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(LucideIcons.message_square, size: 18),
+                        label: Text(
+                          _chatResolved
+                              ? 'Chat Resolved'
+                              : _isContactingPassenger
+                              ? 'Opening Chat...'
+                              : 'Contact Passenger',
+                        ),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(50),
                           shape: RoundedRectangleBorder(
@@ -233,6 +281,40 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildChatFeedback() {
+    final isResolved = _chatResolved;
+    final color = isResolved ? AppTheme.complete : AppTheme.cancel;
+    return Container(
+      key: const ValueKey('driver-trip-chat-feedback'),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isResolved ? LucideIcons.circle_check : LucideIcons.info,
+            size: 18,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _chatFeedbackMessage!,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

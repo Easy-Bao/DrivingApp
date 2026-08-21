@@ -22,6 +22,9 @@ class AppBackButtonWidget extends StatelessWidget {
       onPressed: onPressed,
       tooltip: MaterialLocalizations.of(context).backButtonTooltip,
       padding: EdgeInsets.zero,
+      style: IconButton.styleFrom(
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      ),
       icon: Icon(
         LucideIcons.arrow_left,
         color: colors.onSurface,
@@ -36,7 +39,6 @@ class AppBackButtonWidget extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: colors.surface,
-          shape: BoxShape.circle,
           border: Border.all(color: colors.outline),
           boxShadow: [
             BoxShadow(

@@ -236,31 +236,34 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       final resolvedDriverName = driverName.trim().isEmpty
           ? 'Driver'
           : driverName.trim();
+      final startLat = isInTransit ? driverLat : passengerLat;
+      final startLng = isInTransit ? driverLng : passengerLng;
+      final endLat = isInTransit ? targetLat : driverLat;
+      final endLng = isInTransit ? targetLng : driverLng;
       _passengerMarkerManager = await _upsertMarker(
         _passengerMarkerManager,
         mapController,
-        targetLat,
-        targetLng,
+        startLat,
+        startLng,
         isOrigin: true,
         color: isInTransit ? AppTheme.accent : AppTheme.complete,
-        label: isInTransit
-            ? 'You → Drop Off\n${widget.ride.destination}'
-            : 'You → Driver\n${widget.ride.pickup}',
+        label: 'You\n${isInTransit ? 'On Trip' : widget.ride.pickup}',
+        animate: isInTransit,
       );
       _driverMarkerManager = await _upsertMarker(
         _driverMarkerManager,
         mapController,
-        driverLat,
-        driverLng,
+        endLat,
+        endLng,
         isOrigin: false,
-        color: AppTheme.complete,
-        label: switch (status) {
-          RideStatus.arrived => 'You → Driver\n$resolvedDriverName Has Arrived',
-          RideStatus.inTransit =>
-            'You → Drop Off\n$resolvedDriverName Is Driving You',
-          _ => 'You → Driver\n$resolvedDriverName Is Picking You Up',
-        },
-        animate: true,
+        color: isInTransit ? AppTheme.accent : AppTheme.complete,
+        label: isInTransit
+            ? 'Drop Off\n${widget.ride.destination}'
+            : 'Driver\n${switch (status) {
+                RideStatus.arrived => '$resolvedDriverName Has Arrived',
+                _ => '$resolvedDriverName Is Picking You Up',
+              }}',
+        animate: !isInTransit,
       );
       final now = DateTime.now();
       if (!_hasFittedInitialMap ||

@@ -22,6 +22,10 @@ void main() {
     );
 
     expect(find.byType(IconButton), findsOneWidget);
-    expect(find.byType(DecoratedBox), findsOneWidget);
+    final decoration =
+        tester.widget<DecoratedBox>(find.byType(DecoratedBox)).decoration
+            as BoxDecoration;
+    expect(decoration.shape, BoxShape.rectangle);
+    expect(decoration.borderRadius, isNull);
   });
 }
