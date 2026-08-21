@@ -119,7 +119,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         event.driverLng,
         isOrigin: true,
         color: AppTheme.complete,
-        label: 'Driver\nCurrent Location',
+        label: event.routeTargetLat != null
+            ? 'You → Drop Off\nYou Are Driving Passenger'
+            : 'You → Passenger\nYou Are Heading To Pickup',
         animate: true,
       );
 
@@ -132,7 +134,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           event.passengerLat!,
           event.passengerLng!,
           color: AppTheme.complete,
-          label: 'Pickup\nPassenger Wait Point',
+          label: 'You → Passenger\nPassenger Pickup',
         );
       } else {
         await _clearAnnotations(_passengerMarkerManager);
@@ -145,7 +147,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           targetLat,
           targetLng,
           color: AppTheme.accent,
-          label: 'Drop-off\nTrip Destination',
+          label: 'You → Drop Off\nTrip Destination',
         );
       } else {
         await _clearAnnotations(_destinationMarkerManager);
@@ -182,18 +184,16 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           targetLng,
         );
         final routePoints = route?.validPolylinePoints;
-        final effectiveRoutePoints =
-            routePoints != null && routePoints.length >= 2
-            ? routePoints
-            : <List<double>>[
-                [event.driverLng, event.driverLat],
-                [targetLng, targetLat],
-              ];
-        _routePolylineManager = await _upsertRoute(
-          _routePolylineManager,
-          mapController,
-          effectiveRoutePoints,
-        );
+        if (routePoints != null && routePoints.length >= 2) {
+          _routePolylineManager = await _upsertRoute(
+            _routePolylineManager,
+            mapController,
+            routePoints,
+          );
+        } else {
+          await _clearAnnotations(_routePolylineManager);
+          _routePolylineManager = null;
+        }
         _routeTargetKey = targetKey;
         _lastRouteUpdateAt = DateTime.now();
       }

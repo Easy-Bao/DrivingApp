@@ -11,7 +11,6 @@ import 'package:passenger_app/src/features/auth/bloc/sign_in/sign_in_bloc.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/view/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class SigninPage extends StatelessWidget {

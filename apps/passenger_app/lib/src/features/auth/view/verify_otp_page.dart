@@ -8,7 +8,7 @@ import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class VerifyOtpPage extends StatelessWidget {
   final String email;

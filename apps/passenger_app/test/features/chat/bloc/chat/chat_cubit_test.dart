@@ -10,6 +10,10 @@ void main() {
   test('shows a resolved state when the room is already locked', () async {
     final repository = MockChatRepository();
     when(
+      () => repository.terminateChatConnection(),
+    ).thenAnswer((_) async => const Right(null));
+    when(() => repository.dispose()).thenAnswer((_) async {});
+    when(
       () => repository.initializeChatRoom(
         roomId: 'ride-1',
         passengerId: 'passenger-1',

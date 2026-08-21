@@ -71,8 +71,8 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             pickupAddress != null
-                ? 'Request sent. The driver is reviewing your trip details.'
-                : 'Looking for $rideType drivers nearby...',
+                ? 'Request Sent. Your Driver Is Reviewing Your Ride Request.'
+                : 'Looking For $rideType Drivers Nearby...',
             style: TextStyle(
               fontSize: 14,
               color: AppTheme.primaryColor.withValues(alpha: 0.5),

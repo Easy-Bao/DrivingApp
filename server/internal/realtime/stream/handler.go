@@ -132,7 +132,10 @@ func topicsForIdentity(identity security.Identity) ([]string, error) {
 	switch identity.Role {
 	case "driver":
 		topic, err := event.DriverTopic(identity.Subject)
-		return []string{topic}, err
+		if err != nil {
+			return nil, err
+		}
+		return []string{topic, event.DriverPoolTopic}, nil
 	case "passenger":
 		topic, err := event.PassengerTopic(identity.Subject)
 		return []string{topic}, err

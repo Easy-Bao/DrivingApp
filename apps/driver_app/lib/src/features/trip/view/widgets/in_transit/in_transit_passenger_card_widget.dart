@@ -52,7 +52,7 @@ class InTransitPassengerCardWidget extends StatelessWidget {
                   ),
                 ),
                 const Text(
-                  'Passenger onboard',
+                  'Passenger Onboard',
                   style: TextStyle(fontSize: 11, color: AppTheme.tertiaryColor),
                 ),
               ],

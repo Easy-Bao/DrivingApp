@@ -8,14 +8,10 @@ import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_complete_button_widget.dart';
-import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_destination_card_widget.dart';
-import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_meta_row_widget.dart';
 import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_passenger_card_widget.dart';
-import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_status_badge_widget.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -276,39 +272,7 @@ class _InTransitPageState extends State<InTransitPage> {
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 46,
-                          height: 46,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: AppTheme.surface,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppTheme.borderSide),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              tooltip: 'Back',
-                              onPressed: () => context.pop(),
-                              icon: const Icon(
-                                LucideIcons.arrow_left,
-                                size: 20,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        const InTransitStatusBadgeWidget(),
-                      ],
-                    ),
+                    child: AppBackButtonWidget(onPressed: () => context.pop()),
                   ),
                 ),
                 Align(
@@ -344,14 +308,11 @@ class _InTransitPageState extends State<InTransitPage> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          InTransitDestinationCardWidget(
-                            dropoffAddress: widget.dropoff,
-                          ),
-                          const SizedBox(height: 8),
-                          InTransitMetaRowWidget(
-                            distanceKm: widget.distance,
-                            durationText: widget.duration,
-                            fareAmount: widget.fare,
+                          CompactRouteTimelineWidget(
+                            pickup: widget.pickup,
+                            dropoff: widget.dropoff,
+                            pickupLabel: 'Pickup',
+                            dropoffLabel: 'Drop Off',
                           ),
                           const SizedBox(height: 8),
                           const InTransitPassengerCardWidget(),

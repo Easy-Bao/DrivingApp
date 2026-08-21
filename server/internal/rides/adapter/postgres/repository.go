@@ -462,11 +462,27 @@ func (repository *Repository) DriverStats(ctx context.Context, driverID int) (do
 		return domain.DriverStats{}, err
 	}
 	stats := domain.DriverStats{DriverID: driverID}
+	now := time.Now()
+	startOfDay := time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		0,
+		0,
+		0,
+		0,
+		now.Location(),
+	)
+	endOfDay := startOfDay.AddDate(0, 0, 1)
 	for _, item := range rides {
 		stats.TotalTrips++
 		if item.Status == "completed" {
 			stats.CompletedTrips++
 			stats.TotalFare += item.FareCentavos
+			if !item.CompletedAt.Before(startOfDay) && item.CompletedAt.Before(endOfDay) {
+				stats.TodayCompletedTrips++
+				stats.TodayEarnings += item.FareCentavos
+			}
 		}
 		if item.Status != "completed" && item.Status != "cancelled" && item.Status != "canceled" {
 			stats.ActiveTrips++

@@ -277,12 +277,9 @@ class DashboardRepository implements IDashboardRepository {
       final data = await _remoteDataSource.fetchStats(driverId);
       final earningsCentavos = _readFiniteNumber(data, const [
         'today_earnings_centavos',
-        'total_fare_centavos',
       ]);
       final completedTrips = _readFiniteNumber(data, const [
         'today_completed_trips',
-        'completed_trips',
-        'completedTrips',
       ]);
       if (earningsCentavos == null ||
           earningsCentavos < 0 ||

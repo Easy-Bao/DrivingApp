@@ -48,6 +48,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     List<List<double>>? routePoints;
 
     double progress = 0.0;
+    var lastDriverLat = startLat;
+    var lastDriverLng = startLng;
     DateTime? pickupRouteLastAttempt;
     DateTime? destinationRouteLastAttempt;
     var trackingCompleted = false;
@@ -110,7 +112,15 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               );
             }
 
-            if (!locationFetched) return;
+            // A status transition is authoritative even when the location
+            // endpoint is temporarily unavailable. Keep the last known
+            // coordinate so states such as `arrived` still reach the UI.
+            driverLat ??= lastDriverLat;
+            driverLng ??= lastDriverLng;
+            if (locationFetched) {
+              lastDriverLat = driverLat!;
+              lastDriverLng = driverLng!;
+            }
 
             final targetLat =
                 rideUpdate.destinationLat ??
@@ -119,7 +129,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 rideUpdate.destinationLng ??
                 (destinationLng == 0 ? null : destinationLng);
             final now = DateTime.now();
-            if (rideUpdate.status != RideStatus.inTransit &&
+            if (locationFetched &&
+                rideUpdate.status != RideStatus.inTransit &&
                 _canRetryRoute(pickupRouteLastAttempt, now)) {
               pickupRouteLastAttempt = now;
               final candidate = await _repository.getRoutePolyline(
@@ -132,7 +143,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 routePoints = candidate;
               }
             }
-            if (rideUpdate.status == RideStatus.inTransit &&
+            if (locationFetched &&
+                rideUpdate.status == RideStatus.inTransit &&
                 targetLat != null &&
                 targetLng != null &&
                 _canRetryRoute(destinationRouteLastAttempt, now)) {

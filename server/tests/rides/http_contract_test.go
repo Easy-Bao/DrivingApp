@@ -129,6 +129,14 @@ func TestDriverAnalyticsKeepsTripsPrivateButAllowsAggregateStats(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("stats status = %d, want %d", response.Code, http.StatusOK)
 	}
+	var statsResponse map[string]any
+	if err := json.NewDecoder(response.Body).Decode(&statsResponse); err != nil {
+		t.Fatalf("decode driver stats: %v", err)
+	}
+	if statsResponse["today_earnings_centavos"] != float64(2817) ||
+		statsResponse["today_completed_trips"] != float64(1) {
+		t.Fatalf("daily driver stats are missing: %#v", statsResponse)
+	}
 
 	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/8/trips", nil)
 	request.Header.Set("Authorization", "Bearer "+accessToken)

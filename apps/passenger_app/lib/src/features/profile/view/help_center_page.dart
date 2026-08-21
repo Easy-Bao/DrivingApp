@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class HelpCenterPage extends StatefulWidget {

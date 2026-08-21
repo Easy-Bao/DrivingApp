@@ -73,6 +73,33 @@ func TestCreateSessionPublishesToPassengerAndTargetDriver(t *testing.T) {
 	}
 }
 
+func TestCreateOpenSessionPublishesToTheDriverPool(t *testing.T) {
+	repository := &ridesRepositoryStub{}
+	publisher := &eventPublisherStub{}
+	service := NewService(repository, testPricingConfig(t), publisher)
+
+	_, err := service.CreateSession(context.Background(), domain.BidSession{
+		ID:             32,
+		PassengerID:    7,
+		PickupLatitude: 6.7, PickupLongitude: 122.1,
+		DropoffLatitude: 6.71, DropoffLongitude: 122.11,
+		DistanceKm: 2, DurationMinutes: 10,
+	})
+	if err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	if len(publisher.envelopes) != 1 {
+		t.Fatalf("published event count = %d, want 1", len(publisher.envelopes))
+	}
+	published := publisher.envelopes[0]
+	if !published.Scope.DriverPool || published.Scope.PassengerID != "7" {
+		t.Fatalf("event scope = %#v, want passenger and driver pool", published.Scope)
+	}
+	if got := published.Topics(); len(got) != 2 || got[1] != event.DriverPoolTopic {
+		t.Fatalf("event topics = %v, want passenger and driver pool topics", got)
+	}
+}
+
 func TestPublishingFailureDoesNotRollbackPersistedStatus(t *testing.T) {
 	repository := &ridesRepositoryStub{
 		ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"},

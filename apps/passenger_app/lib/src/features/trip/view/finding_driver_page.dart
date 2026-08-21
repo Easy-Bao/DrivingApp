@@ -17,8 +17,8 @@ import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_bids
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_nearest_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_searching_panel_widget.dart';
-import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverPage extends StatelessWidget {
   final String rideType;
@@ -581,7 +581,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                     horizontal: 16,
                                     vertical: 8,
                                   ),
-                                  child: AppBackButtonWidget.plain(
+                                  child: AppBackButtonWidget(
                                     onPressed: _handleCancel,
                                   ),
                                 ),
@@ -727,7 +727,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                           } else if (state is BookingSearching) {
                             return FindingDriverSearchingPanelWidget(
                               message: state.isDirect
-                                  ? 'Waiting for ${state.targetDriver?.displayName ?? 'driver'}'
+                                  ? 'Waiting For ${state.targetDriver?.displayName ?? 'Driver'}'
                                   : 'Finding your driver',
                               rideType: widget.rideType,
                               fare: widget.fare,
@@ -741,7 +741,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                             if (state.offers.isEmpty) {
                               return FindingDriverSearchingPanelWidget(
                                 message: state.isDirect
-                                    ? 'Waiting for ${state.targetDriver?.displayName ?? 'driver'}'
+                                    ? 'Waiting For ${state.targetDriver?.displayName ?? 'Driver'}'
                                     : 'Finding your driver',
                                 rideType: widget.rideType,
                                 fare: widget.fare,

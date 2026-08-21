@@ -286,7 +286,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           ),
           _buildPlace(
             icon: LucideIcons.map_pin,
-            label: 'Drop-off',
+            label: 'Drop Off',
             address: widget.dropoff,
             color: AppTheme.accent,
           ),

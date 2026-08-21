@@ -8,7 +8,6 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
-import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -408,7 +407,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                     pickup: ride?.pickup ?? 'Pickup Location',
                     dropoff: ride?.destination ?? 'Destination Location',
                     pickupLabel: 'Pickup',
-                    dropoffLabel: 'Drop-off',
+                    dropoffLabel: 'Drop Off',
                   ),
                 ],
               ),

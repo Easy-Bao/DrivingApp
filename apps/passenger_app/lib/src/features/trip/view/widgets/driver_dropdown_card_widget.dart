@@ -146,14 +146,9 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
   }
 
   Widget _buildRecentFeedbackList() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-      decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSide),
-      ),
+      height: _isLoadingFeedback || _recentReviews.isEmpty ? null : 190,
       child: _isLoadingFeedback
           ? const Skeletonizer(
               child: Column(
@@ -169,24 +164,19 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
             )
           : _recentReviews.isEmpty
           ? Text(
-              'No passenger feedback yet.',
+              'No Passenger Feedback Yet.',
               style: TextStyle(
                 fontSize: 12,
                 color: AppTheme.primaryColor.withValues(alpha: 0.65),
               ),
             )
-          : ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 126),
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: _recentReviews.length > 3
-                    ? const BouncingScrollPhysics()
-                    : const NeverScrollableScrollPhysics(),
-                itemCount: _recentReviews.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (_, index) =>
-                    _buildReviewRow(_recentReviews[index]),
-              ),
+          : ListView.separated(
+              primary: false,
+              padding: EdgeInsets.zero,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: _recentReviews.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (_, index) => _buildReviewRow(_recentReviews[index]),
             ),
     );
   }
@@ -196,71 +186,79 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
     final comment = review['comment'] as String? ?? '';
     final date = review['date'] as String? ?? '';
     final rating = (review['rating'] as num?)?.toDouble() ?? 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                passengerName == null || passengerName.isEmpty
-                    ? 'Passenger'
-                    : passengerName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppTheme.neutralColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  passengerName == null || passengerName.isEmpty
+                      ? 'Passenger'
+                      : passengerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ),
-            ),
-            if (date.isNotEmpty)
+              if (date.isNotEmpty)
+                Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.42),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Row(
+            children: [
+              ...List.generate(5, (index) {
+                final filled = rating >= index + 1;
+                return Icon(
+                  filled ? Icons.star_rounded : Icons.star_border_rounded,
+                  size: 12,
+                  color: filled
+                      ? Colors.amber
+                      : AppTheme.primaryColor.withValues(alpha: 0.2),
+                );
+              }),
+              const SizedBox(width: 4),
               Text(
-                date,
+                rating.toStringAsFixed(1),
                 style: TextStyle(
                   fontSize: 10,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.42),
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.58),
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Row(
-          children: [
-            ...List.generate(5, (index) {
-              final filled = rating >= index + 1;
-              return Icon(
-                filled ? Icons.star_rounded : Icons.star_border_rounded,
-                size: 12,
-                color: filled
-                    ? Colors.amber
-                    : AppTheme.primaryColor.withValues(alpha: 0.2),
-              );
-            }),
-            const SizedBox(width: 4),
-            Text(
-              rating.toStringAsFixed(1),
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor.withValues(alpha: 0.58),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          '“$comment”',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 12,
-            height: 1.25,
-            color: AppTheme.primaryColor.withValues(alpha: 0.78),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 3),
+          Text(
+            '“$comment”',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.25,
+              color: AppTheme.primaryColor.withValues(alpha: 0.78),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

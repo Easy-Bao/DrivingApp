@@ -32,6 +32,18 @@ void main() {
     expect(envelope.toJson(), validEvent());
   });
 
+  test('preserves the driver pool scope used for open offers', () {
+    final json = {
+      ...validEvent(),
+      'scope': {'passenger_id': 'passenger-1', 'driver_pool': true},
+    };
+
+    final envelope = RealtimeEnvelope.fromJson(json);
+
+    expect(envelope.scope.driverPool, isTrue);
+    expect(envelope.scope.toJson(), json['scope']);
+  });
+
   test('rejects unsupported versions and malformed scopes', () {
     expect(
       () => RealtimeEnvelope.fromJson(validEvent(version: 2)),

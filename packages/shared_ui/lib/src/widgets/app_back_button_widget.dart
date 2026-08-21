@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 
+/// A consistent, accessible back affordance for map and detail surfaces.
 class AppBackButtonWidget extends StatelessWidget {
   const AppBackButtonWidget({
     super.key,
@@ -10,20 +10,21 @@ class AppBackButtonWidget extends StatelessWidget {
   });
 
   const AppBackButtonWidget.plain({super.key, required this.onPressed})
-    : showSurface = false;
+      : showSurface = false;
 
   final VoidCallback onPressed;
   final bool showSurface;
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final iconButton = IconButton(
       onPressed: onPressed,
       tooltip: MaterialLocalizations.of(context).backButtonTooltip,
       padding: EdgeInsets.zero,
-      icon: const Icon(
+      icon: Icon(
         LucideIcons.arrow_left,
-        color: AppTheme.primaryColor,
+        color: colors.onSurface,
         size: 20,
       ),
     );
@@ -34,9 +35,9 @@ class AppBackButtonWidget extends StatelessWidget {
       height: 46,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: colors.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: AppTheme.borderSide),
+          border: Border.all(color: colors.outline),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),

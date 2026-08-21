@@ -38,7 +38,10 @@ func (service *Service) publishRide(ctx context.Context, eventType event.Type, r
 func (service *Service) publishSession(ctx context.Context, eventType event.Type, session domain.BidSession, payload map[string]any) {
 	// A bid session is not yet an authoritative ride. Its identifier belongs in
 	// the payload, while the event itself is scoped to the verified participants.
-	scope := event.Scope{PassengerID: positiveIdentifier(session.PassengerID)}
+	scope := event.Scope{
+		PassengerID: positiveIdentifier(session.PassengerID),
+		DriverPool:  session.TargetDriverID == nil && session.AcceptedDriverID == nil,
+	}
 	if session.TargetDriverID != nil {
 		scope.DriverID = positiveIdentifier(*session.TargetDriverID)
 	}

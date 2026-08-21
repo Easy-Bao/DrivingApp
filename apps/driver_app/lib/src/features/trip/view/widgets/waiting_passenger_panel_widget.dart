@@ -10,6 +10,7 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
   final String waitFormatted;
   final double fare;
   final bool isStartingTrip;
+  final bool includeStartTripButton;
   final int unreadChatMessagesCount;
   final VoidCallback onStartTripPressed;
   final VoidCallback onCallPressed;
@@ -23,6 +24,7 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
     required this.waitFormatted,
     required this.fare,
     this.isStartingTrip = false,
+    this.includeStartTripButton = true,
     required this.unreadChatMessagesCount,
     required this.onStartTripPressed,
     required this.onCallPressed,
@@ -52,7 +54,7 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Waiting $waitFormatted',
+                    'Waiting For Passenger $waitFormatted',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -116,30 +118,21 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: isStartingTrip ? null : onStartTripPressed,
-            style: ElevatedButton.styleFrom(shape: const StadiumBorder()),
-            child: isStartingTrip
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('Start Trip'),
+        if (includeStartTripButton) ...[
+          const SizedBox(height: 12),
+          WaitingPassengerStartTripButton(
+            isStartingTrip: isStartingTrip,
+            onPressed: onStartTripPressed,
           ),
-        ),
+        ],
       ],
     );
   }
 
   Widget _passengerSummary() {
+    final meetingCopy = passengerName.trim().isEmpty || passengerName == '—'
+        ? 'Meet The Passenger At Pickup'
+        : 'Meet $passengerName At Pickup';
     return Row(
       children: [
         Container(
@@ -171,8 +164,8 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 1),
-              const Text(
-                'Meet the passenger at pickup',
+              Text(
+                meetingCopy,
                 style: TextStyle(fontSize: 11, color: AppTheme.tertiaryColor),
               ),
             ],
@@ -218,6 +211,39 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class WaitingPassengerStartTripButton extends StatelessWidget {
+  final bool isStartingTrip;
+  final VoidCallback onPressed;
+
+  const WaitingPassengerStartTripButton({
+    super.key,
+    required this.isStartingTrip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: isStartingTrip ? null : onPressed,
+        style: ElevatedButton.styleFrom(shape: const StadiumBorder()),
+        child: isStartingTrip
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text('Start Trip'),
       ),
     );
   }

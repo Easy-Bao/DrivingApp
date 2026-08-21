@@ -16,6 +16,9 @@ const CurrentVersion = 1
 
 const maxIdentifierLength = 128
 
+// DriverPoolTopic fans out open ride offers to authenticated driver streams.
+const DriverPoolTopic = "driver-pool"
+
 type Type string
 
 const (
@@ -37,6 +40,7 @@ type Scope struct {
 	RoomID      string `json:"room_id,omitempty"`
 	DriverID    string `json:"driver_id,omitempty"`
 	PassengerID string `json:"passenger_id,omitempty"`
+	DriverPool  bool   `json:"driver_pool,omitempty"`
 }
 
 // Envelope is the common contract persisted only transiently in Pub/Sub and
@@ -137,7 +141,7 @@ func (scope Scope) Validate() error {
 		{name: "passenger id", value: scope.PassengerID},
 	}
 
-	hasScope := false
+	hasScope := scope.DriverPool
 	for _, identifier := range identifiers {
 		if identifier.value == "" {
 			continue
@@ -156,7 +160,7 @@ func (scope Scope) Validate() error {
 // Topics returns the internal fan-out destinations for an already validated
 // event. Topic names are never accepted from mobile clients.
 func (envelope Envelope) Topics() []string {
-	topics := make([]string, 0, 4)
+	topics := make([]string, 0, 5)
 	if envelope.Scope.RideID != "" {
 		topics = append(topics, "ride:"+envelope.Scope.RideID)
 	}
@@ -168,6 +172,9 @@ func (envelope Envelope) Topics() []string {
 	}
 	if envelope.Scope.PassengerID != "" {
 		topics = append(topics, "passenger:"+envelope.Scope.PassengerID)
+	}
+	if envelope.Scope.DriverPool {
+		topics = append(topics, DriverPoolTopic)
 	}
 	return topics
 }

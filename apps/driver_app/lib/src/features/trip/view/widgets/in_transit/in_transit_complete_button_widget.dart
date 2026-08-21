@@ -34,7 +34,7 @@ class InTransitCompleteButtonWidget extends StatelessWidget {
                   ),
                 )
               : const Text(
-                  'Complete trip',
+                  'Complete Trip',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w900,

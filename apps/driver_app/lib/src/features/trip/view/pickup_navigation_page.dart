@@ -14,7 +14,6 @@ import 'package:driver_app/src/features/trip/view/widgets/pickup_navigation_pane
 import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
@@ -149,9 +148,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (!_isInitialChatMessagesCountFetched) {
-          _viewedPassengerMessagesCount = currentPassengerMessagesCount;
+          // Existing passenger messages are unread until this chat is opened.
+          _viewedPassengerMessagesCount = 0;
           _isInitialChatMessagesCountFetched = true;
-          return;
         }
         final unreadCount =
             (currentPassengerMessagesCount - _viewedPassengerMessagesCount)
@@ -409,7 +408,10 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                   '';
                               if (!context.mounted) return;
                               setState(() {
+                                _viewedPassengerMessagesCount +=
+                                    _unreadChatMessagesCount;
                                 _unreadChatMessagesCount = 0;
+                                _isInitialChatMessagesCountFetched = true;
                               });
                               await context.pushNamed(
                                 ChatRoutes.chat,
@@ -423,7 +425,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                 },
                               );
                               if (!context.mounted) return;
-                              _isInitialChatMessagesCountFetched = false;
                               await _updateUnreadMessagesCount(
                                 BlocProvider.of<RideFlowCubit>(context),
                               );
@@ -445,37 +446,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 46,
-            height: 46,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.borderSide),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                tooltip: 'Back',
-                onPressed: () => context.pop(),
-                icon: const Icon(
-                  LucideIcons.arrow_left,
-                  size: 20,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: AppBackButtonWidget(onPressed: () => context.pop()),
     );
   }
 }

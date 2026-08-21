@@ -31,18 +31,21 @@ final class RealtimeScope extends Equatable {
     this.roomId,
     this.driverId,
     this.passengerId,
+    this.driverPool = false,
   });
 
   final String? rideId;
   final String? roomId;
   final String? driverId;
   final String? passengerId;
+  final bool driverPool;
 
   bool get isEmpty =>
       _isBlank(rideId) &&
       _isBlank(roomId) &&
       _isBlank(driverId) &&
-      _isBlank(passengerId);
+      _isBlank(passengerId) &&
+      !driverPool;
 
   factory RealtimeScope.fromJson(Map<String, dynamic> json) {
     final scope = RealtimeScope(
@@ -50,6 +53,7 @@ final class RealtimeScope extends Equatable {
       roomId: _optionalIdentifier(json['room_id'], 'room_id'),
       driverId: _optionalIdentifier(json['driver_id'], 'driver_id'),
       passengerId: _optionalIdentifier(json['passenger_id'], 'passenger_id'),
+      driverPool: json['driver_pool'] == true,
     );
     if (scope.isEmpty) {
       throw const FormatException('Realtime event scope is required.');
@@ -62,10 +66,17 @@ final class RealtimeScope extends Equatable {
     if (roomId != null) 'room_id': roomId,
     if (driverId != null) 'driver_id': driverId,
     if (passengerId != null) 'passenger_id': passengerId,
+    if (driverPool) 'driver_pool': true,
   };
 
   @override
-  List<Object?> get props => [rideId, roomId, driverId, passengerId];
+  List<Object?> get props => [
+    rideId,
+    roomId,
+    driverId,
+    passengerId,
+    driverPool,
+  ];
 }
 
 final class RealtimeEnvelope extends Equatable {

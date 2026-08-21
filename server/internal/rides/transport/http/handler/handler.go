@@ -208,7 +208,20 @@ func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Keep both naming styles while clients finish their API contract cutover.
-	jsonJSON(w, 200, map[string]any{"driver_id": stats.DriverID, "total_trips": stats.TotalTrips, "completed_trips": stats.CompletedTrips, "active_trips": stats.ActiveTrips, "total_fare_centavos": stats.TotalFare, "average_rating": stats.AverageRating, "totalTrips": stats.TotalTrips, "completedTrips": stats.CompletedTrips})
+	jsonJSON(w, 200, map[string]any{
+		"driver_id":               stats.DriverID,
+		"total_trips":             stats.TotalTrips,
+		"completed_trips":         stats.CompletedTrips,
+		"active_trips":            stats.ActiveTrips,
+		"total_fare_centavos":     stats.TotalFare,
+		"today_completed_trips":   stats.TodayCompletedTrips,
+		"today_earnings_centavos": stats.TodayEarnings,
+		"average_rating":          stats.AverageRating,
+		"totalTrips":              stats.TotalTrips,
+		"completedTrips":          stats.CompletedTrips,
+		"todayCompletedTrips":     stats.TodayCompletedTrips,
+		"todayEarningsCentavos":   stats.TodayEarnings,
+	})
 }
 
 func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {

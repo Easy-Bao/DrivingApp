@@ -559,7 +559,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           (rideMap['fare_centavos'] as num?)?.toDouble() ??
           event.proposedFare * 100;
       await _secureSessionService.saveActiveRideId(rideId);
-      await _startBackgroundTelemetry();
       _cleanupSubscriptions();
       emit(
         BookingDriverMatched(
@@ -589,6 +588,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           ),
         ),
       );
+      // Telemetry is supplementary to the accepted-ride transition. Keep it
+      // off the critical path so the passenger sees the matched state as soon
+      // as the authoritative ride has been persisted.
+      unawaited(_startBackgroundTelemetry());
     } catch (error) {
       _isAutoAcceptingOffer = false;
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));

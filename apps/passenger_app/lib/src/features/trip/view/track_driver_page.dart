@@ -17,8 +17,8 @@ import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_c
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/track_driver_panel_widget.dart';
-import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class _MapUpdateRequest {
@@ -132,9 +132,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
 
         if (!mounted) return;
         if (!_isInitialChatMessagesCountFetched) {
-          _viewedDriverMessagesCount = currentDriverMessagesCount;
+          // Messages already in the room were not necessarily read by the
+          // passenger. Start from zero so the chat action exposes them.
+          _viewedDriverMessagesCount = 0;
           _isInitialChatMessagesCountFetched = true;
-          return;
         }
 
         final unreadMessagesCount =
@@ -222,18 +223,19 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       final validRoutePoints = routePoints
           ?.where(_isValidRoutePoint)
           .toList(growable: false);
-      final effectiveRoutePoints =
-          validRoutePoints != null && validRoutePoints.length >= 2
-          ? validRoutePoints
-          : <List<double>>[
-              [driverLng, driverLat],
-              [targetLng, targetLat],
-            ];
-      _routeLineManager = await _upsertRoute(
-        _routeLineManager,
-        mapController,
-        effectiveRoutePoints,
-      );
+      if (validRoutePoints != null && validRoutePoints.length >= 2) {
+        _routeLineManager = await _upsertRoute(
+          _routeLineManager,
+          mapController,
+          validRoutePoints,
+        );
+      } else if (_routeLineManager != null) {
+        await MapProvider.clearAnnotations(_routeLineManager);
+        _routeLineManager = null;
+      }
+      final resolvedDriverName = driverName.trim().isEmpty
+          ? 'Driver'
+          : driverName.trim();
       _passengerMarkerManager = await _upsertMarker(
         _passengerMarkerManager,
         mapController,
@@ -242,8 +244,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         isOrigin: true,
         color: isInTransit ? AppTheme.accent : AppTheme.complete,
         label: isInTransit
-            ? 'Drop-off\n${widget.ride.destination}'
-            : 'Pickup\n${widget.ride.pickup}',
+            ? 'You → Drop Off\n${widget.ride.destination}'
+            : 'You → Driver\n${widget.ride.pickup}',
       );
       _driverMarkerManager = await _upsertMarker(
         _driverMarkerManager,
@@ -253,12 +255,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         isOrigin: false,
         color: AppTheme.complete,
         label: switch (status) {
-          RideStatus.arrived =>
-            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nAt pickup',
+          RideStatus.arrived => 'You → Driver\n$resolvedDriverName Has Arrived',
           RideStatus.inTransit =>
-            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nOn the trip',
-          _ =>
-            '${driverName.trim().isEmpty ? 'Your Driver' : driverName}\nHeading to pickup',
+            'You → Drop Off\n$resolvedDriverName Is Driving You',
+          _ => 'You → Driver\n$resolvedDriverName Is Picking You Up',
         },
         animate: true,
       );
@@ -502,24 +502,24 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                         state is TrackDriverInProgress &&
                         state.status == RideStatus.arrived;
                     final statusTitle = isInTransit
-                        ? 'On The Trip'
+                        ? 'Heading To Your Destination'
                         : hasArrived
                         ? 'Driver Has Arrived'
                         : state is TrackDriverInProgress
-                        ? 'Driver Is Heading To Pickup'
+                        ? 'Driver Is Picking You Up'
                         : 'Driver Assigned';
                     final statusSubtitle = isInTransit
-                        ? 'Heading to ${widget.ride.destination}'
+                        ? 'Heading To ${widget.ride.destination}'
                         : hasArrived
-                        ? 'Please meet your driver at pickup'
+                        ? 'Meet Your Driver At Pickup'
                         : state is TrackDriverInProgress
-                        ? 'Heading to the pickup location'
-                        : 'Preparing to head to pickup';
+                        ? 'Your Driver Is On The Way To Pickup'
+                        : 'Your Driver Is Preparing For Pickup';
                     final etaText = state is TrackDriverInProgress
                         ? hasArrived
-                              ? 'Meet Up'
+                              ? 'Driver Arrived'
                               : isInTransit
-                              ? 'On Trip'
+                              ? 'To Drop Off'
                               : 'To Pickup'
                         : 'To Pickup';
                     final driverName = state is TrackDriverInProgress
@@ -582,7 +582,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                                   : widget.ride.displayDriverName;
                               if (context.mounted) {
                                 setState(() {
+                                  _viewedDriverMessagesCount +=
+                                      _unreadChatMessagesCount;
                                   _unreadChatMessagesCount = 0;
+                                  _isInitialChatMessagesCountFetched = true;
                                 });
                                 await context.pushNamed(
                                   ChatRoutes.driverChat,
@@ -593,7 +596,6 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                                     'peerName': dName,
                                   },
                                 );
-                                _isInitialChatMessagesCountFetched = false;
                                 await _updateUnreadMessagesCount();
                               }
                             },

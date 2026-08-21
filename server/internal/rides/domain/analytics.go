@@ -3,12 +3,14 @@ package domain
 import "context"
 
 type DriverStats struct {
-	DriverID       int     `json:"driver_id"`
-	TotalTrips     int     `json:"total_trips"`
-	CompletedTrips int     `json:"completed_trips"`
-	ActiveTrips    int     `json:"active_trips"`
-	TotalFare      int64   `json:"total_fare_centavos"`
-	AverageRating  float64 `json:"average_rating"`
+	DriverID            int     `json:"driver_id"`
+	TotalTrips          int     `json:"total_trips"`
+	CompletedTrips      int     `json:"completed_trips"`
+	ActiveTrips         int     `json:"active_trips"`
+	TotalFare           int64   `json:"total_fare_centavos"`
+	TodayCompletedTrips int     `json:"today_completed_trips"`
+	TodayEarnings       int64   `json:"today_earnings_centavos"`
+	AverageRating       float64 `json:"average_rating"`
 }
 
 type Review struct {

@@ -57,6 +57,41 @@ func TestHandlerStreamsEventsOnlyToTheVerifiedIdentity(t *testing.T) {
 	}
 }
 
+func TestHandlerStreamsOpenOffersToVerifiedDrivers(t *testing.T) {
+	hub := NewHub()
+	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}}, nil)
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	url := "ws" + strings.TrimPrefix(server.URL, "http")
+	connection, _, err := websocket.DefaultDialer.Dial(url, http.Header{"Authorization": []string{"Bearer valid"}})
+	if err != nil {
+		t.Fatalf("Dial() error = %v", err)
+	}
+	defer connection.Close()
+
+	envelope, err := event.New(
+		"event-open-offer",
+		event.RideOfferCreated,
+		time.Now().UTC(),
+		event.Scope{PassengerID: "9", DriverPool: true},
+		map[string]any{"session_id": "31"},
+	)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	hub.Publish(envelope)
+
+	_ = connection.SetReadDeadline(time.Now().Add(time.Second))
+	var received event.Envelope
+	if err := connection.ReadJSON(&received); err != nil {
+		t.Fatalf("ReadJSON() error = %v", err)
+	}
+	if received.ID != envelope.ID || !received.Scope.DriverPool {
+		t.Fatalf("received event = %#v", received)
+	}
+}
+
 func TestHandlerRejectsUnauthenticatedOrUnsupportedRoles(t *testing.T) {
 	hub := NewHub()
 

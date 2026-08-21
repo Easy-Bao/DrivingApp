@@ -49,8 +49,8 @@ void main() {
       ).thenAnswer((_) async => 'driver-42');
       when(() => tripDataSource.fetchStats('driver-42')).thenAnswer(
         (_) async => <String, dynamic>{
-          'total_fare_centavos': 2817,
-          'completed_trips': 1,
+          'today_earnings_centavos': 2817,
+          'today_completed_trips': 1,
         },
       );
 

@@ -12,7 +12,7 @@ class CompactRouteTimelineWidget extends StatelessWidget {
     required this.pickup,
     required this.dropoff,
     this.pickupLabel = 'Pickup',
-    this.dropoffLabel = 'Drop-off',
+    this.dropoffLabel = 'Drop Off',
   });
 
   @override

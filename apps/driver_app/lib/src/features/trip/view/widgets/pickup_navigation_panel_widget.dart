@@ -134,7 +134,7 @@ class PickupNavigationPanelWidget extends StatelessWidget {
           Icon(LucideIcons.navigation, size: 13, color: AppTheme.complete),
           SizedBox(width: 6),
           Text(
-            'To Pickup',
+            'Heading To Passenger',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,

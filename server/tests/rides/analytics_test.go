@@ -25,7 +25,13 @@ func (analyticsRepository) Get(context.Context, int) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
 func (analyticsRepository) DriverStats(context.Context, int) (domain.DriverStats, error) {
-	return domain.DriverStats{DriverID: 7, TotalTrips: 3, CompletedTrips: 2}, nil
+	return domain.DriverStats{
+		DriverID:            7,
+		TotalTrips:          3,
+		CompletedTrips:      2,
+		TodayCompletedTrips: 1,
+		TodayEarnings:       2817,
+	}, nil
 }
 func (analyticsRepository) DriverTrips(context.Context, int) ([]domain.Ride, error) {
 	return []domain.Ride{{ID: 3}}, nil

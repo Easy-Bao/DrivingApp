@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 void main() {
   testWidgets('plain back button has no decorative surface', (tester) async {

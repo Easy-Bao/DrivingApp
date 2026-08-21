@@ -11,7 +11,6 @@ import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/view/saved_place_icon.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';

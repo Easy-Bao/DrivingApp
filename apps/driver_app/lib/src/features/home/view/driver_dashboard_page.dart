@@ -256,8 +256,17 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _handleRealtimeEvent(RealtimeEvent event) {
-    if (!mounted || event is! RideMatchedEvent) return;
+    if (!mounted) return;
     if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) return;
+
+    // Direct requests already carry the target driver's topic. Refresh the
+    // authoritative offers immediately instead of waiting for the fallback
+    // polling interval.
+    if (event is RideOfferCreatedEvent || event is RideOfferUpdatedEvent) {
+      unawaited(_pollRideData(_pollGeneration));
+      return;
+    }
+    if (event is! RideMatchedEvent) return;
 
     final rawRide = event.envelope.payload['ride'];
     if (rawRide is! Map) {
@@ -965,13 +974,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Widget _buildActiveTripCard(Map<String, dynamic> trip, int queueIndex) {
     final status = trip['status'] as String? ?? 'accepted';
-    String statusLabel = 'To Pickup';
+    String statusLabel = 'Heading To Passenger';
     Color statusColor = AppTheme.inProgress;
     if (status == 'arrived') {
-      statusLabel = 'Waiting Passenger';
+      statusLabel = 'Waiting For Passenger';
       statusColor = AppTheme.secondaryColor;
     } else if (status == 'in_transit') {
-      statusLabel = 'In Transit';
+      statusLabel = 'Driving Passenger';
       statusColor = AppTheme.complete;
     }
     final hasCurrentTransitRide = _activeTrips.any(

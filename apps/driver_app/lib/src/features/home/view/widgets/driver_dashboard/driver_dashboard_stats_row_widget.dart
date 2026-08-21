@@ -24,7 +24,7 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
           children: [
             Expanded(
               child: _buildStatCard(
-                label: 'Earnings',
+                label: "Today's Earnings",
                 value: '₱${earnings.toStringAsFixed(0)}',
                 skeletonWidth: 84,
               ),
@@ -32,7 +32,7 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
-                label: 'Trips completed',
+                label: 'Trips Today',
                 value: '$completedTrips',
                 skeletonWidth: 32,
               ),

@@ -172,6 +172,50 @@ void main() {
     );
 
     blocTest<TrackDriverCubit, TrackDriverState>(
+      'keeps an arrived status when driver location is temporarily unavailable',
+      build: () {
+        when(() => repo.getRideStatusUpdate(any())).thenAnswer(
+          (_) async => const Right(
+            RideUpdate(
+              status: RideStatus.arrived,
+              driverId: 'drv-1',
+              driverName: 'Driver',
+              vehiclePlate: 'ABC-123',
+              vehicleType: 'Sedan',
+            ),
+          ),
+        );
+        when(
+          () => repo.fetchDriverLocation('drv-1'),
+        ).thenAnswer((_) async => const Left(NetworkFailure('offline')));
+        when(
+          () => session.readActiveRideId(),
+        ).thenAnswer((_) async => 'ride-1');
+        return _makeCubit(repo, session);
+      },
+      act: (cubit) async {
+        await cubit.startTracking(
+          startLat: 7.828,
+          startLng: 123.434,
+          endLat: 7.830,
+          endLng: 123.436,
+          rideId: 'ride-1',
+          driverId: 'drv-1',
+          driverName: 'Driver',
+          vehiclePlate: 'ABC-123',
+          vehicleType: 'Sedan',
+        );
+        await Future.delayed(const Duration(milliseconds: 2200));
+      },
+      expect: () => [
+        isA<TrackDriverInProgress>()
+            .having((state) => state.status, 'status', RideStatus.arrived)
+            .having((state) => state.driverLat, 'driverLat', 7.828)
+            .having((state) => state.driverLng, 'driverLng', 123.434),
+      ],
+    );
+
+    blocTest<TrackDriverCubit, TrackDriverState>(
       'emits TrackDriverCompleted when server reports RideStatus.completed',
       build: () {
         when(
