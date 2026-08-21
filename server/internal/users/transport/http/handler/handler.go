@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
 )
@@ -23,15 +23,9 @@ func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
-	raw := strings.TrimSpace(r.Header.Get("Authorization"))
-	if len(raw) <= len("Bearer ") || !strings.HasPrefix(raw, "Bearer ") {
-		return 0, false
-	}
-	id, err := handler.verifier.Verify(
-		strings.TrimSpace(strings.TrimPrefix(raw, "Bearer ")),
-	)
-	value, parseErr := strconv.Atoi(id)
-	return value, err == nil && parseErr == nil
+	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
+	value, parseErr := strconv.Atoi(identity.Subject)
+	return value, ok && parseErr == nil
 }
 func (handler *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)

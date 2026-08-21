@@ -11,6 +11,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
 )
@@ -24,13 +25,9 @@ func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
-	raw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-	if raw == r.Header.Get("Authorization") || raw == "" {
-		return 0, false
-	}
-	subject, err := handler.verifier.Verify(raw)
-	id, parseErr := strconv.Atoi(subject)
-	return id, err == nil && parseErr == nil
+	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
+	id, parseErr := strconv.Atoi(identity.Subject)
+	return id, ok && parseErr == nil
 }
 func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)

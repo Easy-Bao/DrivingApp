@@ -9,6 +9,7 @@ import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_s
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverAccountPage extends StatefulWidget {
@@ -58,20 +59,16 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
 
       final profileData = await Modular.get<DriverRemoteDataSource>()
           .fetchDriverProfile(driverId);
+      final profile = ProfileModel.fromJson(profileData);
       final prefs = await SharedPreferences.getInstance();
-      final name = _readString(profileData, ['name', 'full_name'], _name);
-      final vehicleType = _readString(profileData, [
-        'vehicleType',
-        'vehicle_type',
-      ], _vehicleType);
-      final plateNumber = _readString(profileData, [
-        'plateNumber',
-        'plate_number',
-      ], _plateNumber);
-      final profileRating = _readNumber(profileData, [
-        'rating',
-        'average_rating',
-      ]);
+      final name = profile.name.isNotEmpty ? profile.name : _name;
+      final vehicleType = profile.vehicleType.isNotEmpty
+          ? profile.vehicleType
+          : _vehicleType;
+      final plateNumber = profile.plateNumber.isNotEmpty
+          ? profile.plateNumber
+          : _plateNumber;
+      final profileRating = profile.rating;
       final rating = profileRating != null && profileRating > 0
           ? profileRating.toStringAsFixed(1)
           : _rating;
@@ -105,18 +102,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     } catch (error) {
       debugPrint('Unable to refresh driver account: $error');
     }
-  }
-
-  String _readString(
-    Map<String, dynamic> values,
-    List<String> keys,
-    String fallback,
-  ) {
-    for (final key in keys) {
-      final value = values[key];
-      if (value is String && value.trim().isNotEmpty) return value.trim();
-    }
-    return fallback;
   }
 
   double? _readNumber(Map<String, dynamic> values, List<String> keys) {

@@ -30,17 +30,20 @@ class TripModule {
       name: TripRoutes.activityDetailMap,
       TripRoutes.activityDetailMapPath,
       child: (context, GoRouterState state) {
-        final data = SafeRouteExtra.asMap(state.extra);
-        final latitude = _asDouble(data['lat']);
-        final longitude = _asDouble(data['lng']);
+        final data = RoutePayload.from(
+          extra: state.extra,
+          queryParameters: state.uri.queryParameters,
+        );
+        final latitude = data.doubleValue('lat');
+        final longitude = data.doubleValue('lng');
         if (latitude == null || longitude == null) {
           return const Scaffold(
             body: Center(child: Text('Location data is unavailable.')),
           );
         }
         return ActivityDetailMapPage(
-          placeName: _asString(data['title']) ?? 'Location',
-          placeSubtitle: _asString(data['subtitle']) ?? '',
+          placeName: data.string('title') ?? 'Location',
+          placeSubtitle: data.string('subtitle') ?? '',
           destinationLat: latitude,
           destinationLng: longitude,
         );
@@ -60,21 +63,17 @@ class TripModule {
       TripRoutes.rideSelectionPath,
       child: (context, GoRouterState state) {
         final extra = state.extra;
-        final data = SafeRouteExtra.asMap(state.extra);
+        final data = RoutePayload.from(
+          extra: extra,
+          queryParameters: state.uri.queryParameters,
+        );
         final destination = extra is PlaceModel
             ? extra
-            : data['destination'] is PlaceModel
-            ? data['destination'] as PlaceModel
-            : _destinationFromQuery(state.uri.queryParameters);
-        final distanceKm =
-            _asDouble(data['distanceKm']) ??
-            double.tryParse(state.uri.queryParameters['distanceKm'] ?? '');
-        final distance =
-            _asString(data['distance']) ??
-            state.uri.queryParameters['distance'];
-        final duration =
-            _asString(data['duration']) ??
-            state.uri.queryParameters['duration'];
+            : data.object<PlaceModel>('destination') ??
+                  _destinationFromQuery(data);
+        final distanceKm = data.doubleValue('distanceKm');
+        final distance = data.string('distance');
+        final duration = data.string('duration');
         if (destination == null) {
           return const Scaffold(
             body: Center(child: Text('Trip route data is unavailable.')),
@@ -87,27 +86,12 @@ class TripModule {
             distance: distance,
             duration: duration,
             distanceKm: distanceKm,
-            rideType:
-                _asString(data['rideType']) ??
-                state.uri.queryParameters['rideType'] ??
-                'solo',
-            initialTipAmount:
-                _asInt(data['tipAmount']) ??
-                int.tryParse(state.uri.queryParameters['tipAmount'] ?? '') ??
-                0,
-            initialNotes:
-                _asString(data['notes']) ??
-                state.uri.queryParameters['notes'] ??
-                '',
-            pickupLatitude:
-                _asDouble(data['pickupLat']) ??
-                double.tryParse(state.uri.queryParameters['pickupLat'] ?? ''),
-            pickupLongitude:
-                _asDouble(data['pickupLng']) ??
-                double.tryParse(state.uri.queryParameters['pickupLng'] ?? ''),
-            pickupAddress:
-                _asString(data['pickupAddress']) ??
-                state.uri.queryParameters['pickupAddress'],
+            rideType: data.string('rideType') ?? 'solo',
+            initialTipAmount: data.intValue('tipAmount') ?? 0,
+            initialNotes: data.string('notes') ?? '',
+            pickupLatitude: data.doubleValue('pickupLat'),
+            pickupLongitude: data.doubleValue('pickupLng'),
+            pickupAddress: data.string('pickupAddress'),
           ),
         );
       },
@@ -118,31 +102,31 @@ class TripModule {
       name: TripRoutes.findingDriver,
       TripRoutes.findingDriverPath,
       child: (context, GoRouterState state) {
-        final data = SafeRouteExtra.asMap(state.extra);
-        final destination = data['destination'];
-        if (destination is! PlaceModel) {
+        final data = RoutePayload.from(extra: state.extra);
+        final destination = data.object<PlaceModel>('destination');
+        if (destination == null) {
           return const Scaffold(
             body: Center(child: Text('Destination data is unavailable.')),
           );
         }
-        final fare = _asDouble(data['fare']);
-        final distance = _asString(data['distance']);
-        final duration = _asString(data['duration']);
+        final fare = data.doubleValue('fare');
+        final distance = data.string('distance');
+        final duration = data.string('duration');
         if (fare == null || fare <= 0 || distance == null || duration == null) {
           return const Scaffold(
             body: Center(child: Text('Fare and trip data are unavailable.')),
           );
         }
         return FindingDriverPage(
-          rideType: _asString(data['rideType']) ?? 'Solo Ride',
+          rideType: data.string('rideType') ?? 'Solo Ride',
           fare: fare,
           destination: destination,
           distance: distance,
           duration: duration,
-          pickupLatitude: _asDouble(data['pickupLat']),
-          pickupLongitude: _asDouble(data['pickupLng']),
-          pickupAddress: _asString(data['pickupAddress']),
-          passengerNote: _asString(data['passengerNote']) ?? '',
+          pickupLatitude: data.doubleValue('pickupLat'),
+          pickupLongitude: data.doubleValue('pickupLng'),
+          pickupAddress: data.string('pickupAddress'),
+          passengerNote: data.string('passengerNote') ?? '',
         );
       },
       transition: AppTransitions.modal.toTop,
@@ -152,36 +136,34 @@ class TripModule {
       name: TripRoutes.driverMatched,
       TripRoutes.driverMatchedPath,
       child: (context, GoRouterState state) {
-        final data = SafeRouteExtra.asMap(state.extra);
-        final destination = data['destination'];
-        if (destination is! PlaceModel) {
+        final data = RoutePayload.from(extra: state.extra);
+        final destination = data.object<PlaceModel>('destination');
+        if (destination == null) {
           return const Scaffold(
             body: Center(child: Text('Destination data is unavailable.')),
           );
         }
-        final fare = _asDouble(data['fare']);
-        final distance = _asString(data['distance']);
-        final duration = _asString(data['duration']);
+        final fare = data.doubleValue('fare');
+        final distance = data.string('distance');
+        final duration = data.string('duration');
         if (fare == null || fare <= 0 || distance == null || duration == null) {
           return const Scaffold(
             body: Center(child: Text('Fare and trip data are unavailable.')),
           );
         }
         return DriverMatchedPage(
-          rideType: _asString(data['rideType']) ?? 'Solo Ride',
+          rideType: data.string('rideType') ?? 'Solo Ride',
           fare: fare,
           destination: destination,
           distance: distance,
           duration: duration,
-          driverId: _asString(data['driverId']),
-          driverName: _asString(data['driverName']),
-          driverRating: _asString(data['driverRating']),
-          vehicleType: _asString(data['vehicleType']),
-          plateNumber: _asString(data['plateNumber']),
-          pickupAddress: _asString(data['pickupAddress']),
-          createdRide: data['createdRide'] is RideHistoryModel
-              ? data['createdRide'] as RideHistoryModel
-              : null,
+          driverId: data.string('driverId'),
+          driverName: data.string('driverName'),
+          driverRating: data.string('driverRating'),
+          vehicleType: data.string('vehicleType'),
+          plateNumber: data.string('plateNumber'),
+          pickupAddress: data.string('pickupAddress'),
+          createdRide: data.object<RideHistoryModel>('createdRide'),
         );
       },
       transition: AppTransitions.modal.toTop,
@@ -191,10 +173,10 @@ class TripModule {
 
   static List<ModularRoute> shellRoutes = [];
 
-  static PlaceModel? _destinationFromQuery(Map<String, String> parameters) {
-    final name = parameters['destinationName'];
-    final latitude = double.tryParse(parameters['destinationLat'] ?? '');
-    final longitude = double.tryParse(parameters['destinationLng'] ?? '');
+  static PlaceModel? _destinationFromQuery(RoutePayload data) {
+    final name = data.string('destinationName');
+    final latitude = data.doubleValue('destinationLat');
+    final longitude = data.doubleValue('destinationLng');
 
     if (name == null ||
         name.trim().isEmpty ||
@@ -204,28 +186,11 @@ class TripModule {
     }
 
     return PlaceModel(
-      id: parameters['destinationId'] ?? name,
+      id: data.string('destinationId') ?? name,
       name: name,
-      fullAddress: parameters['destinationAddress'] ?? name,
+      fullAddress: data.string('destinationAddress') ?? name,
       latitude: latitude,
       longitude: longitude,
     );
-  }
-
-  static String? _asString(Object? value) {
-    if (value is! String) return null;
-    final result = value.trim();
-    return result.isEmpty ? null : result;
-  }
-
-  static double? _asDouble(Object? value) {
-    if (value is num) return value.toDouble();
-    return value is String ? double.tryParse(value) : null;
-  }
-
-  static int? _asInt(Object? value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return value is String ? int.tryParse(value) : null;
   }
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
@@ -22,13 +23,9 @@ func NewHandler(service *usecase.Service, verifier *token.Verifier, authorizer *
 	return &Handler{service: service, verifier: verifier, authorizer: authorizer}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
-	raw := r.Header.Get("Authorization")
-	if len(raw) < 7 {
-		return 0, false
-	}
-	subject, err := handler.verifier.Verify(raw[7:])
-	id, parseErr := strconv.Atoi(subject)
-	return id, err == nil && parseErr == nil
+	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
+	id, parseErr := strconv.Atoi(identity.Subject)
+	return id, ok && parseErr == nil
 }
 func (handler *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)

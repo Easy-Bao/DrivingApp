@@ -9,6 +9,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
@@ -181,13 +182,7 @@ func (handler *Handler) NearbyDrivers(writer http.ResponseWriter, request *http.
 }
 
 func (handler *Handler) identity(request *http.Request) (security.Identity, bool) {
-	const prefix = "Bearer "
-	header := request.Header.Get("Authorization")
-	if len(header) <= len(prefix) || header[:len(prefix)] != prefix {
-		return security.Identity{}, false
-	}
-	identity, err := handler.auth.VerifyIdentity(header[len(prefix):])
-	return identity, err == nil && identity.Subject != ""
+	return middleware.IdentityFromRequest(request, handler.auth)
 }
 
 func writeJSON(writer http.ResponseWriter, status int, value any) {

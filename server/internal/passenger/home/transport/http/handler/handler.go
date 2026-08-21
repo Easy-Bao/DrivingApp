@@ -7,6 +7,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 )
 
@@ -41,18 +42,11 @@ func (handler *Handler) Get(writer http.ResponseWriter, request *http.Request) {
 }
 
 func (handler *Handler) passengerID(request *http.Request) (*int, int) {
-	rawAuthorization := strings.TrimSpace(request.Header.Get("Authorization"))
-	if rawAuthorization == "" {
+	if request.Header.Get("Authorization") == "" {
 		return nil, 0
 	}
-	if handler.verifier == nil || !strings.HasPrefix(rawAuthorization, "Bearer ") {
-		return nil, http.StatusUnauthorized
-	}
-
-	identity, err := handler.verifier.VerifyIdentity(
-		strings.TrimSpace(strings.TrimPrefix(rawAuthorization, "Bearer ")),
-	)
-	if err != nil {
+	identity, ok := middleware.IdentityFromRequest(request, handler.verifier)
+	if !ok {
 		return nil, http.StatusUnauthorized
 	}
 	if identity.Role != "" && identity.Role != "passenger" {

@@ -7,6 +7,7 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -66,28 +67,20 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     try {
       final response = await Modular.get<PassengerRemoteDataSource>()
           .fetchPassengerProfile(pId);
-      final profile = _profilePayload(response);
+      final profile = ProfileModel.fromJson(response);
       final values = <String, String>{
-        'name': _profileValue(
-          profile['name'] ?? profile['full_name'] ?? profile['fullName'],
-          cachedValues['name'] ?? '',
-        ),
-        'phone': _profileValue(
-          profile['phone'] ?? profile['phone_number'] ?? profile['phoneNumber'],
-          cachedValues['phone'] ?? '',
-        ),
-        'email': _profileValue(
-          profile['email'] ??
-              profile['email_address'] ??
-              profile['emailAddress'],
-          cachedValues['email'] ?? '',
-        ),
-        'address': _profileValue(
-          profile['address'] ??
-              profile['home_address'] ??
-              profile['homeAddress'],
-          cachedValues['address'] ?? '',
-        ),
+        'name': profile.name.isNotEmpty
+            ? profile.name
+            : cachedValues['name'] ?? '',
+        'phone': profile.phone.isNotEmpty
+            ? profile.phone
+            : cachedValues['phone'] ?? '',
+        'email': profile.email.isNotEmpty
+            ? profile.email
+            : cachedValues['email'] ?? '',
+        'address': profile.address.isNotEmpty
+            ? profile.address
+            : cachedValues['address'] ?? '',
       };
       await prefs.setString('passenger_name', values['name']!);
       await prefs.setString('passenger_phone', values['phone']!);
@@ -98,17 +91,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     } catch (_) {
       // Cached values remain visible when the profile service is unavailable.
     }
-  }
-
-  String _profileValue(Object? value, String fallback) {
-    final normalized = value?.toString().trim() ?? '';
-    return normalized.isEmpty ? fallback : normalized;
-  }
-
-  Map<String, dynamic> _profilePayload(Map<String, dynamic> response) {
-    final nested = response['profile'] ?? response['user'] ?? response['data'];
-    if (nested is Map) return Map<String, dynamic>.from(nested);
-    return response;
   }
 
   void _applyProfileValues(Map<String, String> values) {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/gorilla/websocket"
 )
 
@@ -69,7 +70,7 @@ func (handler *Handler) originAllowed(request *http.Request) bool {
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	token, ok := bearerToken(request.Header.Get("Authorization"))
+	token, ok := middleware.BearerToken(request.Header.Get("Authorization"))
 	if !ok {
 		http.Error(writer, "unauthorized", http.StatusUnauthorized)
 		return
@@ -132,14 +133,6 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			handler.hub.Broadcast(roomID, eventMessage)
 		}
 	}
-}
-
-func bearerToken(header string) (string, bool) {
-	const prefix = "Bearer "
-	if len(header) <= len(prefix) || !strings.HasPrefix(header, prefix) {
-		return "", false
-	}
-	return header[len(prefix):], true
 }
 
 func isChatEvent(message []byte) bool {

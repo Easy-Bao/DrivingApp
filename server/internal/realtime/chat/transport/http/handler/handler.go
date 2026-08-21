@@ -3,11 +3,11 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
 )
@@ -108,13 +108,8 @@ func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Reques
 }
 
 func (handler *Handler) identity(request *http.Request) (string, bool) {
-	const prefix = "Bearer "
-	header := request.Header.Get("Authorization")
-	if handler.verifier == nil || len(header) <= len(prefix) || !strings.HasPrefix(header, prefix) {
-		return "", false
-	}
-	subject, err := handler.verifier.Verify(header[len(prefix):])
-	return subject, err == nil && subject != ""
+	identity, ok := middleware.IdentityFromRequest(request, handler.verifier)
+	return identity.Subject, ok
 }
 
 func writeJSON(writer http.ResponseWriter, status int, value any) {

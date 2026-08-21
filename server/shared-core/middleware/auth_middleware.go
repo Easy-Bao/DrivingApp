@@ -11,23 +11,49 @@ import (
 
 type contextKey string
 
-const subjectKey contextKey = "authenticated_subject"
+const identityKey contextKey = "authenticated_identity"
 
 func RequireAuth(tokenManager *security.TokenManager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			rawToken := strings.TrimPrefix(request.Header.Get("Authorization"), "Bearer ")
-			subject, err := tokenManager.Verify(rawToken)
-			if err != nil {
+			identity, ok := IdentityFromRequest(request, tokenManager)
+			if !ok {
 				response.Error(writer, http.StatusUnauthorized, "unauthorized")
 				return
 			}
-			next.ServeHTTP(writer, request.WithContext(context.WithValue(request.Context(), subjectKey, subject)))
+			next.ServeHTTP(writer, request.WithContext(context.WithValue(request.Context(), identityKey, identity)))
 		})
 	}
 }
 
+func IdentityFromRequest(request *http.Request, tokenManager *security.TokenManager) (security.Identity, bool) {
+	if request == nil || tokenManager == nil {
+		return security.Identity{}, false
+	}
+	rawToken, ok := BearerToken(request.Header.Get("Authorization"))
+	if !ok {
+		return security.Identity{}, false
+	}
+	identity, err := tokenManager.VerifyIdentity(rawToken)
+	return identity, err == nil && identity.Subject != ""
+}
+
+func BearerToken(header string) (string, bool) {
+	const prefix = "Bearer "
+	header = strings.TrimSpace(header)
+	if len(header) <= len(prefix) || !strings.HasPrefix(header, prefix) {
+		return "", false
+	}
+	token := strings.TrimSpace(strings.TrimPrefix(header, prefix))
+	return token, token != ""
+}
+
+func Identity(request *http.Request) (security.Identity, bool) {
+	identity, ok := request.Context().Value(identityKey).(security.Identity)
+	return identity, ok && identity.Subject != ""
+}
+
 func Subject(request *http.Request) (string, bool) {
-	subject, ok := request.Context().Value(subjectKey).(string)
-	return subject, ok && subject != ""
+	identity, ok := Identity(request)
+	return identity.Subject, ok
 }

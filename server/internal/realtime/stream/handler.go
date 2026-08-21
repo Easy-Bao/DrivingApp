@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/gorilla/websocket"
 )
@@ -70,7 +71,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 }
 
 func (handler *Handler) identity(request *http.Request) (security.Identity, bool) {
-	token, ok := bearerToken(request.Header.Get("Authorization"))
+	token, ok := middleware.BearerToken(request.Header.Get("Authorization"))
 	if !ok {
 		return security.Identity{}, false
 	}
@@ -138,12 +139,4 @@ func topicsForIdentity(identity security.Identity) ([]string, error) {
 	default:
 		return nil, errors.New("unsupported realtime role")
 	}
-}
-
-func bearerToken(header string) (string, bool) {
-	const prefix = "Bearer "
-	if len(header) <= len(prefix) || !strings.HasPrefix(header, prefix) {
-		return "", false
-	}
-	return header[len(prefix):], true
 }

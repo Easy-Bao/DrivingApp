@@ -29,6 +29,13 @@ type HistoryRepository interface {
 	Resolve(ctx context.Context, roomID string) error
 }
 
+type RoomRepository interface {
+	HistoryRepository
+	RoomParticipantsRepository
+	RoomAccessRepository
+	RoomLockRepository
+}
+
 type RoomParticipantsRepository interface {
 	RoomParticipants(ctx context.Context, roomID string) (passengerID, driverID string, err error)
 }

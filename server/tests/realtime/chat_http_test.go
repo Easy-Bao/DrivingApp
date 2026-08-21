@@ -24,9 +24,13 @@ func (history *roomHistory) Messages(context.Context, string) ([]domain.Message,
 	return []domain.Message{{Body: "private"}}, nil
 }
 func (history *roomHistory) Resolve(context.Context, string) error { return nil }
+func (history *roomHistory) RoomParticipants(context.Context, string) (string, string, error) {
+	return "7", "8", nil
+}
 func (history *roomHistory) IsMember(_ context.Context, roomID, userID string) (bool, error) {
 	return history.members[roomID+":"+userID], nil
 }
+func (history *roomHistory) IsLocked(context.Context, string) (bool, error) { return false, nil }
 
 func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 	tokenManager := security.NewTokenManager("chat-test-secret")

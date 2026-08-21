@@ -44,19 +44,10 @@ class ProfileCubit extends Cubit<ProfileState> {
       final response = await _remoteDataSource.fetchPassengerProfile(
         passengerId,
       );
-      final profile = _profilePayload(response);
-      final name = _profileValue(
-        profile['name'] ?? profile['full_name'] ?? profile['fullName'],
-        cachedName,
-      );
-      final phone = _profileValue(
-        profile['phone'] ?? profile['phone_number'] ?? profile['phoneNumber'],
-        cachedPhone,
-      );
-      final email = _profileValue(
-        profile['email'] ?? profile['email_address'] ?? profile['emailAddress'],
-        cachedEmail,
-      );
+      final profile = ProfileModel.fromJson(response);
+      final name = profile.name.isNotEmpty ? profile.name : cachedName;
+      final phone = profile.phone.isNotEmpty ? profile.phone : cachedPhone;
+      final email = profile.email.isNotEmpty ? profile.email : cachedEmail;
 
       await prefs.setString('passenger_name', name);
       await prefs.setString('passenger_phone', phone);
@@ -74,16 +65,5 @@ class ProfileCubit extends Cubit<ProfileState> {
         ),
       );
     }
-  }
-
-  Map<String, dynamic> _profilePayload(Map<String, dynamic> response) {
-    final nested = response['profile'] ?? response['user'] ?? response['data'];
-    if (nested is Map) return Map<String, dynamic>.from(nested);
-    return response;
-  }
-
-  String _profileValue(Object? value, String fallback) {
-    final normalized = SafeParse.toStringValue(value).trim();
-    return normalized.isEmpty ? fallback : normalized;
   }
 }

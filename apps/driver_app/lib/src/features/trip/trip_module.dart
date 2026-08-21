@@ -6,6 +6,7 @@ import 'package:driver_app/src/features/trip/view/pickup_navigation_page.dart';
 import 'package:driver_app/src/features/trip/view/fare_summary_page.dart';
 import 'package:driver_app/src/features/trip/view/in_transit_page.dart';
 import 'package:driver_app/src/features/trip/view/waiting_passenger_page.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class TripModule {
@@ -17,7 +18,7 @@ class TripModule {
       TripRoutes.pickupNavigationPath,
       child: (context, GoRouterState state) {
         final data = _DriverTripRouteData.tryParse(
-          SafeRouteExtra.asMap(state.extra),
+          RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
         return PickupNavigationPage(
@@ -36,7 +37,7 @@ class TripModule {
       TripRoutes.waitingPassengerPath,
       child: (context, GoRouterState state) {
         final data = _DriverTripRouteData.tryParse(
-          SafeRouteExtra.asMap(state.extra),
+          RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
         return WaitingPassengerPage(
@@ -55,7 +56,7 @@ class TripModule {
       TripRoutes.inTransitPath,
       child: (context, GoRouterState state) {
         final data = _DriverTripRouteData.tryParse(
-          SafeRouteExtra.asMap(state.extra),
+          RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
         return InTransitPage(
@@ -74,7 +75,7 @@ class TripModule {
       TripRoutes.fareSummaryPath,
       child: (context, GoRouterState state) {
         final data = _DriverTripRouteData.tryParse(
-          SafeRouteExtra.asMap(state.extra),
+          RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
         return FareSummaryPage(
@@ -108,12 +109,12 @@ class _DriverTripRouteData {
   final double fare;
   final String duration;
 
-  static _DriverTripRouteData? tryParse(Map<String, dynamic> data) {
-    final pickup = _asNonEmptyString(data['pickup']);
-    final dropoff = _asNonEmptyString(data['dropoff']);
-    final distance = _asDouble(data['distance']);
-    final fare = _asDouble(data['fare']);
-    final duration = _asNonEmptyString(data['duration']);
+  static _DriverTripRouteData? tryParse(RoutePayload data) {
+    final pickup = data.string('pickup');
+    final dropoff = data.string('dropoff');
+    final distance = data.doubleValue('distance');
+    final fare = data.doubleValue('fare');
+    final duration = data.string('duration');
     if (pickup == null ||
         dropoff == null ||
         distance == null ||
@@ -133,17 +134,6 @@ class _DriverTripRouteData {
       duration: duration,
     );
   }
-}
-
-String? _asNonEmptyString(Object? value) {
-  if (value is! String) return null;
-  final result = value.trim();
-  return result.isEmpty ? null : result;
-}
-
-double? _asDouble(Object? value) {
-  if (value is num) return value.toDouble();
-  return value is String ? double.tryParse(value) : null;
 }
 
 Widget _tripDataUnavailable() => const Scaffold(

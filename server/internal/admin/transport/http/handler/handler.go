@@ -5,6 +5,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 )
@@ -19,14 +20,8 @@ func NewHandler(service *usecase.Service, verifier *token.Verifier, authorizer *
 	return &Handler{service: service, verifier: verifier, authorizer: authorizer}
 }
 func (handler *Handler) Stats(w http.ResponseWriter, r *http.Request) {
-	const prefix = "Bearer "
-	raw := r.Header.Get("Authorization")
-	if handler.verifier == nil || len(raw) <= len(prefix) || raw[:len(prefix)] != prefix {
-		writeError(w, 401, "unauthorized")
-		return
-	}
-	identity, err := handler.verifier.VerifyIdentity(raw[len(prefix):])
-	if err != nil {
+	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
+	if !ok {
 		writeError(w, 401, "unauthorized")
 		return
 	}
