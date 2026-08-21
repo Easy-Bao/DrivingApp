@@ -34,4 +34,11 @@ void main() {
       isNot(contains('passenger_internal_id')),
     );
   });
+
+  test('preserves the resolved-chat state message', () {
+    expect(
+      ErrorHandler.getErrorMessage(const ChatRoomLockedFailure()),
+      'This chat has already been resolved.',
+    );
+  });
 }

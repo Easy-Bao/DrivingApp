@@ -13,4 +13,15 @@ void main() {
     expect(find.byType(IconButton), findsOneWidget);
     expect(find.byType(DecoratedBox), findsNothing);
   });
+
+  testWidgets('default back button has a decorative surface', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AppBackButtonWidget(onPressed: () {})),
+      ),
+    );
+
+    expect(find.byType(IconButton), findsOneWidget);
+    expect(find.byType(DecoratedBox), findsOneWidget);
+  });
 }

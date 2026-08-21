@@ -35,3 +35,9 @@ class CacheFailure extends Failure {
 class ServerFailure extends Failure {
   const ServerFailure([super.message = 'An unexpected server error occurred.']);
 }
+
+class ChatRoomLockedFailure extends Failure {
+  const ChatRoomLockedFailure([
+    super.message = 'This chat has already been resolved.',
+  ]);
+}

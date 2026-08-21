@@ -240,9 +240,7 @@ class _MapPinPageState extends State<MapPinPage>
                 height: 52,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: AppBackButtonWidget.plain(
-                    onPressed: () => context.pop(),
-                  ),
+                  child: AppBackButtonWidget(onPressed: () => context.pop()),
                 ),
               ),
             ),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
@@ -16,6 +17,7 @@ import (
 
 type roomHistory struct {
 	members map[string]bool
+	locked  bool
 }
 
 func (history *roomHistory) CreateRoom(context.Context, string, string, string) error { return nil }
@@ -30,7 +32,9 @@ func (history *roomHistory) RoomParticipants(context.Context, string) (string, s
 func (history *roomHistory) IsMember(_ context.Context, roomID, userID string) (bool, error) {
 	return history.members[roomID+":"+userID], nil
 }
-func (history *roomHistory) IsLocked(context.Context, string) (bool, error) { return false, nil }
+func (history *roomHistory) IsLocked(context.Context, string) (bool, error) {
+	return history.locked, nil
+}
 
 func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 	tokenManager := security.NewTokenManager("chat-test-secret")
@@ -69,5 +73,35 @@ func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 				t.Fatalf("status = %d, want %d", response.Code, test.status)
 			}
 		})
+	}
+}
+
+func TestChatCreateRoomReportsResolvedRoom(t *testing.T) {
+	tokenManager := security.NewTokenManager("chat-test-secret")
+	memberToken, err := tokenManager.Issue("7")
+	if err != nil {
+		t.Fatal(err)
+	}
+	history := &roomHistory{
+		members: map[string]bool{"ride-1:7": true},
+		locked:  true,
+	}
+	router := chi.NewRouter()
+	chath.NewRouter(
+		chatusecase.NewService(chatadapter.NewHub(), history),
+		tokenManager,
+	).RegisterRoutes(router)
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/chat/rooms",
+		strings.NewReader(`{"roomId":"ride-1","passengerId":"7","driverId":"8"}`),
+	)
+	request.Header.Set("Authorization", "Bearer "+memberToken)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusLocked {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusLocked)
 	}
 }

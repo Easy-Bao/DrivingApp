@@ -150,6 +150,7 @@ class PassengerModule extends Module {
   @override
   List<ModularRoute> get routes => <ModularRoute>[
     ...ActivityModule.routes,
+    ...HomeModule.routes,
     ...TripModule.routes,
     ...ChatModule.routes,
     ...ProfileModule.routes,

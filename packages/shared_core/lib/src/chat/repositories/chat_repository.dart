@@ -71,7 +71,15 @@ class ChatRepository implements IChatRepository {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return const Right(null);
       }
+      if (response.statusCode == 423) {
+        return const Left(ChatRoomLockedFailure());
+      }
       return const Left(ServerFailure('Unable to initialize chat room.'));
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 423) {
+        return const Left(ChatRoomLockedFailure());
+      }
+      return const Left(NetworkFailure('Unable to initialize chat room.'));
     } catch (_) {
       return const Left(NetworkFailure('Unable to initialize chat room.'));
     }

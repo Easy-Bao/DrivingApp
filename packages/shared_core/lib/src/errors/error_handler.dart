@@ -6,6 +6,9 @@ class ErrorHandler {
   String get componentName => 'shared-error-handler';
 
   static String getErrorMessage(Object error) {
+    if (error is ChatRoomLockedFailure) {
+      return error.message;
+    }
     if (error is EmailAlreadyRegisteredFailure) {
       return error.message;
     }

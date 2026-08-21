@@ -25,9 +25,24 @@ class ChatCubit extends Cubit<ChatState> {
     );
     return result.fold((failure) {
       if (!isClosed) {
-        emit(
-          state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
-        );
+        if (failure is ChatRoomLockedFailure) {
+          emit(
+            state.copyWith(
+              isConnecting: false,
+              isConnected: false,
+              isRoomLocked: true,
+              lockReasonMessage: failure.message,
+              errorMessage: null,
+            ),
+          );
+        } else {
+          emit(
+            state.copyWith(
+              isConnecting: false,
+              errorMessage: ErrorHandler.getErrorMessage(failure),
+            ),
+          );
+        }
       }
       return false;
     }, (_) => true);

@@ -12,7 +12,6 @@ import 'package:passenger_app/src/features/chat/bloc/chat/chat_cubit.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/shared/widgets/app_back_button_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class DriverChatPage extends StatefulWidget {
   final String? roomId;
@@ -41,6 +40,7 @@ class _DriverChatPageState extends State<DriverChatPage>
   late AnimationController _typingCtrl;
   final _driverTyping = false;
   bool _isTripFinished = false;
+  bool _isResolvingChat = false;
 
   late ChatCubit _chatCubit;
 
@@ -67,6 +67,8 @@ class _DriverChatPageState extends State<DriverChatPage>
   }
 
   Future<void> _resolveChatRoom() async {
+    if (_isResolvingChat) return;
+
     final chatRoomId = widget.roomId;
     final currentUserId = widget.userId;
     if (chatRoomId == null ||
@@ -75,18 +77,24 @@ class _DriverChatPageState extends State<DriverChatPage>
         currentUserId.isEmpty) {
       return;
     }
-    final token =
-        widget.token ?? await Modular.get<SecureSessionService>().readToken();
-    final wsUri = ApiEndpoints.buildChatWebSocketUri(
-      roomId: chatRoomId,
-      userId: currentUserId,
-    );
-    await _chatCubit.resolveChatRoom(
-      chatRoomId,
-      currentUserId,
-      wsUri,
-      token: token,
-    );
+
+    setState(() => _isResolvingChat = true);
+    try {
+      final token =
+          widget.token ?? await Modular.get<SecureSessionService>().readToken();
+      final wsUri = ApiEndpoints.buildChatWebSocketUri(
+        roomId: chatRoomId,
+        userId: currentUserId,
+      );
+      await _chatCubit.resolveChatRoom(
+        chatRoomId,
+        currentUserId,
+        wsUri,
+        token: token,
+      );
+    } finally {
+      if (mounted) setState(() => _isResolvingChat = false);
+    }
   }
 
   final _quickReplies = [
@@ -205,20 +213,23 @@ class _DriverChatPageState extends State<DriverChatPage>
       value: _chatCubit,
       child: BlocConsumer<ChatCubit, ChatState>(
         listenWhen: (previous, current) =>
-            previous.messages != current.messages ||
-            previous.isRoomLocked != current.isRoomLocked ||
-            (previous.errorMessage != current.errorMessage &&
-                current.errorMessage != null),
-        listener: (context, state) {
+            previous.messages != current.messages,
+        listener: (_, state) {
           if (state.messages.isNotEmpty) _scrollDown();
-          if (state.isRoomLocked) {
-            CustomToast.show(context, 'This chat is now closed.');
-          } else if (state.errorMessage != null) {
-            CustomToast.show(context, state.errorMessage!, isError: true);
-          }
         },
         builder: (context, state) {
           final chatHistoryMessages = state.messages;
+          final statusLabel = state.isRoomLocked
+              ? 'Resolved'
+              : state.isConnecting
+              ? 'Connecting...'
+              : state.isConnected
+              ? 'Connected'
+              : 'Offline';
+          final statusColor = state.isRoomLocked || state.isConnected
+              ? AppTheme.complete
+              : AppTheme.cancel;
+          final canSendMessage = state.isConnected && !state.isRoomLocked;
 
           return Scaffold(
             backgroundColor: AppTheme.surface,
@@ -229,11 +240,13 @@ class _DriverChatPageState extends State<DriverChatPage>
               actions: [
                 if (_isTripFinished && !state.isRoomLocked)
                   TextButton(
-                    onPressed: _resolveChatRoom,
-                    child: const Text(
-                      'Resolve',
+                    onPressed: _isResolvingChat ? null : _resolveChatRoom,
+                    child: Text(
+                      _isResolvingChat ? 'Resolving...' : 'Resolve',
                       style: TextStyle(
-                        color: AppTheme.cancel,
+                        color: _isResolvingChat
+                            ? AppTheme.primaryColor.withValues(alpha: 0.4)
+                            : AppTheme.cancel,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -277,19 +290,15 @@ class _DriverChatPageState extends State<DriverChatPage>
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: state.isConnected
-                                  ? AppTheme.complete
-                                  : AppTheme.cancel,
+                              color: statusColor,
                               shape: BoxShape.circle,
                             ),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            state.isConnected ? 'Connected' : 'Offline',
+                            statusLabel,
                             style: TextStyle(
-                              color: state.isConnected
-                                  ? AppTheme.complete
-                                  : AppTheme.cancel,
+                              color: statusColor,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -304,6 +313,12 @@ class _DriverChatPageState extends State<DriverChatPage>
             body: Column(
               children: [
                 const Divider(height: 1, color: AppTheme.borderSide),
+                if (!state.isRoomLocked &&
+                    state.errorMessage != null &&
+                    chatHistoryMessages.isNotEmpty)
+                  _buildErrorBanner(state),
+                if (state.isRoomLocked && chatHistoryMessages.isNotEmpty)
+                  _buildResolvedBanner(state),
                 Expanded(
                   child: chatHistoryMessages.isEmpty
                       ? _buildEmptyState(state)
@@ -323,7 +338,7 @@ class _DriverChatPageState extends State<DriverChatPage>
                           },
                         ),
                 ),
-                if (!state.isRoomLocked)
+                if (canSendMessage)
                   SizedBox(
                     height: 44,
                     child: ListView.separated(
@@ -381,7 +396,7 @@ class _DriverChatPageState extends State<DriverChatPage>
                             ),
                             child: TextField(
                               controller: _msgCtrl,
-                              readOnly: state.isRoomLocked,
+                              readOnly: !canSendMessage,
                               textInputAction: TextInputAction.send,
                               style: const TextStyle(
                                 fontSize: 14,
@@ -393,7 +408,9 @@ class _DriverChatPageState extends State<DriverChatPage>
                                 fillColor: Colors.transparent,
                                 hintText: state.isRoomLocked
                                     ? state.lockReasonMessage
-                                    : 'Type a message...',
+                                    : state.isConnected
+                                    ? 'Type a message...'
+                                    : 'Reconnect to send a message',
                                 hintStyle: TextStyle(
                                   color: AppTheme.primaryColor.withValues(
                                     alpha: 0.4,
@@ -418,9 +435,9 @@ class _DriverChatPageState extends State<DriverChatPage>
                         const SizedBox(width: 12),
                         Container(
                           decoration: BoxDecoration(
-                            color: state.isRoomLocked
-                                ? AppTheme.neutralColor
-                                : AppTheme.primaryColor,
+                            color: canSendMessage
+                                ? AppTheme.primaryColor
+                                : AppTheme.neutralColor,
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -428,10 +445,10 @@ class _DriverChatPageState extends State<DriverChatPage>
                               LucideIcons.send_horizontal,
                               size: 20,
                             ),
-                            color: state.isRoomLocked
+                            color: !canSendMessage
                                 ? AppTheme.tertiaryColor
                                 : AppTheme.activeControlForeground,
-                            onPressed: state.isRoomLocked
+                            onPressed: !canSendMessage
                                 ? null
                                 : () => unawaited(_send(_msgCtrl.text)),
                           ),
@@ -449,10 +466,13 @@ class _DriverChatPageState extends State<DriverChatPage>
   }
 
   Widget _buildEmptyState(ChatState state) {
+    if (state.isRoomLocked) {
+      return _buildResolvedEmptyState(state);
+    }
     if (state.isConnecting) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (!state.isConnected && state.errorMessage != null) {
+    if (state.errorMessage != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -486,6 +506,116 @@ class _DriverChatPageState extends State<DriverChatPage>
       child: Text(
         'No messages yet. Start the conversation.',
         style: TextStyle(color: AppTheme.primaryColor.withValues(alpha: 0.5)),
+      ),
+    );
+  }
+
+  Widget _buildResolvedBanner(ChatState state) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.secondaryColor.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.complete.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            LucideIcons.circle_check,
+            color: AppTheme.complete,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Chat resolved',
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  state.lockReasonMessage,
+                  style: TextStyle(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResolvedEmptyState(ChatState state) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              LucideIcons.circle_check,
+              color: AppTheme.complete,
+              size: 36,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Chat resolved',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              state.lockReasonMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.primaryColor.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(ChatState state) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cancel.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            LucideIcons.circle_alert,
+            color: AppTheme.cancel,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              state.errorMessage!,
+              style: const TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(onPressed: _retryConnection, child: const Text('Retry')),
+        ],
       ),
     );
   }
