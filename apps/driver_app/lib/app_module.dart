@@ -42,9 +42,7 @@ class AppModule extends Module {
       )
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
-          uri: EnvConfig.webSocketBaseUri.replace(
-            path: '/api/v1/realtime/ws',
-          ),
+          uri: EnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
           tokenProvider: i.get<SecureSessionService>().readToken,
         ),
       )

@@ -193,7 +193,7 @@ void main() {
       ),
       expect: () => [
         isA<FindingNearestDriver>(),
-            isA<BookingFailure>()
+        isA<BookingFailure>()
             .having(
               (state) => state.message,
               'message',
