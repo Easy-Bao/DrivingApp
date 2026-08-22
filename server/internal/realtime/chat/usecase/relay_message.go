@@ -17,14 +17,19 @@ const (
 )
 
 type Service struct {
-	publisher   domain.Publisher
-	history     domain.RoomRepository
-	events      EventPublisher
-	assignments geodomain.RideAssignmentLookup
+	publisher              domain.Publisher
+	history                domain.RoomRepository
+	events                 EventPublisher
+	assignments            geodomain.RideAssignmentLookup
+	historicalParticipants RideParticipantLookup
 }
 
 type EventPublisher interface {
 	Publish(ctx context.Context, envelope event.Envelope) error
+}
+
+type RideParticipantLookup interface {
+	ForRide(ctx context.Context, rideID string) (geodomain.RideAssignment, bool, error)
 }
 
 func NewService(publisher domain.Publisher, history domain.RoomRepository) *Service {
@@ -40,6 +45,13 @@ func (service *Service) WithRideAssignmentLookup(
 	lookup geodomain.RideAssignmentLookup,
 ) *Service {
 	service.assignments = lookup
+	return service
+}
+
+func (service *Service) WithRideParticipantLookup(
+	lookup RideParticipantLookup,
+) *Service {
+	service.historicalParticipants = lookup
 	return service
 }
 func (service *Service) Relay(ctx context.Context, message domain.Message) error {
@@ -127,16 +139,43 @@ func (service *Service) CreateRoom(ctx context.Context, roomID, passengerID, dri
 			return domain.ErrRoomLocked
 		}
 	}
-	if existingPassengerID == "" && existingDriverID == "" && service.assignments != nil {
+	if existingPassengerID == "" && existingDriverID == "" {
+		if err := service.authorizeRoomCreation(ctx, roomID, passengerID, driverID); err != nil {
+			return err
+		}
+	}
+	return service.history.CreateRoom(ctx, roomID, passengerID, driverID)
+}
+
+func (service *Service) authorizeRoomCreation(
+	ctx context.Context,
+	roomID, passengerID, driverID string,
+) error {
+	if service.assignments != nil {
 		assignment, found, err := service.assignments.ForRide(ctx, roomID)
 		if err != nil {
 			return domain.ErrRoomUnavailable
 		}
-		if !found || assignment.PassengerID != passengerID || assignment.DriverID != driverID {
-			return domain.ErrForbidden
+		if found {
+			if assignment.PassengerID != passengerID || assignment.DriverID != driverID {
+				return domain.ErrForbidden
+			}
+			return nil
 		}
 	}
-	return service.history.CreateRoom(ctx, roomID, passengerID, driverID)
+
+	if service.historicalParticipants != nil {
+		assignment, found, err := service.historicalParticipants.ForRide(ctx, roomID)
+		if err != nil {
+			return domain.ErrRoomUnavailable
+		}
+		if found && assignment.PassengerID == passengerID && assignment.DriverID == driverID {
+			return nil
+		}
+		return domain.ErrForbidden
+	}
+
+	return domain.ErrRoomUnavailable
 }
 
 func (service *Service) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {

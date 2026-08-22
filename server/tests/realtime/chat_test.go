@@ -32,6 +32,15 @@ func (lookup chatAssignmentLookup) ForRide(context.Context, string) (geodomain.R
 	return lookup.assignment, lookup.found, nil
 }
 
+type historicalChatAssignmentLookup struct {
+	assignment geodomain.RideAssignment
+	found      bool
+}
+
+func (lookup historicalChatAssignmentLookup) ForRide(context.Context, string) (geodomain.RideAssignment, bool, error) {
+	return lookup.assignment, lookup.found, nil
+}
+
 func (history *chatHistory) CreateRoom(
 	_ context.Context,
 	_ string,
@@ -104,6 +113,29 @@ func TestChatCreateRoomRequiresTheAssignedRideParticipants(t *testing.T) {
 		"driver-1",
 	); err != nil {
 		t.Fatalf("assigned participants could not create room: %v", err)
+	}
+}
+
+func TestChatCreateRoomFallsBackToAuthoritativeParticipants(t *testing.T) {
+	history := &chatHistory{}
+	service := usecase.NewService(chatadapter.NewHub(), history).
+		WithRideAssignmentLookup(chatAssignmentLookup{found: false}).
+		WithRideParticipantLookup(historicalChatAssignmentLookup{
+			assignment: geodomain.RideAssignment{
+				RideID:      "ride-1",
+				PassengerID: "passenger-1",
+				DriverID:    "driver-1",
+			},
+			found: true,
+		})
+
+	if err := service.CreateRoom(
+		context.Background(),
+		"ride-1",
+		"passenger-1",
+		"driver-1",
+	); err != nil {
+		t.Fatalf("historical participants could not create room: %v", err)
 	}
 }
 

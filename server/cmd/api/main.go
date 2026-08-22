@@ -184,7 +184,8 @@ func main() {
 	chatHistory := chatadapter.NewRedisRepository(redisClient)
 	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory).
 		WithEventPublisher(eventadapter.NewRedisPublisher(redisClient)).
-		WithRideAssignmentLookup(eventadapter.NewRedisRideAssignmentLookup(redisClient))
+		WithRideAssignmentLookup(eventadapter.NewRedisRideAssignmentLookup(redisClient)).
+		WithRideParticipantLookup(chatadapter.NewRideParticipantLookup(ridesRepository))
 	eventHub := stream.NewHub()
 	eventSubscriber := eventadapter.NewRedisSubscriber(redisClient)
 	go func() {
