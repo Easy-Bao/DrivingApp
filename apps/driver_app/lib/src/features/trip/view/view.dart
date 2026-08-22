@@ -5,5 +5,4 @@ export 'waiting_passenger_page.dart';
 export 'widgets/pickup_navigation_panel_widget.dart';
 export 'widgets/in_transit/in_transit_complete_button_widget.dart';
 export 'widgets/in_transit/in_transit_passenger_card_widget.dart';
-export 'widgets/trip_map_current_location_button.dart';
 export 'widgets/waiting_passenger_panel_widget.dart';
