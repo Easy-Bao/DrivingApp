@@ -457,11 +457,17 @@ func (repository *Repository) Session(ctx context.Context, sessionID int) (domai
 }
 
 func (repository *Repository) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
-	rides, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID)).All(ctx)
+	totalTrips, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID)).Count(ctx)
 	if err != nil {
 		return domain.DriverStats{}, err
 	}
-	stats := domain.DriverStats{DriverID: driverID}
+	completedMetrics, err := aggregateRideMetrics(
+		ctx,
+		repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID), ride.StatusEQ("completed")),
+	)
+	if err != nil {
+		return domain.DriverStats{}, err
+	}
 	now := time.Now()
 	startOfDay := time.Date(
 		now.Year(),
@@ -474,39 +480,72 @@ func (repository *Repository) DriverStats(ctx context.Context, driverID int) (do
 		now.Location(),
 	)
 	endOfDay := startOfDay.AddDate(0, 0, 1)
-	for _, item := range rides {
-		stats.TotalTrips++
-		if item.Status == "completed" {
-			stats.CompletedTrips++
-			stats.TotalFare += item.FareCentavos
-			completedAt := rideCompletionTime(item)
-			if !completedAt.Before(startOfDay) && completedAt.Before(endOfDay) {
-				stats.TodayCompletedTrips++
-				stats.TodayEarnings += item.FareCentavos
-			}
-		}
-		if item.Status != "completed" && item.Status != "cancelled" && item.Status != "canceled" {
-			stats.ActiveTrips++
-		}
-	}
-	items, err := repository.client.Review.Query().Where(review.DriverIDEQ(driverID)).All(ctx)
+	todayCompletedMetrics, err := aggregateRideMetrics(
+		ctx,
+		repository.client.Ride.Query().Where(
+			ride.DriverIDEQ(driverID),
+			ride.StatusEQ("completed"),
+			ride.Or(
+				ride.And(ride.CompletedAtGTE(startOfDay), ride.CompletedAtLT(endOfDay)),
+				ride.And(
+					ride.CompletedAtIsNil(),
+					ride.CreatedAtGTE(startOfDay),
+					ride.CreatedAtLT(endOfDay),
+				),
+			),
+		),
+	)
 	if err != nil {
 		return domain.DriverStats{}, err
 	}
-	for _, item := range items {
-		stats.AverageRating += item.Rating
+	activeTrips, err := repository.client.Ride.Query().Where(
+		ride.DriverIDEQ(driverID),
+		ride.StatusNotIn("completed", "cancelled", "canceled"),
+	).Count(ctx)
+	if err != nil {
+		return domain.DriverStats{}, err
 	}
-	if len(items) > 0 {
-		stats.AverageRating /= float64(len(items))
+	var ratingRows []struct {
+		AverageRating *float64 `json:"average_rating"`
 	}
-	return stats, nil
+	if err := repository.client.Review.Query().Where(review.DriverIDEQ(driverID)).Aggregate(
+		ent.As(ent.Mean(review.FieldRating), "average_rating"),
+	).Scan(ctx, &ratingRows); err != nil {
+		return domain.DriverStats{}, err
+	}
+	var averageRating float64
+	if len(ratingRows) > 0 && ratingRows[0].AverageRating != nil {
+		averageRating = *ratingRows[0].AverageRating
+	}
+	return domain.DriverStats{
+		DriverID:            driverID,
+		TotalTrips:          totalTrips,
+		CompletedTrips:      int(completedMetrics.Count),
+		ActiveTrips:         activeTrips,
+		TotalFare:           completedMetrics.FareCentavos,
+		TodayCompletedTrips: int(todayCompletedMetrics.Count),
+		TodayEarnings:       todayCompletedMetrics.FareCentavos,
+		AverageRating:       averageRating,
+	}, nil
 }
 
-func rideCompletionTime(item *ent.Ride) time.Time {
-	if !item.CompletedAt.IsZero() {
-		return item.CompletedAt
+type rideMetrics struct {
+	Count        int64 `json:"trip_count"`
+	FareCentavos int64 `json:"fare_centavos"`
+}
+
+func aggregateRideMetrics(ctx context.Context, query *ent.RideQuery) (rideMetrics, error) {
+	var rows []rideMetrics
+	if err := query.Aggregate(
+		ent.As(ent.Count(), "trip_count"),
+		ent.As(ent.Sum(ride.FieldFareCentavos), "fare_centavos"),
+	).Scan(ctx, &rows); err != nil {
+		return rideMetrics{}, err
 	}
-	return item.CreatedAt
+	if len(rows) == 0 {
+		return rideMetrics{}, nil
+	}
+	return rows[0], nil
 }
 
 func (repository *Repository) DriverTrips(ctx context.Context, driverID int) ([]domain.Ride, error) {
