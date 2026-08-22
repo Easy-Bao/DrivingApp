@@ -1,9 +1,11 @@
 package schema
 
 import (
-	"entgo.io/ent"
-	"entgo.io/ent/schema/field"
 	"time"
+
+	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema/field"
 )
 
 type Ride struct {
@@ -29,7 +31,9 @@ func (Ride) Fields() []ent.Field {
 		field.String("vehicle_type").Optional(),
 		field.String("plate_number").Optional(),
 		field.Float("driver_rating").Optional(),
-		field.Time("created_at").Default(time.Now),
+		field.Time("created_at").
+			Default(time.Now).
+			Annotations(entsql.DefaultExpr("CURRENT_TIMESTAMP")),
 		field.Time("completed_at").Optional(),
 		field.String("payment_status").Default("unpaid"),
 		field.Time("cash_received_at").Optional(),

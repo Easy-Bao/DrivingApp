@@ -411,9 +411,6 @@ func (_c *RideCreate) check() error {
 	if _, ok := _c.mutation.RideType(); !ok {
 		return &ValidationError{Name: "ride_type", err: errors.New(`ent: missing required field "Ride.ride_type"`)}
 	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Ride.created_at"`)}
-	}
 	if _, ok := _c.mutation.PaymentStatus(); !ok {
 		return &ValidationError{Name: "payment_status", err: errors.New(`ent: missing required field "Ride.payment_status"`)}
 	}
