@@ -6,7 +6,6 @@ import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.
 import 'package:passenger_app/src/features/activity/view/passenger_activity_page.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_payment_page.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_rating_page.dart';
-import 'package:passenger_app/src/features/activity/view/view_all_activity_page.dart';
 import 'package:passenger_app/src/features/activity/view/view_details_page.dart';
 import 'package:passenger_app/src/features/trip/view/track_driver_page.dart';
 import 'package:shared_core/shared_core.dart';
@@ -16,14 +15,6 @@ class ActivityModule {
   ActivityModule._();
 
   static List<ModularRoute> routes = [
-    ChildRoute(
-      name: ActivityRoutes.viewAllRecentActivity,
-      ActivityRoutes.viewAllRecentActivityPath,
-      child: (context, GoRouterState state) =>
-          const PassengerViewAllActivityPage(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
     ChildRoute(
       name: ActivityRoutes.activityViewDetails,
       ActivityRoutes.activityViewDetailsPath,

@@ -322,8 +322,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         TextButton(
-          onPressed: () =>
-              context.pushNamed(ActivityRoutes.viewAllRecentActivity),
+          onPressed: () => context.goNamed(ActivityRoutes.activity),
           child: const Text(
             'View all',
             style: TextStyle(
