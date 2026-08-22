@@ -97,7 +97,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface.withValues(alpha: 0),
         elevation: 0,
         centerTitle: true,
         title: Image.asset(
@@ -333,7 +333,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(
-                                        color: Colors.white,
+                                        color: AppTheme.surface,
                                         strokeWidth: 2,
                                       ),
                                     )

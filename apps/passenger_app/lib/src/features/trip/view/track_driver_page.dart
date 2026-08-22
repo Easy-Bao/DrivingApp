@@ -243,7 +243,9 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         startLat,
         startLng,
         isOrigin: true,
-        color: isInTransit ? AppTheme.accent : AppTheme.complete,
+        color: isInTransit
+            ? TripMapMarkerStyle.tripLocation
+            : TripMapMarkerStyle.ownLocation,
         animate: isInTransit,
       );
       _driverMarkerManager = await _upsertMarker(
@@ -252,7 +254,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         endLat,
         endLng,
         isOrigin: false,
-        color: isInTransit ? AppTheme.accent : AppTheme.complete,
+        color: TripMapMarkerStyle.tripLocation,
         animate: !isInTransit,
       );
       final now = DateTime.now();
@@ -610,30 +612,24 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
 }
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  final colors = Theme.of(context).colorScheme;
-  return SizedBox(
-    width: 46,
-    height: 46,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border.all(color: colors.outline),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+  return Tooltip(
+    message: MaterialLocalizations.of(context).backButtonTooltip,
+    child: Material(
+      color: AppTheme.surface,
+      elevation: 2,
+      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(
+          width: 46,
+          height: 46,
+          child: Center(
+            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
           ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        padding: EdgeInsets.zero,
-        style: IconButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         ),
-        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
       ),
     ),
   );

@@ -91,7 +91,7 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppTheme.primaryColor.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),
@@ -123,7 +123,7 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
           const SizedBox(height: 4),
           const Text(
             'Drivers nearby have placed these bids for your trip',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: AppTheme.tertiaryColor),
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -182,7 +182,7 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                               children: [
                                 const Icon(
                                   LucideIcons.star,
-                                  color: Colors.amber,
+                                  color: AppTheme.warning,
                                   size: 12,
                                 ),
                                 const SizedBox(width: 4),
@@ -214,7 +214,7 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppTheme.activeControlForeground,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -233,7 +233,7 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.white,
+                                      color: AppTheme.surface,
                                     ),
                                   )
                                 : const Text(

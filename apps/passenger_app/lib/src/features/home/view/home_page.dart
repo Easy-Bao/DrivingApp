@@ -408,7 +408,7 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: AppTheme.surface.withValues(alpha: 0),
           border: Border.all(
             color: AppTheme.primaryColor.withValues(alpha: 0.25),
           ),
@@ -529,7 +529,7 @@ class _HomePageState extends State<HomePage> {
       child: Hero(
         tag: 'search_bar_field',
         child: Material(
-          color: Colors.transparent,
+          color: AppTheme.surface.withValues(alpha: 0),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -613,7 +613,7 @@ class _HomePageState extends State<HomePage> {
   Future _showChipOptions(int index, String label) async {
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.surface.withValues(alpha: 0),
       builder: (_) => Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         decoration: BoxDecoration(

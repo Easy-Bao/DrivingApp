@@ -28,6 +28,10 @@ class AppTheme {
   static const Color selectedItemColor = primaryColor;
   static const Color unselectedItemColor = Color(0xFF6C757D);
   static const Color outlineBorderColor = Color(0xFFE9ECEF);
+  static const Color fieldLabel = Color(0xFF495057);
+  static const Color warmAccent = Color(0xFF8A4F35);
+  static const Color rating = Color(0xFFD99A32);
+  static const Color warning = Color(0xFFFFC107);
 
   static ThemeData get themeData {
     return ThemeData(

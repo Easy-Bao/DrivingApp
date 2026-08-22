@@ -55,9 +55,10 @@ class _ForgotPasswordPageContentState
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: IconButton(
+          style: IconButton.styleFrom(shape: const CircleBorder()),
           icon: const Icon(
             LucideIcons.arrow_left,
             color: AppTheme.primaryColor,
@@ -105,7 +106,7 @@ class _ForgotPasswordPageContentState
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1F2937),
+                                color: AppTheme.primaryColor,
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -114,7 +115,7 @@ class _ForgotPasswordPageContentState
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 15,
-                                color: Color(0xFF6B7280),
+                                color: AppTheme.tertiaryColor,
                                 height: 1.5,
                               ),
                             ),
@@ -144,7 +145,7 @@ class _ForgotPasswordPageContentState
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.grey[600],
+                                  color: AppTheme.tertiaryColor,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -213,7 +214,7 @@ class _ForgotPasswordPageContentState
                                         width: 24,
                                         height: 24,
                                         child: CircularProgressIndicator(
-                                          color: Colors.white,
+                                          color: AppTheme.surface,
                                           strokeWidth: 2,
                                         ),
                                       )

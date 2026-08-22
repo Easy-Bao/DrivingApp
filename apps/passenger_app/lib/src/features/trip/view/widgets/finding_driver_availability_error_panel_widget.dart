@@ -30,7 +30,7 @@ class FindingDriverAvailabilityErrorPanelWidget extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppTheme.primaryColor.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),
@@ -128,7 +128,7 @@ class FindingDriverAvailabilityErrorPanelWidget extends StatelessWidget {
               label: const Text('Try again'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: AppTheme.activeControlForeground,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(32),

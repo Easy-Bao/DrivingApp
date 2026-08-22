@@ -30,7 +30,7 @@ class InTransitCompleteButtonWidget extends StatelessWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: AppTheme.surface,
                   ),
                 )
               : const Text(
@@ -38,7 +38,7 @@ class InTransitCompleteButtonWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: AppTheme.surface,
                   ),
                 ),
         ),

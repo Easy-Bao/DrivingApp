@@ -11,7 +11,6 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/chat/bloc/chat/chat_cubit.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class DriverChatPage extends StatefulWidget {
   final String? roomId;
@@ -253,8 +252,16 @@ class _DriverChatPageState extends State<DriverChatPage>
                   ),
               ],
               leading: Center(
-                child: AppBackButtonWidget.plain(
+                child: IconButton(
                   onPressed: () => context.pop(),
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  padding: EdgeInsets.zero,
+                  style: IconButton.styleFrom(shape: const CircleBorder()),
+                  icon: const Icon(
+                    LucideIcons.arrow_left,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
                 ),
               ),
               title: Row(
@@ -405,7 +412,9 @@ class _DriverChatPageState extends State<DriverChatPage>
                               decoration: InputDecoration(
                                 isDense: true,
                                 filled: false,
-                                fillColor: Colors.transparent,
+                                fillColor: AppTheme.surface.withValues(
+                                  alpha: 0,
+                                ),
                                 hintText: state.isRoomLocked
                                     ? state.lockReasonMessage
                                     : state.isConnected
@@ -657,7 +666,7 @@ class _DriverChatPageState extends State<DriverChatPage>
             child: Text(
               msg.text,
               style: TextStyle(
-                color: isMe ? Colors.white : AppTheme.primaryColor,
+                color: isMe ? AppTheme.surface : AppTheme.primaryColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 height: 1.3,

@@ -119,7 +119,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: AppTheme.surface,
                               ),
                             )
                           : const Icon(LucideIcons.check, size: 18),
@@ -130,7 +130,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.complete,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppTheme.activeControlForeground,
                         shape: const StadiumBorder(),
                       ),
                     ),
@@ -151,6 +151,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           onPressed: () => context.goNamed(HomeRoutes.dashboard),
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           padding: EdgeInsets.zero,
+          style: IconButton.styleFrom(shape: const CircleBorder()),
           icon: const Icon(
             LucideIcons.arrow_left,
             size: 21,
@@ -196,12 +197,12 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
+              color: AppTheme.surface.withValues(alpha: 0.14),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               LucideIcons.banknote,
-              color: Colors.white,
+              color: AppTheme.surface,
               size: 20,
             ),
           ),
@@ -215,7 +216,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white.withValues(alpha: 0.72),
+                    color: AppTheme.surface.withValues(alpha: 0.72),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -224,7 +225,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                   style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: AppTheme.surface,
                   ),
                 ),
               ],
@@ -233,7 +234,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
+              color: AppTheme.surface.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(99),
             ),
             child: const Text(
@@ -241,7 +242,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: AppTheme.surface,
               ),
             ),
           ),

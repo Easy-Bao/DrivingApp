@@ -6,6 +6,18 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/location/services/map_camera_service.dart';
 
+class TripMapMarkerStyle {
+  TripMapMarkerStyle._();
+
+  static const double pinIconSize = 1.22;
+  static const Color ownLocation = AppTheme.primaryColor;
+  static const Color tripLocation = AppTheme.complete;
+
+  static Color colorFor({required bool isOrigin}) {
+    return isOrigin ? ownLocation : tripLocation;
+  }
+}
+
 class MapAnnotationService {
   MapAnnotationService._();
 
@@ -111,12 +123,13 @@ class MapAnnotationService {
     required bool isOrigin,
     Color? color,
   }) async {
-    final markerColor = (color ?? AppTheme.complete).toARGB32();
+    final markerColor =
+        color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin);
     return mapbox.PointAnnotationOptions(
       geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-      image: await _createMarkerImage(Color(markerColor), label: label),
+      image: await _createMarkerImage(markerColor, label: label),
       iconAnchor: mapbox.IconAnchor.BOTTOM,
-      iconSize: label == null ? (isOrigin ? 1.08 : 1.16) : 1.0,
+      iconSize: label == null ? TripMapMarkerStyle.pinIconSize : 1.0,
       symbolSortKey: isOrigin ? 10 : 20,
     );
   }
@@ -134,7 +147,8 @@ class MapAnnotationService {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final background = Paint()..color = AppTheme.surface;
-    final shadow = Paint()..color = const Color(0x22000000);
+    final shadow = Paint()
+      ..color = AppTheme.primaryColor.withValues(alpha: 0.13);
     final cardRect = RRect.fromRectAndRadius(
       const Rect.fromLTWH(8, 8, width - 16, 78),
       const Radius.circular(22),
@@ -149,7 +163,11 @@ class MapAnnotationService {
     canvas.drawPath(pointer, background);
 
     canvas.drawCircle(const Offset(48, 47), 20, Paint()..color = color);
-    canvas.drawCircle(const Offset(48, 47), 8, Paint()..color = Colors.white);
+    canvas.drawCircle(
+      const Offset(48, 47),
+      8,
+      Paint()..color = AppTheme.surface,
+    );
 
     final lines = label.split('\n');
     _drawLabelText(

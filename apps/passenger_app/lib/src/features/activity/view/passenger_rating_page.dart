@@ -88,12 +88,12 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
+                        color: AppTheme.warning.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.star_rounded,
-                        color: Colors.amber,
+                        color: AppTheme.warning,
                         size: 28,
                       ),
                     ),
@@ -197,7 +197,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       children: List.generate(5, (index) {
                         final isSelected = index < _selectedStars;
                         return Material(
-                          color: Colors.transparent,
+                          color: AppTheme.surface.withValues(alpha: 0),
                           shape: const CircleBorder(),
                           child: InkWell(
                             onTap: () => setState(() {
@@ -290,7 +290,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppTheme.surface,
                           ),
                         )
                       : const Text('Submit Rating'),

@@ -169,8 +169,16 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
-          child: AppBackButtonWidget.plain(
+          child: IconButton(
             onPressed: () => Navigator.of(context).maybePop(),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            padding: EdgeInsets.zero,
+            style: IconButton.styleFrom(shape: const CircleBorder()),
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
           ),
         ),
         title: const Text(
@@ -236,7 +244,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                             child: const Icon(
                               LucideIcons.camera,
                               size: 16,
-                              color: Colors.white,
+                              color: AppTheme.surface,
                             ),
                           ),
                         ),
@@ -275,7 +283,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                       onPressed: _toggleEdit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppTheme.activeControlForeground,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),

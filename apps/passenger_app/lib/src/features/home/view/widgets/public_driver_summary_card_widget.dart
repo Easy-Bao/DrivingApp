@@ -101,7 +101,7 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(LucideIcons.star, size: 15, color: Color(0xFFD99A32)),
+          const Icon(LucideIcons.star, size: 15, color: AppTheme.rating),
           const SizedBox(width: 4),
           Text(
             summary.rating.toStringAsFixed(1),

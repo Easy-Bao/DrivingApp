@@ -34,7 +34,7 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppTheme.primaryColor.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),

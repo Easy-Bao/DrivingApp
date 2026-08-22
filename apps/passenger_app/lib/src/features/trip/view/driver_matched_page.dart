@@ -119,7 +119,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                       ),
                       child: const Icon(
                         LucideIcons.check,
-                        color: Colors.white,
+                        color: AppTheme.surface,
                         size: 32,
                       ),
                     ),
@@ -151,7 +151,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
+                      backgroundColor: AppTheme.surface.withValues(alpha: 0),
                       builder: (BuildContext sheetContext) =>
                           DriverProfileDetailsSheet(
                             driverId: widget.driverId ?? '',
@@ -206,7 +206,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                                     const Icon(
                                       Icons.star_rounded,
                                       size: 16,
-                                      color: Color(0xFFDAA520),
+                                      color: AppTheme.rating,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -303,7 +303,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                   onPressed: _goToTracking,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppTheme.activeControlForeground,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(32),
                     ),

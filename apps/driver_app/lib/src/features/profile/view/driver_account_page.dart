@@ -302,7 +302,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+          const Icon(Icons.star_rounded, size: 14, color: AppTheme.warning),
           const SizedBox(width: 3),
           Text(
             rating,

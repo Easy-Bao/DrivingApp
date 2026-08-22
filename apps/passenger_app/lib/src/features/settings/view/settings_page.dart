@@ -72,10 +72,11 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Scaffold(
         backgroundColor: AppTheme.surface,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppTheme.surface.withValues(alpha: 0),
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
+            style: IconButton.styleFrom(shape: const CircleBorder()),
             icon: const Icon(
               LucideIcons.arrow_left,
               color: AppTheme.primaryColor,
@@ -251,7 +252,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Icon(icon, color: const Color(0xFF8A4F35), size: 18),
+              child: Icon(icon, color: AppTheme.warmAccent, size: 18),
             ),
             const SizedBox(width: 14),
             Expanded(

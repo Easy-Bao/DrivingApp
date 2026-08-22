@@ -149,7 +149,17 @@ class _PassengerViewAllActivityPageState
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
-          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
+          child: IconButton(
+            onPressed: () => context.pop(),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            padding: EdgeInsets.zero,
+            style: IconButton.styleFrom(shape: const CircleBorder()),
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
+          ),
         ),
         title: const Text(
           'Trip history',
@@ -272,7 +282,7 @@ class _PassengerViewAllActivityPageState
         border: Border.all(color: AppTheme.borderSide),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppTheme.surface.withValues(alpha: 0),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {

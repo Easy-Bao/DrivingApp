@@ -530,7 +530,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                     ),
                                     child: const Icon(
                                       LucideIcons.navigation,
-                                      color: Colors.white,
+                                      color: AppTheme.surface,
                                       size: 24,
                                     ),
                                   ),
@@ -589,7 +589,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                               LucideIcons.map_pin,
                                               size: 14.0,
                                               color: isSelected
-                                                  ? Colors.white
+                                                  ? AppTheme.surface
                                                   : AppTheme.primaryColor,
                                             ),
                                             label: Text(
@@ -600,7 +600,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                                     ? FontWeight.bold
                                                     : FontWeight.w500,
                                                 color: isSelected
-                                                    ? Colors.white
+                                                    ? AppTheme.surface
                                                     : AppTheme.primaryColor,
                                               ),
                                             ),
@@ -777,30 +777,24 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
 }
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  final colors = Theme.of(context).colorScheme;
-  return SizedBox(
-    width: 46,
-    height: 46,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border.all(color: colors.outline),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+  return Tooltip(
+    message: MaterialLocalizations.of(context).backButtonTooltip,
+    child: Material(
+      color: AppTheme.surface,
+      elevation: 2,
+      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(
+          width: 46,
+          height: 46,
+          child: Center(
+            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
           ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        padding: EdgeInsets.zero,
-        style: IconButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         ),
-        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
       ),
     ),
   );

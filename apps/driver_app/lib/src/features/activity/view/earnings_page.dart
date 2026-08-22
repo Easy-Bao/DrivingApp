@@ -364,7 +364,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: Colors.white.withValues(alpha: 0.62),
+                color: AppTheme.surface.withValues(alpha: 0.62),
                 letterSpacing: 1.4,
               ),
             ),
@@ -376,7 +376,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               style: const TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.w900,
-                color: Colors.white,
+                color: AppTheme.surface,
                 letterSpacing: -1.2,
               ),
             ),
@@ -385,7 +385,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: Colors.white.withValues(alpha: 0.56),
+                color: AppTheme.surface.withValues(alpha: 0.56),
               ),
             ),
             const SizedBox(height: 12),
@@ -410,7 +410,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     return Container(
       width: 1,
       height: 28,
-      color: Colors.white24,
+      color: AppTheme.surface.withValues(alpha: 0.24),
       margin: const EdgeInsets.symmetric(horizontal: 12),
     );
   }
@@ -426,7 +426,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppTheme.surface,
           ),
         ),
         Text(
@@ -436,7 +436,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.5),
+            color: AppTheme.surface.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -461,7 +461,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           fontWeight: FontWeight.w600,
         ),
         indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
+        dividerColor: AppTheme.surface.withValues(alpha: 0),
         tabs: const [
           Tab(text: 'Daily'),
           Tab(text: 'Weekly'),
@@ -540,7 +540,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       maxY: maxY,
       alignment: BarChartAlignment.spaceEvenly,
       groupsSpace: 8,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.surface.withValues(alpha: 0),
       borderData: FlBorderData(show: false),
       gridData: FlGridData(
         show: true,

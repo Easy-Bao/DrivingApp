@@ -188,11 +188,21 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface.withValues(alpha: 0),
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
-          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
+          child: IconButton(
+            onPressed: () => context.pop(),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            padding: EdgeInsets.zero,
+            style: IconButton.styleFrom(shape: const CircleBorder()),
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
+          ),
         ),
         title: const Text(
           'Ride details',
@@ -248,7 +258,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                         child: const Text(
                           'Map preview',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.surface,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                           ),
@@ -283,7 +293,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                     alignment: Alignment.center,
                     child: const Icon(
                       LucideIcons.user,
-                      color: Color(0xFF8A4F35),
+                      color: AppTheme.warmAccent,
                       size: 22,
                     ),
                   ),

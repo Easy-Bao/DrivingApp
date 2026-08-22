@@ -401,7 +401,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         isScrollControlled: true,
         isDismissible: true,
         enableDrag: true,
-        barrierColor: Colors.black54,
+        barrierColor: AppTheme.primaryColor.withValues(alpha: 0.54),
         useSafeArea: true,
         builder: (_) => const BookingAuthBottomSheetWidget(),
       );
@@ -459,12 +459,14 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           pickupLat,
           pickupLng,
           isOrigin: true,
+          color: TripMapMarkerStyle.ownLocation,
         );
         await MapProvider.addMarker(
           _mapController!,
           destLat,
           destLng,
           isOrigin: false,
+          color: TripMapMarkerStyle.tripLocation,
         );
         await MapProvider.addPolyline(
           _mapController!,
@@ -552,10 +554,9 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.borderSide),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
+                        color: AppTheme.primaryColor.withValues(alpha: 0.08),
                         blurRadius: 15,
                         offset: const Offset(0, 4),
                       ),

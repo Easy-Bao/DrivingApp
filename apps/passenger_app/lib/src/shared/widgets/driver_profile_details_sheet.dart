@@ -220,7 +220,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.15),
                   blurRadius: 30,
                   offset: const Offset(0, -10),
                 ),
@@ -245,6 +245,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               IconButton(
                 key: const ValueKey('driver-profile-back'),
                 onPressed: widget.onBackPressed,
+                style: IconButton.styleFrom(shape: const CircleBorder()),
                 icon: const Icon(
                   LucideIcons.arrow_left,
                   color: AppTheme.primaryColor,
@@ -326,7 +327,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               icon: LucideIcons.star,
               value: widget.rating,
               label: 'Rating',
-              iconColor: Colors.amber,
+              iconColor: AppTheme.warning,
             ),
             Container(width: 1, height: 40, color: AppTheme.borderSide),
             _buildMetricCard(
@@ -471,13 +472,13 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                 if (ratingValue >= starIndex + 1) {
                   return const Icon(
                     Icons.star_rounded,
-                    color: Colors.amber,
+                    color: AppTheme.warning,
                     size: 13,
                   );
                 } else if (ratingValue >= starIndex + 0.5) {
                   return const Icon(
                     Icons.star_half_rounded,
-                    color: Colors.amber,
+                    color: AppTheme.warning,
                     size: 13,
                   );
                 }

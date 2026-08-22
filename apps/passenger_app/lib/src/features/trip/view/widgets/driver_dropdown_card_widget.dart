@@ -231,7 +231,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                   filled ? Icons.star_rounded : Icons.star_border_rounded,
                   size: 12,
                   color: filled
-                      ? Colors.amber
+                      ? AppTheme.warning
                       : AppTheme.primaryColor.withValues(alpha: 0.2),
                 );
               }),
@@ -294,7 +294,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.14),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.14),
                     blurRadius: 24.0,
                     offset: const Offset(0, 8),
                   ),
@@ -358,7 +358,9 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                       border: Border.all(
                                         color: widget.isNearestDriver
                                             ? AppTheme.primaryColor
-                                            : Colors.transparent,
+                                            : AppTheme.surface.withValues(
+                                                alpha: 0,
+                                              ),
                                         width: 2.0,
                                       ),
                                     ),
@@ -449,15 +451,17 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                     ),
                                     decoration: BoxDecoration(
                                       color: widget.driver.hasPassengerOnboard
-                                          ? Colors.amber.withValues(alpha: 0.15)
-                                          : Colors.green.withValues(
+                                          ? AppTheme.warning.withValues(
+                                              alpha: 0.15,
+                                            )
+                                          : AppTheme.complete.withValues(
                                               alpha: 0.15,
                                             ),
                                       borderRadius: BorderRadius.circular(20.0),
                                       border: Border.all(
                                         color: widget.driver.hasPassengerOnboard
-                                            ? Colors.amber.shade700
-                                            : Colors.green.shade700,
+                                            ? AppTheme.warning
+                                            : AppTheme.complete,
                                         width: 1.0,
                                       ),
                                     ),
@@ -471,8 +475,8 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                           size: 14.0,
                                           color:
                                               widget.driver.hasPassengerOnboard
-                                              ? Colors.amber.shade900
-                                              : Colors.green.shade900,
+                                              ? AppTheme.warning
+                                              : AppTheme.complete,
                                         ),
                                         const SizedBox(width: 6.0),
                                         Text(
@@ -486,8 +490,8 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                                 widget
                                                     .driver
                                                     .hasPassengerOnboard
-                                                ? Colors.amber.shade900
-                                                : Colors.green.shade900,
+                                                ? AppTheme.warning
+                                                : AppTheme.complete,
                                           ),
                                         ),
                                       ],
@@ -498,7 +502,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                     children: [
                                       const Icon(
                                         Icons.star_rounded,
-                                        color: Colors.amber,
+                                        color: AppTheme.warning,
                                         size: 16.0,
                                       ),
                                       const SizedBox(width: 4.0),
@@ -575,7 +579,8 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor:
                                               AppTheme.primaryColor,
-                                          foregroundColor: Colors.white,
+                                          foregroundColor:
+                                              AppTheme.activeControlForeground,
                                           elevation: 0,
                                           padding: EdgeInsets.zero,
                                           shape: const StadiumBorder(),

@@ -582,7 +582,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                 alignment: Alignment.center,
                 child: const Icon(
                   LucideIcons.check,
-                  color: Colors.white,
+                  color: AppTheme.surface,
                   size: 16,
                 ),
               ),

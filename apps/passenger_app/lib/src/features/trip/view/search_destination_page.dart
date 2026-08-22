@@ -479,6 +479,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
       lat,
       lng,
       isOrigin: true,
+      color: TripMapMarkerStyle.ownLocation,
     );
     if (mounted && requestId == _locationMarkerRequestId) {
       _currentLocationMarker = marker;
@@ -493,7 +494,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
       return Scaffold(
         backgroundColor: AppTheme.surface,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppTheme.surface.withValues(alpha: 0),
           elevation: 0,
           leading: Center(
             child: _buildTripBackButton(context, () => context.pop()),
@@ -597,7 +598,9 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                   child: Opacity(
                                     opacity: ((t - 0.2) / 0.8).clamp(0.0, 1.0),
                                     child: Material(
-                                      color: Colors.transparent,
+                                      color: AppTheme.surface.withValues(
+                                        alpha: 0,
+                                      ),
                                       child:
                                           (_isSearching ||
                                               (_isLoadingNearby && !hasQuery))
@@ -819,7 +822,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                               child: Hero(
                                 tag: 'search_bar_field',
                                 child: Material(
-                                  color: Colors.transparent,
+                                  color: AppTheme.surface.withValues(alpha: 0),
                                   child: Container(
                                     height: 52,
                                     padding: const EdgeInsets.symmetric(
@@ -833,9 +836,10 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.08 * (1 - t),
-                                          ),
+                                          color: AppTheme.primaryColor
+                                              .withValues(
+                                                alpha: 0.08 * (1 - t),
+                                              ),
                                           blurRadius: 15,
                                           offset: const Offset(0, 4),
                                         ),
@@ -937,7 +941,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                               child: GestureDetector(
                                                 onTap: _openMapPin,
                                                 child: Material(
-                                                  color: Colors.transparent,
+                                                  color: AppTheme.surface
+                                                      .withValues(alpha: 0),
                                                   child: Container(
                                                     width: 36,
                                                     height: 36,
@@ -990,14 +995,10 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                       decoration: BoxDecoration(
                                         color: AppTheme.surface,
                                         shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: AppTheme.borderSide,
-                                        ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.08,
-                                            ),
+                                            color: AppTheme.primaryColor
+                                                .withValues(alpha: 0.08),
                                             blurRadius: 15,
                                             offset: const Offset(0, 4),
                                           ),
@@ -1031,7 +1032,9 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                       tag: 'map_pin_button',
                                       child: FittedBox(
                                         child: Material(
-                                          color: Colors.transparent,
+                                          color: AppTheme.surface.withValues(
+                                            alpha: 0,
+                                          ),
                                           child: Container(
                                             width: 46,
                                             height: 46,
@@ -1043,7 +1046,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                               ),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: Colors.black
+                                                  color: AppTheme.primaryColor
                                                       .withValues(alpha: 0.08),
                                                   blurRadius: 15,
                                                   offset: const Offset(0, 4),
@@ -1102,30 +1105,24 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
 }
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  final colors = Theme.of(context).colorScheme;
-  return SizedBox(
-    width: 46,
-    height: 46,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border.all(color: colors.outline),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+  return Tooltip(
+    message: MaterialLocalizations.of(context).backButtonTooltip,
+    child: Material(
+      color: AppTheme.surface,
+      elevation: 2,
+      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(
+          width: 46,
+          height: 46,
+          child: Center(
+            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
           ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        padding: EdgeInsets.zero,
-        style: IconButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         ),
-        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
       ),
     ),
   );

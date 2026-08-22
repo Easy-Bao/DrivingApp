@@ -238,6 +238,7 @@ class _DriverChatPageState extends State<DriverChatPage>
                   ),
               ],
               leading: IconButton(
+                style: IconButton.styleFrom(shape: const CircleBorder()),
                 icon: const Icon(
                   LucideIcons.arrow_left,
                   color: AppTheme.primaryColor,
@@ -386,7 +387,9 @@ class _DriverChatPageState extends State<DriverChatPage>
                               decoration: InputDecoration(
                                 isDense: true,
                                 filled: false,
-                                fillColor: Colors.transparent,
+                                fillColor: AppTheme.surface.withValues(
+                                  alpha: 0,
+                                ),
                                 hintText: state.isRoomLocked
                                     ? state.lockReasonMessage
                                     : canSendMessage
@@ -523,7 +526,7 @@ class _DriverChatPageState extends State<DriverChatPage>
             child: Text(
               msg.text,
               style: TextStyle(
-                color: isMe ? Colors.white : AppTheme.primaryColor,
+                color: isMe ? AppTheme.surface : AppTheme.primaryColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 height: 1.3,

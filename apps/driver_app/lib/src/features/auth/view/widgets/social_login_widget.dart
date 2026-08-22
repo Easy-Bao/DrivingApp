@@ -53,7 +53,7 @@ class SocialLoginWidget extends StatelessWidget {
             child: OutlinedButton(
               onPressed: onGoogleTap,
               style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: AppTheme.surface,
                 minimumSize: const Size.fromHeight(56),
                 side: BorderSide(
                   color: AppTheme.primaryColor.withValues(alpha: 0.2),

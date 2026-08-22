@@ -65,11 +65,11 @@ class InboxNotificationCardWidget extends StatelessWidget {
 
     if (isDriverChat) {
       bgCircleColor = AppTheme.secondaryColor;
-      iconColor = const Color(0xFF8A4F35);
+      iconColor = AppTheme.warmAccent;
       icon = LucideIcons.user;
     } else if (isReceipt) {
       bgCircleColor = AppTheme.primaryColor;
-      iconColor = Colors.white;
+      iconColor = AppTheme.surface;
       icon = LucideIcons.receipt;
     } else {
       bgCircleColor = AppTheme.neutralColor;

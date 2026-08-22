@@ -201,7 +201,7 @@ class _MapPinPageState extends State<MapPinPage>
       return Scaffold(
         backgroundColor: AppTheme.surface,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppTheme.surface.withValues(alpha: 0),
           elevation: 0,
           leading: Center(
             child: _buildTripBackButton(context, () => context.pop()),
@@ -337,7 +337,7 @@ class _MapPinPageState extends State<MapPinPage>
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppTheme.activeControlForeground,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(26),
                         ),
@@ -363,30 +363,24 @@ class _MapPinPageState extends State<MapPinPage>
 }
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  final colors = Theme.of(context).colorScheme;
-  return SizedBox(
-    width: 46,
-    height: 46,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border.all(color: colors.outline),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+  return Tooltip(
+    message: MaterialLocalizations.of(context).backButtonTooltip,
+    child: Material(
+      color: AppTheme.surface,
+      elevation: 2,
+      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(
+          width: 46,
+          height: 46,
+          child: Center(
+            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
           ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        padding: EdgeInsets.zero,
-        style: IconButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         ),
-        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
       ),
     ),
   );

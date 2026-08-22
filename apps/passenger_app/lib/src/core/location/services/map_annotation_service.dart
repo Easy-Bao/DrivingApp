@@ -6,6 +6,18 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/services/map_camera_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 
+class TripMapMarkerStyle {
+  TripMapMarkerStyle._();
+
+  static const double pinIconSize = 1.22;
+  static const Color ownLocation = AppTheme.primaryColor;
+  static const Color tripLocation = AppTheme.complete;
+
+  static Color colorFor({required bool isOrigin}) {
+    return isOrigin ? ownLocation : tripLocation;
+  }
+}
+
 class MapAnnotationService {
   MapAnnotationService._();
 
@@ -111,12 +123,13 @@ class MapAnnotationService {
     required bool isOrigin,
     Color? color,
   }) async {
-    final markerColor = color ?? AppTheme.complete;
+    final markerColor =
+        color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin);
     return mapbox.PointAnnotationOptions(
       geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
       image: await _createMarkerImage(markerColor, label: label),
       iconAnchor: mapbox.IconAnchor.BOTTOM,
-      iconSize: label == null ? (isOrigin ? 1.08 : 1.16) : 1.0,
+      iconSize: label == null ? TripMapMarkerStyle.pinIconSize : 1.0,
       symbolSortKey: isOrigin ? 10 : 20,
     );
   }

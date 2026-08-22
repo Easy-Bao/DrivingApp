@@ -875,7 +875,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
                                   color: isOnline
-                                      ? Colors.white
+                                      ? AppTheme.surface
                                       : AppTheme.primaryColor,
                                 ),
                               ),
@@ -888,7 +888,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: isOnline
-                                      ? Colors.white.withValues(alpha: 0.8)
+                                      ? AppTheme.surface.withValues(alpha: 0.8)
                                       : AppTheme.primaryColor.withValues(
                                           alpha: 0.6,
                                         ),
@@ -922,12 +922,16 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final trackColor = isOnline
         ? Color.lerp(
             AppTheme.primaryColor.withValues(alpha: 0.16),
-            Colors.white.withValues(alpha: 0.28),
+            AppTheme.surface.withValues(alpha: 0.28),
             animationProgress,
           )!
         : AppTheme.borderSide;
     final thumbColor = isOnline
-        ? Color.lerp(AppTheme.primaryColor, Colors.white, animationProgress)!
+        ? Color.lerp(
+            AppTheme.primaryColor,
+            AppTheme.surface,
+            animationProgress,
+          )!
         : AppTheme.primaryColor.withValues(alpha: 0.4);
 
     return SizedBox(
@@ -945,7 +949,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: isOnline ? Colors.white : AppTheme.primaryColor,
+                    color: isOnline ? AppTheme.surface : AppTheme.primaryColor,
                   ),
                 ),
               )
@@ -953,9 +957,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 value: isOnline,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 activeThumbColor: thumbColor,
-                activeTrackColor: Colors.transparent,
+                activeTrackColor: AppTheme.surface.withValues(alpha: 0),
                 inactiveThumbColor: thumbColor,
-                inactiveTrackColor: Colors.transparent,
+                inactiveTrackColor: AppTheme.surface.withValues(alpha: 0),
                 onChanged: (value) => _toggleOnline(context, value),
               ),
       ),
@@ -1075,7 +1079,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppTheme.primaryColor.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1167,7 +1171,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                       onPressed: () => _resumeTrip(trip),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppTheme.activeControlForeground,
                         shape: const StadiumBorder(),
                         elevation: 0,
                       ),
@@ -1191,7 +1195,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           : () => _completeTripFromDashboard(trip),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.complete,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppTheme.activeControlForeground,
                         shape: const StadiumBorder(),
                         elevation: 0,
                       ),
@@ -1201,7 +1205,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: AppTheme.surface,
                               ),
                             )
                           : const Text(
@@ -1224,7 +1228,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 onPressed: isQueued ? null : () => _resumeTrip(trip),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppTheme.activeControlForeground,
                   shape: const StadiumBorder(),
                   elevation: 0,
                 ),
@@ -1281,7 +1285,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         border: Border.all(color: AppTheme.borderSide),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.primaryColor.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1432,7 +1436,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppTheme.surface,
                           ),
                         )
                       : const Text(
@@ -1440,7 +1444,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: AppTheme.surface,
                           ),
                         ),
                 ),

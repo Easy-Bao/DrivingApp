@@ -48,11 +48,19 @@ class _SigninPageContentState extends State<_SigninPageContent> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: Center(
-          child: AppBackButtonWidget.plain(
+          child: IconButton(
             onPressed: () => context.goNamed(HomeRoutes.home),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            padding: EdgeInsets.zero,
+            style: IconButton.styleFrom(shape: const CircleBorder()),
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
           ),
         ),
         centerTitle: true,
@@ -175,11 +183,11 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     child: Icon(
                                       LucideIcons.mail,
                                       size: 20,
-                                      color: Color(0xFF495057),
+                                      color: AppTheme.fieldLabel,
                                     ),
                                   ),
                                   filled: true,
-                                  fillColor: Colors.white,
+                                  fillColor: AppTheme.surface,
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(36),
                                     borderSide: const BorderSide(
@@ -260,7 +268,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     child: Icon(
                                       LucideIcons.lock,
                                       size: 20,
-                                      color: Color(0xFF495057),
+                                      color: AppTheme.fieldLabel,
                                     ),
                                   ),
                                   suffixIcon: IconButton(
@@ -269,7 +277,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                           ? LucideIcons.eye
                                           : LucideIcons.eye_off,
                                       size: 20,
-                                      color: const Color(0xFF6C757D),
+                                      color: AppTheme.tertiaryColor,
                                     ),
                                     onPressed: () => setState(
                                       () => _isPasswordVisible =
@@ -277,7 +285,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     ),
                                   ),
                                   filled: true,
-                                  fillColor: Colors.white,
+                                  fillColor: AppTheme.surface,
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(36),
                                     borderSide: const BorderSide(
@@ -361,7 +369,8 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     : () => _submitSignIn(context),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryColor,
-                                  foregroundColor: Colors.white,
+                                  foregroundColor:
+                                      AppTheme.activeControlForeground,
                                   minimumSize: const Size.fromHeight(56),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(36),
@@ -373,7 +382,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                         width: 24,
                                         height: 24,
                                         child: CircularProgressIndicator(
-                                          color: Colors.white,
+                                          color: AppTheme.surface,
                                           strokeWidth: 2,
                                         ),
                                       )

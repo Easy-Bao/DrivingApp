@@ -63,10 +63,20 @@ class _ForgotPasswordPageContentState
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: Center(
-          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
+          child: IconButton(
+            onPressed: () => context.pop(),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            padding: EdgeInsets.zero,
+            style: IconButton.styleFrom(shape: const CircleBorder()),
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
+          ),
         ),
       ),
       body: SafeArea(
@@ -164,11 +174,11 @@ class _ForgotPasswordPageContentState
                                   child: Icon(
                                     LucideIcons.mail,
                                     size: 20,
-                                    color: Color(0xFF495057),
+                                    color: AppTheme.fieldLabel,
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: Colors.white,
+                                fillColor: AppTheme.surface,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
                                   borderSide: const BorderSide(
@@ -213,7 +223,7 @@ class _ForgotPasswordPageContentState
                             : () => _submitResetLink(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppTheme.activeControlForeground,
                           minimumSize: const Size.fromHeight(56),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(36),
@@ -225,7 +235,7 @@ class _ForgotPasswordPageContentState
                                 width: 24,
                                 height: 24,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: AppTheme.surface,
                                   strokeWidth: 2,
                                 ),
                               )

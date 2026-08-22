@@ -182,7 +182,9 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
     bool filled = false,
   }) {
     final background = filled ? AppTheme.primaryColor : AppTheme.neutralColor;
-    final foreground = filled ? Colors.white : AppTheme.primaryColor;
+    final foreground = filled
+        ? AppTheme.activeControlForeground
+        : AppTheme.primaryColor;
     return Material(
       color: background,
       borderRadius: BorderRadius.circular(22),
@@ -240,7 +242,7 @@ class WaitingPassengerStartTripButton extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: AppTheme.surface,
                 ),
               )
             : const Text('Start Trip'),

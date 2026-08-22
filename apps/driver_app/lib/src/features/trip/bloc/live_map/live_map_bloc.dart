@@ -118,7 +118,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         event.driverLat,
         event.driverLng,
         isOrigin: true,
-        color: AppTheme.complete,
+        color: TripMapMarkerStyle.ownLocation,
         animate: true,
       );
 
@@ -130,7 +130,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           mapController,
           event.passengerLat!,
           event.passengerLng!,
-          color: AppTheme.complete,
+          color: TripMapMarkerStyle.tripLocation,
         );
       } else {
         await _clearAnnotations(_passengerMarkerManager);
@@ -142,7 +142,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           mapController,
           targetLat,
           targetLng,
-          color: AppTheme.accent,
+          color: TripMapMarkerStyle.tripLocation,
         );
       } else {
         await _clearAnnotations(_destinationMarkerManager);

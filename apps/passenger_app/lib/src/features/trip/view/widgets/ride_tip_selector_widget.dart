@@ -54,7 +54,7 @@ class RideTipSelectorWidget extends StatelessWidget {
                   ),
                   labelStyle: TextStyle(
                     color: selectedTipAmount == amount
-                        ? Colors.white
+                        ? AppTheme.surface
                         : AppTheme.primaryColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,

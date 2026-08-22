@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class VerifyOtpPage extends StatelessWidget {
   final String email;
@@ -91,10 +91,20 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: Center(
-          child: AppBackButtonWidget.plain(onPressed: () => context.pop()),
+          child: IconButton(
+            onPressed: () => context.pop(),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            padding: EdgeInsets.zero,
+            style: IconButton.styleFrom(shape: const CircleBorder()),
+            icon: const Icon(
+              LucideIcons.arrow_left,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
+          ),
         ),
       ),
       body: SafeArea(
@@ -182,7 +192,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                           width: 46,
                           height: 54,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppTheme.surface,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: isFocused
@@ -194,7 +204,9 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.03,
+                                ),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -254,12 +266,11 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppTheme.activeControlForeground,
                             disabledBackgroundColor: AppTheme.primaryColor
                                 .withValues(alpha: 0.3),
-                            disabledForegroundColor: Colors.white.withValues(
-                              alpha: 0.5,
-                            ),
+                            disabledForegroundColor: AppTheme.surface
+                                .withValues(alpha: 0.5),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(36),
                             ),
@@ -270,7 +281,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: AppTheme.surface,
                                     strokeWidth: 2,
                                   ),
                                 )

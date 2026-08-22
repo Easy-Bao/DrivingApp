@@ -5,6 +5,7 @@ import 'dart:ui' show Color;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_core/shared_core.dart';
@@ -101,13 +102,14 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.riderLat,
       event.riderLng,
       isOrigin: true,
+      color: TripMapMarkerStyle.ownLocation,
     );
     _driverMarkerManager = await _upsertMarker(
       _driverMarkerManager,
       _mapController!,
       event.driverLat,
       event.driverLng,
-      color: const Color(0xFF1565C0),
+      color: TripMapMarkerStyle.tripLocation,
       animate: true,
     );
 
@@ -127,7 +129,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         _routePolylineManager,
         _mapController!,
         route.validPolylinePoints,
-        color: const Color(0xFF222222),
+        color: AppTheme.primaryColor,
         width: 5.0,
       );
     }
@@ -157,7 +159,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.lng,
       isOrigin: event.isOrigin,
       label: event.label,
-      color: event.isOrigin ? null : const Color(0xFF1565C0),
+      color: event.isOrigin
+          ? TripMapMarkerStyle.ownLocation
+          : TripMapMarkerStyle.tripLocation,
       onTap: event.onTap,
     );
     _markerManagers.add(manager);

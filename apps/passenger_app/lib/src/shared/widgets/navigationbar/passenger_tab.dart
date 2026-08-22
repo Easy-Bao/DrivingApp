@@ -362,7 +362,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppTheme.primaryColor.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -490,7 +490,7 @@ class _InboxTabIcon extends StatelessWidget {
                     child: Text(
                       unreadCount > 99 ? '99+' : '$unreadCount',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.surface,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                       ),

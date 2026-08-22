@@ -159,7 +159,11 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         automaticallyImplyLeading: false,
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(LucideIcons.arrow_left),
+          style: IconButton.styleFrom(shape: const CircleBorder()),
+          icon: const Icon(
+            LucideIcons.arrow_left,
+            color: AppTheme.primaryColor,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text('Trip details'),
@@ -252,7 +256,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                                 dimension: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: AppTheme.surface,
                                 ),
                               )
                             : const Icon(LucideIcons.message_square, size: 18),

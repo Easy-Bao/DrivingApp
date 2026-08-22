@@ -259,7 +259,9 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final background = filled ? AppTheme.primaryColor : AppTheme.neutralColor;
-    final foreground = filled ? Colors.white : AppTheme.primaryColor;
+    final foreground = filled
+        ? AppTheme.activeControlForeground
+        : AppTheme.primaryColor;
     return Material(
       color: background,
       borderRadius: BorderRadius.circular(22),

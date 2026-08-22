@@ -78,7 +78,12 @@ class RideFareDetailsWidget extends StatelessWidget {
               IconButton(
                 onPressed: onBackPressed,
                 tooltip: 'Back to trip summary',
-                icon: const Icon(LucideIcons.arrow_left, size: 20),
+                style: IconButton.styleFrom(shape: const CircleBorder()),
+                icon: const Icon(
+                  LucideIcons.arrow_left,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 4),
               const Expanded(

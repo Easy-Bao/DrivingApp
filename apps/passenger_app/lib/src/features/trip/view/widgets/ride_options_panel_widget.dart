@@ -164,7 +164,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.surface.withValues(alpha: 0),
       child: InkWell(
         key: key,
         onTap: onTap,
@@ -229,7 +229,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
 
   Widget _buildTotalFareCard() {
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.surface.withValues(alpha: 0),
       child: InkWell(
         key: const ValueKey('fare-summary'),
         onTap: _hasValidFare
@@ -293,7 +293,12 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
           key: const ValueKey('panel-back'),
           onPressed: () => _showView(_RideOptionsPanelView.summary),
           tooltip: 'Back to trip summary',
-          icon: const Icon(LucideIcons.arrow_left, size: 20),
+          style: IconButton.styleFrom(shape: const CircleBorder()),
+          icon: const Icon(
+            LucideIcons.arrow_left,
+            color: AppTheme.primaryColor,
+            size: 20,
+          ),
         ),
         const SizedBox(width: 4),
         Expanded(
@@ -607,7 +612,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: AppTheme.primaryColor.withValues(alpha: 0.12),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),

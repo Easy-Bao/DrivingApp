@@ -34,7 +34,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppTheme.primaryColor.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, -8),
           ),
@@ -132,7 +132,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
               _metric(
                 icon: Icons.star_rounded,
                 label: '${driver.rating.toStringAsFixed(1)} Rating',
-                color: Colors.amber.shade800,
+                color: AppTheme.warning,
               ),
               const SizedBox(width: 8),
               _metric(
@@ -147,7 +147,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                     : LucideIcons.user_check,
                 label: driver.hasPassengerOnboard ? 'On Trip' : 'Available',
                 color: driver.hasPassengerOnboard
-                    ? Colors.amber.shade800
+                    ? AppTheme.warning
                     : AppTheme.complete,
               ),
             ],

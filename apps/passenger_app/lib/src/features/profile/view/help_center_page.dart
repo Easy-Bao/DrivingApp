@@ -116,8 +116,30 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
-          child: AppBackButtonWidget(
-            onPressed: () => Navigator.of(context).maybePop(),
+          child: Tooltip(
+            message: MaterialLocalizations.of(context).backButtonTooltip,
+            child: Material(
+              color: AppTheme.surface,
+              elevation: 2,
+              shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => Navigator.of(context).maybePop(),
+                customBorder: const CircleBorder(),
+                child: const SizedBox(
+                  width: 46,
+                  height: 46,
+                  child: Center(
+                    child: Icon(
+                      LucideIcons.arrow_left,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
         title: const Text(
@@ -201,7 +223,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: sel ? Colors.white : AppTheme.primaryColor,
+                        color: sel ? AppTheme.surface : AppTheme.primaryColor,
                       ),
                     ),
                   ),
@@ -327,7 +349,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: AppTheme.surface,
             ),
           ),
           const SizedBox(height: 4),
@@ -335,7 +357,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
             'Our support team is available 24/7',
             style: TextStyle(
               fontSize: 13,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: AppTheme.surface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 18),
@@ -357,20 +379,20 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: AppTheme.surface.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: Colors.white),
+            Icon(icon, size: 16, color: AppTheme.surface),
             const SizedBox(width: 8),
             Text(
               text,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: AppTheme.surface,
               ),
             ),
           ],
