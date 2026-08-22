@@ -22,6 +22,14 @@ type RedisCounterStore struct {
 	client *redisclient.Client
 }
 
+const atomicIncrementScript = `
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('PEXPIRE', KEYS[1], ARGV[1])
+end
+return count
+`
+
 func NewRedisCounterStore(client *redisclient.Client) *RedisCounterStore {
 	return &RedisCounterStore{client: client}
 }
@@ -30,16 +38,7 @@ func (store *RedisCounterStore) Increment(ctx context.Context, key string, windo
 	if store == nil || store.client == nil {
 		return 0, fmt.Errorf("redis counter store is not configured")
 	}
-	count, err := store.client.Incr(ctx, key).Result()
-	if err != nil {
-		return 0, err
-	}
-	if count == 1 {
-		if err := store.client.Expire(ctx, key, window).Err(); err != nil {
-			return 0, err
-		}
-	}
-	return count, nil
+	return store.client.Eval(ctx, atomicIncrementScript, []string{key}, window.Milliseconds()).Int64()
 }
 
 type MemoryCounterStore struct {
@@ -105,11 +104,6 @@ func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if isFareCalculationRequest(request) {
-			next.ServeHTTP(writer, request)
-			return
-		}
-
 		scope, limit := limiter.scopeAndLimit(request.URL.Path)
 		key := fmt.Sprintf("rate:%s:%s:%d", scope, clientIP(request), windowKey(time.Now(), limiter.window))
 		count, err := limiter.store.Increment(request.Context(), key, limiter.window)
@@ -127,22 +121,6 @@ func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(writer, request)
 	})
-}
-
-// Fare quotes are intentionally coalesced by the client because a route can
-// cause several UI rebuilds. They remain behind the normal request-security
-// middleware, but are not charged against the shared API request budget.
-func isFareCalculationRequest(request *http.Request) bool {
-	if request.Method != http.MethodPost {
-		return false
-	}
-
-	switch request.URL.Path {
-	case "/api/v1/bids/fare", "/api/v1/fares/estimate", "/api/v1/fares/calculate-final":
-		return true
-	default:
-		return false
-	}
 }
 
 func (limiter *RateLimiter) scopeAndLimit(path string) (string, int64) {

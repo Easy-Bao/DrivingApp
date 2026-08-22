@@ -130,7 +130,7 @@ func NewIdempotency(store IdempotencyStore, expiration time.Duration) *Idempoten
 
 func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if idempotency == nil || idempotency.store == nil || !supportsIdempotency(request.Method) {
+		if idempotency == nil || idempotency.store == nil || !supportsIdempotency(request) {
 			next.ServeHTTP(writer, request)
 			return
 		}
@@ -156,7 +156,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 		}
 		request.Body = io.NopCloser(bytes.NewReader(body))
 		fingerprint := requestFingerprint(request, body)
-		baseKey := "idempotency:" + request.Method + ":" + request.URL.Path + ":" + idempotencyKey
+		baseKey := "idempotency:" + requestTargetScope(request) + ":" + authorizationScope(request) + ":" + idempotencyKey
 		resultKey := baseKey + ":result"
 		lockKey := baseKey + ":lock"
 
@@ -240,13 +240,26 @@ func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, finger
 	_, _ = writer.Write(response.Body)
 }
 
-func supportsIdempotency(method string) bool {
-	switch method {
+func supportsIdempotency(request *http.Request) bool {
+	if strings.HasPrefix(request.URL.Path, "/api/v1/telemetry/") {
+		return false
+	}
+	switch request.Method {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
 		return true
 	default:
 		return false
 	}
+}
+
+func authorizationScope(request *http.Request) string {
+	hash := sha256.Sum256([]byte(strings.TrimSpace(request.Header.Get("Authorization"))))
+	return hex.EncodeToString(hash[:])
+}
+
+func requestTargetScope(request *http.Request) string {
+	hash := sha256.Sum256([]byte(request.Method + "\n" + request.URL.RequestURI()))
+	return hex.EncodeToString(hash[:])
 }
 
 func validIdempotencyKey(value string) bool {
@@ -255,7 +268,7 @@ func validIdempotencyKey(value string) bool {
 
 func requestFingerprint(request *http.Request, body []byte) string {
 	hash := sha256.New()
-	_, _ = hash.Write([]byte(request.Method + "\n" + request.URL.Path + "\n"))
+	_, _ = hash.Write([]byte(request.Method + "\n" + request.URL.RequestURI() + "\n" + authorizationScope(request) + "\n"))
 	_, _ = hash.Write(body)
 	return hex.EncodeToString(hash.Sum(nil))
 }

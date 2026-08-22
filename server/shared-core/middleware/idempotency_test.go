@@ -83,3 +83,46 @@ func TestIdempotencyFailsClosedWhenStoreIsUnavailable(t *testing.T) {
 		t.Fatalf("status = %d, handler called = %t", response.Code, called)
 	}
 }
+
+func TestIdempotencySkipsHighThroughputTelemetryUpdates(t *testing.T) {
+	var calls atomic.Int32
+	handler := NewIdempotency(NewMemoryIdempotencyStore(), time.Minute).Middleware(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		writer.WriteHeader(http.StatusAccepted)
+	}))
+
+	for index := 0; index < 2; index++ {
+		request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"lat":7.8,"lng":123.4}`))
+		request.Header.Set("Idempotency-Key", "telemetry-key")
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("request %d status = %d, want %d", index+1, response.Code, http.StatusAccepted)
+		}
+	}
+	if calls.Load() != 2 {
+		t.Fatalf("telemetry handler calls = %d, want 2", calls.Load())
+	}
+}
+
+func TestIdempotencyScopesKeysToAuthorizationAndQuery(t *testing.T) {
+	var calls atomic.Int32
+	handler := NewIdempotency(NewMemoryIdempotencyStore(), time.Minute).Middleware(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		writer.WriteHeader(http.StatusCreated)
+	}))
+
+	for _, token := range []string{"Bearer first", "Bearer second"} {
+		request := httptest.NewRequest(http.MethodPost, "/rides?mode=direct", strings.NewReader(`{"fare_centavos":100}`))
+		request.Header.Set("Authorization", token)
+		request.Header.Set("Idempotency-Key", "scoped-key")
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusCreated {
+			t.Fatalf("token %q status = %d, want %d", token, response.Code, http.StatusCreated)
+		}
+	}
+	if calls.Load() != 2 {
+		t.Fatalf("scoped handler calls = %d, want 2", calls.Load())
+	}
+}

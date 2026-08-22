@@ -66,24 +66,29 @@ func TestRateLimiterUsesSeparateAuthLimit(t *testing.T) {
 	}
 }
 
-func TestRateLimiterDoesNotChargeFareCalculationRequests(t *testing.T) {
+func TestRateLimiterProtectsFareCalculationRequests(t *testing.T) {
 	limiter := NewRateLimiter(NewMemoryCounterStore(), 1, 1, time.Minute)
 	handler := limiter.Middleware(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 		writer.WriteHeader(http.StatusNoContent)
 	}))
 
-	for index := 0; index < 3; index++ {
-		request := httptest.NewRequest(http.MethodPost, "/api/v1/bids/fare", nil)
-		request.RemoteAddr = "192.0.2.12:1234"
-		response := httptest.NewRecorder()
-		handler.ServeHTTP(response, request)
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/bids/fare", nil)
+	request.RemoteAddr = "192.0.2.12:1234"
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("first fare status = %d, want %d", response.Code, http.StatusNoContent)
+	}
+	if response.Header().Get("X-RateLimit-Limit") != "1" {
+		t.Fatalf("fare request limit header = %q, want 1", response.Header().Get("X-RateLimit-Limit"))
+	}
 
-		if response.Code != http.StatusNoContent {
-			t.Fatalf("request %d status = %d, want %d", index+1, response.Code, http.StatusNoContent)
-		}
-		if response.Header().Get("X-RateLimit-Limit") != "" {
-			t.Fatalf("fare request %d unexpectedly received rate-limit headers", index+1)
-		}
+	request = httptest.NewRequest(http.MethodPost, "/api/v1/bids/fare", nil)
+	request.RemoteAddr = "192.0.2.12:1234"
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusTooManyRequests {
+		t.Fatalf("second fare status = %d, want %d", response.Code, http.StatusTooManyRequests)
 	}
 }
 
