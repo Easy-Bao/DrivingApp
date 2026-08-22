@@ -2,16 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/guest_action_bar_widget.dart';
+import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_floating_tab_bar.dart';
 import 'package:shared_core/shared_core.dart';
 
 class PassengerTabNavigationCoordinator extends ChangeNotifier {
@@ -341,101 +340,13 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
               final bottomPadding = MediaQuery.of(context).padding.bottom;
               return Padding(
                 padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
-                child: _buildAuthenticatedTabBar(context, sel),
+                child: PassengerFloatingTabBar(
+                  selectedIndex: sel,
+                  onDestinationSelected: _onItemTapped,
+                  inboxCubit: widget.inboxCubit,
+                ),
               );
             },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAuthenticatedTabBar(BuildContext context, int selectedIndex) {
-    return Container(
-      height: 58,
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(29),
-        border: Border.all(
-          color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _buildTabItem(
-            context,
-            icon: LucideIcons.house,
-            label: 'Home',
-            index: 0,
-            isSelected: selectedIndex == 0,
-          ),
-          _buildTabItem(
-            context,
-            icon: LucideIcons.history,
-            label: 'Activity',
-            index: 1,
-            isSelected: selectedIndex == 1,
-          ),
-          _buildTabItem(
-            context,
-            icon: LucideIcons.mail,
-            label: 'Inbox',
-            index: 2,
-            isSelected: selectedIndex == 2,
-          ),
-          _buildTabItem(
-            context,
-            icon: LucideIcons.user,
-            label: 'Profile',
-            index: 3,
-            isSelected: selectedIndex == 3,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required int index,
-    required bool isSelected,
-  }) {
-    final color = isSelected
-        ? AppTheme.selectedItemColor
-        : AppTheme.unselectedItemColor;
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _onItemTapped(index),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (index == 2)
-                _InboxTabIcon(color: color, inboxCubit: widget.inboxCubit)
-              else
-                Icon(icon, size: 18, color: color),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: color,
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -446,61 +357,5 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     if (widget.navigationCoordinator.selectedIndex == index) return;
     widget.navigationCoordinator.commit(index);
     widget.navigationShell.goBranch(index);
-  }
-}
-
-class _InboxTabIcon extends StatelessWidget {
-  final Color color;
-  final InboxCubit inboxCubit;
-
-  const _InboxTabIcon({required this.color, required this.inboxCubit});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<InboxCubit, InboxState>(
-      bloc: inboxCubit,
-      builder: (context, state) {
-        final unreadCount = state is InboxLoadedState
-            ? state.notifications
-                  .where((notification) => !notification.isRead)
-                  .length
-            : 0;
-
-        return SizedBox(
-          width: 26,
-          height: 22,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              Icon(LucideIcons.mail, size: 18, color: color),
-              if (unreadCount > 0)
-                Positioned(
-                  top: -8,
-                  right: -5,
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 16),
-                    height: 16,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.cancel,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      unreadCount > 99 ? '99+' : '$unreadCount',
-                      style: const TextStyle(
-                        color: AppTheme.surface,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
   }
 }

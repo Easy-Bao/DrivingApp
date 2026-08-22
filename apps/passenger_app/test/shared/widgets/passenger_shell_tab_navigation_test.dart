@@ -51,6 +51,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
+    final indicator = find.byKey(
+      const ValueKey<String>('passenger-floating-tab-indicator'),
+    );
+    final initialIndicatorPosition = tester.getTopLeft(indicator).dx;
 
     // A first-use swipe must load the adjacent branch while the page is still
     // following the finger, then return to the origin when released early.
@@ -70,7 +74,18 @@ void main() {
     await tester.pump();
     expect(router.state.uri.path, ActivityRoutes.fullActivityPath);
     expect(find.byType(PageView), findsOneWidget);
+    expect(
+      tester.getTopLeft(indicator).dx,
+      closeTo(initialIndicatorPosition, 0.1),
+    );
+    await tester.pump(const Duration(milliseconds: 160));
+    final middleIndicatorPosition = tester.getTopLeft(indicator).dx;
+    expect(middleIndicatorPosition, greaterThan(initialIndicatorPosition));
     await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(indicator).dx,
+      greaterThan(middleIndicatorPosition),
+    );
     expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
 
     final cancelGesture = await tester.startGesture(

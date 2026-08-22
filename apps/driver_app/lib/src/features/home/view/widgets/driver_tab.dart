@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:driver_app/src/core/theme/app_theme.dart';
+import 'package:driver_app/src/features/home/view/widgets/driver_floating_tab_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class DriverTabNavigationCoordinator extends ChangeNotifier {
@@ -239,65 +239,9 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
         body: widget.navigationShell,
         bottomNavigationBar: Padding(
           padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
-          child: Container(
-            height: 58,
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(29),
-              border: Border.all(
-                color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.06),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _tab(
-                  LucideIcons.layout_dashboard,
-                  'Dashboard',
-                  0,
-                  selectedIndex,
-                ),
-                _tab(LucideIcons.history, 'Trips', 1, selectedIndex),
-                _tab(LucideIcons.wallet, 'Earnings', 2, selectedIndex),
-                _tab(LucideIcons.user, 'Account', 3, selectedIndex),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _tab(IconData icon, String label, int index, int selectedIndex) {
-    final isSelected = selectedIndex == index;
-    final color = isSelected
-        ? AppTheme.selectedItemColor
-        : AppTheme.unselectedItemColor;
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _onItemTapped(index),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: color,
-                ),
-              ),
-            ],
+          child: DriverFloatingTabBar(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: _onItemTapped,
           ),
         ),
       ),
