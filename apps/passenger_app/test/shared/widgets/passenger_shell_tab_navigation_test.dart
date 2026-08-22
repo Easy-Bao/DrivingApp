@@ -20,7 +20,9 @@ import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_navigat
 import 'package:shared_core/shared_core.dart';
 
 void main() {
-  testWidgets('tab changes animate and can be swiped', (tester) async {
+  testWidgets('tab changes, named navigation, and swipes stay synchronized', (
+    tester,
+  ) async {
     final sessionBloc = SessionBloc(sessionRepository: _SessionRepositoryStub())
       ..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
     final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
@@ -138,6 +140,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(router.state.uri.path, HomeRoutes.fullHomePath);
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('home-view-all-activity')),
+    );
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, ActivityRoutes.fullActivityPath);
+    expect(navigationCoordinator.selectedIndex, 1);
+    expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 
@@ -168,9 +179,17 @@ GoRouter _createRouter(
               GoRoute(
                 name: HomeRoutes.home,
                 path: HomeRoutes.fullHomePath,
-                builder: (_, _) => const ColoredBox(
-                  key: ValueKey<String>('home-page'),
+                builder: (context, _) => ColoredBox(
+                  key: const ValueKey<String>('home-page'),
                   color: Colors.white,
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: TextButton(
+                      key: const ValueKey<String>('home-view-all-activity'),
+                      onPressed: () => context.goNamed(ActivityRoutes.activity),
+                      child: const Text('View all'),
+                    ),
+                  ),
                 ),
               ),
             ],

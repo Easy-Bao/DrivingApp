@@ -89,8 +89,17 @@ class _DriverTabBranchContainerState extends State<DriverTabBranchContainer> {
     if (_isUserDragging || targetIndex == _activeIndex) return;
 
     _activeIndex = targetIndex;
-    widget.onNavigationSettled(targetIndex);
+    _settleExternalNavigation(targetIndex);
     _animateToPage(targetIndex);
+  }
+
+  void _settleExternalNavigation(int targetIndex) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.navigationShell.currentIndex != targetIndex) {
+        return;
+      }
+      widget.onNavigationSettled(targetIndex);
+    });
   }
 
   @override
