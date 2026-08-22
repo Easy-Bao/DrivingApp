@@ -42,7 +42,7 @@ import 'package:passenger_app/src/features/trip/data/repositories/track_reposito
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/trip_module.dart';
-import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
+import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
 
 class PassengerModule extends Module {

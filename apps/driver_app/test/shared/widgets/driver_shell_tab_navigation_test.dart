@@ -1,6 +1,6 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
-import 'package:driver_app/src/features/home/view/widgets/driver_floating_tab_bar.dart';
-import 'package:driver_app/src/features/home/view/widgets/driver_tab.dart';
+import 'package:driver_app/src/shared/widgets/navigationbar/driver_floating_tab_bar.dart';
+import 'package:driver_app/src/shared/widgets/navigationbar/driver_navigation_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

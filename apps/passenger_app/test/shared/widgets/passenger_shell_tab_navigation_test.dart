@@ -16,7 +16,7 @@ import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_rep
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_floating_tab_bar.dart';
-import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
+import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
 
 void main() {

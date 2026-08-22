@@ -10,7 +10,7 @@ import 'package:driver_app/src/features/home/data/repositories/dashboard_reposit
 import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
-import 'package:driver_app/src/features/home/view/widgets/driver_tab.dart';
+import 'package:driver_app/src/shared/widgets/navigationbar/driver_navigation_shell.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';
 import 'package:driver_app/src/features/location/location_module.dart';
 import 'package:driver_app/src/features/trip/data/repositories/ride_repository.dart';
