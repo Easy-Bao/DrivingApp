@@ -15,6 +15,8 @@ const (
 	FieldUserID = "user_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldAddress holds the string denoting the address field in the database.
+	FieldAddress = "address"
 	// FieldPreferredRideType holds the string denoting the preferred_ride_type field in the database.
 	FieldPreferredRideType = "preferred_ride_type"
 	// Table holds the table name of the passengerprofile in the database.
@@ -26,6 +28,7 @@ var Columns = []string{
 	FieldID,
 	FieldUserID,
 	FieldName,
+	FieldAddress,
 	FieldPreferredRideType,
 }
 
@@ -60,6 +63,11 @@ func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByAddress orders the results by the address field.
+func ByAddress(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAddress, opts...).ToFunc()
 }
 
 // ByPreferredRideType orders the results by the preferred_ride_type field.

@@ -30,7 +30,7 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 	if err != nil {
 		return domain.Profile{}, err
 	}
-	return domain.Profile{ID: passengerProfile.ID, UserID: passengerProfile.UserID, Role: "passenger", Name: passengerProfile.Name, Phone: account.Phone, Email: account.Email, PreferredRideType: passengerProfile.PreferredRideType}, nil
+	return domain.Profile{ID: passengerProfile.ID, UserID: passengerProfile.UserID, Role: "passenger", Name: passengerProfile.Name, Phone: account.Phone, Email: account.Email, Address: passengerProfile.Address, PreferredRideType: passengerProfile.PreferredRideType}, nil
 }
 func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
 	account, err := repository.client.User.UpdateOneID(profile.UserID).SetName(profile.Name).SetPhone(profile.Phone).SetEmail(profile.Email).Save(ctx)
@@ -44,11 +44,11 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		}
 		return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "driver", Name: updated.Name, Phone: account.Phone, Email: account.Email, VehicleType: updated.VehicleType, PlateNumber: updated.PlateNumber, Rating: updated.Rating, IsOnline: updated.IsOnline}, nil
 	}
-	updated, err := repository.client.PassengerProfile.UpdateOneID(profile.ID).SetName(profile.Name).SetPreferredRideType(profile.PreferredRideType).Save(ctx)
+	updated, err := repository.client.PassengerProfile.UpdateOneID(profile.ID).SetName(profile.Name).SetAddress(profile.Address).SetPreferredRideType(profile.PreferredRideType).Save(ctx)
 	if err != nil {
 		return domain.Profile{}, err
 	}
-	return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "passenger", Name: updated.Name, Phone: account.Phone, Email: account.Email, PreferredRideType: updated.PreferredRideType}, nil
+	return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "passenger", Name: updated.Name, Phone: account.Phone, Email: account.Email, Address: updated.Address, PreferredRideType: updated.PreferredRideType}, nil
 }
 
 func (repository *ProfileRepository) Notifications(ctx context.Context, userID int) ([]domain.Notification, error) {

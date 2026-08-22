@@ -62,6 +62,26 @@ func (_u *PassengerProfileUpdate) SetNillableName(v *string) *PassengerProfileUp
 	return _u
 }
 
+// SetAddress sets the "address" field.
+func (_u *PassengerProfileUpdate) SetAddress(v string) *PassengerProfileUpdate {
+	_u.mutation.SetAddress(v)
+	return _u
+}
+
+// SetNillableAddress sets the "address" field if the given value is not nil.
+func (_u *PassengerProfileUpdate) SetNillableAddress(v *string) *PassengerProfileUpdate {
+	if v != nil {
+		_u.SetAddress(*v)
+	}
+	return _u
+}
+
+// ClearAddress clears the value of the "address" field.
+func (_u *PassengerProfileUpdate) ClearAddress() *PassengerProfileUpdate {
+	_u.mutation.ClearAddress()
+	return _u
+}
+
 // SetPreferredRideType sets the "preferred_ride_type" field.
 func (_u *PassengerProfileUpdate) SetPreferredRideType(v string) *PassengerProfileUpdate {
 	_u.mutation.SetPreferredRideType(v)
@@ -145,6 +165,12 @@ func (_u *PassengerProfileUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(passengerprofile.FieldName, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.Address(); ok {
+		_spec.SetField(passengerprofile.FieldAddress, field.TypeString, value)
+	}
+	if _u.mutation.AddressCleared() {
+		_spec.ClearField(passengerprofile.FieldAddress, field.TypeString)
+	}
 	if value, ok := _u.mutation.PreferredRideType(); ok {
 		_spec.SetField(passengerprofile.FieldPreferredRideType, field.TypeString, value)
 	}
@@ -203,6 +229,26 @@ func (_u *PassengerProfileUpdateOne) SetNillableName(v *string) *PassengerProfil
 	if v != nil {
 		_u.SetName(*v)
 	}
+	return _u
+}
+
+// SetAddress sets the "address" field.
+func (_u *PassengerProfileUpdateOne) SetAddress(v string) *PassengerProfileUpdateOne {
+	_u.mutation.SetAddress(v)
+	return _u
+}
+
+// SetNillableAddress sets the "address" field if the given value is not nil.
+func (_u *PassengerProfileUpdateOne) SetNillableAddress(v *string) *PassengerProfileUpdateOne {
+	if v != nil {
+		_u.SetAddress(*v)
+	}
+	return _u
+}
+
+// ClearAddress clears the value of the "address" field.
+func (_u *PassengerProfileUpdateOne) ClearAddress() *PassengerProfileUpdateOne {
+	_u.mutation.ClearAddress()
 	return _u
 }
 
@@ -318,6 +364,12 @@ func (_u *PassengerProfileUpdateOne) sqlSave(ctx context.Context) (_node *Passen
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(passengerprofile.FieldName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Address(); ok {
+		_spec.SetField(passengerprofile.FieldAddress, field.TypeString, value)
+	}
+	if _u.mutation.AddressCleared() {
+		_spec.ClearField(passengerprofile.FieldAddress, field.TypeString)
 	}
 	if value, ok := _u.mutation.PreferredRideType(); ok {
 		_spec.SetField(passengerprofile.FieldPreferredRideType, field.TypeString, value)

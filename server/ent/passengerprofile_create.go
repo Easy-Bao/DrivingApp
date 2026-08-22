@@ -31,6 +31,20 @@ func (_c *PassengerProfileCreate) SetName(v string) *PassengerProfileCreate {
 	return _c
 }
 
+// SetAddress sets the "address" field.
+func (_c *PassengerProfileCreate) SetAddress(v string) *PassengerProfileCreate {
+	_c.mutation.SetAddress(v)
+	return _c
+}
+
+// SetNillableAddress sets the "address" field if the given value is not nil.
+func (_c *PassengerProfileCreate) SetNillableAddress(v *string) *PassengerProfileCreate {
+	if v != nil {
+		_c.SetAddress(*v)
+	}
+	return _c
+}
+
 // SetPreferredRideType sets the "preferred_ride_type" field.
 func (_c *PassengerProfileCreate) SetPreferredRideType(v string) *PassengerProfileCreate {
 	_c.mutation.SetPreferredRideType(v)
@@ -123,6 +137,10 @@ func (_c *PassengerProfileCreate) createSpec() (*PassengerProfile, *sqlgraph.Cre
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(passengerprofile.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := _c.mutation.Address(); ok {
+		_spec.SetField(passengerprofile.FieldAddress, field.TypeString, value)
+		_node.Address = value
 	}
 	if value, ok := _c.mutation.PreferredRideType(); ok {
 		_spec.SetField(passengerprofile.FieldPreferredRideType, field.TypeString, value)

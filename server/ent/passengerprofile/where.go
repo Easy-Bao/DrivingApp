@@ -62,6 +62,11 @@ func Name(v string) predicate.PassengerProfile {
 	return predicate.PassengerProfile(sql.FieldEQ(FieldName, v))
 }
 
+// Address applies equality check predicate on the "address" field. It's identical to AddressEQ.
+func Address(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEQ(FieldAddress, v))
+}
+
 // PreferredRideType applies equality check predicate on the "preferred_ride_type" field. It's identical to PreferredRideTypeEQ.
 func PreferredRideType(v string) predicate.PassengerProfile {
 	return predicate.PassengerProfile(sql.FieldEQ(FieldPreferredRideType, v))
@@ -170,6 +175,81 @@ func NameEqualFold(v string) predicate.PassengerProfile {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.PassengerProfile {
 	return predicate.PassengerProfile(sql.FieldContainsFold(FieldName, v))
+}
+
+// AddressEQ applies the EQ predicate on the "address" field.
+func AddressEQ(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEQ(FieldAddress, v))
+}
+
+// AddressNEQ applies the NEQ predicate on the "address" field.
+func AddressNEQ(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNEQ(FieldAddress, v))
+}
+
+// AddressIn applies the In predicate on the "address" field.
+func AddressIn(vs ...string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldIn(FieldAddress, vs...))
+}
+
+// AddressNotIn applies the NotIn predicate on the "address" field.
+func AddressNotIn(vs ...string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNotIn(FieldAddress, vs...))
+}
+
+// AddressGT applies the GT predicate on the "address" field.
+func AddressGT(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldGT(FieldAddress, v))
+}
+
+// AddressGTE applies the GTE predicate on the "address" field.
+func AddressGTE(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldGTE(FieldAddress, v))
+}
+
+// AddressLT applies the LT predicate on the "address" field.
+func AddressLT(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldLT(FieldAddress, v))
+}
+
+// AddressLTE applies the LTE predicate on the "address" field.
+func AddressLTE(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldLTE(FieldAddress, v))
+}
+
+// AddressContains applies the Contains predicate on the "address" field.
+func AddressContains(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldContains(FieldAddress, v))
+}
+
+// AddressHasPrefix applies the HasPrefix predicate on the "address" field.
+func AddressHasPrefix(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldHasPrefix(FieldAddress, v))
+}
+
+// AddressHasSuffix applies the HasSuffix predicate on the "address" field.
+func AddressHasSuffix(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldHasSuffix(FieldAddress, v))
+}
+
+// AddressIsNil applies the IsNil predicate on the "address" field.
+func AddressIsNil() predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldIsNull(FieldAddress))
+}
+
+// AddressNotNil applies the NotNil predicate on the "address" field.
+func AddressNotNil() predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNotNull(FieldAddress))
+}
+
+// AddressEqualFold applies the EqualFold predicate on the "address" field.
+func AddressEqualFold(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEqualFold(FieldAddress, v))
+}
+
+// AddressContainsFold applies the ContainsFold predicate on the "address" field.
+func AddressContainsFold(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldContainsFold(FieldAddress, v))
 }
 
 // PreferredRideTypeEQ applies the EQ predicate on the "preferred_ride_type" field.

@@ -7,6 +7,7 @@ type Profile struct {
 	Name              string  `json:"name"`
 	Phone             string  `json:"phone,omitempty"`
 	Email             string  `json:"email,omitempty"`
+	Address           string  `json:"address,omitempty"`
 	PreferredRideType string  `json:"preferred_ride_type,omitempty"`
 	VehicleType       string  `json:"vehicle_type,omitempty"`
 	PlateNumber       string  `json:"plate_number,omitempty"`

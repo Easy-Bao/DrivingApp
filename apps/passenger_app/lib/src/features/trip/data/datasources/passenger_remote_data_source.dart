@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
-import 'package:shared_core/shared_core.dart';
 
 abstract class PassengerRemoteDataSource {
   Future<Map<String, dynamic>> fetchPassengerProfile(String passengerId);
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data);
+  Future<Map<String, dynamic>> updateProfile({
+    required String passengerId,
+    required Map<String, dynamic> data,
+  });
   Future<List<dynamic>> fetchRideHistory(String passengerId);
   Future<List<dynamic>> fetchNotifications(String passengerId);
 }
@@ -22,8 +24,10 @@ class PassengerRemoteDataSourceImpl implements PassengerRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
-    final passengerId = SafeParse.toStringValue(data['id']);
+  Future<Map<String, dynamic>> updateProfile({
+    required String passengerId,
+    required Map<String, dynamic> data,
+  }) async {
     final response = await _dio.put<Map<String, dynamic>>(
       '/api/v1/passengers/$passengerId',
       data: data,

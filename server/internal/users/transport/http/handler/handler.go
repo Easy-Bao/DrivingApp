@@ -8,6 +8,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
@@ -46,29 +47,49 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "unauthorized")
 		return
 	}
-	var input domain.Profile
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&input) != nil {
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10))
+	decoder.DisallowUnknownFields()
+	var input dto.UpdateProfileRequest
+	if decoder.Decode(&input) != nil {
 		writeError(w, 400, "invalid JSON")
 		return
 	}
-	input.UserID = id
-	if input.ID == 0 {
-		current, err := handler.service.Get(r.Context(), id)
-		if err != nil {
-			writeError(w, 404, "profile not found")
-			return
-		}
-		input.ID = current.ID
-		if input.Role == "" {
-			input.Role = current.Role
-		}
+	current, err := handler.service.Get(r.Context(), id)
+	if err != nil {
+		writeError(w, 404, "profile not found")
+		return
 	}
-	profile, err := handler.service.Update(r.Context(), input)
+	profile, err := handler.service.Update(r.Context(), applyProfileUpdate(current, input))
 	if err != nil {
 		writeError(w, 400, "We could not update your profile. Check the details and try again.")
 		return
 	}
 	writeJSON(w, 200, profile)
+}
+
+func applyProfileUpdate(current domain.Profile, input dto.UpdateProfileRequest) domain.Profile {
+	if input.Name != nil {
+		current.Name = *input.Name
+	}
+	if input.Phone != nil {
+		current.Phone = *input.Phone
+	}
+	if input.Email != nil {
+		current.Email = *input.Email
+	}
+	if input.Address != nil {
+		current.Address = *input.Address
+	}
+	if input.PreferredRideType != nil {
+		current.PreferredRideType = *input.PreferredRideType
+	}
+	if input.VehicleType != nil {
+		current.VehicleType = *input.VehicleType
+	}
+	if input.PlateNumber != nil {
+		current.PlateNumber = *input.PlateNumber
+	}
+	return current
 }
 
 func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {

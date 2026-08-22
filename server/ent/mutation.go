@@ -5663,6 +5663,7 @@ type PassengerProfileMutation struct {
 	user_id             *int
 	adduser_id          *int
 	name                *string
+	address             *string
 	preferred_ride_type *string
 	clearedFields       map[string]struct{}
 	done                bool
@@ -5860,6 +5861,55 @@ func (m *PassengerProfileMutation) ResetName() {
 	m.name = nil
 }
 
+// SetAddress sets the "address" field.
+func (m *PassengerProfileMutation) SetAddress(s string) {
+	m.address = &s
+}
+
+// Address returns the value of the "address" field in the mutation.
+func (m *PassengerProfileMutation) Address() (r string, exists bool) {
+	v := m.address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddress returns the old "address" field's value of the PassengerProfile entity.
+// If the PassengerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerProfileMutation) OldAddress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddress: %w", err)
+	}
+	return oldValue.Address, nil
+}
+
+// ClearAddress clears the value of the "address" field.
+func (m *PassengerProfileMutation) ClearAddress() {
+	m.address = nil
+	m.clearedFields[passengerprofile.FieldAddress] = struct{}{}
+}
+
+// AddressCleared returns if the "address" field was cleared in this mutation.
+func (m *PassengerProfileMutation) AddressCleared() bool {
+	_, ok := m.clearedFields[passengerprofile.FieldAddress]
+	return ok
+}
+
+// ResetAddress resets all changes to the "address" field.
+func (m *PassengerProfileMutation) ResetAddress() {
+	m.address = nil
+	delete(m.clearedFields, passengerprofile.FieldAddress)
+}
+
 // SetPreferredRideType sets the "preferred_ride_type" field.
 func (m *PassengerProfileMutation) SetPreferredRideType(s string) {
 	m.preferred_ride_type = &s
@@ -5943,12 +5993,15 @@ func (m *PassengerProfileMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PassengerProfileMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.user_id != nil {
 		fields = append(fields, passengerprofile.FieldUserID)
 	}
 	if m.name != nil {
 		fields = append(fields, passengerprofile.FieldName)
+	}
+	if m.address != nil {
+		fields = append(fields, passengerprofile.FieldAddress)
 	}
 	if m.preferred_ride_type != nil {
 		fields = append(fields, passengerprofile.FieldPreferredRideType)
@@ -5965,6 +6018,8 @@ func (m *PassengerProfileMutation) Field(name string) (ent.Value, bool) {
 		return m.UserID()
 	case passengerprofile.FieldName:
 		return m.Name()
+	case passengerprofile.FieldAddress:
+		return m.Address()
 	case passengerprofile.FieldPreferredRideType:
 		return m.PreferredRideType()
 	}
@@ -5980,6 +6035,8 @@ func (m *PassengerProfileMutation) OldField(ctx context.Context, name string) (e
 		return m.OldUserID(ctx)
 	case passengerprofile.FieldName:
 		return m.OldName(ctx)
+	case passengerprofile.FieldAddress:
+		return m.OldAddress(ctx)
 	case passengerprofile.FieldPreferredRideType:
 		return m.OldPreferredRideType(ctx)
 	}
@@ -6004,6 +6061,13 @@ func (m *PassengerProfileMutation) SetField(name string, value ent.Value) error 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case passengerprofile.FieldAddress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddress(v)
 		return nil
 	case passengerprofile.FieldPreferredRideType:
 		v, ok := value.(string)
@@ -6057,6 +6121,9 @@ func (m *PassengerProfileMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *PassengerProfileMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(passengerprofile.FieldAddress) {
+		fields = append(fields, passengerprofile.FieldAddress)
+	}
 	if m.FieldCleared(passengerprofile.FieldPreferredRideType) {
 		fields = append(fields, passengerprofile.FieldPreferredRideType)
 	}
@@ -6074,6 +6141,9 @@ func (m *PassengerProfileMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *PassengerProfileMutation) ClearField(name string) error {
 	switch name {
+	case passengerprofile.FieldAddress:
+		m.ClearAddress()
+		return nil
 	case passengerprofile.FieldPreferredRideType:
 		m.ClearPreferredRideType()
 		return nil
@@ -6090,6 +6160,9 @@ func (m *PassengerProfileMutation) ResetField(name string) error {
 		return nil
 	case passengerprofile.FieldName:
 		m.ResetName()
+		return nil
+	case passengerprofile.FieldAddress:
+		m.ResetAddress()
 		return nil
 	case passengerprofile.FieldPreferredRideType:
 		m.ResetPreferredRideType()

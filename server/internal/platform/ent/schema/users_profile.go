@@ -13,6 +13,7 @@ func (PassengerProfile) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("user_id").Positive(),
 		field.String("name"),
+		field.String("address").Optional(),
 		field.String("preferred_ride_type").Optional(),
 	}
 }

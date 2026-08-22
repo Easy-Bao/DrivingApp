@@ -135,6 +135,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "user_id", Type: field.TypeInt},
 		{Name: "name", Type: field.TypeString},
+		{Name: "address", Type: field.TypeString, Nullable: true},
 		{Name: "preferred_ride_type", Type: field.TypeString, Nullable: true},
 	}
 	// PassengerProfilesTable holds the schema information for the "passenger_profiles" table.

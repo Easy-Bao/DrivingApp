@@ -22,16 +22,16 @@ void main() {
       ),
     );
 
-    final response = await dataSource.updateProfile({
-      'id': 42,
-      'name': 'Passenger',
-    });
+    final response = await dataSource.updateProfile(
+      passengerId: '42',
+      data: {'name': 'Passenger'},
+    );
 
     expect(response['id'], 42);
     verify(
       () => dio.put<Map<String, dynamic>>(
         '/api/v1/passengers/42',
-        data: <String, dynamic>{'id': 42, 'name': 'Passenger'},
+        data: <String, dynamic>{'name': 'Passenger'},
       ),
     ).called(1);
     verifyNever(

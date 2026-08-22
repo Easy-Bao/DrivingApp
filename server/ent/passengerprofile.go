@@ -20,6 +20,8 @@ type PassengerProfile struct {
 	UserID int `json:"user_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Address holds the value of the "address" field.
+	Address string `json:"address,omitempty"`
 	// PreferredRideType holds the value of the "preferred_ride_type" field.
 	PreferredRideType string `json:"preferred_ride_type,omitempty"`
 	selectValues      sql.SelectValues
@@ -32,7 +34,7 @@ func (*PassengerProfile) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case passengerprofile.FieldID, passengerprofile.FieldUserID:
 			values[i] = new(sql.NullInt64)
-		case passengerprofile.FieldName, passengerprofile.FieldPreferredRideType:
+		case passengerprofile.FieldName, passengerprofile.FieldAddress, passengerprofile.FieldPreferredRideType:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -66,6 +68,12 @@ func (_m *PassengerProfile) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				_m.Name = value.String
+			}
+		case passengerprofile.FieldAddress:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field address", values[i])
+			} else if value.Valid {
+				_m.Address = value.String
 			}
 		case passengerprofile.FieldPreferredRideType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -114,6 +122,9 @@ func (_m *PassengerProfile) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
+	builder.WriteString(", ")
+	builder.WriteString("address=")
+	builder.WriteString(_m.Address)
 	builder.WriteString(", ")
 	builder.WriteString("preferred_ride_type=")
 	builder.WriteString(_m.PreferredRideType)

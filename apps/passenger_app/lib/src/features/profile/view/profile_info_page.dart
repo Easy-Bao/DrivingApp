@@ -134,13 +134,15 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
       try {
         final updated = await Modular.get<PassengerRemoteDataSource>()
-            .updateProfile({
-              'id': _passengerId,
-              'name': name,
-              'phone': phone,
-              'email': email,
-              'address': _addressController.text.trim(),
-            });
+            .updateProfile(
+              passengerId: _passengerId,
+              data: {
+                'name': name,
+                'phone': phone,
+                'email': email,
+                'address': _addressController.text.trim(),
+              },
+            );
         if (updated.isNotEmpty) {
           if (!mounted) return;
           CustomToast.show(context, 'Profile updated successfully!');

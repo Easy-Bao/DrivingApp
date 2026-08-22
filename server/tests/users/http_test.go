@@ -129,3 +129,47 @@ func TestProfileReturnsAccountContactFieldsForPassengerInfo(t *testing.T) {
 		t.Fatalf("profile payload = %#v", payload)
 	}
 }
+
+func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) {
+	repository := &onlineRepository{
+		profile: domain.Profile{ID: 7, UserID: 42, Role: "passenger", Name: "Before"},
+	}
+	tokenManager := security.NewTokenManager("users-http-test-secret")
+	token, err := tokenManager.IssueWithRole("42", "passenger")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	router := chi.NewRouter()
+	usershttp.NewRouter(usecase.NewService(repository), tokenManager).RegisterRoutes(router)
+	request := httptest.NewRequest(
+		http.MethodPatch,
+		"/api/v1/users/me",
+		strings.NewReader(`{"name":"After","phone":"+639170000001","email":"after@example.test","address":"Home"}`),
+	)
+	request.Header.Set("Authorization", "Bearer "+token)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+	if repository.saved.ID != 7 || repository.saved.UserID != 42 || repository.saved.Role != "passenger" {
+		t.Fatalf("profile identity changed during update = %#v", repository.saved)
+	}
+	if repository.saved.Name != "After" || repository.saved.Address != "Home" {
+		t.Fatalf("profile values were not persisted = %#v", repository.saved)
+	}
+
+	request = httptest.NewRequest(
+		http.MethodPatch,
+		"/api/v1/users/me",
+		strings.NewReader(`{"id":99}`),
+	)
+	request.Header.Set("Authorization", "Bearer "+token)
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("identity-field status = %d, want %d", response.Code, http.StatusBadRequest)
+	}
+}
