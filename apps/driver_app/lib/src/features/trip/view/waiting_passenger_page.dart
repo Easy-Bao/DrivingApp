@@ -358,25 +358,10 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 }
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  return Tooltip(
-    message: MaterialLocalizations.of(context).backButtonTooltip,
-    child: Material(
-      color: AppTheme.surface,
-      elevation: 2,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: const SizedBox(
-          width: 46,
-          height: 46,
-          child: Center(
-            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
-          ),
-        ),
-      ),
-    ),
+  return IconButton(
+    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+    onPressed: onPressed,
+    color: AppTheme.primaryColor,
+    icon: const Icon(LucideIcons.arrow_left),
   );
 }
