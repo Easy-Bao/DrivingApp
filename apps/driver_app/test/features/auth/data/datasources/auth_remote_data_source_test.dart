@@ -76,4 +76,24 @@ void main() {
       );
     },
   );
+
+  test('posts driver password reset requests to the driver route', () async {
+    when(
+      () => dio.post<void>(any(), data: any<dynamic>(named: 'data')),
+    ).thenAnswer(
+      (_) async => Response<void>(
+        requestOptions: RequestOptions(path: ApiEndpoints.driverForgotPassword),
+        statusCode: 200,
+      ),
+    );
+
+    await dataSource.resetPassword(email: 'driver@example.com');
+
+    verify(
+      () => dio.post<void>(
+        ApiEndpoints.driverForgotPassword,
+        data: <String, dynamic>{'email': 'driver@example.com'},
+      ),
+    ).called(1);
+  });
 }

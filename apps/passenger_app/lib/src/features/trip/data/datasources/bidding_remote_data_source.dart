@@ -7,7 +7,6 @@ abstract class BiddingRemoteDataSource {
   Future<FareResult> fetchFareEstimate({
     required double distanceKm,
     required double durationMinutes,
-    required String rideType,
     required double originLatitude,
     required double originLongitude,
     required double destinationLatitude,
@@ -72,7 +71,6 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   Future<FareResult> fetchFareEstimate({
     required double distanceKm,
     required double durationMinutes,
-    required String rideType,
     required double originLatitude,
     required double originLongitude,
     required double destinationLatitude,
@@ -81,7 +79,6 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/bids/fare',
       data: {
-        'ride_type': rideType,
         'distance_km': distanceKm,
         'duration_minutes': durationMinutes,
         'origin_latitude': originLatitude,

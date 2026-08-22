@@ -211,18 +211,22 @@ func init() {
 	rideDescRideType := rideFields[4].Descriptor()
 	// ride.DefaultRideType holds the default value on creation for the ride_type field.
 	ride.DefaultRideType = rideDescRideType.Default.(string)
+	// rideDescCreatedAt is the schema descriptor for created_at field.
+	rideDescCreatedAt := rideFields[17].Descriptor()
+	// ride.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ride.DefaultCreatedAt = rideDescCreatedAt.Default.(func() time.Time)
 	// rideDescPaymentStatus is the schema descriptor for payment_status field.
-	rideDescPaymentStatus := rideFields[18].Descriptor()
+	rideDescPaymentStatus := rideFields[19].Descriptor()
 	// ride.DefaultPaymentStatus holds the default value on creation for the payment_status field.
 	ride.DefaultPaymentStatus = rideDescPaymentStatus.Default.(string)
 	// rideDescCommissionCentavos is the schema descriptor for commission_centavos field.
-	rideDescCommissionCentavos := rideFields[20].Descriptor()
+	rideDescCommissionCentavos := rideFields[21].Descriptor()
 	// ride.DefaultCommissionCentavos holds the default value on creation for the commission_centavos field.
 	ride.DefaultCommissionCentavos = rideDescCommissionCentavos.Default.(int64)
 	// ride.CommissionCentavosValidator is a validator for the "commission_centavos" field. It is called by the builders before save.
 	ride.CommissionCentavosValidator = rideDescCommissionCentavos.Validators[0].(func(int64) error)
 	// rideDescDriverPayoutCentavos is the schema descriptor for driver_payout_centavos field.
-	rideDescDriverPayoutCentavos := rideFields[21].Descriptor()
+	rideDescDriverPayoutCentavos := rideFields[22].Descriptor()
 	// ride.DefaultDriverPayoutCentavos holds the default value on creation for the driver_payout_centavos field.
 	ride.DefaultDriverPayoutCentavos = rideDescDriverPayoutCentavos.Default.(int64)
 	// ride.DriverPayoutCentavosValidator is a validator for the "driver_payout_centavos" field. It is called by the builders before save.

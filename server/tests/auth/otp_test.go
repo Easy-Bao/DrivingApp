@@ -82,3 +82,16 @@ func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 		t.Fatalf("expected passenger-only verification to reject driver, got %v", err)
 	}
 }
+
+func TestPasswordResetIsScopedToTheAccountRole(t *testing.T) {
+	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
+	store := &otpMemoryStore{values: map[string]string{}}
+	service := usecase.NewOTPService(repository, store, &otpGateway{}, otpIssuer{})
+
+	if err := service.RequestPasswordReset(context.Background(), repository.account.Email); err != domain.ErrInvalidCredentials {
+		t.Fatalf("expected passenger reset route to reject driver account, got %v", err)
+	}
+	if err := service.RequestPasswordResetForRole(context.Background(), repository.account.Email, domain.Driver); err != nil {
+		t.Fatalf("driver reset request failed: %v", err)
+	}
+}

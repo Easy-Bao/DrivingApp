@@ -66,7 +66,9 @@ class RideHistoryModel extends Equatable {
       ),
       destLat: SafeParse.toDouble(json['destLat'] ?? json['dropoff_latitude']),
       destLng: SafeParse.toDouble(json['destLng'] ?? json['dropoff_longitude']),
-      date: SafeParse.toStringValue(json['date'] ?? json['created_at']),
+      date: SafeParse.toStringValue(
+        json['date'] ?? json['completed_at'] ?? json['created_at'],
+      ),
       price: SafeParse.toStringValue(json['price'] ?? json['fare']),
       status: SafeParse.toStringValue(json['status']),
       driverId: SafeParse.toStringValue(json['driverId'] ?? json['driver_id']),

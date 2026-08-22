@@ -51,6 +51,8 @@ type Ride struct {
 	PlateNumber string `json:"plate_number,omitempty"`
 	// DriverRating holds the value of the "driver_rating" field.
 	DriverRating float64 `json:"driver_rating,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
 	// CompletedAt holds the value of the "completed_at" field.
 	CompletedAt time.Time `json:"completed_at,omitempty"`
 	// PaymentStatus holds the value of the "payment_status" field.
@@ -75,7 +77,7 @@ func (*Ride) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case ride.FieldStatus, ride.FieldRideType, ride.FieldPickupName, ride.FieldDropoffName, ride.FieldDriverName, ride.FieldVehicleType, ride.FieldPlateNumber, ride.FieldPaymentStatus:
 			values[i] = new(sql.NullString)
-		case ride.FieldCompletedAt, ride.FieldCashReceivedAt:
+		case ride.FieldCreatedAt, ride.FieldCompletedAt, ride.FieldCashReceivedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -200,6 +202,12 @@ func (_m *Ride) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.DriverRating = value.Float64
 			}
+		case ride.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				_m.CreatedAt = value.Time
+			}
 		case ride.FieldCompletedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field completed_at", values[i])
@@ -316,6 +324,9 @@ func (_m *Ride) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("driver_rating=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DriverRating))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("completed_at=")
 	builder.WriteString(_m.CompletedAt.Format(time.ANSIC))

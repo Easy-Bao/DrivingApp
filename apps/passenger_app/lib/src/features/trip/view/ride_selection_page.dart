@@ -275,7 +275,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       final fareResult = await datasource.fetchFareEstimate(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,
-        rideType: widget.rideType,
         originLatitude: pickup.lat,
         originLongitude: pickup.lng,
         destinationLatitude: widget.destination.latitude,

@@ -31,7 +31,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> resetPassword({required String email}) async {
     await _dio.post<void>(
-      '/api/v1/auth/driver/forgot-password',
+      ApiEndpoints.driverForgotPassword,
       data: {'email': email},
     );
   }

@@ -479,7 +479,8 @@ func (repository *Repository) DriverStats(ctx context.Context, driverID int) (do
 		if item.Status == "completed" {
 			stats.CompletedTrips++
 			stats.TotalFare += item.FareCentavos
-			if !item.CompletedAt.Before(startOfDay) && item.CompletedAt.Before(endOfDay) {
+			completedAt := rideCompletionTime(item)
+			if !completedAt.Before(startOfDay) && completedAt.Before(endOfDay) {
 				stats.TodayCompletedTrips++
 				stats.TodayEarnings += item.FareCentavos
 			}
@@ -499,6 +500,13 @@ func (repository *Repository) DriverStats(ctx context.Context, driverID int) (do
 		stats.AverageRating /= float64(len(items))
 	}
 	return stats, nil
+}
+
+func rideCompletionTime(item *ent.Ride) time.Time {
+	if !item.CompletedAt.IsZero() {
+		return item.CompletedAt
+	}
+	return item.CreatedAt
 }
 
 func (repository *Repository) DriverTrips(ctx context.Context, driverID int) ([]domain.Ride, error) {
@@ -850,7 +858,12 @@ func fromRide(item *ent.Ride) domain.Ride {
 		value := item.CompletedAt.UTC().Format(time.RFC3339)
 		completedAt = &value
 	}
-	return domain.Ride{ID: item.ID, PassengerID: item.PassengerID, DriverID: driverID, Status: item.Status, FareCentavos: item.FareCentavos, RideType: item.RideType, PickupLatitude: item.PickupLatitude, PickupLongitude: item.PickupLongitude, PickupName: item.PickupName, DropoffLatitude: item.DropoffLatitude, DropoffLongitude: item.DropoffLongitude, DropoffName: item.DropoffName, DistanceKm: item.DistanceKm, DurationMinutes: item.DurationMinutes, DriverName: item.DriverName, VehicleType: item.VehicleType, PlateNumber: item.PlateNumber, DriverRating: item.DriverRating, CompletedAt: completedAt, PaymentStatus: item.PaymentStatus, CommissionCentavos: item.CommissionCentavos, DriverPayoutCentavos: item.DriverPayoutCentavos}
+	var createdAt *string
+	if !item.CreatedAt.IsZero() {
+		value := item.CreatedAt.UTC().Format(time.RFC3339)
+		createdAt = &value
+	}
+	return domain.Ride{ID: item.ID, PassengerID: item.PassengerID, DriverID: driverID, Status: item.Status, FareCentavos: item.FareCentavos, RideType: item.RideType, PickupLatitude: item.PickupLatitude, PickupLongitude: item.PickupLongitude, PickupName: item.PickupName, DropoffLatitude: item.DropoffLatitude, DropoffLongitude: item.DropoffLongitude, DropoffName: item.DropoffName, DistanceKm: item.DistanceKm, DurationMinutes: item.DurationMinutes, DriverName: item.DriverName, VehicleType: item.VehicleType, PlateNumber: item.PlateNumber, DriverRating: item.DriverRating, CreatedAt: createdAt, CompletedAt: completedAt, PaymentStatus: item.PaymentStatus, CommissionCentavos: item.CommissionCentavos, DriverPayoutCentavos: item.DriverPayoutCentavos}
 }
 func fromBid(item *ent.Bid) domain.Bid {
 	return domain.Bid{ID: item.ID, RideID: item.RideID, DriverID: item.DriverID, FareCentavos: item.OfferedFareCentavos, Status: item.Status}

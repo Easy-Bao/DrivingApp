@@ -3,6 +3,8 @@
 package ride
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 )
 
@@ -45,6 +47,8 @@ const (
 	FieldPlateNumber = "plate_number"
 	// FieldDriverRating holds the string denoting the driver_rating field in the database.
 	FieldDriverRating = "driver_rating"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
 	// FieldCompletedAt holds the string denoting the completed_at field in the database.
 	FieldCompletedAt = "completed_at"
 	// FieldPaymentStatus holds the string denoting the payment_status field in the database.
@@ -79,6 +83,7 @@ var Columns = []string{
 	FieldVehicleType,
 	FieldPlateNumber,
 	FieldDriverRating,
+	FieldCreatedAt,
 	FieldCompletedAt,
 	FieldPaymentStatus,
 	FieldCashReceivedAt,
@@ -105,6 +110,8 @@ var (
 	FareCentavosValidator func(int64) error
 	// DefaultRideType holds the default value on creation for the "ride_type" field.
 	DefaultRideType string
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
 	// DefaultPaymentStatus holds the default value on creation for the "payment_status" field.
 	DefaultPaymentStatus string
 	// DefaultCommissionCentavos holds the default value on creation for the "commission_centavos" field.
@@ -208,6 +215,11 @@ func ByPlateNumber(opts ...sql.OrderTermOption) OrderOption {
 // ByDriverRating orders the results by the driver_rating field.
 func ByDriverRating(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDriverRating, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }
 
 // ByCompletedAt orders the results by the completed_at field.

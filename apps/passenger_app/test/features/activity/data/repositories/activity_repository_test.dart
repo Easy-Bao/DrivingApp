@@ -72,6 +72,7 @@ void main() {
             'pickup_name': 'Pickup, City',
             'dropoff_name': 'Destination, City',
             'created_at': '2026-08-18T08:00:00Z',
+            'completed_at': '2026-08-18T09:30:00Z',
             'fare_centavos': 2817,
             'status': 'completed',
             'driver_id': 2,
@@ -90,6 +91,7 @@ void main() {
         expect(rides.single.driverName, 'Demo Driver');
         expect(rides.single.vehicleType, 'Motorcycle');
         expect(rides.single.vehiclePlate, 'ABC-123');
+        expect(rides.single.date, contains('5:30 PM'));
       });
     },
   );

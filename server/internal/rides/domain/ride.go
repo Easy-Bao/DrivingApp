@@ -25,6 +25,7 @@ type Ride struct {
 	PassengerPhone       string  `json:"passenger_phone,omitempty"`
 	PassengerRating      float64 `json:"passenger_rating,omitempty"`
 	PassengerFeedback    string  `json:"passenger_feedback,omitempty"`
+	CreatedAt            *string `json:"created_at,omitempty"`
 	CompletedAt          *string `json:"completed_at,omitempty"`
 	PaymentStatus        string  `json:"payment_status"`
 	CommissionCentavos   int64   `json:"commission_centavos"`

@@ -203,6 +203,7 @@ var (
 		{Name: "vehicle_type", Type: field.TypeString, Nullable: true},
 		{Name: "plate_number", Type: field.TypeString, Nullable: true},
 		{Name: "driver_rating", Type: field.TypeFloat64, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "payment_status", Type: field.TypeString, Default: "unpaid"},
 		{Name: "cash_received_at", Type: field.TypeTime, Nullable: true},

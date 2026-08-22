@@ -121,13 +121,25 @@ func (service *OTPService) IssueRefreshToken(account domain.User) (string, error
 }
 
 func (service *OTPService) RequestPasswordReset(ctx context.Context, email string) error {
-	return service.request(ctx, "reset", email)
+	return service.RequestPasswordResetForRole(ctx, email, domain.Passenger)
 }
 
 func (service *OTPService) ResetPassword(ctx context.Context, email, code, password string) error {
-	account, err := service.account(ctx, email)
+	return service.ResetPasswordForRole(ctx, email, code, password, domain.Passenger)
+}
+
+func (service *OTPService) RequestPasswordResetForRole(ctx context.Context, email string, role domain.Role) error {
+	account, err := service.accountForRole(ctx, email, role)
 	if err != nil {
-		return domain.ErrInvalidCredentials
+		return err
+	}
+	return service.requestCode(ctx, "reset", account.Email)
+}
+
+func (service *OTPService) ResetPasswordForRole(ctx context.Context, email, code, password string, role domain.Role) error {
+	account, err := service.accountForRole(ctx, email, role)
+	if err != nil {
+		return err
 	}
 	if len(password) < 8 || len([]byte(password)) > 72 {
 		return domain.ErrInvalidCredentials
@@ -136,14 +148,6 @@ func (service *OTPService) ResetPassword(ctx context.Context, email, code, passw
 		return domain.ErrInvalidOTP
 	}
 	return service.users.UpdatePassword(ctx, account.ID, HashPassword(password))
-}
-
-func (service *OTPService) request(ctx context.Context, purpose, email string) error {
-	account, err := service.account(ctx, email)
-	if err != nil {
-		return domain.ErrInvalidCredentials
-	}
-	return service.requestCode(ctx, purpose, account.Email)
 }
 
 func (service *OTPService) requestCode(ctx context.Context, purpose, email string) error {
@@ -162,6 +166,14 @@ func (service *OTPService) requestCode(ctx context.Context, purpose, email strin
 
 func (service *OTPService) account(ctx context.Context, email string) (domain.User, error) {
 	return service.users.FindByEmail(ctx, strings.ToLower(strings.TrimSpace(email)))
+}
+
+func (service *OTPService) accountForRole(ctx context.Context, email string, role domain.Role) (domain.User, error) {
+	account, err := service.account(ctx, email)
+	if err != nil || account.Role != role {
+		return domain.User{}, domain.ErrInvalidCredentials
+	}
+	return account, nil
 }
 
 func generateOTP() (string, error) {

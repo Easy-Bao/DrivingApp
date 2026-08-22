@@ -4,6 +4,10 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   static const String driverLogin = '/api/v1/auth/driver/login';
+  static const String driverForgotPassword =
+      '/api/v1/auth/driver/forgot-password';
+  static const String driverResetPassword =
+      '/api/v1/auth/driver/reset-password';
   static const String refreshToken = '/api/v1/auth/refresh';
   static const String driverStatus = '/api/v1/driver/status';
   static const String activeBids = '/api/v1/bids/active';

@@ -181,6 +181,14 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	handler.forgotPasswordForRole(w, r, domain.Passenger)
+}
+
+func (handler *Handler) DriverForgotPassword(w http.ResponseWriter, r *http.Request) {
+	handler.forgotPasswordForRole(w, r, domain.Driver)
+}
+
+func (handler *Handler) forgotPasswordForRole(w http.ResponseWriter, r *http.Request, role domain.Role) {
 	if handler.otp == nil {
 		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
@@ -189,7 +197,7 @@ func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &input) {
 		return
 	}
-	if err := handler.otp.RequestPasswordReset(r.Context(), input.Email); err != nil {
+	if err := handler.otp.RequestPasswordResetForRole(r.Context(), input.Email, role); err != nil {
 		writeError(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
@@ -197,6 +205,14 @@ func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	handler.resetPasswordForRole(w, r, domain.Passenger)
+}
+
+func (handler *Handler) DriverResetPassword(w http.ResponseWriter, r *http.Request) {
+	handler.resetPasswordForRole(w, r, domain.Driver)
+}
+
+func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Request, role domain.Role) {
 	if handler.otp == nil {
 		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
@@ -205,7 +221,7 @@ func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &input) {
 		return
 	}
-	if err := handler.otp.ResetPassword(r.Context(), input.Email, input.Code, input.NewPassword); err != nil {
+	if err := handler.otp.ResetPasswordForRole(r.Context(), input.Email, input.Code, input.NewPassword, role); err != nil {
 		writeError(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}

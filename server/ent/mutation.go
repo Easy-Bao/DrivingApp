@@ -7778,6 +7778,7 @@ type RideMutation struct {
 	plate_number              *string
 	driver_rating             *float64
 	adddriver_rating          *float64
+	created_at                *time.Time
 	completed_at              *time.Time
 	payment_status            *string
 	cash_received_at          *time.Time
@@ -8878,6 +8879,42 @@ func (m *RideMutation) ResetDriverRating() {
 	delete(m.clearedFields, ride.FieldDriverRating)
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (m *RideMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RideMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Ride entity.
+// If the Ride object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RideMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RideMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
 // SetCompletedAt sets the "completed_at" field.
 func (m *RideMutation) SetCompletedAt(t time.Time) {
 	m.completed_at = &t
@@ -9158,7 +9195,7 @@ func (m *RideMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RideMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 23)
 	if m.passenger_id != nil {
 		fields = append(fields, ride.FieldPassengerID)
 	}
@@ -9209,6 +9246,9 @@ func (m *RideMutation) Fields() []string {
 	}
 	if m.driver_rating != nil {
 		fields = append(fields, ride.FieldDriverRating)
+	}
+	if m.created_at != nil {
+		fields = append(fields, ride.FieldCreatedAt)
 	}
 	if m.completed_at != nil {
 		fields = append(fields, ride.FieldCompletedAt)
@@ -9267,6 +9307,8 @@ func (m *RideMutation) Field(name string) (ent.Value, bool) {
 		return m.PlateNumber()
 	case ride.FieldDriverRating:
 		return m.DriverRating()
+	case ride.FieldCreatedAt:
+		return m.CreatedAt()
 	case ride.FieldCompletedAt:
 		return m.CompletedAt()
 	case ride.FieldPaymentStatus:
@@ -9320,6 +9362,8 @@ func (m *RideMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPlateNumber(ctx)
 	case ride.FieldDriverRating:
 		return m.OldDriverRating(ctx)
+	case ride.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
 	case ride.FieldCompletedAt:
 		return m.OldCompletedAt(ctx)
 	case ride.FieldPaymentStatus:
@@ -9457,6 +9501,13 @@ func (m *RideMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDriverRating(v)
+		return nil
+	case ride.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
 		return nil
 	case ride.FieldCompletedAt:
 		v, ok := value.(time.Time)
@@ -9832,6 +9883,9 @@ func (m *RideMutation) ResetField(name string) error {
 		return nil
 	case ride.FieldDriverRating:
 		m.ResetDriverRating()
+		return nil
+	case ride.FieldCreatedAt:
+		m.ResetCreatedAt()
 		return nil
 	case ride.FieldCompletedAt:
 		m.ResetCompletedAt()

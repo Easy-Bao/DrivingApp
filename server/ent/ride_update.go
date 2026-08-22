@@ -414,6 +414,20 @@ func (_u *RideUpdate) ClearDriverRating() *RideUpdate {
 	return _u
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_u *RideUpdate) SetCreatedAt(v time.Time) *RideUpdate {
+	_u.mutation.SetCreatedAt(v)
+	return _u
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableCreatedAt(v *time.Time) *RideUpdate {
+	if v != nil {
+		_u.SetCreatedAt(*v)
+	}
+	return _u
+}
+
 // SetCompletedAt sets the "completed_at" field.
 func (_u *RideUpdate) SetCompletedAt(v time.Time) *RideUpdate {
 	_u.mutation.SetCompletedAt(v)
@@ -698,6 +712,9 @@ func (_u *RideUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DriverRatingCleared() {
 		_spec.ClearField(ride.FieldDriverRating, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.CreatedAt(); ok {
+		_spec.SetField(ride.FieldCreatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.CompletedAt(); ok {
 		_spec.SetField(ride.FieldCompletedAt, field.TypeTime, value)
@@ -1132,6 +1149,20 @@ func (_u *RideUpdateOne) ClearDriverRating() *RideUpdateOne {
 	return _u
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_u *RideUpdateOne) SetCreatedAt(v time.Time) *RideUpdateOne {
+	_u.mutation.SetCreatedAt(v)
+	return _u
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableCreatedAt(v *time.Time) *RideUpdateOne {
+	if v != nil {
+		_u.SetCreatedAt(*v)
+	}
+	return _u
+}
+
 // SetCompletedAt sets the "completed_at" field.
 func (_u *RideUpdateOne) SetCompletedAt(v time.Time) *RideUpdateOne {
 	_u.mutation.SetCompletedAt(v)
@@ -1446,6 +1477,9 @@ func (_u *RideUpdateOne) sqlSave(ctx context.Context) (_node *Ride, err error) {
 	}
 	if _u.mutation.DriverRatingCleared() {
 		_spec.ClearField(ride.FieldDriverRating, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.CreatedAt(); ok {
+		_spec.SetField(ride.FieldCreatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.CompletedAt(); ok {
 		_spec.SetField(ride.FieldCompletedAt, field.TypeTime, value)

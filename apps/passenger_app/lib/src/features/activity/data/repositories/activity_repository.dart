@@ -105,7 +105,7 @@ class ActivityRepository implements IActivityRepository {
       pickupLng: SafeParse.toDouble(raw['pickup_longitude']),
       destLat: SafeParse.toDouble(raw['dropoff_latitude']),
       destLng: SafeParse.toDouble(raw['dropoff_longitude']),
-      date: _formatCreatedAt(raw['created_at']),
+      date: _formatCreatedAt(raw['completed_at'] ?? raw['created_at']),
       price: _formatPrice(raw['fare'], raw['fare_centavos']),
       status: SafeParse.toStringValue(raw['status'], 'unknown'),
       driverId: SafeParse.toStringValue(raw['driver_id']),

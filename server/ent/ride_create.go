@@ -242,6 +242,20 @@ func (_c *RideCreate) SetNillableDriverRating(v *float64) *RideCreate {
 	return _c
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *RideCreate) SetCreatedAt(v time.Time) *RideCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *RideCreate) SetNillableCreatedAt(v *time.Time) *RideCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
 // SetCompletedAt sets the "completed_at" field.
 func (_c *RideCreate) SetCompletedAt(v time.Time) *RideCreate {
 	_c.mutation.SetCompletedAt(v)
@@ -355,6 +369,10 @@ func (_c *RideCreate) defaults() {
 		v := ride.DefaultRideType
 		_c.mutation.SetRideType(v)
 	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := ride.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
 	if _, ok := _c.mutation.PaymentStatus(); !ok {
 		v := ride.DefaultPaymentStatus
 		_c.mutation.SetPaymentStatus(v)
@@ -392,6 +410,9 @@ func (_c *RideCreate) check() error {
 	}
 	if _, ok := _c.mutation.RideType(); !ok {
 		return &ValidationError{Name: "ride_type", err: errors.New(`ent: missing required field "Ride.ride_type"`)}
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Ride.created_at"`)}
 	}
 	if _, ok := _c.mutation.PaymentStatus(); !ok {
 		return &ValidationError{Name: "payment_status", err: errors.New(`ent: missing required field "Ride.payment_status"`)}
@@ -505,6 +526,10 @@ func (_c *RideCreate) createSpec() (*Ride, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DriverRating(); ok {
 		_spec.SetField(ride.FieldDriverRating, field.TypeFloat64, value)
 		_node.DriverRating = value
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(ride.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
 	}
 	if value, ok := _c.mutation.CompletedAt(); ok {
 		_spec.SetField(ride.FieldCompletedAt, field.TypeTime, value)
