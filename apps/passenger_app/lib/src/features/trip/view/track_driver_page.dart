@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
@@ -18,7 +19,6 @@ import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_s
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/track_driver_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class _MapUpdateRequest {
@@ -233,9 +233,6 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         await MapProvider.clearAnnotations(_routeLineManager);
         _routeLineManager = null;
       }
-      final resolvedDriverName = driverName.trim().isEmpty
-          ? 'Driver'
-          : driverName.trim();
       final startLat = isInTransit ? driverLat : passengerLat;
       final startLng = isInTransit ? driverLng : passengerLng;
       final endLat = isInTransit ? targetLat : driverLat;
@@ -247,7 +244,6 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         startLng,
         isOrigin: true,
         color: isInTransit ? AppTheme.accent : AppTheme.complete,
-        label: 'You\n${isInTransit ? 'On Trip' : widget.ride.pickup}',
         animate: isInTransit,
       );
       _driverMarkerManager = await _upsertMarker(
@@ -257,12 +253,6 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         endLng,
         isOrigin: false,
         color: isInTransit ? AppTheme.accent : AppTheme.complete,
-        label: isInTransit
-            ? 'Drop Off\n${widget.ride.destination}'
-            : 'Driver\n${switch (status) {
-                RideStatus.arrived => '$resolvedDriverName Has Arrived',
-                _ => '$resolvedDriverName Is Picking You Up',
-              }}',
         animate: !isInTransit,
       );
       final now = DateTime.now();
@@ -315,7 +305,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     double lng, {
     required bool isOrigin,
     required Color color,
-    required String label,
+    String? label,
     bool animate = false,
   }) async {
     if (annotationManager == null) {
@@ -484,8 +474,9 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    AppBackButtonWidget(
-                      onPressed: () => context.goNamed(HomeRoutes.home),
+                    _buildTripBackButton(
+                      context,
+                      () => context.goNamed(HomeRoutes.home),
                     ),
                   ],
                 ),
@@ -616,4 +607,34 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       ),
     );
   }
+}
+
+Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  final colors = Theme.of(context).colorScheme;
+  return SizedBox(
+    width: 46,
+    height: 46,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
+      ),
+    ),
+  );
 }

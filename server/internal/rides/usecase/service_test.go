@@ -209,6 +209,18 @@ func TestUpdateStatusRequiresRideParticipantAndCurrentState(t *testing.T) {
 	}
 }
 
+func TestUpdateStatusAllowsLegacyAssignedRideToReachPickup(t *testing.T) {
+	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 10, PassengerID: 7, DriverID: intPointer(11), Status: "assigned"}}
+	service := NewService(stub, testPricingConfig(t))
+
+	if _, err := service.UpdateStatus(context.Background(), 10, 11, "arrived"); err != nil {
+		t.Fatalf("expected legacy assigned ride to reach pickup, got %v", err)
+	}
+	if stub.updateNext != "arrived" {
+		t.Fatalf("expected persisted arrived status, got %q", stub.updateNext)
+	}
+}
+
 func TestCalculateFareRejectsNonFiniteInput(t *testing.T) {
 	service := NewService(nil, testPricingConfig(t))
 	if got := service.CalculateFare(-1, 2); got != 0 {

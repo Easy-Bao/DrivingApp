@@ -18,7 +18,6 @@ import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_near
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_searching_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverPage extends StatelessWidget {
   final String rideType;
@@ -116,13 +115,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
     return (lat: latitude, lng: longitude);
   }
 
-  String _driverMarkerLabel(DriverModel driver) {
-    final onboard = driver.onboardPassengerCount;
-    return '${driver.displayName}\n★ ${driver.rating.toStringAsFixed(1)} • '
-        '${DistanceFormatter.fromKilometers(driver.distanceKm)} • '
-        '${onboard == null ? '—' : '$onboard/5'} passengers';
-  }
-
   List<DriverModel> _uniqueNearbyDrivers(NearestDriverFound state) {
     final byId = <String, DriverModel>{state.driver.id: state.driver};
     for (final driver in state.nearbyDrivers) {
@@ -211,14 +203,9 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
         ),
       );
 
-      BlocProvider.of<LiveMapBloc>(context).add(
-        AddMapMarkerEvent(
-          lat: lat,
-          lng: lng,
-          label: 'Pickup point\nDriver will meet you here',
-          isOrigin: true,
-        ),
-      );
+      BlocProvider.of<LiveMapBloc>(
+        context,
+      ).add(AddMapMarkerEvent(lat: lat, lng: lng, isOrigin: true));
     }
   }
 
@@ -391,13 +378,10 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
               });
               final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
               liveMapBloc.add(const ClearMapAnnotationsEvent());
-              final nearbyCount = nearbyDrivers.length;
               liveMapBloc.add(
                 AddMapMarkerEvent(
                   lat: state.pickupLat,
                   lng: state.pickupLng,
-                  label:
-                      '$nearbyCount ${nearbyCount == 1 ? 'Driver' : 'Drivers'} Nearby',
                   isOrigin: true,
                 ),
               );
@@ -405,7 +389,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                 AddMapMarkerEvent(
                   lat: state.driver.lat,
                   lng: state.driver.lng,
-                  label: _driverMarkerLabel(state.driver),
                   onTap: () {
                     if (!mounted) return;
                     setState(() {
@@ -421,7 +404,6 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                     AddMapMarkerEvent(
                       lat: nearby.lat,
                       lng: nearby.lng,
-                      label: _driverMarkerLabel(nearby),
                       onTap: () {
                         if (!mounted) return;
                         setState(() {
@@ -581,8 +563,9 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                     horizontal: 16,
                                     vertical: 8,
                                   ),
-                                  child: AppBackButtonWidget(
-                                    onPressed: _handleCancel,
+                                  child: _buildTripBackButton(
+                                    context,
+                                    _handleCancel,
                                   ),
                                 ),
                                 if (showDriverDiscovery &&
@@ -791,4 +774,34 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
       ),
     );
   }
+}
+
+Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  final colors = Theme.of(context).colorScheme;
+  return SizedBox(
+    width: 46,
+    height: 46,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
+      ),
+    ),
+  );
 }

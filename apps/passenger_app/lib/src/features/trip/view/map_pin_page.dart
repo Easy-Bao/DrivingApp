@@ -6,7 +6,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class MapPinPage extends StatefulWidget {
   const MapPinPage({super.key});
@@ -205,7 +204,7 @@ class _MapPinPageState extends State<MapPinPage>
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: Center(
-            child: AppBackButtonWidget(onPressed: () => context.pop()),
+            child: _buildTripBackButton(context, () => context.pop()),
           ),
         ),
         body: const Center(
@@ -240,7 +239,7 @@ class _MapPinPageState extends State<MapPinPage>
                 height: 52,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: AppBackButtonWidget(onPressed: () => context.pop()),
+                  child: _buildTripBackButton(context, () => context.pop()),
                 ),
               ),
             ),
@@ -361,6 +360,36 @@ class _MapPinPageState extends State<MapPinPage>
       ),
     );
   }
+}
+
+Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  final colors = Theme.of(context).colorScheme;
+  return SizedBox(
+    width: 46,
+    height: 46,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
+      ),
+    ),
+  );
 }
 
 class _CenterPin extends StatelessWidget {

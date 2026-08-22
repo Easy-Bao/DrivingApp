@@ -108,7 +108,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            child: AppBackButtonWidget(onPressed: () => context.pop()),
+            child: _buildTripBackButton(context, () => context.pop()),
           ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -239,4 +239,34 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
       ),
     );
   }
+}
+
+Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  final colors = Theme.of(context).colorScheme;
+  return SizedBox(
+    width: 46,
+    height: 46,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
+      ),
+    ),
+  );
 }

@@ -101,14 +101,12 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       event.riderLat,
       event.riderLng,
       isOrigin: true,
-      label: 'You',
     );
     _driverMarkerManager = await _upsertMarker(
       _driverMarkerManager,
       _mapController!,
       event.driverLat,
       event.driverLng,
-      label: 'Driver',
       color: const Color(0xFF1565C0),
       animate: true,
     );

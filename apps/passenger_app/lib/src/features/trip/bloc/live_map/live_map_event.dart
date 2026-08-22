@@ -33,14 +33,14 @@ class DrawDriverToRiderRouteEvent extends LiveMapEvent {
 class AddMapMarkerEvent extends LiveMapEvent {
   final double lat;
   final double lng;
-  final String label;
+  final String? label;
   final bool isOrigin;
   final void Function()? onTap;
 
   const AddMapMarkerEvent({
     required this.lat,
     required this.lng,
-    required this.label,
+    this.label,
     this.isOrigin = false,
     this.onTap,
   });

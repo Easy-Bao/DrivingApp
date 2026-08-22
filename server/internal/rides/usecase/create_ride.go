@@ -183,6 +183,7 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	}
 	allowed := map[string]map[string]bool{
 		"requested":  {"accepted": true, "canceled": true, "cancelled": true},
+		"assigned":   {"arrived": true, "canceled": true, "cancelled": true},
 		"accepted":   {"arrived": true, "canceled": true, "cancelled": true},
 		"arrived":    {"in_transit": true, "canceled": true, "cancelled": true},
 		"in_transit": {"completed": true, "canceled": true, "cancelled": true},

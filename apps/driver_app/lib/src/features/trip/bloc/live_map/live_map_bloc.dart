@@ -119,8 +119,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         event.driverLng,
         isOrigin: true,
         color: AppTheme.complete,
-        label:
-            'You\n${event.routeTargetLat != null ? 'Driving Passenger' : 'Heading To Passenger'}',
         animate: true,
       );
 
@@ -133,7 +131,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           event.passengerLat!,
           event.passengerLng!,
           color: AppTheme.complete,
-          label: 'Passenger\nPickup Location',
         );
       } else {
         await _clearAnnotations(_passengerMarkerManager);
@@ -146,7 +143,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
           targetLat,
           targetLng,
           color: AppTheme.accent,
-          label: 'Drop Off\nTrip Destination',
         );
       } else {
         await _clearAnnotations(_destinationMarkerManager);

@@ -93,7 +93,7 @@ func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, domain.ErrDriverUnavailable
 	}
-	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("accepted", "arrived", "in_transit")).Count(ctx)
+	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
@@ -143,7 +143,7 @@ func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID i
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(driverID), ride.StatusIn("accepted", "arrived", "in_transit")).Count(ctx)
+	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(driverID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -276,7 +276,7 @@ func (repository *Repository) ActiveSessions(ctx context.Context, driverID *int)
 		if err != nil {
 			return nil, domain.ErrDriverUnavailable
 		}
-		active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("accepted", "arrived", "in_transit")).Count(ctx)
+		active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -333,7 +333,7 @@ func (repository *Repository) PlaceOffer(ctx context.Context, value domain.BidOf
 	if err != nil {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
-	active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("accepted", "arrived", "in_transit")).Count(ctx)
+	active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
 	if err != nil {
 		return domain.BidOffer{}, err
 	}
@@ -384,7 +384,7 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrDriverUnavailable
 	}
-	activeDriverRides, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("accepted", "arrived", "in_transit")).Count(ctx)
+	activeDriverRides, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
@@ -786,7 +786,7 @@ func (repository *Repository) OnlineDrivers(ctx context.Context) ([]domain.Onlin
 	if len(driverIDs) > 0 {
 		activeRides, err := repository.client.Ride.Query().Where(
 			ride.DriverIDIn(driverIDs...),
-			ride.StatusIn("accepted", "arrived", "in_transit"),
+			ride.StatusIn("assigned", "accepted", "arrived", "in_transit"),
 		).All(ctx)
 		if err != nil {
 			return nil, err

@@ -459,14 +459,12 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           pickupLat,
           pickupLng,
           isOrigin: true,
-          label: 'Pickup point\nDriver will meet you here',
         );
         await MapProvider.addMarker(
           _mapController!,
           destLat,
           destLng,
           isOrigin: false,
-          label: 'Your destination\n${widget.destination.name}',
         );
         await MapProvider.addPolyline(
           _mapController!,

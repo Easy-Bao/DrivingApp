@@ -7,7 +7,6 @@ import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class SearchDestinationPage extends StatefulWidget {
@@ -480,7 +479,6 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
       lat,
       lng,
       isOrigin: true,
-      label: 'Current location\nYou are here',
     );
     if (mounted && requestId == _locationMarkerRequestId) {
       _currentLocationMarker = marker;
@@ -498,7 +496,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: Center(
-            child: AppBackButtonWidget(onPressed: () => context.pop()),
+            child: _buildTripBackButton(context, () => context.pop()),
           ),
         ),
         body: const Center(
@@ -1101,4 +1099,34 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
         ? _formatDistance(place.distanceKm!)
         : place.category ?? 'Nearby POI';
   }
+}
+
+Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  final colors = Theme.of(context).colorScheme;
+  return SizedBox(
+    width: 46,
+    height: 46,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
+      ),
+    ),
+  );
 }

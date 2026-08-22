@@ -29,6 +29,23 @@ double? _distanceInKm(Map<String, dynamic> value) {
   return distance is num && distance >= 0 ? distance.toDouble() : null;
 }
 
+double? _tripNumber(Map<String, dynamic> value, List<String> keys) {
+  for (final key in keys) {
+    final rawValue = value[key];
+    if (rawValue is num && rawValue.isFinite) return rawValue.toDouble();
+  }
+  return null;
+}
+
+bool _isActiveDriverTripStatus(Object? value) {
+  return const {
+    'assigned',
+    'accepted',
+    'arrived',
+    'in_transit',
+  }.contains(driverValueAsString(value));
+}
+
 class DriverDashboardPage extends StatefulWidget {
   const DriverDashboardPage({super.key});
 
@@ -86,6 +103,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         final s = BlocProvider.of<DashboardCubit>(context).state;
         _availabilityCtrl.value = s.isOnline ? 1 : 0;
         _startLocationAccessMonitoring();
+        unawaited(_loadActiveTrips());
         if (s.isOnline) {
           unawaited(_resumeOnlineTelemetry());
         }
@@ -116,7 +134,34 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
+      unawaited(_loadActiveTrips());
       unawaited(_refreshLocationAfterResume());
+    }
+  }
+
+  Future<void> _loadActiveTrips() async {
+    if (!mounted || _isPollingRideData) return;
+    _isPollingRideData = true;
+    try {
+      final driverId =
+          await Modular.get<SecureSessionService>().readDriverId() ?? '';
+      if (driverId.isEmpty) return;
+
+      final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
+        driverId,
+      );
+      final trips = list
+          .where(_isActiveDriverTripStatus)
+          .map((ride) => Map<String, dynamic>.from(ride as Map))
+          .toList();
+      if (mounted) {
+        _sortActiveTrips(trips);
+        setState(() => _activeTrips = trips);
+      }
+    } catch (error) {
+      dev.log('Unable to recover active driver trips: $error');
+    } finally {
+      _isPollingRideData = false;
     }
   }
 
@@ -280,7 +325,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (rideId == null) return;
 
     final status = driverValueAsString(ride['status']) ?? 'accepted';
-    if (!{'accepted', 'arrived', 'in_transit'}.contains(status)) return;
+    if (!_isActiveDriverTripStatus(status)) return;
     ride['id'] = rideId;
     ride['status'] = status;
 
@@ -300,7 +345,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   void _sortActiveTrips(List<Map<String, dynamic>> trips) {
     trips.sort((a, b) {
-      const statusPriority = {'in_transit': 0, 'arrived': 1, 'accepted': 2};
+      const statusPriority = {
+        'in_transit': 0,
+        'arrived': 1,
+        'accepted': 2,
+        'assigned': 2,
+      };
       final aPriority = statusPriority[a['status']] ?? 3;
       final bPriority = statusPriority[b['status']] ?? 3;
       if (aPriority != bPriority) return aPriority.compareTo(bPriority);
@@ -330,13 +380,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       ]);
       final list = results[0];
       List<Map<String, dynamic>> trips = list
-          .where((r) {
-            final status = r['status'] as String?;
-            return status == 'accepted' ||
-                status == 'arrived' ||
-                status == 'in_transit';
-          })
-          .map((r) => r as Map<String, dynamic>)
+          .where((ride) => _isActiveDriverTripStatus(ride['status']))
+          .map((ride) => Map<String, dynamic>.from(ride as Map))
           .toList();
 
       final bidsList = results[1];
@@ -396,7 +441,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
     if (mounted) {
       setState(() {
-        _activeTrips = [];
         _activeBids = [];
       });
     }
@@ -533,18 +577,42 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
   }
 
-  void _resumeTrip(Map<String, dynamic> trip) {
+  Future<Map<String, dynamic>> _authoritativeTrip(
+    Map<String, dynamic> trip,
+    String rideId,
+  ) async {
+    try {
+      final details = await Modular.get<TripRemoteDataSource>().getRideStatus(
+        rideId,
+      );
+      if (details.isNotEmpty) return {...trip, ...details, 'id': rideId};
+    } catch (error) {
+      dev.log('Unable to refresh trip $rideId before resuming: $error');
+    }
+    return trip;
+  }
+
+  Future<void> _resumeTrip(Map<String, dynamic> trip) async {
     final rideId = driverValueAsString(trip['id']);
-    final fare = driverFareInPesos(trip);
-    final distance = _distanceInKm(trip);
-    final duration = (trip['duration_minutes'] as num?)?.toDouble();
-    if (rideId == null ||
-        fare == null ||
-        distance == null ||
-        duration == null) {
+    if (rideId == null) return;
+
+    final resolvedTrip = await _authoritativeTrip(trip, rideId);
+    if (!mounted) return;
+    final fare = driverFareInPesos(resolvedTrip);
+    final distance = _distanceInKm(resolvedTrip);
+    final duration = _tripNumber(resolvedTrip, const [
+      'duration_minutes',
+      'durationMinutes',
+    ]);
+    if (fare == null || distance == null || duration == null) {
+      CustomToast.show(
+        context,
+        'Trip details are unavailable. Please try again.',
+        isError: true,
+      );
       return;
     }
-    final status = trip['status'] as String?;
+    final status = driverValueAsString(resolvedTrip['status']);
     String routeName = TripRoutes.pickupNavigation;
     if (status == 'arrived') {
       routeName = TripRoutes.waitingPassenger;
@@ -554,21 +622,22 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     BlocProvider.of<RideFlowCubit>(context).resumeRide(
       rideId: rideId,
-      status: driverValueAsString(trip['status']) ?? 'accepted',
-      passengerName: driverValueAsString(trip['passenger_name']) ?? 'Passenger',
-      passengerId: driverValueAsString(trip['passenger_id']),
-      distanceKm: (trip['distance_km'] as num?)?.toDouble(),
-      pickupLat: SafeParse.toNullableDouble(trip['pickup_latitude']),
-      pickupLng: SafeParse.toNullableDouble(trip['pickup_longitude']),
-      destLat: SafeParse.toNullableDouble(trip['dropoff_latitude']),
-      destLng: SafeParse.toNullableDouble(trip['dropoff_longitude']),
+      status: driverValueAsString(resolvedTrip['status']) ?? 'accepted',
+      passengerName:
+          driverValueAsString(resolvedTrip['passenger_name']) ?? 'Passenger',
+      passengerId: driverValueAsString(resolvedTrip['passenger_id']),
+      distanceKm: _distanceInKm(resolvedTrip),
+      pickupLat: SafeParse.toNullableDouble(resolvedTrip['pickup_latitude']),
+      pickupLng: SafeParse.toNullableDouble(resolvedTrip['pickup_longitude']),
+      destLat: SafeParse.toNullableDouble(resolvedTrip['dropoff_latitude']),
+      destLng: SafeParse.toNullableDouble(resolvedTrip['dropoff_longitude']),
     );
 
     context.pushNamed(
       routeName,
       extra: {
-        'pickup': trip['pickup_name'] ?? 'Pickup',
-        'dropoff': trip['dropoff_name'] ?? 'Dropoff',
+        'pickup': resolvedTrip['pickup_name'] ?? 'Pickup',
+        'dropoff': resolvedTrip['dropoff_name'] ?? 'Dropoff',
         'distance': distance,
         'fare': fare,
         'duration': '${duration.toStringAsFixed(0)} min',
@@ -580,9 +649,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (_completingTripId != null) return;
     final rideId = driverValueAsString(trip['id']);
     if (rideId == null) return;
-    final fare = driverFareInPesos(trip);
-    final distance = _distanceInKm(trip);
-    final duration = (trip['duration_minutes'] as num?)?.toDouble();
+    final resolvedTrip = await _authoritativeTrip(trip, rideId);
+    if (!mounted) return;
+    final fare = driverFareInPesos(resolvedTrip);
+    final distance = _distanceInKm(resolvedTrip);
+    final duration = _tripNumber(resolvedTrip, const [
+      'duration_minutes',
+      'durationMinutes',
+    ]);
     if (fare == null || distance == null || duration == null) return;
 
     if (mounted) setState(() => _completingTripId = rideId);
@@ -590,15 +664,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       final cubit = BlocProvider.of<RideFlowCubit>(context);
       cubit.resumeRide(
         rideId: rideId,
-        status: driverValueAsString(trip['status']) ?? 'accepted',
+        status: driverValueAsString(resolvedTrip['status']) ?? 'accepted',
         passengerName:
-            driverValueAsString(trip['passenger_name']) ?? 'Passenger',
-        passengerId: driverValueAsString(trip['passenger_id']),
-        distanceKm: (trip['distance_km'] as num?)?.toDouble(),
-        pickupLat: SafeParse.toNullableDouble(trip['pickup_latitude']),
-        pickupLng: SafeParse.toNullableDouble(trip['pickup_longitude']),
-        destLat: SafeParse.toNullableDouble(trip['dropoff_latitude']),
-        destLng: SafeParse.toNullableDouble(trip['dropoff_longitude']),
+            driverValueAsString(resolvedTrip['passenger_name']) ?? 'Passenger',
+        passengerId: driverValueAsString(resolvedTrip['passenger_id']),
+        distanceKm: _distanceInKm(resolvedTrip),
+        pickupLat: SafeParse.toNullableDouble(resolvedTrip['pickup_latitude']),
+        pickupLng: SafeParse.toNullableDouble(resolvedTrip['pickup_longitude']),
+        destLat: SafeParse.toNullableDouble(resolvedTrip['dropoff_latitude']),
+        destLng: SafeParse.toNullableDouble(resolvedTrip['dropoff_longitude']),
       );
 
       final finalFare = await cubit.completeRide();
@@ -617,8 +691,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       context.pushReplacementNamed(
         TripRoutes.fareSummary,
         extra: {
-          'pickup': trip['pickup_name'] ?? 'Pickup',
-          'dropoff': trip['dropoff_name'] ?? 'Dropoff',
+          'pickup': resolvedTrip['pickup_name'] ?? 'Pickup',
+          'dropoff': resolvedTrip['dropoff_name'] ?? 'Dropoff',
           'distance': distance,
           'fare': finalFare,
           'duration': '${duration.toStringAsFixed(0)} min',
@@ -658,8 +732,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
           final showFeed =
-              state.isOnline &&
-              (_activeBids.isNotEmpty || _activeTrips.isNotEmpty);
+              _activeTrips.isNotEmpty ||
+              (state.isOnline && _activeBids.isNotEmpty);
           return Scaffold(
             backgroundColor: AppTheme.background,
             appBar: AppBar(

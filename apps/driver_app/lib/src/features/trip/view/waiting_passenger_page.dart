@@ -13,12 +13,12 @@ import 'package:driver_app/src/features/trip/view/widgets/waiting_passenger_pane
 import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class WaitingPassengerPage extends StatefulWidget {
   final String pickup;
@@ -210,7 +210,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          AppBackButtonWidget(onPressed: () => context.pop()),
+                          _buildTripBackButton(context, () => context.pop()),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -355,4 +355,34 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       ),
     );
   }
+}
+
+Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  final colors = Theme.of(context).colorScheme;
+  return SizedBox(
+    width: 46,
+    height: 46,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        icon: Icon(LucideIcons.arrow_left, color: colors.onSurface),
+      ),
+    ),
+  );
 }

@@ -66,6 +66,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           );
         }
       }
+      await dashboardCubit.loadStats();
       if (!mounted) return;
       context.goNamed(HomeRoutes.dashboard);
     } catch (_) {
