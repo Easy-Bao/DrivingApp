@@ -339,11 +339,17 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
               }
               final bottomPadding = MediaQuery.of(context).padding.bottom;
               return Padding(
-                padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
-                child: PassengerFloatingTabBar(
-                  selectedIndex: sel,
-                  onDestinationSelected: _onItemTapped,
-                  inboxCubit: widget.inboxCubit,
+                padding: EdgeInsets.only(bottom: bottomPadding + 10),
+                child: FractionallySizedBox(
+                  widthFactor: 0.94,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: PassengerFloatingTabBar(
+                      selectedIndex: sel,
+                      onDestinationSelected: _onItemTapped,
+                      inboxCubit: widget.inboxCubit,
+                    ),
+                  ),
                 ),
               );
             },

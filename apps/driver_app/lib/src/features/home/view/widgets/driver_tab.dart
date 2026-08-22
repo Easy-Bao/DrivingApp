@@ -238,10 +238,16 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
         extendBody: true,
         body: widget.navigationShell,
         bottomNavigationBar: Padding(
-          padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 12),
-          child: DriverFloatingTabBar(
-            selectedIndex: selectedIndex,
-            onDestinationSelected: _onItemTapped,
+          padding: EdgeInsets.only(bottom: bottomPadding + 10),
+          child: FractionallySizedBox(
+            widthFactor: 0.94,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: DriverFloatingTabBar(
+                selectedIndex: selectedIndex,
+                onDestinationSelected: _onItemTapped,
+              ),
+            ),
           ),
         ),
       ),

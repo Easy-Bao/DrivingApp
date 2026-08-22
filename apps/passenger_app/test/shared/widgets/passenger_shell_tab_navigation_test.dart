@@ -15,6 +15,7 @@ import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notificat
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
+import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_floating_tab_bar.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_tab.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -51,6 +52,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
+    final tabBar = find.byType(PassengerFloatingTabBar);
+    expect(tester.getSize(tabBar).height, PassengerFloatingTabBar.height);
+    expect(
+      find.descendant(of: tabBar, matching: find.byType(AnimatedScale)),
+      findsNothing,
+    );
+    void expectStaticDestination(int index, String label) {
+      final item = find.byKey(
+        ValueKey<String>('passenger-floating-tab-item-$index'),
+      );
+      final labelWidget = tester.widget<Text>(
+        find.descendant(of: item, matching: find.text(label)),
+      );
+      final iconWidget = tester.widget<Icon>(
+        find.descendant(of: item, matching: find.byType(Icon)),
+      );
+      expect(labelWidget.style?.fontSize, 10);
+      expect(labelWidget.style?.fontWeight, FontWeight.w500);
+      expect(iconWidget.size, 18);
+    }
+
+    expectStaticDestination(0, 'Home');
+    expectStaticDestination(1, 'Activity');
+    expectStaticDestination(2, 'Inbox');
+    expectStaticDestination(3, 'Profile');
+    expect(tester.takeException(), isNull);
     final indicator = find.byKey(
       const ValueKey<String>('passenger-floating-tab-indicator'),
     );
@@ -86,6 +113,8 @@ void main() {
       tester.getTopLeft(indicator).dx,
       greaterThan(middleIndicatorPosition),
     );
+    expectStaticDestination(0, 'Home');
+    expectStaticDestination(1, 'Activity');
     expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
 
     final cancelGesture = await tester.startGesture(

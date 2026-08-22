@@ -7,6 +7,7 @@ import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 
 class PassengerFloatingTabBar extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 320);
+  static const height = 60.0;
 
   static const _destinations = <_PassengerTabDestination>[
     _PassengerTabDestination(icon: LucideIcons.house, label: 'Home'),
@@ -31,19 +32,19 @@ class PassengerFloatingTabBar extends StatelessWidget {
     final activeIndex = selectedIndex.clamp(0, _destinations.length - 1);
 
     return Container(
-      height: 68,
+      height: height,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(34),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(
           color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
             color: AppTheme.primaryColor.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -59,10 +60,10 @@ class PassengerFloatingTabBar extends StatelessWidget {
                 AnimatedPositionedDirectional(
                   duration: animationDuration,
                   curve: Curves.easeOutCubic,
-                  top: 4,
-                  bottom: 4,
-                  start: destinationWidth * activeIndex + 4,
-                  width: destinationWidth - 8,
+                  top: 3,
+                  bottom: 3,
+                  start: destinationWidth * activeIndex + 3,
+                  width: destinationWidth - 6,
                   child: IgnorePointer(
                     child: DecoratedBox(
                       key: const ValueKey<String>(
@@ -70,7 +71,7 @@ class PassengerFloatingTabBar extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: AppTheme.neutralColor,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(27),
                       ),
                     ),
                   ),
@@ -129,48 +130,26 @@ class _PassengerFloatingTabItem extends StatelessWidget {
         message: destination.label,
         child: InkWell(
           key: ValueKey<String>('passenger-floating-tab-item-$index'),
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(27),
           onTap: () => onTap(index),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedScale(
-                  duration: PassengerFloatingTabBar.animationDuration,
-                  curve: Curves.easeOutCubic,
-                  scale: isSelected ? 1.12 : 1,
-                  child: TweenAnimationBuilder<Color?>(
-                    duration: PassengerFloatingTabBar.animationDuration,
-                    curve: Curves.easeOutCubic,
-                    tween: ColorTween(end: targetColor),
-                    builder: (context, color, child) {
-                      if (index == 2) {
-                        return _InboxTabIcon(
-                          color: color ?? targetColor,
-                          inboxCubit: inboxCubit,
-                        );
-                      }
-                      return Icon(
-                        destination.icon,
-                        size: 20,
-                        color: color ?? targetColor,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 4),
-                AnimatedDefaultTextStyle(
-                  duration: PassengerFloatingTabBar.animationDuration,
-                  curve: Curves.easeOutCubic,
+                if (index == 2)
+                  _InboxTabIcon(color: targetColor, inboxCubit: inboxCubit)
+                else
+                  Icon(destination.icon, size: 18, color: targetColor),
+                const SizedBox(height: 2),
+                Text(
+                  destination.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
                   style: labelStyle.copyWith(
                     color: targetColor,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                  child: Text(
-                    destination.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -200,13 +179,13 @@ class _InboxTabIcon extends StatelessWidget {
             : 0;
 
         return SizedBox(
-          width: 28,
-          height: 24,
+          width: 26,
+          height: 22,
           child: Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              Icon(LucideIcons.mail, size: 20, color: color),
+              Icon(LucideIcons.mail, size: 18, color: color),
               if (unreadCount > 0)
                 Positioned(
                   top: -8,

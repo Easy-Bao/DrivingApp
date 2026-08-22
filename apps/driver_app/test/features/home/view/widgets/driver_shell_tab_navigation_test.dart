@@ -34,7 +34,7 @@ void main() {
         home: Scaffold(
           body: Center(
             child: SizedBox(
-              width: 320,
+              width: 280,
               child: StatefulBuilder(
                 builder: (context, setState) => DriverFloatingTabBar(
                   selectedIndex: selectedIndex,
@@ -49,6 +49,33 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    final tabBar = find.byType(DriverFloatingTabBar);
+    expect(tester.getSize(tabBar).height, DriverFloatingTabBar.height);
+    expect(
+      find.descendant(of: tabBar, matching: find.byType(AnimatedScale)),
+      findsNothing,
+    );
+    void expectStaticDestination(int index, String label) {
+      final item = find.byKey(
+        ValueKey<String>('driver-floating-tab-item-$index'),
+      );
+      final labelWidget = tester.widget<Text>(
+        find.descendant(of: item, matching: find.text(label)),
+      );
+      final iconWidget = tester.widget<Icon>(
+        find.descendant(of: item, matching: find.byType(Icon)),
+      );
+      expect(labelWidget.style?.fontSize, 10);
+      expect(labelWidget.style?.fontWeight, FontWeight.w500);
+      expect(iconWidget.size, 18);
+    }
+
+    expectStaticDestination(0, 'Dashboard');
+    expectStaticDestination(1, 'Trips');
+    expectStaticDestination(2, 'Earnings');
+    expectStaticDestination(3, 'Account');
+    expect(tester.takeException(), isNull);
 
     final indicator = find.byKey(
       const ValueKey<String>('driver-floating-tab-indicator'),
@@ -69,6 +96,8 @@ void main() {
     await tester.pumpAndSettle();
     final finalPosition = tester.getTopLeft(indicator).dx;
     expect(finalPosition, greaterThan(middlePosition));
+    expectStaticDestination(0, 'Dashboard');
+    expectStaticDestination(2, 'Earnings');
     expect(
       tester.getCenter(indicator).dx,
       closeTo(
