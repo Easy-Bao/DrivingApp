@@ -25,7 +25,7 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	)
 
 	registration, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{
-		Email: "passenger@example.test", Name: "Passenger", Password: "secret-8",
+		Email: "passenger@example.test", Phone: "+639171234511", Name: "Passenger", Password: "secret-8",
 	})
 	if err != nil {
 		t.Fatalf("register passenger: %v", err)
@@ -64,13 +64,13 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	)
 
 	_, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{
-		Email: "passenger@example.test", Name: "First", Password: "first-password",
+		Email: "passenger@example.test", Phone: "+639171234512", Name: "First", Password: "first-password",
 	})
 	if err != nil {
 		t.Fatalf("first registration: %v", err)
 	}
 	_, err = service.RegisterPassenger(context.Background(), usecase.RegisterInput{
-		Email: " PASSENGER@example.test ", Name: "Second", Password: "second-password",
+		Email: " PASSENGER@example.test ", Phone: "+639171234512", Name: "Second", Password: "second-password",
 	})
 	if err != nil {
 		t.Fatalf("retry registration: %v", err)
@@ -105,7 +105,7 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 	)
 
 	if _, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{
-		Email: "passenger@example.test", Password: "secret-8",
+		Email: "passenger@example.test", Phone: "+639171234513", Name: "Passenger", Password: "secret-8",
 	}); !errors.Is(err, domain.ErrEmailTaken) {
 		t.Fatalf("expected verified email conflict, got %v", err)
 	}

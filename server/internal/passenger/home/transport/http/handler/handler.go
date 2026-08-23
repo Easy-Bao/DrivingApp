@@ -118,5 +118,5 @@ func statusMessage(status int) string {
 }
 
 func writeError(writer http.ResponseWriter, status int, message string) {
-	response.JSON(writer, status, map[string]string{"error": message})
+	response.Error(writer, status, message)
 }

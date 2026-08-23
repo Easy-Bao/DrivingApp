@@ -150,8 +150,8 @@ func TestPassengerTokenCannotPublishDriverTelemetry(t *testing.T) {
 	request.Header.Set("Authorization", "Bearer "+passengerToken)
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
-	if response.Code != http.StatusUnauthorized {
-		t.Fatalf("status = %d, want %d", response.Code, http.StatusUnauthorized)
+	if response.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusForbidden)
 	}
 }
 

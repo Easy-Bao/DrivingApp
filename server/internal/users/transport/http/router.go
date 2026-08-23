@@ -5,23 +5,29 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )
 
-type Router struct{ handler *handler.Handler }
+type Router struct {
+	handler  *handler.Handler
+	verifier *token.Verifier
+}
 
 func NewRouter(service *usecase.Service, verifier *token.Verifier) *Router {
-	return &Router{handler: handler.NewHandler(service, verifier)}
+	return &Router{handler: handler.NewHandler(service, verifier), verifier: verifier}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.Route(api.V1Prefix, func(routes chi.Router) {
+		routes.Use(middleware.RequireAuth(router.verifier))
 		routes.Get("/users/me", router.handler.Me)
 		routes.Patch("/users/me", router.handler.Update)
-		routes.Get("/passengers/{id}", router.handler.Profile)
-		routes.Put("/passengers/{id}", router.handler.ProfileUpdate)
-		routes.Get("/drivers/{id}", router.handler.Profile)
-		routes.Post("/drivers/{id}/online", router.handler.Online)
-		routes.Get("/passengers/{id}/notifications", router.handler.Notifications)
+		routes.With(middleware.RequireRole(security.RolePassenger)).Get("/passengers/{id}", router.handler.Profile)
+		routes.With(middleware.RequireRole(security.RolePassenger)).Put("/passengers/{id}", router.handler.ProfileUpdate)
+		routes.With(middleware.RequireRole(security.RolePassenger)).Get("/passengers/{id}/notifications", router.handler.Notifications)
+		routes.With(middleware.RequireRole(security.RoleDriver)).Get("/drivers/{id}", router.handler.Profile)
+		routes.With(middleware.RequireRole(security.RoleDriver)).Post("/drivers/{id}/online", router.handler.Online)
 	})
 }

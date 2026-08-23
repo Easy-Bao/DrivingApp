@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 )
 
 const (
@@ -199,9 +201,7 @@ func containsControlCharacter(value string) bool {
 }
 
 func writeSecurityError(writer http.ResponseWriter, status int, message string) {
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(status)
-	_, _ = writer.Write([]byte(`{"error":"` + message + `"}`))
+	response.Error(writer, status, message)
 }
 
 type requestIDKey struct{}

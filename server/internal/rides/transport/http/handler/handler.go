@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
 )
@@ -25,6 +25,9 @@ func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
+	if principal, ok := middleware.PrincipalFromRequest(r); ok {
+		return principal.UserID, true
+	}
 	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
 	id, parseErr := strconv.Atoi(identity.Subject)
 	return id, ok && parseErr == nil
@@ -36,7 +39,7 @@ func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.CreateRideRequest
-	if json.NewDecoder(r.Body).Decode(&input) != nil || input.FareCentavos < 0 {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.FareCentavos < 0 {
 		errorJSON(w, 400, "invalid fare")
 		return
 	}
@@ -79,7 +82,7 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.StatusRequest
-	if json.NewDecoder(r.Body).Decode(&input) != nil || input.Status == "" {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.Status == "" {
 		errorJSON(w, 400, "invalid ride status")
 		return
 	}
@@ -121,7 +124,7 @@ func (handler *Handler) SubmitBid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.SubmitBidRequest
-	if json.NewDecoder(r.Body).Decode(&input) != nil || input.FareCentavos <= 0 {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.FareCentavos <= 0 {
 		errorJSON(w, 400, "invalid fare")
 		return
 	}
@@ -193,13 +196,18 @@ func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
-	if _, ok := handler.identity(r); !ok {
+	actorID, ok := handler.identity(r)
+	if !ok {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
 	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		errorJSON(w, 400, "invalid driver id")
+		return
+	}
+	if driverID != actorID {
+		errorJSON(w, http.StatusForbidden, "forbidden")
 		return
 	}
 	stats, err := handler.service.DriverStats(r.Context(), driverID)
@@ -281,7 +289,7 @@ func (handler *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.ReviewRequest
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&input) != nil || input.RideID <= 0 {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.RideID <= 0 {
 		errorJSON(w, 400, "invalid review")
 		return
 	}
@@ -305,7 +313,7 @@ func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Req
 		return
 	}
 	var input dto.ReviewRequest
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&input) != nil || input.RideID <= 0 {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.RideID <= 0 {
 		errorJSON(w, 400, "invalid review")
 		return
 	}
@@ -373,7 +381,7 @@ func queryInt(r *http.Request, key string, fallback int) int {
 
 func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	var input dto.FareEstimateRequest
-	if json.NewDecoder(r.Body).Decode(&input) != nil {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
 		errorJSON(w, 400, "invalid fare input")
 		return
 	}
@@ -396,7 +404,7 @@ func (handler *Handler) RatingConfig(w http.ResponseWriter, _ *http.Request) {
 }
 func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	var input dto.FinalFareRequest
-	if json.NewDecoder(r.Body).Decode(&input) != nil || input.DistanceKm < 0 || input.DurationMinutes < 0 || input.CommissionBPS < 0 || input.CommissionBPS > 10000 {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.DistanceKm < 0 || input.DurationMinutes < 0 || input.CommissionBPS < 0 || input.CommissionBPS > 10000 {
 		errorJSON(w, 400, "invalid final fare input")
 		return
 	}
@@ -417,7 +425,7 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.BidSessionRequest
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&input) != nil {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
 		errorJSON(w, 400, "invalid bid session")
 		return
 	}
@@ -502,7 +510,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.BidOfferRequest
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&input) != nil {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
 		errorJSON(w, 400, "invalid bid offer")
 		return
 	}
@@ -587,24 +595,7 @@ func jsonJSON(w http.ResponseWriter, status int, value any) {
 	response.JSON(w, status, value)
 }
 func errorJSON(w http.ResponseWriter, status int, message string) {
-	code := "request_failed"
-	switch status {
-	case 400:
-		code = "validation_error"
-	case 401:
-		code = "unauthorized"
-	case 403:
-		code = "forbidden"
-	case 404:
-		code = "not_found"
-	case 409:
-		code = "conflict"
-	case 429:
-		code = "rate_limited"
-	case 500:
-		code = "internal_error"
-	}
-	jsonJSON(w, status, map[string]string{"code": code, "error": message, "message": message})
+	response.Error(w, status, message)
 }
 
 func rideErrorStatus(err error) int {

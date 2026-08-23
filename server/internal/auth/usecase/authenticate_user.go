@@ -36,6 +36,7 @@ func (service *AuthenticateService) ExecuteSessionAs(ctx context.Context, email,
 }
 
 func (service *AuthenticateService) execute(ctx context.Context, email, password string, role domain.Role) (domain.User, SessionTokens, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
 	account, err := service.repository.FindByEmail(ctx, email)
 	if err != nil || !VerifyPassword(account.PasswordHash, password) {
 		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials

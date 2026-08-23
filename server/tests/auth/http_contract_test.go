@@ -139,3 +139,39 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 		t.Fatal("expected refresh to rotate both session tokens")
 	}
 }
+
+func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
+	repository := &repository{users: map[string]domain.User{
+		"passenger@example.test": {
+			ID:           43,
+			Email:        "passenger@example.test",
+			Role:         domain.Passenger,
+			PasswordHash: usecase.HashPassword("secret"),
+		},
+	}}
+	mux := chi.NewRouter()
+	authhttp.NewRouter(nil, usecase.NewAuthenticateService(repository, issuer{})).RegisterRoutes(mux)
+
+	for _, body := range []string{
+		`{"email":"passenger@example.test","password":"secret","role":"driver"}`,
+		`{"email":"passenger@example.test","password":"secret"}{"email":"other@example.test"}`,
+	} {
+		request := httptest.NewRequest(http.MethodPost, "/api/v1/auth/passenger/login", bytes.NewBufferString(body))
+		response := httptest.NewRecorder()
+
+		mux.ServeHTTP(response, request)
+
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want %d, body = %s", response.Code, http.StatusBadRequest, response.Body.String())
+		}
+		if response.Header().Get("Content-Type") != "application/problem+json" {
+			t.Fatalf("content type = %q", response.Header().Get("Content-Type"))
+		}
+		var problem struct {
+			Code string `json:"code"`
+		}
+		if err := json.Unmarshal(response.Body.Bytes(), &problem); err != nil || problem.Code != "validation_error" {
+			t.Fatalf("problem = %#v, error = %v", problem, err)
+		}
+	}
+}

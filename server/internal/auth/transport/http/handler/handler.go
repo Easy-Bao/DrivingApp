@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 )
 
@@ -27,7 +27,7 @@ func (handler *Handler) DriverRegister(w http.ResponseWriter, r *http.Request) {
 	handler.registerAccount(w, r, true)
 }
 func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, driver bool) {
-	var input dto.Credentials
+	var input dto.RegistrationRequest
 	if !decode(w, r, &input) {
 		return
 	}
@@ -35,7 +35,7 @@ func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, 
 }
 
 func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) {
-	var input dto.Credentials
+	var input dto.GenericRegistrationRequest
 	if !decode(w, r, &input) {
 		return
 	}
@@ -43,10 +43,10 @@ func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) 
 		writeError(w, http.StatusBadRequest, "role must be passenger or driver")
 		return
 	}
-	handler.registerDecoded(w, r, input, input.Role == string(domain.Driver))
+	handler.registerDecoded(w, r, input.RegistrationRequest, input.Role == string(domain.Driver))
 }
 
-func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, input dto.Credentials, driver bool) {
+func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, input dto.RegistrationRequest, driver bool) {
 	if !driver {
 		if handler.otp == nil {
 			writeError(w, http.StatusServiceUnavailable, "passenger verification is unavailable")
@@ -55,7 +55,7 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 		pending, err := handler.otp.RegisterPassenger(r.Context(), toRegisterInput(input))
 		if err != nil {
 			status := http.StatusBadRequest
-			if errors.Is(err, domain.ErrEmailTaken) {
+			if errors.Is(err, domain.ErrEmailTaken) || errors.Is(err, domain.ErrAccountConflict) {
 				status = http.StatusConflict
 			}
 			if errors.Is(err, domain.ErrOTPUnavailable) {
@@ -81,7 +81,7 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 	}
 	if err != nil {
 		status := http.StatusBadRequest
-		if errors.Is(err, domain.ErrEmailTaken) {
+		if errors.Is(err, domain.ErrEmailTaken) || errors.Is(err, domain.ErrAccountConflict) {
 			status = http.StatusConflict
 		}
 		writeError(w, status, safeAuthError(err))
@@ -126,7 +126,7 @@ func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domain.Role) {
-	var input dto.Credentials
+	var input dto.LoginRequest
 	if !decode(w, r, &input) {
 		return
 	}
@@ -228,12 +228,12 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
 }
 
-func toRegisterInput(input dto.Credentials) usecase.RegisterInput {
+func toRegisterInput(input dto.RegistrationRequest) usecase.RegisterInput {
 	return usecase.RegisterInput{Email: input.Email, Phone: input.Phone, Name: input.Name, Password: input.Password, VehicleType: input.VehicleType, PlateNumber: input.PlateNumber}
 }
 
 func decode(w http.ResponseWriter, r *http.Request, value any) bool {
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(value) != nil {
+	if sharedrequest.DecodeJSON(w, r, value, 16<<10) != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
 		return false
 	}
@@ -243,13 +243,15 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	response.JSON(w, status, value)
 }
 func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, map[string]string{"error": message})
+	response.Error(w, status, message)
 }
 
 func safeAuthError(err error) string {
 	switch {
 	case errors.Is(err, domain.ErrEmailTaken):
 		return "That email is already registered."
+	case errors.Is(err, domain.ErrAccountConflict):
+		return "That email or phone number is already registered."
 	case errors.Is(err, domain.ErrInvalidCredentials):
 		return "The email or password is incorrect."
 	case errors.Is(err, domain.ErrInvalidRole):
@@ -269,7 +271,7 @@ func safeAuthError(err error) string {
 
 func authSessionResponse(account domain.User, accessToken, refreshToken string, needsVerification bool) map[string]any {
 	data := map[string]any{
-		"user":              account,
+		"user":              dto.NewAccountResponse(account),
 		"token":             accessToken,
 		"needsVerification": needsVerification,
 	}

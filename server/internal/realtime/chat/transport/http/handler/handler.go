@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
 )
@@ -33,7 +33,7 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 		PassengerID string `json:"passengerId"`
 		DriverID    string `json:"driverId"`
 	}
-	if json.NewDecoder(http.MaxBytesReader(writer, request.Body, 8<<10)).Decode(&input) != nil {
+	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
 		writeError(writer, http.StatusBadRequest, "invalid chat room")
 		return
 	}
@@ -116,5 +116,5 @@ func writeJSON(writer http.ResponseWriter, status int, value any) {
 	response.JSON(writer, status, value)
 }
 func writeError(writer http.ResponseWriter, status int, message string) {
-	writeJSON(writer, status, map[string]string{"error": message})
+	response.Error(writer, status, message)
 }

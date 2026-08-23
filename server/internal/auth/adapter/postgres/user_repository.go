@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
@@ -15,8 +16,35 @@ type UserRepository struct{ client *ent.Client }
 func NewUserRepository(client *ent.Client) *UserRepository { return &UserRepository{client: client} }
 
 func (repository *UserRepository) Create(ctx context.Context, account domain.User) (domain.User, error) {
-	created, err := repository.client.User.Create().SetName(account.Name).SetEmail(account.Email).SetPhone(account.Phone).SetRole(string(account.Role)).SetPasswordHash(account.PasswordHash).SetIsVerified(account.IsVerified).Save(ctx)
+	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
+		return domain.User{}, err
+	}
+	defer transaction.Rollback()
+
+	created, err := transaction.User.Create().SetName(account.Name).SetEmail(account.Email).SetPhone(account.Phone).SetRole(string(account.Role)).SetPasswordHash(account.PasswordHash).SetIsVerified(account.IsVerified).Save(ctx)
+	if err != nil {
+		if ent.IsConstraintError(err) {
+			return domain.User{}, domain.ErrAccountConflict
+		}
+		return domain.User{}, err
+	}
+	switch account.Role {
+	case domain.Driver:
+		_, err = transaction.DriverProfile.Create().SetUserID(created.ID).SetName(account.Name).SetVehicleType(account.VehicleType).SetPlateNumber(account.PlateNumber).Save(ctx)
+	case domain.Passenger:
+		preferredRideType := account.PreferredRideType
+		if preferredRideType == "" {
+			preferredRideType = "solo-ride"
+		}
+		_, err = transaction.PassengerProfile.Create().SetUserID(created.ID).SetName(account.Name).SetPreferredRideType(preferredRideType).Save(ctx)
+	default:
+		return domain.User{}, domain.ErrInvalidRole
+	}
+	if err != nil {
+		return domain.User{}, err
+	}
+	if err := transaction.Commit(); err != nil {
 		return domain.User{}, err
 	}
 	result := fromEnt(created)
@@ -29,23 +57,6 @@ func (repository *UserRepository) Create(ctx context.Context, account domain.Use
 
 func (repository *UserRepository) MarkVerified(ctx context.Context, id int) error {
 	return repository.client.User.UpdateOneID(id).SetIsVerified(true).Exec(ctx)
-}
-
-func (repository *UserRepository) Provision(ctx context.Context, account domain.User) error {
-	switch account.Role {
-	case domain.Driver:
-		_, err := repository.client.DriverProfile.Create().SetUserID(account.ID).SetName(account.Name).SetVehicleType(account.VehicleType).SetPlateNumber(account.PlateNumber).Save(ctx)
-		return err
-	case domain.Passenger:
-		preferredRideType := account.PreferredRideType
-		if preferredRideType == "" {
-			preferredRideType = "solo-ride"
-		}
-		_, err := repository.client.PassengerProfile.Create().SetUserID(account.ID).SetName(account.Name).SetPreferredRideType(preferredRideType).Save(ctx)
-		return err
-	default:
-		return domain.ErrInvalidRole
-	}
 }
 
 func (repository *UserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
@@ -73,17 +84,21 @@ func (repository *UserRepository) withProfile(ctx context.Context, account domai
 	switch account.Role {
 	case domain.Driver:
 		profile, err := repository.client.DriverProfile.Query().Where(driverprofile.UserIDEQ(account.ID)).Only(ctx)
-		if err == nil {
-			account.Name = profile.Name
-			account.VehicleType = profile.VehicleType
-			account.PlateNumber = profile.PlateNumber
+		if err != nil {
+			return domain.User{}, err
 		}
+		account.Name = profile.Name
+		account.VehicleType = profile.VehicleType
+		account.PlateNumber = profile.PlateNumber
 	case domain.Passenger:
 		profile, err := repository.client.PassengerProfile.Query().Where(passengerprofile.UserIDEQ(account.ID)).Only(ctx)
-		if err == nil {
-			account.Name = profile.Name
-			account.PreferredRideType = profile.PreferredRideType
+		if err != nil {
+			return domain.User{}, err
 		}
+		account.Name = profile.Name
+		account.PreferredRideType = profile.PreferredRideType
+	default:
+		return domain.User{}, domain.ErrInvalidRole
 	}
 	return account, nil
 }

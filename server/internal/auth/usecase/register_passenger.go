@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"net/mail"
+	"regexp"
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
@@ -17,17 +19,12 @@ type RegisterInput struct {
 }
 
 type RegisterService struct {
-	repository  domain.UserRepository
-	tokens      domain.TokenIssuer
-	provisioner domain.ProfileProvisioner
+	repository domain.UserRepository
+	tokens     domain.TokenIssuer
 }
 
-func NewRegisterService(repository domain.UserRepository, tokens domain.TokenIssuer, provisioners ...domain.ProfileProvisioner) *RegisterService {
-	var provisioner domain.ProfileProvisioner
-	if len(provisioners) > 0 {
-		provisioner = provisioners[0]
-	}
-	return &RegisterService{repository: repository, tokens: tokens, provisioner: provisioner}
+func NewRegisterService(repository domain.UserRepository, tokens domain.TokenIssuer) *RegisterService {
+	return &RegisterService{repository: repository, tokens: tokens}
 }
 
 func (service *RegisterService) Passenger(ctx context.Context, input RegisterInput) (domain.User, string, error) {
@@ -114,7 +111,15 @@ type normalizedRegistration struct {
 }
 
 func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistration, error) {
-	if strings.TrimSpace(input.Email) == "" || len(input.Password) < 8 || len([]byte(input.Password)) > 72 {
+	email := strings.ToLower(strings.TrimSpace(input.Email))
+	name := strings.TrimSpace(input.Name)
+	phone := strings.TrimSpace(input.Phone)
+	vehicleType := strings.TrimSpace(input.VehicleType)
+	plateNumber := strings.TrimSpace(input.PlateNumber)
+	if !validEmail(email) || name == "" || len([]rune(name)) > 100 || !e164Phone.MatchString(phone) || len(input.Password) < 8 || len([]byte(input.Password)) > 72 {
+		return normalizedRegistration{}, domain.ErrInvalidCredentials
+	}
+	if role == domain.Driver && (vehicleType == "" || plateNumber == "" || len([]rune(vehicleType)) > 80 || len([]rune(plateNumber)) > 32) {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
 	passwordHash, err := HashPasswordWithError(input.Password)
@@ -122,13 +127,13 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
 	return normalizedRegistration{
-		Email:             strings.ToLower(strings.TrimSpace(input.Email)),
-		Phone:             strings.TrimSpace(input.Phone),
-		Name:              strings.TrimSpace(input.Name),
+		Email:             email,
+		Phone:             phone,
+		Name:              name,
 		PasswordHash:      passwordHash,
 		Role:              role,
-		VehicleType:       strings.TrimSpace(input.VehicleType),
-		PlateNumber:       strings.TrimSpace(input.PlateNumber),
+		VehicleType:       vehicleType,
+		PlateNumber:       plateNumber,
 		PreferredRideType: "solo-ride",
 	}, nil
 }
@@ -138,11 +143,16 @@ func (service *RegisterService) create(ctx context.Context, account domain.User)
 	if err != nil {
 		return domain.User{}, "", err
 	}
-	if service.provisioner != nil {
-		if err := service.provisioner.Provision(ctx, created); err != nil {
-			return domain.User{}, "", err
-		}
-	}
 	token, err := issueToken(service.tokens, intSubject(created.ID), created.Role)
 	return created, token, err
+}
+
+var e164Phone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
+
+func validEmail(value string) bool {
+	if value == "" || len(value) > 254 {
+		return false
+	}
+	address, err := mail.ParseAddress(value)
+	return err == nil && strings.EqualFold(address.Address, value)
 }

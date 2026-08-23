@@ -23,6 +23,9 @@ func NewHandler(service *usecase.Service, verifier *token.Verifier, authorizer *
 	return &Handler{service: service, verifier: verifier, authorizer: authorizer}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
+	if principal, ok := middleware.PrincipalFromRequest(r); ok {
+		return principal.UserID, true
+	}
 	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
 	id, parseErr := strconv.Atoi(identity.Subject)
 	return id, ok && parseErr == nil
@@ -93,5 +96,5 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	response.JSON(w, status, value)
 }
 func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, map[string]string{"error": message})
+	response.Error(w, status, message)
 }

@@ -5,17 +5,24 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
-type Router struct{ handler *handler.Handler }
+type Router struct {
+	handler  *handler.Handler
+	verifier *token.Verifier
+}
 
 func NewRouter(service *usecase.Service, verifier *token.Verifier) *Router {
-	return &Router{handler: handler.NewHandler(service, verifier)}
+	return &Router{handler: handler.NewHandler(service, verifier), verifier: verifier}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Post(api.V1Prefix+"/chat/rooms", router.handler.CreateRoom)
-	mux.Get(api.V1Prefix+"/chat/rooms/{roomID}/messages", router.handler.Messages)
-	mux.Post(api.V1Prefix+"/chat/rooms/{roomID}/resolve", router.handler.Resolve)
+	mux.Group(func(protected chi.Router) {
+		protected.Use(middleware.RequireAuth(router.verifier))
+		protected.Post(api.V1Prefix+"/chat/rooms", router.handler.CreateRoom)
+		protected.Get(api.V1Prefix+"/chat/rooms/{roomID}/messages", router.handler.Messages)
+		protected.Post(api.V1Prefix+"/chat/rooms/{roomID}/resolve", router.handler.Resolve)
+	})
 }

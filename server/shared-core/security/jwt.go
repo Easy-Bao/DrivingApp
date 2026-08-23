@@ -30,6 +30,11 @@ type Identity struct {
 const MinimumTokenSecretBytes = 32
 
 const (
+	RolePassenger = "passenger"
+	RoleDriver    = "driver"
+)
+
+const (
 	AccessTokenLifetime  = 24 * time.Hour
 	RefreshTokenLifetime = 30 * 24 * time.Hour
 	accessTokenType      = "access"

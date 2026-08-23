@@ -1,13 +1,24 @@
 package dto
 
-type Credentials struct {
+import "github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+
+type RegistrationRequest struct {
 	Email       string `json:"email"`
 	Phone       string `json:"phone"`
 	Name        string `json:"name"`
 	Password    string `json:"password"`
 	VehicleType string `json:"vehicle_type"`
 	PlateNumber string `json:"plate_number"`
-	Role        string `json:"role"`
+}
+
+type GenericRegistrationRequest struct {
+	RegistrationRequest
+	Role string `json:"role"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type OTPRequest struct {
@@ -27,4 +38,30 @@ type PasswordReset struct {
 
 type RefreshToken struct {
 	Token string `json:"refreshToken"`
+}
+
+type AccountResponse struct {
+	ID                int         `json:"id"`
+	Email             string      `json:"email"`
+	Phone             string      `json:"phone"`
+	Name              string      `json:"name"`
+	Role              domain.Role `json:"role"`
+	IsVerified        bool        `json:"isVerified"`
+	VehicleType       string      `json:"vehicleType,omitempty"`
+	PlateNumber       string      `json:"plateNumber,omitempty"`
+	PreferredRideType string      `json:"preferred_ride_type,omitempty"`
+}
+
+func NewAccountResponse(account domain.User) AccountResponse {
+	return AccountResponse{
+		ID:                account.ID,
+		Email:             account.Email,
+		Phone:             account.Phone,
+		Name:              account.Name,
+		Role:              account.Role,
+		IsVerified:        account.IsVerified,
+		VehicleType:       account.VehicleType,
+		PlateNumber:       account.PlateNumber,
+		PreferredRideType: account.PreferredRideType,
+	}
 }

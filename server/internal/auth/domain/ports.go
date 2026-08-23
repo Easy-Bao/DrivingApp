@@ -17,10 +17,6 @@ type VerifiedUserRepository interface {
 	MarkVerified(ctx context.Context, id int) error
 }
 
-type ProfileProvisioner interface {
-	Provision(ctx context.Context, user User) error
-}
-
 type TokenIssuer interface {
 	Issue(subject string) (string, error)
 }

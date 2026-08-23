@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
@@ -29,9 +29,8 @@ func NewHandler(service *usecase.Service, auth ...*security.TokenManager) *Handl
 }
 
 func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request *http.Request) {
-	request.Body = http.MaxBytesReader(writer, request.Body, 8<<10)
 	var input dto.LocationUpdate
-	if json.NewDecoder(request.Body).Decode(&input) != nil {
+	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
 		writeError(writer, http.StatusBadRequest, "invalid location")
 		return
 	}
@@ -120,9 +119,8 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 		writeError(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	request.Body = http.MaxBytesReader(writer, request.Body, 8<<10)
 	var input dto.PassengerLocationUpdate
-	if json.NewDecoder(request.Body).Decode(&input) != nil {
+	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
 		writeError(writer, http.StatusBadRequest, "invalid location")
 		return
 	}
@@ -189,7 +187,7 @@ func writeJSON(writer http.ResponseWriter, status int, value any) {
 	response.JSON(writer, status, value)
 }
 func writeError(writer http.ResponseWriter, status int, message string) {
-	writeJSON(writer, status, map[string]string{"error": message})
+	response.Error(writer, status, message)
 }
 
 func writeRideLocationError(writer http.ResponseWriter, err error) {

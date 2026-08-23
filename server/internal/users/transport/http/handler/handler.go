@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
 )
@@ -24,6 +24,9 @@ func NewHandler(service *usecase.Service, verifier *token.Verifier) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
+	if principal, ok := middleware.PrincipalFromRequest(r); ok {
+		return principal.UserID, true
+	}
 	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
 	value, parseErr := strconv.Atoi(identity.Subject)
 	return value, ok && parseErr == nil
@@ -47,10 +50,8 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "unauthorized")
 		return
 	}
-	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10))
-	decoder.DisallowUnknownFields()
 	var input dto.UpdateProfileRequest
-	if decoder.Decode(&input) != nil {
+	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
 		writeError(w, 400, "invalid JSON")
 		return
 	}
@@ -179,7 +180,7 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		IsOnline       *bool `json:"is_online"`
 		LegacyIsOnline *bool `json:"isOnline"`
 	}
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&input) != nil {
+	if sharedrequest.DecodeJSON(w, r, &input, 4<<10) != nil {
 		writeError(w, 400, "invalid online status")
 		return
 	}
@@ -202,5 +203,5 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	response.JSON(w, status, value)
 }
 func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, map[string]string{"error": message})
+	response.Error(w, status, message)
 }

@@ -14,6 +14,7 @@ import (
 	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
 	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
+	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -108,13 +109,53 @@ func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 	}
 }
 
-func TestDriverAnalyticsKeepsTripsPrivateButAllowsAggregateStats(t *testing.T) {
+func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
+	config, err := ridesusecase.LoadPricingConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	verifier := token.NewVerifier("role-route-test-secret")
+	driverToken, err := verifier.IssueWithRole("7", security.RoleDriver)
+	if err != nil {
+		t.Fatal(err)
+	}
+	passengerToken, err := verifier.IssueWithRole("8", security.RolePassenger)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mux := chi.NewRouter()
+	rideshttp.NewRouter(ridesusecase.NewService(nil, config), verifier).RegisterRoutes(mux)
+
+	for _, test := range []struct {
+		name   string
+		path   string
+		token  string
+		method string
+	}{
+		{name: "driver cannot create passenger ride", path: api.V1Prefix + "/rides", token: driverToken, method: http.MethodPost},
+		{name: "passenger cannot accept ride as driver", path: api.V1Prefix + "/rides/1/accept", token: passengerToken, method: http.MethodPost},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequest(test.method, test.path, strings.NewReader(`{}`))
+			request.Header.Set("Authorization", "Bearer "+test.token)
+			response := httptest.NewRecorder()
+
+			mux.ServeHTTP(response, request)
+
+			if response.Code != http.StatusForbidden {
+				t.Fatalf("status = %d, want %d", response.Code, http.StatusForbidden)
+			}
+		})
+	}
+}
+
+func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 	config, err := ridesusecase.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
 	verifier := token.NewVerifier("test-secret")
-	accessToken, err := verifier.Issue("7")
+	accessToken, err := verifier.IssueWithRole("8", security.RoleDriver)
 	if err != nil {
 		t.Fatalf("Issue() returned error: %v", err)
 	}
@@ -138,7 +179,7 @@ func TestDriverAnalyticsKeepsTripsPrivateButAllowsAggregateStats(t *testing.T) {
 		t.Fatalf("daily driver stats are missing: %#v", statsResponse)
 	}
 
-	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/8/trips", nil)
+	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/9/trips", nil)
 	request.Header.Set("Authorization", "Bearer "+accessToken)
 	response = httptest.NewRecorder()
 	mux.ServeHTTP(response, request)
@@ -196,7 +237,7 @@ func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
 	verifier := token.NewVerifier("test-secret")
-	accessToken, err := verifier.Issue("42")
+	accessToken, err := verifier.IssueWithRole("42", security.RolePassenger)
 	if err != nil {
 		t.Fatalf("Issue() returned error: %v", err)
 	}
@@ -226,7 +267,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 	}
 	repository := &activeSessionsRepository{}
 	verifier := token.NewVerifier("test-secret")
-	driverToken, err := verifier.Issue("42")
+	driverToken, err := verifier.IssueWithRole("42", security.RoleDriver)
 	if err != nil {
 		t.Fatalf("Issue() returned error: %v", err)
 	}
@@ -260,7 +301,11 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 	}
 	repository := &activeSessionsRepository{}
 	verifier := token.NewVerifier("test-secret")
-	accessToken, err := verifier.Issue("42")
+	passengerToken, err := verifier.IssueWithRole("42", security.RolePassenger)
+	if err != nil {
+		t.Fatalf("Issue() returned error: %v", err)
+	}
+	driverToken, err := verifier.IssueWithRole("42", security.RoleDriver)
 	if err != nil {
 		t.Fatalf("Issue() returned error: %v", err)
 	}
@@ -272,20 +317,25 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 		method          string
 		path            string
 		body            string
+		role            string
 		expectedStatus  int
 		expectedOfferID int
 	}{
-		{name: "session", method: http.MethodGet, path: api.V1Prefix + "/bids/101", expectedStatus: http.StatusOK},
-		{name: "offers", method: http.MethodGet, path: api.V1Prefix + "/bids/101/offers", expectedStatus: http.StatusOK},
-		{name: "place offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/offer", body: `{"offer_price":25}`, expectedStatus: http.StatusCreated},
-		{name: "accept offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/offers/202/accept", body: `{}`, expectedStatus: http.StatusOK, expectedOfferID: 202},
-		{name: "cancel session", method: http.MethodPost, path: api.V1Prefix + "/bids/101/cancel", body: `{}`, expectedStatus: http.StatusOK},
-		{name: "cancel offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/cancel-offer", body: `{}`, expectedStatus: http.StatusOK},
+		{name: "session", method: http.MethodGet, path: api.V1Prefix + "/bids/101", role: security.RolePassenger, expectedStatus: http.StatusOK},
+		{name: "offers", method: http.MethodGet, path: api.V1Prefix + "/bids/101/offers", role: security.RolePassenger, expectedStatus: http.StatusOK},
+		{name: "place offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/offer", body: `{"offer_price":25}`, role: security.RoleDriver, expectedStatus: http.StatusCreated},
+		{name: "accept offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/offers/202/accept", body: `{}`, role: security.RolePassenger, expectedStatus: http.StatusOK, expectedOfferID: 202},
+		{name: "cancel session", method: http.MethodPost, path: api.V1Prefix + "/bids/101/cancel", body: `{}`, role: security.RolePassenger, expectedStatus: http.StatusOK},
+		{name: "cancel offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/cancel-offer", body: `{}`, role: security.RoleDriver, expectedStatus: http.StatusOK},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.path, strings.NewReader(test.body))
+			accessToken := passengerToken
+			if test.role == security.RoleDriver {
+				accessToken = driverToken
+			}
 			request.Header.Set("Authorization", "Bearer "+accessToken)
 			response := httptest.NewRecorder()
 

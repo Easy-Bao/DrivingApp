@@ -55,3 +55,48 @@ func TestRequireAuthStoresTheVerifiedIdentity(t *testing.T) {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusNoContent)
 	}
 }
+
+func TestRequireAuthStoresNumericPrincipalAndRoleGateRejectsWrongRole(t *testing.T) {
+	manager := security.NewTokenManager("auth-middleware-test-secret")
+	driverToken, err := manager.IssueWithRole("17", security.RoleDriver)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	protected := RequireAuth(manager)(RequireRole(security.RolePassenger)(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		principal, ok := PrincipalFromRequest(request)
+		if !ok || principal.UserID != 17 {
+			t.Fatalf("principal = %#v, ok = %v", principal, ok)
+		}
+		writer.WriteHeader(http.StatusNoContent)
+	})))
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("Authorization", "Bearer "+driverToken)
+	response := httptest.NewRecorder()
+
+	protected.ServeHTTP(response, request)
+
+	if response.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusForbidden)
+	}
+}
+
+func TestRequireAuthRejectsNonNumericSubject(t *testing.T) {
+	manager := security.NewTokenManager("auth-middleware-test-secret")
+	token, err := manager.IssueWithRole("not-an-account", security.RolePassenger)
+	if err != nil {
+		t.Fatal(err)
+	}
+	protected := RequireAuth(manager)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Fatal("handler must not run")
+	}))
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("Authorization", "Bearer "+token)
+	response := httptest.NewRecorder()
+
+	protected.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusUnauthorized)
+	}
+}

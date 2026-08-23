@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
@@ -13,6 +14,13 @@ type contextKey string
 
 const identityKey contextKey = "authenticated_identity"
 
+const principalKey contextKey = "authenticated_principal"
+
+type Principal struct {
+	UserID int
+	Role   string
+}
+
 func RequireAuth(tokenManager *security.TokenManager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -21,13 +29,49 @@ func RequireAuth(tokenManager *security.TokenManager) func(http.Handler) http.Ha
 				response.Error(writer, http.StatusUnauthorized, "unauthorized")
 				return
 			}
-			next.ServeHTTP(writer, request.WithContext(context.WithValue(request.Context(), identityKey, identity)))
+			userID, err := strconv.Atoi(identity.Subject)
+			if err != nil || userID <= 0 {
+				response.Error(writer, http.StatusUnauthorized, "unauthorized")
+				return
+			}
+			contextValue := context.WithValue(request.Context(), identityKey, identity)
+			contextValue = context.WithValue(contextValue, principalKey, Principal{UserID: userID, Role: identity.Role})
+			next.ServeHTTP(writer, request.WithContext(contextValue))
+		})
+	}
+}
+
+func RequireRole(roles ...string) func(http.Handler) http.Handler {
+	allowed := make(map[string]struct{}, len(roles))
+	for _, role := range roles {
+		if role = strings.TrimSpace(role); role != "" {
+			allowed[role] = struct{}{}
+		}
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			principal, ok := PrincipalFromRequest(request)
+			if !ok {
+				response.Error(writer, http.StatusUnauthorized, "unauthorized")
+				return
+			}
+			if _, ok := allowed[principal.Role]; !ok {
+				response.Error(writer, http.StatusForbidden, "forbidden")
+				return
+			}
+			next.ServeHTTP(writer, request)
 		})
 	}
 }
 
 func IdentityFromRequest(request *http.Request, tokenManager *security.TokenManager) (security.Identity, bool) {
-	if request == nil || tokenManager == nil {
+	if request == nil {
+		return security.Identity{}, false
+	}
+	if identity, ok := Identity(request); ok {
+		return identity, true
+	}
+	if tokenManager == nil {
 		return security.Identity{}, false
 	}
 	rawToken, ok := BearerToken(request.Header.Get("Authorization"))
@@ -56,4 +100,12 @@ func Identity(request *http.Request) (security.Identity, bool) {
 func Subject(request *http.Request) (string, bool) {
 	identity, ok := Identity(request)
 	return identity.Subject, ok
+}
+
+func PrincipalFromRequest(request *http.Request) (Principal, bool) {
+	if request == nil {
+		return Principal{}, false
+	}
+	principal, ok := request.Context().Value(principalKey).(Principal)
+	return principal, ok && principal.UserID > 0
 }

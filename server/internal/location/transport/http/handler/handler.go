@@ -1,15 +1,14 @@
 package httptransport
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"strconv"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 )
 
@@ -98,15 +97,7 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 }
 
 func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, payload *dto.RouteRequest) error {
-	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, maxRoutePayloadBytes))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(payload); err != nil {
-		return err
-	}
-	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return errors.New("route payload must contain exactly one JSON value")
-	}
-	return nil
+	return sharedrequest.DecodeJSON(writer, request, payload, maxRoutePayloadBytes)
 }
 
 func writeServiceError(writer http.ResponseWriter, err error) {
@@ -170,5 +161,5 @@ func writeJSON(writer http.ResponseWriter, status int, value any) {
 }
 
 func writeError(writer http.ResponseWriter, status int, message string) {
-	writeJSON(writer, status, map[string]string{"error": message})
+	response.Error(writer, status, message)
 }

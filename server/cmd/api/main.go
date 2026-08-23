@@ -96,7 +96,7 @@ func main() {
 	defer redisClient.Close()
 
 	authRepository := authpostgres.NewUserRepository(databaseClient)
-	registerService := authusecase.NewRegisterService(authRepository, verifier, authRepository)
+	registerService := authusecase.NewRegisterService(authRepository, verifier)
 	authenticateService := authusecase.NewAuthenticateService(authRepository, verifier)
 
 	authRouter := authhttp.NewRouter(registerService, authenticateService, authusecase.NewOTPServiceWithPending(
