@@ -40,8 +40,6 @@ type Tx struct {
 	RideSettlement *RideSettlementClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
-	// UserRole is the client for interacting with the UserRole builders.
-	UserRole *UserRoleClient
 	// WalletLedger is the client for interacting with the WalletLedger builders.
 	WalletLedger *WalletLedgerClient
 
@@ -189,7 +187,6 @@ func (tx *Tx) init() {
 	tx.Ride = NewRideClient(tx.config)
 	tx.RideSettlement = NewRideSettlementClient(tx.config)
 	tx.User = NewUserClient(tx.config)
-	tx.UserRole = NewUserRoleClient(tx.config)
 	tx.WalletLedger = NewWalletLedgerClient(tx.config)
 }
 

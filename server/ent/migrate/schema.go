@@ -427,26 +427,6 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
-	// UserRolesColumns holds the columns for the "user_roles" table.
-	UserRolesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "user_id", Type: field.TypeInt},
-		{Name: "role", Type: field.TypeEnum, Enums: []string{"passenger", "driver"}},
-		{Name: "created_at", Type: field.TypeTime, Default: schema.Expr("CURRENT_TIMESTAMP")},
-	}
-	// UserRolesTable holds the schema information for the "user_roles" table.
-	UserRolesTable = &schema.Table{
-		Name:       "user_roles",
-		Columns:    UserRolesColumns,
-		PrimaryKey: []*schema.Column{UserRolesColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "userrole_user_id_role",
-				Unique:  true,
-				Columns: []*schema.Column{UserRolesColumns[1], UserRolesColumns[2]},
-			},
-		},
-	}
 	// WalletLedgersColumns holds the columns for the "wallet_ledgers" table.
 	WalletLedgersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -486,7 +466,6 @@ var (
 		RidesTable,
 		RideSettlementsTable,
 		UsersTable,
-		UserRolesTable,
 		WalletLedgersTable,
 	}
 )

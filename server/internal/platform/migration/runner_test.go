@@ -47,25 +47,10 @@ func TestIntegrityMigrationIncludesFinancialAndParticipantConstraints(t *testing
 	}
 }
 
-func TestMigrationPlanEndsWithUserRoleMemberships(t *testing.T) {
+func TestMigrationPlanEndsWithPrivateDocumentHardening(t *testing.T) {
 	runner := NewRunner(nil, nil)
 	last := runner.migrations[len(runner.migrations)-1]
-	if last.version != 2026082306 || last.name != "add_user_role_memberships" {
+	if last.version != 2026082305 || last.name != "secure_private_driver_documents" {
 		t.Fatalf("last migration = %d %q", last.version, last.name)
-	}
-}
-
-func TestUserRoleMigrationBackfillsAndConstrainsMemberships(t *testing.T) {
-	statements := strings.Join(userRoleMembershipStatements, "\n")
-	for _, expected := range []string{
-		"CREATE TABLE user_roles",
-		"UNIQUE INDEX IF NOT EXISTS userrole_user_id_role",
-		"INSERT INTO user_roles (user_id, role)",
-		"user_roles_role_check",
-		"user_roles_user_fk",
-	} {
-		if !strings.Contains(statements, expected) {
-			t.Fatalf("user role migration is missing %q", expected)
-		}
 	}
 }

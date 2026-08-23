@@ -26,7 +26,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
-	"github.com/Easy-Bao/DrivingApp/server/ent/userrole"
 	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 )
 
@@ -102,7 +101,6 @@ func checkColumn(t, c string) error {
 			ride.Table:                ride.ValidColumn,
 			ridesettlement.Table:      ridesettlement.ValidColumn,
 			user.Table:                user.ValidColumn,
-			userrole.Table:            userrole.ValidColumn,
 			walletledger.Table:        walletledger.ValidColumn,
 		})
 	})

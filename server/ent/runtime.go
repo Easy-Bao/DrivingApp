@@ -19,7 +19,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
-	"github.com/Easy-Bao/DrivingApp/server/ent/userrole"
 	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/ent/schema"
 )
@@ -380,16 +379,6 @@ func init() {
 	userDescIsVerified := userFields[5].Descriptor()
 	// user.DefaultIsVerified holds the default value on creation for the is_verified field.
 	user.DefaultIsVerified = userDescIsVerified.Default.(bool)
-	userroleFields := schema.UserRole{}.Fields()
-	_ = userroleFields
-	// userroleDescUserID is the schema descriptor for user_id field.
-	userroleDescUserID := userroleFields[0].Descriptor()
-	// userrole.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	userrole.UserIDValidator = userroleDescUserID.Validators[0].(func(int) error)
-	// userroleDescCreatedAt is the schema descriptor for created_at field.
-	userroleDescCreatedAt := userroleFields[2].Descriptor()
-	// userrole.DefaultCreatedAt holds the default value on creation for the created_at field.
-	userrole.DefaultCreatedAt = userroleDescCreatedAt.Default.(func() time.Time)
 	walletledgerFields := schema.WalletLedger{}.Fields()
 	_ = walletledgerFields
 	// walletledgerDescDriverID is the schema descriptor for driver_id field.
