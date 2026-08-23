@@ -71,3 +71,36 @@ func TestRejectControlCharactersRejectsRequestTarget(t *testing.T) {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
 	}
 }
+
+func TestSecurityHeadersDoNotTrustRawForwardedProtocol(t *testing.T) {
+	handler := SecurityHeaders(false)(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.WriteHeader(http.StatusNoContent)
+	}))
+	request := httptest.NewRequest(http.MethodGet, "/health", nil)
+	request.Header.Set("X-Forwarded-Proto", "https")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Header().Get("Strict-Transport-Security") != "" {
+		t.Fatal("untrusted forwarded protocol enabled HSTS")
+	}
+}
+
+func TestSecurityHeadersUseValidatedProxyProtocol(t *testing.T) {
+	trust, err := NewProxyTrust("10.0.0.0/8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := trust.Middleware(SecurityHeaders(false)(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.WriteHeader(http.StatusNoContent)
+	})))
+	request := httptest.NewRequest(http.MethodGet, "/health", nil)
+	request.RemoteAddr = "10.1.2.3:4321"
+	request.Header.Set("X-Forwarded-Proto", "https")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Header().Get("Strict-Transport-Security") == "" {
+		t.Fatal("validated HTTPS proxy request did not enable HSTS")
+	}
+}

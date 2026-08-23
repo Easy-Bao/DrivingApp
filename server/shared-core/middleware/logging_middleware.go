@@ -18,7 +18,7 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 			status := response.statusCode()
 			requestID := RequestIDFromRequest(request)
 			if requestID == "" {
-				requestID = request.Header.Get("X-Request-ID")
+				requestID = response.Header().Get("X-Request-ID")
 			}
 			logger.Info(
 				"http request",
@@ -26,7 +26,7 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 				"method", request.Method,
 				"path", request.URL.Path,
 				"status", status,
-				"client_ip", clientIP(request),
+				"client_ip", ClientIPFromRequest(request),
 				"user_agent", request.UserAgent(),
 				"duration_ms", time.Since(startedAt).Milliseconds(),
 			)
@@ -38,7 +38,7 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 					"request_id", requestID,
 					"method", request.Method,
 					"path", request.URL.Path,
-					"client_ip", clientIP(request),
+					"client_ip", ClientIPFromRequest(request),
 					"user_agent", request.UserAgent(),
 				)
 			}

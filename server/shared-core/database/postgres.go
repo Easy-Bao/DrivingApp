@@ -5,30 +5,92 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	_ "github.com/lib/pq"
 )
 
+type PostgresPoolConfig struct {
+	MaxOpenConnections    int
+	MaxIdleConnections    int
+	ConnectionMaxLifetime time.Duration
+	ConnectionMaxIdleTime time.Duration
+	PingTimeout           time.Duration
+}
+
+func DefaultPostgresPoolConfig() PostgresPoolConfig {
+	return PostgresPoolConfig{
+		MaxOpenConnections:    25,
+		MaxIdleConnections:    10,
+		ConnectionMaxLifetime: 30 * time.Minute,
+		ConnectionMaxIdleTime: 5 * time.Minute,
+		PingTimeout:           5 * time.Second,
+	}
+}
+
+func PostgresPoolConfigFromEnv() PostgresPoolConfig {
+	defaults := DefaultPostgresPoolConfig()
+	return PostgresPoolConfig{
+		MaxOpenConnections:    positiveIntEnv("POSTGRES_MAX_OPEN_CONNECTIONS", defaults.MaxOpenConnections),
+		MaxIdleConnections:    positiveIntEnv("POSTGRES_MAX_IDLE_CONNECTIONS", defaults.MaxIdleConnections),
+		ConnectionMaxLifetime: positiveDurationEnv("POSTGRES_CONNECTION_MAX_LIFETIME", defaults.ConnectionMaxLifetime),
+		ConnectionMaxIdleTime: positiveDurationEnv("POSTGRES_CONNECTION_MAX_IDLE_TIME", defaults.ConnectionMaxIdleTime),
+		PingTimeout:           positiveDurationEnv("POSTGRES_PING_TIMEOUT", defaults.PingTimeout),
+	}
+}
+
 func OpenPostgres(databaseURL string) (*ent.Client, error) {
-	if databaseURL == "" {
+	return OpenPostgresWithConfig(databaseURL, PostgresPoolConfigFromEnv())
+}
+
+func OpenPostgresWithConfig(databaseURL string, config PostgresPoolConfig) (*ent.Client, error) {
+	if strings.TrimSpace(databaseURL) == "" {
 		return nil, fmt.Errorf("database URL is required")
 	}
-	databaseURL = NormalizePostgresURL(databaseURL)
+	if err := config.validate(); err != nil {
+		return nil, err
+	}
+	databaseURL = NormalizePostgresURL(strings.TrimSpace(databaseURL))
 	connection, err := sql.Open("postgres", databaseURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open PostgreSQL connection: %w", err)
 	}
-	if err := connection.PingContext(context.Background()); err != nil {
+	connection.SetMaxOpenConns(config.MaxOpenConnections)
+	connection.SetMaxIdleConns(config.MaxIdleConnections)
+	connection.SetConnMaxLifetime(config.ConnectionMaxLifetime)
+	connection.SetConnMaxIdleTime(config.ConnectionMaxIdleTime)
+
+	pingContext, cancel := context.WithTimeout(context.Background(), config.PingTimeout)
+	defer cancel()
+	if err := connection.PingContext(pingContext); err != nil {
 		_ = connection.Close()
-		return nil, err
+		return nil, fmt.Errorf("ping PostgreSQL: %w", err)
 	}
-	_ = connection.Close()
-	client, err := ent.Open("postgres", databaseURL)
-	if err != nil {
-		return nil, err
+
+	driver := entsql.OpenDB(dialect.Postgres, connection)
+	return ent.NewClient(ent.Driver(driver)), nil
+}
+
+func (config PostgresPoolConfig) validate() error {
+	if config.MaxOpenConnections <= 0 {
+		return fmt.Errorf("PostgreSQL max open connections must be positive")
 	}
-	return client, nil
+	if config.MaxIdleConnections <= 0 {
+		return fmt.Errorf("PostgreSQL max idle connections must be positive")
+	}
+	if config.MaxIdleConnections > config.MaxOpenConnections {
+		return fmt.Errorf("PostgreSQL max idle connections cannot exceed max open connections")
+	}
+	if config.ConnectionMaxLifetime <= 0 || config.ConnectionMaxIdleTime <= 0 || config.PingTimeout <= 0 {
+		return fmt.Errorf("PostgreSQL connection durations must be positive")
+	}
+	return nil
 }
 
 // NormalizePostgresURL makes local Compose connections explicit about TLS.
@@ -46,4 +108,20 @@ func NormalizePostgresURL(databaseURL string) string {
 	query.Set("sslmode", "disable")
 	parsed.RawQuery = query.Encode()
 	return parsed.String()
+}
+
+func positiveIntEnv(key string, fallback int) int {
+	value, err := strconv.Atoi(strings.TrimSpace(os.Getenv(key)))
+	if err != nil || value <= 0 {
+		return fallback
+	}
+	return value
+}
+
+func positiveDurationEnv(key string, fallback time.Duration) time.Duration {
+	value, err := time.ParseDuration(strings.TrimSpace(os.Getenv(key)))
+	if err != nil || value <= 0 {
+		return fallback
+	}
+	return value
 }

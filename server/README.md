@@ -35,6 +35,33 @@ The public client URL is `API_BASE_URL`, normally `http://127.0.0.1:8000`.
 The API process owns REST, WebSocket, authentication, rides, location,
 realtime, chat, and admin routes.
 
+### Runtime protection and connection pools
+
+Request limits use independent one-minute buckets so polling cannot consume an
+active trip's telemetry allowance. Authentication defaults to 10 requests,
+external location queries to 60, fare queries to 30, WebSocket connection
+attempts to 30, telemetry to 600, other mutations to 120, and reads to 300.
+Health checks and CORS preflight requests bypass the limiter. Public auth,
+location, fare, and connection protection fails closed when Redis is
+unavailable; authenticated reads, mutations, and telemetry continue to their
+own handlers so a protection-store outage does not stop an active ride.
+
+`TRUSTED_PROXY_CIDRS` is empty by default. Set it only to the exact proxy
+networks that are allowed to supply forwarded client and protocol headers.
+Headers sent by direct clients are discarded. This prevents address spoofing
+without grouping every deployed user under a known reverse proxy's address.
+
+The API uses one PostgreSQL handle for startup health checking and Ent. The
+pool defaults to 25 open and 10 idle connections, with a 30-minute connection
+lifetime, a 5-minute idle lifetime, and a 5-second startup ping timeout. Tune
+these using the `POSTGRES_*` values documented in `.env.example`; keep the idle
+connection count no greater than the open connection count.
+
+Idempotency protection is limited to durable domain commands such as ride,
+bid, profile, review, and chat mutations. Authentication, fare and location
+queries, telemetry, online-presence updates, and multipart document uploads do
+not use the replay store. The shared mobile interceptor follows the same rule.
+
 To apply the additive migration plan against native PostgreSQL:
 
 ```sh

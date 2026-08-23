@@ -3,12 +3,14 @@ package database
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	redisclient "github.com/redis/go-redis/v9"
 )
 
 func OpenRedis(redisURL string) (*redisclient.Client, error) {
-	if redisURL == "" {
+	if strings.TrimSpace(redisURL) == "" {
 		return nil, fmt.Errorf("redis URL is required")
 	}
 	options, err := redisclient.ParseURL(redisURL)
@@ -16,9 +18,11 @@ func OpenRedis(redisURL string) (*redisclient.Client, error) {
 		return nil, err
 	}
 	client := redisclient.NewClient(options)
-	if err := client.Ping(context.Background()).Err(); err != nil {
+	pingContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := client.Ping(pingContext).Err(); err != nil {
 		_ = client.Close()
-		return nil, err
+		return nil, fmt.Errorf("ping Redis: %w", err)
 	}
 	return client, nil
 }

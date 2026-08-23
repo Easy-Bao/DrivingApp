@@ -116,7 +116,7 @@ func SecurityHeaders(enableHSTS bool) func(http.Handler) http.Handler {
 			writer.Header().Set("Referrer-Policy", "no-referrer")
 			writer.Header().Set("Permissions-Policy", "camera=(), geolocation=(), microphone=()")
 			writer.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
-			if enableHSTS || strings.EqualFold(request.Header.Get("X-Forwarded-Proto"), "https") {
+			if enableHSTS || RequestSchemeFromRequest(request) == "https" {
 				writer.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 			}
 			next.ServeHTTP(writer, request)

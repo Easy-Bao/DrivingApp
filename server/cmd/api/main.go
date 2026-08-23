@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -69,6 +68,10 @@ func main() {
 	jwtSecret := requiredJWTSecret()
 	verifier := security.NewTokenManager(jwtSecret)
 	securityConfig := middleware.SecurityConfigFromEnv()
+	proxyTrust, err := middleware.NewProxyTrust(os.Getenv("TRUSTED_PROXY_CIDRS"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	adminAuthorizer := security.NewAdminAuthorizer(os.Getenv("ADMIN_USER_IDS"))
 
 	pricingConfig, err := ridesusecase.LoadPricingConfig()
@@ -200,7 +203,7 @@ func main() {
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"api"}`))
 	})
 
-	handler := sanitizeForwardedHeaders(
+	handler := proxyTrust.Middleware(
 		middleware.Logging(logger.New(apiServiceName))(
 			middleware.SecureHTTPWithIdempotency(
 				router,
@@ -256,31 +259,4 @@ func requiredJWTSecret() string {
 		log.Fatal(err)
 	}
 	return secret
-}
-
-// sanitizeForwardedHeaders prevents a direct client from spoofing the values
-// used for rate limiting and transport security. A trusted reverse proxy can
-// be configured separately through the deployment boundary.
-func sanitizeForwardedHeaders(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		request.Header.Del("X-Forwarded-For")
-		request.Header.Del("X-Forwarded-Host")
-		request.Header.Del("X-Forwarded-Port")
-		request.Header.Del("X-Forwarded-Proto")
-		request.Header.Set("X-Forwarded-For", remoteHost(request.RemoteAddr))
-		if request.TLS != nil {
-			request.Header.Set("X-Forwarded-Proto", "https")
-		} else {
-			request.Header.Set("X-Forwarded-Proto", "http")
-		}
-		next.ServeHTTP(writer, request)
-	})
-}
-
-func remoteHost(remoteAddr string) string {
-	host, _, err := net.SplitHostPort(strings.TrimSpace(remoteAddr))
-	if err == nil && host != "" {
-		return host
-	}
-	return strings.TrimSpace(remoteAddr)
 }

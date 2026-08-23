@@ -35,7 +35,7 @@ func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 	}))
 
 	for index := 0; index < 2; index++ {
-		request := httptest.NewRequest(http.MethodPost, "/rides", strings.NewReader(`{"fare_centavos":100}`))
+		request := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_centavos":100}`))
 		request.Header.Set("Idempotency-Key", "ride-key-1")
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, request)
@@ -57,11 +57,11 @@ func TestIdempotencyRejectsKeyReuseWithDifferentBody(t *testing.T) {
 		writer.WriteHeader(http.StatusCreated)
 	}))
 
-	first := httptest.NewRequest(http.MethodPost, "/rides", strings.NewReader(`{"fare_centavos":100}`))
+	first := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_centavos":100}`))
 	first.Header.Set("Idempotency-Key", "ride-key-2")
 	handler.ServeHTTP(httptest.NewRecorder(), first)
 
-	second := httptest.NewRequest(http.MethodPost, "/rides", strings.NewReader(`{"fare_centavos":200}`))
+	second := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_centavos":200}`))
 	second.Header.Set("Idempotency-Key", "ride-key-2")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, second)
@@ -75,7 +75,7 @@ func TestIdempotencyFailsClosedWhenStoreIsUnavailable(t *testing.T) {
 	handler := NewIdempotency(failingIdempotencyStore{}, time.Minute).Middleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 		called = true
 	}))
-	request := httptest.NewRequest(http.MethodPost, "/rides", strings.NewReader(`{"fare_centavos":100}`))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_centavos":100}`))
 	request.Header.Set("Idempotency-Key", "ride-key-3")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -105,6 +105,35 @@ func TestIdempotencySkipsHighThroughputTelemetryUpdates(t *testing.T) {
 	}
 }
 
+func TestIdempotencySkipsQueriesSensitiveAuthAndPresenceUpdates(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		path string
+	}{
+		{name: "authentication", path: "/api/v1/auth/login"},
+		{name: "location query", path: "/api/v1/location/route"},
+		{name: "fare query", path: "/api/v1/fares/estimate"},
+		{name: "document upload", path: "/api/v1/driver/documents"},
+		{name: "online presence", path: "/api/v1/drivers/12/online"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var calls atomic.Int32
+			handler := NewIdempotency(NewMemoryIdempotencyStore(), time.Minute).Middleware(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+				calls.Add(1)
+				writer.WriteHeader(http.StatusOK)
+			}))
+			for index := 0; index < 2; index++ {
+				request := httptest.NewRequest(http.MethodPost, test.path, strings.NewReader(`{"value":true}`))
+				request.Header.Set("Idempotency-Key", "excluded-request-key")
+				handler.ServeHTTP(httptest.NewRecorder(), request)
+			}
+			if calls.Load() != 2 {
+				t.Fatalf("handler calls = %d, want 2", calls.Load())
+			}
+		})
+	}
+}
+
 func TestIdempotencyScopesKeysToAuthorizationAndQuery(t *testing.T) {
 	var calls atomic.Int32
 	handler := NewIdempotency(NewMemoryIdempotencyStore(), time.Minute).Middleware(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
@@ -113,7 +142,7 @@ func TestIdempotencyScopesKeysToAuthorizationAndQuery(t *testing.T) {
 	}))
 
 	for _, token := range []string{"Bearer first", "Bearer second"} {
-		request := httptest.NewRequest(http.MethodPost, "/rides?mode=direct", strings.NewReader(`{"fare_centavos":100}`))
+		request := httptest.NewRequest(http.MethodPost, "/api/v1/rides?mode=direct", strings.NewReader(`{"fare_centavos":100}`))
 		request.Header.Set("Authorization", token)
 		request.Header.Set("Idempotency-Key", "scoped-key")
 		response := httptest.NewRecorder()

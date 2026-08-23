@@ -241,15 +241,7 @@ func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, finger
 }
 
 func supportsIdempotency(request *http.Request) bool {
-	if strings.HasPrefix(request.URL.Path, "/api/v1/telemetry/") {
-		return false
-	}
-	switch request.Method {
-	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
-		return true
-	default:
-		return false
-	}
+	return classifyEndpoint(request) == endpointCommand
 }
 
 func authorizationScope(request *http.Request) string {
