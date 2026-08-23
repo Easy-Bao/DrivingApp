@@ -10,6 +10,7 @@ import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart
 import 'package:driver_app/src/features/home/domain/entities/driver_dispatch_snapshot.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/view/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
+import 'package:driver_app/src/features/home/view/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
 import 'package:driver_app/src/features/location/location_routes.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
@@ -21,11 +22,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
-
-double? _distanceInKm(Map<String, dynamic> value) {
-  final distance = value['distance_km'] ?? value['distance'];
-  return distance is num && distance >= 0 ? distance.toDouble() : null;
-}
 
 bool _isActiveDriverTripStatus(Object? value) {
   return const {
@@ -237,6 +233,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     } finally {
       _isResumingOnline = false;
     }
+  }
+
+  void _refreshRequestCountdowns() {
+    if (!mounted || _activeBids.isEmpty) return;
+    final activeBids = _activeBids.where((bid) {
+      final remaining = remainingBidSeconds(bid);
+      return remaining == null || remaining > 0;
+    }).toList();
+    setState(() => _activeBids = activeBids);
   }
 
   void _publishCurrentLocation() {
@@ -763,20 +768,45 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                         physics: const BouncingScrollPhysics(),
                         children: [
                           if (_activeTrips.isNotEmpty) ...[
-                            _buildSectionLabel(
-                              'Your active rides (${_activeTrips.length}/5)',
+                            DriverDashboardSectionLabel(
+                              'Your active rides (__ACTIVE_COUNT__/5)',
                             ),
                             const SizedBox(height: 10),
                             ..._activeTrips.asMap().entries.map(
-                              (entry) =>
-                                  _buildActiveTripCard(entry.value, entry.key),
+                              (entry) => DriverActiveTripCard(
+                                trip: entry.value,
+                                queueIndex: entry.key,
+                                hasCurrentTransitRide: _activeTrips.any(
+                                  (activeTrip) =>
+                                      activeTrip['status'] == 'in_transit',
+                                ),
+                                isCompletingTrip:
+                                    _completingTripId ==
+                                    driverValueAsString(entry.value['id']),
+                                onResume: () => _resumeTrip(entry.value),
+                                onComplete: () =>
+                                    _completeTripFromDashboard(entry.value),
+                              ),
                             ),
                             const SizedBox(height: 24),
                           ],
                           if (_activeBids.isNotEmpty) ...[
-                            _buildSectionLabel('Incoming Requests'),
+                            const DriverDashboardSectionLabel(
+                              'Incoming Requests',
+                            ),
                             const SizedBox(height: 10),
-                            ..._activeBids.map(_buildPoolBidCard),
+                            ..._activeBids.map(
+                              (bid) => DriverPoolBidCard(
+                                bid: bid,
+                                submittingBidId: _submittingBidId,
+                                onDecline: () => setState(
+                                  () => _activeBids.removeWhere(
+                                    (candidate) => candidate['id'] == bid['id'],
+                                  ),
+                                ),
+                                onAccept: () => _acceptBid(bid),
+                              ),
+                            ),
                           ],
                         ],
                       ),
@@ -1013,427 +1043,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildActiveTripCard(Map<String, dynamic> trip, int queueIndex) {
-    final status = trip['status'] as String? ?? 'accepted';
-    String statusLabel = 'Heading To Passenger';
-    Color statusColor = AppTheme.inProgress;
-    if (status == 'arrived') {
-      statusLabel = 'Waiting For Passenger';
-      statusColor = AppTheme.secondaryColor;
-    } else if (status == 'in_transit') {
-      statusLabel = 'Driving Passenger';
-      statusColor = AppTheme.complete;
-    }
-    final hasCurrentTransitRide = _activeTrips.any(
-      (activeTrip) => activeTrip['status'] == 'in_transit',
-    );
-    final isQueued = hasCurrentTransitRide && status != 'in_transit';
-    final tripId = driverValueAsString(trip['id']);
-    final isCompleting = tripId != null && _completingTripId == tripId;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primaryColor.withValues(alpha: 0.12),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: statusColor == AppTheme.secondaryColor
-                        ? AppTheme.primaryColor
-                        : statusColor,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                driverFareInPesos(trip) == null
-                    ? '—'
-                    : '₱${driverFareInPesos(trip)!.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            ],
-          ),
-          if (isQueued) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Queued passenger ${queueIndex + 1} • Start after the current trip',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.55),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(
-                LucideIcons.user,
-                size: 14,
-                color: AppTheme.primaryColor,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                driverValueAsString(trip['passenger_name']) ?? '—',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          CompactRouteTimelineWidget(
-            pickup: driverValueAsString(trip['pickup_name']) ?? '—',
-            dropoff: driverValueAsString(trip['dropoff_name']) ?? '—',
-          ),
-          const SizedBox(height: 14),
-          if (status == 'in_transit')
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: () => _resumeTrip(trip),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: AppTheme.activeControlForeground,
-                        shape: const StadiumBorder(),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Go to Trip Flow',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: isCompleting
-                          ? null
-                          : () => _completeTripFromDashboard(trip),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.complete,
-                        foregroundColor: AppTheme.activeControlForeground,
-                        shape: const StadiumBorder(),
-                        elevation: 0,
-                      ),
-                      child: isCompleting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.surface,
-                              ),
-                            )
-                          : const Text(
-                              'Complete Trip',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          else
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
-                onPressed: isQueued ? null : () => _resumeTrip(trip),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: AppTheme.activeControlForeground,
-                  shape: const StadiumBorder(),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Go to Trip Flow',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _refreshRequestCountdowns() {
-    if (!mounted || _activeBids.isEmpty) return;
-    final activeBids = _activeBids.where((bid) {
-      final remaining = _remainingBidSeconds(bid);
-      return remaining == null || remaining > 0;
-    }).toList();
-    setState(() => _activeBids = activeBids);
-  }
-
-  int? _remainingBidSeconds(Map<String, dynamic> bid) {
-    final rawExpiry = driverValueAsString(bid['expires_at']);
-    final expiresAt = rawExpiry == null ? null : DateTime.tryParse(rawExpiry);
-    if (expiresAt == null) return null;
-    final seconds = expiresAt.difference(DateTime.now()).inSeconds;
-    return seconds.clamp(0, 3599).toInt();
-  }
-
-  String _formatCountdown(int seconds) {
-    final minutes = seconds ~/ 60;
-    final remainder = seconds % 60;
-    return '$minutes:${remainder.toString().padLeft(2, '0')}';
-  }
-
-  Widget _buildPoolBidCard(Map<String, dynamic> bid) {
-    final pickup = bid['pickup_name']?.toString() ?? '—';
-    final dropoff = bid['dropoff_name']?.toString() ?? '—';
-    final fare = driverFareInPesos(bid);
-    final distance = _distanceInKm(bid);
-    final bidId = driverValueAsString(bid['id']);
-    final isSubmitting = bidId != null && _submittingBidId == bidId;
-    final remainingSeconds = _remainingBidSeconds(bid);
-    final passengerNote = driverValueAsString(bid['passenger_note']);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Ride Request',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.clock_3, size: 14),
-                    const SizedBox(width: 5),
-                    Text(
-                      remainingSeconds == null
-                          ? '—'
-                          : _formatCountdown(remainingSeconds),
-                      key: ValueKey('request-countdown-$bidId'),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          CompactRouteTimelineWidget(pickup: pickup, dropoff: dropoff),
-          if (passengerNote != null) ...[
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(
-                color: AppTheme.neutralColor,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(LucideIcons.message_square_text, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      passengerNote,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, height: 1.3),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: AppTheme.borderSide),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                distance == null
-                    ? 'Distance unavailable'
-                    : '${DistanceFormatter.fromKilometers(distance)} away',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                ),
-              ),
-              Text(
-                fare == null ? '—' : '₱${fare.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _submittingBidId != null
-                      ? null
-                      : () {
-                          setState(() {
-                            _activeBids.removeWhere(
-                              (b) => b['id'] == bid['id'],
-                            );
-                          });
-                        },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: AppTheme.borderSide),
-                    shape: const StadiumBorder(),
-                  ),
-                  child: const Text(
-                    'Decline',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: fare == null || _submittingBidId != null
-                      ? null
-                      : () => _acceptBid(bid),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: const StadiumBorder(),
-                  ),
-                  child: isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppTheme.surface,
-                          ),
-                        )
-                      : const Text(
-                          'Accept',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.surface,
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10, bottom: 8),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: AppTheme.primaryColor.withValues(alpha: 0.6),
-          letterSpacing: 1.2,
-        ),
-      ),
     );
   }
 }
