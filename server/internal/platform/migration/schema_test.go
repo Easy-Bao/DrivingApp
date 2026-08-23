@@ -66,3 +66,17 @@ func TestDriverDocumentsCarryPrivateObjectIntegrityMetadata(t *testing.T) {
 		}
 	}
 }
+
+func TestUserRolesHaveOneMembershipPerIdentityAndRole(t *testing.T) {
+	for _, column := range []string{"user_id", "role", "created_at"} {
+		if _, exists := entmigrate.UserRolesTable.Column(column); !exists {
+			t.Fatalf("user_roles.%s is missing from the generated schema", column)
+		}
+	}
+	for _, index := range entmigrate.UserRolesTable.Indexes {
+		if index.Name == "userrole_user_id_role" && index.Unique {
+			return
+		}
+	}
+	t.Fatal("user role membership uniqueness index is missing")
+}

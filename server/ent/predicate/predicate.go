@@ -48,5 +48,8 @@ type RideSettlement func(*sql.Selector)
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
+// UserRole is the predicate function for userrole builders.
+type UserRole func(*sql.Selector)
+
 // WalletLedger is the predicate function for walletledger builders.
 type WalletLedger func(*sql.Selector)
