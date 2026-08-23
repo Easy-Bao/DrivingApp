@@ -64,7 +64,7 @@ same daily totals.
 
 Idempotency protection is limited to durable domain commands such as ride,
 bid, profile, review, and chat mutations. Authentication, fare and location
-queries, telemetry, online-presence updates, and multipart document uploads do
+queries, telemetry, online-presence updates, and binary document uploads do
 not use the replay store. The shared mobile interceptor follows the same rule.
 
 To apply the additive migration plan against native PostgreSQL:
@@ -100,6 +100,34 @@ then requests profiles for those IDs through `GET /api/v1/drivers/online?ids=`.
 `POST /api/v1/location/matrix` accepts one origin and at most ten destinations
 and returns `distances_km` and `durations_min`; it performs one provider matrix
 request for multiple destinations and a directions request for one destination.
+
+### Private driver documents
+
+New driver documents are immutable objects under `DOCUMENT_STORAGE_DIR`; the
+directory is created with owner-only permissions and is never mounted as a
+public static route. Docker Compose persists it in the `document-data` volume.
+Legacy Redis-backed objects remain readable only through the same authorized
+content endpoints while deployments transition to filesystem storage.
+
+`POST /api/v1/driver/documents?type=driver_license` accepts a raw PDF, JPEG, or
+PNG body. The supported type values are `driver_license`,
+`vehicle_registration`, `vehicle_insurance`, and `government_id`. The declared
+media type must match the detected file signature; object size and checksum are
+recorded with the immutable revision.
+
+Drivers can list their own status and download only their own revisions.
+Configured administrators can page the review queue, download a private object,
+and make one final approve-or-reject decision:
+
+- `GET /api/v1/driver/documents/status`
+- `GET /api/v1/driver/documents/{id}/content`
+- `GET /api/v1/admin/documents?status=pending&limit=25&offset=0`
+- `GET /api/v1/admin/documents/{id}/content`
+- `PATCH /api/v1/admin/documents/{id}/review` with
+  `{"status":"approved"}` or `{"status":"rejected"}`
+
+Content responses are attachments with `Cache-Control: private, no-store`.
+Metadata responses never expose private object keys or checksums.
 
 ## Optional Docker Compose workflow
 
@@ -156,10 +184,10 @@ docker compose logs -f api
 # Rebuild after server code changes
 docker compose up --build -d api
 
-# Stop containers but preserve the PostgreSQL database
+# Stop containers but preserve the PostgreSQL database and private documents
 docker compose down
 
-# Stop containers and permanently delete the local database
+# Stop containers and permanently delete the local database and documents
 docker compose down --volumes
 ```
 
@@ -174,8 +202,9 @@ docker compose down --volumes
 | RabbitMQ | `5672` | Local message-broker inspection |
 
 Change the corresponding values in `.env` if any of those ports are already
-in use. PostgreSQL data is stored in the Docker-managed `postgres-data` volume,
-so it survives normal `docker compose down` commands.
+in use. PostgreSQL data and private driver documents are stored in the
+Docker-managed `postgres-data` and `document-data` volumes, so both survive
+normal `docker compose down` commands.
 
 ## Verify
 

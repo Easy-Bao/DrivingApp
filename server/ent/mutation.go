@@ -3807,18 +3807,26 @@ func (m *BidSessionMutation) ResetEdge(name string) error {
 // DriverDocumentMutation represents an operation that mutates the DriverDocument nodes in the graph.
 type DriverDocumentMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	driver_id     *int
-	adddriver_id  *int
-	document_type *string
-	storage_key   *string
-	status        *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*DriverDocument, error)
-	predicates    []predicate.DriverDocument
+	op              Op
+	typ             string
+	id              *int
+	driver_id       *int
+	adddriver_id    *int
+	document_type   *string
+	storage_key     *string
+	status          *string
+	content_type    *string
+	size_bytes      *int64
+	addsize_bytes   *int64
+	checksum_sha256 *string
+	created_at      *time.Time
+	reviewed_at     *time.Time
+	reviewed_by     *int
+	addreviewed_by  *int
+	clearedFields   map[string]struct{}
+	done            bool
+	oldValue        func(context.Context) (*DriverDocument, error)
+	predicates      []predicate.DriverDocument
 }
 
 var _ ent.Mutation = (*DriverDocumentMutation)(nil)
@@ -4083,6 +4091,289 @@ func (m *DriverDocumentMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetContentType sets the "content_type" field.
+func (m *DriverDocumentMutation) SetContentType(s string) {
+	m.content_type = &s
+}
+
+// ContentType returns the value of the "content_type" field in the mutation.
+func (m *DriverDocumentMutation) ContentType() (r string, exists bool) {
+	v := m.content_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContentType returns the old "content_type" field's value of the DriverDocument entity.
+// If the DriverDocument object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DriverDocumentMutation) OldContentType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContentType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContentType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContentType: %w", err)
+	}
+	return oldValue.ContentType, nil
+}
+
+// ResetContentType resets all changes to the "content_type" field.
+func (m *DriverDocumentMutation) ResetContentType() {
+	m.content_type = nil
+}
+
+// SetSizeBytes sets the "size_bytes" field.
+func (m *DriverDocumentMutation) SetSizeBytes(i int64) {
+	m.size_bytes = &i
+	m.addsize_bytes = nil
+}
+
+// SizeBytes returns the value of the "size_bytes" field in the mutation.
+func (m *DriverDocumentMutation) SizeBytes() (r int64, exists bool) {
+	v := m.size_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSizeBytes returns the old "size_bytes" field's value of the DriverDocument entity.
+// If the DriverDocument object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DriverDocumentMutation) OldSizeBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSizeBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSizeBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSizeBytes: %w", err)
+	}
+	return oldValue.SizeBytes, nil
+}
+
+// AddSizeBytes adds i to the "size_bytes" field.
+func (m *DriverDocumentMutation) AddSizeBytes(i int64) {
+	if m.addsize_bytes != nil {
+		*m.addsize_bytes += i
+	} else {
+		m.addsize_bytes = &i
+	}
+}
+
+// AddedSizeBytes returns the value that was added to the "size_bytes" field in this mutation.
+func (m *DriverDocumentMutation) AddedSizeBytes() (r int64, exists bool) {
+	v := m.addsize_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSizeBytes resets all changes to the "size_bytes" field.
+func (m *DriverDocumentMutation) ResetSizeBytes() {
+	m.size_bytes = nil
+	m.addsize_bytes = nil
+}
+
+// SetChecksumSha256 sets the "checksum_sha256" field.
+func (m *DriverDocumentMutation) SetChecksumSha256(s string) {
+	m.checksum_sha256 = &s
+}
+
+// ChecksumSha256 returns the value of the "checksum_sha256" field in the mutation.
+func (m *DriverDocumentMutation) ChecksumSha256() (r string, exists bool) {
+	v := m.checksum_sha256
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChecksumSha256 returns the old "checksum_sha256" field's value of the DriverDocument entity.
+// If the DriverDocument object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DriverDocumentMutation) OldChecksumSha256(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChecksumSha256 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChecksumSha256 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChecksumSha256: %w", err)
+	}
+	return oldValue.ChecksumSha256, nil
+}
+
+// ResetChecksumSha256 resets all changes to the "checksum_sha256" field.
+func (m *DriverDocumentMutation) ResetChecksumSha256() {
+	m.checksum_sha256 = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *DriverDocumentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *DriverDocumentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the DriverDocument entity.
+// If the DriverDocument object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DriverDocumentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *DriverDocumentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (m *DriverDocumentMutation) SetReviewedAt(t time.Time) {
+	m.reviewed_at = &t
+}
+
+// ReviewedAt returns the value of the "reviewed_at" field in the mutation.
+func (m *DriverDocumentMutation) ReviewedAt() (r time.Time, exists bool) {
+	v := m.reviewed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReviewedAt returns the old "reviewed_at" field's value of the DriverDocument entity.
+// If the DriverDocument object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DriverDocumentMutation) OldReviewedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReviewedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReviewedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReviewedAt: %w", err)
+	}
+	return oldValue.ReviewedAt, nil
+}
+
+// ClearReviewedAt clears the value of the "reviewed_at" field.
+func (m *DriverDocumentMutation) ClearReviewedAt() {
+	m.reviewed_at = nil
+	m.clearedFields[driverdocument.FieldReviewedAt] = struct{}{}
+}
+
+// ReviewedAtCleared returns if the "reviewed_at" field was cleared in this mutation.
+func (m *DriverDocumentMutation) ReviewedAtCleared() bool {
+	_, ok := m.clearedFields[driverdocument.FieldReviewedAt]
+	return ok
+}
+
+// ResetReviewedAt resets all changes to the "reviewed_at" field.
+func (m *DriverDocumentMutation) ResetReviewedAt() {
+	m.reviewed_at = nil
+	delete(m.clearedFields, driverdocument.FieldReviewedAt)
+}
+
+// SetReviewedBy sets the "reviewed_by" field.
+func (m *DriverDocumentMutation) SetReviewedBy(i int) {
+	m.reviewed_by = &i
+	m.addreviewed_by = nil
+}
+
+// ReviewedBy returns the value of the "reviewed_by" field in the mutation.
+func (m *DriverDocumentMutation) ReviewedBy() (r int, exists bool) {
+	v := m.reviewed_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReviewedBy returns the old "reviewed_by" field's value of the DriverDocument entity.
+// If the DriverDocument object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DriverDocumentMutation) OldReviewedBy(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReviewedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReviewedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReviewedBy: %w", err)
+	}
+	return oldValue.ReviewedBy, nil
+}
+
+// AddReviewedBy adds i to the "reviewed_by" field.
+func (m *DriverDocumentMutation) AddReviewedBy(i int) {
+	if m.addreviewed_by != nil {
+		*m.addreviewed_by += i
+	} else {
+		m.addreviewed_by = &i
+	}
+}
+
+// AddedReviewedBy returns the value that was added to the "reviewed_by" field in this mutation.
+func (m *DriverDocumentMutation) AddedReviewedBy() (r int, exists bool) {
+	v := m.addreviewed_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearReviewedBy clears the value of the "reviewed_by" field.
+func (m *DriverDocumentMutation) ClearReviewedBy() {
+	m.reviewed_by = nil
+	m.addreviewed_by = nil
+	m.clearedFields[driverdocument.FieldReviewedBy] = struct{}{}
+}
+
+// ReviewedByCleared returns if the "reviewed_by" field was cleared in this mutation.
+func (m *DriverDocumentMutation) ReviewedByCleared() bool {
+	_, ok := m.clearedFields[driverdocument.FieldReviewedBy]
+	return ok
+}
+
+// ResetReviewedBy resets all changes to the "reviewed_by" field.
+func (m *DriverDocumentMutation) ResetReviewedBy() {
+	m.reviewed_by = nil
+	m.addreviewed_by = nil
+	delete(m.clearedFields, driverdocument.FieldReviewedBy)
+}
+
 // Where appends a list predicates to the DriverDocumentMutation builder.
 func (m *DriverDocumentMutation) Where(ps ...predicate.DriverDocument) {
 	m.predicates = append(m.predicates, ps...)
@@ -4117,7 +4408,7 @@ func (m *DriverDocumentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DriverDocumentMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 10)
 	if m.driver_id != nil {
 		fields = append(fields, driverdocument.FieldDriverID)
 	}
@@ -4129,6 +4420,24 @@ func (m *DriverDocumentMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, driverdocument.FieldStatus)
+	}
+	if m.content_type != nil {
+		fields = append(fields, driverdocument.FieldContentType)
+	}
+	if m.size_bytes != nil {
+		fields = append(fields, driverdocument.FieldSizeBytes)
+	}
+	if m.checksum_sha256 != nil {
+		fields = append(fields, driverdocument.FieldChecksumSha256)
+	}
+	if m.created_at != nil {
+		fields = append(fields, driverdocument.FieldCreatedAt)
+	}
+	if m.reviewed_at != nil {
+		fields = append(fields, driverdocument.FieldReviewedAt)
+	}
+	if m.reviewed_by != nil {
+		fields = append(fields, driverdocument.FieldReviewedBy)
 	}
 	return fields
 }
@@ -4146,6 +4455,18 @@ func (m *DriverDocumentMutation) Field(name string) (ent.Value, bool) {
 		return m.StorageKey()
 	case driverdocument.FieldStatus:
 		return m.Status()
+	case driverdocument.FieldContentType:
+		return m.ContentType()
+	case driverdocument.FieldSizeBytes:
+		return m.SizeBytes()
+	case driverdocument.FieldChecksumSha256:
+		return m.ChecksumSha256()
+	case driverdocument.FieldCreatedAt:
+		return m.CreatedAt()
+	case driverdocument.FieldReviewedAt:
+		return m.ReviewedAt()
+	case driverdocument.FieldReviewedBy:
+		return m.ReviewedBy()
 	}
 	return nil, false
 }
@@ -4163,6 +4484,18 @@ func (m *DriverDocumentMutation) OldField(ctx context.Context, name string) (ent
 		return m.OldStorageKey(ctx)
 	case driverdocument.FieldStatus:
 		return m.OldStatus(ctx)
+	case driverdocument.FieldContentType:
+		return m.OldContentType(ctx)
+	case driverdocument.FieldSizeBytes:
+		return m.OldSizeBytes(ctx)
+	case driverdocument.FieldChecksumSha256:
+		return m.OldChecksumSha256(ctx)
+	case driverdocument.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case driverdocument.FieldReviewedAt:
+		return m.OldReviewedAt(ctx)
+	case driverdocument.FieldReviewedBy:
+		return m.OldReviewedBy(ctx)
 	}
 	return nil, fmt.Errorf("unknown DriverDocument field %s", name)
 }
@@ -4200,6 +4533,48 @@ func (m *DriverDocumentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
+	case driverdocument.FieldContentType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContentType(v)
+		return nil
+	case driverdocument.FieldSizeBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSizeBytes(v)
+		return nil
+	case driverdocument.FieldChecksumSha256:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChecksumSha256(v)
+		return nil
+	case driverdocument.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case driverdocument.FieldReviewedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReviewedAt(v)
+		return nil
+	case driverdocument.FieldReviewedBy:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReviewedBy(v)
+		return nil
 	}
 	return fmt.Errorf("unknown DriverDocument field %s", name)
 }
@@ -4211,6 +4586,12 @@ func (m *DriverDocumentMutation) AddedFields() []string {
 	if m.adddriver_id != nil {
 		fields = append(fields, driverdocument.FieldDriverID)
 	}
+	if m.addsize_bytes != nil {
+		fields = append(fields, driverdocument.FieldSizeBytes)
+	}
+	if m.addreviewed_by != nil {
+		fields = append(fields, driverdocument.FieldReviewedBy)
+	}
 	return fields
 }
 
@@ -4221,6 +4602,10 @@ func (m *DriverDocumentMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case driverdocument.FieldDriverID:
 		return m.AddedDriverID()
+	case driverdocument.FieldSizeBytes:
+		return m.AddedSizeBytes()
+	case driverdocument.FieldReviewedBy:
+		return m.AddedReviewedBy()
 	}
 	return nil, false
 }
@@ -4237,6 +4622,20 @@ func (m *DriverDocumentMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddDriverID(v)
 		return nil
+	case driverdocument.FieldSizeBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSizeBytes(v)
+		return nil
+	case driverdocument.FieldReviewedBy:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReviewedBy(v)
+		return nil
 	}
 	return fmt.Errorf("unknown DriverDocument numeric field %s", name)
 }
@@ -4244,7 +4643,14 @@ func (m *DriverDocumentMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *DriverDocumentMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(driverdocument.FieldReviewedAt) {
+		fields = append(fields, driverdocument.FieldReviewedAt)
+	}
+	if m.FieldCleared(driverdocument.FieldReviewedBy) {
+		fields = append(fields, driverdocument.FieldReviewedBy)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -4257,6 +4663,14 @@ func (m *DriverDocumentMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *DriverDocumentMutation) ClearField(name string) error {
+	switch name {
+	case driverdocument.FieldReviewedAt:
+		m.ClearReviewedAt()
+		return nil
+	case driverdocument.FieldReviewedBy:
+		m.ClearReviewedBy()
+		return nil
+	}
 	return fmt.Errorf("unknown DriverDocument nullable field %s", name)
 }
 
@@ -4275,6 +4689,24 @@ func (m *DriverDocumentMutation) ResetField(name string) error {
 		return nil
 	case driverdocument.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case driverdocument.FieldContentType:
+		m.ResetContentType()
+		return nil
+	case driverdocument.FieldSizeBytes:
+		m.ResetSizeBytes()
+		return nil
+	case driverdocument.FieldChecksumSha256:
+		m.ResetChecksumSha256()
+		return nil
+	case driverdocument.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case driverdocument.FieldReviewedAt:
+		m.ResetReviewedAt()
+		return nil
+	case driverdocument.FieldReviewedBy:
+		m.ResetReviewedBy()
 		return nil
 	}
 	return fmt.Errorf("unknown DriverDocument field %s", name)

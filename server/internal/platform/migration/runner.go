@@ -64,6 +64,11 @@ func NewRunner(database *sql.DB, client *ent.Client) *Runner {
 				name:    "optimize_driver_reporting_indexes",
 				apply:   applyReportingIndexes,
 			},
+			{
+				version: 2026082305,
+				name:    "secure_private_driver_documents",
+				apply:   applyPrivateDocumentMetadata,
+			},
 		},
 	}
 }

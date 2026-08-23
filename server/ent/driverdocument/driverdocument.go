@@ -3,6 +3,8 @@
 package driverdocument
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 )
 
@@ -19,6 +21,18 @@ const (
 	FieldStorageKey = "storage_key"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldContentType holds the string denoting the content_type field in the database.
+	FieldContentType = "content_type"
+	// FieldSizeBytes holds the string denoting the size_bytes field in the database.
+	FieldSizeBytes = "size_bytes"
+	// FieldChecksumSha256 holds the string denoting the checksum_sha256 field in the database.
+	FieldChecksumSha256 = "checksum_sha256"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldReviewedAt holds the string denoting the reviewed_at field in the database.
+	FieldReviewedAt = "reviewed_at"
+	// FieldReviewedBy holds the string denoting the reviewed_by field in the database.
+	FieldReviewedBy = "reviewed_by"
 	// Table holds the table name of the driverdocument in the database.
 	Table = "driver_documents"
 )
@@ -30,6 +44,12 @@ var Columns = []string{
 	FieldDocumentType,
 	FieldStorageKey,
 	FieldStatus,
+	FieldContentType,
+	FieldSizeBytes,
+	FieldChecksumSha256,
+	FieldCreatedAt,
+	FieldReviewedAt,
+	FieldReviewedBy,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -45,8 +65,30 @@ func ValidColumn(column string) bool {
 var (
 	// DriverIDValidator is a validator for the "driver_id" field. It is called by the builders before save.
 	DriverIDValidator func(int) error
+	// DocumentTypeValidator is a validator for the "document_type" field. It is called by the builders before save.
+	DocumentTypeValidator func(string) error
+	// StorageKeyValidator is a validator for the "storage_key" field. It is called by the builders before save.
+	StorageKeyValidator func(string) error
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus string
+	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	StatusValidator func(string) error
+	// DefaultContentType holds the default value on creation for the "content_type" field.
+	DefaultContentType string
+	// ContentTypeValidator is a validator for the "content_type" field. It is called by the builders before save.
+	ContentTypeValidator func(string) error
+	// DefaultSizeBytes holds the default value on creation for the "size_bytes" field.
+	DefaultSizeBytes int64
+	// SizeBytesValidator is a validator for the "size_bytes" field. It is called by the builders before save.
+	SizeBytesValidator func(int64) error
+	// DefaultChecksumSha256 holds the default value on creation for the "checksum_sha256" field.
+	DefaultChecksumSha256 string
+	// ChecksumSha256Validator is a validator for the "checksum_sha256" field. It is called by the builders before save.
+	ChecksumSha256Validator func(string) error
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
+	// ReviewedByValidator is a validator for the "reviewed_by" field. It is called by the builders before save.
+	ReviewedByValidator func(int) error
 )
 
 // OrderOption defines the ordering options for the DriverDocument queries.
@@ -75,4 +117,34 @@ func ByStorageKey(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByContentType orders the results by the content_type field.
+func ByContentType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContentType, opts...).ToFunc()
+}
+
+// BySizeBytes orders the results by the size_bytes field.
+func BySizeBytes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSizeBytes, opts...).ToFunc()
+}
+
+// ByChecksumSha256 orders the results by the checksum_sha256 field.
+func ByChecksumSha256(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldChecksumSha256, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByReviewedAt orders the results by the reviewed_at field.
+func ByReviewedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReviewedAt, opts...).ToFunc()
+}
+
+// ByReviewedBy orders the results by the reviewed_by field.
+func ByReviewedBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReviewedBy, opts...).ToFunc()
 }

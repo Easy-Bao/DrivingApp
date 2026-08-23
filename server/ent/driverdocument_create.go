@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -51,6 +52,90 @@ func (_c *DriverDocumentCreate) SetNillableStatus(v *string) *DriverDocumentCrea
 	return _c
 }
 
+// SetContentType sets the "content_type" field.
+func (_c *DriverDocumentCreate) SetContentType(v string) *DriverDocumentCreate {
+	_c.mutation.SetContentType(v)
+	return _c
+}
+
+// SetNillableContentType sets the "content_type" field if the given value is not nil.
+func (_c *DriverDocumentCreate) SetNillableContentType(v *string) *DriverDocumentCreate {
+	if v != nil {
+		_c.SetContentType(*v)
+	}
+	return _c
+}
+
+// SetSizeBytes sets the "size_bytes" field.
+func (_c *DriverDocumentCreate) SetSizeBytes(v int64) *DriverDocumentCreate {
+	_c.mutation.SetSizeBytes(v)
+	return _c
+}
+
+// SetNillableSizeBytes sets the "size_bytes" field if the given value is not nil.
+func (_c *DriverDocumentCreate) SetNillableSizeBytes(v *int64) *DriverDocumentCreate {
+	if v != nil {
+		_c.SetSizeBytes(*v)
+	}
+	return _c
+}
+
+// SetChecksumSha256 sets the "checksum_sha256" field.
+func (_c *DriverDocumentCreate) SetChecksumSha256(v string) *DriverDocumentCreate {
+	_c.mutation.SetChecksumSha256(v)
+	return _c
+}
+
+// SetNillableChecksumSha256 sets the "checksum_sha256" field if the given value is not nil.
+func (_c *DriverDocumentCreate) SetNillableChecksumSha256(v *string) *DriverDocumentCreate {
+	if v != nil {
+		_c.SetChecksumSha256(*v)
+	}
+	return _c
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (_c *DriverDocumentCreate) SetCreatedAt(v time.Time) *DriverDocumentCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *DriverDocumentCreate) SetNillableCreatedAt(v *time.Time) *DriverDocumentCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (_c *DriverDocumentCreate) SetReviewedAt(v time.Time) *DriverDocumentCreate {
+	_c.mutation.SetReviewedAt(v)
+	return _c
+}
+
+// SetNillableReviewedAt sets the "reviewed_at" field if the given value is not nil.
+func (_c *DriverDocumentCreate) SetNillableReviewedAt(v *time.Time) *DriverDocumentCreate {
+	if v != nil {
+		_c.SetReviewedAt(*v)
+	}
+	return _c
+}
+
+// SetReviewedBy sets the "reviewed_by" field.
+func (_c *DriverDocumentCreate) SetReviewedBy(v int) *DriverDocumentCreate {
+	_c.mutation.SetReviewedBy(v)
+	return _c
+}
+
+// SetNillableReviewedBy sets the "reviewed_by" field if the given value is not nil.
+func (_c *DriverDocumentCreate) SetNillableReviewedBy(v *int) *DriverDocumentCreate {
+	if v != nil {
+		_c.SetReviewedBy(*v)
+	}
+	return _c
+}
+
 // Mutation returns the DriverDocumentMutation object of the builder.
 func (_c *DriverDocumentCreate) Mutation() *DriverDocumentMutation {
 	return _c.mutation
@@ -90,6 +175,22 @@ func (_c *DriverDocumentCreate) defaults() {
 		v := driverdocument.DefaultStatus
 		_c.mutation.SetStatus(v)
 	}
+	if _, ok := _c.mutation.ContentType(); !ok {
+		v := driverdocument.DefaultContentType
+		_c.mutation.SetContentType(v)
+	}
+	if _, ok := _c.mutation.SizeBytes(); !ok {
+		v := driverdocument.DefaultSizeBytes
+		_c.mutation.SetSizeBytes(v)
+	}
+	if _, ok := _c.mutation.ChecksumSha256(); !ok {
+		v := driverdocument.DefaultChecksumSha256
+		_c.mutation.SetChecksumSha256(v)
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := driverdocument.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -105,11 +206,55 @@ func (_c *DriverDocumentCreate) check() error {
 	if _, ok := _c.mutation.DocumentType(); !ok {
 		return &ValidationError{Name: "document_type", err: errors.New(`ent: missing required field "DriverDocument.document_type"`)}
 	}
+	if v, ok := _c.mutation.DocumentType(); ok {
+		if err := driverdocument.DocumentTypeValidator(v); err != nil {
+			return &ValidationError{Name: "document_type", err: fmt.Errorf(`ent: validator failed for field "DriverDocument.document_type": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.StorageKey(); !ok {
 		return &ValidationError{Name: "storage_key", err: errors.New(`ent: missing required field "DriverDocument.storage_key"`)}
 	}
+	if v, ok := _c.mutation.StorageKey(); ok {
+		if err := driverdocument.StorageKeyValidator(v); err != nil {
+			return &ValidationError{Name: "storage_key", err: fmt.Errorf(`ent: validator failed for field "DriverDocument.storage_key": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "DriverDocument.status"`)}
+	}
+	if v, ok := _c.mutation.Status(); ok {
+		if err := driverdocument.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "DriverDocument.status": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.ContentType(); !ok {
+		return &ValidationError{Name: "content_type", err: errors.New(`ent: missing required field "DriverDocument.content_type"`)}
+	}
+	if v, ok := _c.mutation.ContentType(); ok {
+		if err := driverdocument.ContentTypeValidator(v); err != nil {
+			return &ValidationError{Name: "content_type", err: fmt.Errorf(`ent: validator failed for field "DriverDocument.content_type": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.SizeBytes(); !ok {
+		return &ValidationError{Name: "size_bytes", err: errors.New(`ent: missing required field "DriverDocument.size_bytes"`)}
+	}
+	if v, ok := _c.mutation.SizeBytes(); ok {
+		if err := driverdocument.SizeBytesValidator(v); err != nil {
+			return &ValidationError{Name: "size_bytes", err: fmt.Errorf(`ent: validator failed for field "DriverDocument.size_bytes": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.ChecksumSha256(); !ok {
+		return &ValidationError{Name: "checksum_sha256", err: errors.New(`ent: missing required field "DriverDocument.checksum_sha256"`)}
+	}
+	if v, ok := _c.mutation.ChecksumSha256(); ok {
+		if err := driverdocument.ChecksumSha256Validator(v); err != nil {
+			return &ValidationError{Name: "checksum_sha256", err: fmt.Errorf(`ent: validator failed for field "DriverDocument.checksum_sha256": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.ReviewedBy(); ok {
+		if err := driverdocument.ReviewedByValidator(v); err != nil {
+			return &ValidationError{Name: "reviewed_by", err: fmt.Errorf(`ent: validator failed for field "DriverDocument.reviewed_by": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -152,6 +297,30 @@ func (_c *DriverDocumentCreate) createSpec() (*DriverDocument, *sqlgraph.CreateS
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(driverdocument.FieldStatus, field.TypeString, value)
 		_node.Status = value
+	}
+	if value, ok := _c.mutation.ContentType(); ok {
+		_spec.SetField(driverdocument.FieldContentType, field.TypeString, value)
+		_node.ContentType = value
+	}
+	if value, ok := _c.mutation.SizeBytes(); ok {
+		_spec.SetField(driverdocument.FieldSizeBytes, field.TypeInt64, value)
+		_node.SizeBytes = value
+	}
+	if value, ok := _c.mutation.ChecksumSha256(); ok {
+		_spec.SetField(driverdocument.FieldChecksumSha256, field.TypeString, value)
+		_node.ChecksumSha256 = value
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(driverdocument.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.ReviewedAt(); ok {
+		_spec.SetField(driverdocument.FieldReviewedAt, field.TypeTime, value)
+		_node.ReviewedAt = &value
+	}
+	if value, ok := _c.mutation.ReviewedBy(); ok {
+		_spec.SetField(driverdocument.FieldReviewedBy, field.TypeInt, value)
+		_node.ReviewedBy = &value
 	}
 	return _node, _spec
 }

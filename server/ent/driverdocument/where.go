@@ -3,6 +3,8 @@
 package driverdocument
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent/predicate"
 )
@@ -70,6 +72,36 @@ func StorageKey(v string) predicate.DriverDocument {
 // Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
 func Status(v string) predicate.DriverDocument {
 	return predicate.DriverDocument(sql.FieldEQ(FieldStatus, v))
+}
+
+// ContentType applies equality check predicate on the "content_type" field. It's identical to ContentTypeEQ.
+func ContentType(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldContentType, v))
+}
+
+// SizeBytes applies equality check predicate on the "size_bytes" field. It's identical to SizeBytesEQ.
+func SizeBytes(v int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldSizeBytes, v))
+}
+
+// ChecksumSha256 applies equality check predicate on the "checksum_sha256" field. It's identical to ChecksumSha256EQ.
+func ChecksumSha256(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldChecksumSha256, v))
+}
+
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// ReviewedAt applies equality check predicate on the "reviewed_at" field. It's identical to ReviewedAtEQ.
+func ReviewedAt(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldReviewedAt, v))
+}
+
+// ReviewedBy applies equality check predicate on the "reviewed_by" field. It's identical to ReviewedByEQ.
+func ReviewedBy(v int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldReviewedBy, v))
 }
 
 // DriverIDEQ applies the EQ predicate on the "driver_id" field.
@@ -305,6 +337,316 @@ func StatusEqualFold(v string) predicate.DriverDocument {
 // StatusContainsFold applies the ContainsFold predicate on the "status" field.
 func StatusContainsFold(v string) predicate.DriverDocument {
 	return predicate.DriverDocument(sql.FieldContainsFold(FieldStatus, v))
+}
+
+// ContentTypeEQ applies the EQ predicate on the "content_type" field.
+func ContentTypeEQ(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldContentType, v))
+}
+
+// ContentTypeNEQ applies the NEQ predicate on the "content_type" field.
+func ContentTypeNEQ(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNEQ(FieldContentType, v))
+}
+
+// ContentTypeIn applies the In predicate on the "content_type" field.
+func ContentTypeIn(vs ...string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldIn(FieldContentType, vs...))
+}
+
+// ContentTypeNotIn applies the NotIn predicate on the "content_type" field.
+func ContentTypeNotIn(vs ...string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNotIn(FieldContentType, vs...))
+}
+
+// ContentTypeGT applies the GT predicate on the "content_type" field.
+func ContentTypeGT(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGT(FieldContentType, v))
+}
+
+// ContentTypeGTE applies the GTE predicate on the "content_type" field.
+func ContentTypeGTE(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGTE(FieldContentType, v))
+}
+
+// ContentTypeLT applies the LT predicate on the "content_type" field.
+func ContentTypeLT(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLT(FieldContentType, v))
+}
+
+// ContentTypeLTE applies the LTE predicate on the "content_type" field.
+func ContentTypeLTE(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLTE(FieldContentType, v))
+}
+
+// ContentTypeContains applies the Contains predicate on the "content_type" field.
+func ContentTypeContains(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldContains(FieldContentType, v))
+}
+
+// ContentTypeHasPrefix applies the HasPrefix predicate on the "content_type" field.
+func ContentTypeHasPrefix(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldHasPrefix(FieldContentType, v))
+}
+
+// ContentTypeHasSuffix applies the HasSuffix predicate on the "content_type" field.
+func ContentTypeHasSuffix(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldHasSuffix(FieldContentType, v))
+}
+
+// ContentTypeEqualFold applies the EqualFold predicate on the "content_type" field.
+func ContentTypeEqualFold(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEqualFold(FieldContentType, v))
+}
+
+// ContentTypeContainsFold applies the ContainsFold predicate on the "content_type" field.
+func ContentTypeContainsFold(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldContainsFold(FieldContentType, v))
+}
+
+// SizeBytesEQ applies the EQ predicate on the "size_bytes" field.
+func SizeBytesEQ(v int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldSizeBytes, v))
+}
+
+// SizeBytesNEQ applies the NEQ predicate on the "size_bytes" field.
+func SizeBytesNEQ(v int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNEQ(FieldSizeBytes, v))
+}
+
+// SizeBytesIn applies the In predicate on the "size_bytes" field.
+func SizeBytesIn(vs ...int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldIn(FieldSizeBytes, vs...))
+}
+
+// SizeBytesNotIn applies the NotIn predicate on the "size_bytes" field.
+func SizeBytesNotIn(vs ...int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNotIn(FieldSizeBytes, vs...))
+}
+
+// SizeBytesGT applies the GT predicate on the "size_bytes" field.
+func SizeBytesGT(v int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGT(FieldSizeBytes, v))
+}
+
+// SizeBytesGTE applies the GTE predicate on the "size_bytes" field.
+func SizeBytesGTE(v int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGTE(FieldSizeBytes, v))
+}
+
+// SizeBytesLT applies the LT predicate on the "size_bytes" field.
+func SizeBytesLT(v int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLT(FieldSizeBytes, v))
+}
+
+// SizeBytesLTE applies the LTE predicate on the "size_bytes" field.
+func SizeBytesLTE(v int64) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLTE(FieldSizeBytes, v))
+}
+
+// ChecksumSha256EQ applies the EQ predicate on the "checksum_sha256" field.
+func ChecksumSha256EQ(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256NEQ applies the NEQ predicate on the "checksum_sha256" field.
+func ChecksumSha256NEQ(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNEQ(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256In applies the In predicate on the "checksum_sha256" field.
+func ChecksumSha256In(vs ...string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldIn(FieldChecksumSha256, vs...))
+}
+
+// ChecksumSha256NotIn applies the NotIn predicate on the "checksum_sha256" field.
+func ChecksumSha256NotIn(vs ...string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNotIn(FieldChecksumSha256, vs...))
+}
+
+// ChecksumSha256GT applies the GT predicate on the "checksum_sha256" field.
+func ChecksumSha256GT(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGT(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256GTE applies the GTE predicate on the "checksum_sha256" field.
+func ChecksumSha256GTE(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGTE(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256LT applies the LT predicate on the "checksum_sha256" field.
+func ChecksumSha256LT(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLT(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256LTE applies the LTE predicate on the "checksum_sha256" field.
+func ChecksumSha256LTE(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLTE(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256Contains applies the Contains predicate on the "checksum_sha256" field.
+func ChecksumSha256Contains(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldContains(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256HasPrefix applies the HasPrefix predicate on the "checksum_sha256" field.
+func ChecksumSha256HasPrefix(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldHasPrefix(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256HasSuffix applies the HasSuffix predicate on the "checksum_sha256" field.
+func ChecksumSha256HasSuffix(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldHasSuffix(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256EqualFold applies the EqualFold predicate on the "checksum_sha256" field.
+func ChecksumSha256EqualFold(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEqualFold(FieldChecksumSha256, v))
+}
+
+// ChecksumSha256ContainsFold applies the ContainsFold predicate on the "checksum_sha256" field.
+func ChecksumSha256ContainsFold(v string) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldContainsFold(FieldChecksumSha256, v))
+}
+
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNotIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGT(FieldCreatedAt, v))
+}
+
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGTE(FieldCreatedAt, v))
+}
+
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLT(FieldCreatedAt, v))
+}
+
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// ReviewedAtEQ applies the EQ predicate on the "reviewed_at" field.
+func ReviewedAtEQ(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldReviewedAt, v))
+}
+
+// ReviewedAtNEQ applies the NEQ predicate on the "reviewed_at" field.
+func ReviewedAtNEQ(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNEQ(FieldReviewedAt, v))
+}
+
+// ReviewedAtIn applies the In predicate on the "reviewed_at" field.
+func ReviewedAtIn(vs ...time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldIn(FieldReviewedAt, vs...))
+}
+
+// ReviewedAtNotIn applies the NotIn predicate on the "reviewed_at" field.
+func ReviewedAtNotIn(vs ...time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNotIn(FieldReviewedAt, vs...))
+}
+
+// ReviewedAtGT applies the GT predicate on the "reviewed_at" field.
+func ReviewedAtGT(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGT(FieldReviewedAt, v))
+}
+
+// ReviewedAtGTE applies the GTE predicate on the "reviewed_at" field.
+func ReviewedAtGTE(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGTE(FieldReviewedAt, v))
+}
+
+// ReviewedAtLT applies the LT predicate on the "reviewed_at" field.
+func ReviewedAtLT(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLT(FieldReviewedAt, v))
+}
+
+// ReviewedAtLTE applies the LTE predicate on the "reviewed_at" field.
+func ReviewedAtLTE(v time.Time) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLTE(FieldReviewedAt, v))
+}
+
+// ReviewedAtIsNil applies the IsNil predicate on the "reviewed_at" field.
+func ReviewedAtIsNil() predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldIsNull(FieldReviewedAt))
+}
+
+// ReviewedAtNotNil applies the NotNil predicate on the "reviewed_at" field.
+func ReviewedAtNotNil() predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNotNull(FieldReviewedAt))
+}
+
+// ReviewedByEQ applies the EQ predicate on the "reviewed_by" field.
+func ReviewedByEQ(v int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldEQ(FieldReviewedBy, v))
+}
+
+// ReviewedByNEQ applies the NEQ predicate on the "reviewed_by" field.
+func ReviewedByNEQ(v int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNEQ(FieldReviewedBy, v))
+}
+
+// ReviewedByIn applies the In predicate on the "reviewed_by" field.
+func ReviewedByIn(vs ...int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldIn(FieldReviewedBy, vs...))
+}
+
+// ReviewedByNotIn applies the NotIn predicate on the "reviewed_by" field.
+func ReviewedByNotIn(vs ...int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNotIn(FieldReviewedBy, vs...))
+}
+
+// ReviewedByGT applies the GT predicate on the "reviewed_by" field.
+func ReviewedByGT(v int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGT(FieldReviewedBy, v))
+}
+
+// ReviewedByGTE applies the GTE predicate on the "reviewed_by" field.
+func ReviewedByGTE(v int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldGTE(FieldReviewedBy, v))
+}
+
+// ReviewedByLT applies the LT predicate on the "reviewed_by" field.
+func ReviewedByLT(v int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLT(FieldReviewedBy, v))
+}
+
+// ReviewedByLTE applies the LTE predicate on the "reviewed_by" field.
+func ReviewedByLTE(v int) predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldLTE(FieldReviewedBy, v))
+}
+
+// ReviewedByIsNil applies the IsNil predicate on the "reviewed_by" field.
+func ReviewedByIsNil() predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldIsNull(FieldReviewedBy))
+}
+
+// ReviewedByNotNil applies the NotNil predicate on the "reviewed_by" field.
+func ReviewedByNotNil() predicate.DriverDocument {
+	return predicate.DriverDocument(sql.FieldNotNull(FieldReviewedBy))
 }
 
 // And groups predicates with the AND operator between them.

@@ -4,31 +4,17 @@ import (
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 )
 
 type Handler struct {
-	service    *usecase.Service
-	verifier   *token.Verifier
-	authorizer *security.AdminAuthorizer
+	service *usecase.Service
 }
 
-func NewHandler(service *usecase.Service, verifier *token.Verifier, authorizer *security.AdminAuthorizer) *Handler {
-	return &Handler{service: service, verifier: verifier, authorizer: authorizer}
+func NewHandler(service *usecase.Service) *Handler {
+	return &Handler{service: service}
 }
 func (handler *Handler) Stats(w http.ResponseWriter, r *http.Request) {
-	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
-	if !ok {
-		writeError(w, 401, "unauthorized")
-		return
-	}
-	if !handler.authorizer.IsAdmin(identity.Subject) {
-		writeError(w, 403, "forbidden")
-		return
-	}
 	stats, err := handler.service.DashboardStats(r.Context())
 	if err != nil {
 		writeError(w, 500, "Dashboard statistics are temporarily unavailable.")

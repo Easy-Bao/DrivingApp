@@ -109,10 +109,46 @@ func init() {
 	driverdocumentDescDriverID := driverdocumentFields[0].Descriptor()
 	// driverdocument.DriverIDValidator is a validator for the "driver_id" field. It is called by the builders before save.
 	driverdocument.DriverIDValidator = driverdocumentDescDriverID.Validators[0].(func(int) error)
+	// driverdocumentDescDocumentType is the schema descriptor for document_type field.
+	driverdocumentDescDocumentType := driverdocumentFields[1].Descriptor()
+	// driverdocument.DocumentTypeValidator is a validator for the "document_type" field. It is called by the builders before save.
+	driverdocument.DocumentTypeValidator = driverdocumentDescDocumentType.Validators[0].(func(string) error)
+	// driverdocumentDescStorageKey is the schema descriptor for storage_key field.
+	driverdocumentDescStorageKey := driverdocumentFields[2].Descriptor()
+	// driverdocument.StorageKeyValidator is a validator for the "storage_key" field. It is called by the builders before save.
+	driverdocument.StorageKeyValidator = driverdocumentDescStorageKey.Validators[0].(func(string) error)
 	// driverdocumentDescStatus is the schema descriptor for status field.
 	driverdocumentDescStatus := driverdocumentFields[3].Descriptor()
 	// driverdocument.DefaultStatus holds the default value on creation for the status field.
 	driverdocument.DefaultStatus = driverdocumentDescStatus.Default.(string)
+	// driverdocument.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	driverdocument.StatusValidator = driverdocumentDescStatus.Validators[0].(func(string) error)
+	// driverdocumentDescContentType is the schema descriptor for content_type field.
+	driverdocumentDescContentType := driverdocumentFields[4].Descriptor()
+	// driverdocument.DefaultContentType holds the default value on creation for the content_type field.
+	driverdocument.DefaultContentType = driverdocumentDescContentType.Default.(string)
+	// driverdocument.ContentTypeValidator is a validator for the "content_type" field. It is called by the builders before save.
+	driverdocument.ContentTypeValidator = driverdocumentDescContentType.Validators[0].(func(string) error)
+	// driverdocumentDescSizeBytes is the schema descriptor for size_bytes field.
+	driverdocumentDescSizeBytes := driverdocumentFields[5].Descriptor()
+	// driverdocument.DefaultSizeBytes holds the default value on creation for the size_bytes field.
+	driverdocument.DefaultSizeBytes = driverdocumentDescSizeBytes.Default.(int64)
+	// driverdocument.SizeBytesValidator is a validator for the "size_bytes" field. It is called by the builders before save.
+	driverdocument.SizeBytesValidator = driverdocumentDescSizeBytes.Validators[0].(func(int64) error)
+	// driverdocumentDescChecksumSha256 is the schema descriptor for checksum_sha256 field.
+	driverdocumentDescChecksumSha256 := driverdocumentFields[6].Descriptor()
+	// driverdocument.DefaultChecksumSha256 holds the default value on creation for the checksum_sha256 field.
+	driverdocument.DefaultChecksumSha256 = driverdocumentDescChecksumSha256.Default.(string)
+	// driverdocument.ChecksumSha256Validator is a validator for the "checksum_sha256" field. It is called by the builders before save.
+	driverdocument.ChecksumSha256Validator = driverdocumentDescChecksumSha256.Validators[0].(func(string) error)
+	// driverdocumentDescCreatedAt is the schema descriptor for created_at field.
+	driverdocumentDescCreatedAt := driverdocumentFields[7].Descriptor()
+	// driverdocument.DefaultCreatedAt holds the default value on creation for the created_at field.
+	driverdocument.DefaultCreatedAt = driverdocumentDescCreatedAt.Default.(func() time.Time)
+	// driverdocumentDescReviewedBy is the schema descriptor for reviewed_by field.
+	driverdocumentDescReviewedBy := driverdocumentFields[9].Descriptor()
+	// driverdocument.ReviewedByValidator is a validator for the "reviewed_by" field. It is called by the builders before save.
+	driverdocument.ReviewedByValidator = driverdocumentDescReviewedBy.Validators[0].(func(int) error)
 	driverprofileFields := schema.DriverProfile{}.Fields()
 	_ = driverprofileFields
 	// driverprofileDescUserID is the schema descriptor for user_id field.

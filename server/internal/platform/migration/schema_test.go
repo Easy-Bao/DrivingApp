@@ -37,3 +37,32 @@ func TestRideEarningsQueriesHaveACompositeIndex(t *testing.T) {
 		}
 	}
 }
+
+func TestDriverDocumentsCarryPrivateObjectIntegrityMetadata(t *testing.T) {
+	for _, column := range []string{
+		"content_type",
+		"size_bytes",
+		"checksum_sha256",
+		"created_at",
+		"reviewed_at",
+		"reviewed_by",
+	} {
+		if _, exists := entmigrate.DriverDocumentsTable.Column(column); !exists {
+			t.Fatalf("driver_documents.%s is missing from the generated schema", column)
+		}
+	}
+	wantedIndexes := map[string]bool{
+		"driver_document_driver_type_created_at": false,
+		"driver_document_status_created_at":      false,
+	}
+	for _, index := range entmigrate.DriverDocumentsTable.Indexes {
+		if _, exists := wantedIndexes[index.Name]; exists {
+			wantedIndexes[index.Name] = true
+		}
+	}
+	for name, exists := range wantedIndexes {
+		if !exists {
+			t.Fatalf("driver document index %q is missing", name)
+		}
+	}
+}

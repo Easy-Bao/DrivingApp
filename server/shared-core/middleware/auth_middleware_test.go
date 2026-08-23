@@ -100,3 +100,42 @@ func TestRequireAuthRejectsNonNumericSubject(t *testing.T) {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusUnauthorized)
 	}
 }
+
+func TestRequireAdminUsesTheVerifiedPrincipalAtTheRouteBoundary(t *testing.T) {
+	manager := security.NewTokenManager("admin-middleware-test-secret")
+	adminToken, err := manager.IssueWithRole("42", security.RolePassenger)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nonAdminToken, err := manager.IssueWithRole("7", security.RoleDriver)
+	if err != nil {
+		t.Fatal(err)
+	}
+	protected := RequireAuth(manager)(RequireAdmin(security.NewAdminAuthorizer("42"))(
+		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			writer.WriteHeader(http.StatusNoContent)
+		}),
+	))
+
+	for _, test := range []struct {
+		name   string
+		token  string
+		status int
+	}{
+		{name: "missing authentication", status: http.StatusUnauthorized},
+		{name: "non administrator", token: nonAdminToken, status: http.StatusForbidden},
+		{name: "administrator", token: adminToken, status: http.StatusNoContent},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodGet, "/", nil)
+			if test.token != "" {
+				request.Header.Set("Authorization", "Bearer "+test.token)
+			}
+			response := httptest.NewRecorder()
+			protected.ServeHTTP(response, request)
+			if response.Code != test.status {
+				t.Fatalf("status = %d, want %d", response.Code, test.status)
+			}
+		})
+	}
+}

@@ -117,8 +117,19 @@ func main() {
 	))
 	usersRouter := usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(databaseClient)), verifier)
 	documentRepository := documentpostgres.NewRepository(databaseClient)
+	privateDocumentStorage, err := documentstorage.NewFileStorage(documentStorageDirectory())
+	if err != nil {
+		log.Fatal(err)
+	}
 	documentRouter := documenthttp.NewRouter(
-		documentusecase.NewService(documentRepository, documentstorage.NewRedisStorage(redisClient)),
+		documentusecase.NewService(
+			documentRepository,
+			documentstorage.NewCompatibleStorage(
+				privateDocumentStorage,
+				documentstorage.NewRedisLegacyReader(redisClient),
+			),
+			securityConfig.UploadBodyLimit,
+		),
 		verifier,
 		adminAuthorizer,
 	)
@@ -263,4 +274,11 @@ func requiredJWTSecret() string {
 		log.Fatal(err)
 	}
 	return secret
+}
+
+func documentStorageDirectory() string {
+	if directory := strings.TrimSpace(os.Getenv("DOCUMENT_STORAGE_DIR")); directory != "" {
+		return directory
+	}
+	return "var/private/documents"
 }

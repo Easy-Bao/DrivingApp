@@ -64,6 +64,23 @@ func RequireRole(roles ...string) func(http.Handler) http.Handler {
 	}
 }
 
+func RequireAdmin(authorizer *security.AdminAuthorizer) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			principal, ok := PrincipalFromRequest(request)
+			if !ok {
+				response.Error(writer, http.StatusUnauthorized, "unauthorized")
+				return
+			}
+			if authorizer == nil || !authorizer.IsAdmin(strconv.Itoa(principal.UserID)) {
+				response.Error(writer, http.StatusForbidden, "forbidden")
+				return
+			}
+			next.ServeHTTP(writer, request)
+		})
+	}
+}
+
 func IdentityFromRequest(request *http.Request, tokenManager *security.TokenManager) (security.Identity, bool) {
 	if request == nil {
 		return security.Identity{}, false

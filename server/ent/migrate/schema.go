@@ -141,9 +141,15 @@ var (
 	DriverDocumentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "driver_id", Type: field.TypeInt},
-		{Name: "document_type", Type: field.TypeString},
-		{Name: "storage_key", Type: field.TypeString},
-		{Name: "status", Type: field.TypeString, Default: "pending"},
+		{Name: "document_type", Type: field.TypeString, Size: 64},
+		{Name: "storage_key", Type: field.TypeString, Size: 160},
+		{Name: "status", Type: field.TypeString, Size: 16, Default: "pending"},
+		{Name: "content_type", Type: field.TypeString, Size: 64, Default: "application/octet-stream"},
+		{Name: "size_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "checksum_sha256", Type: field.TypeString, Size: 64, Default: ""},
+		{Name: "created_at", Type: field.TypeTime, Default: schema.Expr("CURRENT_TIMESTAMP")},
+		{Name: "reviewed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "reviewed_by", Type: field.TypeInt, Nullable: true},
 	}
 	// DriverDocumentsTable holds the schema information for the "driver_documents" table.
 	DriverDocumentsTable = &schema.Table{
@@ -152,9 +158,14 @@ var (
 		PrimaryKey: []*schema.Column{DriverDocumentsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "driverdocument_driver_id_document_type",
+				Name:    "driver_document_driver_type_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DriverDocumentsColumns[1], DriverDocumentsColumns[2]},
+				Columns: []*schema.Column{DriverDocumentsColumns[1], DriverDocumentsColumns[2], DriverDocumentsColumns[8]},
+			},
+			{
+				Name:    "driver_document_status_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{DriverDocumentsColumns[4], DriverDocumentsColumns[8]},
 			},
 		},
 	}

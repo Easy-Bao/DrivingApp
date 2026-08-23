@@ -1,5 +1,5 @@
 package dto
 
-type UploadQuery struct {
-	DocumentType string
+type ReviewRequest struct {
+	Status string `json:"status"`
 }

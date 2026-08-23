@@ -33,6 +33,7 @@ migrate_working_dir/
 **/build/
 /build/
 /coverage/
+/server/var/
 pubspec_overrides.yaml
 
 # Symbolication related

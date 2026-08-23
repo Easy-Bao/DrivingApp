@@ -80,6 +80,7 @@ services:
       POSTGRES_CONNECTION_MAX_IDLE_TIME: ${POSTGRES_CONNECTION_MAX_IDLE_TIME:-5m}
       POSTGRES_PING_TIMEOUT: ${POSTGRES_PING_TIMEOUT:-5s}
       REPORTING_TIMEZONE: ${REPORTING_TIMEZONE:-Asia/Manila}
+      DOCUMENT_STORAGE_DIR: /var/lib/driveapp/documents
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -89,6 +90,8 @@ services:
         condition: service_healthy
     ports:
       - "${GATEWAY_PORT:-8000}:8000"
+    volumes:
+      - document-data:/var/lib/driveapp/documents
 
   admin-app:
     build:
@@ -107,3 +110,4 @@ services:
 
 volumes:
   postgres-data:
+  document-data:

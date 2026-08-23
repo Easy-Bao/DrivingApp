@@ -11,14 +11,18 @@ import (
 )
 
 type Router struct {
-	handler  *handler.Handler
-	verifier *token.Verifier
+	handler    *handler.Handler
+	verifier   *token.Verifier
+	authorizer *security.AdminAuthorizer
 }
 
 func NewRouter(service *usecase.Service, verifier *token.Verifier, authorizer *security.AdminAuthorizer) *Router {
-	return &Router{handler: handler.NewHandler(service, verifier, authorizer), verifier: verifier}
+	return &Router{handler: handler.NewHandler(service), verifier: verifier, authorizer: authorizer}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.With(middleware.RequireAuth(router.verifier)).Get(api.V1Prefix+"/admin/stats", router.handler.Stats)
+	mux.With(
+		middleware.RequireAuth(router.verifier),
+		middleware.RequireAdmin(router.authorizer),
+	).Get(api.V1Prefix+"/admin/stats", router.handler.Stats)
 }
