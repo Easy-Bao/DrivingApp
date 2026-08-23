@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 class RetryInterceptor extends Interceptor {
   final Dio dio;
+
   RetryInterceptor(this.dio);
 
   @override
