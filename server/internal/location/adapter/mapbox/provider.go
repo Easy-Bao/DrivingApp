@@ -23,6 +23,7 @@ const (
 	searchURL                      = "https://api.mapbox.com/search/searchbox/v1"
 	geocodingURL                   = "https://api.mapbox.com/search/geocode/v6"
 	directionsURL                  = "https://api.mapbox.com/directions/v5/mapbox"
+	matrixURL                      = "https://api.mapbox.com/directions-matrix/v1/mapbox/driving"
 	nearbyPageSize                 = 10
 	maxNearbyPage                  = 100
 	maxSearchQueryBytes            = 256
@@ -469,6 +470,12 @@ type directionsResponse struct {
 	Routes []mapboxRoute `json:"routes"`
 }
 
+type matrixResponse struct {
+	Code      string       `json:"code"`
+	Distances [][]*float64 `json:"distances"`
+	Durations [][]*float64 `json:"durations"`
+}
+
 type mapboxRoute struct {
 	Distance float64 `json:"distance"`
 	Duration float64 `json:"duration"`
@@ -520,6 +527,65 @@ func (provider *Provider) Route(ctx context.Context, origin, destination domain.
 		DurationMin: selected.Duration / 60,
 		Polyline:    selected.Geometry.Coordinates,
 	}, nil
+}
+
+func (provider *Provider) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {
+	if !origin.Valid() || len(destinations) == 0 || len(destinations) > 10 {
+		return nil, fmt.Errorf("invalid travel matrix coordinates")
+	}
+	for _, destination := range destinations {
+		if !destination.Valid() {
+			return nil, fmt.Errorf("invalid travel matrix coordinates")
+		}
+	}
+	if len(destinations) == 1 {
+		route, err := provider.Route(ctx, origin, destinations[0], domain.RouteOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return &domain.Matrix{
+			DistancesKm:  []float64{route.DistanceKm},
+			DurationsMin: []float64{route.DurationMin},
+		}, nil
+	}
+
+	coordinates := make([]string, 0, len(destinations)+1)
+	coordinates = append(coordinates, coordinate(origin.Longitude)+","+coordinate(origin.Latitude))
+	destinationIndexes := make([]string, 0, len(destinations))
+	for index, destination := range destinations {
+		coordinates = append(coordinates, coordinate(destination.Longitude)+","+coordinate(destination.Latitude))
+		destinationIndexes = append(destinationIndexes, strconv.Itoa(index+1))
+	}
+	queryParams := url.Values{
+		"access_token": {provider.token},
+		"annotations":  {"distance,duration"},
+		"sources":      {"0"},
+		"destinations": {strings.Join(destinationIndexes, ";")},
+	}
+	var response matrixResponse
+	endpoint := matrixURL + "/" + strings.Join(coordinates, ";") + "?" + queryParams.Encode()
+	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
+		return nil, err
+	}
+	if response.Code != "Ok" || len(response.Distances) != 1 || len(response.Durations) != 1 ||
+		len(response.Distances[0]) != len(destinations) || len(response.Durations[0]) != len(destinations) {
+		return nil, fmt.Errorf("location provider returned an invalid travel matrix")
+	}
+	matrix := &domain.Matrix{
+		DistancesKm:  make([]float64, len(destinations)),
+		DurationsMin: make([]float64, len(destinations)),
+	}
+	for index := range destinations {
+		distance := response.Distances[0][index]
+		duration := response.Durations[0][index]
+		if distance == nil || duration == nil || math.IsNaN(*distance) || math.IsInf(*distance, 0) ||
+			math.IsNaN(*duration) || math.IsInf(*duration, 0) || *distance < 0 || *duration < 0 {
+			return nil, fmt.Errorf("location provider could not route every travel matrix destination")
+		}
+		matrix.DistancesKm[index] = *distance / 1000
+		matrix.DurationsMin[index] = *duration / 60
+	}
+	return matrix, nil
 }
 
 func selectRoute(routes []mapboxRoute, preference domain.RoutePreference) mapboxRoute {

@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
@@ -25,7 +24,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   _EarningsPeriod _selectedPeriod = _EarningsPeriod.weekly;
   double _periodTotal = 0;
   int _periodTripsCount = 0;
-  List<Map<String, dynamic>> _completedTrips = const [];
+  Map<_EarningsPeriod, _EarningsSummary> _summaries = const {};
   List<_EarnDay> _dailyData = const [];
 
   @override
@@ -61,7 +60,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     }
 
     final result = await Modular.get<IDriverActivityRepository>()
-        .fetchTripHistory(driverId);
+        .fetchEarningsSummary(driverId);
     if (!mounted) return;
 
     result.fold(
@@ -71,19 +70,11 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           _errorMessage = ErrorHandler.getErrorMessage(failure);
         });
       },
-      (trips) {
-        final completedTrips = trips
-            .where(
-              (trip) =>
-                  trip is Map &&
-                  RideStatus.fromString(trip['status'] as String? ?? '') ==
-                      RideStatus.completed,
-            )
-            .map((trip) => Map<String, dynamic>.from(trip as Map))
-            .toList();
-        final summary = _buildSummary(_selectedPeriod, completedTrips);
+      (data) {
+        final summaries = _parseSummaries(data);
+        final summary = summaries[_selectedPeriod]!;
         setState(() {
-          _completedTrips = completedTrips;
+          _summaries = summaries;
           _applySummary(summary);
           _isLoading = false;
         });
@@ -94,7 +85,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   void _selectPeriod(int index) {
     final period = _EarningsPeriod.values[index];
     if (_selectedPeriod == period) return;
-    final summary = _buildSummary(period, _completedTrips);
+    final summary = _summaries[period];
+    if (summary == null) return;
     setState(() {
       _selectedPeriod = period;
       _applySummary(summary);
@@ -107,97 +99,89 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     _dailyData = summary.days;
   }
 
-  _EarningsSummary _buildSummary(
-    _EarningsPeriod period,
-    List<Map<String, dynamic>> trips,
+  Map<_EarningsPeriod, _EarningsSummary> _parseSummaries(
+    Map<String, dynamic> data,
   ) {
+    final today = _parsePeriod(data['today']);
+    final week = _parsePeriod(data['this_week']);
+    final month = _parsePeriod(data['this_month']);
     final now = DateTime.now();
-    final today = _startOfDay(now);
-    late DateTime start;
-    late DateTime end;
-    late List<_EarnDay> days;
+    final weekdays = _parseBuckets(
+      data['weekdays'],
+      (index, date) => _weekdayLabel(date?.weekday ?? index + 1),
+      now,
+    );
+    final monthWeeks = _parseBuckets(
+      data['month_weeks'],
+      (index, _) => 'W${index + 1}',
+      now,
+      currentIndex: (now.day - 1) ~/ 7,
+    );
+    return {
+      _EarningsPeriod.daily: _EarningsSummary(
+        total: today.total,
+        tripsCount: today.tripsCount,
+        days: [_EarnDay('Today', today.total, isCurrent: true)],
+      ),
+      _EarningsPeriod.weekly: _EarningsSummary(
+        total: week.total,
+        tripsCount: week.tripsCount,
+        days: weekdays,
+      ),
+      _EarningsPeriod.monthly: _EarningsSummary(
+        total: month.total,
+        tripsCount: month.tripsCount,
+        days: monthWeeks,
+      ),
+    };
+  }
 
-    switch (period) {
-      case _EarningsPeriod.daily:
-        start = today;
-        end = today.add(const Duration(days: 1));
-        days = [_EarnDay('Today', 0, isCurrent: true)];
-      case _EarningsPeriod.weekly:
-        start = _startOfWeek(now);
-        end = start.add(const Duration(days: 7));
-        days = List.generate(7, (index) {
-          final date = start.add(Duration(days: index));
-          return _EarnDay(_weekdayLabel(date.weekday), 0, date: date);
-        });
-      case _EarningsPeriod.monthly:
-        start = DateTime(now.year, now.month);
-        end = DateTime(now.year, now.month + 1);
-        days = List.generate(5, (index) {
-          final weekStart = start.add(Duration(days: index * 7));
-          return _EarnDay(
-            'W${index + 1}',
-            0,
-            date: weekStart,
-            isCurrent:
-                now.year == start.year &&
-                now.month == start.month &&
-                ((now.day - 1) ~/ 7) == index,
-          );
-        });
-    }
-
-    final amounts = List<double>.filled(days.length, 0);
-    var tripsCount = 0;
-
-    for (final trip in trips) {
-      final tripDate = _tripDate(trip);
-      if (tripDate == null ||
-          tripDate.isBefore(start) ||
-          !tripDate.isBefore(end)) {
-        continue;
-      }
-
-      tripsCount++;
-      final fare = driverFareInPesos(trip);
-      if (fare != null) {
-        final index = switch (period) {
-          _EarningsPeriod.daily => 0,
-          _EarningsPeriod.weekly => tripDate.weekday - 1,
-          _EarningsPeriod.monthly => ((tripDate.day - 1) ~/ 7).clamp(0, 4),
-        };
-        amounts[index] += fare;
-      }
-    }
-
-    final summaryDays = [
-      for (var index = 0; index < days.length; index++)
-        days[index].copyWith(amount: amounts[index]),
-    ];
+  _EarningsSummary _parsePeriod(Object? raw) {
+    final data = raw is Map
+        ? Map<String, dynamic>.from(raw)
+        : const <String, dynamic>{};
     return _EarningsSummary(
-      total: amounts.fold(0, (sum, amount) => sum + amount),
-      tripsCount: tripsCount,
-      days: summaryDays,
+      total: SafeParse.toDouble(data['earnings_centavos']) / 100,
+      tripsCount: SafeParse.toInt(data['completed_trips']),
+      days: const [],
     );
   }
 
-  DateTime? _tripDate(Map<String, dynamic> trip) {
-    final rawDate =
-        driverValueAsString(trip['completed_at']) ??
-        driverValueAsString(trip['created_at']);
-    if (rawDate == null) return null;
-    try {
-      return DateTime.parse(rawDate).toLocal();
-    } catch (_) {
-      return null;
-    }
+  List<_EarnDay> _parseBuckets(
+    Object? raw,
+    String Function(int index, DateTime? date) label,
+    DateTime now, {
+    int? currentIndex,
+  }) {
+    if (raw is! List) return const [];
+    return [
+      for (var index = 0; index < raw.length; index++)
+        if (raw[index] is Map)
+          _bucketDay(
+            Map<String, dynamic>.from(raw[index] as Map),
+            label,
+            index,
+            now,
+            currentIndex,
+          ),
+    ];
   }
 
-  DateTime _startOfDay(DateTime value) =>
-      DateTime(value.year, value.month, value.day);
-
-  DateTime _startOfWeek(DateTime value) {
-    final day = _startOfDay(value);
-    return day.subtract(Duration(days: day.weekday - 1));
+  _EarnDay _bucketDay(
+    Map<String, dynamic> bucket,
+    String Function(int index, DateTime? date) label,
+    int index,
+    DateTime now,
+    int? currentIndex,
+  ) {
+    final date = DateTime.tryParse(
+      SafeParse.toStringValue(bucket['start_date']),
+    );
+    return _EarnDay(
+      label(index, date),
+      SafeParse.toDouble(bucket['earnings_centavos']) / 100,
+      isCurrent: currentIndex == index || (date != null && _sameDay(date, now)),
+    );
   }
 
   String _weekdayLabel(int weekday) {
@@ -274,7 +258,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 720),
                           child: Skeletonizer(
-                            enabled: _isLoading && _completedTrips.isNotEmpty,
+                            enabled: _isLoading && _summaries.isNotEmpty,
                             child: SizedBox(
                               width: double.infinity,
                               child: Column(
@@ -320,7 +304,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             ),
             const SizedBox(height: 8),
             Text(
-              'We could not load your completed rides. Try again when you have a stable connection.',
+              'We could not load your earnings summary. Try again when you have a stable connection.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -658,17 +642,9 @@ class _EarningsSummary {
 class _EarnDay {
   final String day;
   final double amount;
-  final DateTime? date;
   final bool isCurrent;
 
-  const _EarnDay(this.day, this.amount, {this.date, this.isCurrent = false});
-
-  _EarnDay copyWith({double? amount}) => _EarnDay(
-    day,
-    amount ?? this.amount,
-    date: date,
-    isCurrent: isCurrent || (date != null && _sameDay(date!, DateTime.now())),
-  );
+  const _EarnDay(this.day, this.amount, {this.isCurrent = false});
 }
 
 bool _sameDay(DateTime left, DateTime right) =>

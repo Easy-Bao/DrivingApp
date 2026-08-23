@@ -9,6 +9,8 @@ part 'activity_state.dart';
 class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   final IActivityRepository _repository;
 
+  static const _pageSize = 25;
+
   static const _pastStatuses = {RideStatus.completed, RideStatus.cancelled};
 
   static const _upcomingStatuses = {
@@ -23,6 +25,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
       super(const ActivityInitial()) {
     on<LoadActivityEvent>(_onLoad);
     on<RefreshActivityEvent>(_onRefresh);
+    on<LoadMoreActivityEvent>(_onLoadMore);
   }
 
   Future<void> _onLoad(
@@ -50,24 +53,88 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     String passengerId,
     Emitter<ActivityState> emit,
   ) async {
-    final result = await _repository.fetchRideHistory(passengerId);
+    final result = await _repository.fetchActivityOverview(
+      passengerId,
+      limit: _pageSize,
+    );
     result.fold(
       (failure) =>
           emit(ActivityError(message: ErrorHandler.getErrorMessage(failure))),
-      (rides) {
-        final past = rides
-            .where(
-              (r) => _pastStatuses.contains(RideStatus.fromString(r.status)),
-            )
-            .toList();
-        final upcoming = rides
-            .where(
-              (r) =>
-                  _upcomingStatuses.contains(RideStatus.fromString(r.status)),
-            )
-            .toList();
-        emit(ActivityLoaded(past: past, upcoming: upcoming));
+      (overview) {
+        emit(
+          _loadedState(
+            overview.rides,
+            weeklyFareCentavos: overview.weeklyFareCentavos,
+            weeklyRideCount: overview.weeklyRideCount,
+          ),
+        );
       },
+    );
+  }
+
+  Future<void> _onLoadMore(
+    LoadMoreActivityEvent event,
+    Emitter<ActivityState> emit,
+  ) async {
+    final current = state;
+    if (current is! ActivityLoaded ||
+        !current.hasMore ||
+        current.nextOffset == null ||
+        current.isLoadingMore) {
+      return;
+    }
+    emit(current.copyWith(isLoadingMore: true, clearLoadMoreError: true));
+    final result = await _repository.fetchRideHistory(
+      event.passengerId,
+      limit: _pageSize,
+      offset: current.nextOffset!,
+    );
+    result.fold(
+      (failure) => emit(
+        current.copyWith(
+          loadMoreError: ErrorHandler.getErrorMessage(failure),
+          isLoadingMore: false,
+        ),
+      ),
+      (page) {
+        final ridesById = <String, RideHistoryModel>{
+          for (final ride in current.rides) ride.id: ride,
+          for (final ride in page.items) ride.id: ride,
+        };
+        emit(
+          _loadedState(
+            page,
+            rides: ridesById.values.toList(),
+            weeklyFareCentavos: current.weeklyFareCentavos,
+            weeklyRideCount: current.weeklyRideCount,
+          ),
+        );
+      },
+    );
+  }
+
+  ActivityLoaded _loadedState(
+    OffsetPage<RideHistoryModel> page, {
+    List<RideHistoryModel>? rides,
+    required int weeklyFareCentavos,
+    required int weeklyRideCount,
+  }) {
+    final allRides = rides ?? page.items;
+    final past = allRides
+        .where((r) => _pastStatuses.contains(RideStatus.fromString(r.status)))
+        .toList();
+    final upcoming = allRides
+        .where(
+          (r) => _upcomingStatuses.contains(RideStatus.fromString(r.status)),
+        )
+        .toList();
+    return ActivityLoaded(
+      past: past,
+      upcoming: upcoming,
+      hasMore: page.hasMore,
+      nextOffset: page.nextOffset,
+      weeklyFareCentavos: weeklyFareCentavos,
+      weeklyRideCount: weeklyRideCount,
     );
   }
 }

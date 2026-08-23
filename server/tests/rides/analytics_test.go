@@ -3,6 +3,7 @@ package rides_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
@@ -24,7 +25,7 @@ func (analyticsRepository) AcceptBid(context.Context, int, int) (domain.Bid, dom
 func (analyticsRepository) Get(context.Context, int) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
-func (analyticsRepository) DriverStats(context.Context, int) (domain.DriverStats, error) {
+func (analyticsRepository) DriverStats(context.Context, int, time.Time, time.Time) (domain.DriverStats, error) {
 	return domain.DriverStats{
 		DriverID:            7,
 		TotalTrips:          3,
@@ -33,11 +34,17 @@ func (analyticsRepository) DriverStats(context.Context, int) (domain.DriverStats
 		TodayEarnings:       2817,
 	}, nil
 }
-func (analyticsRepository) DriverTrips(context.Context, int) ([]domain.Ride, error) {
+func (analyticsRepository) DriverEarnings(context.Context, int, time.Time, time.Time) ([]domain.DriverEarning, error) {
+	return []domain.DriverEarning{{CompletedAt: time.Now(), PayoutCentavos: 2817}}, nil
+}
+func (analyticsRepository) DriverTrips(context.Context, int, domain.TripHistoryQuery) ([]domain.Ride, error) {
 	return []domain.Ride{{ID: 3}}, nil
 }
-func (analyticsRepository) PassengerRides(context.Context, int) ([]domain.Ride, error) {
+func (analyticsRepository) PassengerRides(context.Context, int, domain.TripHistoryQuery) ([]domain.Ride, error) {
 	return []domain.Ride{{ID: 2}}, nil
+}
+func (analyticsRepository) PassengerActivitySummary(context.Context, int, time.Time, time.Time) (domain.PassengerActivitySummary, error) {
+	return domain.PassengerActivitySummary{ThisWeekFareCentavos: 2817, ThisWeekCompletedRides: 1}, nil
 }
 func (analyticsRepository) DriverReviews(context.Context, int, int, int) ([]domain.Review, error) {
 	return []domain.Review{{Rating: 5}}, nil
@@ -46,7 +53,7 @@ func (analyticsRepository) CreateReview(_ context.Context, review domain.Review)
 	review.ID = 1
 	return review, nil
 }
-func (analyticsRepository) OnlineDrivers(context.Context) ([]domain.OnlineDriver, error) {
+func (analyticsRepository) OnlineDrivers(context.Context, []int) ([]domain.OnlineDriver, error) {
 	return []domain.OnlineDriver{{
 		ID:                    7,
 		UserID:                7,
@@ -55,6 +62,11 @@ func (analyticsRepository) OnlineDrivers(context.Context) ([]domain.OnlineDriver
 		PlateNumber:           "XYZ-123",
 		Rating:                4.8,
 		OnboardPassengerCount: 1,
+	}}, nil
+}
+func (analyticsRepository) PublicDriverSummaries(context.Context, int) ([]domain.PublicDriverSummary, error) {
+	return []domain.PublicDriverSummary{{
+		ID: 7, Name: "Ada Driver", VehicleType: "Motorcycle", Rating: 4.8,
 	}}, nil
 }
 func (passengerReviewRepository) CreatePassengerReview(_ context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
@@ -73,7 +85,7 @@ func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 	if err != nil || stats.TotalTrips != 3 {
 		t.Fatalf("driver stats = %#v, %v", stats, err)
 	}
-	trips, err := service.PassengerRides(context.Background(), 8)
+	trips, err := service.PassengerRides(context.Background(), 8, domain.TripHistoryQuery{Limit: 25})
 	if err != nil || len(trips) != 1 || trips[0].ID != 2 {
 		t.Fatalf("passenger rides = %#v, %v", trips, err)
 	}

@@ -15,11 +15,13 @@ var (
 	ErrInvalidCoordinates  = errors.New("location coordinates are invalid")
 	ErrInvalidNearbyPage   = errors.New("location page is invalid")
 	ErrInvalidRouteOptions = errors.New("location route options are invalid")
+	ErrInvalidMatrix       = errors.New("location matrix request is invalid")
 )
 
 const (
-	maxSearchQueryBytes = 256
-	maxNearbyPage       = 100
+	maxSearchQueryBytes   = 256
+	maxNearbyPage         = 100
+	maxMatrixDestinations = 10
 )
 
 type Service struct {
@@ -109,4 +111,34 @@ func (service *Service) Route(ctx context.Context, origin, destination domain.Co
 		return nil, fmt.Errorf("%w: %v", ErrInvalidRouteOptions, err)
 	}
 	return service.provider.Route(ctx, origin, destination, normalizedOptions)
+}
+
+func (service *Service) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {
+	if !origin.Valid() || len(destinations) == 0 || len(destinations) > maxMatrixDestinations {
+		return nil, ErrInvalidMatrix
+	}
+	for _, destination := range destinations {
+		if !destination.Valid() {
+			return nil, ErrInvalidMatrix
+		}
+	}
+	key := matrixCacheKey(origin, destinations)
+	var matrix domain.Matrix
+	if service.cache != nil && service.cache.Get(ctx, key, &matrix) == nil {
+		return &matrix, nil
+	}
+	result, err := service.provider.Matrix(ctx, origin, destinations)
+	if err == nil && service.cache != nil {
+		_ = service.cache.Set(ctx, key, result)
+	}
+	return result, err
+}
+
+func matrixCacheKey(origin domain.Coordinates, destinations []domain.Coordinates) string {
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "matrix:%.4f:%.4f", origin.Latitude, origin.Longitude)
+	for _, destination := range destinations {
+		fmt.Fprintf(&builder, ":%.4f:%.4f", destination.Latitude, destination.Longitude)
+	}
+	return builder.String()
 }

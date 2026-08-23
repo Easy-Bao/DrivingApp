@@ -213,12 +213,38 @@ func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 403, "forbidden")
 		return
 	}
-	items, err := handler.service.PassengerRides(r.Context(), targetID)
+	page, err := sharedrequest.ParseOffsetPagination(r.URL.Query(), 25, 100)
+	if err != nil {
+		errorJSON(w, http.StatusBadRequest, "invalid pagination")
+		return
+	}
+	items, err := handler.service.PassengerRides(r.Context(), targetID, domain.TripHistoryQuery{
+		Limit: page.Limit, Offset: page.Offset,
+	})
 	if err != nil {
 		errorJSON(w, 500, "Your trip history is temporarily unavailable.")
 		return
 	}
-	jsonJSON(w, 200, items)
+	jsonJSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
+}
+
+func (handler *Handler) PassengerActivitySummary(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		errorJSON(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || targetID != actorID {
+		errorJSON(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	summary, err := handler.service.PassengerActivitySummary(r.Context(), targetID)
+	if err != nil {
+		errorJSON(w, http.StatusServiceUnavailable, "Passenger activity is temporarily unavailable.")
+		return
+	}
+	jsonJSON(w, http.StatusOK, summary)
 }
 
 func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
@@ -241,21 +267,26 @@ func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 500, "Driver statistics are temporarily unavailable.")
 		return
 	}
-	// Keep both naming styles while clients finish their API contract cutover.
-	jsonJSON(w, 200, map[string]any{
-		"driver_id":               stats.DriverID,
-		"total_trips":             stats.TotalTrips,
-		"completed_trips":         stats.CompletedTrips,
-		"active_trips":            stats.ActiveTrips,
-		"total_fare_centavos":     stats.TotalFare,
-		"today_completed_trips":   stats.TodayCompletedTrips,
-		"today_earnings_centavos": stats.TodayEarnings,
-		"average_rating":          stats.AverageRating,
-		"totalTrips":              stats.TotalTrips,
-		"completedTrips":          stats.CompletedTrips,
-		"todayCompletedTrips":     stats.TodayCompletedTrips,
-		"todayEarningsCentavos":   stats.TodayEarnings,
-	})
+	jsonJSON(w, 200, stats)
+}
+
+func (handler *Handler) DriverEarnings(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		errorJSON(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || driverID != actorID {
+		errorJSON(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	summary, err := handler.service.DriverEarnings(r.Context(), driverID)
+	if err != nil {
+		errorJSON(w, http.StatusServiceUnavailable, "Driver earnings are temporarily unavailable.")
+		return
+	}
+	jsonJSON(w, http.StatusOK, summary)
 }
 
 func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
@@ -273,12 +304,32 @@ func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 403, "forbidden")
 		return
 	}
-	items, err := handler.service.DriverTrips(r.Context(), driverID)
+	activeOnly := false
+	defaultLimit := 25
+	maxLimit := 100
+	switch r.URL.Query().Get("scope") {
+	case "", "all":
+	case "active":
+		activeOnly = true
+		defaultLimit = 10
+		maxLimit = 20
+	default:
+		errorJSON(w, http.StatusBadRequest, "invalid trip scope")
+		return
+	}
+	page, err := sharedrequest.ParseOffsetPagination(r.URL.Query(), defaultLimit, maxLimit)
+	if err != nil {
+		errorJSON(w, http.StatusBadRequest, "invalid pagination")
+		return
+	}
+	items, err := handler.service.DriverTrips(r.Context(), driverID, domain.TripHistoryQuery{
+		Limit: page.Limit, Offset: page.Offset, ActiveOnly: activeOnly,
+	})
 	if err != nil {
 		errorJSON(w, 500, "Driver trip history is temporarily unavailable.")
 		return
 	}
-	jsonJSON(w, 200, items)
+	jsonJSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
 }
 
 func (handler *Handler) DriverReviews(w http.ResponseWriter, r *http.Request) {
@@ -291,11 +342,12 @@ func (handler *Handler) DriverReviews(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 400, "invalid driver id")
 		return
 	}
-	limit := queryInt(r, "limit", 20)
-	if limit > 100 {
-		limit = 100
+	page, err := sharedrequest.ParseOffsetPagination(r.URL.Query(), 20, 100)
+	if err != nil {
+		errorJSON(w, http.StatusBadRequest, "invalid pagination")
+		return
 	}
-	items, err := handler.service.DriverReviews(r.Context(), driverID, limit, queryInt(r, "offset", 0))
+	items, err := handler.service.DriverReviews(r.Context(), driverID, page.Limit, page.Offset)
 	if err != nil {
 		errorJSON(w, 500, "Driver reviews are temporarily unavailable.")
 		return
@@ -356,7 +408,12 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, 401, "unauthorized")
 		return
 	}
-	items, err := handler.service.OnlineDrivers(r.Context())
+	driverIDs, err := driverIDsFromQuery(r)
+	if err != nil {
+		errorJSON(w, http.StatusBadRequest, "driver ids are required")
+		return
+	}
+	items, err := handler.service.OnlineDrivers(r.Context(), driverIDs)
 	if err != nil {
 		errorJSON(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
@@ -365,44 +422,45 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Request) {
-	items, err := handler.service.OnlineDrivers(r.Context())
+	limit := 5
+	if r.URL.Query().Has("limit") {
+		var err error
+		limit, err = strconv.Atoi(r.URL.Query().Get("limit"))
+		if err != nil || limit <= 0 || limit > 20 {
+			errorJSON(w, http.StatusBadRequest, "invalid limit")
+			return
+		}
+	}
+	summaries, err := handler.service.PublicDriverSummaries(r.Context(), limit)
 	if err != nil {
 		errorJSON(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
-
-	limit := queryInt(r, "limit", 5)
-	if limit == 0 {
-		limit = 5
-	}
-	if limit > 20 {
-		limit = 20
-	}
-
-	summaries := make([]domain.PublicDriverSummary, 0, min(limit, len(items)))
-	for _, item := range items {
-		if item.ID <= 0 {
-			continue
-		}
-		summaries = append(summaries, domain.PublicDriverSummary{
-			ID:          item.ID,
-			Name:        item.Name,
-			VehicleType: item.VehicleType,
-			Rating:      item.Rating,
-		})
-		if len(summaries) == limit {
-			break
-		}
-	}
 	jsonJSON(w, 200, summaries)
 }
 
-func queryInt(r *http.Request, key string, fallback int) int {
-	value, err := strconv.Atoi(r.URL.Query().Get(key))
-	if err != nil || value < 0 {
-		return fallback
+func driverIDsFromQuery(request *http.Request) ([]int, error) {
+	values := strings.Split(request.URL.Query().Get("ids"), ",")
+	if len(values) == 0 || len(values) > 20 {
+		return nil, errors.New("invalid driver ids")
 	}
-	return value
+	ids := make([]int, 0, len(values))
+	seen := make(map[int]struct{}, len(values))
+	for _, value := range values {
+		id, err := strconv.Atoi(strings.TrimSpace(value))
+		if err != nil || id <= 0 {
+			return nil, errors.New("invalid driver id")
+		}
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil, errors.New("driver ids are required")
+	}
+	return ids, nil
 }
 
 func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {

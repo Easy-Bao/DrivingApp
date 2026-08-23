@@ -6,6 +6,32 @@ import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_
 class MockDio extends Mock implements Dio {}
 
 void main() {
+  test('requests profiles only for bounded nearby driver ids', () async {
+    final dio = MockDio();
+    final dataSource = BiddingRemoteDataSourceImpl(dio);
+    when(
+      () => dio.get<List<dynamic>>(
+        any(),
+        queryParameters: any<Map<String, dynamic>>(named: 'queryParameters'),
+      ),
+    ).thenAnswer(
+      (_) async => Response<List<dynamic>>(
+        requestOptions: RequestOptions(path: '/api/v1/drivers/online'),
+        statusCode: 200,
+        data: const [],
+      ),
+    );
+
+    await dataSource.fetchOnlineDrivers(const ['7', '9']);
+
+    verify(
+      () => dio.get<List<dynamic>>(
+        '/api/v1/drivers/online',
+        queryParameters: <String, dynamic>{'ids': '7,9'},
+      ),
+    ).called(1);
+  });
+
   test('reads driver telemetry through the ride-scoped endpoint', () async {
     final dio = MockDio();
     final dataSource = BiddingRemoteDataSourceImpl(dio);

@@ -52,6 +52,7 @@ class PassengerModule extends Module {
       ..addLazySingleton<IDriverRepository>(
         (i) => DriverRepository(
           biddingDataSource: i.get<BiddingRemoteDataSource>(),
+          locationApiClient: i.get<ILocationApiClient>(),
         ),
       )
       ..addLazySingleton<ITrackRepository>(

@@ -157,7 +157,7 @@ void main() {
         if (options.uri.path == '/api/v1/location/matrix') {
           return ResponseBody.fromString(
             jsonEncode({
-              'distancesKm': [1.25, 3.5],
+              'distances_km': [1.25, 3.5],
               'durationsMin': [4.0, 9.0],
             }),
             200,

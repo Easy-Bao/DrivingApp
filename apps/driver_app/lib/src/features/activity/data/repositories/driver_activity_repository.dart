@@ -35,11 +35,30 @@ class DriverActivityRepository implements IDriverActivityRepository {
   }
 
   @override
-  Future<Either<Failure, List<dynamic>>> fetchTripHistory(
+  Future<Either<Failure, OffsetPage<Map<String, dynamic>>>> fetchTripHistory(
+    String driverId, {
+    int limit = 25,
+    int offset = 0,
+  }) async {
+    try {
+      return Right(
+        await _remoteDataSource.fetchTripHistory(
+          driverId,
+          limit: limit,
+          offset: offset,
+        ),
+      );
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> fetchEarningsSummary(
     String driverId,
   ) async {
     try {
-      return Right(await _remoteDataSource.fetchTripHistory(driverId));
+      return Right(await _remoteDataSource.fetchEarningsSummary(driverId));
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }

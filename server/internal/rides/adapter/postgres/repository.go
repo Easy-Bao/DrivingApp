@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -604,52 +605,13 @@ func (repository *Repository) Session(ctx context.Context, sessionID int) (domai
 	return fromSession(item), nil
 }
 
-func (repository *Repository) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
-	totalTrips, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID)).Count(ctx)
-	if err != nil {
-		return domain.DriverStats{}, err
-	}
-	completedMetrics, err := aggregateRideMetrics(
+func (repository *Repository) DriverStats(ctx context.Context, driverID int, dayStart, dayEnd time.Time) (domain.DriverStats, error) {
+	rideMetrics, err := aggregateDriverRideMetrics(
 		ctx,
-		repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID), ride.StatusEQ("completed")),
+		repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID)),
+		dayStart,
+		dayEnd,
 	)
-	if err != nil {
-		return domain.DriverStats{}, err
-	}
-	now := time.Now()
-	startOfDay := time.Date(
-		now.Year(),
-		now.Month(),
-		now.Day(),
-		0,
-		0,
-		0,
-		0,
-		now.Location(),
-	)
-	endOfDay := startOfDay.AddDate(0, 0, 1)
-	todayCompletedMetrics, err := aggregateRideMetrics(
-		ctx,
-		repository.client.Ride.Query().Where(
-			ride.DriverIDEQ(driverID),
-			ride.StatusEQ("completed"),
-			ride.Or(
-				ride.And(ride.CompletedAtGTE(startOfDay), ride.CompletedAtLT(endOfDay)),
-				ride.And(
-					ride.CompletedAtIsNil(),
-					ride.CreatedAtGTE(startOfDay),
-					ride.CreatedAtLT(endOfDay),
-				),
-			),
-		),
-	)
-	if err != nil {
-		return domain.DriverStats{}, err
-	}
-	activeTrips, err := repository.client.Ride.Query().Where(
-		ride.DriverIDEQ(driverID),
-		ride.StatusNotIn("completed", "cancelled", "canceled"),
-	).Count(ctx)
 	if err != nil {
 		return domain.DriverStats{}, err
 	}
@@ -667,45 +629,125 @@ func (repository *Repository) DriverStats(ctx context.Context, driverID int) (do
 	}
 	return domain.DriverStats{
 		DriverID:            driverID,
-		TotalTrips:          totalTrips,
-		CompletedTrips:      int(completedMetrics.Count),
-		ActiveTrips:         activeTrips,
-		TotalFare:           completedMetrics.FareCentavos,
-		TodayCompletedTrips: int(todayCompletedMetrics.Count),
-		TodayEarnings:       todayCompletedMetrics.DriverPayoutCentavos,
+		TotalTrips:          int(rideMetrics.TotalTrips),
+		CompletedTrips:      int(rideMetrics.CompletedTrips),
+		ActiveTrips:         int(rideMetrics.ActiveTrips),
+		TotalEarnings:       rideMetrics.TotalEarningsCentavos,
+		TodayCompletedTrips: int(rideMetrics.TodayCompletedTrips),
+		TodayEarnings:       rideMetrics.TodayEarningsCentavos,
 		AverageRating:       averageRating,
 	}, nil
 }
 
-type rideMetrics struct {
-	Count                int64 `json:"trip_count"`
-	FareCentavos         int64 `json:"fare_centavos"`
-	DriverPayoutCentavos int64 `json:"driver_payout_centavos"`
+func (repository *Repository) DriverEarnings(ctx context.Context, driverID int, monthStart, monthEnd time.Time) ([]domain.DriverEarning, error) {
+	items, err := repository.client.Ride.Query().Where(
+		ride.DriverIDEQ(driverID),
+		ride.StatusEQ("completed"),
+		ride.Or(
+			ride.And(ride.CompletedAtNotNil(), ride.CompletedAtGTE(monthStart), ride.CompletedAtLT(monthEnd)),
+			ride.And(ride.CompletedAtIsNil(), ride.CreatedAtGTE(monthStart), ride.CreatedAtLT(monthEnd)),
+		),
+	).Select(
+		ride.FieldCreatedAt,
+		ride.FieldCompletedAt,
+		ride.FieldDriverPayoutCentavos,
+	).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.DriverEarning, 0, len(items))
+	for _, item := range items {
+		completedAt := item.CompletedAt
+		if completedAt.IsZero() {
+			completedAt = item.CreatedAt
+		}
+		result = append(result, domain.DriverEarning{
+			CompletedAt: completedAt, PayoutCentavos: item.DriverPayoutCentavos,
+		})
+	}
+	return result, nil
 }
 
-func aggregateRideMetrics(ctx context.Context, query *ent.RideQuery) (rideMetrics, error) {
-	var rows []rideMetrics
+type driverRideMetrics struct {
+	TotalTrips            int64 `json:"total_trips"`
+	CompletedTrips        int64 `json:"completed_trips"`
+	ActiveTrips           int64 `json:"active_trips"`
+	TotalEarningsCentavos int64 `json:"total_earnings_centavos"`
+	TodayCompletedTrips   int64 `json:"today_completed_trips"`
+	TodayEarningsCentavos int64 `json:"today_earnings_centavos"`
+}
+
+func aggregateDriverRideMetrics(ctx context.Context, query *ent.RideQuery, dayStart, dayEnd time.Time) (driverRideMetrics, error) {
+	startLiteral := dayStart.UTC().Format(time.RFC3339Nano)
+	endLiteral := dayEnd.UTC().Format(time.RFC3339Nano)
+	var rows []driverRideMetrics
 	if err := query.Aggregate(
-		ent.As(ent.Count(), "trip_count"),
-		ent.As(ent.Sum(ride.FieldFareCentavos), "fare_centavos"),
-		ent.As(ent.Sum(ride.FieldDriverPayoutCentavos), "driver_payout_centavos"),
+		ent.As(ent.Count(), "total_trips"),
+		driverRideAggregate("completed_trips", func(selector *entsql.Selector) string {
+			return fmt.Sprintf("COUNT(*) FILTER (WHERE %s = 'completed')", selector.C(ride.FieldStatus))
+		}),
+		driverRideAggregate("active_trips", func(selector *entsql.Selector) string {
+			return fmt.Sprintf("COUNT(*) FILTER (WHERE %s IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit'))", selector.C(ride.FieldStatus))
+		}),
+		driverRideAggregate("total_earnings_centavos", func(selector *entsql.Selector) string {
+			return fmt.Sprintf("COALESCE(SUM(%s) FILTER (WHERE %s = 'completed'), 0)", selector.C(ride.FieldDriverPayoutCentavos), selector.C(ride.FieldStatus))
+		}),
+		driverRideAggregate("today_completed_trips", func(selector *entsql.Selector) string {
+			return fmt.Sprintf("COUNT(*) FILTER (WHERE %s)", completedDuring(selector, startLiteral, endLiteral))
+		}),
+		driverRideAggregate("today_earnings_centavos", func(selector *entsql.Selector) string {
+			return fmt.Sprintf("COALESCE(SUM(%s) FILTER (WHERE %s), 0)", selector.C(ride.FieldDriverPayoutCentavos), completedDuring(selector, startLiteral, endLiteral))
+		}),
 	).Scan(ctx, &rows); err != nil {
-		return rideMetrics{}, err
+		return driverRideMetrics{}, err
 	}
 	if len(rows) == 0 {
-		return rideMetrics{}, nil
+		return driverRideMetrics{}, nil
 	}
 	return rows[0], nil
 }
 
-func (repository *Repository) DriverTrips(ctx context.Context, driverID int) ([]domain.Ride, error) {
-	items, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID)).Order(ride.ByID()).All(ctx)
+func driverRideAggregate(alias string, expression func(*entsql.Selector) string) ent.AggregateFunc {
+	return func(selector *entsql.Selector) string {
+		return entsql.As(expression(selector), alias)
+	}
+}
+
+func completedDuring(selector *entsql.Selector, start, end string) string {
+	statusColumn := selector.C(ride.FieldStatus)
+	completedColumn := selector.C(ride.FieldCompletedAt)
+	createdColumn := selector.C(ride.FieldCreatedAt)
+	return fmt.Sprintf(
+		"%s = 'completed' AND ((%s >= TIMESTAMPTZ '%s' AND %s < TIMESTAMPTZ '%s') OR (%s IS NULL AND %s >= TIMESTAMPTZ '%s' AND %s < TIMESTAMPTZ '%s'))",
+		statusColumn,
+		completedColumn,
+		start,
+		completedColumn,
+		end,
+		completedColumn,
+		createdColumn,
+		start,
+		createdColumn,
+		end,
+	)
+}
+
+func (repository *Repository) DriverTrips(ctx context.Context, driverID int, history domain.TripHistoryQuery) ([]domain.Ride, error) {
+	query := repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID))
+	if history.ActiveOnly {
+		query = query.Where(ride.StatusIn("assigned", "accepted", "arrived", "in_transit"))
+	}
+	items, err := query.
+		Order(ride.ByCreatedAt(entsql.OrderDesc()), ride.ByID(entsql.OrderDesc())).
+		Limit(history.Limit + 1).
+		Offset(history.Offset).
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	result := make([]domain.Ride, 0, len(items))
-	for index := len(items) - 1; index >= 0; index-- {
-		result = append(result, fromRide(items[index]))
+	for _, item := range items {
+		result = append(result, fromRide(item))
 	}
 	hydrated, err := repository.hydrateDriverDetails(ctx, result)
 	if err != nil {
@@ -714,16 +756,48 @@ func (repository *Repository) DriverTrips(ctx context.Context, driverID int) ([]
 	return repository.hydratePassengerDetails(ctx, hydrated)
 }
 
-func (repository *Repository) PassengerRides(ctx context.Context, passengerID int) ([]domain.Ride, error) {
-	items, err := repository.client.Ride.Query().Where(ride.PassengerIDEQ(passengerID)).Order(ride.ByID()).All(ctx)
+func (repository *Repository) PassengerRides(ctx context.Context, passengerID int, history domain.TripHistoryQuery) ([]domain.Ride, error) {
+	items, err := repository.client.Ride.Query().
+		Where(ride.PassengerIDEQ(passengerID)).
+		Order(ride.ByCreatedAt(entsql.OrderDesc()), ride.ByID(entsql.OrderDesc())).
+		Limit(history.Limit + 1).
+		Offset(history.Offset).
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	result := make([]domain.Ride, 0, len(items))
-	for index := len(items) - 1; index >= 0; index-- {
-		result = append(result, fromRide(items[index]))
+	for _, item := range items {
+		result = append(result, fromRide(item))
 	}
 	return repository.hydrateDriverDetails(ctx, result)
+}
+
+func (repository *Repository) PassengerActivitySummary(ctx context.Context, passengerID int, weekStart, weekEnd time.Time) (domain.PassengerActivitySummary, error) {
+	startLiteral := weekStart.UTC().Format(time.RFC3339Nano)
+	endLiteral := weekEnd.UTC().Format(time.RFC3339Nano)
+	var rows []struct {
+		FareCentavos   int64 `json:"fare_centavos"`
+		CompletedRides int64 `json:"completed_rides"`
+	}
+	err := repository.client.Ride.Query().Where(ride.PassengerIDEQ(passengerID)).Aggregate(
+		driverRideAggregate("fare_centavos", func(selector *entsql.Selector) string {
+			return fmt.Sprintf("COALESCE(SUM(%s) FILTER (WHERE %s), 0)", selector.C(ride.FieldFareCentavos), completedDuring(selector, startLiteral, endLiteral))
+		}),
+		driverRideAggregate("completed_rides", func(selector *entsql.Selector) string {
+			return fmt.Sprintf("COUNT(*) FILTER (WHERE %s)", completedDuring(selector, startLiteral, endLiteral))
+		}),
+	).Scan(ctx, &rows)
+	if err != nil {
+		return domain.PassengerActivitySummary{}, err
+	}
+	if len(rows) == 0 {
+		return domain.PassengerActivitySummary{}, nil
+	}
+	return domain.PassengerActivitySummary{
+		ThisWeekFareCentavos:   rows[0].FareCentavos,
+		ThisWeekCompletedRides: int(rows[0].CompletedRides),
+	}, nil
 }
 
 func (repository *Repository) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
@@ -975,60 +1049,49 @@ func (repository *Repository) CreatePassengerReview(ctx context.Context, value d
 	return fromPassengerReview(item), nil
 }
 
-func (repository *Repository) OnlineDrivers(ctx context.Context) ([]domain.OnlineDriver, error) {
-	items, err := repository.client.DriverProfile.Query().Where(driverprofile.IsOnlineEQ(true)).Order(driverprofile.ByID()).All(ctx)
+func (repository *Repository) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
+	items, err := repository.client.DriverProfile.Query().
+		Where(driverprofile.IsOnlineEQ(true), driverprofile.UserIDIn(driverIDs...)).
+		Order(driverprofile.ByID()).
+		Limit(len(driverIDs)).
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	driverIDs := make([]int, 0, len(items))
+	availableIDs := make([]int, 0, len(items))
 	for _, item := range items {
-		driverIDs = append(driverIDs, item.UserID)
+		availableIDs = append(availableIDs, item.UserID)
 	}
 
-	activePassengerCounts := make(map[int]int, len(driverIDs))
-	if len(driverIDs) > 0 {
-		activeRides, err := repository.client.Ride.Query().Where(
-			ride.DriverIDIn(driverIDs...),
+	activePassengerCounts := make(map[int]int, len(availableIDs))
+	if len(availableIDs) > 0 {
+		var countRows []struct {
+			DriverID int `json:"driver_id"`
+			Count    int `json:"passenger_count"`
+		}
+		if err := repository.client.Ride.Query().Where(
+			ride.DriverIDIn(availableIDs...),
 			ride.StatusIn("assigned", "accepted", "arrived", "in_transit"),
-		).All(ctx)
-		if err != nil {
+		).GroupBy(ride.FieldDriverID).Aggregate(
+			ent.As(ent.Count(), "passenger_count"),
+		).Scan(ctx, &countRows); err != nil {
 			return nil, err
 		}
-		for _, activeRide := range activeRides {
-			activePassengerCounts[activeRide.DriverID]++
+		for _, row := range countRows {
+			activePassengerCounts[row.DriverID] = row.Count
 		}
 	}
 
-	type reviewSummary struct {
-		totalRating float64
-		count       int
-		feedback    string
-	}
-	reviewSummaries := make(map[int]reviewSummary, len(driverIDs))
-	if len(driverIDs) > 0 {
-		reviews, err := repository.client.Review.Query().Where(
-			review.DriverIDIn(driverIDs...),
-		).Order(review.ByID(entsql.OrderDesc())).All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, item := range reviews {
-			summary := reviewSummaries[item.DriverID]
-			summary.totalRating += item.Rating
-			summary.count++
-			if summary.feedback == "" {
-				summary.feedback = strings.TrimSpace(item.Comment)
-			}
-			reviewSummaries[item.DriverID] = summary
-		}
+	ratings, err := repository.driverAverageRatings(ctx, availableIDs)
+	if err != nil {
+		return nil, err
 	}
 
 	result := make([]domain.OnlineDriver, 0, len(items))
 	for _, item := range items {
-		summary := reviewSummaries[item.UserID]
 		rating := item.Rating
-		if summary.count > 0 {
-			rating = summary.totalRating / float64(summary.count)
+		if average, exists := ratings[item.UserID]; exists {
+			rating = average
 		}
 		result = append(result, domain.OnlineDriver{
 			ID:                    item.UserID,
@@ -1038,10 +1101,66 @@ func (repository *Repository) OnlineDrivers(ctx context.Context) ([]domain.Onlin
 			PlateNumber:           item.PlateNumber,
 			Rating:                rating,
 			OnboardPassengerCount: activePassengerCounts[item.UserID],
-			RecentFeedback:        summary.feedback,
 		})
 	}
 	return result, nil
+}
+
+func (repository *Repository) PublicDriverSummaries(ctx context.Context, limit int) ([]domain.PublicDriverSummary, error) {
+	profiles, err := repository.client.DriverProfile.Query().
+		Where(driverprofile.IsOnlineEQ(true)).
+		Order(driverprofile.ByID()).
+		Limit(limit).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	driverIDs := make([]int, 0, len(profiles))
+	for _, profile := range profiles {
+		driverIDs = append(driverIDs, profile.UserID)
+	}
+	ratings, err := repository.driverAverageRatings(ctx, driverIDs)
+	if err != nil {
+		return nil, err
+	}
+	summaries := make([]domain.PublicDriverSummary, 0, len(profiles))
+	for _, profile := range profiles {
+		rating := profile.Rating
+		if average, exists := ratings[profile.UserID]; exists {
+			rating = average
+		}
+		summaries = append(summaries, domain.PublicDriverSummary{
+			ID:          profile.UserID,
+			Name:        profile.Name,
+			VehicleType: profile.VehicleType,
+			Rating:      rating,
+		})
+	}
+	return summaries, nil
+}
+
+func (repository *Repository) driverAverageRatings(ctx context.Context, driverIDs []int) (map[int]float64, error) {
+	ratings := make(map[int]float64, len(driverIDs))
+	if len(driverIDs) == 0 {
+		return ratings, nil
+	}
+	var rows []struct {
+		DriverID      int      `json:"driver_id"`
+		AverageRating *float64 `json:"average_rating"`
+	}
+	if err := repository.client.Review.Query().Where(
+		review.DriverIDIn(driverIDs...),
+	).GroupBy(review.FieldDriverID).Aggregate(
+		ent.As(ent.Mean(review.FieldRating), "average_rating"),
+	).Scan(ctx, &rows); err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		if row.AverageRating != nil {
+			ratings[row.DriverID] = *row.AverageRating
+		}
+	}
+	return ratings, nil
 }
 func fromRide(item *ent.Ride) domain.Ride {
 	var driverID *int

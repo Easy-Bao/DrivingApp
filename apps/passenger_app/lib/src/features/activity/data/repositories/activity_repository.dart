@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger_app/src/features/activity/domain/entities/activity_overview.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
@@ -79,19 +80,64 @@ class ActivityRepository implements IActivityRepository {
   }
 
   @override
-  Future<Either<Failure, List<RideHistoryModel>>> fetchRideHistory(
-    String passengerId,
-  ) async {
+  Future<Either<Failure, ActivityOverview>> fetchActivityOverview(
+    String passengerId, {
+    int limit = 25,
+  }) async {
     try {
-      final rawList = await _passengerRemoteDataSource.fetchRideHistory(
+      final pageFuture = _passengerRemoteDataSource.fetchRideHistory(
+        passengerId,
+        limit: limit,
+        offset: 0,
+      );
+      final summaryFuture = _passengerRemoteDataSource.fetchActivitySummary(
         passengerId,
       );
+      final responses = await Future.wait<dynamic>([pageFuture, summaryFuture]);
+      final rawPage = responses[0] as OffsetPage<Map<String, dynamic>>;
+      final summary = responses[1] as Map<String, dynamic>;
       return Right(
-        rawList.map((raw) => _mapToModel(raw as Map<String, dynamic>)).toList(),
+        ActivityOverview(
+          rides: _mapPage(rawPage),
+          weeklyFareCentavos: SafeParse.toInt(
+            summary['this_week_fare_centavos'],
+          ),
+          weeklyRideCount: SafeParse.toInt(
+            summary['this_week_completed_rides'],
+          ),
+        ),
       );
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }
+  }
+
+  @override
+  Future<Either<Failure, OffsetPage<RideHistoryModel>>> fetchRideHistory(
+    String passengerId, {
+    int limit = 25,
+    int offset = 0,
+  }) async {
+    try {
+      final rawPage = await _passengerRemoteDataSource.fetchRideHistory(
+        passengerId,
+        limit: limit,
+        offset: offset,
+      );
+      return Right(_mapPage(rawPage));
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    }
+  }
+
+  OffsetPage<RideHistoryModel> _mapPage(
+    OffsetPage<Map<String, dynamic>> rawPage,
+  ) {
+    return OffsetPage<RideHistoryModel>(
+      items: rawPage.items.map(_mapToModel).toList(growable: false),
+      hasMore: rawPage.hasMore,
+      nextOffset: rawPage.nextOffset,
+    );
   }
 
   RideHistoryModel _mapToModel(Map<String, dynamic> raw) {

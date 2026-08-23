@@ -20,7 +20,7 @@ import (
 
 type failingOnlineDriversRepository struct{ analyticsRepository }
 
-func (failingOnlineDriversRepository) OnlineDrivers(context.Context) ([]domain.OnlineDriver, error) {
+func (failingOnlineDriversRepository) OnlineDrivers(context.Context, []int) ([]domain.OnlineDriver, error) {
 	return nil, errors.New("database password leaked")
 }
 
@@ -178,6 +178,50 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 		statsResponse["today_completed_trips"] != float64(1) {
 		t.Fatalf("daily driver stats are missing: %#v", statsResponse)
 	}
+	for _, alias := range []string{"totalRides", "completedRides", "todayEarnings"} {
+		if _, exists := statsResponse[alias]; exists {
+			t.Fatalf("driver stats leaked compatibility alias %q: %#v", alias, statsResponse)
+		}
+	}
+
+	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/8/earnings", nil)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	response = httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("earnings status = %d, body = %s", response.Code, response.Body.String())
+	}
+	var earningsResponse map[string]any
+	if err := json.NewDecoder(response.Body).Decode(&earningsResponse); err != nil {
+		t.Fatalf("decode earnings: %v", err)
+	}
+	today, ok := earningsResponse["today"].(map[string]any)
+	if !ok || today["earnings_centavos"] != float64(2817) || today["completed_trips"] != float64(1) {
+		t.Fatalf("unexpected earnings summary: %#v", earningsResponse)
+	}
+
+	request = httptest.NewRequest(
+		http.MethodGet,
+		api.V1Prefix+"/drivers/8/trips?scope=active&limit=1&offset=0",
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	response = httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("trip page status = %d, body = %s", response.Code, response.Body.String())
+	}
+	var tripPage struct {
+		Items      []domain.Ride `json:"items"`
+		HasMore    bool          `json:"has_more"`
+		NextOffset *int          `json:"next_offset"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&tripPage); err != nil {
+		t.Fatalf("decode trip page: %v", err)
+	}
+	if len(tripPage.Items) != 1 || tripPage.Items[0].ID != 3 || tripPage.HasMore || tripPage.NextOffset != nil {
+		t.Fatalf("unexpected trip page: %#v", tripPage)
+	}
 
 	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/9/trips", nil)
 	request.Header.Set("Authorization", "Bearer "+accessToken)
@@ -185,6 +229,40 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 	mux.ServeHTTP(response, request)
 	if response.Code != http.StatusForbidden {
 		t.Fatalf("trips status = %d, want %d", response.Code, http.StatusForbidden)
+	}
+}
+
+func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
+	config, err := ridesusecase.LoadPricingConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	verifier := token.NewVerifier("passenger-activity-secret")
+	accessToken, err := verifier.IssueWithRole("8", security.RolePassenger)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mux := chi.NewRouter()
+	rideshttp.NewRouter(ridesusecase.NewService(analyticsRepository{}, config), verifier).RegisterRoutes(mux)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		api.V1Prefix+"/passengers/8/activity-summary",
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	response := httptest.NewRecorder()
+
+	mux.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+	var summary map[string]any
+	if err := json.NewDecoder(response.Body).Decode(&summary); err != nil {
+		t.Fatal(err)
+	}
+	if summary["this_week_fare_centavos"] != float64(2817) || summary["this_week_completed_rides"] != float64(1) {
+		t.Fatalf("unexpected passenger activity summary: %#v", summary)
 	}
 }
 
@@ -247,7 +325,7 @@ func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
 		ridesusecase.NewService(failingOnlineDriversRepository{}, config),
 		verifier,
 	).RegisterRoutes(mux)
-	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/online", nil)
+	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/online?ids=7", nil)
 	request.Header.Set("Authorization", "Bearer "+accessToken)
 	response := httptest.NewRecorder()
 	mux.ServeHTTP(response, request)

@@ -10,6 +10,11 @@ type RouteRequest struct {
 	ExcludePoints []domain.Coordinates   `json:"exclude_points,omitempty"`
 }
 
+type MatrixRequest struct {
+	Origin       domain.Coordinates   `json:"origin"`
+	Destinations []domain.Coordinates `json:"destinations"`
+}
+
 func (request RouteRequest) Options() (domain.RouteOptions, error) {
 	return (domain.RouteOptions{
 		Preference:    request.Preference,

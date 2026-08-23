@@ -50,6 +50,10 @@ func (providerStub) Route(context.Context, domain.Coordinates, domain.Coordinate
 	return &domain.Route{DistanceKm: 1}, nil
 }
 
+func (providerStub) Matrix(context.Context, domain.Coordinates, []domain.Coordinates) (*domain.Matrix, error) {
+	return &domain.Matrix{DistancesKm: []float64{1}, DurationsMin: []float64{2}}, nil
+}
+
 type routeProviderSpy struct {
 	providerStub
 	options domain.RouteOptions

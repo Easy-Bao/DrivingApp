@@ -21,11 +21,17 @@ class DriverTripHistoryPage extends StatefulWidget {
 }
 
 class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
+  static const _pageSize = 25;
+
   bool _isLoading = true;
-  List<dynamic> _trips = [];
+  bool _isLoadingMore = false;
+  bool _hasMore = false;
+  int? _nextOffset;
+  String? _loadMoreError;
+  List<Map<String, dynamic>> _trips = [];
   String _selectedTripStatusFilter = 'ALL';
 
-  List<dynamic> get _filteredTripsList {
+  List<Map<String, dynamic>> get _filteredTripsList {
     if (_selectedTripStatusFilter == 'ALL') {
       return _trips;
     }
@@ -42,31 +48,66 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     _loadTrips();
   }
 
-  Future<void> _loadTrips() async {
+  Future<void> _loadTrips({bool loadMore = false}) async {
+    if (loadMore && (!_hasMore || _nextOffset == null || _isLoadingMore)) {
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        if (loadMore) {
+          _isLoadingMore = true;
+          _loadMoreError = null;
+        } else {
+          _isLoading = true;
+        }
+      });
+    }
     final driverId =
         await Modular.get<SecureSessionService>().readDriverId() ?? '';
     if (driverId.isEmpty) {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _isLoadingMore = false;
         });
       }
       return;
     }
     final result = await Modular.get<IDriverActivityRepository>()
-        .fetchTripHistory(driverId);
+        .fetchTripHistory(
+          driverId,
+          limit: _pageSize,
+          offset: loadMore ? _nextOffset! : 0,
+        );
     if (mounted) {
       result.fold(
         (failure) {
           setState(() {
-            _trips = const [];
+            if (loadMore) {
+              _loadMoreError = ErrorHandler.getErrorMessage(failure);
+            } else {
+              _trips = const [];
+            }
             _isLoading = false;
+            _isLoadingMore = false;
           });
         },
-        (trips) {
+        (page) {
           setState(() {
-            _trips = trips;
+            if (loadMore) {
+              final tripsById = <String, Map<String, dynamic>>{
+                for (final trip in _trips) '${trip['id']}': trip,
+                for (final trip in page.items) '${trip['id']}': trip,
+              };
+              _trips = tripsById.values.toList();
+            } else {
+              _trips = page.items;
+            }
+            _hasMore = page.hasMore;
+            _nextOffset = page.nextOffset;
+            _loadMoreError = null;
             _isLoading = false;
+            _isLoadingMore = false;
           });
         },
       );
@@ -129,8 +170,10 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     });
   }
 
-  Map<String, List<dynamic>> _groupByDate(List<dynamic> trips) {
-    final map = <String, List<dynamic>>{};
+  Map<String, List<Map<String, dynamic>>> _groupByDate(
+    List<Map<String, dynamic>> trips,
+  ) {
+    final map = <String, List<Map<String, dynamic>>>{};
     for (final t in trips) {
       final dateStr = _formatDate(
         driverValueAsString(t['completed_at']) ??
@@ -172,7 +215,11 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
           const SizedBox(width: 8),
         ],
       ),
-      body: _filteredTripsList.isEmpty
+      body: _isLoading && _trips.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            )
+          : _filteredTripsList.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -194,40 +241,96 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                 ],
               ),
             )
-          : Skeletonizer(
-              enabled: _isLoading,
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
-                physics: const BouncingScrollPhysics(),
-                itemCount: grouped.keys.length,
-                itemBuilder: (context, groupIndex) {
-                  final date = grouped.keys.elementAt(groupIndex);
-                  final trips = grouped[date]!;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20, bottom: 12),
-                        child: Text(
-                          date,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                            letterSpacing: 0.5,
+          : RefreshIndicator(
+              color: AppTheme.primaryColor,
+              onRefresh: _loadTrips,
+              child: Skeletonizer(
+                enabled: _isLoading,
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  itemCount:
+                      grouped.keys.length +
+                      ((_hasMore || _isLoadingMore || _loadMoreError != null)
+                          ? 1
+                          : 0),
+                  itemBuilder: (context, groupIndex) {
+                    if (groupIndex == grouped.keys.length) {
+                      return _buildLoadMore();
+                    }
+                    final date = grouped.keys.elementAt(groupIndex);
+                    final trips = grouped[date]!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20, bottom: 12),
+                          child: Text(
+                            date,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.4,
+                              ),
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
-                      ),
-                      ...trips.map(_buildTripCard),
-                    ],
-                  );
-                },
+                        ...trips.map(_buildTripCard),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
     );
   }
 
-  Widget _buildTripCard(dynamic trip) {
+  Widget _buildLoadMore() {
+    if (_isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 18),
+        child: Center(
+          child: SizedBox.square(
+            dimension: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 14),
+      child: Column(
+        children: [
+          if (_loadMoreError != null) ...[
+            Text(
+              _loadMoreError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppTheme.cancel,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
+          TextButton.icon(
+            onPressed: () => _loadTrips(loadMore: true),
+            icon: const Icon(LucideIcons.chevron_down, size: 16),
+            label: Text(_loadMoreError == null ? 'Load more trips' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTripCard(Map<String, dynamic> trip) {
     final status = (driverValueAsString(trip['status']) ?? 'completed')
         .toLowerCase();
     final isCompleted = status == 'completed';
@@ -237,7 +340,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         : driverSentenceCase(status, 'Canceled');
     final fromName = driverValueAsString(trip['pickup_name']) ?? 'Pickup';
     final toName = driverValueAsString(trip['dropoff_name']) ?? 'Drop-off';
-    final fareAmt = driverFareInPesos(Map<String, dynamic>.from(trip as Map));
+    final fareAmt = driverFareInPesos(trip);
     final rideType = driverSentenceCase(trip['ride_type'], 'Solo ride');
     final distance =
         trip['distance_km'] is num &&
@@ -253,10 +356,8 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => context.pushNamed(
-            ActivityRoutes.tripDetail,
-            extra: trip as Map<String, dynamic>,
-          ),
+          onTap: () =>
+              context.pushNamed(ActivityRoutes.tripDetail, extra: trip),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

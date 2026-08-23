@@ -59,6 +59,11 @@ func NewRunner(database *sql.DB, client *ent.Client) *Runner {
 				name:    "enforce_relational_integrity",
 				apply:   applyRelationalIntegrity,
 			},
+			{
+				version: 2026082304,
+				name:    "optimize_driver_reporting_indexes",
+				apply:   applyReportingIndexes,
+			},
 		},
 	}
 }

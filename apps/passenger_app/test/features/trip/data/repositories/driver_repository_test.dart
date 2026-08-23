@@ -4,9 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/driver_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 class MockBiddingRemoteDataSource extends Mock
     implements BiddingRemoteDataSource {}
+
+class MockLocationApiClient extends Mock implements ILocationApiClient {}
 
 void main() {
   test(
@@ -15,8 +18,9 @@ void main() {
       const latitude = 7.828;
       const longitude = 123.434;
       final dataSource = MockBiddingRemoteDataSource();
+      final locationApiClient = MockLocationApiClient();
 
-      when(() => dataSource.fetchOnlineDrivers()).thenAnswer(
+      when(() => dataSource.fetchOnlineDrivers(any())).thenAnswer(
         (_) async => [
           {
             'id': 42,
@@ -37,9 +41,18 @@ void main() {
           {'driver_id': '42', 'latitude': latitude, 'longitude': longitude},
         ],
       );
+      when(
+        () => locationApiClient.getTravelMatrix(body: any(named: 'body')),
+      ).thenAnswer(
+        (_) async => {
+          'distances_km': [0.0],
+          'durations_min': [1.0],
+        },
+      );
 
       final result = await DriverRepository(
         biddingDataSource: dataSource,
+        locationApiClient: locationApiClient,
       ).getNearbyDrivers(lat: latitude, lng: longitude);
 
       expect(result.isRight(), isTrue);
@@ -49,7 +62,7 @@ void main() {
       expect(drivers.single.lat, latitude);
       expect(drivers.single.lng, longitude);
       expect(drivers.single.distanceKm, 0.0);
-      verify(() => dataSource.fetchOnlineDrivers()).called(1);
+      verify(() => dataSource.fetchOnlineDrivers(any())).called(1);
       verify(
         () => dataSource.fetchNearbyDrivers(
           latitude: latitude,
@@ -65,11 +78,12 @@ void main() {
       const latitude = 7.828;
       const longitude = 123.434;
       final dataSource = MockBiddingRemoteDataSource();
+      final locationApiClient = MockLocationApiClient();
       final onlineDrivers = Completer<List<dynamic>>();
       final nearbyDrivers = Completer<List<dynamic>>();
 
       when(
-        () => dataSource.fetchOnlineDrivers(),
+        () => dataSource.fetchOnlineDrivers(any()),
       ).thenAnswer((_) => onlineDrivers.future);
       when(
         () => dataSource.fetchNearbyDrivers(
@@ -77,8 +91,19 @@ void main() {
           longitude: longitude,
         ),
       ).thenAnswer((_) => nearbyDrivers.future);
+      when(
+        () => locationApiClient.getTravelMatrix(body: any(named: 'body')),
+      ).thenAnswer(
+        (_) async => {
+          'distances_km': [0.0],
+          'durations_min': [1.0],
+        },
+      );
 
-      final repository = DriverRepository(biddingDataSource: dataSource);
+      final repository = DriverRepository(
+        biddingDataSource: dataSource,
+        locationApiClient: locationApiClient,
+      );
       final firstLookup = repository.getNearbyDrivers(
         lat: latitude,
         lng: longitude,
@@ -110,7 +135,7 @@ void main() {
       expect(drivers.single.id, '42');
       expect(drivers.single.rating, 4.8);
       expect(drivers.single.onboardPassengerCount, 2);
-      verify(() => dataSource.fetchOnlineDrivers()).called(1);
+      verify(() => dataSource.fetchOnlineDrivers(any())).called(1);
       verify(
         () => dataSource.fetchNearbyDrivers(
           latitude: latitude,

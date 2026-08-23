@@ -345,6 +345,92 @@ func TestRouteSupportsTrafficProfileAndExcludedRoadPoints(t *testing.T) {
 	}
 }
 
+func TestMatrixUsesOneBoundedProviderRequestAndConvertsUnits(t *testing.T) {
+	provider := NewProvider("test-token")
+	requestCount := 0
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			requestCount++
+			if request.URL.Path != "/directions-matrix/v1/mapbox/driving/123.400000,7.800000;123.500000,7.900000;123.600000,8.000000" {
+				t.Fatalf("unexpected matrix path: %s", request.URL.Path)
+			}
+			if request.URL.Query().Get("sources") != "0" || request.URL.Query().Get("destinations") != "1;2" {
+				t.Fatalf("unexpected matrix indexes: %s", request.URL.RawQuery)
+			}
+			if request.URL.Query().Get("annotations") != "distance,duration" {
+				t.Fatalf("unexpected matrix annotations: %s", request.URL.RawQuery)
+			}
+			return responseWithBody(request, `{"code":"Ok","distances":[[1250,3500]],"durations":[[180,420]]}`), nil
+		}),
+	}
+
+	matrix, err := provider.Matrix(
+		context.Background(),
+		domain.Coordinates{Latitude: 7.8, Longitude: 123.4},
+		[]domain.Coordinates{
+			{Latitude: 7.9, Longitude: 123.5},
+			{Latitude: 8, Longitude: 123.6},
+		},
+	)
+	if err != nil {
+		t.Fatalf("matrix failed: %v", err)
+	}
+	if requestCount != 1 {
+		t.Fatalf("provider requests = %d, want 1", requestCount)
+	}
+	if len(matrix.DistancesKm) != 2 || matrix.DistancesKm[0] != 1.25 || matrix.DistancesKm[1] != 3.5 {
+		t.Fatalf("unexpected distances: %#v", matrix.DistancesKm)
+	}
+	if matrix.DurationsMin[0] != 3 || matrix.DurationsMin[1] != 7 {
+		t.Fatalf("unexpected durations: %#v", matrix.DurationsMin)
+	}
+}
+
+func TestMatrixUsesDirectionsForOneDestination(t *testing.T) {
+	provider := NewProvider("test-token")
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			if !strings.HasPrefix(request.URL.Path, "/directions/v5/mapbox/driving/") {
+				t.Fatalf("one destination used the wrong endpoint: %s", request.URL.Path)
+			}
+			return responseWithBody(request, `{"routes":[{"distance":1250,"duration":180,"geometry":{"coordinates":[]}}]}`), nil
+		}),
+	}
+
+	matrix, err := provider.Matrix(
+		context.Background(),
+		domain.Coordinates{Latitude: 7.8, Longitude: 123.4},
+		[]domain.Coordinates{{Latitude: 7.9, Longitude: 123.5}},
+	)
+	if err != nil {
+		t.Fatalf("single-destination matrix failed: %v", err)
+	}
+	if len(matrix.DistancesKm) != 1 || matrix.DistancesKm[0] != 1.25 || matrix.DurationsMin[0] != 3 {
+		t.Fatalf("unexpected single-destination matrix: %#v", matrix)
+	}
+}
+
+func TestMatrixRejectsUnreachableDestinations(t *testing.T) {
+	provider := NewProvider("test-token")
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			return responseWithBody(request, `{"code":"Ok","distances":[[1250,null]],"durations":[[180,null]]}`), nil
+		}),
+	}
+
+	_, err := provider.Matrix(
+		context.Background(),
+		domain.Coordinates{Latitude: 7.8, Longitude: 123.4},
+		[]domain.Coordinates{
+			{Latitude: 7.9, Longitude: 123.5},
+			{Latitude: 8, Longitude: 123.6},
+		},
+	)
+	if err == nil {
+		t.Fatal("expected an unreachable destination to reject the matrix")
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (roundTrip roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {

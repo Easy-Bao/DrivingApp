@@ -73,6 +73,14 @@ func applyRelationalIntegrity(ctx context.Context, connection *sql.Conn) error {
 	return executeStatements(ctx, connection, validationStatements)
 }
 
+func applyReportingIndexes(ctx context.Context, connection *sql.Conn) error {
+	return executeStatements(ctx, connection, []string{
+		`CREATE INDEX IF NOT EXISTS ride_driver_id_status_completed_at ON rides (driver_id, status, completed_at)`,
+		`CREATE INDEX IF NOT EXISTS ride_passenger_id_status_completed_at ON rides (passenger_id, status, completed_at)`,
+		`DROP INDEX IF EXISTS ride_driver_id_status`,
+	})
+}
+
 func executeStatements(ctx context.Context, connection *sql.Conn, statements []string) error {
 	for index, statement := range statements {
 		if _, err := connection.ExecContext(ctx, statement); err != nil {

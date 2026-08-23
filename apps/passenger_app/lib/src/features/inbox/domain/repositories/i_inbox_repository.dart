@@ -7,3 +7,12 @@ abstract class IInboxRepository {
     String passengerId,
   );
 }
+
+abstract class IPaginatedInboxRepository {
+  Future<Either<Failure, OffsetPage<InboxNotification>>>
+  fetchPassengerNotificationsPage(
+    String passengerId, {
+    int limit = 50,
+    int offset = 0,
+  });
+}

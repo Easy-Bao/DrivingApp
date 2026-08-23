@@ -78,6 +78,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	reportingLocation, err := ridesusecase.LoadReportingLocation(os.Getenv("REPORTING_TIMEZONE"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
 	if databaseURL == "" {
@@ -132,7 +136,7 @@ func main() {
 		routeCalculator,
 		pricingConfig,
 		eventadapter.NewRedisPublisher(redisClient),
-	)
+	).WithReportingLocation(reportingLocation)
 	rideAssignments := assignment.NewResolver(
 		eventadapter.NewRedisRideAssignmentLookup(redisClient),
 		assignmentadapter.NewRideRepositoryLookup(ridesRepository),

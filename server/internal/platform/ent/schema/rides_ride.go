@@ -16,8 +16,11 @@ type Ride struct {
 func (Ride) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("passenger_id", "created_at"),
+		index.Fields("passenger_id", "status", "completed_at").
+			StorageKey("ride_passenger_id_status_completed_at"),
 		index.Fields("driver_id", "created_at"),
-		index.Fields("driver_id", "status"),
+		index.Fields("driver_id", "status", "completed_at").
+			StorageKey("ride_driver_id_status_completed_at"),
 		index.Fields("passenger_id").
 			Unique().
 			Annotations(entsql.IndexWhere(

@@ -11,6 +11,9 @@ import 'package:shared_core/shared_core.dart';
 
 class MockInboxRepository extends Mock implements IInboxRepository {}
 
+class MockPaginatedInboxRepository extends Mock
+    implements IInboxRepository, IPaginatedInboxRepository {}
+
 void main() {
   final notification = InboxNotification(
     id: 'private-notification',
@@ -54,4 +57,39 @@ void main() {
       await cubit.close();
     },
   );
+
+  test('appends a paginated notification page', () async {
+    final repository = MockPaginatedInboxRepository();
+    when(
+      () => repository.fetchPassengerNotificationsPage(
+        'passenger-1',
+        limit: 50,
+        offset: 0,
+      ),
+    ).thenAnswer(
+      (_) async => Right(
+        OffsetPage(items: [notification], hasMore: true, nextOffset: 50),
+      ),
+    );
+    final older = notification.copyWith(isRead: true);
+    when(
+      () => repository.fetchPassengerNotificationsPage(
+        'passenger-1',
+        limit: 50,
+        offset: 50,
+      ),
+    ).thenAnswer(
+      (_) async =>
+          Right(OffsetPage(items: [older], hasMore: false, nextOffset: null)),
+    );
+    final cubit = InboxCubit(inboxRepository: repository);
+
+    await cubit.loadNotifications('passenger-1');
+    await cubit.loadMoreNotifications();
+
+    final state = cubit.state as InboxLoadedState;
+    expect(state.notifications, hasLength(1), reason: 'duplicate ids merge');
+    expect(state.hasMore, isFalse);
+    await cubit.close();
+  });
 }

@@ -7,12 +7,16 @@ import 'package:shared_core/shared_core.dart';
 
 class DriverRepository implements IDriverRepository {
   final BiddingRemoteDataSource _biddingDataSource;
+  final ILocationApiClient _locationApiClient;
 
   Future<Either<Failure, List<DriverModel>>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
-  DriverRepository({required BiddingRemoteDataSource biddingDataSource})
-    : _biddingDataSource = biddingDataSource;
+  DriverRepository({
+    required BiddingRemoteDataSource biddingDataSource,
+    required ILocationApiClient locationApiClient,
+  }) : _biddingDataSource = biddingDataSource,
+       _locationApiClient = locationApiClient;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
@@ -92,13 +96,11 @@ class DriverRepository implements IDriverRepository {
     required double lng,
   }) async {
     try {
-      final responses = await Future.wait<List<dynamic>>([
-        _biddingDataSource.fetchOnlineDrivers(),
-        _biddingDataSource.fetchNearbyDrivers(latitude: lat, longitude: lng),
-      ]);
-      final profiles = responses[0];
-      final nearbyPoints = responses[1];
-      final pointsByDriverId = <String, Map<String, dynamic>>{};
+      final nearbyPoints = await _biddingDataSource.fetchNearbyDrivers(
+        latitude: lat,
+        longitude: lng,
+      );
+      final validPoints = <Map<String, dynamic>>[];
       for (final rawPoint in nearbyPoints.whereType<Map<String, dynamic>>()) {
         final driverId = _stringValue(
           rawPoint['driver_id'] ?? rawPoint['driverId'],
@@ -115,8 +117,33 @@ class DriverRepository implements IDriverRepository {
             !_isValidCoordinate(pointLat, pointLng)) {
           continue;
         }
-        pointsByDriverId[driverId] = {'lat': pointLat, 'lng': pointLng};
+        validPoints.add({
+          'driver_id': driverId,
+          'lat': pointLat,
+          'lng': pointLng,
+        });
       }
+      if (validPoints.isEmpty) return const Right([]);
+      if (validPoints.length > 10) {
+        validPoints.removeRange(10, validPoints.length);
+      }
+
+      final driverIds = validPoints
+          .map((point) => point['driver_id']! as String)
+          .toSet()
+          .toList(growable: false);
+      final profileFuture = _biddingDataSource.fetchOnlineDrivers(driverIds);
+      final matrixFuture = _fetchTravelMetrics(lat, lng, validPoints);
+      final profiles = await profileFuture;
+      final travelMetrics = await matrixFuture;
+      final pointsByDriverId = <String, Map<String, dynamic>>{
+        for (var index = 0; index < validPoints.length; index++)
+          validPoints[index]['driver_id']! as String: {
+            ...validPoints[index],
+            if (travelMetrics != null && index < travelMetrics.length)
+              'travel_metric': travelMetrics[index],
+          },
+      };
       final rawList = profiles
           .whereType<Map<String, dynamic>>()
           .map((profile) {
@@ -127,11 +154,44 @@ class DriverRepository implements IDriverRepository {
           })
           .whereType<Map<String, dynamic>>()
           .toList(growable: false);
-      // The realtime service already applies the radius query. Haversine keeps
-      // ranking local and avoids depending on the unregistered matrix route.
       return Right(_processNearbyDrivers(rawList, lat, lng));
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
+    }
+  }
+
+  Future<List<_TravelMetric>?> _fetchTravelMetrics(
+    double originLat,
+    double originLng,
+    List<Map<String, dynamic>> points,
+  ) async {
+    try {
+      final response = await _locationApiClient.getTravelMatrix(
+        body: {
+          'origin': {'lat': originLat, 'lng': originLng},
+          'destinations': [
+            for (final point in points)
+              {'lat': point['lat'], 'lng': point['lng']},
+          ],
+        },
+      );
+      final distances = response['distances_km'];
+      final durations = response['durations_min'];
+      if (distances is! List ||
+          durations is! List ||
+          distances.length != points.length ||
+          durations.length != points.length) {
+        return null;
+      }
+      return [
+        for (var index = 0; index < points.length; index++)
+          _TravelMetric(
+            distanceKm: SafeParse.toNullableDouble(distances[index]),
+            durationMinutes: SafeParse.toNullableDouble(durations[index]),
+          ),
+      ];
+    } catch (_) {
+      return null;
     }
   }
 
@@ -159,15 +219,25 @@ class DriverRepository implements IDriverRepository {
       );
       if (fallbackDistance > 5.0) continue;
 
-      final etaMinutes = _calculateEta(fallbackDistance);
+      final travelMetric = d['travel_metric'] as _TravelMetric?;
+      final matrixDistance = travelMetric?.distanceKm;
+      final distanceKm =
+          matrixDistance != null &&
+              matrixDistance.isFinite &&
+              matrixDistance >= 0
+          ? matrixDistance
+          : fallbackDistance;
+      final matrixDuration = travelMetric?.durationMinutes;
+      final etaMinutes =
+          matrixDuration != null &&
+              matrixDuration.isFinite &&
+              matrixDuration >= 0
+          ? matrixDuration.clamp(1.0, 30.0)
+          : _calculateEta(distanceKm);
       final rating = SafeParse.toNullableDouble(d['rating']) ?? 0;
-      final score = _calculateMatchingScore(
-        fallbackDistance,
-        rating,
-        etaMinutes,
-      );
+      final score = _calculateMatchingScore(distanceKm, rating, etaMinutes);
 
-      final driver = _mapToDriverModel(d, fallbackDistance, etaMinutes, score);
+      final driver = _mapToDriverModel(d, distanceKm, etaMinutes, score);
       if (driver != null) drivers.add(driver);
     }
 
@@ -256,4 +326,11 @@ class DriverRepository implements IDriverRepository {
         lng >= -180 &&
         lng <= 180;
   }
+}
+
+class _TravelMetric {
+  final double? distanceKm;
+  final double? durationMinutes;
+
+  const _TravelMetric({this.distanceKm, this.durationMinutes});
 }

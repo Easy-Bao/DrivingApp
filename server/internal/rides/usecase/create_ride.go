@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 )
@@ -24,18 +25,19 @@ func (calculator RouteCalculatorFunc) CalculateRoute(ctx context.Context, origin
 }
 
 type Service struct {
-	repository      domain.Repository
-	routeCalculator RouteCalculator
-	pricingConfig   PricingConfig
-	eventPublisher  domain.EventPublisher
+	repository        domain.Repository
+	routeCalculator   RouteCalculator
+	pricingConfig     PricingConfig
+	eventPublisher    domain.EventPublisher
+	reportingLocation *time.Location
 }
 
 func NewService(repository domain.Repository, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *Service {
-	return &Service{repository: repository, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers)}
+	return &Service{repository: repository, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers), reportingLocation: defaultReportingLocation}
 }
 
 func NewServiceWithRouteCalculator(repository domain.Repository, calculator RouteCalculator, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *Service {
-	return &Service{repository: repository, routeCalculator: calculator, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers)}
+	return &Service{repository: repository, routeCalculator: calculator, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers), reportingLocation: defaultReportingLocation}
 }
 
 func (service *Service) PricingConfig() PricingConfig {
@@ -220,27 +222,62 @@ func validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongi
 }
 
 func (service *Service) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
-	repository, ok := service.repository.(domain.AnalyticsRepository)
+	repository, ok := service.repository.(domain.DriverStatisticsRepository)
 	if !ok {
 		return domain.DriverStats{}, errors.New("driver analytics persistence is unavailable")
 	}
-	return repository.DriverStats(ctx, driverID)
+	dayStart, dayEnd := service.reportingDayBounds(time.Now())
+	return repository.DriverStats(ctx, driverID, dayStart, dayEnd)
 }
 
-func (service *Service) DriverTrips(ctx context.Context, driverID int) ([]domain.Ride, error) {
-	repository, ok := service.repository.(domain.AnalyticsRepository)
+func (service *Service) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
+	repository, ok := service.repository.(domain.DriverEarningsRepository)
+	if !ok {
+		return domain.DriverEarningsSummary{}, errors.New("driver earnings persistence is unavailable")
+	}
+	location := service.reportingLocation
+	if location == nil {
+		location = defaultReportingLocation
+	}
+	now := time.Now().In(location)
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location)
+	monthEnd := monthStart.AddDate(0, 1, 0)
+	entries, err := repository.DriverEarnings(ctx, driverID, monthStart.UTC(), monthEnd.UTC())
+	if err != nil {
+		return domain.DriverEarningsSummary{}, err
+	}
+	return summarizeDriverEarnings(entries, now, location), nil
+}
+
+func (service *Service) DriverTrips(ctx context.Context, driverID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
+	repository, ok := service.repository.(domain.TripHistoryRepository)
 	if !ok {
 		return nil, errors.New("driver trip persistence is unavailable")
 	}
-	return repository.DriverTrips(ctx, driverID)
+	if err := validateTripHistoryQuery(query); err != nil {
+		return nil, err
+	}
+	return repository.DriverTrips(ctx, driverID, query)
 }
 
-func (service *Service) PassengerRides(ctx context.Context, passengerID int) ([]domain.Ride, error) {
-	repository, ok := service.repository.(domain.AnalyticsRepository)
+func (service *Service) PassengerRides(ctx context.Context, passengerID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
+	repository, ok := service.repository.(domain.TripHistoryRepository)
 	if !ok {
 		return nil, errors.New("passenger ride persistence is unavailable")
 	}
-	return repository.PassengerRides(ctx, passengerID)
+	if err := validateTripHistoryQuery(query); err != nil {
+		return nil, err
+	}
+	return repository.PassengerRides(ctx, passengerID, query)
+}
+
+func (service *Service) PassengerActivitySummary(ctx context.Context, passengerID int) (domain.PassengerActivitySummary, error) {
+	repository, ok := service.repository.(domain.PassengerActivitySummaryRepository)
+	if !ok {
+		return domain.PassengerActivitySummary{}, errors.New("passenger activity persistence is unavailable")
+	}
+	weekStart, weekEnd := service.reportingWeekBounds(time.Now())
+	return repository.PassengerActivitySummary(ctx, passengerID, weekStart, weekEnd)
 }
 
 func (service *Service) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
@@ -250,7 +287,7 @@ func (service *Service) PassengerRecentRides(ctx context.Context, passengerID, l
 	if repository, ok := service.repository.(domain.RecentPassengerRidesRepository); ok {
 		return repository.PassengerRecentRides(ctx, passengerID, limit)
 	}
-	rides, err := service.PassengerRides(ctx, passengerID)
+	rides, err := service.PassengerRides(ctx, passengerID, domain.TripHistoryQuery{Limit: limit, Offset: 0})
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +298,7 @@ func (service *Service) PassengerRecentRides(ctx context.Context, passengerID, l
 }
 
 func (service *Service) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
-	repository, ok := service.repository.(domain.AnalyticsRepository)
+	repository, ok := service.repository.(domain.ReviewRepository)
 	if !ok {
 		return nil, errors.New("driver review persistence is unavailable")
 	}
@@ -269,7 +306,7 @@ func (service *Service) DriverReviews(ctx context.Context, driverID, limit, offs
 }
 
 func (service *Service) CreateReview(ctx context.Context, review domain.Review) (domain.Review, error) {
-	repository, ok := service.repository.(domain.AnalyticsRepository)
+	repository, ok := service.repository.(domain.ReviewRepository)
 	if !ok {
 		return domain.Review{}, errors.New("driver review persistence is unavailable")
 	}
@@ -290,10 +327,34 @@ func (service *Service) CreatePassengerReview(ctx context.Context, review domain
 	return repository.CreatePassengerReview(ctx, review)
 }
 
-func (service *Service) OnlineDrivers(ctx context.Context) ([]domain.OnlineDriver, error) {
-	repository, ok := service.repository.(domain.AnalyticsRepository)
+func (service *Service) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
+	repository, ok := service.repository.(domain.DriverAvailabilityRepository)
 	if !ok {
 		return nil, errors.New("online driver persistence is unavailable")
 	}
-	return repository.OnlineDrivers(ctx)
+	if len(driverIDs) == 0 || len(driverIDs) > 20 {
+		return nil, errors.New("driver availability ids are invalid")
+	}
+	return repository.OnlineDrivers(ctx, driverIDs)
+}
+
+func (service *Service) PublicDriverSummaries(ctx context.Context, limit int) ([]domain.PublicDriverSummary, error) {
+	repository, ok := service.repository.(domain.DriverAvailabilityRepository)
+	if !ok {
+		return nil, errors.New("public driver summaries are unavailable")
+	}
+	if limit <= 0 || limit > 20 {
+		return nil, errors.New("public driver summary limit is invalid")
+	}
+	return repository.PublicDriverSummaries(ctx, limit)
+}
+
+func validateTripHistoryQuery(query domain.TripHistoryQuery) error {
+	if query.Limit <= 0 || query.Limit > 100 || query.Offset < 0 || query.Offset > 1_000_000 {
+		return errors.New("trip history pagination is invalid")
+	}
+	if query.ActiveOnly && query.Limit > 20 {
+		return errors.New("active trip history limit is invalid")
+	}
+	return nil
 }

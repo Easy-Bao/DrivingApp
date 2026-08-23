@@ -72,7 +72,7 @@ class MockLocationApiClient implements LocationApiClient {
   }) async {
     final destinations = body['destinations'] as List<dynamic>? ?? [];
     return {
-      'distancesKm': List<double>.filled(destinations.length, 1.0),
+      'distances_km': List<double>.filled(destinations.length, 1.0),
       'durationsMin': List<double>.filled(destinations.length, 3.0),
     };
   }

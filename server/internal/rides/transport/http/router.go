@@ -42,6 +42,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		protected.With(middleware.RequireRole(security.RolePassenger)).Post(apiPrefix+"/bids/{sessionID}/offers/{offerID}/accept", router.handler.AcceptOffer)
 		protected.With(middleware.RequireRole(security.RolePassenger)).Post(apiPrefix+"/bids/{sessionID}/cancel", router.handler.CancelSession)
 		protected.With(middleware.RequireRole(security.RolePassenger)).Get(apiPrefix+"/passengers/{id}/rides", router.handler.PassengerRides)
+		protected.With(middleware.RequireRole(security.RolePassenger)).Get(apiPrefix+"/passengers/{id}/activity-summary", router.handler.PassengerActivitySummary)
 		protected.With(middleware.RequireRole(security.RolePassenger)).Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
 		protected.With(middleware.RequireRole(security.RolePassenger)).Post(apiPrefix+"/drivers/{id}/reviews", router.handler.CreateReview)
 
@@ -54,6 +55,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		protected.With(middleware.RequireRole(security.RoleDriver)).Post(apiPrefix+"/bids/{id}/accept", router.handler.AcceptBid)
 		protected.With(middleware.RequireRole(security.RoleDriver)).Post(apiPrefix+"/passengers/{id}/reviews", router.handler.CreatePassengerReview)
 		protected.With(middleware.RequireRole(security.RoleDriver)).Get(apiPrefix+"/drivers/{id}/stats", router.handler.DriverStats)
+		protected.With(middleware.RequireRole(security.RoleDriver)).Get(apiPrefix+"/drivers/{id}/earnings", router.handler.DriverEarnings)
 		protected.With(middleware.RequireRole(security.RoleDriver)).Get(apiPrefix+"/drivers/{id}/trips", router.handler.DriverTrips)
 	})
 }

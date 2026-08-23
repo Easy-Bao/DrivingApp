@@ -64,6 +64,8 @@ func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitu
 		Latitude:   latitude,
 		Radius:     radiusKm,
 		RadiusUnit: "km",
+		Sort:       "ASC",
+		Count:      20,
 	}).Result()
 	if err != nil {
 		return nil, err

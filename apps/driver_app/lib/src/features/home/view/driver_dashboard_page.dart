@@ -147,12 +147,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverId.isEmpty) return;
 
-      final list = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
+      final page = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
         driverId,
+        limit: 10,
+        activeOnly: true,
       );
-      final trips = list
+      final trips = page.items
           .where(_isActiveDriverTripStatus)
-          .map((ride) => Map<String, dynamic>.from(ride as Map))
+          .map(Map<String, dynamic>.from)
           .toList();
       if (mounted) {
         _sortActiveTrips(trips);
@@ -374,17 +376,21 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverId.isEmpty) return;
 
-      final results = await Future.wait<List<dynamic>>([
-        Modular.get<TripRemoteDataSource>().fetchTripHistory(driverId),
+      final results = await Future.wait<dynamic>([
+        Modular.get<TripRemoteDataSource>().fetchTripHistory(
+          driverId,
+          limit: 10,
+          activeOnly: true,
+        ),
         Modular.get<BiddingRemoteDataSource>().fetchActiveBids(),
       ]);
-      final list = results[0];
-      List<Map<String, dynamic>> trips = list
+      final page = results[0] as OffsetPage<Map<String, dynamic>>;
+      List<Map<String, dynamic>> trips = page.items
           .where((ride) => _isActiveDriverTripStatus(ride['status']))
-          .map((ride) => Map<String, dynamic>.from(ride as Map))
+          .map(Map<String, dynamic>.from)
           .toList();
 
-      final bidsList = results[1];
+      final bidsList = results[1] as List<dynamic>;
       final List<Map<String, dynamic>> bids = bidsList
           .map((b) => b as Map<String, dynamic>)
           .toList();

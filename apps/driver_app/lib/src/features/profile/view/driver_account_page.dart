@@ -82,20 +82,19 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         driverId,
       );
       if (!mounted) return;
-      final totalFareCentavos = _readNumber(stats, ['total_fare_centavos']);
+      final totalEarningsCentavos = _readNumber(stats, [
+        'total_earnings_centavos',
+      ]);
       setState(() {
         _name = name;
         _vehicleType = vehicleType;
         _plateNumber = plateNumber;
         _rating = rating;
-        _totalTrips = _readInt(stats, ['totalTrips', 'total_trips']);
-        _completedTrips = _readInt(stats, [
-          'completedTrips',
-          'completed_trips',
-        ]);
-        _lifetimeEarnings = totalFareCentavos != null
-            ? totalFareCentavos / 100
-            : _readNumber(stats, ['lifetimeEarnings']) ?? 0;
+        _totalTrips = _readInt(stats, ['total_trips']);
+        _completedTrips = _readInt(stats, ['completed_trips']);
+        _lifetimeEarnings = totalEarningsCentavos != null
+            ? totalEarningsCentavos / 100
+            : 0;
         _averageRating =
             _readNumber(stats, ['average_rating']) ?? profileRating ?? 0;
       });

@@ -344,14 +344,19 @@ var (
 				Columns: []*schema.Column{RidesColumns[1], RidesColumns[18]},
 			},
 			{
+				Name:    "ride_passenger_id_status_completed_at",
+				Unique:  false,
+				Columns: []*schema.Column{RidesColumns[1], RidesColumns[3], RidesColumns[19]},
+			},
+			{
 				Name:    "ride_driver_id_created_at",
 				Unique:  false,
 				Columns: []*schema.Column{RidesColumns[2], RidesColumns[18]},
 			},
 			{
-				Name:    "ride_driver_id_status",
+				Name:    "ride_driver_id_status_completed_at",
 				Unique:  false,
-				Columns: []*schema.Column{RidesColumns[2], RidesColumns[3]},
+				Columns: []*schema.Column{RidesColumns[2], RidesColumns[3], RidesColumns[19]},
 			},
 			{
 				Name:    "ride_passenger_id",

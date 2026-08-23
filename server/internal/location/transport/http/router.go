@@ -18,4 +18,5 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.Get(api.V1Prefix+"/location/nearby", router.handler.Nearby)
 	mux.Get(api.V1Prefix+"/location/reverse", router.handler.Reverse)
 	mux.Post(api.V1Prefix+"/location/route", router.handler.Route)
+	mux.Post(api.V1Prefix+"/location/matrix", router.handler.Matrix)
 }

@@ -57,6 +57,11 @@ lifetime, a 5-minute idle lifetime, and a 5-second startup ping timeout. Tune
 these using the `POSTGRES_*` values documented in `.env.example`; keep the idle
 connection count no greater than the open connection count.
 
+`REPORTING_TIMEZONE` defines the calendar day used by driver dashboard and
+earnings summaries. It defaults to `Asia/Manila`; set an IANA timezone name
+explicitly in every environment so native and container deployments report the
+same daily totals.
+
 Idempotency protection is limited to durable domain commands such as ride,
 bid, profile, review, and chat mutations. Authentication, fare and location
 queries, telemetry, online-presence updates, and multipart document uploads do
@@ -73,6 +78,28 @@ migration command once for each deployment before starting or replacing API
 instances. Applied versions are recorded in `schema_migrations`; incompatible
 legacy identifier types are rejected with an actionable error instead of being
 renamed during application startup.
+
+### Bounded read contracts
+
+Trip history and passenger notifications use `limit` and `offset` query
+parameters and return a stable envelope:
+
+```json
+{"items": [], "has_more": false, "next_offset": null}
+```
+
+Driver dashboard recovery uses `GET /api/v1/drivers/{id}/trips?scope=active`
+instead of downloading completed history. Driver earnings use the dedicated
+`GET /api/v1/drivers/{id}/earnings` summary, which projects only current-month
+completion and payout fields. Passenger weekly activity totals come from
+`GET /api/v1/passengers/{id}/activity-summary`, so they remain authoritative
+when ride cards span multiple pages.
+
+Passenger nearby-driver lookup first reads the bounded telemetry candidates,
+then requests profiles for those IDs through `GET /api/v1/drivers/online?ids=`.
+`POST /api/v1/location/matrix` accepts one origin and at most ten destinations
+and returns `distances_km` and `durations_min`; it performs one provider matrix
+request for multiple destinations and a directions request for one destination.
 
 ## Optional Docker Compose workflow
 

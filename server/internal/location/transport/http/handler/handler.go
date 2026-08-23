@@ -96,6 +96,20 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 	writeJSON(writer, http.StatusOK, route)
 }
 
+func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request) {
+	var payload dto.MatrixRequest
+	if sharedrequest.DecodeJSON(writer, request, &payload, maxRoutePayloadBytes) != nil {
+		writeError(writer, http.StatusBadRequest, "invalid matrix payload")
+		return
+	}
+	matrix, err := handler.service.Matrix(request.Context(), payload.Origin, payload.Destinations)
+	if err != nil {
+		writeServiceError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, matrix)
+}
+
 func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, payload *dto.RouteRequest) error {
 	return sharedrequest.DecodeJSON(writer, request, payload, maxRoutePayloadBytes)
 }
@@ -106,7 +120,8 @@ func writeServiceError(writer http.ResponseWriter, err error) {
 		errors.Is(err, usecase.ErrSearchTooLong),
 		errors.Is(err, usecase.ErrInvalidCoordinates),
 		errors.Is(err, usecase.ErrInvalidNearbyPage),
-		errors.Is(err, usecase.ErrInvalidRouteOptions):
+		errors.Is(err, usecase.ErrInvalidRouteOptions),
+		errors.Is(err, usecase.ErrInvalidMatrix):
 		writeError(writer, http.StatusBadRequest, "The location request is invalid.")
 	default:
 		writeError(writer, http.StatusBadGateway, "Nearby locations are temporarily unavailable.")

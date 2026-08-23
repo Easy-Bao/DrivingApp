@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_core/shared_core.dart';
 
 abstract class TripRemoteDataSource {
   Future<bool> acceptRide({required String tripId, required String driverId});
@@ -10,7 +11,13 @@ abstract class TripRemoteDataSource {
   Future<Map<String, dynamic>> getRideStatus(String tripId);
   Future<Map<String, dynamic>> settleCash(String tripId);
   Future<Map<String, dynamic>> fetchStats(String driverId);
-  Future<List<dynamic>> fetchTripHistory(String driverId);
+  Future<Map<String, dynamic>> fetchEarningsSummary(String driverId);
+  Future<OffsetPage<Map<String, dynamic>>> fetchTripHistory(
+    String driverId, {
+    int limit = 25,
+    int offset = 0,
+    bool activeOnly = false,
+  });
 }
 
 class TripRemoteDataSourceImpl implements TripRemoteDataSource {
@@ -75,10 +82,31 @@ class TripRemoteDataSourceImpl implements TripRemoteDataSource {
   }
 
   @override
-  Future<List<dynamic>> fetchTripHistory(String driverId) async {
-    final response = await _dio.get<List<dynamic>>(
-      '/api/v1/drivers/$driverId/trips',
+  Future<Map<String, dynamic>> fetchEarningsSummary(String driverId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/drivers/$driverId/earnings',
     );
-    return response.data ?? [];
+    return response.data ?? {};
+  }
+
+  @override
+  Future<OffsetPage<Map<String, dynamic>>> fetchTripHistory(
+    String driverId, {
+    int limit = 25,
+    int offset = 0,
+    bool activeOnly = false,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/drivers/$driverId/trips',
+      queryParameters: {
+        'limit': limit,
+        'offset': offset,
+        if (activeOnly) 'scope': 'active',
+      },
+    );
+    return OffsetPage<Map<String, dynamic>>.fromJson(
+      response.data ?? const <String, dynamic>{},
+      (value) => Map<String, dynamic>.from(value! as Map),
+    );
   }
 }

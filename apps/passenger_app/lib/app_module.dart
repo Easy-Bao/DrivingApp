@@ -18,6 +18,7 @@ import 'package:passenger_app/src/features/location/domain/repositories/i_locati
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppModule extends Module {
@@ -59,6 +60,9 @@ class AppModule extends Module {
           onSessionExpired: () =>
               i.get<SessionBloc>().add(const SessionGuestRequested()),
         ),
+      )
+      ..addLazySingleton<ILocationApiClient>(
+        (i) => LocationApiClient(i.get<Dio>()),
       )
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => AuthRemoteDataSourceImpl(i.get<Dio>()),

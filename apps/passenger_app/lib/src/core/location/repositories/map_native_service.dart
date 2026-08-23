@@ -165,7 +165,7 @@ class MapNativeService {
               .toList(),
         },
       );
-      final values = response['distancesKm'];
+      final values = response['distances_km'];
       if (values is! List) {
         return left(
           const PlaceParseError(message: 'Invalid travel matrix response.'),

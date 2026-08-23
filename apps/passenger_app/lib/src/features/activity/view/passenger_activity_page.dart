@@ -82,12 +82,26 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
                         message:
                             'Your completed and cancelled rides will appear here.',
                       ),
-                    ActivityLoaded(:final past, :final upcoming) =>
+                    ActivityLoaded(
+                      :final past,
+                      :final upcoming,
+                      :final hasMore,
+                      :final isLoadingMore,
+                      :final loadMoreError,
+                      :final weeklyFareCentavos,
+                      :final weeklyRideCount,
+                    ) =>
                       PassengerActivityHistoryWidget(
                         activeRides: upcoming,
                         pastRides: past,
                         referenceTime: DateTime.now(),
                         onRideTap: _openRide,
+                        hasMore: hasMore,
+                        isLoadingMore: isLoadingMore,
+                        loadMoreError: loadMoreError,
+                        onLoadMore: _loadMoreActivity,
+                        weeklyFare: weeklyFareCentavos / 100,
+                        weeklyRideCount: weeklyRideCount,
                       ),
                   },
                 ),
@@ -102,6 +116,15 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
       BlocProvider.of<ActivityBloc>(
         context,
       ).add(LoadActivityEvent(passengerId: passengerId));
+    }
+  }
+
+  void _loadMoreActivity() {
+    final sessionState = BlocProvider.of<SessionBloc>(context).state;
+    if (sessionState case AuthenticatedSession(:final passengerId)) {
+      BlocProvider.of<ActivityBloc>(
+        context,
+      ).add(LoadMoreActivityEvent(passengerId: passengerId));
     }
   }
 

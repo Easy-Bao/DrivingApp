@@ -1,10 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 class InboxCubit extends Cubit<InboxState> {
+  static const _pageSize = 50;
+
   final IInboxRepository inboxRepository;
   final List<InboxNotification> _localNotifications = [];
   String? _activePassengerId;
@@ -23,15 +26,72 @@ class InboxCubit extends Cubit<InboxState> {
     if (state is! InboxLoadedState) {
       emit(const InboxLoadingState());
     }
-    final result = await inboxRepository.fetchPassengerNotifications(
-      passengerId,
-    );
+    final result = await _fetchPage(passengerId, offset: 0);
     if (isClosed || requestRevision != _sessionRevision) return;
 
     result.fold(
       (failure) => emit(InboxErrorState(ErrorHandler.getErrorMessage(failure))),
-      (notifications) =>
-          emit(InboxLoadedState(_mergeLocalNotifications(notifications))),
+      (page) => emit(
+        InboxLoadedState(
+          _mergeLocalNotifications(page.items),
+          hasMore: page.hasMore,
+          nextOffset: page.nextOffset,
+        ),
+      ),
+    );
+  }
+
+  Future<void> loadMoreNotifications() async {
+    final current = state;
+    final passengerId = _activePassengerId;
+    if (current is! InboxLoadedState ||
+        passengerId == null ||
+        !current.hasMore ||
+        current.nextOffset == null ||
+        current.isLoadingMore) {
+      return;
+    }
+    final requestRevision = _sessionRevision;
+    emit(current.copyWith(isLoadingMore: true, clearLoadMoreError: true));
+    final result = await _fetchPage(passengerId, offset: current.nextOffset!);
+    if (isClosed || requestRevision != _sessionRevision) return;
+    result.fold(
+      (failure) => emit(
+        current.copyWith(
+          isLoadingMore: false,
+          loadMoreError: ErrorHandler.getErrorMessage(failure),
+        ),
+      ),
+      (page) => emit(
+        InboxLoadedState(
+          _mergeLocalNotifications([...current.notifications, ...page.items]),
+          hasMore: page.hasMore,
+          nextOffset: page.nextOffset,
+        ),
+      ),
+    );
+  }
+
+  Future<Either<Failure, OffsetPage<InboxNotification>>> _fetchPage(
+    String passengerId, {
+    required int offset,
+  }) async {
+    final repository = inboxRepository;
+    if (repository is IPaginatedInboxRepository) {
+      final paginatedRepository = repository as IPaginatedInboxRepository;
+      return paginatedRepository.fetchPassengerNotificationsPage(
+        passengerId,
+        limit: _pageSize,
+        offset: offset,
+      );
+    }
+    final result = await repository.fetchPassengerNotifications(passengerId);
+    return result.map(
+      (notifications) => OffsetPage<InboxNotification>(
+        items: notifications,
+        hasMore: false,
+        nextOffset: null,
+      ),
     );
   }
 
@@ -43,20 +103,28 @@ class InboxCubit extends Cubit<InboxState> {
     final currentNotifications = state is InboxLoadedState
         ? (state as InboxLoadedState).notifications
         : const <InboxNotification>[];
-    emit(InboxLoadedState(_mergeLocalNotifications(currentNotifications)));
+    final current = state;
+    emit(
+      InboxLoadedState(
+        _mergeLocalNotifications(currentNotifications),
+        hasMore: current is InboxLoadedState && current.hasMore,
+        nextOffset: current is InboxLoadedState ? current.nextOffset : null,
+      ),
+    );
   }
 
   List<InboxNotification> _mergeLocalNotifications(
     List<InboxNotification> remoteNotifications,
   ) {
     _removeExpiredLocalNotifications();
-    final notifications = [
-      ..._localNotifications,
-      ...remoteNotifications.where((remote) {
-        return !remote.isExpired &&
-            !_localNotifications.any((local) => local.id == remote.id);
-      }),
-    ];
+    final byId = <String, InboxNotification>{};
+    for (final remote in remoteNotifications) {
+      if (!remote.isExpired) byId.putIfAbsent(remote.id, () => remote);
+    }
+    for (final local in _localNotifications.reversed) {
+      byId[local.id] = local;
+    }
+    final notifications = byId.values.toList();
     notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return notifications;
   }
@@ -72,7 +140,7 @@ class InboxCubit extends Cubit<InboxState> {
       );
       if (index >= 0 && index < currentList.length) {
         currentList[index] = currentList[index].copyWith(isRead: true);
-        emit(InboxLoadedState(currentList));
+        emit((state as InboxLoadedState).copyWith(notifications: currentList));
       }
     }
   }
@@ -87,7 +155,7 @@ class InboxCubit extends Cubit<InboxState> {
           (item) => item.id == currentList[index].id,
         );
         currentList.removeAt(index);
-        emit(InboxLoadedState(currentList));
+        emit((state as InboxLoadedState).copyWith(notifications: currentList));
       }
     }
   }

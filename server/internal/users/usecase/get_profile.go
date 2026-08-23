@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 )
 
@@ -15,10 +16,13 @@ func (service *Service) Update(ctx context.Context, profile domain.Profile) (dom
 	return service.repository.Save(ctx, profile)
 }
 
-func (service *Service) Notifications(ctx context.Context, userID int) ([]domain.Notification, error) {
+func (service *Service) Notifications(ctx context.Context, userID, limit, offset int) ([]domain.Notification, error) {
 	repository, ok := service.repository.(domain.NotificationRepository)
 	if !ok {
 		return []domain.Notification{}, nil
 	}
-	return repository.Notifications(ctx, userID)
+	if limit <= 0 || limit > 100 || offset < 0 || offset > 1_000_000 {
+		return nil, errors.New("notification pagination is invalid")
+	}
+	return repository.Notifications(ctx, userID, limit, offset)
 }

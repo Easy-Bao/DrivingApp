@@ -137,12 +137,17 @@ func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 403, "forbidden")
 		return
 	}
-	items, err := handler.service.Notifications(r.Context(), targetID)
+	page, err := sharedrequest.ParseOffsetPagination(r.URL.Query(), 50, 100)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid pagination")
+		return
+	}
+	items, err := handler.service.Notifications(r.Context(), targetID, page.Limit, page.Offset)
 	if err != nil {
 		writeError(w, 500, "Notifications are temporarily unavailable.")
 		return
 	}
-	writeJSON(w, 200, items)
+	writeJSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
 }
 
 func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {

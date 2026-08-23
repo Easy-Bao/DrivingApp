@@ -26,7 +26,7 @@ abstract class BiddingRemoteDataSource {
     int? page,
     int? limit,
   });
-  Future<List<dynamic>> fetchOnlineDrivers();
+  Future<List<dynamic>> fetchOnlineDrivers(List<String> driverIds);
   Future<List<dynamic>> fetchPublicDriverSummaries();
   Future<List<dynamic>> fetchNearbyDrivers({
     required double latitude,
@@ -153,8 +153,14 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   }
 
   @override
-  Future<List<dynamic>> fetchOnlineDrivers() async {
-    final response = await _dio.get<List<dynamic>>('/api/v1/drivers/online');
+  Future<List<dynamic>> fetchOnlineDrivers(List<String> driverIds) async {
+    if (driverIds.isEmpty || driverIds.length > 20) {
+      throw const FormatException('Nearby driver identifiers are invalid.');
+    }
+    final response = await _dio.get<List<dynamic>>(
+      '/api/v1/drivers/online',
+      queryParameters: {'ids': driverIds.join(',')},
+    );
     return response.data ?? [];
   }
 

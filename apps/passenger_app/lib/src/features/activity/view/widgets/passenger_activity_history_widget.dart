@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_controls_widget.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_header_widget.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_history_presenter.dart';
@@ -10,12 +12,24 @@ class PassengerActivityHistoryWidget extends StatefulWidget {
   final List<RideHistoryModel> pastRides;
   final DateTime referenceTime;
   final ValueChanged<RideHistoryModel> onRideTap;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final String? loadMoreError;
+  final VoidCallback? onLoadMore;
+  final double? weeklyFare;
+  final int? weeklyRideCount;
 
   const PassengerActivityHistoryWidget({
     required this.activeRides,
     required this.pastRides,
     required this.referenceTime,
     required this.onRideTap,
+    this.hasMore = false,
+    this.isLoadingMore = false,
+    this.loadMoreError,
+    this.onLoadMore,
+    this.weeklyFare,
+    this.weeklyRideCount,
     super.key,
   });
 
@@ -34,8 +48,10 @@ class _PassengerActivityHistoryWidgetState
     final sortedPastRides = presenter.sortPastRides(widget.pastRides);
     final filteredRides = _filterRides(sortedPastRides);
     final groupedRides = presenter.groupRides(filteredRides);
-    final weeklyRides = presenter.completedRidesThisWeek(sortedPastRides);
-    final weeklyFare = weeklyRides.fold<double>(
+    final fallbackWeeklyRides = presenter.completedRidesThisWeek(
+      sortedPastRides,
+    );
+    final fallbackWeeklyFare = fallbackWeeklyRides.fold<double>(
       0,
       (total, ride) => total + presenter.priceValue(ride.price),
     );
@@ -57,8 +73,9 @@ class _PassengerActivityHistoryWidgetState
           padding: const EdgeInsets.symmetric(horizontal: 20),
           sliver: SliverToBoxAdapter(
             child: PassengerActivitySummaryWidget(
-              weeklyFare: weeklyFare,
-              weeklyRideCount: weeklyRides.length,
+              weeklyFare: widget.weeklyFare ?? fallbackWeeklyFare,
+              weeklyRideCount:
+                  widget.weeklyRideCount ?? fallbackWeeklyRides.length,
             ),
           ),
         ),
@@ -80,8 +97,52 @@ class _PassengerActivityHistoryWidgetState
           )
         else
           ..._historySlivers(groupedRides, presenter),
+        if (filteredRides.isNotEmpty &&
+            (widget.hasMore || widget.loadMoreError != null))
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+            sliver: SliverToBoxAdapter(child: _buildLoadMore()),
+          ),
         if (filteredRides.isNotEmpty)
           const SliverToBoxAdapter(child: SizedBox(height: 112)),
+      ],
+    );
+  }
+
+  Widget _buildLoadMore() {
+    if (widget.isLoadingMore) {
+      return const Center(
+        child: SizedBox.square(
+          dimension: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        if (widget.loadMoreError != null) ...[
+          Text(
+            widget.loadMoreError!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppTheme.cancel,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
+        TextButton.icon(
+          onPressed: widget.onLoadMore,
+          style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
+          icon: const Icon(LucideIcons.chevron_down, size: 16),
+          label: Text(
+            widget.loadMoreError == null ? 'Load more rides' : 'Retry',
+          ),
+        ),
       ],
     );
   }

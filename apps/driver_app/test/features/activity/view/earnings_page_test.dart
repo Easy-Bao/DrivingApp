@@ -16,17 +16,39 @@ class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class _FakeActivityRepository implements IDriverActivityRepository {
   @override
-  Future<Either<Failure, List<dynamic>>> fetchTripHistory(String driverId) {
-    return Future.value(
-      const Right<Failure, List<dynamic>>([
-        {
-          'status': 'completed',
-          'completed_at': '2026-08-19T10:00:00Z',
-          'fare_pesos': 29.73,
-          'duration_minutes': 6,
-        },
-      ]),
-    );
+  Future<Either<Failure, Map<String, dynamic>>> fetchEarningsSummary(
+    String driverId,
+  ) async {
+    return const Right({
+      'today': {'earnings_centavos': 2973, 'completed_trips': 1},
+      'this_week': {'earnings_centavos': 2973, 'completed_trips': 1},
+      'this_month': {'earnings_centavos': 2973, 'completed_trips': 1},
+      'weekdays': [
+        {'start_date': '2026-08-17', 'earnings_centavos': 2973},
+        {'start_date': '2026-08-18', 'earnings_centavos': 0},
+        {'start_date': '2026-08-19', 'earnings_centavos': 0},
+        {'start_date': '2026-08-20', 'earnings_centavos': 0},
+        {'start_date': '2026-08-21', 'earnings_centavos': 0},
+        {'start_date': '2026-08-22', 'earnings_centavos': 0},
+        {'start_date': '2026-08-23', 'earnings_centavos': 0},
+      ],
+      'month_weeks': [
+        {'start_date': '2026-08-01', 'earnings_centavos': 2973},
+        {'start_date': '2026-08-08', 'earnings_centavos': 0},
+        {'start_date': '2026-08-15', 'earnings_centavos': 0},
+        {'start_date': '2026-08-22', 'earnings_centavos': 0},
+        {'start_date': '2026-08-29', 'earnings_centavos': 0},
+      ],
+    });
+  }
+
+  @override
+  Future<Either<Failure, OffsetPage<Map<String, dynamic>>>> fetchTripHistory(
+    String driverId, {
+    int limit = 25,
+    int offset = 0,
+  }) async {
+    return const Right(OffsetPage(items: [], hasMore: false, nextOffset: null));
   }
 }
 

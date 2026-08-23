@@ -18,11 +18,46 @@ class InboxLoadingState extends InboxState {
 
 class InboxLoadedState extends InboxState {
   final List<InboxNotification> notifications;
+  final bool hasMore;
+  final int? nextOffset;
+  final bool isLoadingMore;
+  final String? loadMoreError;
 
-  const InboxLoadedState(this.notifications);
+  const InboxLoadedState(
+    this.notifications, {
+    this.hasMore = false,
+    this.nextOffset,
+    this.isLoadingMore = false,
+    this.loadMoreError,
+  });
+
+  InboxLoadedState copyWith({
+    List<InboxNotification>? notifications,
+    bool? hasMore,
+    int? nextOffset,
+    bool? isLoadingMore,
+    String? loadMoreError,
+    bool clearLoadMoreError = false,
+  }) {
+    return InboxLoadedState(
+      notifications ?? this.notifications,
+      hasMore: hasMore ?? this.hasMore,
+      nextOffset: nextOffset ?? this.nextOffset,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      loadMoreError: clearLoadMoreError
+          ? null
+          : loadMoreError ?? this.loadMoreError,
+    );
+  }
 
   @override
-  List<Object?> get props => [notifications];
+  List<Object?> get props => [
+    notifications,
+    hasMore,
+    nextOffset,
+    isLoadingMore,
+    loadMoreError,
+  ];
 }
 
 class InboxErrorState extends InboxState {

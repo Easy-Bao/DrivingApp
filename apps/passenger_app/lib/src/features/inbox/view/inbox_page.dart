@@ -122,6 +122,7 @@ class _InboxPageState extends State<InboxPage> {
               final notifications = state is InboxLoadedState
                   ? state.notifications
                   : <InboxNotification>[];
+              final loadedState = state is InboxLoadedState ? state : null;
 
               return CustomScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -195,34 +196,8 @@ class _InboxPageState extends State<InboxPage> {
                   if (notifications.isNotEmpty)
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(vertical: 36.0),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  LucideIcons.mail,
-                                  size: 24,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.25,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'You are all caught up',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.35,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ]),
+                      sliver: SliverToBoxAdapter(
+                        child: _buildFooter(loadedState!),
                       ),
                     ),
                 ],
@@ -230,6 +205,67 @@ class _InboxPageState extends State<InboxPage> {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFooter(InboxLoadedState state) {
+    if (state.isLoadingMore) {
+      return const Center(
+        child: SizedBox.square(
+          dimension: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      );
+    }
+    if (state.hasMore || state.loadMoreError != null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (state.loadMoreError != null) ...[
+            Text(
+              state.loadMoreError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppTheme.cancel,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
+          TextButton.icon(
+            onPressed: _inboxCubit.loadMoreNotifications,
+            icon: const Icon(LucideIcons.chevron_down, size: 16),
+            label: Text(
+              state.loadMoreError == null ? 'Load more messages' : 'Retry',
+            ),
+          ),
+        ],
+      );
+    }
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            LucideIcons.mail,
+            size: 24,
+            color: AppTheme.primaryColor.withValues(alpha: 0.25),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You are all caught up',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryColor.withValues(alpha: 0.35),
+            ),
+          ),
+        ],
       ),
     );
   }

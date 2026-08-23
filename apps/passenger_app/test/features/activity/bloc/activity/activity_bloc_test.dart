@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
+import 'package:passenger_app/src/features/activity/domain/entities/activity_overview.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -63,8 +64,20 @@ void main() {
       'emits [Loading, Loaded] with correctly segregated past and upcoming rides',
       build: () {
         when(
-          () => repo.fetchRideHistory(any()),
-        ).thenAnswer((_) async => const Right([completedRide, requestedRide]));
+          () => repo.fetchActivityOverview(any(), limit: any(named: 'limit')),
+        ).thenAnswer(
+          (_) async => const Right(
+            ActivityOverview(
+              rides: OffsetPage(
+                items: [completedRide, requestedRide],
+                hasMore: false,
+                nextOffset: null,
+              ),
+              weeklyFareCentavos: 8500,
+              weeklyRideCount: 1,
+            ),
+          ),
+        );
         return _makeCubit(repo);
       },
       act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
@@ -86,7 +99,7 @@ void main() {
       'emits [Loading, ActivityError] on repository failure',
       build: () {
         when(
-          () => repo.fetchRideHistory(any()),
+          () => repo.fetchActivityOverview(any(), limit: any(named: 'limit')),
         ).thenAnswer((_) async => const Left(ServerFailure('network error')));
         return _makeCubit(repo);
       },
@@ -109,8 +122,16 @@ void main() {
       'emits ActivityLoaded with empty lists when repository returns no rides',
       build: () {
         when(
-          () => repo.fetchRideHistory(any()),
-        ).thenAnswer((_) async => const Right([]));
+          () => repo.fetchActivityOverview(any(), limit: any(named: 'limit')),
+        ).thenAnswer(
+          (_) async => const Right(
+            ActivityOverview(
+              rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
+              weeklyFareCentavos: 0,
+              weeklyRideCount: 0,
+            ),
+          ),
+        );
         return _makeCubit(repo);
       },
       act: (bloc) => bloc.add(const LoadActivityEvent(passengerId: 'pass-1')),
@@ -130,8 +151,16 @@ void main() {
       'reports existing rides while refreshing populated activity',
       build: () {
         when(
-          () => repo.fetchRideHistory(any()),
-        ).thenAnswer((_) async => const Right([]));
+          () => repo.fetchActivityOverview(any(), limit: any(named: 'limit')),
+        ).thenAnswer(
+          (_) async => const Right(
+            ActivityOverview(
+              rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
+              weeklyFareCentavos: 0,
+              weeklyRideCount: 0,
+            ),
+          ),
+        );
         return _makeCubit(repo);
       },
       seed: () => const ActivityLoaded(
@@ -150,6 +179,56 @@ void main() {
             .having((state) => state.upcoming, 'upcoming', isEmpty),
       ],
     );
+
+    blocTest<ActivityBloc, ActivityState>(
+      'loads the next page without replacing existing rides',
+      build: () {
+        when(
+          () => repo.fetchRideHistory(
+            any(),
+            limit: any(named: 'limit'),
+            offset: any(named: 'offset'),
+          ),
+        ).thenAnswer(
+          (_) async => const Right(
+            OffsetPage(
+              items: [requestedRide],
+              hasMore: false,
+              nextOffset: null,
+            ),
+          ),
+        );
+        return _makeCubit(repo);
+      },
+      seed: () => const ActivityLoaded(
+        past: [completedRide],
+        upcoming: [],
+        hasMore: true,
+        nextOffset: 25,
+      ),
+      act: (bloc) =>
+          bloc.add(const LoadMoreActivityEvent(passengerId: 'pass-1')),
+      expect: () => [
+        isA<ActivityLoaded>().having(
+          (state) => state.isLoadingMore,
+          'loading more',
+          isTrue,
+        ),
+        isA<ActivityLoaded>()
+            .having((state) => state.past.single.id, 'past ride', 'ride-1')
+            .having(
+              (state) => state.upcoming.single.id,
+              'new upcoming ride',
+              'ride-2',
+            )
+            .having((state) => state.hasMore, 'has more', isFalse),
+      ],
+      verify: (_) {
+        verify(
+          () => repo.fetchRideHistory('pass-1', limit: 25, offset: 25),
+        ).called(1);
+      },
+    );
   });
 
   group('ActivityBloc — RefreshActivityEvent', () {
@@ -157,8 +236,16 @@ void main() {
       'refreshes without emitting ActivityLoading first',
       build: () {
         when(
-          () => repo.fetchRideHistory(any()),
-        ).thenAnswer((_) async => const Right([]));
+          () => repo.fetchActivityOverview(any(), limit: any(named: 'limit')),
+        ).thenAnswer(
+          (_) async => const Right(
+            ActivityOverview(
+              rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
+              weeklyFareCentavos: 0,
+              weeklyRideCount: 0,
+            ),
+          ),
+        );
         return _makeCubit(repo);
       },
       act: (bloc) =>

@@ -24,3 +24,12 @@ final class RefreshActivityEvent extends ActivityEvent {
   @override
   List<Object?> get props => [passengerId];
 }
+
+final class LoadMoreActivityEvent extends ActivityEvent {
+  final String passengerId;
+
+  const LoadMoreActivityEvent({required this.passengerId});
+
+  @override
+  List<Object?> get props => [passengerId];
+}

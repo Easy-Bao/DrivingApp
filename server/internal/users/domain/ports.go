@@ -8,5 +8,5 @@ type Repository interface {
 }
 
 type NotificationRepository interface {
-	Notifications(ctx context.Context, userID int) ([]Notification, error)
+	Notifications(ctx context.Context, userID, limit, offset int) ([]Notification, error)
 }

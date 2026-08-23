@@ -1,6 +1,7 @@
 package location_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -52,6 +53,29 @@ func TestLocationHTTPRejectsUnsupportedRouteOptions(t *testing.T) {
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
+	}
+}
+
+func TestLocationHTTPExposesSnakeCaseMatrixContract(t *testing.T) {
+	router := newLocationRouter()
+	payload := `{"origin":{"lat":7.8,"lng":123.4},"destinations":[{"lat":7.9,"lng":123.5}]}`
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/location/matrix", strings.NewReader(payload))
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+	var body map[string]any
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode matrix response: %v", err)
+	}
+	if _, exists := body["distances_km"]; !exists {
+		t.Fatalf("matrix response is missing distances_km: %#v", body)
+	}
+	if _, exists := body["distancesKm"]; exists {
+		t.Fatalf("matrix response leaked a camel-case alias: %#v", body)
 	}
 }
 
