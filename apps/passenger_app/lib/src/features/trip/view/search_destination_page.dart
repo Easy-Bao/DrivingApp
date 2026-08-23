@@ -6,6 +6,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/features/trip/view/search_destination_formatters.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -253,7 +254,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     final requestId = _searchRequestId;
 
     final localMatches = _allNearbyPlaces
-        .where((place) => _matchesSearchQuery(place, query))
+        .where((place) => destinationMatchesSearchQuery(place, query))
         .toList();
 
     final apiResults = await MapProvider.searchPlaces(
@@ -266,7 +267,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     for (final res in apiResults.where(
       (place) =>
           (place.distanceKm == null || place.distanceKm! <= 10.0) &&
-          _matchesSearchQuery(place, query),
+          destinationMatchesSearchQuery(place, query),
     )) {
       final isDuplicate = mergedResults.any(
         (m) =>
@@ -282,7 +283,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
 
     if (mounted && requestId == _searchRequestId) {
       setState(() {
-        _results = _sortPlacesByDistance(mergedResults);
+        _results = sortDestinationsByDistance(mergedResults, _drivingDistances);
         _isSearching = false;
       });
       unawaited(_loadDrivingDistances(mergedResults, requestId));
@@ -296,7 +297,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     if (_userLat == null || _userLng == null) return;
 
     for (final place in places) {
-      final key = _placeKey(place);
+      final key = destinationPlaceKey(place);
       if (_drivingDistances.containsKey(key) ||
           !_drivingDistanceRequests.add(key)) {
         continue;
@@ -313,7 +314,10 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
           setState(() {
             _drivingDistances[key] = route.distanceKm;
             if (requestId == _searchRequestId) {
-              _results = _sortPlacesByDistance(_results);
+              _results = sortDestinationsByDistance(
+                _results,
+                _drivingDistances,
+              );
             }
           });
         }
@@ -322,58 +326,6 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
         _drivingDistanceRequests.remove(key);
       }
     }
-  }
-
-  String _placeKey(PlaceModel place) {
-    return '${place.id}:${place.latitude.toStringAsFixed(5)}:${place.longitude.toStringAsFixed(5)}';
-  }
-
-  bool _matchesSearchQuery(PlaceModel place, String query) {
-    final normalizedQuery = _normalizeSearchText(query);
-    if (normalizedQuery.isEmpty) return false;
-
-    final searchableText = _normalizeSearchText(
-      '${place.name} ${place.fullAddress}',
-    );
-    final compactQuery = _compactSearchText(query);
-    final compactSearchableText = _compactSearchText(
-      '${place.name} ${place.fullAddress}',
-    );
-    if (compactQuery.isNotEmpty &&
-        compactSearchableText.contains(compactQuery)) {
-      return true;
-    }
-    if (searchableText.contains(normalizedQuery)) return true;
-
-    final queryTokens = normalizedQuery.split(' ');
-    final searchableTokens = searchableText.split(' ');
-    return queryTokens.every(
-      (queryToken) => searchableTokens.any(
-        (searchableToken) => searchableToken.startsWith(queryToken),
-      ),
-    );
-  }
-
-  String _normalizeSearchText(String value) {
-    return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
-  }
-
-  String _compactSearchText(String value) {
-    return _normalizeSearchText(value).replaceAll(' ', '');
-  }
-
-  List<PlaceModel> _sortPlacesByDistance(List<PlaceModel> places) {
-    final sorted = [...places];
-    sorted.sort(
-      (a, b) => _distanceForSorting(a).compareTo(_distanceForSorting(b)),
-    );
-    return sorted;
-  }
-
-  double _distanceForSorting(PlaceModel place) {
-    return _drivingDistances[_placeKey(place)] ??
-        place.distanceKm ??
-        double.maxFinite;
   }
 
   void _onPlaceSelected(PlaceModel place) {
@@ -772,7 +724,11 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                                     ),
                                                   ),
                                                   subtitle: Text(
-                                                    _formatPlaceDistance(place),
+                                                    formatDestinationPlaceDistance(
+                                                      place,
+                                                      _drivingDistances,
+                                                      _drivingDistanceRequests,
+                                                    ),
                                                     style: TextStyle(
                                                       color: AppTheme
                                                           .primaryColor
@@ -1080,27 +1036,6 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
         ),
       ),
     );
-  }
-
-  String _formatDistance(double distanceKm) {
-    if (distanceKm < 0.1) {
-      return '${(distanceKm * 1000).round()} m away';
-    }
-    return '${DistanceFormatter.fromKilometers(distanceKm)} away';
-  }
-
-  String _formatPlaceDistance(PlaceModel place) {
-    final key = _placeKey(place);
-    final drivingDistance = _drivingDistances[key];
-    if (drivingDistance != null) {
-      return _formatDistance(drivingDistance);
-    }
-    if (_drivingDistanceRequests.contains(key)) {
-      return 'Calculating route...';
-    }
-    return place.distanceKm != null
-        ? _formatDistance(place.distanceKm!)
-        : place.category ?? 'Nearby POI';
   }
 }
 
