@@ -1,22 +1,20 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger_app/src/features/activity/data/datasources/passenger_activity_remote_data_source.dart';
 import 'package:passenger_app/src/features/activity/data/repositories/activity_repository.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 
-class MockPassengerRemoteDataSource extends Mock
-    implements PassengerRemoteDataSource {}
+class MockPassengerActivityRemoteDataSource extends Mock
+    implements PassengerActivityRemoteDataSource {}
 
 void main() {
-  late MockPassengerRemoteDataSource remoteDataSource;
+  late MockPassengerActivityRemoteDataSource remoteDataSource;
   late ActivityRepository repository;
 
   setUp(() {
-    remoteDataSource = MockPassengerRemoteDataSource();
-    repository = ActivityRepository(
-      passengerRemoteDataSource: remoteDataSource,
-    );
+    remoteDataSource = MockPassengerActivityRemoteDataSource();
+    repository = ActivityRepository(remoteDataSource: remoteDataSource);
   });
 
   test(
@@ -130,7 +128,7 @@ void main() {
         nextOffset: null,
       ),
     );
-    when(() => remoteDataSource.fetchActivitySummary('passenger-1')).thenAnswer(
+    when(() => remoteDataSource.fetchSummary('passenger-1')).thenAnswer(
       (_) async => const {
         'this_week_fare_centavos': 21426,
         'this_week_completed_rides': 6,

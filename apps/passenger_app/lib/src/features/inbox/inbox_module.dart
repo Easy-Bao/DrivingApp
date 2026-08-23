@@ -1,10 +1,29 @@
+import 'package:dio/dio.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger_app/src/features/inbox/data/datasources/inbox_remote_data_source.dart';
+import 'package:passenger_app/src/features/inbox/data/repositories/inbox_repository.dart';
+import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/inbox/view/inbox_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class InboxModule {
   InboxModule._();
+
+  static void binds(Injector i) {
+    i
+      ..addLazySingleton<InboxRemoteDataSource>(
+        (i) => InboxRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<IInboxRepository>(
+        (i) =>
+            InboxRepository(remoteDataSource: i.get<InboxRemoteDataSource>()),
+      )
+      ..addLazySingleton<InboxCubit>(
+        (i) => InboxCubit(inboxRepository: i.get<IInboxRepository>()),
+      );
+  }
 
   static List<ModularRoute> routes = [];
 

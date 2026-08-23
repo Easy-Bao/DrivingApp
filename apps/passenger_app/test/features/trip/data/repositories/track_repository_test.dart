@@ -1,25 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/track_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
-class MockBiddingRemoteDataSource extends Mock
-    implements BiddingRemoteDataSource {}
+class MockRideRemoteDataSource extends Mock implements RideRemoteDataSource {}
 
 void main() {
-  late MockBiddingRemoteDataSource dataSource;
+  late MockRideRemoteDataSource dataSource;
   late TrackRepository repository;
 
   setUp(() {
-    dataSource = MockBiddingRemoteDataSource();
-    repository = TrackRepository(biddingDataSource: dataSource);
+    dataSource = MockRideRemoteDataSource();
+    repository = TrackRepository(remoteDataSource: dataSource);
   });
 
   test(
     'parses the numeric driver identifier returned by the ride API',
     () async {
-      when(() => dataSource.getRideStatus('303')).thenAnswer(
+      when(() => dataSource.fetchRide('303')).thenAnswer(
         (_) async => {
           'id': 303,
           'status': 'accepted',

@@ -18,8 +18,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/datasources/ride_offer_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -147,11 +148,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverId.isEmpty) return;
 
-      final page = await Modular.get<TripRemoteDataSource>().fetchTripHistory(
-        driverId,
-        limit: 10,
-        activeOnly: true,
-      );
+      final page = await Modular.get<DriverActivityRemoteDataSource>()
+          .fetchTripHistory(driverId, limit: 10, activeOnly: true);
       final trips = page.items
           .where(_isActiveDriverTripStatus)
           .map(Map<String, dynamic>.from)
@@ -377,12 +375,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       if (driverId.isEmpty) return;
 
       final results = await Future.wait<dynamic>([
-        Modular.get<TripRemoteDataSource>().fetchTripHistory(
+        Modular.get<DriverActivityRemoteDataSource>().fetchTripHistory(
           driverId,
           limit: 10,
           activeOnly: true,
         ),
-        Modular.get<BiddingRemoteDataSource>().fetchActiveBids(),
+        Modular.get<RideOfferRemoteDataSource>().fetchActiveBids(),
       ]);
       final page = results[0] as OffsetPage<Map<String, dynamic>>;
       List<Map<String, dynamic>> trips = page.items
@@ -549,13 +547,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       final vehicleType = prefs.getString('vehicle_type') ?? '';
       final plateNumber = prefs.getString('plate_number') ?? '';
 
-      final success = await Modular.get<BiddingRemoteDataSource>().placeBid(
+      final success = await Modular.get<RideOfferRemoteDataSource>().placeBid(
         sessionId: sessionId,
         driverName: driverName,
         plateNumber: plateNumber,
         vehicleType: vehicleType,
         offerPrice: fare,
-        proposedFare: fare,
       );
 
       if (mounted) {
@@ -588,7 +585,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     String rideId,
   ) async {
     try {
-      final details = await Modular.get<TripRemoteDataSource>().getRideStatus(
+      final details = await Modular.get<RideRemoteDataSource>().getRideStatus(
         rideId,
       );
       if (details.isNotEmpty) return {...trip, ...details, 'id': rideId};

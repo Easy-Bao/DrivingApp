@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/datasources/ride_offer_remote_data_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -8,7 +8,7 @@ class MockDio extends Mock implements Dio {}
 void main() {
   test('sends the canonical centavo fare field to the bid endpoint', () async {
     final dio = MockDio();
-    final dataSource = BiddingRemoteDataSourceImpl(dio);
+    final dataSource = RideOfferRemoteDataSourceImpl(dio);
     when(
       () => dio.post<Map<String, dynamic>>(
         any(),
@@ -25,7 +25,6 @@ void main() {
     final submitted = await dataSource.placeBid(
       sessionId: '101',
       offerPrice: 125.50,
-      proposedFare: 125.50,
     );
 
     expect(submitted, isTrue);

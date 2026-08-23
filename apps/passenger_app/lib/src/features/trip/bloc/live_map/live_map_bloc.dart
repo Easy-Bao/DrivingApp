@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -14,7 +14,7 @@ part 'live_map_event.dart';
 part 'live_map_state.dart';
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
-  final BiddingRemoteDataSource _biddingDataSource;
+  final RideRemoteDataSource _rideDataSource;
 
   AppMapController? _mapController;
   mapbox.PointAnnotationManager? _riderMarkerManager;
@@ -30,8 +30,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  LiveMapBloc({required BiddingRemoteDataSource biddingDataSource})
-    : _biddingDataSource = biddingDataSource,
+  LiveMapBloc({required RideRemoteDataSource rideDataSource})
+    : _rideDataSource = rideDataSource,
       super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<DrawDriverToRiderRouteEvent>(_onDrawDriverToRiderRoute);
@@ -43,10 +43,10 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         .throttleTime(const Duration(seconds: 5))
         .listen((event) async {
           try {
-            await _biddingDataSource.sendPassengerLocation(
+            await _rideDataSource.sendPassengerLocation(
               rideId: event.rideId,
-              lat: event.lat,
-              lng: event.lng,
+              latitude: event.lat,
+              longitude: event.lng,
             );
           } catch (error) {
             dev.log('Passenger telemetry update failed: $error');

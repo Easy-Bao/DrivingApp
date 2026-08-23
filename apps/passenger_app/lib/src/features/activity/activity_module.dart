@@ -1,8 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
+import 'package:passenger_app/src/features/activity/data/datasources/passenger_activity_remote_data_source.dart';
+import 'package:passenger_app/src/features/activity/data/repositories/activity_repository.dart';
+import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_activity_page.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_payment_page.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_rating_page.dart';
@@ -13,6 +17,21 @@ import 'package:shared_ui/shared_ui.dart';
 
 class ActivityModule {
   ActivityModule._();
+
+  static void binds(Injector i) {
+    i
+      ..addLazySingleton<PassengerActivityRemoteDataSource>(
+        (i) => PassengerActivityRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<IActivityRepository>(
+        (i) => ActivityRepository(
+          remoteDataSource: i.get<PassengerActivityRemoteDataSource>(),
+        ),
+      )
+      ..addFactory<ActivityBloc>(
+        (i) => ActivityBloc(repository: i.get<IActivityRepository>()),
+      );
+  }
 
   static List<ModularRoute> routes = [
     ChildRoute(

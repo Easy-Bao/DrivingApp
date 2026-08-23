@@ -1,13 +1,14 @@
 import 'package:shared_core/shared_core.dart';
+import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:fpdart/fpdart.dart';
 
 class DriverActivityRepository implements IDriverActivityRepository {
-  final TripRemoteDataSource _remoteDataSource;
+  final DriverActivityRemoteDataSource _remoteDataSource;
 
-  DriverActivityRepository({required TripRemoteDataSource remoteDataSource})
-    : _remoteDataSource = remoteDataSource;
+  DriverActivityRepository({
+    required DriverActivityRemoteDataSource remoteDataSource,
+  }) : _remoteDataSource = remoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is ServerException) {

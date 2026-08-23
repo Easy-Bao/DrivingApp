@@ -2,28 +2,28 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_state.dart';
 
-class MockTripRemoteDataSource extends Mock implements TripRemoteDataSource {}
+class MockRideRemoteDataSource extends Mock implements RideRemoteDataSource {}
 
 class MockSecureSessionService extends Mock implements SecureSessionService {}
 
 RideFlowCubit _makeCubit(
-  TripRemoteDataSource tripRemoteDataSource,
+  RideRemoteDataSource rideDataSource,
   SecureSessionService sessionService,
 ) => RideFlowCubit(
-  tripRemoteDataSource: tripRemoteDataSource,
+  rideDataSource: rideDataSource,
   sessionService: sessionService,
 );
 
 void main() {
-  late MockTripRemoteDataSource mockTripRemoteDataSource;
+  late MockRideRemoteDataSource mockRideRemoteDataSource;
   late MockSecureSessionService mockSessionService;
 
   setUp(() {
-    mockTripRemoteDataSource = MockTripRemoteDataSource();
+    mockRideRemoteDataSource = MockRideRemoteDataSource();
     mockSessionService = MockSecureSessionService();
 
     when(
@@ -31,14 +31,14 @@ void main() {
     ).thenAnswer((_) async => 'test-driver-id');
 
     when(
-      () => mockTripRemoteDataSource.acceptRide(
+      () => mockRideRemoteDataSource.acceptRide(
         tripId: any(named: 'tripId'),
         driverId: any(named: 'driverId'),
       ),
     ).thenAnswer((_) async => true);
 
     when(
-      () => mockTripRemoteDataSource.updateRideStatus(
+      () => mockRideRemoteDataSource.updateRideStatus(
         tripId: any(named: 'tripId'),
         status: any(named: 'status'),
       ),
@@ -47,7 +47,7 @@ void main() {
 
   group('RideFlowCubit — initial state', () {
     test('starts in initial state', () async {
-      final cubit = _makeCubit(mockTripRemoteDataSource, mockSessionService);
+      final cubit = _makeCubit(mockRideRemoteDataSource, mockSessionService);
       expect(cubit.state, isA<RideFlowInitial>());
       expect(cubit.activeRideId, isNull);
       await cubit.close();
@@ -57,7 +57,7 @@ void main() {
   group('RideFlowCubit — acceptRide()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowNavigatingToPickup with correct data',
-      build: () => _makeCubit(mockTripRemoteDataSource, mockSessionService),
+      build: () => _makeCubit(mockRideRemoteDataSource, mockSessionService),
       act: (cubit) => cubit.acceptRide(
         rideId: 'test-ride-id',
         passengerName: 'Juan Dela Cruz',
@@ -77,7 +77,7 @@ void main() {
   group('RideFlowCubit — arriveAtPickup()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowWaitingPassenger starting at 0 seconds',
-      build: () => _makeCubit(mockTripRemoteDataSource, mockSessionService),
+      build: () => _makeCubit(mockRideRemoteDataSource, mockSessionService),
       act: (cubit) => cubit.arriveAtPickup('Juan Dela Cruz'),
       expect: () => [
         const RideFlowWaitingPassenger(
@@ -91,7 +91,7 @@ void main() {
   group('RideFlowCubit — startRide()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowInTransit with correct trip data',
-      build: () => _makeCubit(mockTripRemoteDataSource, mockSessionService),
+      build: () => _makeCubit(mockRideRemoteDataSource, mockSessionService),
       act: (cubit) => cubit.startRide(
         passengerName: 'Juan Dela Cruz',
         destLat: 7.85,
@@ -112,12 +112,12 @@ void main() {
       'recovers missing destination coordinates from the active ride',
       () async {
         when(
-          () => mockTripRemoteDataSource.getRideStatus('test-ride-id'),
+          () => mockRideRemoteDataSource.getRideStatus('test-ride-id'),
         ).thenAnswer(
           (_) async => {'dropoff_latitude': 7.85, 'dropoff_longitude': 123.45},
         );
 
-        final cubit = _makeCubit(mockTripRemoteDataSource, mockSessionService);
+        final cubit = _makeCubit(mockRideRemoteDataSource, mockSessionService);
         cubit.resumeRide(
           rideId: 'test-ride-id',
           status: 'arrived',
@@ -148,7 +148,7 @@ void main() {
           ),
         );
         verify(
-          () => mockTripRemoteDataSource.getRideStatus('test-ride-id'),
+          () => mockRideRemoteDataSource.getRideStatus('test-ride-id'),
         ).called(1);
         await cubit.close();
       },
@@ -158,7 +158,7 @@ void main() {
   group('RideFlowCubit — resumed destination continuity', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'keeps the server destination while waiting for the passenger',
-      build: () => _makeCubit(mockTripRemoteDataSource, mockSessionService),
+      build: () => _makeCubit(mockRideRemoteDataSource, mockSessionService),
       act: (cubit) => cubit.resumeRide(
         rideId: 'test-ride-id',
         status: 'arrived',
@@ -184,7 +184,7 @@ void main() {
   group('RideFlowCubit — reset()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'returns to RideFlowInitial from any state',
-      build: () => _makeCubit(mockTripRemoteDataSource, mockSessionService),
+      build: () => _makeCubit(mockRideRemoteDataSource, mockSessionService),
       seed: () => const RideFlowComplete(fare: 150.0),
       act: (cubit) => cubit.reset(),
       expect: () => [isA<RideFlowInitial>()],

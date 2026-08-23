@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/driver_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
-class MockBiddingRemoteDataSource extends Mock
-    implements BiddingRemoteDataSource {}
+class MockDriverDiscoveryRemoteDataSource extends Mock
+    implements DriverDiscoveryRemoteDataSource {}
 
 class MockLocationApiClient extends Mock implements ILocationApiClient {}
 
@@ -17,7 +17,7 @@ void main() {
     () async {
       const latitude = 7.828;
       const longitude = 123.434;
-      final dataSource = MockBiddingRemoteDataSource();
+      final dataSource = MockDriverDiscoveryRemoteDataSource();
       final locationApiClient = MockLocationApiClient();
 
       when(() => dataSource.fetchOnlineDrivers(any())).thenAnswer(
@@ -51,7 +51,7 @@ void main() {
       );
 
       final result = await DriverRepository(
-        biddingDataSource: dataSource,
+        discoveryDataSource: dataSource,
         locationApiClient: locationApiClient,
       ).getNearbyDrivers(lat: latitude, lng: longitude);
 
@@ -77,7 +77,7 @@ void main() {
     () async {
       const latitude = 7.828;
       const longitude = 123.434;
-      final dataSource = MockBiddingRemoteDataSource();
+      final dataSource = MockDriverDiscoveryRemoteDataSource();
       final locationApiClient = MockLocationApiClient();
       final onlineDrivers = Completer<List<dynamic>>();
       final nearbyDrivers = Completer<List<dynamic>>();
@@ -101,7 +101,7 @@ void main() {
       );
 
       final repository = DriverRepository(
-        biddingDataSource: dataSource,
+        discoveryDataSource: dataSource,
         locationApiClient: locationApiClient,
       );
       final firstLookup = repository.getNearbyDrivers(

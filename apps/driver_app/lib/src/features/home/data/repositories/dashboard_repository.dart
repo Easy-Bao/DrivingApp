@@ -4,29 +4,28 @@ import 'package:dio/dio.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
-import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
+import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/datasources/driver_availability_remote_data_source.dart';
 import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 import 'package:fpdart/fpdart.dart';
 
 class DashboardRepository implements IDashboardRepository {
-  final TripRemoteDataSource _remoteDataSource;
-  final DriverRemoteDataSource _driverRemoteDataSource;
+  final DriverActivityRemoteDataSource _activityDataSource;
+  final DriverAvailabilityRemoteDataSource _availabilityDataSource;
   final TelemetryRemoteDataSource _telemetryRemoteDataSource;
   final SecureSessionService _sessionService;
   final BackgroundTelemetryService? _backgroundTelemetryService;
 
   DashboardRepository({
-    required TripRemoteDataSource remoteDataSource,
-    required DriverRemoteDataSource driverRemoteDataSource,
+    required DriverActivityRemoteDataSource activityDataSource,
+    required DriverAvailabilityRemoteDataSource availabilityDataSource,
     required TelemetryRemoteDataSource telemetryRemoteDataSource,
     required SecureSessionService sessionService,
     BackgroundTelemetryService? backgroundTelemetryService,
-  }) : _remoteDataSource = remoteDataSource,
-       _driverRemoteDataSource = driverRemoteDataSource,
+  }) : _activityDataSource = activityDataSource,
+       _availabilityDataSource = availabilityDataSource,
        _telemetryRemoteDataSource = telemetryRemoteDataSource,
        _sessionService = sessionService,
        _backgroundTelemetryService = backgroundTelemetryService;
@@ -138,7 +137,7 @@ class DashboardRepository implements IDashboardRepository {
   }) async {
     if (markServerOffline) {
       try {
-        await _driverRemoteDataSource.updateOnlineStatus(
+        await _availabilityDataSource.updateOnlineStatus(
           driverId: driverId,
           isOnline: false,
           lat: lat,
@@ -185,7 +184,7 @@ class DashboardRepository implements IDashboardRepository {
     if (!isOnline) {
       Object? statusError;
       try {
-        await _driverRemoteDataSource.updateOnlineStatus(
+        await _availabilityDataSource.updateOnlineStatus(
           driverId: driverId,
           isOnline: false,
           lat: lat,
@@ -224,7 +223,7 @@ class DashboardRepository implements IDashboardRepository {
         );
       }
 
-      await _driverRemoteDataSource.updateOnlineStatus(
+      await _availabilityDataSource.updateOnlineStatus(
         driverId: driverId,
         isOnline: true,
         lat: lat,
@@ -273,7 +272,7 @@ class DashboardRepository implements IDashboardRepository {
       if (driverId.isEmpty) {
         return const Left(CacheFailure('Driver ID is not registered.'));
       }
-      final data = await _remoteDataSource.fetchStats(driverId);
+      final data = await _activityDataSource.fetchStats(driverId);
       final earningsCentavos = _readFiniteNumber(data, const [
         'today_earnings_centavos',
       ]);
@@ -298,19 +297,5 @@ class DashboardRepository implements IDashboardRepository {
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }
-  }
-
-  @override
-  Future<Either<Failure, List<HeatmapCell>>> getSurgeHeatmap({
-    required double lat,
-    required double lng,
-    required int gridSize,
-    required double cellSize,
-    required List<double> requestLats,
-    required List<double> requestLngs,
-  }) async {
-    // Surge cells must come from a server pricing/dispatch response. Until
-    // that endpoint exists, an empty layer is safer than fabricated demand.
-    return const Right(<HeatmapCell>[]);
   }
 }

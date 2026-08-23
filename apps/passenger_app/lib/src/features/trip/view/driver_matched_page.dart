@@ -5,7 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
-import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
+import 'package:passenger_app/src/features/driver_profile/view/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
 
 class DriverMatchedPage extends StatefulWidget {

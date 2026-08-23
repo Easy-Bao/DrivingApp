@@ -1,21 +1,21 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 class DriverRepository implements IDriverRepository {
-  final BiddingRemoteDataSource _biddingDataSource;
+  final DriverDiscoveryRemoteDataSource _discoveryDataSource;
   final ILocationApiClient _locationApiClient;
 
   Future<Either<Failure, List<DriverModel>>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
   DriverRepository({
-    required BiddingRemoteDataSource biddingDataSource,
+    required DriverDiscoveryRemoteDataSource discoveryDataSource,
     required ILocationApiClient locationApiClient,
-  }) : _biddingDataSource = biddingDataSource,
+  }) : _discoveryDataSource = discoveryDataSource,
        _locationApiClient = locationApiClient;
 
   Failure _mapExceptionToFailure(Object error) {
@@ -96,7 +96,7 @@ class DriverRepository implements IDriverRepository {
     required double lng,
   }) async {
     try {
-      final nearbyPoints = await _biddingDataSource.fetchNearbyDrivers(
+      final nearbyPoints = await _discoveryDataSource.fetchNearbyDrivers(
         latitude: lat,
         longitude: lng,
       );
@@ -132,7 +132,7 @@ class DriverRepository implements IDriverRepository {
           .map((point) => point['driver_id']! as String)
           .toSet()
           .toList(growable: false);
-      final profileFuture = _biddingDataSource.fetchOnlineDrivers(driverIds);
+      final profileFuture = _discoveryDataSource.fetchOnlineDrivers(driverIds);
       final matrixFuture = _fetchTravelMetrics(lat, lng, validPoints);
       final profiles = await profileFuture;
       final travelMetrics = await matrixFuture;

@@ -4,8 +4,8 @@ import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
-import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
+import 'package:driver_app/src/features/profile/data/datasources/driver_profile_remote_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -57,8 +57,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           await Modular.get<SecureSessionService>().readDriverId() ?? '';
       if (driverId.isEmpty) return;
 
-      final profileData = await Modular.get<DriverRemoteDataSource>()
-          .fetchDriverProfile(driverId);
+      final profileData = await Modular.get<DriverProfileRemoteDataSource>()
+          .fetchProfile(driverId);
       final profile = ProfileModel.fromJson(profileData);
       final prefs = await SharedPreferences.getInstance();
       final name = profile.name.isNotEmpty ? profile.name : _name;
@@ -78,9 +78,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
       await prefs.setString('plate_number', plateNumber);
       await prefs.setString('rating', rating);
 
-      final stats = await Modular.get<TripRemoteDataSource>().fetchStats(
-        driverId,
-      );
+      final stats = await Modular.get<DriverActivityRemoteDataSource>()
+          .fetchStats(driverId);
       if (!mounted) return;
       final totalEarningsCentavos = _readNumber(stats, [
         'total_earnings_centavos',

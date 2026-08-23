@@ -5,7 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
+import 'package:passenger_app/src/features/profile/data/datasources/passenger_profile_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -64,8 +64,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     if (pId.isEmpty) return;
 
     try {
-      final response = await Modular.get<PassengerRemoteDataSource>()
-          .fetchPassengerProfile(pId);
+      final response = await Modular.get<PassengerProfileRemoteDataSource>()
+          .fetchProfile(pId);
       final profile = ProfileModel.fromJson(response);
       final values = <String, String>{
         'name': profile.name.isNotEmpty
@@ -133,7 +133,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       }
 
       try {
-        final updated = await Modular.get<PassengerRemoteDataSource>()
+        final updated = await Modular.get<PassengerProfileRemoteDataSource>()
             .updateProfile(
               passengerId: _passengerId,
               data: {

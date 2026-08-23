@@ -4,9 +4,10 @@ import 'dart:developer' as dev;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/booking_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:rxdart/rxdart.dart';
@@ -17,7 +18,8 @@ part 'booking_state.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final IDriverRepository _driverRepository;
-  final BiddingRemoteDataSource _biddingDataSource;
+  final BookingRemoteDataSource _bookingDataSource;
+  final DriverProfileRemoteDataSource _driverProfileDataSource;
   final SecureSessionService _secureSessionService;
   final BackgroundTelemetryService? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
@@ -56,7 +58,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   BookingBloc({
     required IDriverRepository driverRepository,
-    required BiddingRemoteDataSource biddingDataSource,
+    required BookingRemoteDataSource bookingDataSource,
+    required DriverProfileRemoteDataSource driverProfileDataSource,
     required SecureSessionService secureSessionService,
     InboxCubit? inboxCubit,
     BackgroundTelemetryService? backgroundTelemetryService,
@@ -65,7 +68,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Duration nearestDriverRetryDelay = const Duration(seconds: 2),
   }) : assert(nearestDriverMaxAttempts > 0),
        _driverRepository = driverRepository,
-       _biddingDataSource = biddingDataSource,
+       _bookingDataSource = bookingDataSource,
+       _driverProfileDataSource = driverProfileDataSource,
        _secureSessionService = secureSessionService,
        _inboxCubit = inboxCubit,
        _backgroundTelemetryService = backgroundTelemetryService,
@@ -218,7 +222,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   Future<int?> _loadDriverTripCount(String driverId) async {
     try {
-      final stats = await _biddingDataSource.fetchDriverStats(driverId);
+      final stats = await _driverProfileDataSource.fetchStats(driverId);
       final totalTrips = stats['totalTrips'] ?? stats['total_trips'];
       return (totalTrips as num?)?.toInt();
     } catch (error) {
@@ -229,7 +233,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   Future<List<Map<String, dynamic>>> _loadDriverReviews(String driverId) async {
     try {
-      final rawReviews = await _biddingDataSource.fetchDriverReviews(driverId);
+      final rawReviews = await _driverProfileDataSource.fetchReviews(driverId);
       final processedReviews = <Map<String, dynamic>>[];
       for (final review in rawReviews.whereType<Map<String, dynamic>>()) {
         processedReviews.add({
@@ -322,7 +326,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _dropoffName = event.trip.destination.name;
 
     try {
-      final response = await _biddingDataSource.requestRide({
+      final response = await _bookingDataSource.createSession({
         'ride_type': event.trip.rideType,
         'pickup_latitude': event.pickupLat,
         'pickup_longitude': event.pickupLng,
@@ -368,7 +372,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _dropoffName = event.trip.destination.name;
 
     try {
-      final response = await _biddingDataSource.requestRide({
+      final response = await _bookingDataSource.createSession({
         'ride_type': event.trip.rideType,
         'pickup_latitude': event.pickupLat,
         'pickup_longitude': event.pickupLng,
@@ -447,7 +451,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   Future<void> _loadOfferSnapshot(String sessionId) async {
     if (isClosed || _activeBidSessionId != sessionId) return;
     try {
-      add(UpdateOffersEvent(await _biddingDataSource.fetchOffers(sessionId)));
+      add(UpdateOffersEvent(await _bookingDataSource.fetchOffers(sessionId)));
     } catch (error) {
       dev.log('Failed to refresh booking offers: $error');
     }
@@ -531,7 +535,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
 
     try {
-      final response = await _biddingDataSource.acceptOffer(
+      final response = await _bookingDataSource.acceptOffer(
         sessionId: sessionId,
         offerId: event.offerId,
       );
@@ -608,7 +612,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     final sessionId = _activeBidSessionId;
     try {
       if (sessionId != null && sessionId.isNotEmpty) {
-        await _biddingDataSource
+        await _bookingDataSource
             .cancelSession(sessionId)
             .timeout(const Duration(seconds: 5));
       }

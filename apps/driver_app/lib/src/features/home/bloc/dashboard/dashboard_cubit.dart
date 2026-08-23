@@ -71,8 +71,6 @@ class DashboardCubit extends Cubit<DashboardState> {
         (failure) => emit(
           state.copyWith(
             isOnline: false,
-            isLoadingHeatmap: false,
-            surgeCells: const [],
             errorMessage: ErrorHandler.getErrorMessage(failure),
           ),
         ),
@@ -82,52 +80,9 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
 
     if (goingOnline) {
-      emit(
-        state.copyWith(
-          isOnline: true,
-          isLoadingHeatmap: true,
-          errorMessage: null,
-        ),
-      );
-
-      final heatmapResult = await _repository.getSurgeHeatmap(
-        lat: lat,
-        lng: lng,
-        gridSize: 10,
-        cellSize: 0.003,
-        requestLats: const [],
-        requestLngs: const [],
-      );
-
-      heatmapResult.fold(
-        (failure) {
-          dev.log('Error loading surge heatmap: ${failure.message}');
-          emit(
-            state.copyWith(
-              isLoadingHeatmap: false,
-              surgeCells: const [],
-              errorMessage: ErrorHandler.getErrorMessage(failure),
-            ),
-          );
-        },
-        (cells) {
-          emit(
-            state.copyWith(
-              isLoadingHeatmap: false,
-              surgeCells: cells,
-              errorMessage: null,
-            ),
-          );
-        },
-      );
+      emit(state.copyWith(isOnline: true, errorMessage: null));
     } else {
-      emit(
-        state.copyWith(
-          isOnline: false,
-          surgeCells: const [],
-          errorMessage: null,
-        ),
-      );
+      emit(state.copyWith(isOnline: false, errorMessage: null));
     }
   }
 
@@ -142,19 +97,10 @@ class DashboardCubit extends Cubit<DashboardState> {
       (failure) => emit(
         state.copyWith(
           isOnline: false,
-          isLoadingHeatmap: false,
-          surgeCells: const [],
           errorMessage: ErrorHandler.getErrorMessage(failure),
         ),
       ),
-      (_) => emit(
-        state.copyWith(
-          isOnline: false,
-          isLoadingHeatmap: false,
-          surgeCells: const [],
-          errorMessage: null,
-        ),
-      ),
+      (_) => emit(state.copyWith(isOnline: false, errorMessage: null)),
     );
   }
 

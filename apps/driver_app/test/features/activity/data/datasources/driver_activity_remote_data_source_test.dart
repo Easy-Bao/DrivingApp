@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -8,7 +8,7 @@ class MockDio extends Mock implements Dio {}
 void main() {
   test('requests only active trips for dashboard recovery', () async {
     final dio = MockDio();
-    final dataSource = TripRemoteDataSourceImpl(dio);
+    final dataSource = DriverActivityRemoteDataSourceImpl(dio);
     when(
       () => dio.get<Map<String, dynamic>>(
         any(),

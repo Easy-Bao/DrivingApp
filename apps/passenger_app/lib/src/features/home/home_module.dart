@@ -1,10 +1,20 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/home/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/bloc/public_driver_summary/public_driver_summary_cubit.dart';
+import 'package:passenger_app/src/features/home/data/datasources/current_location_data_source.dart';
+import 'package:passenger_app/src/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:passenger_app/src/features/home/data/datasources/public_driver_remote_data_source.dart';
+import 'package:passenger_app/src/features/home/data/repositories/current_location_repository.dart';
+import 'package:passenger_app/src/features/home/data/repositories/home_repository.dart';
+import 'package:passenger_app/src/features/home/data/repositories/public_driver_summary_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/i_public_driver_summary_repository.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/view/home_page.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
@@ -14,6 +24,44 @@ import 'package:shared_ui/shared_ui.dart';
 
 class HomeModule {
   HomeModule._();
+
+  static void binds(Injector i) {
+    i
+      ..addLazySingleton<HomeRemoteDataSource>(
+        (i) => HomeRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<CurrentLocationDataSource>(
+        (_) => DeviceCurrentLocationDataSource(),
+      )
+      ..addLazySingleton<PublicDriverRemoteDataSource>(
+        (i) => PublicDriverRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<IHomeRepository>(
+        (i) =>
+            HomeRepository(homeRemoteDataSource: i.get<HomeRemoteDataSource>()),
+      )
+      ..addLazySingleton<ICurrentLocationRepository>(
+        (i) => CurrentLocationRepository(
+          dataSource: i.get<CurrentLocationDataSource>(),
+        ),
+      )
+      ..addLazySingleton<IPublicDriverSummaryRepository>(
+        (i) => PublicDriverSummaryRepository(
+          remoteDataSource: i.get<PublicDriverRemoteDataSource>(),
+        ),
+      )
+      ..addFactory<HomeCubit>(
+        (i) => HomeCubit(
+          repository: i.get<IHomeRepository>(),
+          currentLocationRepository: i.get<ICurrentLocationRepository>(),
+        ),
+      )
+      ..addLazySingleton<PublicDriverSummaryCubit>(
+        (i) => PublicDriverSummaryCubit(
+          repository: i.get<IPublicDriverSummaryRepository>(),
+        ),
+      );
+  }
 
   static List<ModularRoute> routes = [
     ChildRoute(

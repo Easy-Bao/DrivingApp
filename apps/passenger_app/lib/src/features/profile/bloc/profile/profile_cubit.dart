@@ -3,18 +3,18 @@ import 'dart:developer' as dev;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_state.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
+import 'package:passenger_app/src/features/profile/data/datasources/passenger_profile_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 export 'package:passenger_app/src/features/profile/bloc/profile/profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  final PassengerRemoteDataSource _remoteDataSource;
+  final PassengerProfileRemoteDataSource _remoteDataSource;
   final SecureSessionService _secureSessionService;
 
   ProfileCubit({
-    required PassengerRemoteDataSource remoteDataSource,
+    required PassengerProfileRemoteDataSource remoteDataSource,
     required SecureSessionService secureSessionService,
   }) : _remoteDataSource = remoteDataSource,
        _secureSessionService = secureSessionService,
@@ -41,9 +41,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       final passengerId = await _secureSessionService.readPassengerId() ?? '';
       if (passengerId.isEmpty) return;
 
-      final response = await _remoteDataSource.fetchPassengerProfile(
-        passengerId,
-      );
+      final response = await _remoteDataSource.fetchProfile(passengerId);
       final profile = ProfileModel.fromJson(response);
       final name = profile.name.isNotEmpty ? profile.name : cachedName;
       final phone = profile.phone.isNotEmpty ? profile.phone : cachedPhone;

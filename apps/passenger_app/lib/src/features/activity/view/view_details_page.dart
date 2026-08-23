@@ -7,7 +7,7 @@ import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -41,16 +41,16 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
     final passengerId =
         await Modular.get<SecureSessionService>().readPassengerId() ?? '';
 
-    final dataSource = Modular.get<BiddingRemoteDataSource>();
+    final dataSource = Modular.get<RideRemoteDataSource>();
     Future<Map<String, dynamic>?> loadCounterparty() async {
       try {
-        return await dataSource.getRideCounterparty(ride.id);
+        return await dataSource.fetchCounterparty(ride.id);
       } catch (_) {
         return null;
       }
     }
 
-    final rideFuture = dataSource.getRideStatus(ride.id);
+    final rideFuture = dataSource.fetchRide(ride.id);
     final counterpartyFuture = loadCounterparty();
     final retrievedRideData = await rideFuture;
     final counterparty = await counterpartyFuture;
@@ -105,9 +105,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
     try {
       final driverProfile =
           _counterpartyData ??
-          await Modular.get<BiddingRemoteDataSource>().getRideCounterparty(
-            ride.id,
-          );
+          await Modular.get<RideRemoteDataSource>().fetchCounterparty(ride.id);
       final phone = SafeParse.toStringValue(driverProfile['phone']);
       if (phone.isNotEmpty) {
         final uri = Uri.parse('tel:$phone');

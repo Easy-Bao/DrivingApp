@@ -16,7 +16,7 @@ import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_state.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/track_driver_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -549,10 +549,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                                 final rideId = widget.ride.id.trim();
                                 if (rideId.isNotEmpty) {
                                   final driverProfile =
-                                      await Modular.get<
-                                            BiddingRemoteDataSource
-                                          >()
-                                          .getRideCounterparty(rideId);
+                                      await Modular.get<RideRemoteDataSource>()
+                                          .fetchCounterparty(rideId);
                                   final phone = SafeParse.toStringValue(
                                     driverProfile['phone'],
                                   ).trim();

@@ -16,8 +16,6 @@ import 'package:passenger_app/src/features/location/bloc/location_access/locatio
 import 'package:passenger_app/src/features/location/data/repositories/location_access_repository.dart';
 import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -66,12 +64,6 @@ class AppModule extends Module {
       )
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => AuthRemoteDataSourceImpl(i.get<Dio>()),
-      )
-      ..addLazySingleton<PassengerRemoteDataSource>(
-        (i) => PassengerRemoteDataSourceImpl(i.get<Dio>()),
-      )
-      ..addLazySingleton<BiddingRemoteDataSource>(
-        (i) => BiddingRemoteDataSourceImpl(i.get<Dio>()),
       )
       // AppWidget provides this state before the passenger route module is active.
       ..addLazySingleton<BookingDraftCubit>((_) => BookingDraftCubit());

@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
+import 'package:passenger_app/src/features/profile/data/datasources/passenger_profile_remote_data_source.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/profile/view/account_page.dart';
 import 'package:passenger_app/src/features/profile/view/help_center_page.dart';
@@ -13,6 +16,19 @@ import 'package:shared_ui/shared_ui.dart';
 
 class ProfileModule {
   ProfileModule._();
+
+  static void binds(Injector i) {
+    i
+      ..addLazySingleton<PassengerProfileRemoteDataSource>(
+        (i) => PassengerProfileRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addFactory<ProfileCubit>(
+        (i) => ProfileCubit(
+          remoteDataSource: i.get<PassengerProfileRemoteDataSource>(),
+          secureSessionService: i.get<SecureSessionService>(),
+        ),
+      );
+  }
 
   static List<ModularRoute> routes = [
     ChildRoute(

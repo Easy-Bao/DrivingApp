@@ -4,20 +4,21 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/datasources/driver_availability_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
 import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 
-class MockDriverRemoteDataSource extends Mock
-    implements DriverRemoteDataSource {}
+class MockDriverAvailabilityRemoteDataSource extends Mock
+    implements DriverAvailabilityRemoteDataSource {}
 
 class MockTelemetryRemoteDataSource extends Mock
     implements TelemetryRemoteDataSource {}
 
-class MockTripRemoteDataSource extends Mock implements TripRemoteDataSource {}
+class MockDriverActivityRemoteDataSource extends Mock
+    implements DriverActivityRemoteDataSource {}
 
 class MockSecureSessionService extends Mock implements SecureSessionService {}
 
@@ -39,15 +40,15 @@ void main() {
   test(
     'maps completed trip statistics from the server contract once',
     () async {
-      final driverDataSource = MockDriverRemoteDataSource();
+      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final telemetryDataSource = MockTelemetryRemoteDataSource();
-      final tripDataSource = MockTripRemoteDataSource();
+      final activityDataSource = MockDriverActivityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
-      when(() => tripDataSource.fetchStats('driver-42')).thenAnswer(
+      when(() => activityDataSource.fetchStats('driver-42')).thenAnswer(
         (_) async => <String, dynamic>{
           'today_earnings_centavos': 2817,
           'today_completed_trips': 1,
@@ -55,8 +56,8 @@ void main() {
       );
 
       final repository = DashboardRepository(
-        remoteDataSource: tripDataSource,
-        driverRemoteDataSource: driverDataSource,
+        activityDataSource: activityDataSource,
+        availabilityDataSource: availabilityDataSource,
         telemetryRemoteDataSource: telemetryDataSource,
         sessionService: sessionService,
       );
@@ -69,21 +70,21 @@ void main() {
           DriverDashboardStats(earnings: 28.17, completedTrips: 1),
         ),
       );
-      verify(() => tripDataSource.fetchStats('driver-42')).called(1);
+      verify(() => activityDataSource.fetchStats('driver-42')).called(1);
     },
   );
 
   test('publishes the initial driver location when going online', () async {
-    final driverDataSource = MockDriverRemoteDataSource();
+    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
     final telemetryDataSource = MockTelemetryRemoteDataSource();
-    final tripDataSource = MockTripRemoteDataSource();
+    final activityDataSource = MockDriverActivityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
     when(
       () => sessionService.readDriverId(),
     ).thenAnswer((_) async => 'driver-42');
     when(
-      () => driverDataSource.updateOnlineStatus(
+      () => availabilityDataSource.updateOnlineStatus(
         driverId: 'driver-42',
         isOnline: true,
         lat: 7.828,
@@ -98,8 +99,8 @@ void main() {
     ).thenAnswer((_) async {});
 
     final repository = DashboardRepository(
-      remoteDataSource: tripDataSource,
-      driverRemoteDataSource: driverDataSource,
+      activityDataSource: activityDataSource,
+      availabilityDataSource: availabilityDataSource,
       telemetryRemoteDataSource: telemetryDataSource,
       sessionService: sessionService,
     );
@@ -119,9 +120,9 @@ void main() {
   test(
     'does not mark the driver online when initial location publishing fails',
     () async {
-      final driverDataSource = MockDriverRemoteDataSource();
+      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final telemetryDataSource = MockTelemetryRemoteDataSource();
-      final tripDataSource = MockTripRemoteDataSource();
+      final activityDataSource = MockDriverActivityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(
@@ -131,7 +132,7 @@ void main() {
         () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
       ).thenAnswer((_) async => false);
       when(
-        () => driverDataSource.updateOnlineStatus(
+        () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
           lat: 7.828,
@@ -146,8 +147,8 @@ void main() {
       ).thenAnswer((_) async {});
 
       final repository = DashboardRepository(
-        remoteDataSource: tripDataSource,
-        driverRemoteDataSource: driverDataSource,
+        activityDataSource: activityDataSource,
+        availabilityDataSource: availabilityDataSource,
         telemetryRemoteDataSource: telemetryDataSource,
         sessionService: sessionService,
       );
@@ -167,7 +168,7 @@ void main() {
         ),
       );
       verify(
-        () => driverDataSource.updateOnlineStatus(
+        () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
           lat: 7.828,
@@ -175,7 +176,7 @@ void main() {
         ),
       ).called(1);
       verifyNever(
-        () => driverDataSource.updateOnlineStatus(
+        () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: true,
           lat: 7.828,
@@ -190,9 +191,9 @@ void main() {
   test(
     'keeps the driver online when optional background telemetry cannot start',
     () async {
-      final driverDataSource = MockDriverRemoteDataSource();
+      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final telemetryDataSource = MockTelemetryRemoteDataSource();
-      final tripDataSource = MockTripRemoteDataSource();
+      final activityDataSource = MockDriverActivityRemoteDataSource();
       final sessionService = MockSecureSessionService();
       final backgroundService = MockBackgroundTelemetryService();
 
@@ -203,7 +204,7 @@ void main() {
         () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
       ).thenAnswer((_) async => true);
       when(
-        () => driverDataSource.updateOnlineStatus(
+        () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: true,
           lat: 7.828,
@@ -218,8 +219,8 @@ void main() {
       ).thenThrow(StateError('not configured'));
 
       final repository = DashboardRepository(
-        remoteDataSource: tripDataSource,
-        driverRemoteDataSource: driverDataSource,
+        activityDataSource: activityDataSource,
+        availabilityDataSource: availabilityDataSource,
         telemetryRemoteDataSource: telemetryDataSource,
         sessionService: sessionService,
         backgroundTelemetryService: backgroundService,
@@ -234,7 +235,7 @@ void main() {
       expect(result, const Right<Failure, void>(null));
       verify(() => backgroundService.start()).called(1);
       verifyNever(
-        () => driverDataSource.updateOnlineStatus(
+        () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
           lat: 7.828,
@@ -247,16 +248,16 @@ void main() {
   );
 
   test('removes the driver location when going offline', () async {
-    final driverDataSource = MockDriverRemoteDataSource();
+    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
     final telemetryDataSource = MockTelemetryRemoteDataSource();
-    final tripDataSource = MockTripRemoteDataSource();
+    final activityDataSource = MockDriverActivityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
     when(
       () => sessionService.readDriverId(),
     ).thenAnswer((_) async => 'driver-42');
     when(
-      () => driverDataSource.updateOnlineStatus(
+      () => availabilityDataSource.updateOnlineStatus(
         driverId: 'driver-42',
         isOnline: false,
         lat: 7.828,
@@ -271,8 +272,8 @@ void main() {
     ).thenAnswer((_) async {});
 
     final repository = DashboardRepository(
-      remoteDataSource: tripDataSource,
-      driverRemoteDataSource: driverDataSource,
+      activityDataSource: activityDataSource,
+      availabilityDataSource: availabilityDataSource,
       telemetryRemoteDataSource: telemetryDataSource,
       sessionService: sessionService,
     );
@@ -290,9 +291,9 @@ void main() {
   test(
     'keeps the server error actionable when availability update fails',
     () async {
-      final driverDataSource = MockDriverRemoteDataSource();
+      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final telemetryDataSource = MockTelemetryRemoteDataSource();
-      final tripDataSource = MockTripRemoteDataSource();
+      final activityDataSource = MockDriverActivityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(
@@ -302,7 +303,7 @@ void main() {
         () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
       ).thenAnswer((_) async => true);
       when(
-        () => driverDataSource.updateOnlineStatus(
+        () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: true,
           lat: 7.828,
@@ -315,7 +316,7 @@ void main() {
         ),
       );
       when(
-        () => driverDataSource.updateOnlineStatus(
+        () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
           lat: 7.828,
@@ -330,8 +331,8 @@ void main() {
       ).thenAnswer((_) async {});
 
       final repository = DashboardRepository(
-        remoteDataSource: tripDataSource,
-        driverRemoteDataSource: driverDataSource,
+        activityDataSource: activityDataSource,
+        availabilityDataSource: availabilityDataSource,
         telemetryRemoteDataSource: telemetryDataSource,
         sessionService: sessionService,
       );

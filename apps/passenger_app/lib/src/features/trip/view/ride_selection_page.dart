@@ -10,7 +10,7 @@ import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/fare_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_draft.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/booking_auth_bottom_sheet_widget.dart';
@@ -271,8 +271,8 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       if (pickup == null) {
         throw StateError('Pickup location is unavailable.');
       }
-      final datasource = Modular.get<BiddingRemoteDataSource>();
-      final fareResult = await datasource.fetchFareEstimate(
+      final dataSource = Modular.get<FareRemoteDataSource>();
+      final fareResult = await dataSource.fetchEstimate(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,
         originLatitude: pickup.lat,

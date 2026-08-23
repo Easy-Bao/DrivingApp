@@ -2,12 +2,12 @@ import 'package:driver_app/src/core/location/location.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_ride_repository.dart';
-import 'package:driver_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/fare_remote_data_source.dart';
 
 class RideRepository implements IRideRepository {
-  final BiddingRemoteDataSource _remoteDataSource;
+  final FareRemoteDataSource _remoteDataSource;
 
-  RideRepository({required BiddingRemoteDataSource remoteDataSource})
+  RideRepository({required FareRemoteDataSource remoteDataSource})
     : _remoteDataSource = remoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {

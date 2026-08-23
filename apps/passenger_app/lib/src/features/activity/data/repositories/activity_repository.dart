@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger_app/src/features/activity/data/datasources/passenger_activity_remote_data_source.dart';
 import 'package:passenger_app/src/features/activity/domain/entities/activity_overview.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 
 const List<String> _monthAbbreviations = <String>[
@@ -29,11 +29,11 @@ String _shortenAddress(String fullAddress) {
 }
 
 class ActivityRepository implements IActivityRepository {
-  final PassengerRemoteDataSource _passengerRemoteDataSource;
+  final PassengerActivityRemoteDataSource _remoteDataSource;
 
   ActivityRepository({
-    required PassengerRemoteDataSource passengerRemoteDataSource,
-  }) : _passengerRemoteDataSource = passengerRemoteDataSource;
+    required PassengerActivityRemoteDataSource remoteDataSource,
+  }) : _remoteDataSource = remoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
@@ -85,14 +85,12 @@ class ActivityRepository implements IActivityRepository {
     int limit = 25,
   }) async {
     try {
-      final pageFuture = _passengerRemoteDataSource.fetchRideHistory(
+      final pageFuture = _remoteDataSource.fetchRideHistory(
         passengerId,
         limit: limit,
         offset: 0,
       );
-      final summaryFuture = _passengerRemoteDataSource.fetchActivitySummary(
-        passengerId,
-      );
+      final summaryFuture = _remoteDataSource.fetchSummary(passengerId);
       final responses = await Future.wait<dynamic>([pageFuture, summaryFuture]);
       final rawPage = responses[0] as OffsetPage<Map<String, dynamic>>;
       final summary = responses[1] as Map<String, dynamic>;
@@ -119,7 +117,7 @@ class ActivityRepository implements IActivityRepository {
     int offset = 0,
   }) async {
     try {
-      final rawPage = await _passengerRemoteDataSource.fetchRideHistory(
+      final rawPage = await _remoteDataSource.fetchRideHistory(
         passengerId,
         limit: limit,
         offset: offset,

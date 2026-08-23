@@ -7,7 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/chat/bloc/chat/chat_cubit.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -46,7 +46,7 @@ class _DriverChatPageState extends State<DriverChatPage>
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
     try {
-      final res = await Modular.get<TripRemoteDataSource>().getRideStatus(rId);
+      final res = await Modular.get<RideRemoteDataSource>().getRideStatus(rId);
       if (res.isNotEmpty) {
         final status = res['status'] as String?;
         if (status == 'completed' ||

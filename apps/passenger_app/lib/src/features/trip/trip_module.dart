@@ -1,7 +1,22 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
+import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/booking_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/driver_discovery_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/fare_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/repositories/driver_repository.dart';
+import 'package:passenger_app/src/features/trip/data/repositories/track_repository.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/activity_detail_map_page.dart';
 import 'package:passenger_app/src/features/trip/view/driver_matched_page.dart';
@@ -14,6 +29,52 @@ import 'package:shared_ui/shared_ui.dart';
 
 class TripModule {
   TripModule._();
+
+  static void binds(Injector i) {
+    i
+      ..addLazySingleton<BookingRemoteDataSource>(
+        (i) => BookingRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<DriverDiscoveryRemoteDataSource>(
+        (i) => DriverDiscoveryRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<FareRemoteDataSource>(
+        (i) => FareRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<RideRemoteDataSource>(
+        (i) => RideRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<IDriverRepository>(
+        (i) => DriverRepository(
+          discoveryDataSource: i.get<DriverDiscoveryRemoteDataSource>(),
+          locationApiClient: i.get<ILocationApiClient>(),
+        ),
+      )
+      ..addLazySingleton<ITrackRepository>(
+        (i) => TrackRepository(remoteDataSource: i.get<RideRemoteDataSource>()),
+      )
+      ..addLazySingleton<BookingBloc>(
+        (i) => BookingBloc(
+          driverRepository: i.get<IDriverRepository>(),
+          bookingDataSource: i.get<BookingRemoteDataSource>(),
+          driverProfileDataSource: i.get<DriverProfileRemoteDataSource>(),
+          secureSessionService: i.get<SecureSessionService>(),
+          inboxCubit: i.get<InboxCubit>(),
+          backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
+          realtimeClient: i.get<RealtimeWebSocketClient>(),
+        ),
+      )
+      ..addFactory<LiveMapBloc>(
+        (i) => LiveMapBloc(rideDataSource: i.get<RideRemoteDataSource>()),
+      )
+      ..addFactory<TrackDriverCubit>(
+        (i) => TrackDriverCubit(
+          repository: i.get<ITrackRepository>(),
+          sessionService: i.get<SecureSessionService>(),
+          backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
+        ),
+      );
+  }
 
   static List<ModularRoute> routes = [
     ChildRoute(

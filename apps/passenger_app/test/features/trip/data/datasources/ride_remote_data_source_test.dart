@@ -1,40 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 
 class MockDio extends Mock implements Dio {}
 
 void main() {
-  test('requests profiles only for bounded nearby driver ids', () async {
-    final dio = MockDio();
-    final dataSource = BiddingRemoteDataSourceImpl(dio);
-    when(
-      () => dio.get<List<dynamic>>(
-        any(),
-        queryParameters: any<Map<String, dynamic>>(named: 'queryParameters'),
-      ),
-    ).thenAnswer(
-      (_) async => Response<List<dynamic>>(
-        requestOptions: RequestOptions(path: '/api/v1/drivers/online'),
-        statusCode: 200,
-        data: const [],
-      ),
-    );
-
-    await dataSource.fetchOnlineDrivers(const ['7', '9']);
-
-    verify(
-      () => dio.get<List<dynamic>>(
-        '/api/v1/drivers/online',
-        queryParameters: <String, dynamic>{'ids': '7,9'},
-      ),
-    ).called(1);
-  });
-
   test('reads driver telemetry through the ride-scoped endpoint', () async {
     final dio = MockDio();
-    final dataSource = BiddingRemoteDataSourceImpl(dio);
+    final dataSource = RideRemoteDataSourceImpl(dio);
     when(() => dio.get<Map<String, dynamic>>(any())).thenAnswer(
       (_) async => Response<Map<String, dynamic>>(
         requestOptions: RequestOptions(
@@ -61,7 +35,7 @@ void main() {
     'publishes canonical passenger telemetry without identity fields',
     () async {
       final dio = MockDio();
-      final dataSource = BiddingRemoteDataSourceImpl(dio);
+      final dataSource = RideRemoteDataSourceImpl(dio);
       Map<String, dynamic>? payload;
       when(
         () => dio.post<Map<String, dynamic>>(
@@ -82,8 +56,8 @@ void main() {
 
       final sent = await dataSource.sendPassengerLocation(
         rideId: '303',
-        lat: 7.828,
-        lng: 123.434,
+        latitude: 7.828,
+        longitude: 123.434,
       );
 
       expect(sent, isTrue);
@@ -95,7 +69,7 @@ void main() {
     'loads contact details through the ride counterparty endpoint',
     () async {
       final dio = MockDio();
-      final dataSource = BiddingRemoteDataSourceImpl(dio);
+      final dataSource = RideRemoteDataSourceImpl(dio);
       when(() => dio.get<Map<String, dynamic>>(any())).thenAnswer(
         (_) async => Response<Map<String, dynamic>>(
           requestOptions: RequestOptions(
@@ -106,7 +80,7 @@ void main() {
         ),
       );
 
-      final counterparty = await dataSource.getRideCounterparty('303');
+      final counterparty = await dataSource.fetchCounterparty('303');
 
       verify(
         () => dio.get<Map<String, dynamic>>('/api/v1/rides/303/counterparty'),
@@ -114,30 +88,4 @@ void main() {
       expect(counterparty['role'], 'driver');
     },
   );
-
-  test('accepts the created response from driver review submission', () async {
-    final dio = MockDio();
-    final dataSource = BiddingRemoteDataSourceImpl(dio);
-    when(
-      () => dio.post<Map<String, dynamic>>(
-        any(),
-        data: any<dynamic>(named: 'data'),
-      ),
-    ).thenAnswer(
-      (_) async => Response<Map<String, dynamic>>(
-        requestOptions: RequestOptions(path: '/api/v1/drivers/42/reviews'),
-        statusCode: 201,
-        data: const {'id': 1},
-      ),
-    );
-
-    final submitted = await dataSource.submitDriverReview(
-      driverId: '42',
-      rideId: '303',
-      rating: 5,
-      comment: 'Safe trip',
-    );
-
-    expect(submitted, isTrue);
-  });
 }

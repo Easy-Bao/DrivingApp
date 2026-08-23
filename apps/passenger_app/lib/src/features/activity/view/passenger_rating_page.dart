@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
 
 class PassengerRatingPage extends StatefulWidget {
   final String driverId;
@@ -41,8 +41,8 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
       _error = null;
     });
     try {
-      final submitted = await Modular.get<BiddingRemoteDataSource>()
-          .submitDriverReview(
+      final submitted = await Modular.get<DriverProfileRemoteDataSource>()
+          .submitReview(
             driverId: widget.driverId,
             rideId: widget.rideId,
             rating: _selectedStars.toDouble(),

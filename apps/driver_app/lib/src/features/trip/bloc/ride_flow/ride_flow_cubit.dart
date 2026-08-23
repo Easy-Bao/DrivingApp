@@ -3,12 +3,12 @@ import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_state.dart';
 import 'package:shared_core/shared_core.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
-  final TripRemoteDataSource _tripRemoteDataSource;
+  final RideRemoteDataSource _rideDataSource;
   final SecureSessionService _sessionService;
 
   String? _activeRideId;
@@ -18,9 +18,9 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   int _elapsedWaitTime = 0;
 
   RideFlowCubit({
-    required TripRemoteDataSource tripRemoteDataSource,
+    required RideRemoteDataSource rideDataSource,
     required SecureSessionService sessionService,
-  }) : _tripRemoteDataSource = tripRemoteDataSource,
+  }) : _rideDataSource = rideDataSource,
        _sessionService = sessionService,
        super(const RideFlowInitial());
 
@@ -99,7 +99,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
 
     try {
-      final success = await _tripRemoteDataSource.acceptRide(
+      final success = await _rideDataSource.acceptRide(
         tripId: rideId,
         driverId: driverId,
       );
@@ -136,7 +136,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        final updated = await _tripRemoteDataSource.updateRideStatus(
+        final updated = await _rideDataSource.updateRideStatus(
           tripId: _activeRideId!,
           status: 'arrived',
         );
@@ -208,7 +208,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        final updated = await _tripRemoteDataSource.updateRideStatus(
+        final updated = await _rideDataSource.updateRideStatus(
           tripId: _activeRideId!,
           status: 'in_transit',
         );
@@ -245,7 +245,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     if (rideId == null || rideId.isEmpty) return null;
 
     try {
-      final ride = await _tripRemoteDataSource.getRideStatus(rideId);
+      final ride = await _rideDataSource.getRideStatus(rideId);
       final latitude = _readCoordinate(ride, const [
         'dropoff_latitude',
         'dropoffLatitude',
@@ -298,12 +298,12 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
 
     try {
-      final ride = await _tripRemoteDataSource.getRideStatus(rideId);
+      final ride = await _rideDataSource.getRideStatus(rideId);
       _activePassengerId ??= ride['passenger_id']?.toString();
       _activePassengerName ??= ride['passenger_name']?.toString();
       final status = ride['status']?.toString();
       if (status != 'completed') {
-        final updated = await _tripRemoteDataSource.updateRideStatus(
+        final updated = await _rideDataSource.updateRideStatus(
           tripId: rideId,
           status: 'completed',
         );
@@ -342,7 +342,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
 
     try {
-      final settled = await _tripRemoteDataSource.settleCash(rideId);
+      final settled = await _rideDataSource.settleCash(rideId);
       final fareCentavos = (settled['fare_centavos'] as num?)?.toDouble();
       if (fareCentavos == null || fareCentavos <= 0) {
         emit(const RideFlowError('The server did not return a payable fare.'));

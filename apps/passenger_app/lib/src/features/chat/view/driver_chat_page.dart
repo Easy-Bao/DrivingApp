@@ -9,7 +9,7 @@ import 'package:passenger_app/src/core/constants/api_endpoints.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/chat/bloc/chat/chat_cubit.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 
 class DriverChatPage extends StatefulWidget {
@@ -47,9 +47,7 @@ class _DriverChatPageState extends State<DriverChatPage>
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
     try {
-      final res = await Modular.get<BiddingRemoteDataSource>().getRideStatus(
-        rId,
-      );
+      final res = await Modular.get<RideRemoteDataSource>().fetchRide(rId);
       if (res != null) {
         final status = res['status'] as String?;
         if (status == 'completed' ||

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
-import 'package:passenger_app/src/shared/widgets/driver_profile_details_sheet.dart';
+import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/driver_profile/view/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -69,8 +69,8 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
 
   Future<void> _loadRecentFeedback() async {
     try {
-      final rawReviews = await Modular.get<BiddingRemoteDataSource>()
-          .fetchDriverReviews(widget.driver.id, page: 1, limit: 6);
+      final rawReviews = await Modular.get<DriverProfileRemoteDataSource>()
+          .fetchReviews(widget.driver.id, page: 1, limit: 6);
       final reviews = rawReviews
           .whereType<Map>()
           .map((review) {

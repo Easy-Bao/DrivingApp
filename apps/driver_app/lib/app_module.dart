@@ -9,11 +9,7 @@ import 'package:driver_app/src/core/storage/secure_storage.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
 import 'package:driver_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/auth_repository.dart';
-import 'package:driver_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/ride_counterparty_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
-import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_core/shared_core.dart';
@@ -54,20 +50,10 @@ class AppModule extends Module {
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => AuthRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<BiddingRemoteDataSource>(
-        (i) => BiddingRemoteDataSourceImpl(i.get<Dio>()),
-      )
-      ..addLazySingleton<TripRemoteDataSource>(
-        (i) => TripRemoteDataSourceImpl(i.get<Dio>()),
-      )
-      ..addLazySingleton<TelemetryRemoteDataSource>(
-        (i) => TelemetryRemoteDataSourceImpl(i.get<Dio>()),
-      )
-      ..addLazySingleton<RideCounterpartyRemoteDataSource>(
-        (i) => RideCounterpartyRemoteDataSourceImpl(i.get<Dio>()),
-      )
-      ..addLazySingleton<DriverRemoteDataSource>(
-        (i) => DriverRemoteDataSourceImpl(i.get<Dio>()),
+      // Active ride state spans dashboard and trip routes, so its transport
+      // remains at application scope while page-specific sources do not.
+      ..addLazySingleton<RideRemoteDataSource>(
+        (i) => RideRemoteDataSourceImpl(i.get<Dio>()),
       )
       ..addLazySingleton<AuthRepository>(
         (i) => AuthRepository(

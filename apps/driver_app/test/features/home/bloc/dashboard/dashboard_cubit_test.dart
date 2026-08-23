@@ -3,7 +3,6 @@ import 'package:shared_core/shared_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:driver_app/src/features/home/data/models/heatmap_cell_model.dart';
 import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
@@ -113,12 +112,9 @@ void main() {
   group('DashboardCubit — toggleOnline()', () {
     const lat = 7.828282;
     const lng = 123.434343;
-    final mockCells = <HeatmapCell>[
-      HeatmapCell(lat: lat + 0.002, lng: lng - 0.002, intensity: 2.5),
-    ];
 
     blocTest<DashboardCubit, DashboardState>(
-      'going online fetches heatmap and emits [online+loading, online+cells]',
+      'going online emits the confirmed online state',
       build: () {
         when(
           () => repo.updateOnlineStatus(
@@ -127,56 +123,10 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer((_) async => const Right(null));
-        when(
-          () => repo.getSurgeHeatmap(
-            lat: any(named: 'lat'),
-            lng: any(named: 'lng'),
-            gridSize: any(named: 'gridSize'),
-            cellSize: any(named: 'cellSize'),
-            requestLats: any(named: 'requestLats'),
-            requestLngs: any(named: 'requestLngs'),
-          ),
-        ).thenAnswer((_) async => Right(mockCells));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
-      expect: () => [
-        const DashboardState(isOnline: true, isLoadingHeatmap: true),
-        DashboardState(isOnline: true, surgeCells: mockCells),
-      ],
-    );
-
-    blocTest<DashboardCubit, DashboardState>(
-      'going online with heatmap failure still stays online with empty cells',
-      build: () {
-        when(
-          () => repo.updateOnlineStatus(
-            isOnline: any(named: 'isOnline'),
-            lat: any(named: 'lat'),
-            lng: any(named: 'lng'),
-          ),
-        ).thenAnswer((_) async => const Right(null));
-        when(
-          () => repo.getSurgeHeatmap(
-            lat: any(named: 'lat'),
-            lng: any(named: 'lng'),
-            gridSize: any(named: 'gridSize'),
-            cellSize: any(named: 'cellSize'),
-            requestLats: any(named: 'requestLats'),
-            requestLngs: any(named: 'requestLngs'),
-          ),
-        ).thenAnswer((_) async => const Left(ServerFailure('map error')));
-        return _makeCubit(repo);
-      },
-      act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
-      expect: () => [
-        const DashboardState(isOnline: true, isLoadingHeatmap: true),
-        const DashboardState(
-          isOnline: true,
-          errorMessage:
-              'The service is temporarily unavailable. Please try again.',
-        ),
-      ],
+      expect: () => [const DashboardState(isOnline: true)],
     );
 
     blocTest<DashboardCubit, DashboardState>(
@@ -191,7 +141,7 @@ void main() {
         ).thenAnswer((_) async => const Right(null));
         return _makeCubit(repo);
       },
-      seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
+      seed: () => const DashboardState(isOnline: true),
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [const DashboardState(isOnline: false)],
     );
@@ -240,7 +190,7 @@ void main() {
         ).thenAnswer((_) async => const Right(null));
         return _makeCubit(repo);
       },
-      seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
+      seed: () => const DashboardState(isOnline: true),
       act: (cubit) => cubit.forceOffline(lat: lat, lng: lng),
       expect: () => [const DashboardState(isOnline: false)],
     );
@@ -255,12 +205,11 @@ void main() {
         );
         return _makeCubit(repo);
       },
-      seed: () => DashboardState(isOnline: true, surgeCells: mockCells),
+      seed: () => const DashboardState(isOnline: true),
       act: (cubit) => cubit.refreshOnlinePresence(lat: lat, lng: lng),
       expect: () => [
-        DashboardState(
+        const DashboardState(
           isOnline: true,
-          surgeCells: mockCells,
           errorMessage: 'Check your connection and try again.',
         ),
       ],

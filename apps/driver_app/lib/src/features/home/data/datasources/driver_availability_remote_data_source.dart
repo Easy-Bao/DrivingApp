@@ -1,8 +1,6 @@
 import 'package:dio/dio.dart';
 
-abstract class DriverRemoteDataSource {
-  Future<Map<String, dynamic>> fetchDriverProfile(String driverId);
-
+abstract class DriverAvailabilityRemoteDataSource {
   Future<void> updateOnlineStatus({
     required String driverId,
     required bool isOnline,
@@ -11,18 +9,11 @@ abstract class DriverRemoteDataSource {
   });
 }
 
-class DriverRemoteDataSourceImpl implements DriverRemoteDataSource {
+class DriverAvailabilityRemoteDataSourceImpl
+    implements DriverAvailabilityRemoteDataSource {
   final Dio _dio;
 
-  DriverRemoteDataSourceImpl(this._dio);
-
-  @override
-  Future<Map<String, dynamic>> fetchDriverProfile(String driverId) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/api/v1/drivers/$driverId',
-    );
-    return response.data ?? {};
-  }
+  DriverAvailabilityRemoteDataSourceImpl(this._dio);
 
   @override
   Future<void> updateOnlineStatus({
@@ -32,7 +23,7 @@ class DriverRemoteDataSourceImpl implements DriverRemoteDataSource {
     required double lng,
   }) async {
     await _dio.post<Map<String, dynamic>>(
-      '/api/v1/drivers/$driverId/online',
+      '/api/v1/drivers/${Uri.encodeComponent(driverId)}/online',
       data: {'is_online': isOnline, 'lat': lat, 'lng': lng},
     );
   }

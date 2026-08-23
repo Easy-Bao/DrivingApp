@@ -1,14 +1,14 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 class TrackRepository implements ITrackRepository {
-  final BiddingRemoteDataSource _biddingDataSource;
+  final RideRemoteDataSource _remoteDataSource;
 
-  TrackRepository({required BiddingRemoteDataSource biddingDataSource})
-    : _biddingDataSource = biddingDataSource;
+  TrackRepository({required RideRemoteDataSource remoteDataSource})
+    : _remoteDataSource = remoteDataSource;
 
   @override
   Future<List<List<double>>?> getRoutePolyline({
@@ -36,7 +36,7 @@ class TrackRepository implements ITrackRepository {
   @override
   Future<Either<Failure, RideUpdate>> getRideStatusUpdate(String rideId) async {
     try {
-      final data = await _biddingDataSource.getRideStatus(rideId);
+      final data = await _remoteDataSource.fetchRide(rideId);
       if (data != null) {
         return Right(RideUpdate.fromJson(data));
       }
@@ -56,7 +56,7 @@ class TrackRepository implements ITrackRepository {
   Future<Either<Failure, (double latitude, double longitude)>>
   fetchDriverLocation(String rideId) async {
     try {
-      final locData = await _biddingDataSource.fetchDriverLocation(rideId);
+      final locData = await _remoteDataSource.fetchDriverLocation(rideId);
       final latitude = SafeParse.toNullableDouble(
         locData?['latitude'] ?? locData?['lat'],
       );
@@ -86,7 +86,7 @@ class TrackRepository implements ITrackRepository {
     RideStatus status,
   ) async {
     try {
-      final success = await _biddingDataSource.updateRideStatus(
+      final success = await _remoteDataSource.updateStatus(
         rideId,
         status.value,
       );

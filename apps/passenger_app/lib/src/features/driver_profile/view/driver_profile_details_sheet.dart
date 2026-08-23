@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
+import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class DriverProfileDetailsSheet extends StatefulWidget {
@@ -68,8 +68,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Future<void> _loadDriverProfileStats() async {
     try {
-      final statsData = await Modular.get<BiddingRemoteDataSource>()
-          .fetchDriverStats(widget.driverId);
+      final statsData = await Modular.get<DriverProfileRemoteDataSource>()
+          .fetchStats(widget.driverId);
       final stats = statsData['data'] is Map
           ? Map<String, dynamic>.from(statsData['data'] as Map)
           : statsData;
@@ -96,8 +96,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     _hasMore = true;
     final List<Map<String, dynamic>> dynamicReviews = [];
     try {
-      final rawReviews = await Modular.get<BiddingRemoteDataSource>()
-          .fetchDriverReviews(
+      final rawReviews = await Modular.get<DriverProfileRemoteDataSource>()
+          .fetchReviews(
             widget.driverId,
             page: _currentPage,
             limit: _reviewPageSize,
@@ -170,8 +170,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     final nextPage = _currentPage + 1;
     final List<Map<String, dynamic>> nextReviews = [];
     try {
-      final rawReviews = await Modular.get<BiddingRemoteDataSource>()
-          .fetchDriverReviews(
+      final rawReviews = await Modular.get<DriverProfileRemoteDataSource>()
+          .fetchReviews(
             widget.driverId,
             page: nextPage,
             limit: _reviewPageSize,
