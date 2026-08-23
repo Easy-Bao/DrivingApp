@@ -9,7 +9,11 @@ import 'package:driver_app/src/core/storage/secure_storage.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
 import 'package:driver_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/auth_repository.dart';
+import 'package:driver_app/src/features/trip/data/datasources/ride_counterparty_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/repositories/driver_ride_repository.dart';
+import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_core/shared_core.dart';
@@ -47,6 +51,12 @@ class AppModule extends Module {
           sessionService: i.get<SecureSessionService>(),
         ),
       )
+      ..addLazySingleton<IChatRepositoryFactory>(
+        (i) => ChatRepositoryFactory(
+          clientDio: i.get<Dio>(),
+          tokenProvider: i.get<SecureSessionService>().readToken,
+        ),
+      )
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => AuthRemoteDataSourceImpl(i.get<Dio>()),
       )
@@ -54,6 +64,19 @@ class AppModule extends Module {
       // remains at application scope while page-specific sources do not.
       ..addLazySingleton<RideRemoteDataSource>(
         (i) => RideRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<RideCounterpartyRemoteDataSource>(
+        (i) => RideCounterpartyRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<TelemetryRemoteDataSource>(
+        (i) => TelemetryRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<IDriverRideRepository>(
+        (i) => DriverRideRepository(
+          rideDataSource: i.get<RideRemoteDataSource>(),
+          counterpartyDataSource: i.get<RideCounterpartyRemoteDataSource>(),
+          telemetryDataSource: i.get<TelemetryRemoteDataSource>(),
+        ),
       )
       ..addLazySingleton<AuthRepository>(
         (i) => AuthRepository(

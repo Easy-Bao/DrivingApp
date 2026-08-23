@@ -4,19 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 
 class PassengerRatingPage extends StatefulWidget {
   final String driverId;
   final String driverName;
   final String rideId;
+  final IDriverProfileRepository profileRepository;
 
   const PassengerRatingPage({
     super.key,
     required this.driverId,
     required this.driverName,
     required this.rideId,
+    required this.profileRepository,
   });
 
   @override
@@ -41,14 +43,13 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
       _error = null;
     });
     try {
-      final submitted = await Modular.get<DriverProfileRemoteDataSource>()
-          .submitReview(
-            driverId: widget.driverId,
-            rideId: widget.rideId,
-            rating: _selectedStars.toDouble(),
-            comment: _feedbackController.text.trim(),
-          );
-      if (!submitted) throw StateError('review was not accepted');
+      final result = await widget.profileRepository.submitReview(
+        driverId: widget.driverId,
+        rideId: widget.rideId,
+        rating: _selectedStars.toDouble(),
+        comment: _feedbackController.text.trim(),
+      );
+      if (result.isLeft()) throw StateError('review was not accepted');
       if (mounted) context.goNamed(HomeRoutes.home);
     } catch (_) {
       if (mounted) {

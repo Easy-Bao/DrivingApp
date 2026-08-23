@@ -3,22 +3,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/booking_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip.dart';
+import 'package:passenger_app/src/features/trip/domain/entities/booking_session_request.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_booking_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MockDriverRepo extends Mock implements IDriverRepository {}
 
-abstract class BookingTestGateway
-    implements BookingRemoteDataSource, DriverProfileRemoteDataSource {}
+class MockBookingRepository extends Mock implements IBookingRepository {}
 
-class MockBookingTestGateway extends Mock implements BookingTestGateway {}
+class MockDriverProfileRepository extends Mock
+    implements IDriverProfileRepository {}
+
+class FakeBookingSessionRequest extends Fake implements BookingSessionRequest {}
 
 class MockSecureSessionService extends Mock implements SecureSessionService {}
 
@@ -26,15 +30,16 @@ class MockInboxRepository extends Mock implements IInboxRepository {}
 
 BookingBloc _makeBookingBloc({
   required IDriverRepository driverRepo,
-  required BookingTestGateway biddingDataSource,
+  required IBookingRepository bookingRepository,
+  required IDriverProfileRepository driverProfileRepository,
   required SecureSessionService secureSessionService,
   InboxCubit? inboxCubit,
   int nearestDriverMaxAttempts = 5,
   Duration nearestDriverRetryDelay = const Duration(seconds: 2),
 }) => BookingBloc(
   driverRepository: driverRepo,
-  bookingDataSource: biddingDataSource,
-  driverProfileDataSource: biddingDataSource,
+  bookingRepository: bookingRepository,
+  driverProfileRepository: driverProfileRepository,
   secureSessionService: secureSessionService,
   inboxCubit: inboxCubit,
   nearestDriverMaxAttempts: nearestDriverMaxAttempts,
@@ -44,22 +49,26 @@ BookingBloc _makeBookingBloc({
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  setUpAll(() => registerFallbackValue(FakeBookingSessionRequest()));
+
   late MockDriverRepo driverRepo;
-  late MockBookingTestGateway biddingDataSource;
+  late MockBookingRepository bookingRepository;
+  late MockDriverProfileRepository driverProfileRepository;
   late MockSecureSessionService secureSessionService;
   late MockInboxRepository inboxRepository;
 
   setUp(() {
     driverRepo = MockDriverRepo();
-    biddingDataSource = MockBookingTestGateway();
+    bookingRepository = MockBookingRepository();
+    driverProfileRepository = MockDriverProfileRepository();
     secureSessionService = MockSecureSessionService();
     inboxRepository = MockInboxRepository();
     when(
       () => secureSessionService.readPassengerId(),
     ).thenAnswer((_) async => 'pass-001');
     when(
-      () => biddingDataSource.cancelSession(any()),
-    ).thenAnswer((_) async => true);
+      () => bookingRepository.cancelSession(any()),
+    ).thenAnswer((_) async => const Right(null));
   });
 
   const testDriver = DriverModel(
@@ -93,7 +102,8 @@ void main() {
     test('starts as BookingInitial', () async {
       final bloc = _makeBookingBloc(
         driverRepo: driverRepo,
-        biddingDataSource: biddingDataSource,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
         secureSessionService: secureSessionService,
       );
       expect(bloc.state, isA<BookingInitial>());
@@ -104,7 +114,8 @@ void main() {
       'clears a completed booking session so the next trip can start',
       build: () => _makeBookingBloc(
         driverRepo: driverRepo,
-        biddingDataSource: biddingDataSource,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
         secureSessionService: secureSessionService,
       ),
       act: (bloc) {
@@ -138,15 +149,16 @@ void main() {
           ),
         ).thenAnswer((_) async => const Right([testDriver]));
 
+        when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
+          (_) async => const Right(DriverProfileStats(completedTrips: 42)),
+        );
         when(
-          () => biddingDataSource.fetchStats(any()),
-        ).thenAnswer((_) async => {'totalTrips': 42});
-        when(
-          () => biddingDataSource.fetchReviews(any()),
-        ).thenAnswer((_) async => []);
+          () => driverProfileRepository.fetchReviews(any()),
+        ).thenAnswer((_) async => const Right([]));
         return _makeBookingBloc(
           driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
         );
       },
@@ -182,7 +194,8 @@ void main() {
         );
         return _makeBookingBloc(
           driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
           nearestDriverMaxAttempts: 5,
           nearestDriverRetryDelay: Duration.zero,
@@ -225,15 +238,16 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer((_) async => const Right([testDriver]));
+        when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
+          (_) async => const Right(DriverProfileStats(completedTrips: 42)),
+        );
         when(
-          () => biddingDataSource.fetchStats(any()),
-        ).thenAnswer((_) async => {'totalTrips': 42});
-        when(
-          () => biddingDataSource.fetchReviews(any()),
-        ).thenAnswer((_) async => []);
+          () => driverProfileRepository.fetchReviews(any()),
+        ).thenAnswer((_) async => const Right([]));
         return _makeBookingBloc(
           driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
           nearestDriverMaxAttempts: 1,
           nearestDriverRetryDelay: Duration.zero,
@@ -311,18 +325,19 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer((_) async => const Right([numericDriver, selectedDriver]));
+        when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
+          (_) async => const Right(DriverProfileStats(completedTrips: 1)),
+        );
         when(
-          () => biddingDataSource.fetchStats(any()),
-        ).thenAnswer((_) async => {'totalTrips': 1});
+          () => driverProfileRepository.fetchReviews(any()),
+        ).thenAnswer((_) async => const Right([]));
         when(
-          () => biddingDataSource.fetchReviews(any()),
-        ).thenAnswer((_) async => []);
-        when(
-          () => biddingDataSource.createSession(any()),
-        ).thenAnswer((_) async => {'id': 101});
+          () => bookingRepository.createSession(any()),
+        ).thenAnswer((_) async => const Right('101'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
         );
       },
@@ -362,10 +377,10 @@ void main() {
       verify: (_) {
         final request =
             verify(
-                  () => biddingDataSource.createSession(captureAny()),
+                  () => bookingRepository.createSession(captureAny()),
                 ).captured.single
-                as Map<String, dynamic>;
-        expect(request['target_driver_id'], 77);
+                as BookingSessionRequest;
+        expect(request.targetDriverId, 77);
       },
     );
 
@@ -373,11 +388,12 @@ void main() {
       'accepts a numeric session ID returned by the server',
       build: () {
         when(
-          () => biddingDataSource.createSession(any()),
-        ).thenAnswer((_) async => {'id': 202});
+          () => bookingRepository.createSession(any()),
+        ).thenAnswer((_) async => const Right('202'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
         );
       },
@@ -407,13 +423,15 @@ void main() {
         final inboxCubit = InboxCubit(inboxRepository: inboxRepository);
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
           inboxCubit: inboxCubit,
         );
-        when(
-          () => biddingDataSource.createSession(any()),
-        ).thenAnswer((_) async => {});
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async =>
+              const Left(ValidationFailure('Booking session was not created.')),
+        );
 
         final searchState = expectLater(
           bloc.stream,
@@ -449,7 +467,8 @@ void main() {
       build: () {
         return _makeBookingBloc(
           driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
         );
       },
@@ -461,11 +480,12 @@ void main() {
       'emits BookingCanceled when the remote cancellation fails',
       build: () {
         when(
-          () => biddingDataSource.cancelSession(any()),
+          () => bookingRepository.cancelSession(any()),
         ).thenThrow(Exception('gateway unavailable'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
-          biddingDataSource: biddingDataSource,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
         );
       },

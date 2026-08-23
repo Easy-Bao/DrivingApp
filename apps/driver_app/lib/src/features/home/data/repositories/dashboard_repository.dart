@@ -1,33 +1,42 @@
 import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/home/data/datasources/driver_availability_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/datasources/ride_offer_remote_data_source.dart';
 import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
+import 'package:driver_app/src/features/home/domain/entities/driver_dispatch_snapshot.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
-import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardRepository implements IDashboardRepository {
-  final DriverActivityRemoteDataSource _activityDataSource;
+  final IDriverActivityRepository _activityRepository;
   final DriverAvailabilityRemoteDataSource _availabilityDataSource;
-  final TelemetryRemoteDataSource _telemetryRemoteDataSource;
+  final RideOfferRemoteDataSource _rideOfferDataSource;
+  final IDriverRideRepository _rideRepository;
   final SecureSessionService _sessionService;
+  final SharedPreferences _preferences;
   final BackgroundTelemetryService? _backgroundTelemetryService;
 
   DashboardRepository({
-    required DriverActivityRemoteDataSource activityDataSource,
+    required IDriverActivityRepository activityRepository,
     required DriverAvailabilityRemoteDataSource availabilityDataSource,
-    required TelemetryRemoteDataSource telemetryRemoteDataSource,
+    required RideOfferRemoteDataSource rideOfferDataSource,
+    required IDriverRideRepository rideRepository,
     required SecureSessionService sessionService,
+    required SharedPreferences preferences,
     BackgroundTelemetryService? backgroundTelemetryService,
-  }) : _activityDataSource = activityDataSource,
+  }) : _activityRepository = activityRepository,
        _availabilityDataSource = availabilityDataSource,
-       _telemetryRemoteDataSource = telemetryRemoteDataSource,
+       _rideOfferDataSource = rideOfferDataSource,
+       _rideRepository = rideRepository,
        _sessionService = sessionService,
+       _preferences = preferences,
        _backgroundTelemetryService = backgroundTelemetryService;
 
   Failure _mapExceptionToFailure(Object error) {
@@ -149,7 +158,13 @@ class DashboardRepository implements IDashboardRepository {
     }
 
     try {
-      await _telemetryRemoteDataSource.removeLocation();
+      final result = await _rideRepository.clearDriverLocation();
+      result.fold(
+        (failure) => dev.log(
+          'Unable to remove driver location during cleanup: ${failure.message}',
+        ),
+        (_) {},
+      );
     } catch (error) {
       dev.log('Unable to remove driver location during cleanup: $error');
     }
@@ -205,22 +220,19 @@ class DashboardRepository implements IDashboardRepository {
     }
 
     try {
-      final locationSent = await _telemetryRemoteDataSource.sendLocationUpdate(
-        lat: lat,
-        lng: lng,
-      );
-      if (!locationSent) {
+      Failure? locationFailure;
+      (await _rideRepository.publishDriverLocation(
+        latitude: lat,
+        longitude: lng,
+      )).fold((failure) => locationFailure = failure, (_) {});
+      if (locationFailure != null) {
         await _clearOnlinePresence(
           driverId: driverId,
           lat: lat,
           lng: lng,
           markServerOffline: true,
         );
-        return const Left(
-          NetworkFailure(
-            'Unable to share your location. You are not online yet.',
-          ),
-        );
+        return Left(locationFailure!);
       }
 
       await _availabilityDataSource.updateOnlineStatus(
@@ -257,14 +269,6 @@ class DashboardRepository implements IDashboardRepository {
     }
   }
 
-  num? _readFiniteNumber(Map<String, dynamic> values, List<String> keys) {
-    for (final key in keys) {
-      final value = values[key];
-      if (value is num && value.isFinite) return value;
-    }
-    return null;
-  }
-
   @override
   Future<Either<Failure, DriverDashboardStats>> getDashboardStats() async {
     try {
@@ -272,30 +276,87 @@ class DashboardRepository implements IDashboardRepository {
       if (driverId.isEmpty) {
         return const Left(CacheFailure('Driver ID is not registered.'));
       }
-      final data = await _activityDataSource.fetchStats(driverId);
-      final earningsCentavos = _readFiniteNumber(data, const [
-        'today_earnings_centavos',
-      ]);
-      final completedTrips = _readFiniteNumber(data, const [
-        'today_completed_trips',
-      ]);
-      if (earningsCentavos == null ||
-          earningsCentavos < 0 ||
-          completedTrips == null ||
-          completedTrips < 0 ||
-          completedTrips != completedTrips.roundToDouble()) {
-        throw DataParsingException(
-          message: 'Driver statistics response is incomplete.',
-        );
-      }
-      return Right(
-        DriverDashboardStats(
-          earnings: earningsCentavos / 100,
-          completedTrips: completedTrips.toInt(),
+      return (await _activityRepository.fetchStats(driverId)).map(
+        (stats) => DriverDashboardStats(
+          earnings: stats.todayEarningsCentavos / 100,
+          completedTrips: stats.todayCompletedTrips,
         ),
       );
     } catch (error) {
       return Left(_mapExceptionToFailure(error));
     }
+  }
+
+  @override
+  Future<Either<Failure, DriverDispatchSnapshot>> getDispatchSnapshot({
+    bool includeOffers = true,
+    int limit = 10,
+  }) async {
+    try {
+      final driverId = await _getDriverId();
+      if (driverId.isEmpty) {
+        return const Left(CacheFailure('Driver ID is not registered.'));
+      }
+      final tripsFuture = _activityRepository.fetchTripHistory(
+        driverId,
+        limit: limit,
+        activeOnly: true,
+      );
+      final offersFuture = includeOffers
+          ? _rideOfferDataSource.fetchActiveBids()
+          : Future<List<dynamic>>.value(const []);
+      final responses = await Future.wait<dynamic>([tripsFuture, offersFuture]);
+      final tripResult =
+          responses[0] as Either<Failure, OffsetPage<Map<String, dynamic>>>;
+      OffsetPage<Map<String, dynamic>>? tripPage;
+      final Failure? tripFailure = tripResult.fold((failure) => failure, (
+        page,
+      ) {
+        tripPage = page;
+        return null;
+      });
+      if (tripFailure != null) return Left(tripFailure);
+      final offers = (responses[1] as List<dynamic>)
+          .whereType<Map>()
+          .map((value) => Map<String, dynamic>.from(value))
+          .toList(growable: false);
+      return Right(
+        DriverDispatchSnapshot(
+          activeTrips: tripPage!.items,
+          rideOffers: offers,
+        ),
+      );
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> submitRideOffer({
+    required String sessionId,
+    required double farePesos,
+  }) async {
+    if (sessionId.trim().isEmpty || !farePesos.isFinite || farePesos <= 0) {
+      return const Left(ValidationFailure('The ride offer is invalid.'));
+    }
+    try {
+      final accepted = await _rideOfferDataSource.placeBid(
+        sessionId: sessionId,
+        driverName: _preferences.getString('driver_name') ?? '',
+        plateNumber: _preferences.getString('plate_number') ?? '',
+        vehicleType: _preferences.getString('vehicle_type') ?? '',
+        offerPrice: farePesos,
+      );
+      return accepted
+          ? const Right(null)
+          : const Left(ServerFailure('The ride offer was not accepted.'));
+    } catch (error) {
+      return Left(_mapExceptionToFailure(error));
+    }
+  }
+
+  @override
+  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId) {
+    return _rideRepository.fetchRide(rideId);
   }
 }

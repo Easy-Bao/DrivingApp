@@ -2,23 +2,23 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
 
-import 'package:shared_core/shared_core.dart';
-import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/chat/bloc/chat/chat_cubit.dart';
-import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 
 class DriverChatPage extends StatefulWidget {
   final String? roomId;
   final String? userId;
   final String? peerId;
   final String? peerName;
+  final IDriverRideRepository rideRepository;
+  final IChatRepositoryFactory chatRepositoryFactory;
 
   const DriverChatPage({
     super.key,
@@ -26,6 +26,8 @@ class DriverChatPage extends StatefulWidget {
     this.userId,
     this.peerId,
     this.peerName,
+    required this.rideRepository,
+    required this.chatRepositoryFactory,
   });
 
   @override
@@ -46,16 +48,12 @@ class _DriverChatPageState extends State<DriverChatPage>
     final rId = widget.roomId ?? '';
     if (rId.isEmpty) return;
     try {
-      final res = await Modular.get<RideRemoteDataSource>().getRideStatus(rId);
-      if (res.isNotEmpty) {
-        final status = res['status'] as String?;
-        if (status == 'completed' ||
-            status == 'canceled' ||
-            status == 'cancelled') {
-          setState(() {
-            _isTripFinished = true;
-          });
-        }
+      RideSnapshot? ride;
+      (await widget.rideRepository.fetchRide(
+        rId,
+      )).fold((_) {}, (value) => ride = value);
+      if (ride?.isTerminal == true && mounted) {
+        setState(() => _isTripFinished = true);
       }
     } catch (error) {
       debugPrint('Error checking trip status in driver chat: $error');
@@ -101,10 +99,8 @@ class _DriverChatPageState extends State<DriverChatPage>
     }
 
     _chatCubit = ChatCubit(
-      chatRepository: ChatRepository(
-        remoteDataSource: WebSocketChatRemoteDataSource(),
+      chatRepository: widget.chatRepositoryFactory.create(
         currentUserId: currentUserId,
-        clientDio: Modular.get<Dio>(),
       ),
     );
     unawaited(_connectChat(currentRoomId, currentUserId));
@@ -112,15 +108,10 @@ class _DriverChatPageState extends State<DriverChatPage>
   }
 
   Future<void> _connectChat(String roomId, String userId) async {
-    final token = await Modular.get<SecureSessionService>().readToken();
     final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
     if (!initialized || !mounted) return;
     final wsUri = ApiEndpoints.buildChatWebSocketUri(roomId: roomId);
-    await _chatCubit.connectToChatRoom(
-      roomId: roomId,
-      wsUri: wsUri,
-      token: token,
-    );
+    await _chatCubit.connectToChatRoom(roomId: roomId, wsUri: wsUri);
   }
 
   Future<void> _retryConnection() async {

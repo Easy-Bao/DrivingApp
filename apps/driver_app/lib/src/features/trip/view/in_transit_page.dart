@@ -7,14 +7,13 @@ import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_complete_button_widget.dart';
 import 'package:driver_app/src/features/trip/view/widgets/in_transit/in_transit_passenger_card_widget.dart';
-import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class InTransitPage extends StatefulWidget {
@@ -23,6 +22,7 @@ class InTransitPage extends StatefulWidget {
   final String duration;
   final double distance;
   final double fare;
+  final IDriverRideRepository rideRepository;
 
   const InTransitPage({
     super.key,
@@ -31,6 +31,7 @@ class InTransitPage extends StatefulWidget {
     required this.distance,
     required this.fare,
     required this.duration,
+    required this.rideRepository,
   });
 
   @override
@@ -71,14 +72,7 @@ class _InTransitPageState extends State<InTransitPage> {
       try {
         final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId;
         if (rideId != null && rideId.isNotEmpty) {
-          final location = await Modular.get<TelemetryRemoteDataSource>()
-              .fetchPassengerLocation(rideId);
-          final passengerLat = SafeParse.toNullableDouble(location['lat']);
-          final passengerLng = SafeParse.toNullableDouble(location['lng']);
-          if (passengerLat != null && passengerLng != null) {
-            _passengerLat = passengerLat;
-            _passengerLng = passengerLng;
-          }
+          await _refreshPassengerLocation(rideId);
         }
         final pos =
             LocationService.lastPosition ??
@@ -139,14 +133,7 @@ class _InTransitPageState extends State<InTransitPage> {
       final rideId = rideCubit.activeRideId;
       if (_passengerLat == null && rideId != null && rideId.isNotEmpty) {
         try {
-          final location = await Modular.get<TelemetryRemoteDataSource>()
-              .fetchPassengerLocation(rideId);
-          final passengerLat = SafeParse.toNullableDouble(location['lat']);
-          final passengerLng = SafeParse.toNullableDouble(location['lng']);
-          if (passengerLat != null && passengerLng != null) {
-            _passengerLat = passengerLat;
-            _passengerLng = passengerLng;
-          }
+          await _refreshPassengerLocation(rideId);
         } catch (_) {}
       }
 
@@ -165,6 +152,16 @@ class _InTransitPageState extends State<InTransitPage> {
       setState(() => _isLoading = false);
       debugPrint('Unable to load destination route: $error\n$stackTrace');
     }
+  }
+
+  Future<void> _refreshPassengerLocation(String rideId) async {
+    (await widget.rideRepository.fetchPassengerLocation(rideId)).fold((_) {}, (
+      location,
+    ) {
+      if (location == null) return;
+      _passengerLat = location.$1;
+      _passengerLng = location.$2;
+    });
   }
 
   void _triggerDrawRoute(double dLat, double dLng) {

@@ -1,17 +1,25 @@
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/profile/view/driver_account_page.dart';
+import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
+import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:go_router_modular/testing.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_core/shared_core.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
+class _MockDriverProfileRepository extends Mock
+    implements IDriverProfileRepository {}
+
 void main() {
   late ModularTestScope scope;
+  late _MockDriverProfileRepository repository;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({
@@ -22,6 +30,21 @@ void main() {
       'rating': '4.8',
     });
     final preferences = await SharedPreferences.getInstance();
+    repository = _MockDriverProfileRepository();
+    when(() => repository.getCachedAccount()).thenReturn(
+      const DriverAccountSnapshot(
+        name: 'Bao Driver',
+        email: 'bao@example.com',
+        vehicleType: 'Motorcycle',
+        plateNumber: 'XYZ-123',
+        ratingLabel: '4.8',
+      ),
+    );
+    when(() => repository.refreshAccount()).thenAnswer(
+      (_) async => const Left(
+        NetworkFailure('Account refresh is unavailable in this widget test.'),
+      ),
+    );
     final storage = _MockSecureStorage();
     when(
       () => storage.read(
@@ -47,7 +70,10 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.themeData, home: const DriverAccountPage()),
+      MaterialApp(
+        theme: AppTheme.themeData,
+        home: DriverAccountPage(repository: repository),
+      ),
     );
     await tester.pumpAndSettle();
 

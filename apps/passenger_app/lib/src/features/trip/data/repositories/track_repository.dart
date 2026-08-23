@@ -53,6 +53,48 @@ class TrackRepository implements ITrackRepository {
   }
 
   @override
+  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId) async {
+    try {
+      final data = await _remoteDataSource.fetchRide(rideId);
+      if (data == null) {
+        return const Left(ServerFailure('No ride data returned from server.'));
+      }
+      final ride = RideSnapshot.fromJson(data, fallbackId: rideId);
+      if (ride.id.isEmpty || ride.status.isEmpty) {
+        return const Left(
+          ValidationFailure('The ride response is incomplete.'),
+        );
+      }
+      return Right(ride);
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
+    } catch (_) {
+      return const Left(
+        ServerFailure('Ride details are temporarily unavailable.'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, RideCounterparty>> fetchCounterparty(
+    String rideId,
+  ) async {
+    try {
+      return Right(
+        RideCounterparty.fromJson(
+          await _remoteDataSource.fetchCounterparty(rideId),
+        ),
+      );
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
+    } catch (_) {
+      return const Left(
+        ServerFailure('Driver contact details are temporarily unavailable.'),
+      );
+    }
+  }
+
+  @override
   Future<Either<Failure, (double latitude, double longitude)>>
   fetchDriverLocation(String rideId) async {
     try {
@@ -103,6 +145,30 @@ class TrackRepository implements ITrackRepository {
         ServerFailure(
           'The ride status could not be updated. Please try again.',
         ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> publishPassengerLocation({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final sent = await _remoteDataSource.sendPassengerLocation(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      return sent
+          ? const Right(null)
+          : const Left(NetworkFailure('Passenger location was not accepted.'));
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
+    } catch (_) {
+      return const Left(
+        NetworkFailure('Unable to share your current trip location.'),
       );
     }
   }

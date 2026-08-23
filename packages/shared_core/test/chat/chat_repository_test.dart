@@ -9,13 +9,16 @@ import 'package:shared_core/shared_core.dart';
 class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   bool sent = false;
   String? sentPayload;
+  String? connectionToken;
   bool disposed = false;
 
   @override
   Future<void> establishWebSocketConnection(
     Uri chatServiceUri, {
     String? token,
-  }) async {}
+  }) async {
+    connectionToken = token;
+  }
 
   @override
   void sendWebSocketChatMessage(String messagePayload) {
@@ -63,6 +66,24 @@ void main() {
     expect(result.isRight(), isTrue);
     expect(capturedRequest?.path, '/api/v1/chat/rooms');
     expect(capturedRequest?.data, {'ride_id': '303'});
+  });
+
+  test('obtains the websocket token from its composition root', () async {
+    final remoteDataSource = FakeChatRemoteDataSource();
+    final repository = ChatRepository(
+      remoteDataSource: remoteDataSource,
+      currentUserId: '7',
+      clientDio: Dio(),
+      tokenProvider: () async => 'session-token',
+    );
+
+    final result = await repository.establishChatConnection(
+      roomId: '303',
+      chatUri: Uri.parse('ws://localhost/chat'),
+    );
+
+    expect(result.isRight(), isTrue);
+    expect(remoteDataSource.connectionToken, 'session-token');
   });
 
   test('rejects empty and oversized chat messages before transport', () async {

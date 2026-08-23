@@ -2,16 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/profile/data/datasources/passenger_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/profile/domain/repositories/i_passenger_profile_repository.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ProfileInfoPage extends StatefulWidget {
-  const ProfileInfoPage({super.key});
+  const ProfileInfoPage({super.key, required this.repository});
+
+  final IPassengerProfileRepository repository;
 
   @override
   State<ProfileInfoPage> createState() => _ProfileInfoPageState();
@@ -23,8 +22,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   bool _isEditing = false;
-  String _passengerId = '';
-
   String? _nameError;
   String? _phoneError;
   String? _emailError;
@@ -45,58 +42,21 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   Future<void> _loadProfile() async {
-    final session = Modular.get<SecureSessionService>();
-    final prefs = await SharedPreferences.getInstance();
-    final pId = await session.readPassengerId() ?? '';
-    final cachedValues = <String, String>{
-      'name': prefs.getString('passenger_name') ?? '',
-      'phone': prefs.getString('passenger_phone') ?? '',
-      'email': prefs.getString('passenger_email') ?? '',
-      'address': prefs.getString('passenger_address') ?? '',
-    };
-
-    if (!mounted) return;
-    setState(() {
-      _passengerId = pId;
-      _applyProfileValues(cachedValues);
-    });
-
-    if (pId.isEmpty) return;
-
-    try {
-      final response = await Modular.get<PassengerProfileRemoteDataSource>()
-          .fetchProfile(pId);
-      final profile = ProfileModel.fromJson(response);
-      final values = <String, String>{
-        'name': profile.name.isNotEmpty
-            ? profile.name
-            : cachedValues['name'] ?? '',
-        'phone': profile.phone.isNotEmpty
-            ? profile.phone
-            : cachedValues['phone'] ?? '',
-        'email': profile.email.isNotEmpty
-            ? profile.email
-            : cachedValues['email'] ?? '',
-        'address': profile.address.isNotEmpty
-            ? profile.address
-            : cachedValues['address'] ?? '',
-      };
-      await prefs.setString('passenger_name', values['name']!);
-      await prefs.setString('passenger_phone', values['phone']!);
-      await prefs.setString('passenger_email', values['email']!);
-      await prefs.setString('passenger_address', values['address']!);
-      if (!mounted) return;
-      setState(() => _applyProfileValues(values));
-    } catch (_) {
-      // Cached values remain visible when the profile service is unavailable.
-    }
+    _applyProfile(widget.repository.getCachedProfile());
+    ProfileModel? profile;
+    (await widget.repository.refreshProfile()).fold(
+      (_) {},
+      (value) => profile = value,
+    );
+    if (!mounted || profile == null) return;
+    setState(() => _applyProfile(profile!));
   }
 
-  void _applyProfileValues(Map<String, String> values) {
-    _nameController.text = values['name'] ?? '';
-    _phoneController.text = values['phone'] ?? '';
-    _emailController.text = values['email'] ?? '';
-    _addressController.text = values['address'] ?? '';
+  void _applyProfile(ProfileModel profile) {
+    _nameController.text = profile.name;
+    _phoneController.text = profile.phone;
+    _emailController.text = profile.email;
+    _addressController.text = profile.address;
   }
 
   Future<void> _toggleEdit() async {
@@ -132,28 +92,28 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         return;
       }
 
-      try {
-        final updated = await Modular.get<PassengerProfileRemoteDataSource>()
-            .updateProfile(
-              passengerId: _passengerId,
-              data: {
-                'name': name,
-                'phone': phone,
-                'email': email,
-                'address': _addressController.text.trim(),
-              },
-            );
-        if (updated.isNotEmpty) {
-          if (!mounted) return;
+      final result = await widget.repository.updateProfile(
+        name: name,
+        phone: phone,
+        email: email,
+        address: _addressController.text.trim(),
+      );
+      if (!mounted) return;
+      result.fold(
+        (_) {
+          CustomToast.show(
+            context,
+            'We could not update your profile. Please try again.',
+            isError: true,
+          );
+        },
+        (profile) {
+          _applyProfile(profile);
           CustomToast.show(context, 'Profile updated successfully!');
-        }
-      } catch (error) {
-        if (!mounted) return;
-        CustomToast.show(
-          context,
-          'We could not update your profile. Please try again.',
-          isError: true,
-        );
+        },
+      );
+      if (result.isLeft()) {
+        return;
       }
     }
 

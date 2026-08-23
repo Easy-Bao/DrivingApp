@@ -1,5 +1,6 @@
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
+import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/view/earnings_page.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -15,6 +16,22 @@ import 'package:shared_core/shared_core.dart';
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class _FakeActivityRepository implements IDriverActivityRepository {
+  @override
+  Future<Either<Failure, DriverActivityStats>> fetchStats(
+    String driverId,
+  ) async {
+    return const Right(
+      DriverActivityStats(
+        todayEarningsCentavos: 2973,
+        todayCompletedTrips: 1,
+        totalTrips: 1,
+        completedTrips: 1,
+        totalEarningsCentavos: 2973,
+        averageRating: 5,
+      ),
+    );
+  }
+
   @override
   Future<Either<Failure, Map<String, dynamic>>> fetchEarningsSummary(
     String driverId,
@@ -47,6 +64,7 @@ class _FakeActivityRepository implements IDriverActivityRepository {
     String driverId, {
     int limit = 25,
     int offset = 0,
+    bool activeOnly = false,
   }) async {
     return const Right(OffsetPage(items: [], hasMore: false, nextOffset: null));
   }

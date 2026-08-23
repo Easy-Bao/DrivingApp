@@ -79,7 +79,7 @@ class ResetBookingEvent extends BookingEvent {
 }
 
 class UpdateOffersEvent extends BookingEvent {
-  final List<dynamic> offers;
+  final List<BookingOffer> offers;
 
   const UpdateOffersEvent(this.offers);
 }

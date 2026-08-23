@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/driver_profile/view/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -17,6 +17,7 @@ class DriverDropdownCardWidget extends StatefulWidget {
   final VoidCallback onProfileBackPressed;
   final VoidCallback onSelectDriverPressed;
   final VoidCallback onCloseDropdownPressed;
+  final IDriverProfileRepository profileRepository;
 
   const DriverDropdownCardWidget({
     super.key,
@@ -27,6 +28,7 @@ class DriverDropdownCardWidget extends StatefulWidget {
     required this.onProfileBackPressed,
     required this.onSelectDriverPressed,
     required this.onCloseDropdownPressed,
+    required this.profileRepository,
   });
 
   @override
@@ -39,7 +41,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
   late final AnimationController _dropdownAnimationController;
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
-  List<Map<String, dynamic>> _recentReviews = const [];
+  List<DriverReview> _recentReviews = const [];
   bool _isLoadingFeedback = true;
 
   @override
@@ -68,81 +70,31 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
   }
 
   Future<void> _loadRecentFeedback() async {
-    try {
-      final rawReviews = await Modular.get<DriverProfileRemoteDataSource>()
-          .fetchReviews(widget.driver.id, page: 1, limit: 6);
-      final reviews = rawReviews
-          .whereType<Map>()
-          .map((review) {
-            final comment = SafeParse.toStringValue(
-              review['comment'] ?? review['feedback'] ?? review['message'],
-            ).trim();
-            return <String, dynamic>{
-              'passengerName': SafeParse.toStringValue(
-                review['passengerName'] ?? review['passenger_name'],
-              ).trim(),
-              'comment': comment,
-              'rating': SafeParse.toNullableDouble(review['rating']) ?? 0,
-              'date': _formatReviewDate(
-                review['createdAt'] ?? review['created_at'],
+    List<DriverReview> reviews = const [];
+    (await widget.profileRepository.fetchReviews(
+      widget.driver.id,
+      page: 1,
+      limit: 6,
+    )).fold((_) {}, (value) => reviews = value);
+    if (!mounted) return;
+    final visibleReviews = reviews
+        .where((review) => review.comment.isNotEmpty)
+        .take(6)
+        .toList(growable: false);
+    setState(() {
+      _recentReviews =
+          visibleReviews.isEmpty &&
+              widget.driver.recentFeedback?.trim().isNotEmpty == true
+          ? [
+              DriverReview(
+                passengerName: 'Passenger',
+                comment: widget.driver.recentFeedback!.trim(),
+                rating: widget.driver.rating,
               ),
-            };
-          })
-          .where((review) => (review['comment'] as String).isNotEmpty)
-          .take(6);
-      if (!mounted) return;
-      setState(() {
-        _recentReviews =
-            reviews.isEmpty &&
-                widget.driver.recentFeedback?.trim().isNotEmpty == true
-            ? [
-                {
-                  'passengerName': 'Passenger',
-                  'comment': widget.driver.recentFeedback!.trim(),
-                  'rating': widget.driver.rating,
-                  'date': '',
-                },
-              ]
-            : reviews.toList(growable: false);
-        _isLoadingFeedback = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _recentReviews = widget.driver.recentFeedback?.trim().isNotEmpty == true
-            ? [
-                {
-                  'passengerName': 'Passenger',
-                  'comment': widget.driver.recentFeedback!.trim(),
-                  'rating': widget.driver.rating,
-                  'date': '',
-                },
-              ]
-            : const [];
-        _isLoadingFeedback = false;
-      });
-    }
-  }
-
-  String _formatReviewDate(Object? value) {
-    if (value == null) return '';
-    final parsed = DateTime.tryParse(value.toString());
-    if (parsed == null) return '';
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
+            ]
+          : visibleReviews;
+      _isLoadingFeedback = false;
+    });
   }
 
   Widget _buildRecentFeedbackList() {
@@ -181,11 +133,11 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
     );
   }
 
-  Widget _buildReviewRow(Map<String, dynamic> review) {
-    final passengerName = (review['passengerName'] as String?)?.trim();
-    final comment = review['comment'] as String? ?? '';
-    final date = review['date'] as String? ?? '';
-    final rating = (review['rating'] as num?)?.toDouble() ?? 0;
+  Widget _buildReviewRow(DriverReview review) {
+    final passengerName = review.passengerName.trim();
+    final comment = review.comment;
+    final date = review.displayDate;
+    final rating = review.rating;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
@@ -200,9 +152,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
             children: [
               Expanded(
                 child: Text(
-                  passengerName == null || passengerName.isEmpty
-                      ? 'Passenger'
-                      : passengerName,
+                  passengerName.isEmpty ? 'Passenger' : passengerName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -339,6 +289,7 @@ class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
                                 widget.driver.onboardPassengerCount,
                             embedded: true,
                             onBackPressed: widget.onProfileBackPressed,
+                            repository: widget.profileRepository,
                           )
                         : Column(
                             mainAxisSize: MainAxisSize.min,

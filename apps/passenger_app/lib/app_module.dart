@@ -59,6 +59,12 @@ class AppModule extends Module {
               i.get<SessionBloc>().add(const SessionGuestRequested()),
         ),
       )
+      ..addLazySingleton<IChatRepositoryFactory>(
+        (i) => ChatRepositoryFactory(
+          clientDio: i.get<Dio>(),
+          tokenProvider: i.get<SecureSessionService>().readToken,
+        ),
+      )
       ..addLazySingleton<ILocationApiClient>(
         (i) => LocationApiClient(i.get<Dio>()),
       )

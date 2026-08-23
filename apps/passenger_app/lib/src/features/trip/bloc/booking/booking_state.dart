@@ -48,7 +48,7 @@ class BookingSearching extends BookingState {
 }
 
 class BookingOffersReceived extends BookingState {
-  final List<dynamic> offers;
+  final List<BookingOffer> offers;
   final bool isDirect;
   final DriverModel? targetDriver;
 

@@ -1,29 +1,55 @@
 import 'package:dio/dio.dart';
+import 'package:driver_app/src/core/services/background_telemetry_service.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
+import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
+import 'package:driver_app/src/features/home/data/datasources/driver_availability_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/datasources/ride_offer_remote_data_source.dart';
+import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
+import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
+import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/home/data/datasources/driver_availability_remote_data_source.dart';
-import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
-import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
-import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
-import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockDriverAvailabilityRemoteDataSource extends Mock
     implements DriverAvailabilityRemoteDataSource {}
 
-class MockTelemetryRemoteDataSource extends Mock
-    implements TelemetryRemoteDataSource {}
-
-class MockDriverActivityRemoteDataSource extends Mock
-    implements DriverActivityRemoteDataSource {}
+class MockDriverActivityRepository extends Mock
+    implements IDriverActivityRepository {}
 
 class MockSecureSessionService extends Mock implements SecureSessionService {}
 
 class MockBackgroundTelemetryService extends Mock
     implements BackgroundTelemetryService {}
+
+class MockRideOfferRemoteDataSource extends Mock
+    implements RideOfferRemoteDataSource {}
+
+class MockDriverRideRepository extends Mock implements IDriverRideRepository {}
+
+late SharedPreferences _preferences;
+late MockDriverActivityRepository _activityRepository;
+late MockRideOfferRemoteDataSource _rideOfferDataSource;
+late MockDriverRideRepository _rideRepository;
+
+DashboardRepository _buildRepository({
+  required DriverAvailabilityRemoteDataSource availabilityDataSource,
+  required SecureSessionService sessionService,
+  BackgroundTelemetryService? backgroundTelemetryService,
+}) {
+  return DashboardRepository(
+    activityRepository: _activityRepository,
+    availabilityDataSource: availabilityDataSource,
+    rideOfferDataSource: _rideOfferDataSource,
+    rideRepository: _rideRepository,
+    sessionService: sessionService,
+    preferences: _preferences,
+    backgroundTelemetryService: backgroundTelemetryService,
+  );
+}
 
 DioException _httpFailure({required int statusCode, Object? data}) {
   return DioException(
@@ -37,28 +63,38 @@ DioException _httpFailure({required int statusCode, Object? data}) {
 }
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    _preferences = await SharedPreferences.getInstance();
+    _activityRepository = MockDriverActivityRepository();
+    _rideOfferDataSource = MockRideOfferRemoteDataSource();
+    _rideRepository = MockDriverRideRepository();
+  });
+
   test(
     'maps completed trip statistics from the server contract once',
     () async {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
-      final telemetryDataSource = MockTelemetryRemoteDataSource();
-      final activityDataSource = MockDriverActivityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
-      when(() => activityDataSource.fetchStats('driver-42')).thenAnswer(
-        (_) async => <String, dynamic>{
-          'today_earnings_centavos': 2817,
-          'today_completed_trips': 1,
-        },
+      when(() => _activityRepository.fetchStats('driver-42')).thenAnswer(
+        (_) async => const Right(
+          DriverActivityStats(
+            todayEarningsCentavos: 2817,
+            todayCompletedTrips: 1,
+            totalTrips: 6,
+            completedTrips: 6,
+            totalEarningsCentavos: 2817,
+            averageRating: 5,
+          ),
+        ),
       );
 
-      final repository = DashboardRepository(
-        activityDataSource: activityDataSource,
+      final repository = _buildRepository(
         availabilityDataSource: availabilityDataSource,
-        telemetryRemoteDataSource: telemetryDataSource,
         sessionService: sessionService,
       );
 
@@ -70,14 +106,12 @@ void main() {
           DriverDashboardStats(earnings: 28.17, completedTrips: 1),
         ),
       );
-      verify(() => activityDataSource.fetchStats('driver-42')).called(1);
+      verify(() => _activityRepository.fetchStats('driver-42')).called(1);
     },
   );
 
   test('publishes the initial driver location when going online', () async {
     final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
-    final telemetryDataSource = MockTelemetryRemoteDataSource();
-    final activityDataSource = MockDriverActivityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
     when(
@@ -92,16 +126,17 @@ void main() {
       ),
     ).thenAnswer((_) async {});
     when(
-      () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
-    ).thenAnswer((_) async => true);
+      () => _rideRepository.publishDriverLocation(
+        latitude: 7.828,
+        longitude: 123.434,
+      ),
+    ).thenAnswer((_) async => const Right(null));
     when(
       () => sessionService.saveDriverOnlineStatus(true),
     ).thenAnswer((_) async {});
 
-    final repository = DashboardRepository(
-      activityDataSource: activityDataSource,
+    final repository = _buildRepository(
       availabilityDataSource: availabilityDataSource,
-      telemetryRemoteDataSource: telemetryDataSource,
       sessionService: sessionService,
     );
 
@@ -113,7 +148,10 @@ void main() {
 
     expect(result, const Right<Failure, void>(null));
     verify(
-      () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
+      () => _rideRepository.publishDriverLocation(
+        latitude: 7.828,
+        longitude: 123.434,
+      ),
     ).called(1);
   });
 
@@ -121,16 +159,23 @@ void main() {
     'does not mark the driver online when initial location publishing fails',
     () async {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
-      final telemetryDataSource = MockTelemetryRemoteDataSource();
-      final activityDataSource = MockDriverActivityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
       when(
-        () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
-      ).thenAnswer((_) async => false);
+        () => _rideRepository.publishDriverLocation(
+          latitude: 7.828,
+          longitude: 123.434,
+        ),
+      ).thenAnswer(
+        (_) async => const Left(
+          NetworkFailure(
+            'Unable to share your location. You are not online yet.',
+          ),
+        ),
+      );
       when(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
@@ -140,16 +185,14 @@ void main() {
         ),
       ).thenAnswer((_) async {});
       when(
-        () => telemetryDataSource.removeLocation(),
-      ).thenAnswer((_) async => true);
+        () => _rideRepository.clearDriverLocation(),
+      ).thenAnswer((_) async => const Right(null));
       when(
         () => sessionService.saveDriverOnlineStatus(false),
       ).thenAnswer((_) async {});
 
-      final repository = DashboardRepository(
-        activityDataSource: activityDataSource,
+      final repository = _buildRepository(
         availabilityDataSource: availabilityDataSource,
-        telemetryRemoteDataSource: telemetryDataSource,
         sessionService: sessionService,
       );
 
@@ -183,7 +226,7 @@ void main() {
           lng: 123.434,
         ),
       );
-      verify(() => telemetryDataSource.removeLocation()).called(1);
+      verify(() => _rideRepository.clearDriverLocation()).called(1);
       verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
     },
   );
@@ -192,8 +235,6 @@ void main() {
     'keeps the driver online when optional background telemetry cannot start',
     () async {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
-      final telemetryDataSource = MockTelemetryRemoteDataSource();
-      final activityDataSource = MockDriverActivityRemoteDataSource();
       final sessionService = MockSecureSessionService();
       final backgroundService = MockBackgroundTelemetryService();
 
@@ -201,8 +242,11 @@ void main() {
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
       when(
-        () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
-      ).thenAnswer((_) async => true);
+        () => _rideRepository.publishDriverLocation(
+          latitude: 7.828,
+          longitude: 123.434,
+        ),
+      ).thenAnswer((_) async => const Right(null));
       when(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
@@ -218,10 +262,8 @@ void main() {
         () => backgroundService.start(),
       ).thenThrow(StateError('not configured'));
 
-      final repository = DashboardRepository(
-        activityDataSource: activityDataSource,
+      final repository = _buildRepository(
         availabilityDataSource: availabilityDataSource,
-        telemetryRemoteDataSource: telemetryDataSource,
         sessionService: sessionService,
         backgroundTelemetryService: backgroundService,
       );
@@ -242,15 +284,13 @@ void main() {
           lng: 123.434,
         ),
       );
-      verifyNever(() => telemetryDataSource.removeLocation());
+      verifyNever(() => _rideRepository.clearDriverLocation());
       verify(() => sessionService.saveDriverOnlineStatus(true)).called(1);
     },
   );
 
   test('removes the driver location when going offline', () async {
     final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
-    final telemetryDataSource = MockTelemetryRemoteDataSource();
-    final activityDataSource = MockDriverActivityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
     when(
@@ -265,16 +305,14 @@ void main() {
       ),
     ).thenAnswer((_) async {});
     when(
-      () => telemetryDataSource.removeLocation(),
-    ).thenAnswer((_) async => true);
+      () => _rideRepository.clearDriverLocation(),
+    ).thenAnswer((_) async => const Right(null));
     when(
       () => sessionService.saveDriverOnlineStatus(false),
     ).thenAnswer((_) async {});
 
-    final repository = DashboardRepository(
-      activityDataSource: activityDataSource,
+    final repository = _buildRepository(
       availabilityDataSource: availabilityDataSource,
-      telemetryRemoteDataSource: telemetryDataSource,
       sessionService: sessionService,
     );
 
@@ -285,23 +323,24 @@ void main() {
     );
 
     expect(result, const Right<Failure, void>(null));
-    verify(() => telemetryDataSource.removeLocation()).called(1);
+    verify(() => _rideRepository.clearDriverLocation()).called(1);
   });
 
   test(
     'keeps the server error actionable when availability update fails',
     () async {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
-      final telemetryDataSource = MockTelemetryRemoteDataSource();
-      final activityDataSource = MockDriverActivityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
       when(
-        () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
-      ).thenAnswer((_) async => true);
+        () => _rideRepository.publishDriverLocation(
+          latitude: 7.828,
+          longitude: 123.434,
+        ),
+      ).thenAnswer((_) async => const Right(null));
       when(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
@@ -324,16 +363,14 @@ void main() {
         ),
       ).thenAnswer((_) async {});
       when(
-        () => telemetryDataSource.removeLocation(),
-      ).thenAnswer((_) async => true);
+        () => _rideRepository.clearDriverLocation(),
+      ).thenAnswer((_) async => const Right(null));
       when(
         () => sessionService.saveDriverOnlineStatus(false),
       ).thenAnswer((_) async {});
 
-      final repository = DashboardRepository(
-        activityDataSource: activityDataSource,
+      final repository = _buildRepository(
         availabilityDataSource: availabilityDataSource,
-        telemetryRemoteDataSource: telemetryDataSource,
         sessionService: sessionService,
       );
 
@@ -351,7 +388,7 @@ void main() {
           'The online status request was invalid. Please try again.',
         );
       }, (_) => fail('Expected availability update to fail.'));
-      verify(() => telemetryDataSource.removeLocation()).called(1);
+      verify(() => _rideRepository.clearDriverLocation()).called(1);
       verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
     },
   );

@@ -8,14 +8,14 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:rxdart/rxdart.dart';
 
-import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
-  final TelemetryRemoteDataSource _telemetryDataSource;
+  final IDriverRideRepository _rideRepository;
 
   AppMapController? _mapController;
   mapbox.PointAnnotationManager? _driverMarkerManager;
@@ -33,8 +33,8 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  LiveMapBloc({required TelemetryRemoteDataSource telemetryDataSource})
-    : _telemetryDataSource = telemetryDataSource,
+  LiveMapBloc({required IDriverRideRepository rideRepository})
+    : _rideRepository = rideRepository,
       super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<UpdateLocationsAndDrawRouteEvent>(
@@ -56,9 +56,15 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
   Future<void> _publishLocation(DispatchTelemetryLocationEvent event) async {
     try {
-      await _telemetryDataSource.sendLocationUpdate(
-        lat: event.lat,
-        lng: event.lng,
+      final result = await _rideRepository.publishDriverLocation(
+        latitude: event.lat,
+        longitude: event.lng,
+      );
+      result.fold(
+        (failure) => dev.log(
+          'Unable to publish driver location update: ${failure.message}',
+        ),
+        (_) {},
       );
     } catch (error, stackTrace) {
       dev.log(

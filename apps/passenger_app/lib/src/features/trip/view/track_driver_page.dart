@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -16,7 +15,7 @@ import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_state.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/track_driver_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -39,8 +38,17 @@ class _MapUpdateRequest {
 
 class ActivityTrackDriverPage extends StatefulWidget {
   final RideHistoryModel ride;
+  final ITrackRepository trackRepository;
+  final IChatRepositoryFactory chatRepositoryFactory;
+  final SecureSessionService sessionService;
 
-  const ActivityTrackDriverPage({super.key, required this.ride});
+  const ActivityTrackDriverPage({
+    super.key,
+    required this.ride,
+    required this.trackRepository,
+    required this.chatRepositoryFactory,
+    required this.sessionService,
+  });
 
   @override
   State<ActivityTrackDriverPage> createState() =>
@@ -65,7 +73,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   int _viewedDriverMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
   Timer? _chatMessagesPollTimer;
-  ChatRepository? _chatRepository;
+  IChatRepository? _chatRepository;
+  String _passengerIdentifier = '';
   bool _isCancellingTrip = false;
   bool _isPollingChat = false;
 
@@ -79,12 +88,11 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
 
   Future<void> _initializeChatRepository() async {
     final passengerIdentifier =
-        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
+        await widget.sessionService.readPassengerId() ?? '';
     if (!mounted || passengerIdentifier.isEmpty) return;
-    _chatRepository = ChatRepository(
-      remoteDataSource: WebSocketChatRemoteDataSource(),
+    _passengerIdentifier = passengerIdentifier;
+    _chatRepository = widget.chatRepositoryFactory.create(
       currentUserId: passengerIdentifier,
-      clientDio: Modular.get<Dio>(),
     );
     unawaited(_updateUnreadMessagesCount());
   }
@@ -119,7 +127,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     _isPollingChat = true;
     try {
       final chatRepository = _chatRepository;
-      final passengerIdentifier = chatRepository?.currentUserId ?? '';
+      final passengerIdentifier = _passengerIdentifier;
       if (chatRepository == null || passengerIdentifier.isEmpty) return;
 
       final result = await chatRepository.fetchRoomMessages(widget.ride.id);
@@ -548,12 +556,13 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                               try {
                                 final rideId = widget.ride.id.trim();
                                 if (rideId.isNotEmpty) {
-                                  final driverProfile =
-                                      await Modular.get<RideRemoteDataSource>()
-                                          .fetchCounterparty(rideId);
-                                  final phone = SafeParse.toStringValue(
-                                    driverProfile['phone'],
-                                  ).trim();
+                                  String phone = '';
+                                  (await widget.trackRepository
+                                          .fetchCounterparty(rideId))
+                                      .fold(
+                                        (_) {},
+                                        (driver) => phone = driver.phone,
+                                      );
 
                                   if (phone.isNotEmpty) {
                                     final uri = Uri.parse('tel:$phone');
@@ -566,7 +575,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                             },
                             onChatDriverPressed: () async {
                               final passengerId =
-                                  await Modular.get<SecureSessionService>()
+                                  await widget.sessionService
                                       .readPassengerId() ??
                                   '';
                               final dName = state is TrackDriverInProgress

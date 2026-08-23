@@ -7,15 +7,22 @@ import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActivityViewDetailsPage extends StatefulWidget {
   final RideHistoryModel? ride;
+  final ITrackRepository trackRepository;
+  final SecureSessionService sessionService;
 
-  const ActivityViewDetailsPage({super.key, this.ride});
+  const ActivityViewDetailsPage({
+    super.key,
+    required this.trackRepository,
+    required this.sessionService,
+    this.ride,
+  });
 
   @override
   State<ActivityViewDetailsPage> createState() =>
@@ -23,8 +30,8 @@ class ActivityViewDetailsPage extends StatefulWidget {
 }
 
 class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
-  Map<String, dynamic>? _detailedRideData;
-  Map<String, dynamic>? _counterpartyData;
+  RideSnapshot? _detailedRideData;
+  RideCounterparty? _counterpartyData;
   bool _showLostFoundChat = false;
   String _passengerId = '';
 
@@ -38,22 +45,16 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
     final ride = widget.ride;
     if (ride == null) return;
 
-    final passengerId =
-        await Modular.get<SecureSessionService>().readPassengerId() ?? '';
+    final passengerId = await widget.sessionService.readPassengerId() ?? '';
 
-    final dataSource = Modular.get<RideRemoteDataSource>();
-    Future<Map<String, dynamic>?> loadCounterparty() async {
-      try {
-        return await dataSource.fetchCounterparty(ride.id);
-      } catch (_) {
-        return null;
-      }
-    }
-
-    final rideFuture = dataSource.fetchRide(ride.id);
-    final counterpartyFuture = loadCounterparty();
-    final retrievedRideData = await rideFuture;
-    final counterparty = await counterpartyFuture;
+    final rideFuture = widget.trackRepository.fetchRide(ride.id);
+    final counterpartyFuture = widget.trackRepository.fetchCounterparty(
+      ride.id,
+    );
+    RideSnapshot? retrievedRideData;
+    RideCounterparty? counterparty;
+    (await rideFuture).fold((_) {}, (value) => retrievedRideData = value);
+    (await counterpartyFuture).fold((_) {}, (value) => counterparty = value);
 
     if (mounted) {
       setState(() {
@@ -61,8 +62,8 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
         _detailedRideData = retrievedRideData;
         _counterpartyData = counterparty;
         _showLostFoundChat =
-            counterparty?['contact_allowed'] == true &&
-            counterparty?['user_id'] != null;
+            counterparty?.contactAllowed == true &&
+            counterparty?.userId.isNotEmpty == true;
       });
     }
   }
@@ -74,9 +75,8 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
       return;
     }
 
-    final driverId = SafeParse.toStringValue(
-      _counterpartyData?['user_id'] ?? retrievedRideData['driver_id'],
-    );
+    final driverId =
+        _counterpartyData?.userId ?? retrievedRideData.driverId ?? '';
     if (driverId.isEmpty) return;
 
     try {
@@ -89,7 +89,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
               'userId': _passengerId,
               'peerId': driverId,
               'peerName': SafeParse.toStringValue(
-                _counterpartyData?['name'] ?? retrievedRideData['driver_name'],
+                _counterpartyData?.name ?? retrievedRideData.driverName,
                 'Driver',
               ),
             },
@@ -103,10 +103,13 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
     final ride = widget.ride;
     if (ride == null) return;
     try {
-      final driverProfile =
-          _counterpartyData ??
-          await Modular.get<RideRemoteDataSource>().fetchCounterparty(ride.id);
-      final phone = SafeParse.toStringValue(driverProfile['phone']);
+      RideCounterparty? driverProfile = _counterpartyData;
+      if (driverProfile == null) {
+        (await widget.trackRepository.fetchCounterparty(
+          ride.id,
+        )).fold((_) {}, (value) => driverProfile = value);
+      }
+      final phone = driverProfile?.phone ?? '';
       if (phone.isNotEmpty) {
         final uri = Uri.parse('tel:$phone');
         if (await canLaunchUrl(uri)) {

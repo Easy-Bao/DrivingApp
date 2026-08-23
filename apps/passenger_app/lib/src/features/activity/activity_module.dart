@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/activity/data/datasources/passenger_activity_remote_data_source.dart';
@@ -11,6 +12,8 @@ import 'package:passenger_app/src/features/activity/view/passenger_activity_page
 import 'package:passenger_app/src/features/activity/view/passenger_payment_page.dart';
 import 'package:passenger_app/src/features/activity/view/passenger_rating_page.dart';
 import 'package:passenger_app/src/features/activity/view/view_details_page.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/view/track_driver_page.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -41,7 +44,11 @@ class ActivityModule {
         final ride = state.extra is RideHistoryModel
             ? state.extra as RideHistoryModel
             : null;
-        return ActivityViewDetailsPage(ride: ride);
+        return ActivityViewDetailsPage(
+          ride: ride,
+          trackRepository: Modular.get<ITrackRepository>(),
+          sessionService: Modular.get<SecureSessionService>(),
+        );
       },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -58,7 +65,12 @@ class ActivityModule {
             body: Center(child: Text('Trip tracking data not available.')),
           );
         }
-        return ActivityTrackDriverPage(ride: ride);
+        return ActivityTrackDriverPage(
+          ride: ride,
+          trackRepository: Modular.get<ITrackRepository>(),
+          chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
+          sessionService: Modular.get<SecureSessionService>(),
+        );
       },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -74,6 +86,7 @@ class ActivityModule {
           driverId: driverId,
           driverName: driverName,
           rideId: rideId,
+          profileRepository: Modular.get<IDriverProfileRepository>(),
         );
       },
       transition: AppTransitions.modal.toTop,

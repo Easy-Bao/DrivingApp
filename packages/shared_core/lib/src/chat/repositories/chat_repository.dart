@@ -10,11 +10,13 @@ class ChatRepository implements IChatRepository {
   final ChatRemoteDataSource remoteDataSource;
   final String currentUserId;
   final Dio clientDio;
+  final Future<String?> Function()? tokenProvider;
 
   ChatRepository({
     required this.remoteDataSource,
     required this.currentUserId,
     required this.clientDio,
+    this.tokenProvider,
   });
 
   @override
@@ -27,9 +29,10 @@ class ChatRepository implements IChatRepository {
     String? token,
   }) async {
     try {
+      final resolvedToken = token ?? await tokenProvider?.call();
       await remoteDataSource.establishWebSocketConnection(
         chatUri,
-        token: token,
+        token: resolvedToken,
       );
       return const Right(null);
     } catch (error) {

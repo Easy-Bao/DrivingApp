@@ -5,6 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/driver_profile/view/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -21,6 +22,7 @@ class DriverMatchedPage extends StatefulWidget {
   final String? plateNumber;
   final String? pickupAddress;
   final RideHistoryModel? createdRide;
+  final IDriverProfileRepository profileRepository;
 
   const DriverMatchedPage({
     super.key,
@@ -36,6 +38,7 @@ class DriverMatchedPage extends StatefulWidget {
     this.plateNumber,
     this.pickupAddress,
     this.createdRide,
+    required this.profileRepository,
   });
 
   @override
@@ -159,6 +162,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                             vehicleType: widget.vehicleType ?? '—',
                             plateNumber: widget.plateNumber ?? '—',
                             rating: widget.driverRating ?? '—',
+                            repository: widget.profileRepository,
                           ),
                     ),
                   );

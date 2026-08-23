@@ -11,6 +11,10 @@ abstract class ITrackRepository {
 
   Future<Either<Failure, RideUpdate>> getRideStatusUpdate(String rideId);
 
+  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId);
+
+  Future<Either<Failure, RideCounterparty>> fetchCounterparty(String rideId);
+
   Future<Either<Failure, (double latitude, double longitude)>>
   fetchDriverLocation(String rideId);
 
@@ -18,4 +22,10 @@ abstract class ITrackRepository {
     String rideId,
     RideStatus status,
   );
+
+  Future<Either<Failure, void>> publishPassengerLocation({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  });
 }

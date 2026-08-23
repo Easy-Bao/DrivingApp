@@ -6,12 +6,15 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/data/datasources/passenger_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/profile/data/repositories/passenger_profile_repository.dart';
+import 'package:passenger_app/src/features/profile/domain/repositories/i_passenger_profile_repository.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/profile/view/account_page.dart';
 import 'package:passenger_app/src/features/profile/view/help_center_page.dart';
 import 'package:passenger_app/src/features/profile/view/profile_info_page.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/view/saved_place_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ProfileModule {
@@ -22,11 +25,15 @@ class ProfileModule {
       ..addLazySingleton<PassengerProfileRemoteDataSource>(
         (i) => PassengerProfileRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addFactory<ProfileCubit>(
-        (i) => ProfileCubit(
+      ..addLazySingleton<IPassengerProfileRepository>(
+        (i) => PassengerProfileRepository(
           remoteDataSource: i.get<PassengerProfileRemoteDataSource>(),
-          secureSessionService: i.get<SecureSessionService>(),
+          sessionService: i.get<SecureSessionService>(),
+          preferences: i.get<SharedPreferences>(),
         ),
+      )
+      ..addFactory<ProfileCubit>(
+        (i) => ProfileCubit(repository: i.get<IPassengerProfileRepository>()),
       );
   }
 
@@ -34,7 +41,9 @@ class ProfileModule {
     ChildRoute(
       name: ProfileRoutes.profileInfo,
       ProfileRoutes.profileInfoPath,
-      child: (context, GoRouterState state) => const ProfileInfoPage(),
+      child: (context, GoRouterState state) => ProfileInfoPage(
+        repository: Modular.get<IPassengerProfileRepository>(),
+      ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

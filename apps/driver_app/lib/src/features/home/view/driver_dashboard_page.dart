@@ -7,6 +7,8 @@ import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
+import 'package:driver_app/src/features/home/domain/entities/driver_dispatch_snapshot.dart';
+import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/view/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
 import 'package:driver_app/src/features/location/location_routes.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
@@ -17,25 +19,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
-import 'package:driver_app/src/features/home/data/datasources/ride_offer_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/trip_routes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 double? _distanceInKm(Map<String, dynamic> value) {
   final distance = value['distance_km'] ?? value['distance'];
   return distance is num && distance >= 0 ? distance.toDouble() : null;
-}
-
-double? _tripNumber(Map<String, dynamic> value, List<String> keys) {
-  for (final key in keys) {
-    final rawValue = value[key];
-    if (rawValue is num && rawValue.isFinite) return rawValue.toDouble();
-  }
-  return null;
 }
 
 bool _isActiveDriverTripStatus(Object? value) {
@@ -48,7 +37,9 @@ bool _isActiveDriverTripStatus(Object? value) {
 }
 
 class DriverDashboardPage extends StatefulWidget {
-  const DriverDashboardPage({super.key});
+  const DriverDashboardPage({super.key, required this.repository});
+
+  final IDashboardRepository repository;
 
   @override
   State<DriverDashboardPage> createState() => _DriverDashboardPageState();
@@ -144,13 +135,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (!mounted || _isPollingRideData) return;
     _isPollingRideData = true;
     try {
-      final driverId =
-          await Modular.get<SecureSessionService>().readDriverId() ?? '';
-      if (driverId.isEmpty) return;
-
-      final page = await Modular.get<DriverActivityRemoteDataSource>()
-          .fetchTripHistory(driverId, limit: 10, activeOnly: true);
-      final trips = page.items
+      late DriverDispatchSnapshot snapshot;
+      (await widget.repository.getDispatchSnapshot(
+        includeOffers: false,
+      )).fold((failure) => throw failure, (value) => snapshot = value);
+      final trips = snapshot.activeTrips
           .where(_isActiveDriverTripStatus)
           .map(Map<String, dynamic>.from)
           .toList();
@@ -370,28 +359,16 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     _isPollingRideData = true;
     try {
-      final driverId =
-          await Modular.get<SecureSessionService>().readDriverId() ?? '';
-      if (driverId.isEmpty) return;
-
-      final results = await Future.wait<dynamic>([
-        Modular.get<DriverActivityRemoteDataSource>().fetchTripHistory(
-          driverId,
-          limit: 10,
-          activeOnly: true,
-        ),
-        Modular.get<RideOfferRemoteDataSource>().fetchActiveBids(),
-      ]);
-      final page = results[0] as OffsetPage<Map<String, dynamic>>;
-      List<Map<String, dynamic>> trips = page.items
+      late DriverDispatchSnapshot snapshot;
+      (await widget.repository.getDispatchSnapshot()).fold(
+        (failure) => throw failure,
+        (value) => snapshot = value,
+      );
+      final trips = snapshot.activeTrips
           .where((ride) => _isActiveDriverTripStatus(ride['status']))
           .map(Map<String, dynamic>.from)
           .toList();
-
-      final bidsList = results[1] as List<dynamic>;
-      final List<Map<String, dynamic>> bids = bidsList
-          .map((b) => b as Map<String, dynamic>)
-          .toList();
+      final bids = snapshot.rideOffers;
 
       if (!mounted ||
           pollGeneration != _pollGeneration ||
@@ -542,18 +519,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     if (mounted) setState(() => _submittingBidId = sessionId);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final driverName = prefs.getString('driver_name') ?? '';
-      final vehicleType = prefs.getString('vehicle_type') ?? '';
-      final plateNumber = prefs.getString('plate_number') ?? '';
-
-      final success = await Modular.get<RideOfferRemoteDataSource>().placeBid(
+      final result = await widget.repository.submitRideOffer(
         sessionId: sessionId,
-        driverName: driverName,
-        plateNumber: plateNumber,
-        vehicleType: vehicleType,
-        offerPrice: fare,
+        farePesos: fare,
       );
+      final success = result.fold((_) => false, (_) => true);
 
       if (mounted) {
         if (success) {
@@ -580,19 +550,20 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
   }
 
-  Future<Map<String, dynamic>> _authoritativeTrip(
+  Future<RideSnapshot> _authoritativeTrip(
     Map<String, dynamic> trip,
     String rideId,
   ) async {
     try {
-      final details = await Modular.get<RideRemoteDataSource>().getRideStatus(
+      RideSnapshot? ride;
+      (await widget.repository.fetchRide(
         rideId,
-      );
-      if (details.isNotEmpty) return {...trip, ...details, 'id': rideId};
+      )).fold((_) {}, (value) => ride = value);
+      if (ride != null) return ride!;
     } catch (error) {
       dev.log('Unable to refresh trip $rideId before resuming: $error');
     }
-    return trip;
+    return RideSnapshot.fromJson(trip, fallbackId: rideId);
   }
 
   Future<void> _resumeTrip(Map<String, dynamic> trip) async {
@@ -601,12 +572,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     final resolvedTrip = await _authoritativeTrip(trip, rideId);
     if (!mounted) return;
-    final fare = driverFareInPesos(resolvedTrip);
-    final distance = _distanceInKm(resolvedTrip);
-    final duration = _tripNumber(resolvedTrip, const [
-      'duration_minutes',
-      'durationMinutes',
-    ]);
+    final fare = resolvedTrip.farePesos;
+    final distance = resolvedTrip.distanceKm;
+    final duration = resolvedTrip.durationMinutes;
     if (fare == null || distance == null || duration == null) {
       CustomToast.show(
         context,
@@ -615,7 +583,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       );
       return;
     }
-    final status = driverValueAsString(resolvedTrip['status']);
+    final status = resolvedTrip.status;
     String routeName = TripRoutes.pickupNavigation;
     if (status == 'arrived') {
       routeName = TripRoutes.waitingPassenger;
@@ -625,22 +593,21 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     BlocProvider.of<RideFlowCubit>(context).resumeRide(
       rideId: rideId,
-      status: driverValueAsString(resolvedTrip['status']) ?? 'accepted',
-      passengerName:
-          driverValueAsString(resolvedTrip['passenger_name']) ?? 'Passenger',
-      passengerId: driverValueAsString(resolvedTrip['passenger_id']),
-      distanceKm: _distanceInKm(resolvedTrip),
-      pickupLat: SafeParse.toNullableDouble(resolvedTrip['pickup_latitude']),
-      pickupLng: SafeParse.toNullableDouble(resolvedTrip['pickup_longitude']),
-      destLat: SafeParse.toNullableDouble(resolvedTrip['dropoff_latitude']),
-      destLng: SafeParse.toNullableDouble(resolvedTrip['dropoff_longitude']),
+      status: resolvedTrip.status.isEmpty ? 'accepted' : resolvedTrip.status,
+      passengerName: resolvedTrip.passengerName ?? 'Passenger',
+      passengerId: resolvedTrip.passengerId,
+      distanceKm: resolvedTrip.distanceKm,
+      pickupLat: resolvedTrip.pickupLatitude,
+      pickupLng: resolvedTrip.pickupLongitude,
+      destLat: resolvedTrip.dropoffLatitude,
+      destLng: resolvedTrip.dropoffLongitude,
     );
 
     context.pushNamed(
       routeName,
       extra: {
-        'pickup': resolvedTrip['pickup_name'] ?? 'Pickup',
-        'dropoff': resolvedTrip['dropoff_name'] ?? 'Dropoff',
+        'pickup': resolvedTrip.pickupName,
+        'dropoff': resolvedTrip.dropoffName,
         'distance': distance,
         'fare': fare,
         'duration': '${duration.toStringAsFixed(0)} min',
@@ -654,12 +621,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (rideId == null) return;
     final resolvedTrip = await _authoritativeTrip(trip, rideId);
     if (!mounted) return;
-    final fare = driverFareInPesos(resolvedTrip);
-    final distance = _distanceInKm(resolvedTrip);
-    final duration = _tripNumber(resolvedTrip, const [
-      'duration_minutes',
-      'durationMinutes',
-    ]);
+    final fare = resolvedTrip.farePesos;
+    final distance = resolvedTrip.distanceKm;
+    final duration = resolvedTrip.durationMinutes;
     if (fare == null || distance == null || duration == null) return;
 
     if (mounted) setState(() => _completingTripId = rideId);
@@ -667,15 +631,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       final cubit = BlocProvider.of<RideFlowCubit>(context);
       cubit.resumeRide(
         rideId: rideId,
-        status: driverValueAsString(resolvedTrip['status']) ?? 'accepted',
-        passengerName:
-            driverValueAsString(resolvedTrip['passenger_name']) ?? 'Passenger',
-        passengerId: driverValueAsString(resolvedTrip['passenger_id']),
-        distanceKm: _distanceInKm(resolvedTrip),
-        pickupLat: SafeParse.toNullableDouble(resolvedTrip['pickup_latitude']),
-        pickupLng: SafeParse.toNullableDouble(resolvedTrip['pickup_longitude']),
-        destLat: SafeParse.toNullableDouble(resolvedTrip['dropoff_latitude']),
-        destLng: SafeParse.toNullableDouble(resolvedTrip['dropoff_longitude']),
+        status: resolvedTrip.status.isEmpty ? 'accepted' : resolvedTrip.status,
+        passengerName: resolvedTrip.passengerName ?? 'Passenger',
+        passengerId: resolvedTrip.passengerId,
+        distanceKm: resolvedTrip.distanceKm,
+        pickupLat: resolvedTrip.pickupLatitude,
+        pickupLng: resolvedTrip.pickupLongitude,
+        destLat: resolvedTrip.dropoffLatitude,
+        destLng: resolvedTrip.dropoffLongitude,
       );
 
       final finalFare = await cubit.completeRide();
@@ -694,8 +657,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       context.pushReplacementNamed(
         TripRoutes.fareSummary,
         extra: {
-          'pickup': resolvedTrip['pickup_name'] ?? 'Pickup',
-          'dropoff': resolvedTrip['dropoff_name'] ?? 'Dropoff',
+          'pickup': resolvedTrip.pickupName,
+          'dropoff': resolvedTrip.dropoffName,
           'distance': distance,
           'fare': finalFare,
           'duration': '${duration.toStringAsFixed(0)} min',

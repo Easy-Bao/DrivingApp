@@ -4,11 +4,14 @@ import 'dart:developer' as dev;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/booking_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/domain/entities/accepted_booking.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip.dart';
+import 'package:passenger_app/src/features/trip/domain/entities/booking_offer.dart';
+import 'package:passenger_app/src/features/trip/domain/entities/booking_session_request.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_booking_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_core/shared_core.dart';
@@ -18,8 +21,8 @@ part 'booking_state.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final IDriverRepository _driverRepository;
-  final BookingRemoteDataSource _bookingDataSource;
-  final DriverProfileRemoteDataSource _driverProfileDataSource;
+  final IBookingRepository _bookingRepository;
+  final IDriverProfileRepository _driverProfileRepository;
   final SecureSessionService _secureSessionService;
   final BackgroundTelemetryService? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
@@ -46,20 +49,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   double? _dropoffLng;
   String? _dropoffName;
 
-  String? _sessionIdFromResponse(Map<String, dynamic> response) {
-    final rawSessionId = response['id'];
-    final sessionId = switch (rawSessionId) {
-      final String value => value.trim(),
-      final num value => value.toInt().toString(),
-      _ => null,
-    };
-    return sessionId == null || sessionId.isEmpty ? null : sessionId;
-  }
-
   BookingBloc({
     required IDriverRepository driverRepository,
-    required BookingRemoteDataSource bookingDataSource,
-    required DriverProfileRemoteDataSource driverProfileDataSource,
+    required IBookingRepository bookingRepository,
+    required IDriverProfileRepository driverProfileRepository,
     required SecureSessionService secureSessionService,
     InboxCubit? inboxCubit,
     BackgroundTelemetryService? backgroundTelemetryService,
@@ -68,8 +61,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Duration nearestDriverRetryDelay = const Duration(seconds: 2),
   }) : assert(nearestDriverMaxAttempts > 0),
        _driverRepository = driverRepository,
-       _bookingDataSource = bookingDataSource,
-       _driverProfileDataSource = driverProfileDataSource,
+       _bookingRepository = bookingRepository,
+       _driverProfileRepository = driverProfileRepository,
        _secureSessionService = secureSessionService,
        _inboxCubit = inboxCubit,
        _backgroundTelemetryService = backgroundTelemetryService,
@@ -221,60 +214,30 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<int?> _loadDriverTripCount(String driverId) async {
-    try {
-      final stats = await _driverProfileDataSource.fetchStats(driverId);
-      final totalTrips = stats['totalTrips'] ?? stats['total_trips'];
-      return (totalTrips as num?)?.toInt();
-    } catch (error) {
-      dev.log('Unable to load driver stats: $error');
-      return null;
-    }
+    int? totalTrips;
+    (await _driverProfileRepository.fetchStats(driverId)).fold(
+      (failure) => dev.log('Unable to load driver stats: ${failure.message}'),
+      (stats) => totalTrips = stats.completedTrips,
+    );
+    return totalTrips;
   }
 
   Future<List<Map<String, dynamic>>> _loadDriverReviews(String driverId) async {
-    try {
-      final rawReviews = await _driverProfileDataSource.fetchReviews(driverId);
-      final processedReviews = <Map<String, dynamic>>[];
-      for (final review in rawReviews.whereType<Map<String, dynamic>>()) {
-        processedReviews.add({
-          'passengerName': review['passengerName'] ?? review['passenger_name'],
-          'comment': review['comment'],
-          'rating': (review['rating'] as num?)?.toDouble(),
-          'date': _formatReviewDate(
-            review['createdAt'] ?? review['created_at'],
-          ),
-        });
-      }
-      return processedReviews;
-    } catch (error) {
-      dev.log('Failed to process reviews: $error');
-      return const [];
-    }
-  }
-
-  String _formatReviewDate(Object? value) {
-    if (value == null) return '';
-    try {
-      final date = DateTime.parse(value.toString());
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${months[date.month - 1]} ${date.day}, ${date.year}';
-    } catch (error) {
-      dev.log('Failed to parse review date: $error');
-      return '';
-    }
+    List<Map<String, dynamic>> reviews = const [];
+    (await _driverProfileRepository.fetchReviews(driverId)).fold(
+      (failure) => dev.log('Failed to process reviews: ${failure.message}'),
+      (values) => reviews = values
+          .map(
+            (review) => <String, dynamic>{
+              'passengerName': review.passengerName,
+              'comment': review.comment,
+              'rating': review.rating,
+              'date': review.displayDate,
+            },
+          )
+          .toList(growable: false),
+    );
+    return reviews;
   }
 
   void _notifyNoDriverFound() {
@@ -326,26 +289,21 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _dropoffName = event.trip.destination.name;
 
     try {
-      final response = await _bookingDataSource.createSession({
-        'ride_type': event.trip.rideType,
-        'pickup_latitude': event.pickupLat,
-        'pickup_longitude': event.pickupLng,
-        'pickup_name': _pickupName,
-        'dropoff_latitude': _dropoffLat,
-        'dropoff_longitude': _dropoffLng,
-        'dropoff_name': _dropoffName,
-        'distance_km': event.distanceKm,
-        'duration_minutes': event.durationMinutes,
-        'target_driver_id': targetDriverId,
-        'custom_fare_centavos': (event.trip.fare * 100).round(),
-        'passenger_note': event.trip.passengerNote,
-      });
-      final sessionId = _sessionIdFromResponse(response);
-      if (sessionId == null || sessionId.isEmpty) {
-        throw StateError('Booking session was not created');
-      }
+      String? sessionId;
+      Failure? failure;
+      (await _bookingRepository.createSession(
+        _bookingRequest(
+          trip: event.trip,
+          pickupLat: event.pickupLat,
+          pickupLng: event.pickupLng,
+          distanceKm: event.distanceKm,
+          durationMinutes: event.durationMinutes,
+          targetDriverId: targetDriverId,
+        ),
+      )).fold((value) => failure = value, (value) => sessionId = value);
+      if (sessionId == null) throw failure!;
       _activeBidSessionId = sessionId;
-      _subscribeToSession(sessionId);
+      _subscribeToSession(sessionId!);
     } catch (error) {
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
@@ -372,25 +330,20 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _dropoffName = event.trip.destination.name;
 
     try {
-      final response = await _bookingDataSource.createSession({
-        'ride_type': event.trip.rideType,
-        'pickup_latitude': event.pickupLat,
-        'pickup_longitude': event.pickupLng,
-        'pickup_name': _pickupName,
-        'dropoff_latitude': _dropoffLat,
-        'dropoff_longitude': _dropoffLng,
-        'dropoff_name': _dropoffName,
-        'distance_km': event.distanceKm,
-        'duration_minutes': event.durationMinutes,
-        'custom_fare_centavos': (event.trip.fare * 100).round(),
-        'passenger_note': event.trip.passengerNote,
-      });
-      final sessionId = _sessionIdFromResponse(response);
-      if (sessionId == null || sessionId.isEmpty) {
-        throw StateError('Booking session was not created');
-      }
+      String? sessionId;
+      Failure? failure;
+      (await _bookingRepository.createSession(
+        _bookingRequest(
+          trip: event.trip,
+          pickupLat: event.pickupLat,
+          pickupLng: event.pickupLng,
+          distanceKm: event.distanceKm,
+          durationMinutes: event.durationMinutes,
+        ),
+      )).fold((value) => failure = value, (value) => sessionId = value);
+      if (sessionId == null) throw failure!;
       _activeBidSessionId = sessionId;
-      _subscribeToSession(sessionId);
+      _subscribeToSession(sessionId!);
     } catch (error) {
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
@@ -401,6 +354,30 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     return pickupName == null || pickupName.isEmpty
         ? 'Current Location'
         : pickupName;
+  }
+
+  BookingSessionRequest _bookingRequest({
+    required BidSessionTrip trip,
+    required double pickupLat,
+    required double pickupLng,
+    required double distanceKm,
+    required double durationMinutes,
+    int? targetDriverId,
+  }) {
+    return BookingSessionRequest(
+      rideType: trip.rideType,
+      pickupLatitude: pickupLat,
+      pickupLongitude: pickupLng,
+      pickupName: _pickupName ?? _pickupNameForTrip(trip),
+      dropoffLatitude: trip.destination.latitude,
+      dropoffLongitude: trip.destination.longitude,
+      dropoffName: trip.destination.name,
+      distanceKm: distanceKm,
+      durationMinutes: durationMinutes,
+      targetDriverId: targetDriverId,
+      customFareCentavos: (trip.fare * 100).round(),
+      passengerNote: trip.passengerNote,
+    );
   }
 
   void _subscribeToSession(String sessionId) {
@@ -414,17 +391,20 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         return;
       }
       final offer = event.envelope.payload['offer'];
-      if (offer is! Map || offer['session_id']?.toString() != sessionId) {
+      if (offer is! Map) {
         return;
       }
-      final updatedOffer = Map<String, dynamic>.from(offer);
+      final updatedOffer = BookingOffer.tryParse(
+        Map<String, dynamic>.from(offer),
+      );
+      if (updatedOffer == null || updatedOffer.sessionId != sessionId) return;
       final currentOffers = switch (state) {
         BookingOffersReceived(:final offers) => offers,
-        _ => const <dynamic>[],
+        _ => const <BookingOffer>[],
       };
       final updatedOffers =
           currentOffers
-              .where((item) => item is! Map || item['id'] != updatedOffer['id'])
+              .where((item) => item.offerId != updatedOffer.offerId)
               .toList()
             ..add(updatedOffer);
       add(UpdateOffersEvent(updatedOffers));
@@ -450,11 +430,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   Future<void> _loadOfferSnapshot(String sessionId) async {
     if (isClosed || _activeBidSessionId != sessionId) return;
-    try {
-      add(UpdateOffersEvent(await _bookingDataSource.fetchOffers(sessionId)));
-    } catch (error) {
-      dev.log('Failed to refresh booking offers: $error');
-    }
+    (await _bookingRepository.fetchOffers(sessionId)).fold(
+      (failure) =>
+          dev.log('Failed to refresh booking offers: ${failure.message}'),
+      (offers) => add(UpdateOffersEvent(offers)),
+    );
   }
 
   void _onUpdateOffers(UpdateOffersEvent event, Emitter<BookingState> emit) {
@@ -465,28 +445,24 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     };
 
     if (isDirectBooking && event.offers.isNotEmpty && !_isAutoAcceptingOffer) {
-      final pendingOffer = event.offers
-          .whereType<Map<String, dynamic>>()
-          .where((offer) => offer['status'] == 'pending')
-          .firstWhere((_) => true, orElse: () => <String, dynamic>{});
-      final offerId = pendingOffer['id']?.toString() ?? '';
-      final proposedFareCentavos =
-          (pendingOffer['proposed_fare_centavos'] as num?)?.toInt();
-      final driverId = pendingOffer['driver_id']?.toString() ?? '';
-      if (offerId.isNotEmpty &&
-          driverId.isNotEmpty &&
-          proposedFareCentavos != null &&
-          proposedFareCentavos > 0) {
+      BookingOffer? pendingOffer;
+      for (final offer in event.offers) {
+        if (offer.status == 'pending') {
+          pendingOffer = offer;
+          break;
+        }
+      }
+      if (pendingOffer != null) {
         _isAutoAcceptingOffer = true;
         add(
           AcceptBidOfferEvent(
-            offerId: offerId,
-            driverId: driverId,
-            driverName: pendingOffer['driver_name']?.toString() ?? '',
-            vehicleType: pendingOffer['vehicle_type']?.toString() ?? '',
-            plateNumber: pendingOffer['plate_number']?.toString() ?? '',
-            proposedFare: proposedFareCentavos / 100,
-            driverRating: pendingOffer['driver_rating']?.toString(),
+            offerId: pendingOffer.offerId,
+            driverId: pendingOffer.driverId,
+            driverName: pendingOffer.driverName,
+            vehicleType: pendingOffer.vehicleType,
+            plateNumber: pendingOffer.plateNumber,
+            proposedFare: pendingOffer.proposedFare,
+            driverRating: pendingOffer.ratingLabel,
           ),
         );
         return;
@@ -535,19 +511,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
 
     try {
-      final response = await _bookingDataSource.acceptOffer(
+      AcceptedBooking? acceptedBooking;
+      Failure? failure;
+      (await _bookingRepository.acceptOffer(
         sessionId: sessionId,
         offerId: event.offerId,
-      );
-      final ride = response['ride'];
-      final rideMap = ride is Map<String, dynamic>
-          ? ride
-          : const <String, dynamic>{};
-      final rideId =
-          response['ride_id']?.toString() ?? rideMap['id']?.toString() ?? '';
-      if (rideId.isEmpty) {
-        throw StateError('Accepted booking did not return a ride ID');
-      }
+      )).fold((value) => failure = value, (value) => acceptedBooking = value);
+      if (acceptedBooking == null) throw failure!;
+      final rideId = acceptedBooking!.rideId;
 
       final pickupLat = _pickupLat;
       final pickupLng = _pickupLng;
@@ -560,8 +531,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         throw StateError('Booking coordinates are unavailable');
       }
       final fareCentavos =
-          (rideMap['fare_centavos'] as num?)?.toDouble() ??
-          event.proposedFare * 100;
+          acceptedBooking!.fareCentavos ?? (event.proposedFare * 100).round();
       await _secureSessionService.saveActiveRideId(rideId);
       _cleanupSubscriptions();
       emit(
@@ -612,7 +582,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     final sessionId = _activeBidSessionId;
     try {
       if (sessionId != null && sessionId.isNotEmpty) {
-        await _bookingDataSource
+        await _bookingRepository
             .cancelSession(sessionId)
             .timeout(const Duration(seconds: 5));
       }

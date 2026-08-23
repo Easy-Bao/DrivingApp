@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
@@ -13,9 +13,13 @@ import 'package:passenger_app/src/features/trip/data/datasources/booking_remote_
 import 'package:passenger_app/src/features/trip/data/datasources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/fare_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/repositories/booking_repository.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/driver_repository.dart';
+import 'package:passenger_app/src/features/trip/data/repositories/fare_repository.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/track_repository.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_booking_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_fare_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/activity_detail_map_page.dart';
@@ -50,14 +54,20 @@ class TripModule {
           locationApiClient: i.get<ILocationApiClient>(),
         ),
       )
+      ..addLazySingleton<IBookingRepository>(
+        (i) => BookingRepository(dataSource: i.get<BookingRemoteDataSource>()),
+      )
+      ..addLazySingleton<IFareRepository>(
+        (i) => FareRepository(remoteDataSource: i.get<FareRemoteDataSource>()),
+      )
       ..addLazySingleton<ITrackRepository>(
         (i) => TrackRepository(remoteDataSource: i.get<RideRemoteDataSource>()),
       )
       ..addLazySingleton<BookingBloc>(
         (i) => BookingBloc(
           driverRepository: i.get<IDriverRepository>(),
-          bookingDataSource: i.get<BookingRemoteDataSource>(),
-          driverProfileDataSource: i.get<DriverProfileRemoteDataSource>(),
+          bookingRepository: i.get<IBookingRepository>(),
+          driverProfileRepository: i.get<IDriverProfileRepository>(),
           secureSessionService: i.get<SecureSessionService>(),
           inboxCubit: i.get<InboxCubit>(),
           backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
@@ -65,7 +75,7 @@ class TripModule {
         ),
       )
       ..addFactory<LiveMapBloc>(
-        (i) => LiveMapBloc(rideDataSource: i.get<RideRemoteDataSource>()),
+        (i) => LiveMapBloc(trackRepository: i.get<ITrackRepository>()),
       )
       ..addFactory<TrackDriverCubit>(
         (i) => TrackDriverCubit(
@@ -153,6 +163,7 @@ class TripModule {
             pickupLatitude: data.doubleValue('pickupLat'),
             pickupLongitude: data.doubleValue('pickupLng'),
             pickupAddress: data.string('pickupAddress'),
+            fareRepository: Modular.get<IFareRepository>(),
           ),
         );
       },
@@ -188,6 +199,7 @@ class TripModule {
           pickupLongitude: data.doubleValue('pickupLng'),
           pickupAddress: data.string('pickupAddress'),
           passengerNote: data.string('passengerNote') ?? '',
+          profileRepository: Modular.get<IDriverProfileRepository>(),
         );
       },
       transition: AppTransitions.modal.toTop,
@@ -225,6 +237,7 @@ class TripModule {
           plateNumber: data.string('plateNumber'),
           pickupAddress: data.string('pickupAddress'),
           createdRide: data.object<RideHistoryModel>('createdRide'),
+          profileRepository: Modular.get<IDriverProfileRepository>(),
         );
       },
       transition: AppTransitions.modal.toTop,

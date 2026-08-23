@@ -6,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
@@ -29,6 +30,7 @@ class FindingDriverPage extends StatelessWidget {
   final double? pickupLatitude;
   final double? pickupLongitude;
   final String passengerNote;
+  final IDriverProfileRepository profileRepository;
 
   const FindingDriverPage({
     super.key,
@@ -41,6 +43,7 @@ class FindingDriverPage extends StatelessWidget {
     this.pickupLatitude,
     this.pickupLongitude,
     this.passengerNote = '',
+    required this.profileRepository,
   });
 
   @override
@@ -60,6 +63,7 @@ class FindingDriverPage extends StatelessWidget {
         pickupLatitude: pickupLatitude,
         pickupLongitude: pickupLongitude,
         passengerNote: passengerNote,
+        profileRepository: profileRepository,
       ),
     );
   }
@@ -75,6 +79,7 @@ class FindingDriverPageContent extends StatefulWidget {
   final double? pickupLatitude;
   final double? pickupLongitude;
   final String passengerNote;
+  final IDriverProfileRepository profileRepository;
 
   const FindingDriverPageContent({
     super.key,
@@ -87,6 +92,7 @@ class FindingDriverPageContent extends StatefulWidget {
     this.pickupLatitude,
     this.pickupLongitude,
     this.passengerNote = '',
+    required this.profileRepository,
   });
 
   @override
@@ -643,6 +649,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                         _isViewingDriverProfile = false;
                                       });
                                     },
+                                    profileRepository: widget.profileRepository,
                                   ),
                               ],
                             );
@@ -752,7 +759,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                     vehicleType: offer.vehicleType,
                                     plateNumber: offer.plateNumber,
                                     proposedFare: offer.proposedFare,
-                                    driverRating: offer.ratingStr,
+                                    driverRating: offer.ratingLabel,
                                   ),
                                 );
                               },

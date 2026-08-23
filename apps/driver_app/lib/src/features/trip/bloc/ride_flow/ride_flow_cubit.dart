@@ -3,12 +3,12 @@ import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
-  final RideRemoteDataSource _rideDataSource;
+  final IDriverRideRepository _rideRepository;
   final SecureSessionService _sessionService;
 
   String? _activeRideId;
@@ -18,9 +18,9 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   int _elapsedWaitTime = 0;
 
   RideFlowCubit({
-    required RideRemoteDataSource rideDataSource,
+    required IDriverRideRepository rideRepository,
     required SecureSessionService sessionService,
-  }) : _rideDataSource = rideDataSource,
+  }) : _rideRepository = rideRepository,
        _sessionService = sessionService,
        super(const RideFlowInitial());
 
@@ -99,13 +99,13 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
 
     try {
-      final success = await _rideDataSource.acceptRide(
-        tripId: rideId,
+      final result = await _rideRepository.acceptRide(
+        rideId: rideId,
         driverId: driverId,
       );
-
-      if (!success) {
-        emit(const RideFlowError('Failed to accept ride on backend.'));
+      final failure = result.fold<Failure?>((value) => value, (_) => null);
+      if (failure != null) {
+        emit(RideFlowError(failure.message));
         return;
       }
 
@@ -136,14 +136,13 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        final updated = await _rideDataSource.updateRideStatus(
-          tripId: _activeRideId!,
-          status: 'arrived',
+        final result = await _rideRepository.updateRideStatus(
+          rideId: _activeRideId!,
+          status: RideStatus.arrived,
         );
-        if (!updated) {
-          emit(
-            const RideFlowError('Unable to confirm arrival with the server.'),
-          );
+        final failure = result.fold<Failure?>((value) => value, (_) => null);
+        if (failure != null) {
+          emit(RideFlowError(failure.message));
           return;
         }
       } catch (error) {
@@ -208,16 +207,13 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (_activeRideId != null) {
       try {
-        final updated = await _rideDataSource.updateRideStatus(
-          tripId: _activeRideId!,
-          status: 'in_transit',
+        final result = await _rideRepository.updateRideStatus(
+          rideId: _activeRideId!,
+          status: RideStatus.inTransit,
         );
-        if (!updated) {
-          emit(
-            const RideFlowError(
-              'Another passenger is already in transit. Complete that trip first.',
-            ),
-          );
+        final failure = result.fold<Failure?>((value) => value, (_) => null);
+        if (failure != null) {
+          emit(RideFlowError(failure.message));
           return false;
         }
       } catch (error) {
@@ -245,17 +241,12 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     if (rideId == null || rideId.isEmpty) return null;
 
     try {
-      final ride = await _rideDataSource.getRideStatus(rideId);
-      final latitude = _readCoordinate(ride, const [
-        'dropoff_latitude',
-        'dropoffLatitude',
-        'destination_latitude',
-      ]);
-      final longitude = _readCoordinate(ride, const [
-        'dropoff_longitude',
-        'dropoffLongitude',
-        'destination_longitude',
-      ]);
+      RideSnapshot? ride;
+      (await _rideRepository.fetchRide(
+        rideId,
+      )).fold((_) {}, (value) => ride = value);
+      final latitude = ride?.dropoffLatitude;
+      final longitude = ride?.dropoffLongitude;
       if (_isValidCoordinatePair(latitude, longitude)) {
         return (latitude!, longitude!);
       }
@@ -265,14 +256,6 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         error: error,
         stackTrace: stackTrace,
       );
-    }
-    return null;
-  }
-
-  double? _readCoordinate(Map<String, dynamic> ride, List<String> keys) {
-    for (final key in keys) {
-      final value = SafeParse.toNullableDouble(ride[key]);
-      if (value != null) return value;
     }
     return null;
   }
@@ -288,7 +271,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         longitude <= 180;
   }
 
-  Future<Map<String, dynamic>?> _loadCompletedRide() async {
+  Future<RideSnapshot?> _loadCompletedRide() async {
     _waitTimer?.cancel();
 
     final rideId = _activeRideId;
@@ -298,19 +281,30 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
 
     try {
-      final ride = await _rideDataSource.getRideStatus(rideId);
-      _activePassengerId ??= ride['passenger_id']?.toString();
-      _activePassengerName ??= ride['passenger_name']?.toString();
-      final status = ride['status']?.toString();
-      if (status != 'completed') {
-        final updated = await _rideDataSource.updateRideStatus(
-          tripId: rideId,
-          status: 'completed',
+      RideSnapshot? ride;
+      Failure? loadFailure;
+      (await _rideRepository.fetchRide(
+        rideId,
+      )).fold((failure) => loadFailure = failure, (value) => ride = value);
+      if (ride == null) {
+        emit(
+          RideFlowError(
+            loadFailure?.message ?? 'Unable to load the active ride.',
+          ),
         );
-        if (!updated) {
-          emit(
-            const RideFlowError('Unable to complete this trip on the server.'),
-          );
+        return null;
+      }
+      _activePassengerId ??= ride!.passengerId;
+      _activePassengerName ??= ride!.passengerName;
+      final status = ride!.status;
+      if (status != 'completed') {
+        final result = await _rideRepository.updateRideStatus(
+          rideId: rideId,
+          status: RideStatus.completed,
+        );
+        final failure = result.fold<Failure?>((value) => value, (_) => null);
+        if (failure != null) {
+          emit(RideFlowError(failure.message));
           return null;
         }
       }
@@ -326,7 +320,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     final ride = await _loadCompletedRide();
     if (ride == null) return null;
 
-    final fareCentavos = (ride['fare_centavos'] as num?)?.toDouble();
+    final fareCentavos = ride.fareCentavos;
     if (fareCentavos == null || fareCentavos <= 0) {
       emit(const RideFlowError('The server did not return a payable fare.'));
       return null;
@@ -342,13 +336,22 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     }
 
     try {
-      final settled = await _rideDataSource.settleCash(rideId);
-      final fareCentavos = (settled['fare_centavos'] as num?)?.toDouble();
-      if (fareCentavos == null || fareCentavos <= 0) {
-        emit(const RideFlowError('The server did not return a payable fare.'));
+      int? fareCentavos;
+      Failure? settleFailure;
+      (await _rideRepository.settleCash(rideId)).fold(
+        (failure) => settleFailure = failure,
+        (value) => fareCentavos = value,
+      );
+      if (fareCentavos == null) {
+        emit(
+          RideFlowError(
+            settleFailure?.message ??
+                'The server did not return a payable fare.',
+          ),
+        );
         return null;
       }
-      final finalFare = fareCentavos / 100;
+      final finalFare = fareCentavos! / 100;
       emit(RideFlowComplete(fare: finalFare));
       return finalFare;
     } catch (error) {

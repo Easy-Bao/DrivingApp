@@ -1,19 +1,21 @@
+import 'dart:async';
+
 import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
-import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
-import 'package:driver_app/src/features/profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
+import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverAccountPage extends StatefulWidget {
-  const DriverAccountPage({super.key});
+  const DriverAccountPage({super.key, required this.repository});
+
+  final IDriverProfileRepository repository;
 
   @override
   State<DriverAccountPage> createState() => _DriverAccountPageState();
@@ -36,83 +38,33 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   void initState() {
     super.initState();
     _loadCachedProfile();
-    _fetchUpdatedData();
+    unawaited(_fetchUpdatedData());
   }
 
-  Future<void> _loadCachedProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _name = prefs.getString('driver_name') ?? '';
-      _email = prefs.getString('driver_email') ?? '';
-      _vehicleType = prefs.getString('vehicle_type') ?? '';
-      _plateNumber = prefs.getString('plate_number') ?? '';
-      _rating = prefs.getString('rating') ?? '—';
-    });
+  void _loadCachedProfile() {
+    _applyAccount(widget.repository.getCachedAccount());
   }
 
   Future<void> _fetchUpdatedData() async {
-    try {
-      final driverId =
-          await Modular.get<SecureSessionService>().readDriverId() ?? '';
-      if (driverId.isEmpty) return;
-
-      final profileData = await Modular.get<DriverProfileRemoteDataSource>()
-          .fetchProfile(driverId);
-      final profile = ProfileModel.fromJson(profileData);
-      final prefs = await SharedPreferences.getInstance();
-      final name = profile.name.isNotEmpty ? profile.name : _name;
-      final vehicleType = profile.vehicleType.isNotEmpty
-          ? profile.vehicleType
-          : _vehicleType;
-      final plateNumber = profile.plateNumber.isNotEmpty
-          ? profile.plateNumber
-          : _plateNumber;
-      final profileRating = profile.rating;
-      final rating = profileRating != null && profileRating > 0
-          ? profileRating.toStringAsFixed(1)
-          : _rating;
-
-      await prefs.setString('driver_name', name);
-      await prefs.setString('vehicle_type', vehicleType);
-      await prefs.setString('plate_number', plateNumber);
-      await prefs.setString('rating', rating);
-
-      final stats = await Modular.get<DriverActivityRemoteDataSource>()
-          .fetchStats(driverId);
-      if (!mounted) return;
-      final totalEarningsCentavos = _readNumber(stats, [
-        'total_earnings_centavos',
-      ]);
-      setState(() {
-        _name = name;
-        _vehicleType = vehicleType;
-        _plateNumber = plateNumber;
-        _rating = rating;
-        _totalTrips = _readInt(stats, ['total_trips']);
-        _completedTrips = _readInt(stats, ['completed_trips']);
-        _lifetimeEarnings = totalEarningsCentavos != null
-            ? totalEarningsCentavos / 100
-            : 0;
-        _averageRating =
-            _readNumber(stats, ['average_rating']) ?? profileRating ?? 0;
-      });
-    } catch (error) {
-      debugPrint('Unable to refresh driver account: $error');
-    }
+    DriverAccountSnapshot? account;
+    (await widget.repository.refreshAccount()).fold(
+      (failure) => debugPrint('Unable to refresh driver account: $failure'),
+      (value) => account = value,
+    );
+    if (!mounted || account == null) return;
+    setState(() => _applyAccount(account!));
   }
 
-  double? _readNumber(Map<String, dynamic> values, List<String> keys) {
-    for (final key in keys) {
-      final value = values[key];
-      if (value is num && value.isFinite) return value.toDouble();
-    }
-    return null;
-  }
-
-  int _readInt(Map<String, dynamic> values, List<String> keys) {
-    final value = _readNumber(values, keys);
-    return value?.toInt() ?? 0;
+  void _applyAccount(DriverAccountSnapshot account) {
+    _name = account.name;
+    _email = account.email;
+    _vehicleType = account.vehicleType;
+    _plateNumber = account.plateNumber;
+    _rating = account.ratingLabel;
+    _totalTrips = account.totalTrips;
+    _completedTrips = account.completedTrips;
+    _lifetimeEarnings = account.lifetimeEarnings;
+    _averageRating = account.averageRating;
   }
 
   @override

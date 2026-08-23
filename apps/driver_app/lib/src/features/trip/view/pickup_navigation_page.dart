@@ -1,26 +1,23 @@
 import 'package:driver_app/src/core/location/location.dart';
-import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
 
-import 'package:dio/dio.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:driver_app/src/features/trip/view/widgets/pickup_navigation_panel_widget.dart';
 import 'package:driver_app/src/features/trip/trip_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/data/datasources/ride_counterparty_remote_data_source.dart';
-
-import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PickupNavigationPage extends StatefulWidget {
   final String pickup;
@@ -28,6 +25,9 @@ class PickupNavigationPage extends StatefulWidget {
   final double distance;
   final double fare;
   final String duration;
+  final IDriverRideRepository rideRepository;
+  final IChatRepositoryFactory chatRepositoryFactory;
+  final SecureSessionService sessionService;
 
   const PickupNavigationPage({
     super.key,
@@ -36,6 +36,9 @@ class PickupNavigationPage extends StatefulWidget {
     required this.distance,
     required this.fare,
     required this.duration,
+    required this.rideRepository,
+    required this.chatRepositoryFactory,
+    required this.sessionService,
   });
 
   @override
@@ -55,7 +58,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   int _unreadChatMessagesCount = 0;
   int _viewedPassengerMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
-  ChatRepository? _chatRepository;
+  IChatRepository? _chatRepository;
 
   @override
   void initState() {
@@ -66,13 +69,10 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   }
 
   Future<void> _initializeChatRepository() async {
-    final driverIdentifier =
-        await Modular.get<SecureSessionService>().readDriverId() ?? '';
+    final driverIdentifier = await widget.sessionService.readDriverId() ?? '';
     if (!mounted || driverIdentifier.isEmpty) return;
-    _chatRepository = ChatRepository(
-      remoteDataSource: WebSocketChatRemoteDataSource(),
+    _chatRepository = widget.chatRepositoryFactory.create(
       currentUserId: driverIdentifier,
-      clientDio: Modular.get<Dio>(),
     );
     final cubit = BlocProvider.of<RideFlowCubit>(context);
     unawaited(_updateUnreadMessagesCount(cubit));
@@ -134,8 +134,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       final rideId = cubit.activeRideId;
       if (rideId == null || rideId.isEmpty) return;
 
-      final driverIdentifier =
-          await Modular.get<SecureSessionService>().readDriverId() ?? '';
+      final driverIdentifier = await widget.sessionService.readDriverId() ?? '';
       if (driverIdentifier.isEmpty) return;
 
       final chatRepo = _chatRepository;
@@ -364,16 +363,19 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                     BlocProvider.of<RideFlowCubit>(context);
                                 final rideId = rideCubit.activeRideId ?? '';
                                 if (rideId.isNotEmpty) {
-                                  final passenger =
-                                      await Modular.get<
-                                            RideCounterpartyRemoteDataSource
-                                          >()
-                                          .fetch(rideId);
-                                  final phone = driverValueAsString(
-                                    passenger['phone'],
-                                  );
-                                  if (phone != null && phone.isNotEmpty) {
-                                    final uri = Uri.parse('tel:$phone');
+                                  String? phone;
+                                  (await widget.rideRepository
+                                          .fetchCounterparty(rideId))
+                                      .fold(
+                                        (_) {},
+                                        (passenger) => phone = passenger.phone,
+                                      );
+                                  final passengerPhone = phone;
+                                  if (passengerPhone != null &&
+                                      passengerPhone.isNotEmpty) {
+                                    final uri = Uri.parse(
+                                      'tel:$passengerPhone',
+                                    );
                                     if (await canLaunchUrl(uri)) {
                                       await launchUrl(uri);
                                     }
@@ -394,8 +396,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                   ? state.passengerName
                                   : 'Passenger';
                               final driverId =
-                                  await Modular.get<SecureSessionService>()
-                                      .readDriverId() ??
+                                  await widget.sessionService.readDriverId() ??
                                   '';
                               if (!context.mounted) return;
                               setState(() {

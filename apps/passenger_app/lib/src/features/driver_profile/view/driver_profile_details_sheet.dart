@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:developer' as dev;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class DriverProfileDetailsSheet extends StatefulWidget {
@@ -17,6 +16,7 @@ class DriverProfileDetailsSheet extends StatefulWidget {
   final int? onboardPassengerCount;
   final bool embedded;
   final VoidCallback? onBackPressed;
+  final IDriverProfileRepository repository;
 
   const DriverProfileDetailsSheet({
     super.key,
@@ -28,6 +28,7 @@ class DriverProfileDetailsSheet extends StatefulWidget {
     this.onboardPassengerCount,
     this.embedded = false,
     this.onBackPressed,
+    required this.repository,
   });
 
   @override
@@ -43,7 +44,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   bool _hasMore = true;
   int _currentPage = 1;
   int? _completedTripsCount;
-  List<Map<String, dynamic>> _driverReviewsList = [];
+  List<DriverReview> _driverReviewsList = [];
 
   @override
   void initState() {
@@ -67,97 +68,32 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   }
 
   Future<void> _loadDriverProfileStats() async {
-    try {
-      final statsData = await Modular.get<DriverProfileRemoteDataSource>()
-          .fetchStats(widget.driverId);
-      final stats = statsData['data'] is Map
-          ? Map<String, dynamic>.from(statsData['data'] as Map)
-          : statsData;
-      final completedTrips =
-          stats['completedTrips'] ??
-          stats['completed_trips'] ??
-          stats['totalTrips'] ??
-          stats['total_trips'];
-      final completedTripsValue = num.tryParse(
-        completedTrips?.toString() ?? '',
-      );
-      if (completedTripsValue != null) {
-        if (mounted) {
-          setState(() {
-            _completedTripsCount = completedTripsValue.toInt();
-          });
-        }
-      }
-    } catch (error) {
-      dev.log('Unable to load driver stats: $error');
-    }
-
     _currentPage = 1;
     _hasMore = true;
-    final List<Map<String, dynamic>> dynamicReviews = [];
-    try {
-      final rawReviews = await Modular.get<DriverProfileRemoteDataSource>()
-          .fetchReviews(
-            widget.driverId,
-            page: _currentPage,
-            limit: _reviewPageSize,
-          );
-      if (rawReviews.length < _reviewPageSize) {
-        _hasMore = false;
-      }
-      for (final r in rawReviews) {
-        if (r is Map<String, dynamic>) {
-          final review = _parseReview(r);
-          if (review['rating'] is num) dynamicReviews.add(review);
-        }
-      }
-    } catch (error) {
-      dev.log('Unable to load driver reviews: $error');
-      _hasMore = false;
-    }
+    final statsFuture = widget.repository.fetchStats(widget.driverId);
+    final reviewsFuture = widget.repository.fetchReviews(
+      widget.driverId,
+      page: _currentPage,
+      limit: _reviewPageSize,
+    );
+    int? completedTrips;
+    List<DriverReview> reviews = const [];
+    (await statsFuture).fold(
+      (_) {},
+      (stats) => completedTrips = stats.completedTrips,
+    );
+    (await reviewsFuture).fold((_) => _hasMore = false, (value) {
+      reviews = value;
+      _hasMore = value.length >= _reviewPageSize;
+    });
 
     if (mounted) {
       setState(() {
-        _driverReviewsList = dynamicReviews;
+        _completedTripsCount = completedTrips;
+        _driverReviewsList = reviews;
         _isLoadingStats = false;
       });
     }
-  }
-
-  Map<String, dynamic> _parseReview(Map<String, dynamic> r) {
-    final createdAtStr = r['createdAt'] ?? r['created_at'];
-    var dateFormatted = '';
-    if (createdAtStr != null) {
-      try {
-        final parsedDate = DateTime.parse(createdAtStr.toString());
-        final months = [
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dec',
-        ];
-        dateFormatted =
-            '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
-      } catch (error) {
-        dev.log('Unable to parse review date: $error');
-      }
-    }
-
-    return {
-      'passengerName':
-          r['passengerName']?.toString() ?? r['passenger_name']?.toString(),
-      'comment': r['comment']?.toString() ?? r['feedback']?.toString() ?? '',
-      'rating': num.tryParse(r['rating']?.toString() ?? '')?.toDouble(),
-      'date': dateFormatted,
-    };
   }
 
   Future<void> _loadMoreDriverReviews() async {
@@ -168,26 +104,15 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     });
 
     final nextPage = _currentPage + 1;
-    final List<Map<String, dynamic>> nextReviews = [];
-    try {
-      final rawReviews = await Modular.get<DriverProfileRemoteDataSource>()
-          .fetchReviews(
-            widget.driverId,
-            page: nextPage,
-            limit: _reviewPageSize,
-          );
-      if (rawReviews.length < _reviewPageSize) {
-        _hasMore = false;
-      }
-      for (final r in rawReviews) {
-        if (r is Map<String, dynamic>) {
-          final review = _parseReview(r);
-          if (review['rating'] is num) nextReviews.add(review);
-        }
-      }
-    } catch (_) {
-      _hasMore = false;
-    }
+    List<DriverReview> nextReviews = const [];
+    (await widget.repository.fetchReviews(
+      widget.driverId,
+      page: nextPage,
+      limit: _reviewPageSize,
+    )).fold((_) => _hasMore = false, (value) {
+      nextReviews = value;
+      _hasMore = value.length >= _reviewPageSize;
+    });
 
     if (mounted) {
       setState(() {
@@ -431,7 +356,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     );
   }
 
-  Widget _buildReviewCard(Map<String, dynamic> reviewItem) {
+  Widget _buildReviewCard(DriverReview reviewItem) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -447,7 +372,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                reviewItem['passengerName']?.toString() ?? '—',
+                reviewItem.passengerName,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
@@ -455,7 +380,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                 ),
               ),
               Text(
-                reviewItem['date']?.toString() ?? '—',
+                reviewItem.displayDate,
                 style: TextStyle(
                   fontSize: 11,
                   color: AppTheme.primaryColor.withValues(alpha: 0.4),
@@ -467,8 +392,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           Row(
             children: [
               ...List.generate(5, (starIndex) {
-                final ratingValue =
-                    (reviewItem['rating'] as num?)?.toDouble() ?? 0.0;
+                final ratingValue = reviewItem.rating;
                 if (ratingValue >= starIndex + 1) {
                   return const Icon(
                     Icons.star_rounded,
@@ -490,8 +414,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               }),
               const SizedBox(width: 6),
               Text(
-                ((reviewItem['rating'] as num?)?.toDouble() ?? 0.0)
-                    .toStringAsFixed(1),
+                reviewItem.rating.toStringAsFixed(1),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -502,7 +425,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            reviewItem['comment']?.toString() ?? '',
+            reviewItem.comment,
             style: TextStyle(
               fontSize: 13,
               height: 1.4,

@@ -10,8 +10,8 @@ import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/fare_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_draft.dart';
+import 'package:passenger_app/src/features/trip/domain/repositories/i_fare_repository.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/booking_auth_bottom_sheet_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/ride_options_panel_widget.dart';
@@ -30,6 +30,7 @@ class RideSelectionPage extends StatefulWidget {
   final double? pickupLongitude;
   final int initialTipAmount;
   final String initialNotes;
+  final IFareRepository fareRepository;
 
   const RideSelectionPage({
     super.key,
@@ -43,6 +44,7 @@ class RideSelectionPage extends StatefulWidget {
     this.pickupLongitude,
     this.initialTipAmount = 0,
     this.initialNotes = '',
+    required this.fareRepository,
   });
 
   @override
@@ -271,28 +273,21 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       if (pickup == null) {
         throw StateError('Pickup location is unavailable.');
       }
-      final dataSource = Modular.get<FareRemoteDataSource>();
-      final fareResult = await dataSource.fetchEstimate(
+      FareResult? fareResult;
+      (await widget.fareRepository.estimateFare(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,
         originLatitude: pickup.lat,
         originLongitude: pickup.lng,
         destinationLatitude: widget.destination.latitude,
         destinationLongitude: widget.destination.longitude,
-      );
-      if (fareResult.totalFare > 0 && mounted) {
+      )).fold((failure) => throw failure, (value) => fareResult = value);
+      if (fareResult != null && mounted) {
         setState(() {
           _fareResult = fareResult;
-          _customFareController.text = fareResult.totalFare.toStringAsFixed(2);
+          _customFareController.text = fareResult!.totalFare.toStringAsFixed(2);
           _fareError = null;
           _customFareError = null;
-        });
-      } else if (mounted) {
-        setState(() {
-          _isLoadingFare = false;
-          _fareError = 'We couldn’t calculate a fare for this route.';
-          _fareResult = null;
-          _customFareController.clear();
         });
       }
     } catch (_) {
