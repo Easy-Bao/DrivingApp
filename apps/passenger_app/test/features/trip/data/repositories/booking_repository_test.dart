@@ -76,4 +76,36 @@ void main() {
     expect(booking.rideId, '901');
     expect(booking.fareCentavos, 2764);
   });
+
+  test(
+    'keeps an actionable offer when optional driver display fields are blank',
+    () async {
+      when(() => dataSource.fetchOffers('26')).thenAnswer(
+        (_) async => <dynamic>[
+          <String, dynamic>{
+            'id': 25,
+            'session_id': 26,
+            'driver_id': 2,
+            'driver_name': '',
+            'vehicle_type': '',
+            'plate_number': '',
+            'proposed_fare_centavos': 2970,
+            'status': 'pending',
+          },
+        ],
+      );
+
+      final result = await repository.fetchOffers('26');
+
+      expect(result.isRight(), isTrue);
+      final offers = result.getOrElse(
+        (_) => throw StateError('Expected the pending offer to be retained.'),
+      );
+      expect(offers, hasLength(1));
+      expect(offers.single.offerId, '25');
+      expect(offers.single.sessionId, '26');
+      expect(offers.single.driverId, '2');
+      expect(offers.single.proposedFareCentavos, 2970);
+    },
+  );
 }

@@ -9,7 +9,9 @@ import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
+import 'package:passenger_app/src/features/trip/domain/entities/accepted_booking.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/bid_session_trip.dart';
+import 'package:passenger_app/src/features/trip/domain/entities/booking_offer.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_session_request.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_booking_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
@@ -36,6 +38,7 @@ BookingBloc _makeBookingBloc({
   InboxCubit? inboxCubit,
   int nearestDriverMaxAttempts = 5,
   Duration nearestDriverRetryDelay = const Duration(seconds: 2),
+  Duration offerRefreshInterval = const Duration(seconds: 3),
 }) => BookingBloc(
   driverRepository: driverRepo,
   bookingRepository: bookingRepository,
@@ -44,6 +47,7 @@ BookingBloc _makeBookingBloc({
   inboxCubit: inboxCubit,
   nearestDriverMaxAttempts: nearestDriverMaxAttempts,
   nearestDriverRetryDelay: nearestDriverRetryDelay,
+  offerRefreshInterval: offerRefreshInterval,
 );
 
 void main() {
@@ -69,6 +73,9 @@ void main() {
     when(
       () => bookingRepository.cancelSession(any()),
     ).thenAnswer((_) async => const Right(null));
+    when(
+      () => bookingRepository.fetchOffers(any()),
+    ).thenAnswer((_) async => const Right([]));
   });
 
   const testDriver = DriverModel(
@@ -373,6 +380,9 @@ void main() {
           'direct booking',
           isTrue,
         ),
+        isA<BookingOffersReceived>()
+            .having((state) => state.isDirect, 'direct booking', isTrue)
+            .having((state) => state.offers, 'offers', isEmpty),
       ],
       verify: (_) {
         final request =
@@ -412,7 +422,95 @@ void main() {
           'open booking',
           isFalse,
         ),
+        isA<BookingOffersReceived>()
+            .having((state) => state.isDirect, 'open booking', isFalse)
+            .having((state) => state.offers, 'offers', isEmpty),
       ],
+    );
+
+    test(
+      'matches a direct booking from snapshot polling when realtime is absent',
+      () async {
+        var fetchCount = 0;
+        when(
+          () => bookingRepository.createSession(any()),
+        ).thenAnswer((_) async => const Right('26'));
+        when(() => bookingRepository.fetchOffers('26')).thenAnswer((_) async {
+          fetchCount++;
+          if (fetchCount == 1) return const Right([]);
+          return const Right([
+            BookingOffer(
+              offerId: '25',
+              sessionId: '26',
+              driverId: '2',
+              driverName: '',
+              vehicleType: '',
+              plateNumber: '',
+              status: 'pending',
+              proposedFareCentavos: 2970,
+            ),
+          ]);
+        });
+        when(
+          () => bookingRepository.acceptOffer(sessionId: '26', offerId: '25'),
+        ).thenAnswer(
+          (_) async =>
+              const Right(AcceptedBooking(rideId: '24', fareCentavos: 2970)),
+        );
+        when(
+          () => secureSessionService.saveActiveRideId('24'),
+        ).thenAnswer((_) async {});
+
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          offerRefreshInterval: const Duration(milliseconds: 5),
+        );
+        final matched = bloc.stream.firstWhere(
+          (state) => state is BookingDriverMatched,
+        );
+
+        bloc.add(
+          const StartDirectBookingEvent(
+            targetDriver: DriverModel(
+              id: '2',
+              name: 'Target Driver',
+              vehicleType: 'Sedan',
+              plateNumber: 'ABC 1234',
+              rating: 4.8,
+              lat: 7.828,
+              lng: 123.434,
+              distanceKm: 0.8,
+              etaMinutes: 3,
+              score: 95,
+            ),
+            trip: pickupTrip,
+            pickupLat: 7.828,
+            pickupLng: 123.434,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+
+        final state =
+            await matched.timeout(const Duration(milliseconds: 500))
+                as BookingDriverMatched;
+        expect(state.matchResult.driverName, 'Target Driver');
+        expect(state.matchResult.vehicleType, 'Sedan');
+        expect(state.matchResult.plateNumber, 'ABC 1234');
+        expect(state.createdRide?.id, '24');
+        expect(fetchCount, greaterThanOrEqualTo(2));
+        final fetchCountAtMatch = fetchCount;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(fetchCount, fetchCountAtMatch);
+        verify(
+          () => bookingRepository.acceptOffer(sessionId: '26', offerId: '25'),
+        ).called(1);
+
+        await bloc.close();
+      },
     );
   });
 

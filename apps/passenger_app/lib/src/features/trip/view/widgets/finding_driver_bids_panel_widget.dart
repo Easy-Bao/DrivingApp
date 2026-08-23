@@ -100,7 +100,7 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              offer.driverName,
+                              offer.displayDriverName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -109,7 +109,7 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${offer.vehicleType} • ${offer.plateNumber}',
+                              offer.vehicleSummary,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.primaryColor.withValues(

@@ -755,9 +755,9 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                   AcceptBidOfferEvent(
                                     offerId: offer.offerId,
                                     driverId: offer.driverId,
-                                    driverName: offer.driverName,
-                                    vehicleType: offer.vehicleType,
-                                    plateNumber: offer.plateNumber,
+                                    driverName: offer.displayDriverName,
+                                    vehicleType: offer.displayVehicleType,
+                                    plateNumber: offer.displayPlateNumber,
                                     proposedFare: offer.proposedFare,
                                     driverRating: offer.ratingLabel,
                                   ),

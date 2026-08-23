@@ -24,10 +24,8 @@ class BookingOffer {
     final plateNumber = SafeParse.toStringValue(json['plate_number']).trim();
     final fare = SafeParse.toNullableDouble(json['proposed_fare_centavos']);
     if (offerId.isEmpty ||
+        sessionId.isEmpty ||
         driverId.isEmpty ||
-        driverName.isEmpty ||
-        vehicleType.isEmpty ||
-        plateNumber.isEmpty ||
         fare == null ||
         fare <= 0) {
       return null;
@@ -57,4 +55,21 @@ class BookingOffer {
 
   double get proposedFare => proposedFareCentavos / 100;
   String get ratingLabel => driverRating?.toStringAsFixed(1) ?? '—';
+
+  String get displayDriverName => driverName.isEmpty ? 'Driver' : driverName;
+
+  String get displayVehicleType =>
+      vehicleType.isEmpty ? 'Vehicle details unavailable' : vehicleType;
+
+  String get displayPlateNumber => plateNumber.isEmpty ? '—' : plateNumber;
+
+  String get vehicleSummary {
+    final details = [
+      vehicleType,
+      plateNumber,
+    ].where((value) => value.isNotEmpty).toList(growable: false);
+    return details.isEmpty
+        ? 'Vehicle details unavailable'
+        : details.join(' • ');
+  }
 }

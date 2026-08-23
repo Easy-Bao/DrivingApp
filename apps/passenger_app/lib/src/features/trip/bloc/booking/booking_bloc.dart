@@ -29,9 +29,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final RealtimeWebSocketClient? _realtimeClient;
   final int _nearestDriverMaxAttempts;
   final Duration _nearestDriverRetryDelay;
+  final Duration _offerRefreshInterval;
 
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   StreamSubscription<RealtimeConnectionState>? _realtimeStateSubscription;
+  Timer? _offerRefreshTimer;
 
   int? _totalTrips;
   List<Map<String, dynamic>> _reviews = [];
@@ -39,6 +41,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   bool _nearestSearchCancelled = false;
   bool _noDriverNotificationSent = false;
   bool _isAutoAcceptingOffer = false;
+  bool _isRefreshingOffers = false;
   bool _realtimeWasConnected = false;
   String? _activeBidSessionId;
 
@@ -59,7 +62,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     RealtimeWebSocketClient? realtimeClient,
     int nearestDriverMaxAttempts = 5,
     Duration nearestDriverRetryDelay = const Duration(seconds: 2),
+    Duration offerRefreshInterval = const Duration(seconds: 3),
   }) : assert(nearestDriverMaxAttempts > 0),
+       assert(offerRefreshInterval > Duration.zero),
        _driverRepository = driverRepository,
        _bookingRepository = bookingRepository,
        _driverProfileRepository = driverProfileRepository,
@@ -69,6 +74,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
        _realtimeClient = realtimeClient,
        _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
        _nearestDriverRetryDelay = nearestDriverRetryDelay,
+       _offerRefreshInterval = offerRefreshInterval,
        super(BookingInitial()) {
     on<LocateNearestDriverEvent>(
       _onLocateNearestDriver,
@@ -382,6 +388,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   void _subscribeToSession(String sessionId) {
     _cleanupRealtimeSubscriptions();
+    _startOfferRefresh(sessionId);
     final realtimeClient = _realtimeClient;
     if (realtimeClient == null) {
       return;
@@ -418,23 +425,46 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       }
       _realtimeWasConnected = true;
     });
-    unawaited(_connectAndLoadOfferSnapshot(sessionId));
+    unawaited(_connectRealtime());
   }
 
-  Future<void> _connectAndLoadOfferSnapshot(String sessionId) async {
+  Future<void> _connectRealtime() async {
     final realtimeClient = _realtimeClient;
     if (realtimeClient == null) return;
-    await realtimeClient.start();
-    await _loadOfferSnapshot(sessionId);
+    try {
+      await realtimeClient.start();
+    } catch (error) {
+      dev.log('Realtime booking updates are unavailable: $error');
+    }
+  }
+
+  void _startOfferRefresh(String sessionId) {
+    _offerRefreshTimer?.cancel();
+    unawaited(_loadOfferSnapshot(sessionId));
+    _offerRefreshTimer = Timer.periodic(
+      _offerRefreshInterval,
+      (_) => unawaited(_loadOfferSnapshot(sessionId)),
+    );
   }
 
   Future<void> _loadOfferSnapshot(String sessionId) async {
-    if (isClosed || _activeBidSessionId != sessionId) return;
-    (await _bookingRepository.fetchOffers(sessionId)).fold(
-      (failure) =>
-          dev.log('Failed to refresh booking offers: ${failure.message}'),
-      (offers) => add(UpdateOffersEvent(offers)),
-    );
+    if (isClosed || _activeBidSessionId != sessionId || _isRefreshingOffers) {
+      return;
+    }
+    _isRefreshingOffers = true;
+    try {
+      (await _bookingRepository.fetchOffers(sessionId)).fold(
+        (failure) =>
+            dev.log('Failed to refresh booking offers: ${failure.message}'),
+        (offers) {
+          if (!isClosed && _activeBidSessionId == sessionId) {
+            add(UpdateOffersEvent(offers));
+          }
+        },
+      );
+    } finally {
+      _isRefreshingOffers = false;
+    }
   }
 
   void _onUpdateOffers(UpdateOffersEvent event, Emitter<BookingState> emit) {
@@ -453,14 +483,34 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         }
       }
       if (pendingOffer != null) {
+        final targetDriver = switch (state) {
+          BookingSearching(:final targetDriver) => targetDriver,
+          BookingOffersReceived(:final targetDriver) => targetDriver,
+          _ => null,
+        };
+        final driverName = _preferDisplayValue(
+          pendingOffer.driverName,
+          targetDriver?.name,
+          pendingOffer.displayDriverName,
+        );
+        final vehicleType = _preferDisplayValue(
+          pendingOffer.vehicleType,
+          targetDriver?.vehicleType,
+          pendingOffer.displayVehicleType,
+        );
+        final plateNumber = _preferDisplayValue(
+          pendingOffer.plateNumber,
+          targetDriver?.plateNumber,
+          pendingOffer.displayPlateNumber,
+        );
         _isAutoAcceptingOffer = true;
         add(
           AcceptBidOfferEvent(
             offerId: pendingOffer.offerId,
             driverId: pendingOffer.driverId,
-            driverName: pendingOffer.driverName,
-            vehicleType: pendingOffer.vehicleType,
-            plateNumber: pendingOffer.plateNumber,
+            driverName: driverName,
+            vehicleType: vehicleType,
+            plateNumber: plateNumber,
             proposedFare: pendingOffer.proposedFare,
             driverRating: pendingOffer.ratingLabel,
           ),
@@ -488,6 +538,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         ),
       );
     }
+  }
+
+  String _preferDisplayValue(
+    String primary,
+    String? fallback,
+    String placeholder,
+  ) {
+    final primaryValue = primary.trim();
+    if (primaryValue.isNotEmpty) return primaryValue;
+    final fallbackValue = fallback?.trim() ?? '';
+    return fallbackValue.isNotEmpty ? fallbackValue : placeholder;
   }
 
   Future<void> _onDriverMatched(
@@ -568,6 +629,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       unawaited(_startBackgroundTelemetry());
     } catch (error) {
       _isAutoAcceptingOffer = false;
+      _cleanupSubscriptions();
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
   }
@@ -611,6 +673,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _cleanupSubscriptions() {
+    _offerRefreshTimer?.cancel();
+    _offerRefreshTimer = null;
+    _isRefreshingOffers = false;
     _cleanupRealtimeSubscriptions();
   }
 
