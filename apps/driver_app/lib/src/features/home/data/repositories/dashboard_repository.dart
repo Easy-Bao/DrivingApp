@@ -140,8 +140,6 @@ class DashboardRepository implements IDashboardRepository {
 
   Future<void> _clearOnlinePresence({
     required String driverId,
-    required double lat,
-    required double lng,
     required bool markServerOffline,
   }) async {
     if (markServerOffline) {
@@ -149,8 +147,6 @@ class DashboardRepository implements IDashboardRepository {
         await _availabilityDataSource.updateOnlineStatus(
           driverId: driverId,
           isOnline: false,
-          lat: lat,
-          lng: lng,
         );
       } catch (error) {
         dev.log('Unable to mark driver offline during cleanup: $error');
@@ -202,18 +198,11 @@ class DashboardRepository implements IDashboardRepository {
         await _availabilityDataSource.updateOnlineStatus(
           driverId: driverId,
           isOnline: false,
-          lat: lat,
-          lng: lng,
         );
       } catch (error) {
         statusError = error;
       }
-      await _clearOnlinePresence(
-        driverId: driverId,
-        lat: lat,
-        lng: lng,
-        markServerOffline: false,
-      );
+      await _clearOnlinePresence(driverId: driverId, markServerOffline: false);
       return statusError == null
           ? const Right(null)
           : Left(_mapExceptionToFailure(statusError));
@@ -226,20 +215,13 @@ class DashboardRepository implements IDashboardRepository {
         longitude: lng,
       )).fold((failure) => locationFailure = failure, (_) {});
       if (locationFailure != null) {
-        await _clearOnlinePresence(
-          driverId: driverId,
-          lat: lat,
-          lng: lng,
-          markServerOffline: true,
-        );
+        await _clearOnlinePresence(driverId: driverId, markServerOffline: true);
         return Left(locationFailure!);
       }
 
       await _availabilityDataSource.updateOnlineStatus(
         driverId: driverId,
         isOnline: true,
-        lat: lat,
-        lng: lng,
       );
 
       try {
@@ -259,12 +241,7 @@ class DashboardRepository implements IDashboardRepository {
       }
       return const Right(null);
     } catch (error) {
-      await _clearOnlinePresence(
-        driverId: driverId,
-        lat: lat,
-        lng: lng,
-        markServerOffline: true,
-      );
+      await _clearOnlinePresence(driverId: driverId, markServerOffline: true);
       return Left(_mapExceptionToFailure(error));
     }
   }

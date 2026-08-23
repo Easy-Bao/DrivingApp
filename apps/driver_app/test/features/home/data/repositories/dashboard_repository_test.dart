@@ -121,8 +121,6 @@ void main() {
       () => availabilityDataSource.updateOnlineStatus(
         driverId: 'driver-42',
         isOnline: true,
-        lat: 7.828,
-        lng: 123.434,
       ),
     ).thenAnswer((_) async {});
     when(
@@ -180,8 +178,6 @@ void main() {
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
-          lat: 7.828,
-          lng: 123.434,
         ),
       ).thenAnswer((_) async {});
       when(
@@ -214,16 +210,12 @@ void main() {
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
-          lat: 7.828,
-          lng: 123.434,
         ),
       ).called(1);
       verifyNever(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: true,
-          lat: 7.828,
-          lng: 123.434,
         ),
       );
       verify(() => _rideRepository.clearDriverLocation()).called(1);
@@ -251,8 +243,6 @@ void main() {
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: true,
-          lat: 7.828,
-          lng: 123.434,
         ),
       ).thenAnswer((_) async {});
       when(
@@ -280,8 +270,6 @@ void main() {
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
-          lat: 7.828,
-          lng: 123.434,
         ),
       );
       verifyNever(() => _rideRepository.clearDriverLocation());
@@ -300,8 +288,6 @@ void main() {
       () => availabilityDataSource.updateOnlineStatus(
         driverId: 'driver-42',
         isOnline: false,
-        lat: 7.828,
-        lng: 123.434,
       ),
     ).thenAnswer((_) async {});
     when(
@@ -345,8 +331,6 @@ void main() {
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: true,
-          lat: 7.828,
-          lng: 123.434,
         ),
       ).thenThrow(
         _httpFailure(
@@ -358,8 +342,6 @@ void main() {
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
-          lat: 7.828,
-          lng: 123.434,
         ),
       ).thenAnswer((_) async {});
       when(
