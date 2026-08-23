@@ -12,7 +12,7 @@ abstract class ITrackRepository {
   Future<Either<Failure, RideUpdate>> getRideStatusUpdate(String rideId);
 
   Future<Either<Failure, (double latitude, double longitude)>>
-  fetchDriverLocation(String driverId);
+  fetchDriverLocation(String rideId);
 
   Future<Either<Failure, void>> updateRideStatus(
     String rideId,

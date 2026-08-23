@@ -8,19 +8,20 @@ import (
 	"math"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 )
 
 type Service struct {
 	repository     domain.Repository
-	assignments    domain.RideAssignmentLookup
+	assignments    assignment.Lookup
 	eventPublisher domain.EventPublisher
 }
 
 type Option func(*Service)
 
-func WithRideAssignments(assignments domain.RideAssignmentLookup) Option {
+func WithRideAssignments(assignments assignment.Lookup) Option {
 	return func(service *Service) { service.assignments = assignments }
 }
 
@@ -37,24 +38,30 @@ func NewService(repository domain.Repository, options ...Option) *Service {
 }
 
 func (service *Service) Ingest(ctx context.Context, point domain.DriverPoint) error {
-	if !validCoordinates(point.Latitude, point.Longitude) || point.DriverID == "" {
-		return errors.New("invalid driver location")
+	if !validCoordinates(point.Latitude, point.Longitude) || !validMotion(point.Heading, point.Speed) || point.DriverID == "" {
+		return domain.ErrInvalidLocation
 	}
 	if err := service.repository.Upsert(ctx, point); err != nil {
 		return fmt.Errorf("persist driver location: %w", err)
 	}
-	scope := event.Scope{DriverID: point.DriverID}
-	if assignment, found, err := service.activeRideForDriver(ctx, point.DriverID); err != nil {
+	assignments, err := service.activeRidesForDriver(ctx, point.DriverID)
+	if err != nil {
 		log.Printf("realtime ride assignment lookup failed: %v", err)
-	} else if found {
-		scope = event.Scope{RideID: assignment.RideID, DriverID: assignment.DriverID, PassengerID: assignment.PassengerID}
 	}
-	service.publish(ctx, event.DriverLocationUpdated, scope, map[string]any{"location": point})
+	if len(assignments) == 0 {
+		service.publish(ctx, event.DriverLocationUpdated, event.Scope{DriverID: point.DriverID}, map[string]any{"location": point})
+		return nil
+	}
+	for _, rideAssignment := range assignments {
+		service.publish(ctx, event.DriverLocationUpdated, event.Scope{
+			RideID: rideAssignment.RideID, DriverID: rideAssignment.DriverID, PassengerID: rideAssignment.PassengerID,
+		}, map[string]any{"location": point})
+	}
 	return nil
 }
 func (service *Service) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
 	if !validCoordinates(latitude, longitude) || math.IsNaN(radiusKm) || math.IsInf(radiusKm, 0) || radiusKm <= 0 || radiusKm > 50 {
-		return nil, errors.New("invalid nearby location")
+		return nil, domain.ErrInvalidLocation
 	}
 	return service.repository.Nearby(ctx, latitude, longitude, radiusKm)
 }
@@ -84,7 +91,7 @@ func (service *Service) UpdatePassenger(ctx context.Context, rideID, passengerID
 		return errors.New("passenger location persistence is unavailable")
 	}
 	if rideID == "" || passengerID == "" || !validCoordinates(point.Latitude, point.Longitude) {
-		return errors.New("invalid passenger location")
+		return domain.ErrInvalidLocation
 	}
 	assignment, err := service.assignmentForRide(ctx, rideID)
 	if err != nil {
@@ -117,44 +124,50 @@ func (service *Service) GetPassengerForDriver(ctx context.Context, rideID, drive
 	return repository.GetPassenger(ctx, rideID)
 }
 
-func (service *Service) GetDriverForPassenger(ctx context.Context, driverID, passengerID string) (domain.DriverPoint, error) {
+func (service *Service) GetDriverForRide(ctx context.Context, rideID, passengerID string) (domain.DriverPoint, error) {
 	repository, ok := service.repository.(domain.LocationRepository)
 	if !ok {
 		return domain.DriverPoint{}, errors.New("driver location lookup is unavailable")
 	}
-	assignment, found, err := service.activeRideForDriver(ctx, driverID)
+	rideAssignment, err := service.assignmentForRide(ctx, rideID)
 	if err != nil {
 		return domain.DriverPoint{}, err
 	}
-	if !found || assignment.PassengerID != passengerID {
+	if rideAssignment.PassengerID != passengerID {
 		return domain.DriverPoint{}, domain.ErrRideAccessDenied
 	}
-	return repository.Get(ctx, driverID)
+	return repository.Get(ctx, rideAssignment.DriverID)
 }
 
-func (service *Service) activeRideForDriver(ctx context.Context, driverID string) (domain.RideAssignment, bool, error) {
+func (service *Service) activeRidesForDriver(ctx context.Context, driverID string) ([]assignment.Assignment, error) {
 	if service.assignments == nil {
-		return domain.RideAssignment{}, false, nil
+		return nil, nil
 	}
-	assignment, found, err := service.assignments.ForDriver(ctx, driverID)
+	assignments, err := service.assignments.ForDriver(ctx, driverID)
 	if err != nil {
-		return domain.RideAssignment{}, false, fmt.Errorf("load active ride assignment: %w", err)
+		return nil, fmt.Errorf("load active ride assignments: %w", err)
 	}
-	return assignment, found, nil
+	active := make([]assignment.Assignment, 0, len(assignments))
+	for _, rideAssignment := range assignments {
+		if rideAssignment.Active() {
+			active = append(active, rideAssignment)
+		}
+	}
+	return active, nil
 }
 
-func (service *Service) assignmentForRide(ctx context.Context, rideID string) (domain.RideAssignment, error) {
+func (service *Service) assignmentForRide(ctx context.Context, rideID string) (assignment.Assignment, error) {
 	if service.assignments == nil {
-		return domain.RideAssignment{}, domain.ErrRideAssignmentUnavailable
+		return assignment.Assignment{}, domain.ErrRideAssignmentUnavailable
 	}
-	assignment, found, err := service.assignments.ForRide(ctx, rideID)
+	rideAssignment, found, err := service.assignments.ForRide(ctx, rideID)
 	if err != nil {
-		return domain.RideAssignment{}, fmt.Errorf("load ride assignment: %w", err)
+		return assignment.Assignment{}, fmt.Errorf("load ride assignment: %w", err)
 	}
-	if !found {
-		return domain.RideAssignment{}, domain.ErrRideAccessDenied
+	if !found || !rideAssignment.Active() {
+		return assignment.Assignment{}, domain.ErrRideAccessDenied
 	}
-	return assignment, nil
+	return rideAssignment, nil
 }
 
 func (service *Service) publish(ctx context.Context, eventType event.Type, scope event.Scope, payload map[string]any) {
@@ -174,4 +187,9 @@ func (service *Service) publish(ctx context.Context, eventType event.Type, scope
 func validCoordinates(latitude, longitude float64) bool {
 	return !math.IsNaN(latitude) && !math.IsInf(latitude, 0) && latitude >= -90 && latitude <= 90 &&
 		!math.IsNaN(longitude) && !math.IsInf(longitude, 0) && longitude >= -180 && longitude <= 180
+}
+
+func validMotion(heading, speed float64) bool {
+	return !math.IsNaN(heading) && !math.IsInf(heading, 0) && heading >= 0 && heading <= 360 &&
+		!math.IsNaN(speed) && !math.IsInf(speed, 0) && speed >= 0 && speed <= 200
 }

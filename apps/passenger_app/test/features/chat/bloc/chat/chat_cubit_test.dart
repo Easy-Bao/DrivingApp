@@ -14,20 +14,12 @@ void main() {
     ).thenAnswer((_) async => const Right(null));
     when(() => repository.dispose()).thenAnswer((_) async {});
     when(
-      () => repository.initializeChatRoom(
-        roomId: 'ride-1',
-        passengerId: 'passenger-1',
-        driverId: 'driver-1',
-      ),
+      () => repository.initializeChatRoom(roomId: 'ride-1'),
     ).thenAnswer((_) async => const Left(ChatRoomLockedFailure()));
 
     final cubit = ChatCubit(chatRepository: repository);
 
-    final initialized = await cubit.initializeChatRoom(
-      roomId: 'ride-1',
-      passengerId: 'passenger-1',
-      driverId: 'driver-1',
-    );
+    final initialized = await cubit.initializeChatRoom(roomId: 'ride-1');
 
     expect(initialized, isFalse);
     expect(cubit.state.isRoomLocked, isTrue);

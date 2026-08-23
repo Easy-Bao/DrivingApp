@@ -207,7 +207,6 @@ class DashboardRepository implements IDashboardRepository {
 
     try {
       final locationSent = await _telemetryRemoteDataSource.sendLocationUpdate(
-        driverId: driverId,
         lat: lat,
         lng: lng,
       );

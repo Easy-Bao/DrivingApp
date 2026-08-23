@@ -54,9 +54,9 @@ class TrackRepository implements ITrackRepository {
 
   @override
   Future<Either<Failure, (double latitude, double longitude)>>
-  fetchDriverLocation(String driverId) async {
+  fetchDriverLocation(String rideId) async {
     try {
-      final locData = await _biddingDataSource.fetchDriverLocation(driverId);
+      final locData = await _biddingDataSource.fetchDriverLocation(rideId);
       final latitude = SafeParse.toNullableDouble(
         locData?['latitude'] ?? locData?['lat'],
       );

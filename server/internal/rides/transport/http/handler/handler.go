@@ -176,6 +176,32 @@ func (handler *Handler) GetRide(w http.ResponseWriter, r *http.Request) {
 	jsonJSON(w, 200, ride)
 }
 
+func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		errorJSON(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || rideID <= 0 {
+		errorJSON(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	result, err := handler.service.Counterparty(r.Context(), rideID, actorID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrUnauthorizedRide):
+			errorJSON(w, http.StatusForbidden, "forbidden")
+		case errors.Is(err, domain.ErrCounterpartyUnavailable):
+			errorJSON(w, http.StatusConflict, "ride counterparty is unavailable")
+		default:
+			errorJSON(w, http.StatusNotFound, "ride counterparty not found")
+		}
+		return
+	}
+	jsonJSON(w, http.StatusOK, result)
+}
+
 func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {

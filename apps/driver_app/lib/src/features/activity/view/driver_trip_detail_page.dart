@@ -2,7 +2,6 @@ import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
-import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -18,7 +17,6 @@ class DriverTripDetailPage extends StatefulWidget {
 
 class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   bool _isContactingPassenger = false;
-  bool _chatResolved = false;
   String? _chatFeedbackMessage;
 
   String get _passengerName =>
@@ -38,7 +36,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   }
 
   Future<void> _contactPassenger() async {
-    if (_isContactingPassenger || _chatResolved) return;
+    if (_isContactingPassenger) return;
 
     final passengerId = driverValueAsString(widget.trip['passenger_id']);
     final tripId = driverValueAsString(widget.trip['id']);
@@ -50,7 +48,6 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     setState(() {
       _isContactingPassenger = true;
       _chatFeedbackMessage = null;
-      _chatResolved = false;
     });
 
     final driverId =
@@ -66,33 +63,16 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     }
 
     try {
-      final initializationStatus = await Modular.get<ChatRoomRemoteDataSource>()
-          .initializeRoom(
-            roomId: tripId,
-            driverId: driverId,
-            passengerId: passengerId,
-          );
-
       if (!mounted) return;
-      switch (initializationStatus) {
-        case ChatRoomInitializationStatus.opened:
-          await context.pushNamed(
-            ChatRoutes.chat,
-            extra: {
-              'roomId': tripId,
-              'userId': driverId,
-              'peerId': passengerId,
-              'peerName': _passengerName,
-            },
-          );
-        case ChatRoomInitializationStatus.resolved:
-          setState(() {
-            _chatResolved = true;
-            _chatFeedbackMessage = 'This Chat Has Already Been Resolved.';
-          });
-        case ChatRoomInitializationStatus.unavailable:
-          _showChatFeedback('Chat Unavailable Right Now. Please Try Again.');
-      }
+      await context.pushNamed(
+        ChatRoutes.chat,
+        extra: {
+          'roomId': tripId,
+          'userId': driverId,
+          'peerId': passengerId,
+          'peerName': _passengerName,
+        },
+      );
     } catch (_) {
       if (!mounted) return;
       _showChatFeedback('Chat Unavailable Right Now. Please Try Again.');
@@ -248,7 +228,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                       ],
                       const SizedBox(height: 16),
                       FilledButton.icon(
-                        onPressed: _isContactingPassenger || _chatResolved
+                        onPressed: _isContactingPassenger
                             ? null
                             : _contactPassenger,
                         icon: _isContactingPassenger
@@ -261,9 +241,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                               )
                             : const Icon(LucideIcons.message_square, size: 18),
                         label: Text(
-                          _chatResolved
-                              ? 'Chat Resolved'
-                              : _isContactingPassenger
+                          _isContactingPassenger
                               ? 'Opening Chat...'
                               : 'Contact Passenger',
                         ),
@@ -290,8 +268,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   }
 
   Widget _buildChatFeedback() {
-    final isResolved = _chatResolved;
-    final color = isResolved ? AppTheme.complete : AppTheme.cancel;
+    const color = AppTheme.cancel;
     return Container(
       key: const ValueKey('driver-trip-chat-feedback'),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -302,11 +279,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
       ),
       child: Row(
         children: [
-          Icon(
-            isResolved ? LucideIcons.circle_check : LucideIcons.info,
-            size: 18,
-            color: color,
-          ),
+          Icon(LucideIcons.info, size: 18, color: color),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

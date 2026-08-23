@@ -34,7 +34,7 @@ abstract class BiddingRemoteDataSource {
     double radiusKm,
   });
   Future<Map<String, dynamic>?> getRideStatus(String rideId);
-  Future<Map<String, dynamic>?> fetchDriverLocation(String driverId);
+  Future<Map<String, dynamic>?> fetchDriverLocation(String rideId);
   Future<bool> sendPassengerLocation({
     required String rideId,
     required double lat,
@@ -47,7 +47,7 @@ abstract class BiddingRemoteDataSource {
     required double rating,
     required String comment,
   });
-  Future<Map<String, dynamic>> getDriverProfile(String driverId);
+  Future<Map<String, dynamic>> getRideCounterparty(String rideId);
 }
 
 class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
@@ -194,9 +194,9 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>?> fetchDriverLocation(String driverId) async {
+  Future<Map<String, dynamic>?> fetchDriverLocation(String rideId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/api/v1/telemetry/location/$driverId',
+      '/api/v1/telemetry/rides/${Uri.encodeComponent(rideId)}/driver',
     );
     return response.data;
   }
@@ -208,8 +208,8 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
     required double lng,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/api/v1/telemetry/passenger/$rideId',
-      data: {'lat': lat, 'lng': lng},
+      '/api/v1/telemetry/passenger/${Uri.encodeComponent(rideId)}',
+      data: {'latitude': lat, 'longitude': lng},
     );
     return response.statusCode == 200 || response.statusCode == 201;
   }
@@ -242,9 +242,9 @@ class BiddingRemoteDataSourceImpl implements BiddingRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> getDriverProfile(String driverId) async {
+  Future<Map<String, dynamic>> getRideCounterparty(String rideId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/api/v1/drivers/$driverId',
+      '/api/v1/rides/${Uri.encodeComponent(rideId)}/counterparty',
     );
     return response.data ?? {};
   }

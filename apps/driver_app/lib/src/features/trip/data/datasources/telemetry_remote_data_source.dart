@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 abstract class TelemetryRemoteDataSource {
   Future<bool> sendLocationUpdate({
-    required String driverId,
     required double lat,
     required double lng,
     double? heading,
@@ -19,7 +18,6 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
 
   @override
   Future<bool> sendLocationUpdate({
-    required String driverId,
     required double lat,
     required double lng,
     double? heading,
@@ -28,9 +26,8 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/telemetry/location',
       data: {
-        'driver_id': driverId,
-        'lat': lat,
-        'lng': lng,
+        'latitude': lat,
+        'longitude': lng,
         'heading': ?heading,
         'speed': ?speed,
       },
@@ -50,7 +47,7 @@ class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
   Future<Map<String, dynamic>> fetchPassengerLocation(String tripId) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
-        '/api/v1/telemetry/passenger/$tripId',
+        '/api/v1/telemetry/passenger/${Uri.encodeComponent(tripId)}',
       );
       final data = response.data ?? const <String, dynamic>{};
       return {

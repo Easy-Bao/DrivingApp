@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 )
@@ -33,14 +34,19 @@ func (stub *locationRepositoryStub) GetPassenger(context.Context, string) (domai
 	return stub.passengerPoint, nil
 }
 
-type assignmentLookupStub struct{ assignment domain.RideAssignment }
+type assignmentLookupStub struct{ assignments []assignment.Assignment }
 
-func (stub assignmentLookupStub) ForDriver(context.Context, string) (domain.RideAssignment, bool, error) {
-	return stub.assignment, stub.assignment.RideID != "", nil
+func (stub assignmentLookupStub) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
+	return stub.assignments, nil
 }
 
-func (stub assignmentLookupStub) ForRide(_ context.Context, rideID string) (domain.RideAssignment, bool, error) {
-	return stub.assignment, stub.assignment.RideID == rideID, nil
+func (stub assignmentLookupStub) ForRide(_ context.Context, rideID string) (assignment.Assignment, bool, error) {
+	for _, value := range stub.assignments {
+		if value.RideID == rideID {
+			return value, true, nil
+		}
+	}
+	return assignment.Assignment{}, false, nil
 }
 
 type locationEventPublisherStub struct{ envelopes []event.Envelope }
@@ -75,7 +81,7 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	publisher := &locationEventPublisherStub{}
 	service := NewService(
 		repository,
-		WithRideAssignments(assignmentLookupStub{assignment: domain.RideAssignment{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2"}}),
+		WithRideAssignments(assignmentLookupStub{assignments: []assignment.Assignment{{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2", Status: "assigned"}}}),
 		WithEventPublisher(publisher),
 	)
 
@@ -97,7 +103,7 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 func TestPassengerLocationRequiresTheRidePassenger(t *testing.T) {
 	service := NewService(
 		&locationRepositoryStub{},
-		WithRideAssignments(assignmentLookupStub{assignment: domain.RideAssignment{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2"}}),
+		WithRideAssignments(assignmentLookupStub{assignments: []assignment.Assignment{{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2", Status: "assigned"}}}),
 	)
 
 	err := service.UpdatePassenger(context.Background(), "ride-7", "passenger-3", domain.DriverPoint{Latitude: 6.7, Longitude: 122.1})

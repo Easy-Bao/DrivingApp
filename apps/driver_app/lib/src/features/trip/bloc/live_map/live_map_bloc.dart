@@ -8,7 +8,6 @@ import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:rxdart/rxdart.dart';
 
-import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -17,7 +16,6 @@ part 'live_map_state.dart';
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final TelemetryRemoteDataSource _telemetryDataSource;
-  final SecureSessionService _sessionService;
 
   AppMapController? _mapController;
   mapbox.PointAnnotationManager? _driverMarkerManager;
@@ -35,12 +33,9 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  LiveMapBloc({
-    required TelemetryRemoteDataSource telemetryDataSource,
-    required SecureSessionService sessionService,
-  }) : _telemetryDataSource = telemetryDataSource,
-       _sessionService = sessionService,
-       super(LiveMapInitial()) {
+  LiveMapBloc({required TelemetryRemoteDataSource telemetryDataSource})
+    : _telemetryDataSource = telemetryDataSource,
+      super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<UpdateLocationsAndDrawRouteEvent>(
       _onUpdateLocationsAndDrawRoute,
@@ -61,10 +56,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
 
   Future<void> _publishLocation(DispatchTelemetryLocationEvent event) async {
     try {
-      final driverId = await _sessionService.readDriverId();
-      if (driverId == null || driverId.isEmpty) return;
       await _telemetryDataSource.sendLocationUpdate(
-        driverId: driverId,
         lat: event.lat,
         lng: event.lng,
       );

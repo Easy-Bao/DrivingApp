@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
-	geodomain "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -20,7 +20,7 @@ const reconnectDelay = time.Second
 const (
 	rideAssignmentTTL         = 4 * time.Hour
 	rideAssignmentKeyPrefix   = "realtime:ride:"
-	driverAssignmentPrefix    = "realtime:driver:"
+	driverAssignmentsPrefix   = "realtime:driver-rides:"
 	passengerAssignmentPrefix = "realtime:passenger:"
 )
 
@@ -60,31 +60,60 @@ func NewRedisRideAssignmentLookup(client *redis.Client) *RedisRideAssignmentLook
 	return &RedisRideAssignmentLookup{client: client}
 }
 
-func (lookup *RedisRideAssignmentLookup) ForDriver(ctx context.Context, driverID string) (geodomain.RideAssignment, bool, error) {
-	rideID, err := lookup.client.Get(ctx, driverAssignmentKey(driverID)).Result()
+func (lookup *RedisRideAssignmentLookup) ForDriver(ctx context.Context, driverID string) ([]assignment.Assignment, error) {
+	rideIDs, err := lookup.client.SMembers(ctx, driverAssignmentsKey(driverID)).Result()
 	if errors.Is(err, redis.Nil) {
-		return geodomain.RideAssignment{}, false, nil
+		return nil, nil
 	}
 	if err != nil {
-		return geodomain.RideAssignment{}, false, fmt.Errorf("load driver ride assignment: %w", err)
+		return nil, fmt.Errorf("load driver ride assignments: %w", err)
 	}
-	return lookup.ForRide(ctx, rideID)
+	if len(rideIDs) == 0 {
+		return nil, nil
+	}
+
+	commands := make([]*redis.MapStringStringCmd, 0, len(rideIDs))
+	_, err = lookup.client.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+		for _, rideID := range rideIDs {
+			commands = append(commands, pipe.HGetAll(ctx, rideAssignmentKey(rideID)))
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load driver ride assignment details: %w", err)
+	}
+	result := make([]assignment.Assignment, 0, len(rideIDs))
+	for index, command := range commands {
+		if value, ok := assignmentFromValues(rideIDs[index], command.Val()); ok {
+			result = append(result, value)
+		}
+	}
+	return result, nil
 }
 
-func (lookup *RedisRideAssignmentLookup) ForRide(ctx context.Context, rideID string) (geodomain.RideAssignment, bool, error) {
+func (lookup *RedisRideAssignmentLookup) ForRide(ctx context.Context, rideID string) (assignment.Assignment, bool, error) {
 	values, err := lookup.client.HGetAll(ctx, rideAssignmentKey(rideID)).Result()
 	if err != nil {
-		return geodomain.RideAssignment{}, false, fmt.Errorf("load ride assignment: %w", err)
+		return assignment.Assignment{}, false, fmt.Errorf("load ride assignment: %w", err)
 	}
-	assignment := geodomain.RideAssignment{
+	value, found := assignmentFromValues(rideID, values)
+	return value, found, nil
+}
+
+func assignmentFromValues(rideID string, values map[string]string) (assignment.Assignment, bool) {
+	value := assignment.Assignment{
 		RideID:      rideID,
 		DriverID:    values["driver_id"],
 		PassengerID: values["passenger_id"],
+		Status:      values["status"],
 	}
-	if assignment.DriverID == "" || assignment.PassengerID == "" {
-		return geodomain.RideAssignment{}, false, nil
+	if value.DriverID == "" || value.PassengerID == "" {
+		return assignment.Assignment{}, false
 	}
-	return assignment, true, nil
+	if value.Status == "" {
+		value.Status = "assigned"
+	}
+	return value, true
 }
 
 func (publisher *RedisPublisher) syncAssignment(ctx context.Context, envelope event.Envelope) error {
@@ -107,9 +136,11 @@ func (publisher *RedisPublisher) activateAssignment(ctx context.Context, scope e
 		pipe.HSet(ctx, rideAssignmentKey(scope.RideID), map[string]any{
 			"driver_id":    scope.DriverID,
 			"passenger_id": scope.PassengerID,
+			"status":       "assigned",
 		})
 		pipe.Expire(ctx, rideAssignmentKey(scope.RideID), rideAssignmentTTL)
-		pipe.Set(ctx, driverAssignmentKey(scope.DriverID), scope.RideID, rideAssignmentTTL)
+		pipe.SAdd(ctx, driverAssignmentsKey(scope.DriverID), scope.RideID)
+		pipe.Expire(ctx, driverAssignmentsKey(scope.DriverID), rideAssignmentTTL)
 		pipe.Set(ctx, passengerAssignmentKey(scope.PassengerID), scope.RideID, rideAssignmentTTL)
 		return nil
 	})
@@ -123,13 +154,13 @@ func (publisher *RedisPublisher) deactivateAssignment(ctx context.Context, scope
 	if err := publisher.client.Del(ctx, rideAssignmentKey(scope.RideID)).Err(); err != nil {
 		return err
 	}
-	for _, key := range []string{driverAssignmentKey(scope.DriverID), passengerAssignmentKey(scope.PassengerID)} {
-		if key == "" {
-			continue
-		}
-		if err := deleteIfMatches(ctx, publisher.client, key, scope.RideID); err != nil {
+	if key := driverAssignmentsKey(scope.DriverID); key != "" {
+		if err := publisher.client.SRem(ctx, key, scope.RideID).Err(); err != nil {
 			return err
 		}
+	}
+	if err := deleteIfMatches(ctx, publisher.client, passengerAssignmentKey(scope.PassengerID), scope.RideID); err != nil {
+		return err
 	}
 	return nil
 }
@@ -163,11 +194,11 @@ func rideAssignmentKey(rideID string) string {
 	return rideAssignmentKeyPrefix + rideID
 }
 
-func driverAssignmentKey(driverID string) string {
+func driverAssignmentsKey(driverID string) string {
 	if driverID == "" {
 		return ""
 	}
-	return driverAssignmentPrefix + driverID
+	return driverAssignmentsPrefix + driverID
 }
 
 func passengerAssignmentKey(passengerID string) string {

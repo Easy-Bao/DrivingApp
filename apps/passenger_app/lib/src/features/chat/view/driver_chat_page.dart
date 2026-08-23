@@ -69,28 +69,13 @@ class _DriverChatPageState extends State<DriverChatPage>
     if (_isResolvingChat) return;
 
     final chatRoomId = widget.roomId;
-    final currentUserId = widget.userId;
-    if (chatRoomId == null ||
-        chatRoomId.isEmpty ||
-        currentUserId == null ||
-        currentUserId.isEmpty) {
+    if (chatRoomId == null || chatRoomId.isEmpty) {
       return;
     }
 
     setState(() => _isResolvingChat = true);
     try {
-      final token =
-          widget.token ?? await Modular.get<SecureSessionService>().readToken();
-      final wsUri = ApiEndpoints.buildChatWebSocketUri(
-        roomId: chatRoomId,
-        userId: currentUserId,
-      );
-      await _chatCubit.resolveChatRoom(
-        chatRoomId,
-        currentUserId,
-        wsUri,
-        token: token,
-      );
+      await _chatCubit.resolveChatRoom(chatRoomId);
     } finally {
       if (mounted) setState(() => _isResolvingChat = false);
     }
@@ -141,19 +126,9 @@ class _DriverChatPageState extends State<DriverChatPage>
   Future<void> _connectChat(String roomId, String userId) async {
     final token =
         widget.token ?? await Modular.get<SecureSessionService>().readToken();
-    final peerId = widget.peerId;
-    if (peerId != null && peerId.isNotEmpty) {
-      final initialized = await _chatCubit.initializeChatRoom(
-        roomId: roomId,
-        passengerId: userId,
-        driverId: peerId,
-      );
-      if (!initialized || !mounted) return;
-    }
-    final wsUri = ApiEndpoints.buildChatWebSocketUri(
-      roomId: roomId,
-      userId: userId,
-    );
+    final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
+    if (!initialized || !mounted) return;
+    final wsUri = ApiEndpoints.buildChatWebSocketUri(roomId: roomId);
     await _chatCubit.connectToChatRoom(
       roomId: roomId,
       wsUri: wsUri,

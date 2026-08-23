@@ -14,14 +14,11 @@ class ApiEndpoints {
   static const String tripDetails = '/api/v1/trips';
   static const String telemetryStream = '/api/v1/telemetry/location';
 
-  static Uri buildChatWebSocketUri({
-    required String roomId,
-    required String userId,
-  }) {
+  static Uri buildChatWebSocketUri({required String roomId}) {
     final base = EnvConfig.webSocketBaseUri;
     return base.replace(
       path: '/api/v1/chat/ws',
-      queryParameters: {'roomId': roomId, 'userId': userId},
+      queryParameters: {'roomId': roomId},
     );
   }
 }

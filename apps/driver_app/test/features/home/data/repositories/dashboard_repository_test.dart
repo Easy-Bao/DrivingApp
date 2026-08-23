@@ -91,11 +91,7 @@ void main() {
       ),
     ).thenAnswer((_) async {});
     when(
-      () => telemetryDataSource.sendLocationUpdate(
-        driverId: 'driver-42',
-        lat: 7.828,
-        lng: 123.434,
-      ),
+      () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
     ).thenAnswer((_) async => true);
     when(
       () => sessionService.saveDriverOnlineStatus(true),
@@ -116,11 +112,7 @@ void main() {
 
     expect(result, const Right<Failure, void>(null));
     verify(
-      () => telemetryDataSource.sendLocationUpdate(
-        driverId: 'driver-42',
-        lat: 7.828,
-        lng: 123.434,
-      ),
+      () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
     ).called(1);
   });
 
@@ -136,11 +128,7 @@ void main() {
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
       when(
-        () => telemetryDataSource.sendLocationUpdate(
-          driverId: 'driver-42',
-          lat: 7.828,
-          lng: 123.434,
-        ),
+        () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
       ).thenAnswer((_) async => false);
       when(
         () => driverDataSource.updateOnlineStatus(
@@ -212,11 +200,7 @@ void main() {
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
       when(
-        () => telemetryDataSource.sendLocationUpdate(
-          driverId: 'driver-42',
-          lat: 7.828,
-          lng: 123.434,
-        ),
+        () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
       ).thenAnswer((_) async => true);
       when(
         () => driverDataSource.updateOnlineStatus(
@@ -315,11 +299,7 @@ void main() {
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
       when(
-        () => telemetryDataSource.sendLocationUpdate(
-          driverId: 'driver-42',
-          lat: 7.828,
-          lng: 123.434,
-        ),
+        () => telemetryDataSource.sendLocationUpdate(lat: 7.828, lng: 123.434),
       ).thenAnswer((_) async => true);
       when(
         () => driverDataSource.updateOnlineStatus(

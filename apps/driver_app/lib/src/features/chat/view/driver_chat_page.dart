@@ -6,7 +6,6 @@ import 'package:shared_core/shared_core.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_data_source.dart';
 import 'package:driver_app/src/features/chat/bloc/chat/chat_cubit.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
 
@@ -65,24 +64,10 @@ class _DriverChatPageState extends State<DriverChatPage>
 
   Future<void> _resolveChatRoom() async {
     final chatRoomId = widget.roomId;
-    final currentUserId = widget.userId;
-    if (chatRoomId == null ||
-        chatRoomId.isEmpty ||
-        currentUserId == null ||
-        currentUserId.isEmpty) {
+    if (chatRoomId == null || chatRoomId.isEmpty) {
       return;
     }
-    final token = await Modular.get<SecureSessionService>().readToken();
-    final wsUri = ApiEndpoints.buildChatWebSocketUri(
-      roomId: chatRoomId,
-      userId: currentUserId,
-    );
-    await _chatCubit.resolveChatRoom(
-      chatRoomId,
-      currentUserId,
-      wsUri,
-      token: token,
-    );
+    await _chatCubit.resolveChatRoom(chatRoomId);
   }
 
   final _quickReplies = [
@@ -121,7 +106,6 @@ class _DriverChatPageState extends State<DriverChatPage>
         currentUserId: currentUserId,
         clientDio: Modular.get<Dio>(),
       ),
-      roomRemoteDataSource: Modular.get<ChatRoomRemoteDataSource>(),
     );
     unawaited(_connectChat(currentRoomId, currentUserId));
     unawaited(_checkTripStatus());
@@ -129,19 +113,9 @@ class _DriverChatPageState extends State<DriverChatPage>
 
   Future<void> _connectChat(String roomId, String userId) async {
     final token = await Modular.get<SecureSessionService>().readToken();
-    final passengerId = widget.peerId?.trim() ?? '';
-    if (passengerId.isNotEmpty) {
-      final initialized = await _chatCubit.initializeChatRoom(
-        roomId: roomId,
-        driverId: userId,
-        passengerId: passengerId,
-      );
-      if (!initialized || !mounted) return;
-    }
-    final wsUri = ApiEndpoints.buildChatWebSocketUri(
-      roomId: roomId,
-      userId: userId,
-    );
+    final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
+    if (!initialized || !mounted) return;
+    final wsUri = ApiEndpoints.buildChatWebSocketUri(roomId: roomId);
     await _chatCubit.connectToChatRoom(
       roomId: roomId,
       wsUri: wsUri,

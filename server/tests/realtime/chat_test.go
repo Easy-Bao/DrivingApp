@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
-	geodomain "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 )
 
 type chatHistory struct {
@@ -20,24 +20,18 @@ type chatHistory struct {
 }
 
 type chatAssignmentLookup struct {
-	assignment geodomain.RideAssignment
+	assignment assignment.Assignment
 	found      bool
 }
 
-func (lookup chatAssignmentLookup) ForDriver(context.Context, string) (geodomain.RideAssignment, bool, error) {
-	return lookup.assignment, lookup.found, nil
+func (lookup chatAssignmentLookup) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
+	if !lookup.found {
+		return nil, nil
+	}
+	return []assignment.Assignment{lookup.assignment}, nil
 }
 
-func (lookup chatAssignmentLookup) ForRide(context.Context, string) (geodomain.RideAssignment, bool, error) {
-	return lookup.assignment, lookup.found, nil
-}
-
-type historicalChatAssignmentLookup struct {
-	assignment geodomain.RideAssignment
-	found      bool
-}
-
-func (lookup historicalChatAssignmentLookup) ForRide(context.Context, string) (geodomain.RideAssignment, bool, error) {
+func (lookup chatAssignmentLookup) ForRide(context.Context, string) (assignment.Assignment, bool, error) {
 	return lookup.assignment, lookup.found, nil
 }
 
@@ -71,15 +65,20 @@ func (history *chatHistory) IsLocked(context.Context, string) (bool, error) {
 
 func TestChatCreateRoomDoesNotReplaceParticipants(t *testing.T) {
 	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
-	service := usecase.NewService(chatadapter.NewHub(), history)
+	service := usecase.NewService(chatadapter.NewHub(), history).
+		WithRideAssignmentLookup(chatAssignmentLookup{
+			assignment: assignment.Assignment{
+				RideID: "ride-1", PassengerID: "passenger-1", DriverID: "driver-1", Status: "assigned",
+			},
+			found: true,
+		})
 
-	if err := service.CreateRoom(
+	if err := service.OpenRideRoom(
 		context.Background(),
 		"ride-1",
 		"passenger-2",
-		"driver-2",
-	); err != domain.ErrRoomConflict {
-		t.Fatalf("create room error = %v, want %v", err, domain.ErrRoomConflict)
+	); err != domain.ErrForbidden {
+		t.Fatalf("create room error = %v, want %v", err, domain.ErrForbidden)
 	}
 	if history.passengerID != "passenger-1" || history.driverID != "driver-1" {
 		t.Fatalf("room participants changed to %q/%q", history.passengerID, history.driverID)
@@ -90,52 +89,55 @@ func TestChatCreateRoomRequiresTheAssignedRideParticipants(t *testing.T) {
 	history := &chatHistory{}
 	service := usecase.NewService(chatadapter.NewHub(), history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: geodomain.RideAssignment{
+			assignment: assignment.Assignment{
 				RideID:      "ride-1",
 				PassengerID: "passenger-1",
 				DriverID:    "driver-1",
+				Status:      "assigned",
+				ContactOpen: true,
 			},
 			found: true,
 		})
 
-	if err := service.CreateRoom(
+	if err := service.OpenRideRoom(
 		context.Background(),
 		"ride-1",
-		"passenger-1",
 		"driver-2",
 	); err != domain.ErrForbidden {
 		t.Fatalf("create room error = %v, want %v", err, domain.ErrForbidden)
 	}
-	if err := service.CreateRoom(
+	if err := service.OpenRideRoom(
 		context.Background(),
 		"ride-1",
 		"passenger-1",
-		"driver-1",
 	); err != nil {
 		t.Fatalf("assigned participants could not create room: %v", err)
 	}
 }
 
-func TestChatCreateRoomFallsBackToAuthoritativeParticipants(t *testing.T) {
+func TestChatCreateRoomUsesAuthoritativeParticipants(t *testing.T) {
 	history := &chatHistory{}
 	service := usecase.NewService(chatadapter.NewHub(), history).
-		WithRideAssignmentLookup(chatAssignmentLookup{found: false}).
-		WithRideParticipantLookup(historicalChatAssignmentLookup{
-			assignment: geodomain.RideAssignment{
+		WithRideAssignmentLookup(chatAssignmentLookup{
+			assignment: assignment.Assignment{
 				RideID:      "ride-1",
 				PassengerID: "passenger-1",
 				DriverID:    "driver-1",
+				Status:      "completed",
+				ContactOpen: true,
 			},
 			found: true,
 		})
 
-	if err := service.CreateRoom(
+	if err := service.OpenRideRoom(
 		context.Background(),
 		"ride-1",
-		"passenger-1",
 		"driver-1",
 	); err != nil {
-		t.Fatalf("historical participants could not create room: %v", err)
+		t.Fatalf("authoritative participant could not create room: %v", err)
+	}
+	if history.passengerID != "passenger-1" || history.driverID != "driver-1" {
+		t.Fatalf("created room participants = %q/%q", history.passengerID, history.driverID)
 	}
 }
 

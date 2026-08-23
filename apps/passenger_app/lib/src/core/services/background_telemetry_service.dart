@@ -176,7 +176,10 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       );
       await client.post<void>(
         '/api/v1/telemetry/passenger/${Uri.encodeComponent(rideId)}',
-        data: {'lat': position.latitude, 'lng': position.longitude},
+        data: {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+        },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
     } on DioException catch (error) {

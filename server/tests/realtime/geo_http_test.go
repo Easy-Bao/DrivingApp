@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 	geoh "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http"
 	geousecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
@@ -16,6 +17,16 @@ import (
 )
 
 type locationRepository struct{ point domain.DriverPoint }
+
+type locationAssignmentLookup struct{ value assignment.Assignment }
+
+func (lookup locationAssignmentLookup) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
+	return []assignment.Assignment{lookup.value}, nil
+}
+
+func (lookup locationAssignmentLookup) ForRide(_ context.Context, rideID string) (assignment.Assignment, bool, error) {
+	return lookup.value, lookup.value.RideID == rideID, nil
+}
 
 func (repository *locationRepository) Upsert(_ context.Context, point domain.DriverPoint) error {
 	repository.point = point
@@ -54,7 +65,7 @@ func TestTelemetryUsesTheVerifiedSubjectAsDriverID(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	geoh.NewRouter(geousecase.NewService(repository), security.NewTokenManager("secret")).RegisterRoutes(router)
-	request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"driver_id":"attacker","lat":14.1,"lng":120.9}`))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"latitude":14.1,"longitude":120.9,"heading":90,"speed":12}`))
 	request.Header.Set("Authorization", "Bearer "+token)
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
@@ -67,6 +78,28 @@ func TestTelemetryUsesTheVerifiedSubjectAsDriverID(t *testing.T) {
 	var body map[string]any
 	if json.Unmarshal(response.Body.Bytes(), &body) != nil {
 		t.Fatal("invalid response")
+	}
+}
+
+func TestTelemetryRejectsClientSuppliedDriverID(t *testing.T) {
+	tokenManager := security.NewTokenManager("secret")
+	token, err := tokenManager.IssueWithRole("42", "driver")
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := chi.NewRouter()
+	geoh.NewRouter(geousecase.NewService(&locationRepository{}), tokenManager).RegisterRoutes(router)
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/telemetry/location",
+		strings.NewReader(`{"driver_id":"42","latitude":14.1,"longitude":120.9}`),
+	)
+	request.Header.Set("Authorization", "Bearer "+token)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
 	}
 }
 
@@ -88,7 +121,7 @@ func TestDriverLocationIsVisibleToPassengerAtTheSameCoordinates(t *testing.T) {
 	locationRequest := httptest.NewRequest(
 		http.MethodPost,
 		"/api/v1/telemetry/location",
-		strings.NewReader(`{"driverId":"42","lat":7.828,"lng":123.434}`),
+		strings.NewReader(`{"latitude":7.828,"longitude":123.434}`),
 	)
 	locationRequest.Header.Set("Authorization", "Bearer "+driverToken)
 	locationResponse := httptest.NewRecorder()
@@ -120,12 +153,48 @@ func TestDriverLocationIsVisibleToPassengerAtTheSameCoordinates(t *testing.T) {
 	}
 }
 
+func TestPassengerReadsDriverLocationThroughItsRide(t *testing.T) {
+	repository := &locationRepository{point: domain.DriverPoint{
+		DriverID: "42", Latitude: 7.828, Longitude: 123.434,
+	}}
+	tokenManager := security.NewTokenManager("secret")
+	passengerToken, err := tokenManager.IssueWithRole("99", "passenger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assignments := locationAssignmentLookup{value: assignment.Assignment{
+		RideID: "303", DriverID: "42", PassengerID: "99", Status: "assigned",
+	}}
+	router := chi.NewRouter()
+	geoh.NewRouter(
+		geousecase.NewService(repository, geousecase.WithRideAssignments(assignments)),
+		tokenManager,
+	).RegisterRoutes(router)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/rides/303/driver", nil)
+	request.Header.Set("Authorization", "Bearer "+passengerToken)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+	var point domain.DriverPoint
+	if err := json.Unmarshal(response.Body.Bytes(), &point); err != nil {
+		t.Fatal(err)
+	}
+	if point.DriverID != "42" || point.Latitude != 7.828 || point.Longitude != 123.434 {
+		t.Fatalf("driver point = %#v", point)
+	}
+}
+
 func TestExactTelemetryReadsRequireAuthentication(t *testing.T) {
 	router := chi.NewRouter()
 	geoh.NewRouter(geousecase.NewService(&locationRepository{}), security.NewTokenManager("secret")).RegisterRoutes(router)
 
 	for _, path := range []string{
 		"/api/v1/telemetry/location/42",
+		"/api/v1/telemetry/rides/ride-1/driver",
 		"/api/v1/telemetry/passenger/ride-1",
 	} {
 		request := httptest.NewRequest(http.MethodGet, path, nil)
@@ -146,7 +215,7 @@ func TestPassengerTokenCannotPublishDriverTelemetry(t *testing.T) {
 	router := chi.NewRouter()
 	geoh.NewRouter(geousecase.NewService(&locationRepository{}), tokenManager).RegisterRoutes(router)
 
-	request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"driverId":"42","lat":7.828,"lng":123.434}`))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"latitude":7.828,"longitude":123.434}`))
 	request.Header.Set("Authorization", "Bearer "+passengerToken)
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)

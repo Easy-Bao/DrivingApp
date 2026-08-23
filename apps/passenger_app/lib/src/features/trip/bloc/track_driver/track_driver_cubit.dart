@@ -87,30 +87,21 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             double? driverLng;
             bool locationFetched = false;
 
-            // Status responses can omit the driver id after the initial
-            // assignment. Keep the route anchored to the ride's assigned
-            // driver instead of silently dropping every map update.
-            final assignedDriverId =
-                rideUpdate.driverId?.trim().isNotEmpty == true
-                ? rideUpdate.driverId!.trim()
-                : driverId.trim();
-            if (assignedDriverId.isNotEmpty) {
-              final locResult = await _repository.fetchDriverLocation(
-                assignedDriverId,
-              );
-              locResult.fold(
-                (failure) {
-                  dev.log(
-                    'Error fetching coordinate location: ${failure.message}',
-                  );
-                },
-                (coordinate) {
-                  driverLat = coordinate.$1;
-                  driverLng = coordinate.$2;
-                  locationFetched = true;
-                },
-              );
-            }
+            final locResult = await _repository.fetchDriverLocation(
+              activeRideId,
+            );
+            locResult.fold(
+              (failure) {
+                dev.log(
+                  'Error fetching coordinate location: ${failure.message}',
+                );
+              },
+              (coordinate) {
+                driverLat = coordinate.$1;
+                driverLng = coordinate.$2;
+                locationFetched = true;
+              },
+            );
 
             // A status transition is authoritative even when the location
             // endpoint is temporarily unavailable. Keep the last known

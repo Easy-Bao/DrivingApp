@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:shared_core/shared_core.dart';
-import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_data_source.dart';
 import 'package:driver_app/src/features/chat/bloc/chat/chat_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,62 +7,37 @@ export 'package:driver_app/src/features/chat/bloc/chat/chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
   final IChatRepository _chatRepository;
-  final ChatRoomRemoteDataSource _roomRemoteDataSource;
   StreamSubscription? _chatSubscription;
 
-  ChatCubit({
-    required IChatRepository chatRepository,
-    required ChatRoomRemoteDataSource roomRemoteDataSource,
-  }) : _chatRepository = chatRepository,
-       _roomRemoteDataSource = roomRemoteDataSource,
-       super(const ChatState());
+  ChatCubit({required IChatRepository chatRepository})
+    : _chatRepository = chatRepository,
+      super(const ChatState());
 
-  Future<bool> initializeChatRoom({
-    required String roomId,
-    required String driverId,
-    required String passengerId,
-  }) async {
-    try {
-      final initializationStatus = await _roomRemoteDataSource.initializeRoom(
-        roomId: roomId,
-        driverId: driverId,
-        passengerId: passengerId,
-      );
-      if (initializationStatus == ChatRoomInitializationStatus.resolved) {
-        if (!isClosed) {
+  Future<bool> initializeChatRoom({required String roomId}) async {
+    final result = await _chatRepository.initializeChatRoom(roomId: roomId);
+    return result.fold((failure) {
+      if (!isClosed) {
+        if (failure is ChatRoomLockedFailure) {
           emit(
             state.copyWith(
               isConnecting: false,
               isConnected: false,
               isRoomLocked: true,
-              lockReasonMessage: 'This chat has already been resolved.',
+              lockReasonMessage: failure.message,
               errorMessage: null,
             ),
           );
+        } else {
+          emit(
+            state.copyWith(
+              isConnecting: false,
+              errorMessage: ErrorHandler.getErrorMessage(failure),
+            ),
+          );
         }
-        return false;
-      }
-      if (initializationStatus == ChatRoomInitializationStatus.unavailable &&
-          !isClosed) {
-        emit(
-          state.copyWith(
-            isConnecting: false,
-            errorMessage: 'Chat is unavailable right now. Please try again.',
-          ),
-        );
-      }
-      return initializationStatus == ChatRoomInitializationStatus.opened;
-    } catch (_) {
-      if (!isClosed) {
-        emit(
-          state.copyWith(
-            isConnecting: false,
-            errorMessage: 'Chat is unavailable right now. Please try again.',
-          ),
-        );
       }
       return false;
-    }
+    }, (_) => true);
   }
 
   Future<void> connectToChatRoom({
@@ -157,30 +131,28 @@ class ChatCubit extends Cubit<ChatState> {
     return result.isRight();
   }
 
-  Future<void> resolveChatRoom(
-    String roomId,
-    String userId,
-    Uri wsUri, {
-    String? token,
-  }) async {
+  Future<void> resolveChatRoom(String roomId) async {
     try {
-      final resolved = await _roomRemoteDataSource.resolveRoom(roomId);
-      if (resolved) {
-        await _chatSubscription?.cancel();
-        await _chatRepository.terminateChatConnection();
-        if (!isClosed) {
-          emit(
-            state.copyWith(
-              isConnected: false,
-              isRoomLocked: true,
-              lockReasonMessage: 'This chat is closed.',
-              errorMessage: null,
-            ),
-          );
-        }
-      } else if (!isClosed) {
-        emit(state.copyWith(errorMessage: 'We could not close this chat.'));
-      }
+      final result = await _chatRepository.resolveChatRoom(roomId);
+      await result.fold(
+        (failure) async => emit(
+          state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+        ),
+        (_) async {
+          await _chatSubscription?.cancel();
+          await _chatRepository.terminateChatConnection();
+          if (!isClosed) {
+            emit(
+              state.copyWith(
+                isConnected: false,
+                isRoomLocked: true,
+                lockReasonMessage: 'This chat is closed.',
+                errorMessage: null,
+              ),
+            );
+          }
+        },
+      );
     } catch (_) {
       if (!isClosed) {
         emit(state.copyWith(errorMessage: 'We could not close this chat.'));

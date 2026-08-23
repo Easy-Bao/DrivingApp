@@ -23,6 +23,10 @@ type PaymentRepository interface {
 	SettleCash(ctx context.Context, rideID, driverID int) (Ride, error)
 }
 
+type CounterpartyRepository interface {
+	Counterparty(ctx context.Context, rideID, actorID int) (Counterparty, error)
+}
+
 type BiddingRepository interface {
 	Repository
 	CreateSession(ctx context.Context, session BidSession) (BidSession, error)

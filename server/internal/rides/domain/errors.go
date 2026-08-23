@@ -8,6 +8,7 @@ var (
 	ErrActiveBooking           = errors.New("passenger already has an active booking")
 	ErrDriverAtCapacity        = errors.New("driver has reached the five-passenger capacity")
 	ErrUnauthorizedRide        = errors.New("you are not a participant in this ride")
+	ErrCounterpartyUnavailable = errors.New("ride counterparty is unavailable")
 	ErrUnauthorizedSession     = errors.New("you are not a participant in this booking")
 	ErrInvalidFareOffer        = errors.New("offer must not be lower than the calculated minimum fare")
 	ErrInvalidSettlement       = errors.New("invalid settlement terms")

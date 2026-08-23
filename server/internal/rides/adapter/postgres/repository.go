@@ -81,6 +81,21 @@ func (repository *Repository) Get(ctx context.Context, id int) (domain.Ride, err
 	}
 	return rides[0], nil
 }
+
+func (repository *Repository) ActiveRidesForDriver(ctx context.Context, driverID int) ([]domain.Ride, error) {
+	items, err := repository.client.Ride.Query().Where(
+		ride.DriverIDEQ(driverID),
+		ride.StatusIn("assigned", "accepted", "arrived", "in_transit"),
+	).Order(ride.ByID()).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.Ride, 0, len(items))
+	for _, item := range items {
+		result = append(result, fromRide(item))
+	}
+	return result, nil
+}
 func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
 	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {

@@ -42,11 +42,11 @@ void main() {
   );
 
   test('parses the realtime service latitude and longitude fields', () async {
-    when(() => dataSource.fetchDriverLocation('42')).thenAnswer(
+    when(() => dataSource.fetchDriverLocation('303')).thenAnswer(
       (_) async => {'driver_id': '42', 'latitude': 7.828, 'longitude': 123.434},
     );
 
-    final result = await repository.fetchDriverLocation('42');
+    final result = await repository.fetchDriverLocation('303');
 
     expect(result.isRight(), isTrue);
     expect(result.getOrElse((_) => (0.0, 0.0)), (7.828, 123.434));

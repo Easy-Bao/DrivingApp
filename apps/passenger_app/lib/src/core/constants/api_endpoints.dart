@@ -14,14 +14,11 @@ class ApiEndpoints {
   static const String createBooking = '/api/v1/bids';
   static const String searchPlaces = '/api/v1/location/search';
 
-  static Uri buildChatWebSocketUri({
-    required String roomId,
-    required String userId,
-  }) {
+  static Uri buildChatWebSocketUri({required String roomId}) {
     final base = EnvConfig.webSocketBaseUri;
     return base.replace(
       path: '/api/v1/chat/ws',
-      queryParameters: {'roomId': roomId, 'userId': userId},
+      queryParameters: {'roomId': roomId},
     );
   }
 }

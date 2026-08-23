@@ -24,6 +24,7 @@ class ActivityViewDetailsPage extends StatefulWidget {
 
 class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
   Map<String, dynamic>? _detailedRideData;
+  Map<String, dynamic>? _counterpartyData;
   bool _showLostFoundChat = false;
   String _passengerId = '';
 
@@ -40,27 +41,28 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
     final passengerId =
         await Modular.get<SecureSessionService>().readPassengerId() ?? '';
 
-    final retrievedRideData = await Modular.get<BiddingRemoteDataSource>()
-        .getRideStatus(ride.id);
-    bool isWithinGracePeriodWindow = false;
-    try {
-      final rideCompletedTime = DateTime.parse(ride.date).toLocal();
-      final elapsedTimeSinceCompletion = DateTime.now().difference(
-        rideCompletedTime,
-      );
-      if (elapsedTimeSinceCompletion.inHours < 48) {
-        isWithinGracePeriodWindow = true;
+    final dataSource = Modular.get<BiddingRemoteDataSource>();
+    Future<Map<String, dynamic>?> loadCounterparty() async {
+      try {
+        return await dataSource.getRideCounterparty(ride.id);
+      } catch (_) {
+        return null;
       }
-    } catch (_) {}
+    }
+
+    final rideFuture = dataSource.getRideStatus(ride.id);
+    final counterpartyFuture = loadCounterparty();
+    final retrievedRideData = await rideFuture;
+    final counterparty = await counterpartyFuture;
 
     if (mounted) {
       setState(() {
         _passengerId = passengerId;
         _detailedRideData = retrievedRideData;
+        _counterpartyData = counterparty;
         _showLostFoundChat =
-            isWithinGracePeriodWindow &&
-            retrievedRideData != null &&
-            retrievedRideData['driver_id'] != null;
+            counterparty?['contact_allowed'] == true &&
+            counterparty?['user_id'] != null;
       });
     }
   }
@@ -72,7 +74,9 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
       return;
     }
 
-    final driverId = SafeParse.toStringValue(retrievedRideData['driver_id']);
+    final driverId = SafeParse.toStringValue(
+      _counterpartyData?['user_id'] ?? retrievedRideData['driver_id'],
+    );
     if (driverId.isEmpty) return;
 
     try {
@@ -85,7 +89,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
               'userId': _passengerId,
               'peerId': driverId,
               'peerName': SafeParse.toStringValue(
-                retrievedRideData['driver_name'],
+                _counterpartyData?['name'] ?? retrievedRideData['driver_name'],
                 'Driver',
               ),
             },
@@ -96,13 +100,14 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
   }
 
   Future<void> _makeDriverCall() async {
-    final retrievedRideData = _detailedRideData;
-    if (retrievedRideData == null) return;
-    final driverId = SafeParse.toStringValue(retrievedRideData['driver_id']);
-    if (driverId.isEmpty) return;
+    final ride = widget.ride;
+    if (ride == null) return;
     try {
-      final driverProfile = await Modular.get<BiddingRemoteDataSource>()
-          .getDriverProfile(driverId);
+      final driverProfile =
+          _counterpartyData ??
+          await Modular.get<BiddingRemoteDataSource>().getRideCounterparty(
+            ride.id,
+          );
       final phone = SafeParse.toStringValue(driverProfile['phone']);
       if (phone.isNotEmpty) {
         final uri = Uri.parse('tel:$phone');

@@ -34,28 +34,20 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 		writeError(writer, http.StatusBadRequest, "invalid location")
 		return
 	}
-	if handler.auth != nil {
-		identity, ok := handler.identity(request)
-		if !ok || identity.Role != "driver" {
-			writeError(writer, http.StatusUnauthorized, "unauthorized")
-			return
-		}
-		input.DriverID = identity.Subject
-	} else if input.DriverID == "" {
-		input.DriverID = input.LegacyID
-	}
-	if input.Latitude == 0 {
-		input.Latitude = input.Lat
-	}
-	if input.Longitude == 0 {
-		input.Longitude = input.Lng
-	}
-	point := domain.DriverPoint{DriverID: input.DriverID, Latitude: input.Latitude, Longitude: input.Longitude}
-	if point.DriverID == "" {
-		writeError(writer, http.StatusBadRequest, "driver id is required")
+	identity, ok := handler.identity(request)
+	if !ok || identity.Role != "driver" {
+		writeError(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
+	point := domain.DriverPoint{
+		DriverID: identity.Subject, Latitude: input.Latitude, Longitude: input.Longitude,
+		Heading: input.Heading, Speed: input.Speed,
+	}
 	if err := handler.service.Ingest(request.Context(), point); err != nil {
+		if errors.Is(err, domain.ErrInvalidLocation) {
+			writeError(writer, http.StatusBadRequest, "invalid location")
+			return
+		}
 		writeError(writer, http.StatusInternalServerError, "could not save location")
 		return
 	}
@@ -64,29 +56,32 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 
 func (handler *Handler) GetDriverLocation(writer http.ResponseWriter, request *http.Request) {
 	driverID := chi.URLParam(request, "driverID")
-	if handler.auth != nil {
-		identity, ok := handler.identity(request)
-		if !ok {
-			writeError(writer, http.StatusUnauthorized, "unauthorized")
-			return
-		}
-		if identity.Role == "passenger" {
-			point, err := handler.service.GetDriverForPassenger(request.Context(), driverID, identity.Subject)
-			if err != nil {
-				writeRideLocationError(writer, err)
-				return
-			}
-			writeJSON(writer, http.StatusOK, point)
-			return
-		}
-		if identity.Role != "driver" || identity.Subject != driverID {
-			writeError(writer, http.StatusForbidden, "forbidden")
-			return
-		}
+	identity, ok := handler.identity(request)
+	if !ok || identity.Role != "driver" || identity.Subject != driverID {
+		writeError(writer, http.StatusForbidden, "forbidden")
+		return
 	}
 	point, err := handler.service.Get(request.Context(), driverID)
 	if err != nil {
 		writeError(writer, http.StatusNotFound, "location not found")
+		return
+	}
+	writeJSON(writer, http.StatusOK, point)
+}
+
+func (handler *Handler) GetRideDriverLocation(writer http.ResponseWriter, request *http.Request) {
+	identity, ok := handler.identity(request)
+	if !ok || identity.Role != "passenger" {
+		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	point, err := handler.service.GetDriverForRide(
+		request.Context(),
+		chi.URLParam(request, "rideID"),
+		identity.Subject,
+	)
+	if err != nil {
+		writeRideLocationError(writer, err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, point)
@@ -123,12 +118,6 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
 		writeError(writer, http.StatusBadRequest, "invalid location")
 		return
-	}
-	if input.Latitude == 0 {
-		input.Latitude = input.Lat
-	}
-	if input.Longitude == 0 {
-		input.Longitude = input.Lng
 	}
 	point := domain.DriverPoint{Latitude: input.Latitude, Longitude: input.Longitude}
 	if err := handler.service.UpdatePassenger(request.Context(), chi.URLParam(request, "rideID"), identity.Subject, point); err != nil {
@@ -191,6 +180,10 @@ func writeError(writer http.ResponseWriter, status int, message string) {
 }
 
 func writeRideLocationError(writer http.ResponseWriter, err error) {
+	if errors.Is(err, domain.ErrInvalidLocation) {
+		writeError(writer, http.StatusBadRequest, "invalid location")
+		return
+	}
 	if errors.Is(err, domain.ErrRideAccessDenied) || errors.Is(err, domain.ErrRideAssignmentUnavailable) {
 		writeError(writer, http.StatusForbidden, "forbidden")
 		return

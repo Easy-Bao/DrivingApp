@@ -13,16 +13,8 @@ class ChatCubit extends Cubit<ChatState> {
     : _chatRepository = chatRepository,
       super(const ChatState());
 
-  Future<bool> initializeChatRoom({
-    required String roomId,
-    required String passengerId,
-    required String driverId,
-  }) async {
-    final result = await _chatRepository.initializeChatRoom(
-      roomId: roomId,
-      passengerId: passengerId,
-      driverId: driverId,
-    );
+  Future<bool> initializeChatRoom({required String roomId}) async {
+    final result = await _chatRepository.initializeChatRoom(roomId: roomId);
     return result.fold((failure) {
       if (!isClosed) {
         if (failure is ChatRoomLockedFailure) {
@@ -139,12 +131,7 @@ class ChatCubit extends Cubit<ChatState> {
     return result.isRight();
   }
 
-  Future<void> resolveChatRoom(
-    String roomId,
-    String userId,
-    Uri wsUri, {
-    String? token,
-  }) async {
+  Future<void> resolveChatRoom(String roomId) async {
     try {
       final result = await _chatRepository.resolveChatRoom(roomId);
       await result.fold(

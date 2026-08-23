@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http"
@@ -49,7 +50,13 @@ func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 	history := &roomHistory{members: map[string]bool{"ride-1:7": true}}
 	router := chi.NewRouter()
 	chath.NewRouter(
-		chatusecase.NewService(chatadapter.NewHub(), history),
+		chatusecase.NewService(chatadapter.NewHub(), history).
+			WithRideAssignmentLookup(chatAssignmentLookup{
+				assignment: assignment.Assignment{
+					RideID: "ride-1", PassengerID: "7", DriverID: "9", Status: "assigned",
+				},
+				found: true,
+			}),
 		tokenManager,
 	).RegisterRoutes(router)
 
@@ -88,14 +95,20 @@ func TestChatCreateRoomReportsResolvedRoom(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	chath.NewRouter(
-		chatusecase.NewService(chatadapter.NewHub(), history),
+		chatusecase.NewService(chatadapter.NewHub(), history).
+			WithRideAssignmentLookup(chatAssignmentLookup{
+				assignment: assignment.Assignment{
+					RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",
+				},
+				found: true,
+			}),
 		tokenManager,
 	).RegisterRoutes(router)
 
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/api/v1/chat/rooms",
-		strings.NewReader(`{"roomId":"ride-1","passengerId":"7","driverId":"8"}`),
+		strings.NewReader(`{"ride_id":"ride-1"}`),
 	)
 	request.Header.Set("Authorization", "Bearer "+memberToken)
 	response := httptest.NewRecorder()
@@ -103,5 +116,31 @@ func TestChatCreateRoomReportsResolvedRoom(t *testing.T) {
 
 	if response.Code != http.StatusLocked {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusLocked)
+	}
+}
+
+func TestChatCreateRoomRejectsClientSuppliedParticipants(t *testing.T) {
+	tokenManager := security.NewTokenManager("chat-test-secret")
+	token, err := tokenManager.Issue("7")
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := chi.NewRouter()
+	chath.NewRouter(
+		chatusecase.NewService(chatadapter.NewHub(), &roomHistory{}),
+		tokenManager,
+	).RegisterRoutes(router)
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/chat/rooms",
+		strings.NewReader(`{"ride_id":"ride-1","passengerId":"7","driverId":"8"}`),
+	)
+	request.Header.Set("Authorization", "Bearer "+token)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
 	}
 }

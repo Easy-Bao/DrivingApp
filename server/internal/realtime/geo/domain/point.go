@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	ErrInvalidLocation           = errors.New("invalid location")
 	ErrRideAccessDenied          = errors.New("ride location access denied")
 	ErrRideAssignmentUnavailable = errors.New("ride location authorization is unavailable")
 )
@@ -16,6 +17,8 @@ type DriverPoint struct {
 	DriverID  string  `json:"driver_id"`
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
+	Heading   float64 `json:"heading,omitempty"`
+	Speed     float64 `json:"speed,omitempty"`
 }
 type Repository interface {
 	Upsert(ctx context.Context, point DriverPoint) error
@@ -28,19 +31,6 @@ type LocationRepository interface {
 	Get(ctx context.Context, driverID string) (DriverPoint, error)
 	UpsertPassenger(ctx context.Context, rideID string, point DriverPoint) error
 	GetPassenger(ctx context.Context, rideID string) (DriverPoint, error)
-}
-
-// RideAssignment is a short-lived delivery routing record, not a source of
-// truth. The ride store remains authoritative during a cache miss.
-type RideAssignment struct {
-	RideID      string
-	DriverID    string
-	PassengerID string
-}
-
-type RideAssignmentLookup interface {
-	ForDriver(ctx context.Context, driverID string) (RideAssignment, bool, error)
-	ForRide(ctx context.Context, rideID string) (RideAssignment, bool, error)
 }
 
 type EventPublisher interface {

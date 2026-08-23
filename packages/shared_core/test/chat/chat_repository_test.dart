@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,7 @@ import 'package:shared_core/shared_core.dart';
 
 class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   bool sent = false;
+  String? sentPayload;
   bool disposed = false;
 
   @override
@@ -18,6 +20,7 @@ class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   @override
   void sendWebSocketChatMessage(String messagePayload) {
     sent = true;
+    sentPayload = messagePayload;
   }
 
   @override
@@ -36,6 +39,32 @@ class FakeChatRemoteDataSource implements ChatRemoteDataSource {
 }
 
 void main() {
+  test('opens a chat room with only the authoritative ride id', () async {
+    RequestOptions? capturedRequest;
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
+      ..httpClientAdapter = _StubHttpClientAdapter((options) {
+        capturedRequest = options;
+        return ResponseBody.fromString(
+          '{}',
+          201,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      });
+    final repository = ChatRepository(
+      remoteDataSource: FakeChatRemoteDataSource(),
+      currentUserId: '7',
+      clientDio: dio,
+    );
+
+    final result = await repository.initializeChatRoom(roomId: '303');
+
+    expect(result.isRight(), isTrue);
+    expect(capturedRequest?.path, '/api/v1/chat/rooms');
+    expect(capturedRequest?.data, {'ride_id': '303'});
+  });
+
   test('rejects empty and oversized chat messages before transport', () async {
     final remoteDataSource = FakeChatRemoteDataSource();
     final repository = ChatRepository(
@@ -52,6 +81,23 @@ void main() {
     expect(remoteDataSource.sent, isFalse);
   });
 
+  test('sends message content without client identity or timestamps', () async {
+    final remoteDataSource = FakeChatRemoteDataSource();
+    final repository = ChatRepository(
+      remoteDataSource: remoteDataSource,
+      currentUserId: '7',
+      clientDio: Dio(),
+    );
+
+    final result = await repository.sendChatMessage('On my way');
+
+    expect(result.isRight(), isTrue);
+    expect(jsonDecode(remoteDataSource.sentPayload!), {
+      'type': 'message',
+      'text': 'On my way',
+    });
+  });
+
   test('disposes the websocket data source with the repository', () async {
     final remoteDataSource = FakeChatRemoteDataSource();
     final repository = ChatRepository(
@@ -64,4 +110,20 @@ void main() {
 
     expect(remoteDataSource.disposed, isTrue);
   });
+}
+
+class _StubHttpClientAdapter implements HttpClientAdapter {
+  final ResponseBody Function(RequestOptions options) _handler;
+
+  _StubHttpClientAdapter(this._handler);
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<List<int>>? requestStream,
+    Future<void>? cancelFuture,
+  ) async => _handler(options);
+
+  @override
+  void close({bool force = false}) {}
 }

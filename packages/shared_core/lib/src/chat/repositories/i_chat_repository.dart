@@ -10,11 +10,7 @@ abstract class IChatRepository {
 
   Future<Either<Failure, void>> terminateChatConnection();
 
-  Future<Either<Failure, void>> initializeChatRoom({
-    required String roomId,
-    required String passengerId,
-    required String driverId,
-  });
+  Future<Either<Failure, void>> initializeChatRoom({required String roomId});
 
   Future<Either<Failure, void>> sendChatMessage(String text);
 

@@ -10,10 +10,9 @@ import 'package:driver_app/src/features/auth/auth_module.dart';
 import 'package:driver_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/auth_repository.dart';
 import 'package:driver_app/src/features/trip/data/datasources/bidding_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/ride_counterparty_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
-import 'package:driver_app/src/features/chat/data/datasources/chat_room_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/datasources/driver_remote_data_source.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -64,11 +63,8 @@ class AppModule extends Module {
       ..addLazySingleton<TelemetryRemoteDataSource>(
         (i) => TelemetryRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<PassengerRemoteDataSource>(
-        (i) => PassengerRemoteDataSourceImpl(i.get<Dio>()),
-      )
-      ..addLazySingleton<ChatRoomRemoteDataSource>(
-        (i) => ChatRoomRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<RideCounterpartyRemoteDataSource>(
+        (i) => RideCounterpartyRemoteDataSourceImpl(i.get<Dio>()),
       )
       ..addLazySingleton<DriverRemoteDataSource>(
         (i) => DriverRemoteDataSourceImpl(i.get<Dio>()),

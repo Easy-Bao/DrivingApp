@@ -221,11 +221,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     if (!isConfigured || appIsVisible || sending || client == null) return;
 
     final token = await storage.read(key: StorageKeys.jwtToken);
-    final driverId = await storage.read(key: StorageKeys.driverId);
-    if (token == null ||
-        token.isEmpty ||
-        driverId == null ||
-        driverId.isEmpty) {
+    if (token == null || token.isEmpty) {
       return;
     }
 
@@ -240,11 +236,14 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       await client.post<void>(
         '/api/v1/telemetry/location',
         data: {
-          'driver_id': driverId,
-          'lat': position.latitude,
-          'lng': position.longitude,
-          'heading': position.heading,
-          'speed': position.speed,
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'heading': position.heading.isFinite && position.heading >= 0
+              ? position.heading.clamp(0, 360)
+              : 0,
+          'speed': position.speed.isFinite && position.speed >= 0
+              ? position.speed.clamp(0, 200)
+              : 0,
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );

@@ -50,23 +50,16 @@ class ChatRepository implements IChatRepository {
   @override
   Future<Either<Failure, void>> initializeChatRoom({
     required String roomId,
-    required String passengerId,
-    required String driverId,
   }) async {
-    if (roomId.trim().isEmpty ||
-        passengerId.trim().isEmpty ||
-        driverId.trim().isEmpty) {
-      return const Left(ValidationFailure('Chat participants are required.'));
+    final rideId = roomId.trim();
+    if (rideId.isEmpty) {
+      return const Left(ValidationFailure('Ride ID is required.'));
     }
 
     try {
       final response = await clientDio.post<void>(
         '/api/v1/chat/rooms',
-        data: {
-          'roomId': roomId,
-          'passengerId': passengerId,
-          'driverId': driverId,
-        },
+        data: {'ride_id': rideId},
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return const Right(null);
@@ -100,12 +93,7 @@ class ChatRepository implements IChatRepository {
     }
 
     try {
-      final payload = jsonEncode({
-        'type': 'message',
-        'text': trimmed,
-        'senderId': currentUserId,
-        'createdAt': DateTime.now().toIso8601String(),
-      });
+      final payload = jsonEncode({'type': 'message', 'text': trimmed});
 
       remoteDataSource.sendWebSocketChatMessage(payload);
       return const Right(null);

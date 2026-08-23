@@ -55,7 +55,6 @@ class DriverModule extends Module {
       ..addFactory<LiveMapBloc>(
         (i) => LiveMapBloc(
           telemetryDataSource: i.get<TelemetryRemoteDataSource>(),
-          sessionService: i.get<SecureSessionService>(),
         ),
       )
       ..addFactory<RideFlowCubit>(

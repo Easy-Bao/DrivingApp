@@ -28,27 +28,17 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 		return
 	}
 	var input struct {
-		RoomID      string `json:"roomId"`
-		RoomIDSnake string `json:"room_id"`
-		PassengerID string `json:"passengerId"`
-		DriverID    string `json:"driverId"`
+		RideID string `json:"ride_id"`
 	}
 	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
 		writeError(writer, http.StatusBadRequest, "invalid chat room")
 		return
 	}
-	if input.RoomID == "" {
-		input.RoomID = input.RoomIDSnake
-	}
-	if input.RoomID == "" {
-		writeError(writer, http.StatusBadRequest, "room id is required")
+	if input.RideID == "" {
+		writeError(writer, http.StatusBadRequest, "ride id is required")
 		return
 	}
-	if identity != input.PassengerID && identity != input.DriverID {
-		writeError(writer, http.StatusForbidden, "chat room access denied")
-		return
-	}
-	if err := handler.service.CreateRoom(request.Context(), input.RoomID, input.PassengerID, input.DriverID); err != nil {
+	if err := handler.service.OpenRideRoom(request.Context(), input.RideID, identity); err != nil {
 		status := http.StatusInternalServerError
 		if err == domain.ErrInvalidRoom {
 			status = http.StatusBadRequest
@@ -64,7 +54,7 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 		writeError(writer, status, "could not create chat room")
 		return
 	}
-	writeJSON(writer, http.StatusCreated, map[string]any{"room_id": input.RoomID, "status": "open"})
+	writeJSON(writer, http.StatusCreated, map[string]any{"room_id": input.RideID, "status": "open"})
 }
 
 func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Request) {

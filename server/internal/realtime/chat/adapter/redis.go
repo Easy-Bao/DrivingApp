@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	chatRoomTTL       = 24 * time.Hour
+	chatRoomTTL       = 48 * time.Hour
 	maxHistoryEntries = 100
 )
 

@@ -17,8 +17,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/data/datasources/trip_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/passenger_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/datasources/ride_counterparty_remote_data_source.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -365,27 +364,18 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                     BlocProvider.of<RideFlowCubit>(context);
                                 final rideId = rideCubit.activeRideId ?? '';
                                 if (rideId.isNotEmpty) {
-                                  final ride =
-                                      await Modular.get<TripRemoteDataSource>()
-                                          .getRideStatus(rideId);
-                                  final passengerId = driverValueAsString(
-                                    ride['passenger_id'],
+                                  final passenger =
+                                      await Modular.get<
+                                            RideCounterpartyRemoteDataSource
+                                          >()
+                                          .fetch(rideId);
+                                  final phone = driverValueAsString(
+                                    passenger['phone'],
                                   );
-                                  if (passengerId != null &&
-                                      passengerId.isNotEmpty) {
-                                    final passenger =
-                                        await Modular.get<
-                                              PassengerRemoteDataSource
-                                            >()
-                                            .fetchPassengerProfile(passengerId);
-                                    final phone = driverValueAsString(
-                                      passenger['phone'],
-                                    );
-                                    if (phone != null && phone.isNotEmpty) {
-                                      final uri = Uri.parse('tel:$phone');
-                                      if (await canLaunchUrl(uri)) {
-                                        await launchUrl(uri);
-                                      }
+                                  if (phone != null && phone.isNotEmpty) {
+                                    final uri = Uri.parse('tel:$phone');
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(uri);
                                     }
                                   }
                                 }

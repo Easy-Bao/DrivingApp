@@ -32,6 +32,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		protected.Use(middleware.RequireAuth(router.verifier))
 		protected.Post(apiPrefix+"/rides/{id}/status", router.handler.UpdateStatus)
 		protected.Get(apiPrefix+"/rides/{id}", router.handler.GetRide)
+		protected.Get(apiPrefix+"/rides/{id}/counterparty", router.handler.Counterparty)
 		protected.Get(apiPrefix+"/bids/{sessionID}", router.handler.Session)
 		protected.Get(apiPrefix+"/drivers/{id}/reviews", router.handler.DriverReviews)
 

@@ -33,6 +33,8 @@ import (
 	passengerhome "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
 	passengerhomeadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/adapter"
 	passengerhomehttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/transport/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
+	assignmentadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment/adapter"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http"
 	chatws "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/ws"
@@ -40,7 +42,6 @@ import (
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/event/adapter"
 	geo "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/adapter"
 	geoh "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http"
-	geows "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/ws"
 	geousecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/stream"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
@@ -129,11 +130,15 @@ func main() {
 		pricingConfig,
 		eventadapter.NewRedisPublisher(redisClient),
 	)
+	rideAssignments := assignment.NewResolver(
+		eventadapter.NewRedisRideAssignmentLookup(redisClient),
+		assignmentadapter.NewRideRepositoryLookup(ridesRepository),
+	)
 	ridesRouter := rideshttp.NewRouter(ridesService, verifier)
 	adminRouter := adminhttp.NewRouter(adminusecase.NewService(adminpostgres.NewRepository(databaseClient)), verifier, adminAuthorizer)
 	geoService := geousecase.NewService(
 		geo.NewRedisRepository(redisClient),
-		geousecase.WithRideAssignments(eventadapter.NewRedisRideAssignmentLookup(redisClient)),
+		geousecase.WithRideAssignments(rideAssignments),
 		geousecase.WithEventPublisher(eventadapter.NewRedisPublisher(redisClient)),
 	)
 
@@ -168,8 +173,7 @@ func main() {
 	chatHistory := chatadapter.NewRedisRepository(redisClient)
 	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory).
 		WithEventPublisher(eventadapter.NewRedisPublisher(redisClient)).
-		WithRideAssignmentLookup(eventadapter.NewRedisRideAssignmentLookup(redisClient)).
-		WithRideParticipantLookup(chatadapter.NewRideParticipantLookup(ridesRepository))
+		WithRideAssignmentLookup(rideAssignments)
 	eventHub := stream.NewHub()
 	eventSubscriber := eventadapter.NewRedisSubscriber(redisClient)
 	go func() {
@@ -179,7 +183,6 @@ func main() {
 	}()
 
 	events := ws.NewEventRouter()
-	events.Register("LOCATION_UPDATE", geows.NewEventHandler(geoService))
 	chatEventHandler := chatws.NewEventHandler(chatService)
 	events.Register("CHAT_MESSAGE", chatEventHandler)
 	events.Register("message", chatEventHandler)

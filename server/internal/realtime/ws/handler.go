@@ -127,7 +127,10 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			continue
 		}
 		if handler.sink != nil {
-			_ = handler.sink.Handle(request.Context(), eventMessage)
+			if err := handler.sink.Handle(request.Context(), eventMessage); err != nil {
+				_ = connection.WriteJSON(map[string]string{"error": "event rejected"})
+				continue
+			}
 		}
 		if isChatEvent(eventMessage) {
 			handler.hub.Broadcast(roomID, eventMessage)
@@ -153,7 +156,7 @@ func validEvent(message []byte) bool {
 		return false
 	}
 	switch event.Type {
-	case "LOCATION_UPDATE", "CHAT_MESSAGE", "BID_CREATED", "message":
+	case "CHAT_MESSAGE", "message":
 		return true
 	default:
 		return false

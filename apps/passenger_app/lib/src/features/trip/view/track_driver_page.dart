@@ -546,13 +546,13 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
                             isCancellingTrip: _isCancellingTrip,
                             onCallDriverPressed: () async {
                               try {
-                                final driverId = widget.ride.driverId.trim();
-                                if (driverId.isNotEmpty) {
+                                final rideId = widget.ride.id.trim();
+                                if (rideId.isNotEmpty) {
                                   final driverProfile =
                                       await Modular.get<
                                             BiddingRemoteDataSource
                                           >()
-                                          .getDriverProfile(driverId);
+                                          .getRideCounterparty(rideId);
                                   final phone = SafeParse.toStringValue(
                                     driverProfile['phone'],
                                   ).trim();

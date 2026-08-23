@@ -98,7 +98,7 @@ void main() {
           ),
         );
         when(
-          () => repo.fetchDriverLocation('drv-1'),
+          () => repo.fetchDriverLocation('ride-1'),
         ).thenAnswer((_) async => const Right((7.828, 123.434)));
         when(
           () => session.readActiveRideId(),
@@ -146,7 +146,7 @@ void main() {
           ),
         );
         when(
-          () => repo.fetchDriverLocation('drv-1'),
+          () => repo.fetchDriverLocation('ride-1'),
         ).thenAnswer((_) async => const Right((7.828, 123.434)));
         when(
           () => session.readActiveRideId(),
@@ -186,7 +186,7 @@ void main() {
           ),
         );
         when(
-          () => repo.fetchDriverLocation('drv-1'),
+          () => repo.fetchDriverLocation('ride-1'),
         ).thenAnswer((_) async => const Left(NetworkFailure('offline')));
         when(
           () => session.readActiveRideId(),
