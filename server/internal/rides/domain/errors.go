@@ -10,6 +10,7 @@ var (
 	ErrUnauthorizedRide        = errors.New("you are not a participant in this ride")
 	ErrUnauthorizedSession     = errors.New("you are not a participant in this booking")
 	ErrInvalidFareOffer        = errors.New("offer must not be lower than the calculated minimum fare")
+	ErrInvalidSettlement       = errors.New("invalid settlement terms")
 	ErrDriverUnavailable       = errors.New("driver is unavailable")
 	ErrDuplicateBid            = errors.New("driver already submitted a bid for this ride")
 	ErrInvalidStatusTransition = errors.New("invalid ride status transition")

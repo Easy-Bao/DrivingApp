@@ -59,6 +59,8 @@ type Ride struct {
 	PaymentStatus string `json:"payment_status,omitempty"`
 	// CashReceivedAt holds the value of the "cash_received_at" field.
 	CashReceivedAt time.Time `json:"cash_received_at,omitempty"`
+	// CommissionBps holds the value of the "commission_bps" field.
+	CommissionBps *int64 `json:"commission_bps,omitempty"`
 	// CommissionCentavos holds the value of the "commission_centavos" field.
 	CommissionCentavos int64 `json:"commission_centavos,omitempty"`
 	// DriverPayoutCentavos holds the value of the "driver_payout_centavos" field.
@@ -73,7 +75,7 @@ func (*Ride) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case ride.FieldPickupLatitude, ride.FieldPickupLongitude, ride.FieldDropoffLatitude, ride.FieldDropoffLongitude, ride.FieldDistanceKm, ride.FieldDurationMinutes, ride.FieldDriverRating:
 			values[i] = new(sql.NullFloat64)
-		case ride.FieldID, ride.FieldPassengerID, ride.FieldDriverID, ride.FieldFareCentavos, ride.FieldCommissionCentavos, ride.FieldDriverPayoutCentavos:
+		case ride.FieldID, ride.FieldPassengerID, ride.FieldDriverID, ride.FieldFareCentavos, ride.FieldCommissionBps, ride.FieldCommissionCentavos, ride.FieldDriverPayoutCentavos:
 			values[i] = new(sql.NullInt64)
 		case ride.FieldStatus, ride.FieldRideType, ride.FieldPickupName, ride.FieldDropoffName, ride.FieldDriverName, ride.FieldVehicleType, ride.FieldPlateNumber, ride.FieldPaymentStatus:
 			values[i] = new(sql.NullString)
@@ -226,6 +228,13 @@ func (_m *Ride) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.CashReceivedAt = value.Time
 			}
+		case ride.FieldCommissionBps:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field commission_bps", values[i])
+			} else if value.Valid {
+				_m.CommissionBps = new(int64)
+				*_m.CommissionBps = value.Int64
+			}
 		case ride.FieldCommissionCentavos:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field commission_centavos", values[i])
@@ -336,6 +345,11 @@ func (_m *Ride) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("cash_received_at=")
 	builder.WriteString(_m.CashReceivedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	if v := _m.CommissionBps; v != nil {
+		builder.WriteString("commission_bps=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("commission_centavos=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CommissionCentavos))

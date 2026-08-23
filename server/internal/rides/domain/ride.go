@@ -28,6 +28,7 @@ type Ride struct {
 	CreatedAt            *string `json:"created_at,omitempty"`
 	CompletedAt          *string `json:"completed_at,omitempty"`
 	PaymentStatus        string  `json:"payment_status"`
+	CommissionBPS        *int64  `json:"commission_bps,omitempty"`
 	CommissionCentavos   int64   `json:"commission_centavos"`
 	DriverPayoutCentavos int64   `json:"driver_payout_centavos"`
 }

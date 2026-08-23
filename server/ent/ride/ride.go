@@ -55,6 +55,8 @@ const (
 	FieldPaymentStatus = "payment_status"
 	// FieldCashReceivedAt holds the string denoting the cash_received_at field in the database.
 	FieldCashReceivedAt = "cash_received_at"
+	// FieldCommissionBps holds the string denoting the commission_bps field in the database.
+	FieldCommissionBps = "commission_bps"
 	// FieldCommissionCentavos holds the string denoting the commission_centavos field in the database.
 	FieldCommissionCentavos = "commission_centavos"
 	// FieldDriverPayoutCentavos holds the string denoting the driver_payout_centavos field in the database.
@@ -87,6 +89,7 @@ var Columns = []string{
 	FieldCompletedAt,
 	FieldPaymentStatus,
 	FieldCashReceivedAt,
+	FieldCommissionBps,
 	FieldCommissionCentavos,
 	FieldDriverPayoutCentavos,
 }
@@ -114,6 +117,8 @@ var (
 	DefaultCreatedAt func() time.Time
 	// DefaultPaymentStatus holds the default value on creation for the "payment_status" field.
 	DefaultPaymentStatus string
+	// CommissionBpsValidator is a validator for the "commission_bps" field. It is called by the builders before save.
+	CommissionBpsValidator func(int64) error
 	// DefaultCommissionCentavos holds the default value on creation for the "commission_centavos" field.
 	DefaultCommissionCentavos int64
 	// CommissionCentavosValidator is a validator for the "commission_centavos" field. It is called by the builders before save.
@@ -235,6 +240,11 @@ func ByPaymentStatus(opts ...sql.OrderTermOption) OrderOption {
 // ByCashReceivedAt orders the results by the cash_received_at field.
 func ByCashReceivedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCashReceivedAt, opts...).ToFunc()
+}
+
+// ByCommissionBps orders the results by the commission_bps field.
+func ByCommissionBps(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCommissionBps, opts...).ToFunc()
 }
 
 // ByCommissionCentavos orders the results by the commission_centavos field.

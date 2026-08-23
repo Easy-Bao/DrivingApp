@@ -482,6 +482,33 @@ func (_u *RideUpdate) ClearCashReceivedAt() *RideUpdate {
 	return _u
 }
 
+// SetCommissionBps sets the "commission_bps" field.
+func (_u *RideUpdate) SetCommissionBps(v int64) *RideUpdate {
+	_u.mutation.ResetCommissionBps()
+	_u.mutation.SetCommissionBps(v)
+	return _u
+}
+
+// SetNillableCommissionBps sets the "commission_bps" field if the given value is not nil.
+func (_u *RideUpdate) SetNillableCommissionBps(v *int64) *RideUpdate {
+	if v != nil {
+		_u.SetCommissionBps(*v)
+	}
+	return _u
+}
+
+// AddCommissionBps adds value to the "commission_bps" field.
+func (_u *RideUpdate) AddCommissionBps(v int64) *RideUpdate {
+	_u.mutation.AddCommissionBps(v)
+	return _u
+}
+
+// ClearCommissionBps clears the value of the "commission_bps" field.
+func (_u *RideUpdate) ClearCommissionBps() *RideUpdate {
+	_u.mutation.ClearCommissionBps()
+	return _u
+}
+
 // SetCommissionCentavos sets the "commission_centavos" field.
 func (_u *RideUpdate) SetCommissionCentavos(v int64) *RideUpdate {
 	_u.mutation.ResetCommissionCentavos()
@@ -566,6 +593,11 @@ func (_u *RideUpdate) check() error {
 	if v, ok := _u.mutation.FareCentavos(); ok {
 		if err := ride.FareCentavosValidator(v); err != nil {
 			return &ValidationError{Name: "fare_centavos", err: fmt.Errorf(`ent: validator failed for field "Ride.fare_centavos": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.CommissionBps(); ok {
+		if err := ride.CommissionBpsValidator(v); err != nil {
+			return &ValidationError{Name: "commission_bps", err: fmt.Errorf(`ent: validator failed for field "Ride.commission_bps": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.CommissionCentavos(); ok {
@@ -730,6 +762,15 @@ func (_u *RideUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.CashReceivedAtCleared() {
 		_spec.ClearField(ride.FieldCashReceivedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.CommissionBps(); ok {
+		_spec.SetField(ride.FieldCommissionBps, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCommissionBps(); ok {
+		_spec.AddField(ride.FieldCommissionBps, field.TypeInt64, value)
+	}
+	if _u.mutation.CommissionBpsCleared() {
+		_spec.ClearField(ride.FieldCommissionBps, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CommissionCentavos(); ok {
 		_spec.SetField(ride.FieldCommissionCentavos, field.TypeInt64, value)
@@ -1217,6 +1258,33 @@ func (_u *RideUpdateOne) ClearCashReceivedAt() *RideUpdateOne {
 	return _u
 }
 
+// SetCommissionBps sets the "commission_bps" field.
+func (_u *RideUpdateOne) SetCommissionBps(v int64) *RideUpdateOne {
+	_u.mutation.ResetCommissionBps()
+	_u.mutation.SetCommissionBps(v)
+	return _u
+}
+
+// SetNillableCommissionBps sets the "commission_bps" field if the given value is not nil.
+func (_u *RideUpdateOne) SetNillableCommissionBps(v *int64) *RideUpdateOne {
+	if v != nil {
+		_u.SetCommissionBps(*v)
+	}
+	return _u
+}
+
+// AddCommissionBps adds value to the "commission_bps" field.
+func (_u *RideUpdateOne) AddCommissionBps(v int64) *RideUpdateOne {
+	_u.mutation.AddCommissionBps(v)
+	return _u
+}
+
+// ClearCommissionBps clears the value of the "commission_bps" field.
+func (_u *RideUpdateOne) ClearCommissionBps() *RideUpdateOne {
+	_u.mutation.ClearCommissionBps()
+	return _u
+}
+
 // SetCommissionCentavos sets the "commission_centavos" field.
 func (_u *RideUpdateOne) SetCommissionCentavos(v int64) *RideUpdateOne {
 	_u.mutation.ResetCommissionCentavos()
@@ -1314,6 +1382,11 @@ func (_u *RideUpdateOne) check() error {
 	if v, ok := _u.mutation.FareCentavos(); ok {
 		if err := ride.FareCentavosValidator(v); err != nil {
 			return &ValidationError{Name: "fare_centavos", err: fmt.Errorf(`ent: validator failed for field "Ride.fare_centavos": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.CommissionBps(); ok {
+		if err := ride.CommissionBpsValidator(v); err != nil {
+			return &ValidationError{Name: "commission_bps", err: fmt.Errorf(`ent: validator failed for field "Ride.commission_bps": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.CommissionCentavos(); ok {
@@ -1495,6 +1568,15 @@ func (_u *RideUpdateOne) sqlSave(ctx context.Context) (_node *Ride, err error) {
 	}
 	if _u.mutation.CashReceivedAtCleared() {
 		_spec.ClearField(ride.FieldCashReceivedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.CommissionBps(); ok {
+		_spec.SetField(ride.FieldCommissionBps, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCommissionBps(); ok {
+		_spec.AddField(ride.FieldCommissionBps, field.TypeInt64, value)
+	}
+	if _u.mutation.CommissionBpsCleared() {
+		_spec.ClearField(ride.FieldCommissionBps, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CommissionCentavos(); ok {
 		_spec.SetField(ride.FieldCommissionCentavos, field.TypeInt64, value)

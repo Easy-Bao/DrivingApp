@@ -112,12 +112,23 @@ func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
 	}
+	settlement, err := domain.NewSettlementSnapshot(
+		trip.FareCentavos,
+		repository.platformCommissionBPS,
+	)
+	if err != nil {
+		_ = transaction.Rollback()
+		return domain.Bid{}, domain.Ride{}, err
+	}
 	trip, err = trip.Update().
 		SetStatus("assigned").
 		SetDriverID(driverID).
 		SetDriverName(profile.Name).
 		SetVehicleType(profile.VehicleType).
 		SetPlateNumber(profile.PlateNumber).
+		SetCommissionBps(settlement.CommissionBPS).
+		SetCommissionCentavos(settlement.CommissionCentavos).
+		SetDriverPayoutCentavos(settlement.DriverPayoutCentavos).
 		Save(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
@@ -150,12 +161,22 @@ func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID i
 	if active >= 5 {
 		return domain.Ride{}, domain.ErrDriverAtCapacity
 	}
+	settlement, err := domain.NewSettlementSnapshot(
+		item.FareCentavos,
+		repository.platformCommissionBPS,
+	)
+	if err != nil {
+		return domain.Ride{}, err
+	}
 	updated, err := item.Update().
 		SetDriverID(driverID).
 		SetStatus("accepted").
 		SetDriverName(profile.Name).
 		SetVehicleType(profile.VehicleType).
 		SetPlateNumber(profile.PlateNumber).
+		SetCommissionBps(settlement.CommissionBPS).
+		SetCommissionCentavos(settlement.CommissionCentavos).
+		SetDriverPayoutCentavos(settlement.DriverPayoutCentavos).
 		Save(ctx)
 	if err != nil {
 		return domain.Ride{}, err
@@ -183,8 +204,20 @@ func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID i
 	if err != nil {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
-	commission := rideItem.FareCentavos * repository.platformCommissionBPS / 10000
-	payout := rideItem.FareCentavos - commission
+	commissionBPS := repository.platformCommissionBPS
+	if rideItem.CommissionBps != nil {
+		commissionBPS = *rideItem.CommissionBps
+	}
+	settlement, err := domain.NewSettlementSnapshot(rideItem.FareCentavos, commissionBPS)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	commission := settlement.CommissionCentavos
+	payout := settlement.DriverPayoutCentavos
+	if rideItem.CommissionBps != nil &&
+		(rideItem.CommissionCentavos != commission || rideItem.DriverPayoutCentavos != payout) {
+		return domain.Ride{}, domain.ErrInvalidSettlement
+	}
 	if payout <= 0 {
 		return domain.Ride{}, domain.ErrInvalidFareOffer
 	}
@@ -195,7 +228,13 @@ func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID i
 	if _, err = profile.Update().AddWalletBalanceCentavos(payout).Save(ctx); err != nil {
 		return domain.Ride{}, err
 	}
-	updatedRide, err := rideItem.Update().SetPaymentStatus("paid").SetCashReceivedAt(time.Now()).SetCommissionCentavos(commission).SetDriverPayoutCentavos(payout).Save(ctx)
+	updatedRide, err := rideItem.Update().
+		SetPaymentStatus("paid").
+		SetCashReceivedAt(time.Now()).
+		SetCommissionBps(commissionBPS).
+		SetCommissionCentavos(commission).
+		SetDriverPayoutCentavos(payout).
+		Save(ctx)
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -417,7 +456,41 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
-	rideItem, err := transaction.Ride.Create().SetPassengerID(session.PassengerID).SetDriverID(offer.DriverID).SetStatus("accepted").SetFareCentavos(session.OfferedFareCentavos).SetRideType(session.RideType).SetPickupLatitude(session.PickupLatitude).SetPickupLongitude(session.PickupLongitude).SetPickupName(session.PickupName).SetDropoffLatitude(session.DropoffLatitude).SetDropoffLongitude(session.DropoffLongitude).SetDropoffName(session.DropoffName).SetDistanceKm(session.DistanceKm).SetDurationMinutes(session.DurationMinutes).SetDriverName(profile.Name).SetVehicleType(profile.VehicleType).SetPlateNumber(profile.PlateNumber).Save(ctx)
+	acceptedRide, err := domain.NewRideFromAcceptedOffer(
+		fromSession(session),
+		fromOffer(offer),
+		domain.DriverAssignmentSnapshot{
+			Name:        profile.Name,
+			VehicleType: profile.VehicleType,
+			PlateNumber: profile.PlateNumber,
+		},
+		repository.platformCommissionBPS,
+	)
+	if err != nil {
+		_ = transaction.Rollback()
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+	}
+	rideItem, err := transaction.Ride.Create().
+		SetPassengerID(acceptedRide.PassengerID).
+		SetDriverID(*acceptedRide.DriverID).
+		SetStatus(acceptedRide.Status).
+		SetFareCentavos(acceptedRide.FareCentavos).
+		SetRideType(acceptedRide.RideType).
+		SetPickupLatitude(acceptedRide.PickupLatitude).
+		SetPickupLongitude(acceptedRide.PickupLongitude).
+		SetPickupName(acceptedRide.PickupName).
+		SetDropoffLatitude(acceptedRide.DropoffLatitude).
+		SetDropoffLongitude(acceptedRide.DropoffLongitude).
+		SetDropoffName(acceptedRide.DropoffName).
+		SetDistanceKm(acceptedRide.DistanceKm).
+		SetDurationMinutes(acceptedRide.DurationMinutes).
+		SetDriverName(acceptedRide.DriverName).
+		SetVehicleType(acceptedRide.VehicleType).
+		SetPlateNumber(acceptedRide.PlateNumber).
+		SetCommissionBps(*acceptedRide.CommissionBPS).
+		SetCommissionCentavos(acceptedRide.CommissionCentavos).
+		SetDriverPayoutCentavos(acceptedRide.DriverPayoutCentavos).
+		Save(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
@@ -524,14 +597,15 @@ func (repository *Repository) DriverStats(ctx context.Context, driverID int) (do
 		ActiveTrips:         activeTrips,
 		TotalFare:           completedMetrics.FareCentavos,
 		TodayCompletedTrips: int(todayCompletedMetrics.Count),
-		TodayEarnings:       todayCompletedMetrics.FareCentavos,
+		TodayEarnings:       todayCompletedMetrics.DriverPayoutCentavos,
 		AverageRating:       averageRating,
 	}, nil
 }
 
 type rideMetrics struct {
-	Count        int64 `json:"trip_count"`
-	FareCentavos int64 `json:"fare_centavos"`
+	Count                int64 `json:"trip_count"`
+	FareCentavos         int64 `json:"fare_centavos"`
+	DriverPayoutCentavos int64 `json:"driver_payout_centavos"`
 }
 
 func aggregateRideMetrics(ctx context.Context, query *ent.RideQuery) (rideMetrics, error) {
@@ -539,6 +613,7 @@ func aggregateRideMetrics(ctx context.Context, query *ent.RideQuery) (rideMetric
 	if err := query.Aggregate(
 		ent.As(ent.Count(), "trip_count"),
 		ent.As(ent.Sum(ride.FieldFareCentavos), "fare_centavos"),
+		ent.As(ent.Sum(ride.FieldDriverPayoutCentavos), "driver_payout_centavos"),
 	).Scan(ctx, &rows); err != nil {
 		return rideMetrics{}, err
 	}
@@ -902,7 +977,7 @@ func fromRide(item *ent.Ride) domain.Ride {
 		value := item.CreatedAt.UTC().Format(time.RFC3339)
 		createdAt = &value
 	}
-	return domain.Ride{ID: item.ID, PassengerID: item.PassengerID, DriverID: driverID, Status: item.Status, FareCentavos: item.FareCentavos, RideType: item.RideType, PickupLatitude: item.PickupLatitude, PickupLongitude: item.PickupLongitude, PickupName: item.PickupName, DropoffLatitude: item.DropoffLatitude, DropoffLongitude: item.DropoffLongitude, DropoffName: item.DropoffName, DistanceKm: item.DistanceKm, DurationMinutes: item.DurationMinutes, DriverName: item.DriverName, VehicleType: item.VehicleType, PlateNumber: item.PlateNumber, DriverRating: item.DriverRating, CreatedAt: createdAt, CompletedAt: completedAt, PaymentStatus: item.PaymentStatus, CommissionCentavos: item.CommissionCentavos, DriverPayoutCentavos: item.DriverPayoutCentavos}
+	return domain.Ride{ID: item.ID, PassengerID: item.PassengerID, DriverID: driverID, Status: item.Status, FareCentavos: item.FareCentavos, RideType: item.RideType, PickupLatitude: item.PickupLatitude, PickupLongitude: item.PickupLongitude, PickupName: item.PickupName, DropoffLatitude: item.DropoffLatitude, DropoffLongitude: item.DropoffLongitude, DropoffName: item.DropoffName, DistanceKm: item.DistanceKm, DurationMinutes: item.DurationMinutes, DriverName: item.DriverName, VehicleType: item.VehicleType, PlateNumber: item.PlateNumber, DriverRating: item.DriverRating, CreatedAt: createdAt, CompletedAt: completedAt, PaymentStatus: item.PaymentStatus, CommissionBPS: item.CommissionBps, CommissionCentavos: item.CommissionCentavos, DriverPayoutCentavos: item.DriverPayoutCentavos}
 }
 func fromBid(item *ent.Bid) domain.Bid {
 	return domain.Bid{ID: item.ID, RideID: item.RideID, DriverID: item.DriverID, FareCentavos: item.OfferedFareCentavos, Status: item.Status}

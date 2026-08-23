@@ -298,6 +298,20 @@ func (_c *RideCreate) SetNillableCashReceivedAt(v *time.Time) *RideCreate {
 	return _c
 }
 
+// SetCommissionBps sets the "commission_bps" field.
+func (_c *RideCreate) SetCommissionBps(v int64) *RideCreate {
+	_c.mutation.SetCommissionBps(v)
+	return _c
+}
+
+// SetNillableCommissionBps sets the "commission_bps" field if the given value is not nil.
+func (_c *RideCreate) SetNillableCommissionBps(v *int64) *RideCreate {
+	if v != nil {
+		_c.SetCommissionBps(*v)
+	}
+	return _c
+}
+
 // SetCommissionCentavos sets the "commission_centavos" field.
 func (_c *RideCreate) SetCommissionCentavos(v int64) *RideCreate {
 	_c.mutation.SetCommissionCentavos(v)
@@ -413,6 +427,11 @@ func (_c *RideCreate) check() error {
 	}
 	if _, ok := _c.mutation.PaymentStatus(); !ok {
 		return &ValidationError{Name: "payment_status", err: errors.New(`ent: missing required field "Ride.payment_status"`)}
+	}
+	if v, ok := _c.mutation.CommissionBps(); ok {
+		if err := ride.CommissionBpsValidator(v); err != nil {
+			return &ValidationError{Name: "commission_bps", err: fmt.Errorf(`ent: validator failed for field "Ride.commission_bps": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.CommissionCentavos(); !ok {
 		return &ValidationError{Name: "commission_centavos", err: errors.New(`ent: missing required field "Ride.commission_centavos"`)}
@@ -539,6 +558,10 @@ func (_c *RideCreate) createSpec() (*Ride, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.CashReceivedAt(); ok {
 		_spec.SetField(ride.FieldCashReceivedAt, field.TypeTime, value)
 		_node.CashReceivedAt = value
+	}
+	if value, ok := _c.mutation.CommissionBps(); ok {
+		_spec.SetField(ride.FieldCommissionBps, field.TypeInt64, value)
+		_node.CommissionBps = &value
 	}
 	if value, ok := _c.mutation.CommissionCentavos(); ok {
 		_spec.SetField(ride.FieldCommissionCentavos, field.TypeInt64, value)

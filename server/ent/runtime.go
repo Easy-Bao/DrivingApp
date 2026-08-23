@@ -219,14 +219,32 @@ func init() {
 	rideDescPaymentStatus := rideFields[19].Descriptor()
 	// ride.DefaultPaymentStatus holds the default value on creation for the payment_status field.
 	ride.DefaultPaymentStatus = rideDescPaymentStatus.Default.(string)
+	// rideDescCommissionBps is the schema descriptor for commission_bps field.
+	rideDescCommissionBps := rideFields[21].Descriptor()
+	// ride.CommissionBpsValidator is a validator for the "commission_bps" field. It is called by the builders before save.
+	ride.CommissionBpsValidator = func() func(int64) error {
+		validators := rideDescCommissionBps.Validators
+		fns := [...]func(int64) error{
+			validators[0].(func(int64) error),
+			validators[1].(func(int64) error),
+		}
+		return func(commission_bps int64) error {
+			for _, fn := range fns {
+				if err := fn(commission_bps); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// rideDescCommissionCentavos is the schema descriptor for commission_centavos field.
-	rideDescCommissionCentavos := rideFields[21].Descriptor()
+	rideDescCommissionCentavos := rideFields[22].Descriptor()
 	// ride.DefaultCommissionCentavos holds the default value on creation for the commission_centavos field.
 	ride.DefaultCommissionCentavos = rideDescCommissionCentavos.Default.(int64)
 	// ride.CommissionCentavosValidator is a validator for the "commission_centavos" field. It is called by the builders before save.
 	ride.CommissionCentavosValidator = rideDescCommissionCentavos.Validators[0].(func(int64) error)
 	// rideDescDriverPayoutCentavos is the schema descriptor for driver_payout_centavos field.
-	rideDescDriverPayoutCentavos := rideFields[22].Descriptor()
+	rideDescDriverPayoutCentavos := rideFields[23].Descriptor()
 	// ride.DefaultDriverPayoutCentavos holds the default value on creation for the driver_payout_centavos field.
 	ride.DefaultDriverPayoutCentavos = rideDescDriverPayoutCentavos.Default.(int64)
 	// ride.DriverPayoutCentavosValidator is a validator for the "driver_payout_centavos" field. It is called by the builders before save.

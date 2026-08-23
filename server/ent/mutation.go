@@ -7855,6 +7855,8 @@ type RideMutation struct {
 	completed_at              *time.Time
 	payment_status            *string
 	cash_received_at          *time.Time
+	commission_bps            *int64
+	addcommission_bps         *int64
 	commission_centavos       *int64
 	addcommission_centavos    *int64
 	driver_payout_centavos    *int64
@@ -9122,6 +9124,76 @@ func (m *RideMutation) ResetCashReceivedAt() {
 	delete(m.clearedFields, ride.FieldCashReceivedAt)
 }
 
+// SetCommissionBps sets the "commission_bps" field.
+func (m *RideMutation) SetCommissionBps(i int64) {
+	m.commission_bps = &i
+	m.addcommission_bps = nil
+}
+
+// CommissionBps returns the value of the "commission_bps" field in the mutation.
+func (m *RideMutation) CommissionBps() (r int64, exists bool) {
+	v := m.commission_bps
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommissionBps returns the old "commission_bps" field's value of the Ride entity.
+// If the Ride object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RideMutation) OldCommissionBps(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommissionBps is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommissionBps requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommissionBps: %w", err)
+	}
+	return oldValue.CommissionBps, nil
+}
+
+// AddCommissionBps adds i to the "commission_bps" field.
+func (m *RideMutation) AddCommissionBps(i int64) {
+	if m.addcommission_bps != nil {
+		*m.addcommission_bps += i
+	} else {
+		m.addcommission_bps = &i
+	}
+}
+
+// AddedCommissionBps returns the value that was added to the "commission_bps" field in this mutation.
+func (m *RideMutation) AddedCommissionBps() (r int64, exists bool) {
+	v := m.addcommission_bps
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCommissionBps clears the value of the "commission_bps" field.
+func (m *RideMutation) ClearCommissionBps() {
+	m.commission_bps = nil
+	m.addcommission_bps = nil
+	m.clearedFields[ride.FieldCommissionBps] = struct{}{}
+}
+
+// CommissionBpsCleared returns if the "commission_bps" field was cleared in this mutation.
+func (m *RideMutation) CommissionBpsCleared() bool {
+	_, ok := m.clearedFields[ride.FieldCommissionBps]
+	return ok
+}
+
+// ResetCommissionBps resets all changes to the "commission_bps" field.
+func (m *RideMutation) ResetCommissionBps() {
+	m.commission_bps = nil
+	m.addcommission_bps = nil
+	delete(m.clearedFields, ride.FieldCommissionBps)
+}
+
 // SetCommissionCentavos sets the "commission_centavos" field.
 func (m *RideMutation) SetCommissionCentavos(i int64) {
 	m.commission_centavos = &i
@@ -9268,7 +9340,7 @@ func (m *RideMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RideMutation) Fields() []string {
-	fields := make([]string, 0, 23)
+	fields := make([]string, 0, 24)
 	if m.passenger_id != nil {
 		fields = append(fields, ride.FieldPassengerID)
 	}
@@ -9332,6 +9404,9 @@ func (m *RideMutation) Fields() []string {
 	if m.cash_received_at != nil {
 		fields = append(fields, ride.FieldCashReceivedAt)
 	}
+	if m.commission_bps != nil {
+		fields = append(fields, ride.FieldCommissionBps)
+	}
 	if m.commission_centavos != nil {
 		fields = append(fields, ride.FieldCommissionCentavos)
 	}
@@ -9388,6 +9463,8 @@ func (m *RideMutation) Field(name string) (ent.Value, bool) {
 		return m.PaymentStatus()
 	case ride.FieldCashReceivedAt:
 		return m.CashReceivedAt()
+	case ride.FieldCommissionBps:
+		return m.CommissionBps()
 	case ride.FieldCommissionCentavos:
 		return m.CommissionCentavos()
 	case ride.FieldDriverPayoutCentavos:
@@ -9443,6 +9520,8 @@ func (m *RideMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPaymentStatus(ctx)
 	case ride.FieldCashReceivedAt:
 		return m.OldCashReceivedAt(ctx)
+	case ride.FieldCommissionBps:
+		return m.OldCommissionBps(ctx)
 	case ride.FieldCommissionCentavos:
 		return m.OldCommissionCentavos(ctx)
 	case ride.FieldDriverPayoutCentavos:
@@ -9603,6 +9682,13 @@ func (m *RideMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCashReceivedAt(v)
 		return nil
+	case ride.FieldCommissionBps:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommissionBps(v)
+		return nil
 	case ride.FieldCommissionCentavos:
 		v, ok := value.(int64)
 		if !ok {
@@ -9655,6 +9741,9 @@ func (m *RideMutation) AddedFields() []string {
 	if m.adddriver_rating != nil {
 		fields = append(fields, ride.FieldDriverRating)
 	}
+	if m.addcommission_bps != nil {
+		fields = append(fields, ride.FieldCommissionBps)
+	}
 	if m.addcommission_centavos != nil {
 		fields = append(fields, ride.FieldCommissionCentavos)
 	}
@@ -9689,6 +9778,8 @@ func (m *RideMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedDurationMinutes()
 	case ride.FieldDriverRating:
 		return m.AddedDriverRating()
+	case ride.FieldCommissionBps:
+		return m.AddedCommissionBps()
 	case ride.FieldCommissionCentavos:
 		return m.AddedCommissionCentavos()
 	case ride.FieldDriverPayoutCentavos:
@@ -9772,6 +9863,13 @@ func (m *RideMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddDriverRating(v)
 		return nil
+	case ride.FieldCommissionBps:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCommissionBps(v)
+		return nil
 	case ride.FieldCommissionCentavos:
 		v, ok := value.(int64)
 		if !ok {
@@ -9839,6 +9937,9 @@ func (m *RideMutation) ClearedFields() []string {
 	if m.FieldCleared(ride.FieldCashReceivedAt) {
 		fields = append(fields, ride.FieldCashReceivedAt)
 	}
+	if m.FieldCleared(ride.FieldCommissionBps) {
+		fields = append(fields, ride.FieldCommissionBps)
+	}
 	return fields
 }
 
@@ -9897,6 +9998,9 @@ func (m *RideMutation) ClearField(name string) error {
 		return nil
 	case ride.FieldCashReceivedAt:
 		m.ClearCashReceivedAt()
+		return nil
+	case ride.FieldCommissionBps:
+		m.ClearCommissionBps()
 		return nil
 	}
 	return fmt.Errorf("unknown Ride nullable field %s", name)
@@ -9968,6 +10072,9 @@ func (m *RideMutation) ResetField(name string) error {
 		return nil
 	case ride.FieldCashReceivedAt:
 		m.ResetCashReceivedAt()
+		return nil
+	case ride.FieldCommissionBps:
+		m.ResetCommissionBps()
 		return nil
 	case ride.FieldCommissionCentavos:
 		m.ResetCommissionCentavos()

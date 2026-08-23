@@ -159,6 +159,11 @@ func CashReceivedAt(v time.Time) predicate.Ride {
 	return predicate.Ride(sql.FieldEQ(FieldCashReceivedAt, v))
 }
 
+// CommissionBps applies equality check predicate on the "commission_bps" field. It's identical to CommissionBpsEQ.
+func CommissionBps(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldCommissionBps, v))
+}
+
 // CommissionCentavos applies equality check predicate on the "commission_centavos" field. It's identical to CommissionCentavosEQ.
 func CommissionCentavos(v int64) predicate.Ride {
 	return predicate.Ride(sql.FieldEQ(FieldCommissionCentavos, v))
@@ -1357,6 +1362,56 @@ func CashReceivedAtIsNil() predicate.Ride {
 // CashReceivedAtNotNil applies the NotNil predicate on the "cash_received_at" field.
 func CashReceivedAtNotNil() predicate.Ride {
 	return predicate.Ride(sql.FieldNotNull(FieldCashReceivedAt))
+}
+
+// CommissionBpsEQ applies the EQ predicate on the "commission_bps" field.
+func CommissionBpsEQ(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldEQ(FieldCommissionBps, v))
+}
+
+// CommissionBpsNEQ applies the NEQ predicate on the "commission_bps" field.
+func CommissionBpsNEQ(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldNEQ(FieldCommissionBps, v))
+}
+
+// CommissionBpsIn applies the In predicate on the "commission_bps" field.
+func CommissionBpsIn(vs ...int64) predicate.Ride {
+	return predicate.Ride(sql.FieldIn(FieldCommissionBps, vs...))
+}
+
+// CommissionBpsNotIn applies the NotIn predicate on the "commission_bps" field.
+func CommissionBpsNotIn(vs ...int64) predicate.Ride {
+	return predicate.Ride(sql.FieldNotIn(FieldCommissionBps, vs...))
+}
+
+// CommissionBpsGT applies the GT predicate on the "commission_bps" field.
+func CommissionBpsGT(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldGT(FieldCommissionBps, v))
+}
+
+// CommissionBpsGTE applies the GTE predicate on the "commission_bps" field.
+func CommissionBpsGTE(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldGTE(FieldCommissionBps, v))
+}
+
+// CommissionBpsLT applies the LT predicate on the "commission_bps" field.
+func CommissionBpsLT(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldLT(FieldCommissionBps, v))
+}
+
+// CommissionBpsLTE applies the LTE predicate on the "commission_bps" field.
+func CommissionBpsLTE(v int64) predicate.Ride {
+	return predicate.Ride(sql.FieldLTE(FieldCommissionBps, v))
+}
+
+// CommissionBpsIsNil applies the IsNil predicate on the "commission_bps" field.
+func CommissionBpsIsNil() predicate.Ride {
+	return predicate.Ride(sql.FieldIsNull(FieldCommissionBps))
+}
+
+// CommissionBpsNotNil applies the NotNil predicate on the "commission_bps" field.
+func CommissionBpsNotNil() predicate.Ride {
+	return predicate.Ride(sql.FieldNotNull(FieldCommissionBps))
 }
 
 // CommissionCentavosEQ applies the EQ predicate on the "commission_centavos" field.

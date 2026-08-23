@@ -208,6 +208,7 @@ var (
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "payment_status", Type: field.TypeString, Default: "unpaid"},
 		{Name: "cash_received_at", Type: field.TypeTime, Nullable: true},
+		{Name: "commission_bps", Type: field.TypeInt64, Nullable: true},
 		{Name: "commission_centavos", Type: field.TypeInt64, Default: 0},
 		{Name: "driver_payout_centavos", Type: field.TypeInt64, Default: 0},
 	}
