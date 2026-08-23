@@ -126,6 +126,10 @@ class _DriverFloatingTabItem extends StatelessWidget {
         child: InkWell(
           key: ValueKey<String>('driver-floating-tab-item-$index'),
           borderRadius: BorderRadius.circular(27),
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStatePropertyAll(
+            AppTheme.surface.withValues(alpha: 0),
+          ),
           onTap: () => onTap(index),
           child: Center(
             child: Column(

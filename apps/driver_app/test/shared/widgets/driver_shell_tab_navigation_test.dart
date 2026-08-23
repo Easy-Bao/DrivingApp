@@ -66,9 +66,19 @@ void main() {
       final iconWidget = tester.widget<Icon>(
         find.descendant(of: item, matching: find.byType(Icon)),
       );
+      final inkWell = tester.widget<InkWell>(item);
       expect(labelWidget.style?.fontSize, 10);
       expect(labelWidget.style?.fontWeight, FontWeight.w500);
       expect(iconWidget.size, 18);
+      expect(inkWell.splashFactory, NoSplash.splashFactory);
+      expect(
+        inkWell.overlayColor?.resolve({WidgetState.pressed}),
+        AppTheme.surface.withValues(alpha: 0),
+      );
+      expect(
+        inkWell.overlayColor?.resolve({WidgetState.hovered}),
+        AppTheme.surface.withValues(alpha: 0),
+      );
     }
 
     expectStaticDestination(0, 'Dashboard');

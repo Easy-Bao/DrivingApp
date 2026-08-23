@@ -131,6 +131,10 @@ class _PassengerFloatingTabItem extends StatelessWidget {
         child: InkWell(
           key: ValueKey<String>('passenger-floating-tab-item-$index'),
           borderRadius: BorderRadius.circular(27),
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStatePropertyAll(
+            AppTheme.surface.withValues(alpha: 0),
+          ),
           onTap: () => onTap(index),
           child: Center(
             child: Column(

@@ -5,6 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:passenger_app/src/features/trip/view/widgets/map_selection_marker_widget.dart';
 import 'package:shared_core/shared_core.dart';
 
 class MapPinPage extends StatefulWidget {
@@ -225,11 +226,17 @@ class _MapPinPageState extends State<MapPinPage>
                   _pinAnimationController.value,
                 );
                 return Transform.translate(
-                  offset: Offset(0, -39 - (8 * lift)),
+                  offset: Offset(
+                    0,
+                    -(MapSelectionMarkerWidget.height / 2) - (5 * lift),
+                  ),
                   child: child,
                 );
               },
-              child: const Hero(tag: 'map_pin_button', child: _CenterPin()),
+              child: const Hero(
+                tag: 'map_pin_button',
+                child: MapSelectionMarkerWidget(),
+              ),
             ),
           ),
           SafeArea(
@@ -384,55 +391,4 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
       ),
     ),
   );
-}
-
-class _CenterPin extends StatelessWidget {
-  const _CenterPin();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 64,
-      height: 78,
-      child: CustomPaint(painter: _CenterPinPainter()),
-    );
-  }
-}
-
-class _CenterPinPainter extends CustomPainter {
-  const _CenterPinPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, 26);
-    final outerTail = Path()
-      ..moveTo(center.dx - 10, 41)
-      ..lineTo(center.dx, size.height - 2)
-      ..lineTo(center.dx + 10, 41)
-      ..close();
-    final innerTail = Path()
-      ..moveTo(center.dx - 6, 40)
-      ..lineTo(center.dx, size.height - 9)
-      ..lineTo(center.dx + 6, 40)
-      ..close();
-    final shadowPath = Path()
-      ..addOval(Rect.fromCircle(center: center, radius: 23))
-      ..addPath(outerTail, Offset.zero);
-
-    canvas.drawShadow(
-      shadowPath,
-      AppTheme.primaryColor.withValues(alpha: 0.28),
-      5,
-      true,
-    );
-    canvas.drawPath(outerTail, Paint()..color = AppTheme.surface);
-    canvas.drawPath(innerTail, Paint()..color = AppTheme.primaryColor);
-    canvas.drawCircle(center, 23, Paint()..color = AppTheme.surface);
-    canvas.drawCircle(center, 18, Paint()..color = AppTheme.primaryColor);
-    canvas.drawCircle(center, 9, Paint()..color = AppTheme.secondaryColor);
-    canvas.drawCircle(center, 4, Paint()..color = AppTheme.primaryColor);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CenterPinPainter oldDelegate) => false;
 }
