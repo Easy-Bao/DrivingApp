@@ -149,7 +149,10 @@ class AuthInterceptor extends Interceptor {
       }
       return null;
     } catch (_) {
-      await _expireSession();
+      // A timeout, connection loss, or malformed transient response must not
+      // sign the user out. The refresh token can still recover the session on
+      // the next authenticated request; only an explicit auth rejection above
+      // proves that the session is no longer valid.
       return null;
     }
   }

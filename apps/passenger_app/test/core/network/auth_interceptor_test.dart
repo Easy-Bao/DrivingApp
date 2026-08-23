@@ -208,4 +208,46 @@ void main() {
       verifyNever(() => dio.fetch<dynamic>(any()));
     },
   );
+
+  test('keeps the session when refresh fails transiently', () async {
+    final secureSessionService = TestSecureSessionService('refresh-token');
+    final dio = MockDio();
+    final refreshClient = MockDio();
+    final handler = MockErrorInterceptorHandler();
+    final requestOptions = RequestOptions(
+      baseUrl: 'https://api.example',
+      path: '/api/v1/passengers/passenger-42',
+    );
+    final expiredError = DioException(
+      requestOptions: requestOptions,
+      response: Response<Object?>(
+        requestOptions: requestOptions,
+        statusCode: 401,
+      ),
+    );
+
+    when(
+      () => refreshClient.post<Object?>(
+        any(),
+        data: any<dynamic>(named: 'data'),
+        options: any(named: 'options'),
+      ),
+    ).thenThrow(
+      DioException(
+        requestOptions: RequestOptions(path: '/api/v1/auth/refresh'),
+        type: DioExceptionType.connectionError,
+      ),
+    );
+
+    await AuthInterceptor(
+      secureSessionService,
+      dio: dio,
+      refreshClient: refreshClient,
+      allowedBaseUri: Uri.parse('https://api.example'),
+    ).onError(expiredError, handler);
+
+    expect(secureSessionService.sessionCleared, isFalse);
+    verify(() => handler.next(expiredError)).called(1);
+    verifyNever(() => dio.fetch<dynamic>(any()));
+  });
 }
