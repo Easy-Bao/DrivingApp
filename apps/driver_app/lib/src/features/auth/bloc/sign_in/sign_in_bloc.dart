@@ -1,8 +1,8 @@
 import 'package:driver_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:driver_app/src/features/auth/bloc/sign_in/sign_in_failure_message.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_core/shared_core.dart';
 
 part 'sign_in_event.dart';
 part 'sign_in_state.dart';
@@ -18,8 +18,8 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     SignInSubmitted event,
     Emitter<SignInState> emit,
   ) async {
-    final normalizedEmail = event.email.trim();
-    final normalizedPassword = event.password.trim();
+    final normalizedEmail = event.email.trim().toLowerCase();
+    final password = event.password;
 
     if (normalizedEmail.isEmpty) {
       emit(const SignInFailure('Please enter email'));
@@ -29,7 +29,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
       emit(const SignInFailure('Please enter a valid email'));
       return;
     }
-    if (normalizedPassword.isEmpty) {
+    if (password.isEmpty) {
       emit(const SignInFailure('Please enter password'));
       return;
     }
@@ -38,11 +38,11 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
 
     final result = await _signInUseCase.execute(
       email: normalizedEmail,
-      password: normalizedPassword,
+      password: password,
     );
 
     result.fold(
-      (failure) => emit(SignInFailure(ErrorHandler.getErrorMessage(failure))),
+      (failure) => emit(SignInFailure(signInFailureMessage(failure))),
       (credentials) => emit(SignInSuccess(credentials)),
     );
   }
