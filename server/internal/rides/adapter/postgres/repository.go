@@ -60,6 +60,9 @@ func (repository *Repository) CreateBid(ctx context.Context, value domain.Bid) (
 	}
 	item, err := transaction.Bid.Create().SetRideID(value.RideID).SetDriverID(value.DriverID).SetOfferedFareCentavos(value.FareCentavos).SetStatus(value.Status).Save(ctx)
 	if err != nil {
+		if ent.IsConstraintError(err) {
+			return domain.Bid{}, domain.ErrDuplicateBid
+		}
 		return domain.Bid{}, err
 	}
 	if err := transaction.Commit(); err != nil {
@@ -134,6 +137,10 @@ func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
 	}
+	if err := createRideSettlement(ctx, transaction, trip.ID, settlement); err != nil {
+		_ = transaction.Rollback()
+		return domain.Bid{}, domain.Ride{}, err
+	}
 	if err := transaction.Commit(); err != nil {
 		return domain.Bid{}, domain.Ride{}, err
 	}
@@ -181,6 +188,9 @@ func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID i
 	if err != nil {
 		return domain.Ride{}, err
 	}
+	if err := createRideSettlement(ctx, transaction, updated.ID, settlement); err != nil {
+		return domain.Ride{}, err
+	}
 	if err := transaction.Commit(); err != nil {
 		return domain.Ride{}, err
 	}
@@ -197,27 +207,39 @@ func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID i
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	if rideItem.PaymentStatus == "paid" {
+	settlementRecord, settlement, err := ensureRideSettlement(
+		ctx,
+		transaction,
+		rideItem,
+		repository.platformCommissionBPS,
+	)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	if settlementRecord.PaymentStatus == "paid" {
+		if rideItem.PaymentStatus != "paid" {
+			rideItem, err = rideItem.Update().
+				SetPaymentStatus("paid").
+				SetNillableCashReceivedAt(settlementRecord.CashReceivedAt).
+				SetNillableCommissionBps(settlementRecord.CommissionBps).
+				SetCommissionCentavos(settlementRecord.CommissionCentavos).
+				SetDriverPayoutCentavos(settlementRecord.DriverPayoutCentavos).
+				Save(ctx)
+			if err != nil {
+				return domain.Ride{}, err
+			}
+		}
+		if err := transaction.Commit(); err != nil {
+			return domain.Ride{}, err
+		}
 		return fromRide(rideItem), nil
 	}
 	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(driverID)).Only(ctx)
 	if err != nil {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
-	commissionBPS := repository.platformCommissionBPS
-	if rideItem.CommissionBps != nil {
-		commissionBPS = *rideItem.CommissionBps
-	}
-	settlement, err := domain.NewSettlementSnapshot(rideItem.FareCentavos, commissionBPS)
-	if err != nil {
-		return domain.Ride{}, err
-	}
 	commission := settlement.CommissionCentavos
 	payout := settlement.DriverPayoutCentavos
-	if rideItem.CommissionBps != nil &&
-		(rideItem.CommissionCentavos != commission || rideItem.DriverPayoutCentavos != payout) {
-		return domain.Ride{}, domain.ErrInvalidSettlement
-	}
 	if payout <= 0 {
 		return domain.Ride{}, domain.ErrInvalidFareOffer
 	}
@@ -225,13 +247,24 @@ func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID i
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	if _, err = profile.Update().AddWalletBalanceCentavos(payout).Save(ctx); err != nil {
+	if err := creditDriverWallet(ctx, transaction, profile, payout); err != nil {
+		return domain.Ride{}, err
+	}
+	settledAt := time.Now()
+	if _, err := settlementRecord.Update().
+		SetPaymentStatus("paid").
+		SetCashReceivedAt(settledAt).
+		SetSettledAt(settledAt).
+		SetCommissionBps(settlement.CommissionBPS).
+		SetCommissionCentavos(commission).
+		SetDriverPayoutCentavos(payout).
+		Save(ctx); err != nil {
 		return domain.Ride{}, err
 	}
 	updatedRide, err := rideItem.Update().
 		SetPaymentStatus("paid").
-		SetCashReceivedAt(time.Now()).
-		SetCommissionBps(commissionBPS).
+		SetCashReceivedAt(settledAt).
+		SetCommissionBps(settlement.CommissionBPS).
 		SetCommissionCentavos(commission).
 		SetDriverPayoutCentavos(payout).
 		Save(ctx)
@@ -262,6 +295,13 @@ func (repository *Repository) CreateSession(ctx context.Context, value domain.Bi
 		return domain.BidSession{}, err
 	}
 	defer transaction.Rollback()
+	if _, err := transaction.BidSession.Update().Where(
+		bidsession.PassengerIDEQ(value.PassengerID),
+		bidsession.StatusEQ("open"),
+		bidsession.ExpiresAtLTE(time.Now()),
+	).SetStatus("expired").Save(ctx); err != nil {
+		return domain.BidSession{}, err
+	}
 	activeSession, err := transaction.BidSession.Query().Where(bidsession.PassengerIDEQ(value.PassengerID), bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(time.Now())).Exist(ctx)
 	if err != nil {
 		return domain.BidSession{}, err
@@ -299,6 +339,9 @@ func (repository *Repository) CreateSession(ctx context.Context, value domain.Bi
 	}
 	item, err := builder.Save(ctx)
 	if err != nil {
+		if ent.IsConstraintError(err) {
+			return domain.BidSession{}, domain.ErrActiveBooking
+		}
 		return domain.BidSession{}, err
 	}
 	if err := transaction.Commit(); err != nil {
@@ -384,11 +427,14 @@ func (repository *Repository) PlaceOffer(ctx context.Context, value domain.BidOf
 		return domain.BidOffer{}, err
 	}
 	if existing {
-		return domain.BidOffer{}, context.Canceled
+		return domain.BidOffer{}, domain.ErrDuplicateBid
 	}
 	builder := repository.client.BidOffer.Create().SetSessionID(value.SessionID).SetDriverID(value.DriverID).SetDriverName(profile.Name).SetPlateNumber(profile.PlateNumber).SetVehicleType(profile.VehicleType).SetProposedFareCentavos(value.ProposedFareCentavos).SetStatus("pending")
 	item, err := builder.Save(ctx)
 	if err != nil {
+		if ent.IsConstraintError(err) {
+			return domain.BidOffer{}, domain.ErrDuplicateBid
+		}
 		return domain.BidOffer{}, err
 	}
 	return fromOffer(item), nil
@@ -492,6 +538,20 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 		SetDriverPayoutCentavos(acceptedRide.DriverPayoutCentavos).
 		Save(ctx)
 	if err != nil {
+		_ = transaction.Rollback()
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+	}
+	if err := createRideSettlement(
+		ctx,
+		transaction,
+		rideItem.ID,
+		domain.SettlementSnapshot{
+			FareCentavos:         acceptedRide.FareCentavos,
+			CommissionBPS:        *acceptedRide.CommissionBPS,
+			CommissionCentavos:   acceptedRide.CommissionCentavos,
+			DriverPayoutCentavos: acceptedRide.DriverPayoutCentavos,
+		},
+	); err != nil {
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
@@ -872,6 +932,9 @@ func (repository *Repository) CreateReview(ctx context.Context, value domain.Rev
 	}
 	item, err := repository.client.Review.Create().SetRideID(value.RideID).SetDriverID(value.DriverID).SetPassengerID(value.PassengerID).SetPassengerName(value.PassengerName).SetRating(value.Rating).SetComment(value.Comment).Save(ctx)
 	if err != nil {
+		if ent.IsConstraintError(err) {
+			return domain.Review{}, domain.ErrReviewAlreadySubmitted
+		}
 		return domain.Review{}, err
 	}
 	return fromReview(item), nil
@@ -889,6 +952,9 @@ func (repository *Repository) CreatePassengerReview(ctx context.Context, value d
 	}
 	item, err := repository.client.PassengerReview.Create().SetRideID(value.RideID).SetDriverID(value.DriverID).SetPassengerID(value.PassengerID).SetRating(value.Rating).SetComment(value.Comment).Save(ctx)
 	if err != nil {
+		if ent.IsConstraintError(err) {
+			return domain.PassengerReview{}, domain.ErrReviewAlreadySubmitted
+		}
 		return domain.PassengerReview{}, err
 	}
 	return fromPassengerReview(item), nil

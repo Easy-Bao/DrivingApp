@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log"
 	"net"
@@ -13,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent/migrate"
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
 	adminusecase "github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
@@ -35,7 +33,6 @@ import (
 	passengerhome "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
 	passengerhomeadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/adapter"
 	passengerhomehttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/transport/http"
-	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http"
 	chatws "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/ws"
@@ -59,7 +56,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
-	_ "github.com/lib/pq"
 )
 
 const apiServiceName = "api"
@@ -88,18 +84,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer databaseClient.Close()
-
-	databaseConnection, err := sql.Open("postgres", database.NormalizePostgresURL(databaseURL))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer databaseConnection.Close()
-	if err := platformmigration.PreserveLegacyTables(context.Background(), databaseConnection); err != nil {
-		log.Fatal(err)
-	}
-	if err := databaseClient.Schema.Create(context.Background(), migrate.WithForeignKeys(true)); err != nil {
-		log.Fatal(err)
-	}
 
 	redisURL := strings.TrimSpace(os.Getenv("REDIS_URL"))
 	if redisURL == "" {

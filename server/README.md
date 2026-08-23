@@ -7,7 +7,7 @@ messaging, and infrastructure adapters.
 
 The other commands are one-shot developer tools:
 
-- `cmd/migrate` applies the Ent migration stream.
+- `cmd/migrate` applies the ordered, advisory-locked migration plan.
 - `cmd/entgenerate` regenerates the Ent client.
 
 ## Native local development (default)
@@ -35,11 +35,17 @@ The public client URL is `API_BASE_URL`, normally `http://127.0.0.1:8000`.
 The API process owns REST, WebSocket, authentication, rides, location,
 realtime, chat, and admin routes.
 
-To apply the Ent migration stream against native PostgreSQL:
+To apply the additive migration plan against native PostgreSQL:
 
 ```sh
 just db-migrate
 ```
+
+The long-running API process never changes the database schema. Run the
+migration command once for each deployment before starting or replacing API
+instances. Applied versions are recorded in `schema_migrations`; incompatible
+legacy identifier types are rejected with an actionable error instead of being
+renamed during application startup.
 
 ## Optional Docker Compose workflow
 

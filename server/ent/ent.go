@@ -18,11 +18,13 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/bidsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverdocument"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/driverwalletaccount"
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
+	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
 	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 )
@@ -85,19 +87,21 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			auditevent.Table:       auditevent.ValidColumn,
-			bid.Table:              bid.ValidColumn,
-			bidoffer.Table:         bidoffer.ValidColumn,
-			bidsession.Table:       bidsession.ValidColumn,
-			driverdocument.Table:   driverdocument.ValidColumn,
-			driverprofile.Table:    driverprofile.ValidColumn,
-			notification.Table:     notification.ValidColumn,
-			passengerprofile.Table: passengerprofile.ValidColumn,
-			passengerreview.Table:  passengerreview.ValidColumn,
-			review.Table:           review.ValidColumn,
-			ride.Table:             ride.ValidColumn,
-			user.Table:             user.ValidColumn,
-			walletledger.Table:     walletledger.ValidColumn,
+			auditevent.Table:          auditevent.ValidColumn,
+			bid.Table:                 bid.ValidColumn,
+			bidoffer.Table:            bidoffer.ValidColumn,
+			bidsession.Table:          bidsession.ValidColumn,
+			driverdocument.Table:      driverdocument.ValidColumn,
+			driverprofile.Table:       driverprofile.ValidColumn,
+			driverwalletaccount.Table: driverwalletaccount.ValidColumn,
+			notification.Table:        notification.ValidColumn,
+			passengerprofile.Table:    passengerprofile.ValidColumn,
+			passengerreview.Table:     passengerreview.ValidColumn,
+			review.Table:              review.ValidColumn,
+			ride.Table:                ride.ValidColumn,
+			ridesettlement.Table:      ridesettlement.ValidColumn,
+			user.Table:                user.ValidColumn,
+			walletledger.Table:        walletledger.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

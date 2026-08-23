@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -124,6 +125,20 @@ func (_u *AuditEventUpdate) SetNillableRequestID(v *string) *AuditEventUpdate {
 	return _u
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_u *AuditEventUpdate) SetCreatedAt(v time.Time) *AuditEventUpdate {
+	_u.mutation.SetCreatedAt(v)
+	return _u
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_u *AuditEventUpdate) SetNillableCreatedAt(v *time.Time) *AuditEventUpdate {
+	if v != nil {
+		_u.SetCreatedAt(*v)
+	}
+	return _u
+}
+
 // Mutation returns the AuditEventMutation object of the builder.
 func (_u *AuditEventUpdate) Mutation() *AuditEventMutation {
 	return _u.mutation
@@ -201,6 +216,9 @@ func (_u *AuditEventUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.RequestID(); ok {
 		_spec.SetField(auditevent.FieldRequestID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CreatedAt(); ok {
+		_spec.SetField(auditevent.FieldCreatedAt, field.TypeTime, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -319,6 +337,20 @@ func (_u *AuditEventUpdateOne) SetNillableRequestID(v *string) *AuditEventUpdate
 	return _u
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_u *AuditEventUpdateOne) SetCreatedAt(v time.Time) *AuditEventUpdateOne {
+	_u.mutation.SetCreatedAt(v)
+	return _u
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_u *AuditEventUpdateOne) SetNillableCreatedAt(v *time.Time) *AuditEventUpdateOne {
+	if v != nil {
+		_u.SetCreatedAt(*v)
+	}
+	return _u
+}
+
 // Mutation returns the AuditEventMutation object of the builder.
 func (_u *AuditEventUpdateOne) Mutation() *AuditEventMutation {
 	return _u.mutation
@@ -426,6 +458,9 @@ func (_u *AuditEventUpdateOne) sqlSave(ctx context.Context) (_node *AuditEvent, 
 	}
 	if value, ok := _u.mutation.RequestID(); ok {
 		_spec.SetField(auditevent.FieldRequestID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CreatedAt(); ok {
+		_spec.SetField(auditevent.FieldCreatedAt, field.TypeTime, value)
 	}
 	_node = &AuditEvent{config: _u.config}
 	_spec.Assign = _node.assignValues

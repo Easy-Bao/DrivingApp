@@ -11,11 +11,13 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/bidsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverdocument"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/driverwalletaccount"
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
+	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
 	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/ent/schema"
@@ -31,6 +33,10 @@ func init() {
 	auditeventDescActorID := auditeventFields[0].Descriptor()
 	// auditevent.ActorIDValidator is a validator for the "actor_id" field. It is called by the builders before save.
 	auditevent.ActorIDValidator = auditeventDescActorID.Validators[0].(func(int) error)
+	// auditeventDescCreatedAt is the schema descriptor for created_at field.
+	auditeventDescCreatedAt := auditeventFields[6].Descriptor()
+	// auditevent.DefaultCreatedAt holds the default value on creation for the created_at field.
+	auditevent.DefaultCreatedAt = auditeventDescCreatedAt.Default.(func() time.Time)
 	bidFields := schema.Bid{}.Fields()
 	_ = bidFields
 	// bidDescRideID is the schema descriptor for ride_id field.
@@ -129,6 +135,30 @@ func init() {
 	driverprofile.DefaultWalletBalanceCentavos = driverprofileDescWalletBalanceCentavos.Default.(int64)
 	// driverprofile.WalletBalanceCentavosValidator is a validator for the "wallet_balance_centavos" field. It is called by the builders before save.
 	driverprofile.WalletBalanceCentavosValidator = driverprofileDescWalletBalanceCentavos.Validators[0].(func(int64) error)
+	driverwalletaccountFields := schema.DriverWalletAccount{}.Fields()
+	_ = driverwalletaccountFields
+	// driverwalletaccountDescDriverID is the schema descriptor for driver_id field.
+	driverwalletaccountDescDriverID := driverwalletaccountFields[0].Descriptor()
+	// driverwalletaccount.DriverIDValidator is a validator for the "driver_id" field. It is called by the builders before save.
+	driverwalletaccount.DriverIDValidator = driverwalletaccountDescDriverID.Validators[0].(func(int) error)
+	// driverwalletaccountDescBalanceCentavos is the schema descriptor for balance_centavos field.
+	driverwalletaccountDescBalanceCentavos := driverwalletaccountFields[1].Descriptor()
+	// driverwalletaccount.DefaultBalanceCentavos holds the default value on creation for the balance_centavos field.
+	driverwalletaccount.DefaultBalanceCentavos = driverwalletaccountDescBalanceCentavos.Default.(int64)
+	// driverwalletaccount.BalanceCentavosValidator is a validator for the "balance_centavos" field. It is called by the builders before save.
+	driverwalletaccount.BalanceCentavosValidator = driverwalletaccountDescBalanceCentavos.Validators[0].(func(int64) error)
+	// driverwalletaccountDescVersion is the schema descriptor for version field.
+	driverwalletaccountDescVersion := driverwalletaccountFields[2].Descriptor()
+	// driverwalletaccount.DefaultVersion holds the default value on creation for the version field.
+	driverwalletaccount.DefaultVersion = driverwalletaccountDescVersion.Default.(int64)
+	// driverwalletaccount.VersionValidator is a validator for the "version" field. It is called by the builders before save.
+	driverwalletaccount.VersionValidator = driverwalletaccountDescVersion.Validators[0].(func(int64) error)
+	// driverwalletaccountDescUpdatedAt is the schema descriptor for updated_at field.
+	driverwalletaccountDescUpdatedAt := driverwalletaccountFields[3].Descriptor()
+	// driverwalletaccount.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	driverwalletaccount.DefaultUpdatedAt = driverwalletaccountDescUpdatedAt.Default.(func() time.Time)
+	// driverwalletaccount.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	driverwalletaccount.UpdateDefaultUpdatedAt = driverwalletaccountDescUpdatedAt.UpdateDefault.(func() time.Time)
 	notificationFields := schema.Notification{}.Fields()
 	_ = notificationFields
 	// notificationDescUserID is the schema descriptor for user_id field.
@@ -249,6 +279,60 @@ func init() {
 	ride.DefaultDriverPayoutCentavos = rideDescDriverPayoutCentavos.Default.(int64)
 	// ride.DriverPayoutCentavosValidator is a validator for the "driver_payout_centavos" field. It is called by the builders before save.
 	ride.DriverPayoutCentavosValidator = rideDescDriverPayoutCentavos.Validators[0].(func(int64) error)
+	ridesettlementFields := schema.RideSettlement{}.Fields()
+	_ = ridesettlementFields
+	// ridesettlementDescRideID is the schema descriptor for ride_id field.
+	ridesettlementDescRideID := ridesettlementFields[0].Descriptor()
+	// ridesettlement.RideIDValidator is a validator for the "ride_id" field. It is called by the builders before save.
+	ridesettlement.RideIDValidator = ridesettlementDescRideID.Validators[0].(func(int) error)
+	// ridesettlementDescGrossFareCentavos is the schema descriptor for gross_fare_centavos field.
+	ridesettlementDescGrossFareCentavos := ridesettlementFields[1].Descriptor()
+	// ridesettlement.GrossFareCentavosValidator is a validator for the "gross_fare_centavos" field. It is called by the builders before save.
+	ridesettlement.GrossFareCentavosValidator = ridesettlementDescGrossFareCentavos.Validators[0].(func(int64) error)
+	// ridesettlementDescCommissionBps is the schema descriptor for commission_bps field.
+	ridesettlementDescCommissionBps := ridesettlementFields[2].Descriptor()
+	// ridesettlement.CommissionBpsValidator is a validator for the "commission_bps" field. It is called by the builders before save.
+	ridesettlement.CommissionBpsValidator = func() func(int64) error {
+		validators := ridesettlementDescCommissionBps.Validators
+		fns := [...]func(int64) error{
+			validators[0].(func(int64) error),
+			validators[1].(func(int64) error),
+		}
+		return func(commission_bps int64) error {
+			for _, fn := range fns {
+				if err := fn(commission_bps); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// ridesettlementDescCommissionCentavos is the schema descriptor for commission_centavos field.
+	ridesettlementDescCommissionCentavos := ridesettlementFields[3].Descriptor()
+	// ridesettlement.DefaultCommissionCentavos holds the default value on creation for the commission_centavos field.
+	ridesettlement.DefaultCommissionCentavos = ridesettlementDescCommissionCentavos.Default.(int64)
+	// ridesettlement.CommissionCentavosValidator is a validator for the "commission_centavos" field. It is called by the builders before save.
+	ridesettlement.CommissionCentavosValidator = ridesettlementDescCommissionCentavos.Validators[0].(func(int64) error)
+	// ridesettlementDescDriverPayoutCentavos is the schema descriptor for driver_payout_centavos field.
+	ridesettlementDescDriverPayoutCentavos := ridesettlementFields[4].Descriptor()
+	// ridesettlement.DefaultDriverPayoutCentavos holds the default value on creation for the driver_payout_centavos field.
+	ridesettlement.DefaultDriverPayoutCentavos = ridesettlementDescDriverPayoutCentavos.Default.(int64)
+	// ridesettlement.DriverPayoutCentavosValidator is a validator for the "driver_payout_centavos" field. It is called by the builders before save.
+	ridesettlement.DriverPayoutCentavosValidator = ridesettlementDescDriverPayoutCentavos.Validators[0].(func(int64) error)
+	// ridesettlementDescPaymentStatus is the schema descriptor for payment_status field.
+	ridesettlementDescPaymentStatus := ridesettlementFields[5].Descriptor()
+	// ridesettlement.DefaultPaymentStatus holds the default value on creation for the payment_status field.
+	ridesettlement.DefaultPaymentStatus = ridesettlementDescPaymentStatus.Default.(string)
+	// ridesettlementDescCreatedAt is the schema descriptor for created_at field.
+	ridesettlementDescCreatedAt := ridesettlementFields[8].Descriptor()
+	// ridesettlement.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ridesettlement.DefaultCreatedAt = ridesettlementDescCreatedAt.Default.(func() time.Time)
+	// ridesettlementDescUpdatedAt is the schema descriptor for updated_at field.
+	ridesettlementDescUpdatedAt := ridesettlementFields[9].Descriptor()
+	// ridesettlement.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ridesettlement.DefaultUpdatedAt = ridesettlementDescUpdatedAt.Default.(func() time.Time)
+	// ridesettlement.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ridesettlement.UpdateDefaultUpdatedAt = ridesettlementDescUpdatedAt.UpdateDefault.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

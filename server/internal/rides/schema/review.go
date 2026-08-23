@@ -1,15 +1,24 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
-	"time"
+	"entgo.io/ent/schema/index"
 )
 
 // Review belongs to the ride domain because a rating is created from a
 // completed ride and contributes to driver dispatch metadata.
 type Review struct {
 	ent.Schema
+}
+
+func (Review) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("ride_id").Unique(),
+		index.Fields("driver_id", "created_at"),
+	}
 }
 
 func (Review) Fields() []ent.Field {

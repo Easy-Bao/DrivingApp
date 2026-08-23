@@ -5,15 +5,19 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
-	"github.com/Easy-Bao/DrivingApp/server/ent/migrate"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	"github.com/Easy-Bao/DrivingApp/server/shared-core/database"
 	_ "github.com/lib/pq"
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
 		log.Fatal("DATABASE_URL is required")
@@ -29,10 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer database.Close()
-	if err := platformmigration.PreserveLegacyTables(context.Background(), database); err != nil {
-		log.Fatal(err)
-	}
-	if err := client.Schema.Create(context.Background(), migrate.WithForeignKeys(true)); err != nil {
+	if err := platformmigration.NewRunner(database, client).Run(ctx); err != nil {
 		log.Fatal(err)
 	}
 }

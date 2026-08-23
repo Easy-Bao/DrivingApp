@@ -3,10 +3,15 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 type PassengerProfile struct {
 	ent.Schema
+}
+
+func (PassengerProfile) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("user_id").Unique()}
 }
 
 func (PassengerProfile) Fields() []ent.Field {
@@ -16,6 +21,10 @@ func (PassengerProfile) Fields() []ent.Field {
 		field.String("address").Optional(),
 		field.String("preferred_ride_type").Optional(),
 	}
+}
+
+func (DriverProfile) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("user_id").Unique()}
 }
 
 type DriverProfile struct {

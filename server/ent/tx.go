@@ -24,6 +24,8 @@ type Tx struct {
 	DriverDocument *DriverDocumentClient
 	// DriverProfile is the client for interacting with the DriverProfile builders.
 	DriverProfile *DriverProfileClient
+	// DriverWalletAccount is the client for interacting with the DriverWalletAccount builders.
+	DriverWalletAccount *DriverWalletAccountClient
 	// Notification is the client for interacting with the Notification builders.
 	Notification *NotificationClient
 	// PassengerProfile is the client for interacting with the PassengerProfile builders.
@@ -34,6 +36,8 @@ type Tx struct {
 	Review *ReviewClient
 	// Ride is the client for interacting with the Ride builders.
 	Ride *RideClient
+	// RideSettlement is the client for interacting with the RideSettlement builders.
+	RideSettlement *RideSettlementClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// WalletLedger is the client for interacting with the WalletLedger builders.
@@ -175,11 +179,13 @@ func (tx *Tx) init() {
 	tx.BidSession = NewBidSessionClient(tx.config)
 	tx.DriverDocument = NewDriverDocumentClient(tx.config)
 	tx.DriverProfile = NewDriverProfileClient(tx.config)
+	tx.DriverWalletAccount = NewDriverWalletAccountClient(tx.config)
 	tx.Notification = NewNotificationClient(tx.config)
 	tx.PassengerProfile = NewPassengerProfileClient(tx.config)
 	tx.PassengerReview = NewPassengerReviewClient(tx.config)
 	tx.Review = NewReviewClient(tx.config)
 	tx.Ride = NewRideClient(tx.config)
+	tx.RideSettlement = NewRideSettlementClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.WalletLedger = NewWalletLedgerClient(tx.config)
 }

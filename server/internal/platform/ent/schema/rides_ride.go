@@ -6,10 +6,24 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 type Ride struct {
 	ent.Schema
+}
+
+func (Ride) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("passenger_id", "created_at"),
+		index.Fields("driver_id", "created_at"),
+		index.Fields("driver_id", "status"),
+		index.Fields("passenger_id").
+			Unique().
+			Annotations(entsql.IndexWhere(
+				"status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')",
+			)),
+	}
 }
 
 func (Ride) Fields() []ent.Field {
@@ -47,6 +61,16 @@ type BidSession struct {
 	ent.Schema
 }
 
+func (BidSession) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("expires_at", "created_at"),
+		index.Fields("target_driver_id", "created_at"),
+		index.Fields("passenger_id").
+			Unique().
+			Annotations(entsql.IndexWhere("status = 'open'")),
+	}
+}
+
 func (BidSession) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("passenger_id").Positive(),
@@ -73,6 +97,15 @@ type BidOffer struct {
 	ent.Schema
 }
 
+func (BidOffer) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("session_id", "created_at"),
+		index.Fields("session_id", "driver_id").
+			Unique().
+			Annotations(entsql.IndexWhere("status = 'pending'")),
+	}
+}
+
 func (BidOffer) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("session_id").Positive(),
@@ -88,6 +121,14 @@ func (BidOffer) Fields() []ent.Field {
 
 type Bid struct {
 	ent.Schema
+}
+
+func (Bid) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("ride_id", "driver_id").
+			Unique().
+			Annotations(entsql.IndexWhere("status = 'pending'")),
+	}
 }
 
 func (Bid) Fields() []ent.Field {

@@ -24,6 +24,9 @@ type DriverDocument func(*sql.Selector)
 // DriverProfile is the predicate function for driverprofile builders.
 type DriverProfile func(*sql.Selector)
 
+// DriverWalletAccount is the predicate function for driverwalletaccount builders.
+type DriverWalletAccount func(*sql.Selector)
+
 // Notification is the predicate function for notification builders.
 type Notification func(*sql.Selector)
 
@@ -38,6 +41,9 @@ type Review func(*sql.Selector)
 
 // Ride is the predicate function for ride builders.
 type Ride func(*sql.Selector)
+
+// RideSettlement is the predicate function for ridesettlement builders.
+type RideSettlement func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

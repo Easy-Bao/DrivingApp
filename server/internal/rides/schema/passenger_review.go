@@ -1,10 +1,11 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
-	"time"
 )
 
 type PassengerReview struct {
@@ -23,5 +24,8 @@ func (PassengerReview) Fields() []ent.Field {
 }
 
 func (PassengerReview) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("ride_id").Unique()}
+	return []ent.Index{
+		index.Fields("ride_id").Unique(),
+		index.Fields("passenger_id", "created_at"),
+	}
 }

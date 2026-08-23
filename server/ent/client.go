@@ -20,11 +20,13 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/bidsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverdocument"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
+	"github.com/Easy-Bao/DrivingApp/server/ent/driverwalletaccount"
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
+	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
 	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
 )
@@ -46,6 +48,8 @@ type Client struct {
 	DriverDocument *DriverDocumentClient
 	// DriverProfile is the client for interacting with the DriverProfile builders.
 	DriverProfile *DriverProfileClient
+	// DriverWalletAccount is the client for interacting with the DriverWalletAccount builders.
+	DriverWalletAccount *DriverWalletAccountClient
 	// Notification is the client for interacting with the Notification builders.
 	Notification *NotificationClient
 	// PassengerProfile is the client for interacting with the PassengerProfile builders.
@@ -56,6 +60,8 @@ type Client struct {
 	Review *ReviewClient
 	// Ride is the client for interacting with the Ride builders.
 	Ride *RideClient
+	// RideSettlement is the client for interacting with the RideSettlement builders.
+	RideSettlement *RideSettlementClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// WalletLedger is the client for interacting with the WalletLedger builders.
@@ -77,11 +83,13 @@ func (c *Client) init() {
 	c.BidSession = NewBidSessionClient(c.config)
 	c.DriverDocument = NewDriverDocumentClient(c.config)
 	c.DriverProfile = NewDriverProfileClient(c.config)
+	c.DriverWalletAccount = NewDriverWalletAccountClient(c.config)
 	c.Notification = NewNotificationClient(c.config)
 	c.PassengerProfile = NewPassengerProfileClient(c.config)
 	c.PassengerReview = NewPassengerReviewClient(c.config)
 	c.Review = NewReviewClient(c.config)
 	c.Ride = NewRideClient(c.config)
+	c.RideSettlement = NewRideSettlementClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.WalletLedger = NewWalletLedgerClient(c.config)
 }
@@ -174,21 +182,23 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		AuditEvent:       NewAuditEventClient(cfg),
-		Bid:              NewBidClient(cfg),
-		BidOffer:         NewBidOfferClient(cfg),
-		BidSession:       NewBidSessionClient(cfg),
-		DriverDocument:   NewDriverDocumentClient(cfg),
-		DriverProfile:    NewDriverProfileClient(cfg),
-		Notification:     NewNotificationClient(cfg),
-		PassengerProfile: NewPassengerProfileClient(cfg),
-		PassengerReview:  NewPassengerReviewClient(cfg),
-		Review:           NewReviewClient(cfg),
-		Ride:             NewRideClient(cfg),
-		User:             NewUserClient(cfg),
-		WalletLedger:     NewWalletLedgerClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		AuditEvent:          NewAuditEventClient(cfg),
+		Bid:                 NewBidClient(cfg),
+		BidOffer:            NewBidOfferClient(cfg),
+		BidSession:          NewBidSessionClient(cfg),
+		DriverDocument:      NewDriverDocumentClient(cfg),
+		DriverProfile:       NewDriverProfileClient(cfg),
+		DriverWalletAccount: NewDriverWalletAccountClient(cfg),
+		Notification:        NewNotificationClient(cfg),
+		PassengerProfile:    NewPassengerProfileClient(cfg),
+		PassengerReview:     NewPassengerReviewClient(cfg),
+		Review:              NewReviewClient(cfg),
+		Ride:                NewRideClient(cfg),
+		RideSettlement:      NewRideSettlementClient(cfg),
+		User:                NewUserClient(cfg),
+		WalletLedger:        NewWalletLedgerClient(cfg),
 	}, nil
 }
 
@@ -206,21 +216,23 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		AuditEvent:       NewAuditEventClient(cfg),
-		Bid:              NewBidClient(cfg),
-		BidOffer:         NewBidOfferClient(cfg),
-		BidSession:       NewBidSessionClient(cfg),
-		DriverDocument:   NewDriverDocumentClient(cfg),
-		DriverProfile:    NewDriverProfileClient(cfg),
-		Notification:     NewNotificationClient(cfg),
-		PassengerProfile: NewPassengerProfileClient(cfg),
-		PassengerReview:  NewPassengerReviewClient(cfg),
-		Review:           NewReviewClient(cfg),
-		Ride:             NewRideClient(cfg),
-		User:             NewUserClient(cfg),
-		WalletLedger:     NewWalletLedgerClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		AuditEvent:          NewAuditEventClient(cfg),
+		Bid:                 NewBidClient(cfg),
+		BidOffer:            NewBidOfferClient(cfg),
+		BidSession:          NewBidSessionClient(cfg),
+		DriverDocument:      NewDriverDocumentClient(cfg),
+		DriverProfile:       NewDriverProfileClient(cfg),
+		DriverWalletAccount: NewDriverWalletAccountClient(cfg),
+		Notification:        NewNotificationClient(cfg),
+		PassengerProfile:    NewPassengerProfileClient(cfg),
+		PassengerReview:     NewPassengerReviewClient(cfg),
+		Review:              NewReviewClient(cfg),
+		Ride:                NewRideClient(cfg),
+		RideSettlement:      NewRideSettlementClient(cfg),
+		User:                NewUserClient(cfg),
+		WalletLedger:        NewWalletLedgerClient(cfg),
 	}, nil
 }
 
@@ -251,8 +263,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
-		c.DriverProfile, c.Notification, c.PassengerProfile, c.PassengerReview,
-		c.Review, c.Ride, c.User, c.WalletLedger,
+		c.DriverProfile, c.DriverWalletAccount, c.Notification, c.PassengerProfile,
+		c.PassengerReview, c.Review, c.Ride, c.RideSettlement, c.User, c.WalletLedger,
 	} {
 		n.Use(hooks...)
 	}
@@ -263,8 +275,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
-		c.DriverProfile, c.Notification, c.PassengerProfile, c.PassengerReview,
-		c.Review, c.Ride, c.User, c.WalletLedger,
+		c.DriverProfile, c.DriverWalletAccount, c.Notification, c.PassengerProfile,
+		c.PassengerReview, c.Review, c.Ride, c.RideSettlement, c.User, c.WalletLedger,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -285,6 +297,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DriverDocument.mutate(ctx, m)
 	case *DriverProfileMutation:
 		return c.DriverProfile.mutate(ctx, m)
+	case *DriverWalletAccountMutation:
+		return c.DriverWalletAccount.mutate(ctx, m)
 	case *NotificationMutation:
 		return c.Notification.mutate(ctx, m)
 	case *PassengerProfileMutation:
@@ -295,6 +309,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Review.mutate(ctx, m)
 	case *RideMutation:
 		return c.Ride.mutate(ctx, m)
+	case *RideSettlementMutation:
+		return c.RideSettlement.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *WalletLedgerMutation:
@@ -1102,6 +1118,139 @@ func (c *DriverProfileClient) mutate(ctx context.Context, m *DriverProfileMutati
 	}
 }
 
+// DriverWalletAccountClient is a client for the DriverWalletAccount schema.
+type DriverWalletAccountClient struct {
+	config
+}
+
+// NewDriverWalletAccountClient returns a client for the DriverWalletAccount from the given config.
+func NewDriverWalletAccountClient(c config) *DriverWalletAccountClient {
+	return &DriverWalletAccountClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `driverwalletaccount.Hooks(f(g(h())))`.
+func (c *DriverWalletAccountClient) Use(hooks ...Hook) {
+	c.hooks.DriverWalletAccount = append(c.hooks.DriverWalletAccount, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `driverwalletaccount.Intercept(f(g(h())))`.
+func (c *DriverWalletAccountClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DriverWalletAccount = append(c.inters.DriverWalletAccount, interceptors...)
+}
+
+// Create returns a builder for creating a DriverWalletAccount entity.
+func (c *DriverWalletAccountClient) Create() *DriverWalletAccountCreate {
+	mutation := newDriverWalletAccountMutation(c.config, OpCreate)
+	return &DriverWalletAccountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DriverWalletAccount entities.
+func (c *DriverWalletAccountClient) CreateBulk(builders ...*DriverWalletAccountCreate) *DriverWalletAccountCreateBulk {
+	return &DriverWalletAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DriverWalletAccountClient) MapCreateBulk(slice any, setFunc func(*DriverWalletAccountCreate, int)) *DriverWalletAccountCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DriverWalletAccountCreateBulk{err: fmt.Errorf("calling to DriverWalletAccountClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DriverWalletAccountCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DriverWalletAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DriverWalletAccount.
+func (c *DriverWalletAccountClient) Update() *DriverWalletAccountUpdate {
+	mutation := newDriverWalletAccountMutation(c.config, OpUpdate)
+	return &DriverWalletAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DriverWalletAccountClient) UpdateOne(_m *DriverWalletAccount) *DriverWalletAccountUpdateOne {
+	mutation := newDriverWalletAccountMutation(c.config, OpUpdateOne, withDriverWalletAccount(_m))
+	return &DriverWalletAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DriverWalletAccountClient) UpdateOneID(id int) *DriverWalletAccountUpdateOne {
+	mutation := newDriverWalletAccountMutation(c.config, OpUpdateOne, withDriverWalletAccountID(id))
+	return &DriverWalletAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DriverWalletAccount.
+func (c *DriverWalletAccountClient) Delete() *DriverWalletAccountDelete {
+	mutation := newDriverWalletAccountMutation(c.config, OpDelete)
+	return &DriverWalletAccountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DriverWalletAccountClient) DeleteOne(_m *DriverWalletAccount) *DriverWalletAccountDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DriverWalletAccountClient) DeleteOneID(id int) *DriverWalletAccountDeleteOne {
+	builder := c.Delete().Where(driverwalletaccount.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DriverWalletAccountDeleteOne{builder}
+}
+
+// Query returns a query builder for DriverWalletAccount.
+func (c *DriverWalletAccountClient) Query() *DriverWalletAccountQuery {
+	return &DriverWalletAccountQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDriverWalletAccount},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DriverWalletAccount entity by its id.
+func (c *DriverWalletAccountClient) Get(ctx context.Context, id int) (*DriverWalletAccount, error) {
+	return c.Query().Where(driverwalletaccount.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DriverWalletAccountClient) GetX(ctx context.Context, id int) *DriverWalletAccount {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *DriverWalletAccountClient) Hooks() []Hook {
+	return c.hooks.DriverWalletAccount
+}
+
+// Interceptors returns the client interceptors.
+func (c *DriverWalletAccountClient) Interceptors() []Interceptor {
+	return c.inters.DriverWalletAccount
+}
+
+func (c *DriverWalletAccountClient) mutate(ctx context.Context, m *DriverWalletAccountMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DriverWalletAccountCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DriverWalletAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DriverWalletAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DriverWalletAccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DriverWalletAccount mutation op: %q", m.Op())
+	}
+}
+
 // NotificationClient is a client for the Notification schema.
 type NotificationClient struct {
 	config
@@ -1767,6 +1916,139 @@ func (c *RideClient) mutate(ctx context.Context, m *RideMutation) (Value, error)
 	}
 }
 
+// RideSettlementClient is a client for the RideSettlement schema.
+type RideSettlementClient struct {
+	config
+}
+
+// NewRideSettlementClient returns a client for the RideSettlement from the given config.
+func NewRideSettlementClient(c config) *RideSettlementClient {
+	return &RideSettlementClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ridesettlement.Hooks(f(g(h())))`.
+func (c *RideSettlementClient) Use(hooks ...Hook) {
+	c.hooks.RideSettlement = append(c.hooks.RideSettlement, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ridesettlement.Intercept(f(g(h())))`.
+func (c *RideSettlementClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RideSettlement = append(c.inters.RideSettlement, interceptors...)
+}
+
+// Create returns a builder for creating a RideSettlement entity.
+func (c *RideSettlementClient) Create() *RideSettlementCreate {
+	mutation := newRideSettlementMutation(c.config, OpCreate)
+	return &RideSettlementCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RideSettlement entities.
+func (c *RideSettlementClient) CreateBulk(builders ...*RideSettlementCreate) *RideSettlementCreateBulk {
+	return &RideSettlementCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RideSettlementClient) MapCreateBulk(slice any, setFunc func(*RideSettlementCreate, int)) *RideSettlementCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RideSettlementCreateBulk{err: fmt.Errorf("calling to RideSettlementClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RideSettlementCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RideSettlementCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RideSettlement.
+func (c *RideSettlementClient) Update() *RideSettlementUpdate {
+	mutation := newRideSettlementMutation(c.config, OpUpdate)
+	return &RideSettlementUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RideSettlementClient) UpdateOne(_m *RideSettlement) *RideSettlementUpdateOne {
+	mutation := newRideSettlementMutation(c.config, OpUpdateOne, withRideSettlement(_m))
+	return &RideSettlementUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RideSettlementClient) UpdateOneID(id int) *RideSettlementUpdateOne {
+	mutation := newRideSettlementMutation(c.config, OpUpdateOne, withRideSettlementID(id))
+	return &RideSettlementUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RideSettlement.
+func (c *RideSettlementClient) Delete() *RideSettlementDelete {
+	mutation := newRideSettlementMutation(c.config, OpDelete)
+	return &RideSettlementDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RideSettlementClient) DeleteOne(_m *RideSettlement) *RideSettlementDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RideSettlementClient) DeleteOneID(id int) *RideSettlementDeleteOne {
+	builder := c.Delete().Where(ridesettlement.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RideSettlementDeleteOne{builder}
+}
+
+// Query returns a query builder for RideSettlement.
+func (c *RideSettlementClient) Query() *RideSettlementQuery {
+	return &RideSettlementQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRideSettlement},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RideSettlement entity by its id.
+func (c *RideSettlementClient) Get(ctx context.Context, id int) (*RideSettlement, error) {
+	return c.Query().Where(ridesettlement.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RideSettlementClient) GetX(ctx context.Context, id int) *RideSettlement {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RideSettlementClient) Hooks() []Hook {
+	return c.hooks.RideSettlement
+}
+
+// Interceptors returns the client interceptors.
+func (c *RideSettlementClient) Interceptors() []Interceptor {
+	return c.inters.RideSettlement
+}
+
+func (c *RideSettlementClient) mutate(ctx context.Context, m *RideSettlementMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RideSettlementCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RideSettlementUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RideSettlementUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RideSettlementDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RideSettlement mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -2037,12 +2319,12 @@ func (c *WalletLedgerClient) mutate(ctx context.Context, m *WalletLedgerMutation
 type (
 	hooks struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
-		Notification, PassengerProfile, PassengerReview, Review, Ride, User,
-		WalletLedger []ent.Hook
+		DriverWalletAccount, Notification, PassengerProfile, PassengerReview, Review,
+		Ride, RideSettlement, User, WalletLedger []ent.Hook
 	}
 	inters struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
-		Notification, PassengerProfile, PassengerReview, Review, Ride, User,
-		WalletLedger []ent.Interceptor
+		DriverWalletAccount, Notification, PassengerProfile, PassengerReview, Review,
+		Ride, RideSettlement, User, WalletLedger []ent.Interceptor
 	}
 )

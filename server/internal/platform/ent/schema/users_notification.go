@@ -1,13 +1,19 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
-	"time"
+	"entgo.io/ent/schema/index"
 )
 
 type Notification struct {
 	ent.Schema
+}
+
+func (Notification) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("user_id", "created_at")}
 }
 
 func (Notification) Fields() []ent.Field {

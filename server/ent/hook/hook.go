@@ -81,6 +81,18 @@ func (f DriverProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DriverProfileMutation", m)
 }
 
+// The DriverWalletAccountFunc type is an adapter to allow the use of ordinary
+// function as DriverWalletAccount mutator.
+type DriverWalletAccountFunc func(context.Context, *ent.DriverWalletAccountMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DriverWalletAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DriverWalletAccountMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DriverWalletAccountMutation", m)
+}
+
 // The NotificationFunc type is an adapter to allow the use of ordinary
 // function as Notification mutator.
 type NotificationFunc func(context.Context, *ent.NotificationMutation) (ent.Value, error)
@@ -139,6 +151,18 @@ func (f RideFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RideMutation", m)
+}
+
+// The RideSettlementFunc type is an adapter to allow the use of ordinary
+// function as RideSettlement mutator.
+type RideSettlementFunc func(context.Context, *ent.RideSettlementMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RideSettlementFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RideSettlementMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RideSettlementMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

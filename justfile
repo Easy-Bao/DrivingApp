@@ -58,7 +58,7 @@ db-down:
 infra-up:
     docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis rabbitmq
 
-# Apply the single Ent migration stream to the configured native PostgreSQL.
+# Apply the ordered additive migration plan to configured native PostgreSQL.
 db-migrate:
     cd server && go run ./cmd/migrate
 

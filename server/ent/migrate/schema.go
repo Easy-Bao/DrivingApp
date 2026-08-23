@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -17,12 +18,20 @@ var (
 		{Name: "target_id", Type: field.TypeString, Nullable: true},
 		{Name: "outcome", Type: field.TypeString},
 		{Name: "request_id", Type: field.TypeString, Unique: true},
+		{Name: "created_at", Type: field.TypeTime, Default: schema.Expr("CURRENT_TIMESTAMP")},
 	}
 	// AuditEventsTable holds the schema information for the "audit_events" table.
 	AuditEventsTable = &schema.Table{
 		Name:       "audit_events",
 		Columns:    AuditEventsColumns,
 		PrimaryKey: []*schema.Column{AuditEventsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "auditevent_actor_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{AuditEventsColumns[1], AuditEventsColumns[7]},
+			},
+		},
 	}
 	// BidsColumns holds the columns for the "bids" table.
 	BidsColumns = []*schema.Column{
@@ -37,6 +46,16 @@ var (
 		Name:       "bids",
 		Columns:    BidsColumns,
 		PrimaryKey: []*schema.Column{BidsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "bid_ride_id_driver_id",
+				Unique:  true,
+				Columns: []*schema.Column{BidsColumns[1], BidsColumns[2]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "status = 'pending'",
+				},
+			},
+		},
 	}
 	// BidOffersColumns holds the columns for the "bid_offers" table.
 	BidOffersColumns = []*schema.Column{
@@ -55,6 +74,21 @@ var (
 		Name:       "bid_offers",
 		Columns:    BidOffersColumns,
 		PrimaryKey: []*schema.Column{BidOffersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "bidoffer_session_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{BidOffersColumns[1], BidOffersColumns[8]},
+			},
+			{
+				Name:    "bidoffer_session_id_driver_id",
+				Unique:  true,
+				Columns: []*schema.Column{BidOffersColumns[1], BidOffersColumns[2]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "status = 'pending'",
+				},
+			},
+		},
 	}
 	// BidSessionsColumns holds the columns for the "bid_sessions" table.
 	BidSessionsColumns = []*schema.Column{
@@ -82,6 +116,26 @@ var (
 		Name:       "bid_sessions",
 		Columns:    BidSessionsColumns,
 		PrimaryKey: []*schema.Column{BidSessionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "bidsession_expires_at_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{BidSessionsColumns[16], BidSessionsColumns[17]},
+			},
+			{
+				Name:    "bidsession_target_driver_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{BidSessionsColumns[14], BidSessionsColumns[17]},
+			},
+			{
+				Name:    "bidsession_passenger_id",
+				Unique:  true,
+				Columns: []*schema.Column{BidSessionsColumns[1]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "status = 'open'",
+				},
+			},
+		},
 	}
 	// DriverDocumentsColumns holds the columns for the "driver_documents" table.
 	DriverDocumentsColumns = []*schema.Column{
@@ -96,6 +150,13 @@ var (
 		Name:       "driver_documents",
 		Columns:    DriverDocumentsColumns,
 		PrimaryKey: []*schema.Column{DriverDocumentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "driverdocument_driver_id_document_type",
+				Unique:  false,
+				Columns: []*schema.Column{DriverDocumentsColumns[1], DriverDocumentsColumns[2]},
+			},
+		},
 	}
 	// DriverProfilesColumns holds the columns for the "driver_profiles" table.
 	DriverProfilesColumns = []*schema.Column{
@@ -113,6 +174,34 @@ var (
 		Name:       "driver_profiles",
 		Columns:    DriverProfilesColumns,
 		PrimaryKey: []*schema.Column{DriverProfilesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "driverprofile_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{DriverProfilesColumns[1]},
+			},
+		},
+	}
+	// DriverWalletAccountsColumns holds the columns for the "driver_wallet_accounts" table.
+	DriverWalletAccountsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "driver_id", Type: field.TypeInt},
+		{Name: "balance_centavos", Type: field.TypeInt64, Default: 0},
+		{Name: "version", Type: field.TypeInt64, Default: 0},
+		{Name: "updated_at", Type: field.TypeTime, Default: schema.Expr("CURRENT_TIMESTAMP")},
+	}
+	// DriverWalletAccountsTable holds the schema information for the "driver_wallet_accounts" table.
+	DriverWalletAccountsTable = &schema.Table{
+		Name:       "driver_wallet_accounts",
+		Columns:    DriverWalletAccountsColumns,
+		PrimaryKey: []*schema.Column{DriverWalletAccountsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "driverwalletaccount_driver_id",
+				Unique:  true,
+				Columns: []*schema.Column{DriverWalletAccountsColumns[1]},
+			},
+		},
 	}
 	// NotificationsColumns holds the columns for the "notifications" table.
 	NotificationsColumns = []*schema.Column{
@@ -129,6 +218,13 @@ var (
 		Name:       "notifications",
 		Columns:    NotificationsColumns,
 		PrimaryKey: []*schema.Column{NotificationsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "notification_user_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{NotificationsColumns[1], NotificationsColumns[6]},
+			},
+		},
 	}
 	// PassengerProfilesColumns holds the columns for the "passenger_profiles" table.
 	PassengerProfilesColumns = []*schema.Column{
@@ -143,6 +239,13 @@ var (
 		Name:       "passenger_profiles",
 		Columns:    PassengerProfilesColumns,
 		PrimaryKey: []*schema.Column{PassengerProfilesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "passengerprofile_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{PassengerProfilesColumns[1]},
+			},
+		},
 	}
 	// PassengerReviewsColumns holds the columns for the "passenger_reviews" table.
 	PassengerReviewsColumns = []*schema.Column{
@@ -165,6 +268,11 @@ var (
 				Unique:  true,
 				Columns: []*schema.Column{PassengerReviewsColumns[1]},
 			},
+			{
+				Name:    "passengerreview_passenger_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{PassengerReviewsColumns[3], PassengerReviewsColumns[6]},
+			},
 		},
 	}
 	// ReviewsColumns holds the columns for the "reviews" table.
@@ -183,6 +291,18 @@ var (
 		Name:       "reviews",
 		Columns:    ReviewsColumns,
 		PrimaryKey: []*schema.Column{ReviewsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "review_ride_id",
+				Unique:  true,
+				Columns: []*schema.Column{ReviewsColumns[1]},
+			},
+			{
+				Name:    "review_driver_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ReviewsColumns[2], ReviewsColumns[7]},
+			},
+		},
 	}
 	// RidesColumns holds the columns for the "rides" table.
 	RidesColumns = []*schema.Column{
@@ -217,6 +337,63 @@ var (
 		Name:       "rides",
 		Columns:    RidesColumns,
 		PrimaryKey: []*schema.Column{RidesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ride_passenger_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{RidesColumns[1], RidesColumns[18]},
+			},
+			{
+				Name:    "ride_driver_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{RidesColumns[2], RidesColumns[18]},
+			},
+			{
+				Name:    "ride_driver_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{RidesColumns[2], RidesColumns[3]},
+			},
+			{
+				Name:    "ride_passenger_id",
+				Unique:  true,
+				Columns: []*schema.Column{RidesColumns[1]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')",
+				},
+			},
+		},
+	}
+	// RideSettlementsColumns holds the columns for the "ride_settlements" table.
+	RideSettlementsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "ride_id", Type: field.TypeInt},
+		{Name: "gross_fare_centavos", Type: field.TypeInt64},
+		{Name: "commission_bps", Type: field.TypeInt64, Nullable: true},
+		{Name: "commission_centavos", Type: field.TypeInt64, Default: 0},
+		{Name: "driver_payout_centavos", Type: field.TypeInt64, Default: 0},
+		{Name: "payment_status", Type: field.TypeString, Default: "unpaid"},
+		{Name: "cash_received_at", Type: field.TypeTime, Nullable: true},
+		{Name: "settled_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime, Default: schema.Expr("CURRENT_TIMESTAMP")},
+		{Name: "updated_at", Type: field.TypeTime, Default: schema.Expr("CURRENT_TIMESTAMP")},
+	}
+	// RideSettlementsTable holds the schema information for the "ride_settlements" table.
+	RideSettlementsTable = &schema.Table{
+		Name:       "ride_settlements",
+		Columns:    RideSettlementsColumns,
+		PrimaryKey: []*schema.Column{RideSettlementsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ridesettlement_ride_id",
+				Unique:  true,
+				Columns: []*schema.Column{RideSettlementsColumns[1]},
+			},
+			{
+				Name:    "ridesettlement_payment_status_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{RideSettlementsColumns[6], RideSettlementsColumns[10]},
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
@@ -265,11 +442,13 @@ var (
 		BidSessionsTable,
 		DriverDocumentsTable,
 		DriverProfilesTable,
+		DriverWalletAccountsTable,
 		NotificationsTable,
 		PassengerProfilesTable,
 		PassengerReviewsTable,
 		ReviewsTable,
 		RidesTable,
+		RideSettlementsTable,
 		UsersTable,
 		WalletLedgersTable,
 	}

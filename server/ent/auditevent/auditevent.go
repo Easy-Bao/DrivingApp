@@ -3,6 +3,8 @@
 package auditevent
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 )
 
@@ -23,6 +25,8 @@ const (
 	FieldOutcome = "outcome"
 	// FieldRequestID holds the string denoting the request_id field in the database.
 	FieldRequestID = "request_id"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
 	// Table holds the table name of the auditevent in the database.
 	Table = "audit_events"
 )
@@ -36,6 +40,7 @@ var Columns = []string{
 	FieldTargetID,
 	FieldOutcome,
 	FieldRequestID,
+	FieldCreatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -51,6 +56,8 @@ func ValidColumn(column string) bool {
 var (
 	// ActorIDValidator is a validator for the "actor_id" field. It is called by the builders before save.
 	ActorIDValidator func(int) error
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
 )
 
 // OrderOption defines the ordering options for the AuditEvent queries.
@@ -89,4 +96,9 @@ func ByOutcome(opts ...sql.OrderTermOption) OrderOption {
 // ByRequestID orders the results by the request_id field.
 func ByRequestID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRequestID, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }

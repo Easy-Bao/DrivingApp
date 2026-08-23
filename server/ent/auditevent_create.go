@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -63,6 +64,20 @@ func (_c *AuditEventCreate) SetRequestID(v string) *AuditEventCreate {
 	return _c
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *AuditEventCreate) SetCreatedAt(v time.Time) *AuditEventCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *AuditEventCreate) SetNillableCreatedAt(v *time.Time) *AuditEventCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
 // Mutation returns the AuditEventMutation object of the builder.
 func (_c *AuditEventCreate) Mutation() *AuditEventMutation {
 	return _c.mutation
@@ -70,6 +85,7 @@ func (_c *AuditEventCreate) Mutation() *AuditEventMutation {
 
 // Save creates the AuditEvent in the database.
 func (_c *AuditEventCreate) Save(ctx context.Context) (*AuditEvent, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -92,6 +108,14 @@ func (_c *AuditEventCreate) Exec(ctx context.Context) error {
 func (_c *AuditEventCreate) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_c *AuditEventCreate) defaults() {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := auditevent.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
 	}
 }
 
@@ -167,6 +191,10 @@ func (_c *AuditEventCreate) createSpec() (*AuditEvent, *sqlgraph.CreateSpec) {
 		_spec.SetField(auditevent.FieldRequestID, field.TypeString, value)
 		_node.RequestID = value
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(auditevent.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
 	return _node, _spec
 }
 
@@ -188,6 +216,7 @@ func (_c *AuditEventCreateBulk) Save(ctx context.Context) ([]*AuditEvent, error)
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*AuditEventMutation)
 				if !ok {

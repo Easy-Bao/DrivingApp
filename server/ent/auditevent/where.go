@@ -3,6 +3,8 @@
 package auditevent
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent/predicate"
 )
@@ -80,6 +82,11 @@ func Outcome(v string) predicate.AuditEvent {
 // RequestID applies equality check predicate on the "request_id" field. It's identical to RequestIDEQ.
 func RequestID(v string) predicate.AuditEvent {
 	return predicate.AuditEvent(sql.FieldEQ(FieldRequestID, v))
+}
+
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldEQ(FieldCreatedAt, v))
 }
 
 // ActorIDEQ applies the EQ predicate on the "actor_id" field.
@@ -455,6 +462,46 @@ func RequestIDEqualFold(v string) predicate.AuditEvent {
 // RequestIDContainsFold applies the ContainsFold predicate on the "request_id" field.
 func RequestIDContainsFold(v string) predicate.AuditEvent {
 	return predicate.AuditEvent(sql.FieldContainsFold(FieldRequestID, v))
+}
+
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldNEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldNotIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldGT(FieldCreatedAt, v))
+}
+
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldGTE(FieldCreatedAt, v))
+}
+
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldLT(FieldCreatedAt, v))
+}
+
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.AuditEvent {
+	return predicate.AuditEvent(sql.FieldLTE(FieldCreatedAt, v))
 }
 
 // And groups predicates with the AND operator between them.
