@@ -1,9 +1,11 @@
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
+import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/view/driver_account_page.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -72,7 +74,10 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.themeData,
-        home: DriverAccountPage(repository: repository),
+        home: BlocProvider(
+          create: (_) => DriverAccountCubit(repository: repository)..load(),
+          child: const DriverAccountPage(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

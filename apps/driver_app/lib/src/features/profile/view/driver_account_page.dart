@@ -6,16 +6,16 @@ import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
+import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
-import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class DriverAccountPage extends StatefulWidget {
-  const DriverAccountPage({super.key, required this.repository});
-
-  final IDriverProfileRepository repository;
+  const DriverAccountPage({super.key});
 
   @override
   State<DriverAccountPage> createState() => _DriverAccountPageState();
@@ -37,22 +37,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   @override
   void initState() {
     super.initState();
-    _loadCachedProfile();
-    unawaited(_fetchUpdatedData());
-  }
-
-  void _loadCachedProfile() {
-    _applyAccount(widget.repository.getCachedAccount());
-  }
-
-  Future<void> _fetchUpdatedData() async {
-    DriverAccountSnapshot? account;
-    (await widget.repository.refreshAccount()).fold(
-      (failure) => debugPrint('Unable to refresh driver account: $failure'),
-      (value) => account = value,
-    );
-    if (!mounted || account == null) return;
-    setState(() => _applyAccount(account!));
+    _applyAccount(BlocProvider.of<DriverAccountCubit>(context).state.account);
   }
 
   void _applyAccount(DriverAccountSnapshot account) {
@@ -69,55 +54,63 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
+    return BlocListener<DriverAccountCubit, DriverAccountState>(
+      listenWhen: (previous, current) => previous.account != current.account,
+      listener: (_, state) {
+        if (mounted) setState(() => _applyAccount(state.account));
+      },
+      child: Scaffold(
         backgroundColor: AppTheme.background,
-        title: const Text('Account'),
-      ),
-      body: SafeArea(
-        top: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
-            final compact = constraints.maxHeight < 650;
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                compact ? 6 : 12,
-                horizontalPadding,
-                MediaQuery.paddingOf(context).bottom + 78,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildProfileSummary(compact: compact),
-                      SizedBox(height: compact ? 10 : 14),
-                      _buildVehicleSummary(compact: compact),
-                      SizedBox(height: compact ? 12 : 18),
-                      _buildSectionLabel('Performance'),
-                      const SizedBox(height: 6),
-                      _buildStatsCard(compact: compact),
-                      SizedBox(height: compact ? 12 : 18),
-                      _buildSectionLabel('Account Settings'),
-                      const SizedBox(height: 6),
-                      _buildSettingsGroup(
-                        _buildAccountItems(context),
-                        compact: compact,
-                      ),
-                      const Spacer(),
-                      SizedBox(height: compact ? 6 : 10),
-                      _buildLogoutButton(context),
-                    ],
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: AppTheme.background,
+          title: const Text('Account'),
+        ),
+        body: SafeArea(
+          top: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final horizontalPadding = constraints.maxWidth < 360
+                  ? 16.0
+                  : 24.0;
+              final compact = constraints.maxHeight < 650;
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  compact ? 6 : 12,
+                  horizontalPadding,
+                  MediaQuery.paddingOf(context).bottom + 78,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildProfileSummary(compact: compact),
+                        SizedBox(height: compact ? 10 : 14),
+                        _buildVehicleSummary(compact: compact),
+                        SizedBox(height: compact ? 12 : 18),
+                        _buildSectionLabel('Performance'),
+                        const SizedBox(height: 6),
+                        _buildStatsCard(compact: compact),
+                        SizedBox(height: compact ? 12 : 18),
+                        _buildSectionLabel('Account Settings'),
+                        const SizedBox(height: 6),
+                        _buildSettingsGroup(
+                          _buildAccountItems(context),
+                          compact: compact,
+                        ),
+                        const Spacer(),
+                        SizedBox(height: compact ? 6 : 10),
+                        _buildLogoutButton(context),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

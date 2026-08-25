@@ -34,6 +34,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       final current = (state as SettingsLoadedState).settings;
       final updated = current.copyWith(locationSharingEnabled: enabled);
       emit(SettingsLoadedState(updated));
+      await settingsRepository.updateUserSettings(updated);
     }
   }
 

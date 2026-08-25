@@ -41,8 +41,13 @@ class ProfileModule {
     ChildRoute(
       name: ProfileRoutes.profileInfo,
       ProfileRoutes.profileInfoPath,
-      child: (context, GoRouterState state) => ProfileInfoPage(
-        repository: Modular.get<IPassengerProfileRepository>(),
+      child: (context, GoRouterState state) => BlocProvider<ProfileCubit>(
+        create: (_) {
+          final cubit = Modular.get<ProfileCubit>();
+          unawaited(cubit.loadProfile());
+          return cubit;
+        },
+        child: const ProfileInfoPage(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

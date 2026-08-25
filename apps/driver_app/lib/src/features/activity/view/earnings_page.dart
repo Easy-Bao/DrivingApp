@@ -1,11 +1,10 @@
-import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/theme/app_theme.dart';
-import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
+import 'package:driver_app/src/features/activity/bloc/earnings/earnings_cubit.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:shared_core/shared_core.dart';
 
 enum _EarningsPeriod { daily, weekly, monthly }
 
@@ -19,13 +18,7 @@ class DriverEarningsPage extends StatefulWidget {
 class _DriverEarningsPageState extends State<DriverEarningsPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
-  bool _isLoading = true;
-  String? _errorMessage;
   _EarningsPeriod _selectedPeriod = _EarningsPeriod.weekly;
-  double _periodTotal = 0;
-  int _periodTripsCount = 0;
-  Map<_EarningsPeriod, _EarningsSummary> _summaries = const {};
-  List<_EarnDay> _dailyData = const [];
 
   @override
   void initState() {
@@ -35,68 +28,12 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       initialIndex: _selectedPeriod.index,
       vsync: this,
     );
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-    }
-
-    final secureSession = Modular.get<SecureSessionService>();
-    final driverId = await secureSession.readDriverId() ?? '';
-
-    if (driverId.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Your driver session is unavailable.';
-        });
-      }
-      return;
-    }
-
-    final result = await Modular.get<IDriverActivityRepository>()
-        .fetchEarningsSummary(driverId);
-    if (!mounted) return;
-
-    result.fold(
-      (failure) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = ErrorHandler.getErrorMessage(failure);
-        });
-      },
-      (data) {
-        final summaries = _parseSummaries(data);
-        final summary = summaries[_selectedPeriod]!;
-        setState(() {
-          _summaries = summaries;
-          _applySummary(summary);
-          _isLoading = false;
-        });
-      },
-    );
   }
 
   void _selectPeriod(int index) {
     final period = _EarningsPeriod.values[index];
     if (_selectedPeriod == period) return;
-    final summary = _summaries[period];
-    if (summary == null) return;
-    setState(() {
-      _selectedPeriod = period;
-      _applySummary(summary);
-    });
-  }
-
-  void _applySummary(_EarningsSummary summary) {
-    _periodTotal = summary.total;
-    _periodTripsCount = summary.tripsCount;
-    _dailyData = summary.days;
+    setState(() => _selectedPeriod = period);
   }
 
   Map<_EarningsPeriod, _EarningsSummary> _parseSummaries(
@@ -217,9 +154,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     _EarningsPeriod.monthly => 'See how your total builds each week.',
   };
 
-  String get _averageFareLabel => _periodTripsCount == 0
+  String _averageFareLabel(_EarningsSummary summary) => summary.tripsCount == 0
       ? '—'
-      : '₱${(_periodTotal / _periodTripsCount).toStringAsFixed(2)}';
+      : '₱${(summary.total / summary.tripsCount).toStringAsFixed(2)}';
 
   @override
   void dispose() {
@@ -229,6 +166,12 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<DriverEarningsCubit>().state;
+    final summaries = state.data == null
+        ? const <_EarningsPeriod, _EarningsSummary>{}
+        : _parseSummaries(state.data!);
+    final summary = summaries[_selectedPeriod];
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -238,8 +181,14 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       ),
       body: SafeArea(
         top: false,
-        child: _errorMessage != null
-            ? _buildErrorState()
+        child: summary == null
+            ? state.errorMessage != null
+                  ? _buildErrorState(context)
+                  : const Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.primaryColor,
+                      ),
+                    )
             : LayoutBuilder(
                 builder: (context, constraints) {
                   final horizontalPadding = constraints.maxWidth < 360
@@ -258,15 +207,15 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 720),
                           child: Skeletonizer(
-                            enabled: _isLoading && _summaries.isNotEmpty,
+                            enabled: state.isLoading,
                             child: SizedBox(
                               width: double.infinity,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  _buildSummaryCard(),
+                                  _buildSummaryCard(summary),
                                   const SizedBox(height: 12),
-                                  _buildBarChart(),
+                                  _buildBarChart(summary.days),
                                 ],
                               ),
                             ),
@@ -281,7 +230,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -312,14 +261,18 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               ),
             ),
             const SizedBox(height: 20),
-            OutlinedButton(onPressed: _loadData, child: const Text('Retry')),
+            OutlinedButton(
+              onPressed: () =>
+                  BlocProvider.of<DriverEarningsCubit>(context).load(),
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildSummaryCard(_EarningsSummary summary) {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -354,7 +307,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             ),
             const SizedBox(height: 4),
             Text(
-              '₱${_periodTotal.toStringAsFixed(0)}',
+              '₱${summary.total.toStringAsFixed(0)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -376,11 +329,14 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             Row(
               children: [
                 Expanded(
-                  child: _miniStat('$_periodTripsCount', 'Completed trips'),
+                  child: _miniStat('${summary.tripsCount}', 'Completed trips'),
                 ),
                 _summaryDivider(),
                 Expanded(
-                  child: _miniStat(_averageFareLabel, 'Average per trip'),
+                  child: _miniStat(
+                    _averageFareLabel(summary),
+                    'Average per trip',
+                  ),
                 ),
               ],
             ),
@@ -455,7 +411,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-  Widget _buildBarChart() {
+  Widget _buildBarChart(List<_EarnDay> dailyData) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
@@ -489,7 +445,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                   child: LayoutBuilder(
                     builder: (context, chartConstraints) {
                       return BarChart(
-                        _barChartData(chartConstraints.maxWidth),
+                        _barChartData(chartConstraints.maxWidth, dailyData),
                         duration: const Duration(milliseconds: 600),
                         curve: Curves.easeOutCubic,
                       );
@@ -504,10 +460,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-  BarChartData _barChartData(double availableWidth) {
-    final chartDays = _dailyData.isEmpty
-        ? const [_EarnDay('—', 0)]
-        : _dailyData;
+  BarChartData _barChartData(double availableWidth, List<_EarnDay> dailyData) {
+    final chartDays = dailyData.isEmpty ? const [_EarnDay('—', 0)] : dailyData;
     final maxAmount = chartDays.fold<double>(0, (max, item) {
       final amount = item.amount;
       if (!amount.isFinite || amount <= max) return max;

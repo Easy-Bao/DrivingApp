@@ -15,7 +15,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       super(const ProfileState());
 
   Future<void> loadProfile() async {
-    emit(state.copyWith(isLoading: true));
+    if (isClosed) return;
+    emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
       final cached = _repository.getCachedProfile();
@@ -25,6 +26,7 @@ class ProfileCubit extends Cubit<ProfileState> {
           name: cached.name,
           phone: cached.phone,
           email: cached.email,
+          address: cached.address,
           isLoading: false,
         ),
       );
@@ -42,6 +44,7 @@ class ProfileCubit extends Cubit<ProfileState> {
           name: profile!.name,
           phone: profile!.phone,
           email: profile!.email,
+          address: profile!.address,
           isLoading: false,
         ),
       );
@@ -54,5 +57,47 @@ class ProfileCubit extends Cubit<ProfileState> {
         ),
       );
     }
+  }
+
+  Future<bool> updateProfile({
+    required String name,
+    required String phone,
+    required String email,
+    required String address,
+  }) async {
+    if (isClosed) return false;
+    emit(state.copyWith(isSaving: true, clearError: true));
+
+    final result = await _repository.updateProfile(
+      name: name,
+      phone: phone,
+      email: email,
+      address: address,
+    );
+    if (isClosed) return false;
+
+    return result.fold(
+      (failure) {
+        emit(
+          state.copyWith(
+            isSaving: false,
+            errorMessage: ErrorHandler.getErrorMessage(failure),
+          ),
+        );
+        return false;
+      },
+      (profile) {
+        emit(
+          ProfileState(
+            name: profile.name,
+            phone: profile.phone,
+            email: profile.email,
+            address: profile.address,
+            isSaving: false,
+          ),
+        );
+        return true;
+      },
+    );
   }
 }

@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
-
-import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
+import 'package:driver_app/src/features/activity/bloc/trip_history/trip_history_cubit.dart';
+import 'package:driver_app/src/features/activity/bloc/trip_history/trip_history_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -21,97 +21,19 @@ class DriverTripHistoryPage extends StatefulWidget {
 }
 
 class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
-  static const _pageSize = 25;
-
-  bool _isLoading = true;
-  bool _isLoadingMore = false;
-  bool _hasMore = false;
-  int? _nextOffset;
-  String? _loadMoreError;
-  List<Map<String, dynamic>> _trips = [];
   String _selectedTripStatusFilter = 'ALL';
 
-  List<Map<String, dynamic>> get _filteredTripsList {
+  List<Map<String, dynamic>> _filteredTripsList(
+    List<Map<String, dynamic>> trips,
+  ) {
     if (_selectedTripStatusFilter == 'ALL') {
-      return _trips;
+      return trips;
     }
-    return _trips.where((tripRecord) {
+    return trips.where((tripRecord) {
       final statusString = (tripRecord['status'] as String? ?? '')
           .toUpperCase();
       return statusString == _selectedTripStatusFilter;
     }).toList();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTrips();
-  }
-
-  Future<void> _loadTrips({bool loadMore = false}) async {
-    if (loadMore && (!_hasMore || _nextOffset == null || _isLoadingMore)) {
-      return;
-    }
-    if (mounted) {
-      setState(() {
-        if (loadMore) {
-          _isLoadingMore = true;
-          _loadMoreError = null;
-        } else {
-          _isLoading = true;
-        }
-      });
-    }
-    final driverId =
-        await Modular.get<SecureSessionService>().readDriverId() ?? '';
-    if (driverId.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _isLoadingMore = false;
-        });
-      }
-      return;
-    }
-    final result = await Modular.get<IDriverActivityRepository>()
-        .fetchTripHistory(
-          driverId,
-          limit: _pageSize,
-          offset: loadMore ? _nextOffset! : 0,
-        );
-    if (mounted) {
-      result.fold(
-        (failure) {
-          setState(() {
-            if (loadMore) {
-              _loadMoreError = ErrorHandler.getErrorMessage(failure);
-            } else {
-              _trips = const [];
-            }
-            _isLoading = false;
-            _isLoadingMore = false;
-          });
-        },
-        (page) {
-          setState(() {
-            if (loadMore) {
-              final tripsById = <String, Map<String, dynamic>>{
-                for (final trip in _trips) '${trip['id']}': trip,
-                for (final trip in page.items) '${trip['id']}': trip,
-              };
-              _trips = tripsById.values.toList();
-            } else {
-              _trips = page.items;
-            }
-            _hasMore = page.hasMore;
-            _nextOffset = page.nextOffset;
-            _loadMoreError = null;
-            _isLoading = false;
-            _isLoadingMore = false;
-          });
-        },
-      );
-    }
   }
 
   String _formatDate(String isoString) {
@@ -187,7 +109,9 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final grouped = _groupByDate(_filteredTripsList);
+    final state = context.watch<DriverTripHistoryCubit>().state;
+    final filteredTrips = _filteredTripsList(state.trips);
+    final grouped = _groupByDate(filteredTrips);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -215,11 +139,11 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
           const SizedBox(width: 8),
         ],
       ),
-      body: _isLoading && _trips.isEmpty
+      body: state.isLoading && state.trips.isEmpty
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
-          : _filteredTripsList.isEmpty
+          : filteredTrips.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -243,9 +167,10 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             )
           : RefreshIndicator(
               color: AppTheme.primaryColor,
-              onRefresh: _loadTrips,
+              onRefresh: () =>
+                  BlocProvider.of<DriverTripHistoryCubit>(context).load(),
               child: Skeletonizer(
-                enabled: _isLoading,
+                enabled: state.isLoading,
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
                   physics: const AlwaysScrollableScrollPhysics(
@@ -253,12 +178,14 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                   ),
                   itemCount:
                       grouped.keys.length +
-                      ((_hasMore || _isLoadingMore || _loadMoreError != null)
+                      ((state.hasMore ||
+                              state.isLoadingMore ||
+                              state.loadMoreError != null)
                           ? 1
                           : 0),
                   itemBuilder: (context, groupIndex) {
                     if (groupIndex == grouped.keys.length) {
-                      return _buildLoadMore();
+                      return _buildLoadMore(state);
                     }
                     final date = grouped.keys.elementAt(groupIndex);
                     final trips = grouped[date]!;
@@ -289,8 +216,8 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     );
   }
 
-  Widget _buildLoadMore() {
-    if (_isLoadingMore) {
+  Widget _buildLoadMore(DriverTripHistoryState state) {
+    if (state.isLoadingMore) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 18),
         child: Center(
@@ -308,9 +235,9 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
       padding: const EdgeInsets.only(top: 6, bottom: 14),
       child: Column(
         children: [
-          if (_loadMoreError != null) ...[
+          if (state.loadMoreError != null) ...[
             Text(
-              _loadMoreError!,
+              state.loadMoreError!,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppTheme.cancel,
@@ -321,9 +248,12 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             const SizedBox(height: 6),
           ],
           TextButton.icon(
-            onPressed: () => _loadTrips(loadMore: true),
+            onPressed: () =>
+                BlocProvider.of<DriverTripHistoryCubit>(context).loadMore(),
             icon: const Icon(LucideIcons.chevron_down, size: 16),
-            label: Text(_loadMoreError == null ? 'Load more trips' : 'Retry'),
+            label: Text(
+              state.loadMoreError == null ? 'Load more trips' : 'Retry',
+            ),
           ),
         ],
       ),

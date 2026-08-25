@@ -1,6 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
+import 'package:driver_app/src/features/activity/bloc/earnings/earnings_cubit.dart';
+import 'package:driver_app/src/features/activity/bloc/trip_history/trip_history_cubit.dart';
 import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
 import 'package:driver_app/src/features/activity/data/repositories/driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
@@ -20,6 +24,18 @@ class ActivityModule {
         (i) => DriverActivityRepository(
           remoteDataSource: i.get<DriverActivityRemoteDataSource>(),
         ),
+      )
+      ..addFactory<DriverEarningsCubit>(
+        (i) => DriverEarningsCubit(
+          repository: i.get<IDriverActivityRepository>(),
+          sessionService: i.get<SecureSessionService>(),
+        ),
+      )
+      ..addFactory<DriverTripHistoryCubit>(
+        (i) => DriverTripHistoryCubit(
+          repository: i.get<IDriverActivityRepository>(),
+          sessionService: i.get<SecureSessionService>(),
+        ),
       );
   }
 
@@ -38,7 +54,14 @@ class ActivityModule {
     ChildRoute(
       name: ActivityRoutes.tripHistory,
       ActivityRoutes.tripHistoryPath,
-      child: (context, GoRouterState state) => const DriverTripHistoryPage(),
+      child: (context, GoRouterState state) => BlocProvider(
+        create: (_) {
+          final cubit = Modular.get<DriverTripHistoryCubit>();
+          cubit.load();
+          return cubit;
+        },
+        child: const DriverTripHistoryPage(),
+      ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),
