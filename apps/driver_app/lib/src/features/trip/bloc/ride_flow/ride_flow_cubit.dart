@@ -90,11 +90,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     final driverId = await _sessionService.readDriverId();
     if (driverId == null || driverId.isEmpty) {
-      emit(
-        const RideFlowError(
-          'Driver session is unavailable. Please sign in again.',
-        ),
-      );
+      emit(RideFlowError(ErrorHandler.getErrorMessage(const AuthFailure())));
       return;
     }
 
@@ -198,8 +194,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     if (!_isValidCoordinatePair(resolvedDestLat, resolvedDestLng)) {
       emit(
-        const RideFlowError(
-          'The destination coordinates are unavailable. Please try again.',
+        RideFlowError(
+          ErrorHandler.getErrorMessage(const RouteCalculationFailure()),
         ),
       );
       return false;
@@ -218,7 +214,9 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         }
       } catch (error) {
         dev.log('Error updating status to in_transit: $error');
-        emit(const RideFlowError('Unable to start this trip right now.'));
+        emit(
+          RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())),
+        );
         return false;
       }
     }
@@ -325,7 +323,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     final fareCentavos = ride.fareCentavos;
     if (fareCentavos == null || fareCentavos <= 0) {
-      emit(const RideFlowError('The server did not return a payable fare.'));
+      emit(RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())));
       return null;
     }
     return fareCentavos / 100;
@@ -350,7 +348,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         emit(
           RideFlowError(
             failure == null
-                ? 'The server did not return a payable fare.'
+                ? ErrorHandler.getErrorMessage(const ServerFailure())
                 : ErrorHandler.getErrorMessage(failure),
           ),
         );

@@ -66,7 +66,7 @@ class PickupNavigationPanelWidget extends StatelessWidget {
               _statusPill(),
               const Spacer(),
               Text(
-                '₱${fare.toStringAsFixed(2)}',
+                formatPesoAmount(fare),
                 style: const TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.w900,

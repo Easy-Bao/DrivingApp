@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 
 class DriverAccountPage extends StatefulWidget {
   const DriverAccountPage({super.key});
@@ -274,7 +275,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           _statDivider(),
           _statItem('$_totalTrips', 'Total Trips'),
           _statDivider(),
-          _statItem('₱${_lifetimeEarnings.toStringAsFixed(0)}', 'Lifetime'),
+          _statItem(formatPesoAmount(_lifetimeEarnings), 'Lifetime'),
         ],
       ),
     );

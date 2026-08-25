@@ -275,7 +275,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     final targetDriver = event.targetDriver;
     final targetDriverId = int.tryParse(targetDriver.id);
     if (targetDriverId == null || targetDriverId <= 0) {
-      emit(const BookingFailure('The selected driver ID is invalid.'));
+      emit(
+        BookingFailure(ErrorHandler.getErrorMessage(const ValidationFailure())),
+      );
       return;
     }
     _isAutoAcceptingOffer = false;
@@ -283,7 +285,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     final passengerId = await _secureSessionService.readPassengerId() ?? '';
     if (passengerId.isEmpty) {
-      emit(const BookingFailure('Passenger ID is missing.'));
+      emit(BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())));
       return;
     }
 
@@ -324,7 +326,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     final passengerId = await _secureSessionService.readPassengerId() ?? '';
     if (passengerId.isEmpty) {
-      emit(const BookingFailure('Passenger ID is missing.'));
+      emit(BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())));
       return;
     }
 
@@ -614,7 +616,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             destLat: dropoffLat,
             destLng: dropoffLng,
             date: DateTime.now().toLocal().toString(),
-            price: '₱${(fareCentavos / 100).toStringAsFixed(2)}',
+            price: formatPesoAmount(fareCentavos / 100),
             status: RideStatus.accepted.value,
             driverId: event.driverId,
             driverName: event.driverName,

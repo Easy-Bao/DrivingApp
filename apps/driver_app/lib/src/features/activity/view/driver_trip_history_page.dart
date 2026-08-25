@@ -342,9 +342,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                     Expanded(
                       child: _tripMeta(
                         'Fare',
-                        fareAmt == null
-                            ? '—'
-                            : '₱${fareAmt.toStringAsFixed(2)}',
+                        fareAmt == null ? '—' : formatPesoAmount(fareAmt),
                       ),
                     ),
                   ],

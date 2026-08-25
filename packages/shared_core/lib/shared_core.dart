@@ -34,5 +34,6 @@ export 'src/network/retry_interceptor.dart';
 export 'src/realtime/realtime_event.dart';
 export 'src/realtime/realtime_web_socket_client.dart';
 export 'src/routing/route_data.dart';
+export 'src/utils/currency_formatter.dart';
 export 'src/utils/distance_formatter.dart';
 export 'src/utils/safe_parse.dart';

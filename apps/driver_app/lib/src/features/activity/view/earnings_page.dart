@@ -156,7 +156,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
 
   String _averageFareLabel(_EarningsSummary summary) => summary.tripsCount == 0
       ? '—'
-      : '₱${(summary.total / summary.tripsCount).toStringAsFixed(2)}';
+      : formatPesoAmount(summary.total / summary.tripsCount);
 
   @override
   void dispose() {
@@ -307,7 +307,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             ),
             const SizedBox(height: 4),
             Text(
-              '₱${summary.total.toStringAsFixed(0)}',
+              formatPesoAmount(summary.total),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(

@@ -4,6 +4,7 @@ import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials
 import 'package:passenger_app/src/features/auth/domain/usecases/register_use_case.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
+import 'package:shared_core/shared_core.dart';
 
 part 'sign_up_event.dart';
 part 'sign_up_state.dart';
@@ -67,7 +68,9 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
           );
           if (credentials.passengerId.isEmpty || credentials.token.isEmpty) {
             emit(
-              const SignUpFailure('Registration returned an invalid session.'),
+              SignUpFailure(
+                ErrorHandler.getErrorMessage(const ServerFailure()),
+              ),
             );
             return;
           }

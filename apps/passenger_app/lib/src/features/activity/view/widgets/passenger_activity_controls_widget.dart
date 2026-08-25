@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_core/shared_core.dart';
 
 enum PassengerActivityFilter { all, completed, cancelled }
 
@@ -21,7 +22,7 @@ class PassengerActivitySummaryWidget extends StatelessWidget {
         Expanded(
           child: _SummaryCard(
             label: 'This week',
-            value: '₱${weeklyFare.toStringAsFixed(2)}',
+            value: formatPesoAmount(weeklyFare),
             backgroundColor: AppTheme.secondaryColor.withValues(alpha: 0.55),
             valueKey: const ValueKey<String>('activity-weekly-fare'),
           ),

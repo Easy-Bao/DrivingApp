@@ -139,7 +139,10 @@ class PassengerActivityHistoryPresenter {
 
   String fareLabel(RideHistoryModel ride) {
     final fare = ride.price.trim();
-    return fare.isEmpty ? '—' : fare;
+    if (fare.isEmpty) return '—';
+    final normalized = fare.replaceAll(RegExp(r'[^0-9.\-]'), '');
+    final amount = double.tryParse(normalized);
+    return amount == null ? '—' : formatPesoAmount(amount);
   }
 
   String _formatClockTime(DateTime date) {

@@ -181,7 +181,7 @@ class ActivityRepository implements IActivityRepository {
     final fareDouble = price != null
         ? SafeParse.toDouble(price)
         : SafeParse.toDouble(fareCentavos) / 100;
-    return '₱${fareDouble.toStringAsFixed(2)}';
+    return formatPesoAmount(fareDouble);
   }
 
   String _firstNonEmpty(Object? primary, Object? fallback) {

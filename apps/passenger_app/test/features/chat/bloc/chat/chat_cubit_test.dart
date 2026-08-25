@@ -32,4 +32,49 @@ void main() {
 
     await cubit.close();
   });
+
+  test(
+    'redacts a realtime lock reason before it reaches presentation state',
+    () async {
+      final repository = MockChatRepository();
+      when(
+        () => repository.establishChatConnection(
+          roomId: 'ride-1',
+          chatUri: Uri.parse('wss://example.test/chat/ride-1'),
+          token: any(named: 'token'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+      when(() => repository.chatEventsStream).thenAnswer(
+        (_) => Stream.value(
+          const Right<Failure, ChatEvent>(
+            ChatRoomLocked('pq: relation chat_rooms is missing'),
+          ),
+        ),
+      );
+      when(
+        () => repository.fetchRoomMessages('ride-1'),
+      ).thenAnswer((_) async => const Right(<ChatMessage>[]));
+      when(
+        () => repository.terminateChatConnection(),
+      ).thenAnswer((_) async => const Right(null));
+      when(() => repository.dispose()).thenAnswer((_) async {});
+
+      final cubit = ChatCubit(chatRepository: repository);
+
+      await cubit.connectToChatRoom(
+        roomId: 'ride-1',
+        wsUri: Uri.parse('wss://example.test/chat/ride-1'),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.isRoomLocked, isTrue);
+      expect(
+        cubit.state.lockReasonMessage,
+        'This chat has already been resolved.',
+      );
+      expect(cubit.state.lockReasonMessage, isNot(contains('pq')));
+
+      await cubit.close();
+    },
+  );
 }

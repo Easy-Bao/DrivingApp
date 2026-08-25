@@ -221,7 +221,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '₱${widget.fare.toStringAsFixed(2)}',
+                  formatPesoAmount(widget.fare),
                   style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w900,

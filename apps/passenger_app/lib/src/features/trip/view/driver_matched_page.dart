@@ -288,7 +288,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                       ),
                     ),
                     Text(
-                      '₱${widget.fare.toStringAsFixed(2)}',
+                      formatPesoAmount(widget.fare),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,

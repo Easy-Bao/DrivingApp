@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_offer.dart';
+import 'package:shared_core/shared_core.dart';
 
 class FindingDriverBidsPanelWidget extends StatelessWidget {
   final List<BookingOffer> offers;
@@ -143,7 +144,7 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '₱${offer.proposedFare.toStringAsFixed(2)}',
+                            formatPesoAmount(offer.proposedFare),
                             style: const TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 16,

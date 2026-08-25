@@ -1,6 +1,7 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:shared_core/shared_core.dart';
 
 class DriverDashboardStatsRowWidget extends StatelessWidget {
   final bool isLoadingStats;
@@ -24,8 +25,8 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
           children: [
             Expanded(
               child: _buildStatCard(
-                label: "Today's Earnings",
-                value: '₱${earnings.toStringAsFixed(0)}',
+                label: "Today's Net Earnings",
+                value: formatPesoAmount(earnings),
                 skeletonWidth: 84,
               ),
             ),

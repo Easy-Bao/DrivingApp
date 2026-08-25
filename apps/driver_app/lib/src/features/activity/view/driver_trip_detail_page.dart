@@ -5,6 +5,7 @@ import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 
 class DriverTripDetailPage extends StatefulWidget {
   final Map<String, dynamic> trip;
@@ -353,7 +354,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      fare == null ? '—' : '₱${fare.toStringAsFixed(2)}',
+                      fare == null ? '—' : formatPesoAmount(fare),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,

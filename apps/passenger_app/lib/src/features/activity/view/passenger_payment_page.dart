@@ -80,7 +80,7 @@ class PassengerPaymentPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '₱${fare.toStringAsFixed(2)}',
+                          formatPesoAmount(fare),
                           key: const ValueKey('payment-total-fare'),
                           style: const TextStyle(
                             fontSize: 38,

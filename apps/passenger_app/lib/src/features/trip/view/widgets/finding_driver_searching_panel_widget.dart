@@ -112,7 +112,7 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  '₱${fare.toStringAsFixed(2)}',
+                  formatPesoAmount(fare),
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w900,

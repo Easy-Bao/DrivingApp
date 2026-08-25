@@ -132,7 +132,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     if (state is! RideFlowWaitingPassenger ||
         state.pickupLat == null ||
         state.pickupLng == null) {
-      _showError('Passenger pickup coordinates are unavailable.');
+      _showError(ErrorHandler.getErrorMessage(const LocationFailure()));
       return;
     }
 
@@ -153,7 +153,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
         _showError(
           errorState is RideFlowError
               ? errorState.message
-              : 'Unable to Start The Trip Right Now. Please Try Again.',
+              : ErrorHandler.getErrorMessage(const ServerFailure()),
         );
       }
       if (mounted && started) {
@@ -168,9 +168,9 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
           },
         );
       }
-    } catch (error) {
-      dev.log('Unable to start trip: $error');
-      _showError('Unable To Start The Trip Right Now. Please Try Again.');
+    } catch (error, stackTrace) {
+      dev.log('Unable to start trip', error: error, stackTrace: stackTrace);
+      _showError(ErrorHandler.getErrorMessage(error, stackTrace));
     } finally {
       if (mounted) setState(() => _isStartingTrip = false);
     }

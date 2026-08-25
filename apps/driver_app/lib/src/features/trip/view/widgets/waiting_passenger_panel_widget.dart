@@ -1,6 +1,7 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class WaitingPassengerPanelWidget extends StatelessWidget {
@@ -66,7 +67,7 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              '₱${fare.toStringAsFixed(2)}',
+              formatPesoAmount(fare),
               style: const TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.w900,

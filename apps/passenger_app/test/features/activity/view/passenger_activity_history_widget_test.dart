@@ -43,7 +43,7 @@ void main() {
     (tester) async {
       await _pumpHistory(tester, rides: rides, referenceTime: referenceTime);
 
-      expect(find.text('₱107.36'), findsOneWidget);
+      expect(find.text('₱107'), findsOneWidget);
       final rideCount = tester.widget<Text>(
         find.byKey(const ValueKey<String>('activity-weekly-ride-count')),
       );
@@ -69,7 +69,7 @@ void main() {
       expect(find.text('Grand Terrace Homes'), findsOneWidget);
       expect(find.text('Aikido of Mountain View'), findsNothing);
       expect(find.text('Vista Slope'), findsNothing);
-      expect(find.text('₱107.36'), findsOneWidget);
+      expect(find.text('₱107'), findsOneWidget);
 
       await tester.tap(
         find.byKey(const ValueKey<String>('activity-filter-completed')),

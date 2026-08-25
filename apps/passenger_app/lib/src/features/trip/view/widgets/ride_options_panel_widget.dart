@@ -74,7 +74,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
         widget.customFareError == null;
   }
 
-  String _currency(double amount) => '₱${amount.toStringAsFixed(2)}';
+  String _currency(double amount) => formatPesoAmount(amount);
 
   void _showView(_RideOptionsPanelView view) {
     if (!mounted) return;

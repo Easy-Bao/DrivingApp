@@ -105,7 +105,7 @@ void main() {
 
       result.fold((_) => fail('Expected ride history to load.'), (page) {
         expect(page.items, hasLength(1));
-        expect(page.items.single.price, '₱28.17');
+        expect(page.items.single.price, '₱28');
         expect(page.items.single.driverName, 'Demo Driver');
         expect(page.items.single.vehicleType, 'Motorcycle');
         expect(page.items.single.vehiclePlate, 'ABC-123');

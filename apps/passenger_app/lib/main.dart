@@ -7,38 +7,49 @@ import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/features/location/location_routes.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await BackgroundTelemetryService.stopExistingServiceForStartup();
-  final prefs = await SharedPreferences.getInstance();
+  configureClientErrorBoundary(appName: 'passenger-app');
 
-  await dotenv.load(fileName: '.env', isOptional: true);
+  try {
+    await BackgroundTelemetryService.stopExistingServiceForStartup();
+    final prefs = await SharedPreferences.getInstance();
 
-  final nativeService = MapNativeService(
-    placeServiceBaseUri: EnvConfig.placeServiceUri,
-  );
-  LocationService.nativeService = nativeService;
-  final mapboxToken = EnvConfig.mapboxPublicToken;
-  if (mapboxToken == null) {
-    debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');
+    await dotenv.load(fileName: '.env', isOptional: true);
+
+    final nativeService = MapNativeService(
+      placeServiceBaseUri: EnvConfig.placeServiceUri,
+    );
+    LocationService.nativeService = nativeService;
+    final mapboxToken = EnvConfig.mapboxPublicToken;
+    if (mapboxToken == null) {
+      debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');
+    }
+    await MapProvider.initialize(
+      token: mapboxToken,
+      nativeService: nativeService,
+    );
+
+    AppTransitions.configure();
+
+    await Modular.configure(
+      appModule: AppModule(prefs: prefs),
+      initialRoute: LocationRoutes.fullGatePath,
+      debugLogDiagnostics: true,
+      debugLogDiagnosticsGoRouter: true,
+      debugLogEventBus: true,
+    );
+
+    runApp(const AppWidget());
+  } catch (error, stackTrace) {
+    runApp(
+      SafeClientErrorApp(
+        message: ErrorHandler.getErrorMessage(error, stackTrace),
+      ),
+    );
   }
-  await MapProvider.initialize(
-    token: mapboxToken,
-    nativeService: nativeService,
-  );
-
-  AppTransitions.configure();
-
-  await Modular.configure(
-    appModule: AppModule(prefs: prefs),
-    initialRoute: LocationRoutes.fullGatePath,
-    debugLogDiagnostics: true,
-    debugLogDiagnosticsGoRouter: true,
-    debugLogEventBus: true,
-  );
-
-  runApp(const AppWidget());
 }

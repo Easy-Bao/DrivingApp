@@ -26,7 +26,7 @@ class RideFareDetailsWidget extends StatelessWidget {
     return adjustment > 0 ? adjustment : 0;
   }
 
-  String _currency(double amount) => '₱${amount.toStringAsFixed(2)}';
+  String _currency(double amount) => formatPesoAmount(amount);
 
   Widget _amountRow(String label, String value, {bool emphasize = false}) {
     final valueStyle = TextStyle(

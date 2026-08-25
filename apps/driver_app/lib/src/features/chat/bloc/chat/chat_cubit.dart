@@ -85,15 +85,22 @@ class ChatCubit extends Cubit<ChatState> {
                     emit(
                       state.copyWith(
                         isRoomLocked: true,
-                        lockReasonMessage: chatEvent.reason,
+                        lockReasonMessage: ErrorHandler.getErrorMessage(
+                          const ChatRoomLockedFailure(),
+                        ),
                       ),
                     );
                   }
                 },
               );
             },
-            onError: (_) {
-              emit(state.copyWith(errorMessage: 'Chat stream unavailable.'));
+            onError: (Object error, StackTrace stackTrace) {
+              if (isClosed) return;
+              emit(
+                state.copyWith(
+                  errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
+                ),
+              );
             },
           );
 
@@ -101,12 +108,13 @@ class ChatCubit extends Cubit<ChatState> {
           unawaited(_loadHistory(roomId));
         },
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           isConnecting: false,
           isConnected: false,
-          errorMessage: 'Unable to connect to chat.',
+          errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
         ),
       );
     }
@@ -153,9 +161,13 @@ class ChatCubit extends Cubit<ChatState> {
           }
         },
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
       if (!isClosed) {
-        emit(state.copyWith(errorMessage: 'We could not close this chat.'));
+        emit(
+          state.copyWith(
+            errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
+          ),
+        );
       }
     }
   }

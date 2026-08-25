@@ -90,7 +90,7 @@ class DriverActiveTripCard extends StatelessWidget {
               Text(
                 driverFareInPesos(trip) == null
                     ? '—'
-                    : '₱${driverFareInPesos(trip)!.toStringAsFixed(2)}',
+                    : formatPesoAmount(driverFareInPesos(trip)!),
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w900,
@@ -362,7 +362,7 @@ class DriverPoolBidCard extends StatelessWidget {
                 ),
               ),
               Text(
-                fare == null ? '—' : '₱${fare.toStringAsFixed(0)}',
+                fare == null ? '—' : formatPesoAmount(fare),
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,

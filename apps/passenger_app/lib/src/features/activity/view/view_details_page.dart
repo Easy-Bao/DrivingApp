@@ -164,6 +164,9 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final ride = widget.ride;
+    final fare = ride == null
+        ? null
+        : double.tryParse(ride.price.replaceAll(RegExp(r'[^0-9.\-]'), ''));
 
     final centerLat = ride != null
         ? (ride.pickupLat + ride.destLat) / 2
@@ -482,7 +485,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                     ],
                   ),
                   Text(
-                    ride?.price ?? '—',
+                    fare == null ? '—' : formatPesoAmount(fare),
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
