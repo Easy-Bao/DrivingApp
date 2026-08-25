@@ -44,14 +44,18 @@ class ActivityRepository implements IActivityRepository {
         );
       }
       return switch (error.type) {
-        DioExceptionType.connectionError ||
-        DioExceptionType.connectionTimeout ||
-        DioExceptionType.receiveTimeout ||
-        DioExceptionType.sendTimeout => const NetworkFailure(
+        DioExceptionType.connectionError => const NetworkFailure(
           'Unable to connect. Check your connection and try again.',
         ),
-        _ => const ServerFailure(
+        DioExceptionType.connectionTimeout ||
+        DioExceptionType.receiveTimeout ||
+        DioExceptionType.sendTimeout => const ServerFailure.withStatusCode(
+          'Activity request timed out.',
+          504,
+        ),
+        _ => ServerFailure.withStatusCode(
           'Activity is temporarily unavailable. Please try again.',
+          statusCode ?? 500,
         ),
       };
     }
@@ -64,8 +68,9 @@ class ActivityRepository implements IActivityRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return const ServerFailure(
+      return ServerFailure.withStatusCode(
         'Activity is temporarily unavailable. Please try again.',
+        error.statusCode,
       );
     }
     if (error is DataParsingException) {

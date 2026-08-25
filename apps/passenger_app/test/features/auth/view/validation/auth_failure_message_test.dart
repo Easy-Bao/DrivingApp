@@ -8,7 +8,7 @@ void main() {
       safeAuthFailureMessage(
         const ServerFailure('database password leaked by the server'),
       ),
-      'Authentication is temporarily unavailable. Please try again.',
+      'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
     );
   });
 
@@ -17,7 +17,7 @@ void main() {
     () {
       expect(
         safeAuthFailureMessage(const EmailAlreadyRegisteredFailure()),
-        'This email is already registered. Try signing in or use another email.',
+        'This email is already registered.',
       );
     },
   );

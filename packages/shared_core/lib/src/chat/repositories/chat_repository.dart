@@ -70,14 +70,19 @@ class ChatRepository implements IChatRepository {
       if (response.statusCode == 423) {
         return const Left(ChatRoomLockedFailure());
       }
-      return const Left(ServerFailure('Unable to initialize chat room.'));
+      return Left(
+        ServerFailure.withStatusCode(
+          'Unable to initialize chat room.',
+          response.statusCode ?? 500,
+        ),
+      );
     } on DioException catch (error) {
       if (error.response?.statusCode == 423) {
         return const Left(ChatRoomLockedFailure());
       }
-      return const Left(NetworkFailure('Unable to initialize chat room.'));
-    } catch (_) {
-      return const Left(NetworkFailure('Unable to initialize chat room.'));
+      return Left(_mapChatFailure(error, 'Unable to initialize chat room.'));
+    } catch (error) {
+      return Left(_mapChatFailure(error, 'Unable to initialize chat room.'));
     }
   }
 
@@ -128,8 +133,8 @@ class ChatRepository implements IChatRepository {
         return Right(messages);
       }
       return const Right([]);
-    } catch (_) {
-      return const Left(ServerFailure('Unable to load chat history.'));
+    } catch (error) {
+      return Left(_mapChatFailure(error, 'Unable to load chat history.'));
     }
   }
 
@@ -140,9 +145,14 @@ class ChatRepository implements IChatRepository {
         '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/resolve',
       );
       if (response.statusCode == 200) return const Right(null);
-      return const Left(ServerFailure('Unable to resolve chat room.'));
-    } catch (_) {
-      return const Left(ServerFailure('Unable to resolve chat room.'));
+      return Left(
+        ServerFailure.withStatusCode(
+          'Unable to resolve chat room.',
+          response.statusCode ?? 500,
+        ),
+      );
+    } catch (error) {
+      return Left(_mapChatFailure(error, 'Unable to resolve chat room.'));
     }
   }
 
@@ -185,4 +195,23 @@ class ChatRepository implements IChatRepository {
       }
     });
   }
+}
+
+Failure _mapChatFailure(Object error, String message) {
+  if (error is DioException) {
+    final statusCode = error.response?.statusCode;
+    if (statusCode == null) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return const ServerFailure.withStatusCode(
+          'Chat request timed out.',
+          504,
+        );
+      }
+      return NetworkFailure(message);
+    }
+    return ServerFailure.withStatusCode(message, statusCode);
+  }
+  return ServerFailure(message);
 }

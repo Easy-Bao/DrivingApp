@@ -27,12 +27,21 @@ class DriverRepository implements IDriverRepository {
         );
       }
       if (statusCode == null) {
+        if (error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.sendTimeout ||
+            error.type == DioExceptionType.receiveTimeout) {
+          return const ServerFailure.withStatusCode(
+            'Driver availability request timed out.',
+            504,
+          );
+        }
         return const NetworkFailure(
           'Unable to check nearby drivers. Check your connection and try again.',
         );
       }
-      return const ServerFailure(
+      return ServerFailure.withStatusCode(
         'Driver availability is temporarily unavailable. Please try again.',
+        statusCode,
       );
     }
     if (error is ServerException) {
@@ -44,8 +53,9 @@ class DriverRepository implements IDriverRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return const ServerFailure(
+      return ServerFailure.withStatusCode(
         'Driver availability is temporarily unavailable. Please try again.',
+        error.statusCode,
       );
     }
     if (error is DataParsingException) {

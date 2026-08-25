@@ -96,12 +96,22 @@ Failure _mapFailure(Object error) {
       return const AuthFailure('Your driver session has ended. Sign in again.');
     }
     if (statusCode == null) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return const ServerFailure.withStatusCode(
+          'Driver account request timed out.',
+          504,
+        );
+      }
       return const NetworkFailure(
         'Unable to refresh your account. Check your connection.',
       );
     }
   }
-  if (error is ServerException) return ServerFailure(error.message);
+  if (error is ServerException) {
+    return ServerFailure.withStatusCode(error.message, error.statusCode);
+  }
   if (error is FormatException || error is DataParsingException) {
     return const ValidationFailure('Driver account data is invalid.');
   }

@@ -12,6 +12,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_core/shared_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,8 +28,12 @@ void main() async {
     nativeService = MapNativeService(
       placeServiceBaseUri: EnvConfig.placeServiceUri,
     );
-  } on StateError catch (error) {
-    runApp(_ConfigurationErrorApp(message: error.message));
+  } on StateError catch (error, stackTrace) {
+    runApp(
+      _ConfigurationErrorApp(
+        message: ErrorHandler.getErrorMessage(error, stackTrace),
+      ),
+    );
     return;
   }
   LocationService.nativeService = nativeService;

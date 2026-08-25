@@ -101,7 +101,7 @@ void main() {
         const HomeState(
           isLoading: false,
           locationErrorMessage:
-              'The service is temporarily unavailable. Please try again.',
+              'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
         ),
       ],
     );

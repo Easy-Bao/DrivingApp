@@ -6,6 +6,7 @@ export 'src/chat/repositories/chat_repository.dart';
 export 'src/chat/repositories/chat_repository_factory.dart';
 export 'src/chat/repositories/i_chat_repository.dart';
 export 'src/enums/ride_status.dart';
+export 'src/errors/app_failure.dart';
 export 'src/errors/error_handler.dart';
 export 'src/errors/exceptions.dart';
 export 'src/errors/failures.dart';

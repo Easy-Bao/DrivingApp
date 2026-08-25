@@ -160,10 +160,24 @@ Failure _mapFailure(Object error, {required String action}) {
       return ValidationFailure('Unable to $action with the supplied ride.');
     }
     if (statusCode == null) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return const ServerFailure.withStatusCode(
+          'The ride request timed out.',
+          504,
+        );
+      }
       return NetworkFailure('Unable to $action. Check your connection.');
     }
+    return ServerFailure.withStatusCode(
+      'Unable to $action right now.',
+      statusCode,
+    );
   }
-  if (error is ServerException) return ServerFailure(error.message);
+  if (error is ServerException) {
+    return ServerFailure.withStatusCode(error.message, error.statusCode);
+  }
   if (error is FormatException || error is DataParsingException) {
     return ValidationFailure('Unable to $action because the data is invalid.');
   }

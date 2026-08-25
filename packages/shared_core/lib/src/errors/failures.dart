@@ -19,6 +19,11 @@ class AuthFailure extends Failure {
   ]);
 }
 
+class InvalidCredentialsFailure extends Failure {
+  const InvalidCredentialsFailure()
+    : super('The submitted sign-in credentials are invalid.');
+}
+
 class ValidationFailure extends Failure {
   const ValidationFailure([super.message = 'Invalid input parameters.']);
 }
@@ -32,12 +37,38 @@ class CacheFailure extends Failure {
   const CacheFailure([super.message = 'Failed to load local storage cache.']);
 }
 
+class LocationFailure extends Failure {
+  const LocationFailure([
+    super.message = 'The current device location is unavailable.',
+  ]);
+}
+
 class ServerFailure extends Failure {
-  const ServerFailure([super.message = 'An unexpected server error occurred.']);
+  final int? statusCode;
+
+  const ServerFailure([super.message = 'An unexpected server error occurred.'])
+    : statusCode = null;
+
+  const ServerFailure.withStatusCode(super.message, this.statusCode);
 }
 
 class ChatRoomLockedFailure extends Failure {
   const ChatRoomLockedFailure([
     super.message = 'This chat has already been resolved.',
   ]);
+}
+
+class NoDriversAvailableFailure extends Failure {
+  const NoDriversAvailableFailure()
+    : super('All nearby drivers are currently busy.');
+}
+
+class RouteCalculationFailure extends Failure {
+  const RouteCalculationFailure()
+    : super('The route and fare could not be calculated.');
+}
+
+class PaymentDeclinedFailure extends Failure {
+  const PaymentDeclinedFailure()
+    : super('The payment provider declined the transaction.');
 }

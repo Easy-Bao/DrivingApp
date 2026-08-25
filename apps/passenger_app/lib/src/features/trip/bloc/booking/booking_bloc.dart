@@ -162,7 +162,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(
         BookingFailure(
           lastFailure == null
-              ? 'No drivers nearby. Please try again.'
+              ? ErrorHandler.getErrorMessage(const NoDriversAvailableFailure())
               : ErrorHandler.getErrorMessage(lastFailure!),
           isNoDriverFound: true,
         ),

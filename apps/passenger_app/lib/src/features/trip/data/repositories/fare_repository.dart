@@ -41,14 +41,35 @@ class FareRepository implements IFareRepository {
       }
       return Right(fare);
     } on DioException catch (error) {
-      if (error.response?.statusCode == null) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == null) {
+        if (error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.sendTimeout ||
+            error.type == DioExceptionType.receiveTimeout) {
+          return const Left(
+            ServerFailure.withStatusCode('Fare request timed out.', 504),
+          );
+        }
         return const Left(
           NetworkFailure('Unable to calculate fare. Check your connection.'),
         );
       }
-      return const Left(ServerFailure('Fare calculation is unavailable.'));
+      if (statusCode == 400 || statusCode == 422) {
+        return const Left(RouteCalculationFailure());
+      }
+      return Left(
+        ServerFailure.withStatusCode(
+          'Fare calculation is unavailable.',
+          statusCode,
+        ),
+      );
     } on ServerException catch (error) {
-      return Left(ServerFailure(error.message));
+      if (error.statusCode == 400 || error.statusCode == 422) {
+        return const Left(RouteCalculationFailure());
+      }
+      return Left(
+        ServerFailure.withStatusCode(error.message, error.statusCode),
+      );
     } catch (_) {
       return const Left(ServerFailure('Fare calculation is unavailable.'));
     }

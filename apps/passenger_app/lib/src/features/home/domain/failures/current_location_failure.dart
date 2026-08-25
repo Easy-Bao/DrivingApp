@@ -1,6 +1,6 @@
 import 'package:shared_core/shared_core.dart';
 
-final class CurrentLocationFailure extends Failure {
+final class CurrentLocationFailure extends LocationFailure {
   const CurrentLocationFailure([
     super.message = 'The current device location is unavailable.',
   ]);

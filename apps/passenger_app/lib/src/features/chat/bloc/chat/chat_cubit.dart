@@ -23,7 +23,7 @@ class ChatCubit extends Cubit<ChatState> {
               isConnecting: false,
               isConnected: false,
               isRoomLocked: true,
-              lockReasonMessage: failure.message,
+              lockReasonMessage: ErrorHandler.getErrorMessage(failure),
               errorMessage: null,
             ),
           );

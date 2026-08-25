@@ -21,8 +21,9 @@ class DriverActivityRepository implements IDriverActivityRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
-      return const ServerFailure(
+      return ServerFailure.withStatusCode(
         'Driver trip history is temporarily unavailable. Please try again.',
+        error.statusCode,
       );
     }
     if (error is DataParsingException) {

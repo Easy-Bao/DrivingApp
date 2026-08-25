@@ -51,7 +51,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return Map<String, dynamic>.from(responseData);
     } on DioException catch (error) {
       throw ServerException(
-        statusCode: error.response?.statusCode ?? 0,
+        statusCode: error.response?.statusCode ?? (_isTimeout(error) ? 504 : 0),
         message: _extractErrorMessage(error),
       );
     }
@@ -82,5 +82,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       404 => 'The requested authentication action is unavailable.',
       _ => 'Authentication request failed. Please try again.',
     };
+  }
+
+  bool _isTimeout(DioException error) {
+    return error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout;
   }
 }

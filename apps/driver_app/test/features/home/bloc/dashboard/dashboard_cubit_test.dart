@@ -81,7 +81,7 @@ void main() {
         const DashboardState(
           isLoadingStats: false,
           errorMessage:
-              'The service is temporarily unavailable. Please try again.',
+              'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
         ),
       ],
     );
@@ -177,7 +177,8 @@ void main() {
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [
         const DashboardState(
-          errorMessage: 'Check your connection and try again.',
+          errorMessage:
+              'You are currently offline. Please check your Wi-Fi or mobile data.',
         ),
       ],
     );
@@ -210,7 +211,8 @@ void main() {
       expect: () => [
         const DashboardState(
           isOnline: true,
-          errorMessage: 'Check your connection and try again.',
+          errorMessage:
+              'You are currently offline. Please check your Wi-Fi or mobile data.',
         ),
       ],
     );

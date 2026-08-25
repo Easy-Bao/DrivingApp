@@ -108,8 +108,14 @@ Failure _mapFailure(Object error) {
         'Unable to reach driver profiles. Check your connection.',
       );
     }
+    return ServerFailure.withStatusCode(
+      'Driver profiles are temporarily unavailable.',
+      statusCode,
+    );
   }
-  if (error is ServerException) return ServerFailure(error.message);
+  if (error is ServerException) {
+    return ServerFailure.withStatusCode(error.message, error.statusCode);
+  }
   if (error is FormatException || error is DataParsingException) {
     return const ValidationFailure('Driver profile data is invalid.');
   }

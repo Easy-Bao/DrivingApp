@@ -43,8 +43,9 @@ class PublicDriverSummaryRepository implements IPublicDriverSummaryRepository {
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid driver summary response.');
       }
-      return const ServerFailure(
+      return ServerFailure.withStatusCode(
         'Driver summaries are temporarily unavailable. Please try again.',
+        error.statusCode,
       );
     }
     if (error is DataParsingException) {

@@ -62,7 +62,7 @@ void main() {
         const SavedPlacesState(
           places: [],
           isLoading: false,
-          errorMessage: 'Something went wrong. Please try again.',
+          errorMessage: 'Unable to complete your request. Please try again.',
         ),
       ],
     );

@@ -87,12 +87,14 @@ class AuthRepository implements IAuthRepository {
       return Right(credentials);
     } on ServerException catch (error) {
       if (error.statusCode == 401 || error.statusCode == 403) {
-        return const Left(AuthFailure('Invalid email or password.'));
+        return const Left(InvalidCredentialsFailure());
       }
       if (error.statusCode == 0) {
         return Left(NetworkFailure(error.message));
       }
-      return Left(ServerFailure(error.message));
+      return Left(
+        ServerFailure.withStatusCode(error.message, error.statusCode),
+      );
     } on DataParsingException catch (error) {
       return Left(ServerFailure(error.message));
     } catch (_) {

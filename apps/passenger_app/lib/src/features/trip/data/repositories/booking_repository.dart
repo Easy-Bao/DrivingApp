@@ -144,12 +144,26 @@ Failure _mapFailure(Object error) {
       return const ValidationFailure('The booking request was rejected.');
     }
     if (statusCode == null) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return const ServerFailure.withStatusCode(
+          'Booking request timed out.',
+          504,
+        );
+      }
       return const NetworkFailure(
         'Unable to reach booking services. Check your connection.',
       );
     }
+    return ServerFailure.withStatusCode(
+      'Booking services are temporarily unavailable.',
+      statusCode,
+    );
   }
-  if (error is ServerException) return ServerFailure(error.message);
+  if (error is ServerException) {
+    return ServerFailure.withStatusCode(error.message, error.statusCode);
+  }
   if (error is FormatException || error is DataParsingException) {
     return const ValidationFailure('The booking response is invalid.');
   }

@@ -105,7 +105,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
       );
       final failure = result.fold<Failure?>((value) => value, (_) => null);
       if (failure != null) {
-        emit(RideFlowError(failure.message));
+        emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
         return;
       }
 
@@ -142,7 +142,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         );
         final failure = result.fold<Failure?>((value) => value, (_) => null);
         if (failure != null) {
-          emit(RideFlowError(failure.message));
+          emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
           return;
         }
       } catch (error) {
@@ -213,7 +213,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         );
         final failure = result.fold<Failure?>((value) => value, (_) => null);
         if (failure != null) {
-          emit(RideFlowError(failure.message));
+          emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
           return false;
         }
       } catch (error) {
@@ -287,9 +287,12 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         rideId,
       )).fold((failure) => loadFailure = failure, (value) => ride = value);
       if (ride == null) {
+        final failure = loadFailure;
         emit(
           RideFlowError(
-            loadFailure?.message ?? 'Unable to load the active ride.',
+            failure == null
+                ? 'Unable to load the active ride.'
+                : ErrorHandler.getErrorMessage(failure),
           ),
         );
         return null;
@@ -304,7 +307,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         );
         final failure = result.fold<Failure?>((value) => value, (_) => null);
         if (failure != null) {
-          emit(RideFlowError(failure.message));
+          emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
           return null;
         }
       }
@@ -343,10 +346,12 @@ class RideFlowCubit extends Cubit<RideFlowState> {
         (value) => fareCentavos = value,
       );
       if (fareCentavos == null) {
+        final failure = settleFailure;
         emit(
           RideFlowError(
-            settleFailure?.message ??
-                'The server did not return a payable fare.',
+            failure == null
+                ? 'The server did not return a payable fare.'
+                : ErrorHandler.getErrorMessage(failure),
           ),
         );
         return null;

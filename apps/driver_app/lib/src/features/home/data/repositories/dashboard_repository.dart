@@ -48,13 +48,20 @@ class DashboardRepository implements IDashboardRepository {
         );
       }
       if (statusCode == 403) {
-        final profileMessage = _safeAvailabilityMessage(error.response?.data);
-        if (profileMessage != null) return ServerFailure(profileMessage);
-        return const AuthFailure(
-          'This account is not authorized to change driver availability.',
+        return const ServerFailure.withStatusCode(
+          'Driver availability access is restricted.',
+          403,
         );
       }
       if (statusCode == null) {
+        if (error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.sendTimeout ||
+            error.type == DioExceptionType.receiveTimeout) {
+          return const ServerFailure.withStatusCode(
+            'Driver availability request timed out.',
+            504,
+          );
+        }
         return const NetworkFailure(
           'Unable to reach driver availability services. Check your connection and try again.',
         );
@@ -66,12 +73,14 @@ class DashboardRepository implements IDashboardRepository {
         );
       }
       if (statusCode == 404) {
-        return const ServerFailure(
+        return const ServerFailure.withStatusCode(
           'Driver availability endpoint was not found. Check that the API services are running.',
+          404,
         );
       }
-      return const ServerFailure(
+      return ServerFailure.withStatusCode(
         'Unable to update your driver availability. Please try again.',
+        statusCode,
       );
     }
     if (error is ServerException) {
@@ -81,17 +90,18 @@ class DashboardRepository implements IDashboardRepository {
         );
       }
       if (error.statusCode == 403) {
-        return const AuthFailure(
-          'This account is not authorized to change driver availability.',
+        return const ServerFailure.withStatusCode(
+          'Driver availability access is restricted.',
+          403,
         );
       }
       if (error.statusCode == 400 || error.statusCode == 422) {
         return const ValidationFailure('Invalid request data.');
       }
       if (error.statusCode == 0) {
-        return NetworkFailure(error.message);
+        return const NetworkFailure();
       }
-      return ServerFailure(error.message);
+      return ServerFailure.withStatusCode(error.message, error.statusCode);
     }
     if (error is DataParsingException) {
       return ValidationFailure(error.message);

@@ -42,7 +42,7 @@ class TrackRepository implements ITrackRepository {
       }
       return const Left(ServerFailure('No status data returned from server.'));
     } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
+      return Left(ServerFailure.withStatusCode(e.message, e.statusCode));
     } catch (_) {
       return const Left(
         ServerFailure(
@@ -67,7 +67,9 @@ class TrackRepository implements ITrackRepository {
       }
       return Right(ride);
     } on ServerException catch (error) {
-      return Left(ServerFailure(error.message));
+      return Left(
+        ServerFailure.withStatusCode(error.message, error.statusCode),
+      );
     } catch (_) {
       return const Left(
         ServerFailure('Ride details are temporarily unavailable.'),
@@ -86,7 +88,9 @@ class TrackRepository implements ITrackRepository {
         ),
       );
     } on ServerException catch (error) {
-      return Left(ServerFailure(error.message));
+      return Left(
+        ServerFailure.withStatusCode(error.message, error.statusCode),
+      );
     } catch (_) {
       return const Left(
         ServerFailure('Driver contact details are temporarily unavailable.'),
@@ -112,7 +116,7 @@ class TrackRepository implements ITrackRepository {
         ServerFailure('Driver location coordinates unavailable.'),
       );
     } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
+      return Left(ServerFailure.withStatusCode(e.message, e.statusCode));
     } catch (_) {
       return const Left(
         ServerFailure(
@@ -139,7 +143,7 @@ class TrackRepository implements ITrackRepository {
         ServerFailure('Failed to update ride status on server.'),
       );
     } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
+      return Left(ServerFailure.withStatusCode(e.message, e.statusCode));
     } catch (_) {
       return const Left(
         ServerFailure(
@@ -165,7 +169,9 @@ class TrackRepository implements ITrackRepository {
           ? const Right(null)
           : const Left(NetworkFailure('Passenger location was not accepted.'));
     } on ServerException catch (error) {
-      return Left(ServerFailure(error.message));
+      return Left(
+        ServerFailure.withStatusCode(error.message, error.statusCode),
+      );
     } catch (_) {
       return const Left(
         NetworkFailure('Unable to share your current trip location.'),

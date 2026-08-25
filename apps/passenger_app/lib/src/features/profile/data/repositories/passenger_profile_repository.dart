@@ -129,12 +129,26 @@ Failure _mapFailure(Object error) {
       return const ValidationFailure('Profile values are invalid.');
     }
     if (statusCode == null) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return const ServerFailure.withStatusCode(
+          'Profile request timed out.',
+          504,
+        );
+      }
       return const NetworkFailure(
         'Unable to refresh your profile. Check your connection.',
       );
     }
+    return ServerFailure.withStatusCode(
+      'Your profile is temporarily unavailable.',
+      statusCode,
+    );
   }
   if (error is CacheException) return CacheFailure(error.message);
-  if (error is ServerException) return ServerFailure(error.message);
+  if (error is ServerException) {
+    return ServerFailure.withStatusCode(error.message, error.statusCode);
+  }
   return const ServerFailure('Your profile is temporarily unavailable.');
 }

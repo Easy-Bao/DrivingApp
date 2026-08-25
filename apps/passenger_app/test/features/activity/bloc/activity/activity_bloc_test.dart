@@ -113,7 +113,7 @@ void main() {
         isA<ActivityError>().having(
           (s) => s.message,
           'error message',
-          'The service is temporarily unavailable. Please try again.',
+          'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
         ),
       ],
     );

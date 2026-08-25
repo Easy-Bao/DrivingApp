@@ -23,9 +23,7 @@ void main() {
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
-      ).thenAnswer(
-        (_) async => const Left(AuthFailure('Invalid email or password.')),
-      );
+      ).thenAnswer((_) async => const Left(InvalidCredentialsFailure()));
     },
     build: () => SignInBloc(signInUseCase),
     act: (bloc) => bloc.add(
