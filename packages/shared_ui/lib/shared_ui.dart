@@ -5,4 +5,5 @@ export 'package:shared_ui/src/widgets/app_network_image_widget.dart';
 export 'package:shared_ui/src/widgets/compact_route_timeline_widget.dart';
 export 'package:shared_ui/src/widgets/custom_toast.dart';
 export 'package:shared_ui/src/widgets/location_permission_page.dart';
+export 'package:shared_ui/src/widgets/swipe_active_tab_indicator.dart';
 export 'package:shared_ui/src/widgets/trip_history_filter_sheet.dart';

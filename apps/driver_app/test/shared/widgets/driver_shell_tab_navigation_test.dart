@@ -90,26 +90,56 @@ void main() {
     final indicator = find.byKey(
       const ValueKey<String>('driver-floating-tab-indicator'),
     );
-    final initialPosition = tester.getTopLeft(indicator).dx;
+    expect(indicator, findsOneWidget);
+    double capsuleScale(int index) {
+      final capsule = find.byKey(
+        ValueKey<String>('driver-floating-tab-indicator-$index'),
+      );
+      return capsule.evaluate().isEmpty
+          ? 0
+          : tester.widget<Transform>(capsule).transform[0];
+    }
+
+    double capsuleOpacity(int index) {
+      final capsule = find.byKey(
+        ValueKey<String>('driver-floating-tab-indicator-$index'),
+      );
+      if (capsule.evaluate().isEmpty) return 0;
+      final opacity = find.ancestor(
+        of: capsule,
+        matching: find.byType(Opacity),
+      );
+      return tester.widget<Opacity>(opacity).opacity;
+    }
+
+    final initialEarningsCapsuleScale = capsuleScale(2);
 
     await tester.tap(
       find.byKey(const ValueKey<String>('driver-floating-tab-item-2')),
     );
     await tester.pump();
     expect(selectedIndex, 2);
-    expect(tester.getTopLeft(indicator).dx, closeTo(initialPosition, 0.1));
+    final initialTargetCapsuleScale = capsuleScale(2);
 
     await tester.pump(const Duration(milliseconds: 160));
-    final middlePosition = tester.getTopLeft(indicator).dx;
-    expect(middlePosition, greaterThan(initialPosition));
+    final middleTargetCapsuleScale = capsuleScale(2);
+    expect(middleTargetCapsuleScale, greaterThan(initialTargetCapsuleScale));
+    expect(capsuleOpacity(2), greaterThan(0));
 
     await tester.pumpAndSettle();
-    final finalPosition = tester.getTopLeft(indicator).dx;
-    expect(finalPosition, greaterThan(middlePosition));
+    final finalTargetCapsuleScale = capsuleScale(2);
+    expect(finalTargetCapsuleScale, greaterThan(middleTargetCapsuleScale));
+    expect(finalTargetCapsuleScale, greaterThan(initialEarningsCapsuleScale));
     expectStaticDestination(0, 'Dashboard');
     expectStaticDestination(2, 'Earnings');
     expect(
-      tester.getCenter(indicator).dx,
+      tester
+          .getCenter(
+            find.byKey(
+              const ValueKey<String>('driver-floating-tab-indicator-2'),
+            ),
+          )
+          .dx,
       closeTo(
         tester
             .getCenter(

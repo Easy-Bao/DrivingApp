@@ -43,6 +43,8 @@ class DriverModule extends Module {
             navigationShell: navigationShell,
             onNavigationSettled:
                 Modular.get<DriverTabNavigationCoordinator>().commit,
+            onPagePositionChanged: Modular.get<DriverTabNavigationCoordinator>()
+                .updatePagePosition,
             children: children,
           ),
       branches: [

@@ -1,12 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PassengerFloatingTabBar extends StatelessWidget {
-  static const animationDuration = Duration(milliseconds: 320);
+  static const animationDuration = Duration(milliseconds: 280);
   static const height = 60.0;
 
   static const _destinations = <_PassengerTabDestination>[
@@ -19,17 +21,51 @@ class PassengerFloatingTabBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final InboxCubit inboxCubit;
+  final ValueListenable<double>? pagePosition;
 
   const PassengerFloatingTabBar({
     super.key,
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.inboxCubit,
+    this.pagePosition,
   });
 
   @override
   Widget build(BuildContext context) {
-    final activeIndex = selectedIndex.clamp(0, _destinations.length - 1);
+    final activeIndex = selectedIndex
+        .clamp(0, _destinations.length - 1)
+        .toInt();
+
+    final positionListenable = pagePosition;
+    if (positionListenable != null) {
+      return ValueListenableBuilder<double>(
+        valueListenable: positionListenable,
+        builder: (context, position, child) => _buildBar(
+          context,
+          activeIndex: activeIndex,
+          pagePosition: position,
+        ),
+      );
+    }
+
+    return TweenAnimationBuilder<double>(
+      duration: animationDuration,
+      curve: Curves.easeOutCubic,
+      tween: Tween<double>(end: activeIndex.toDouble()),
+      builder: (context, position, child) =>
+          _buildBar(context, activeIndex: activeIndex, pagePosition: position),
+    );
+  }
+
+  Widget _buildBar(
+    BuildContext context, {
+    required int activeIndex,
+    required double pagePosition,
+  }) {
+    final visualPagePosition = pagePosition
+        .clamp(0.0, (_destinations.length - 1).toDouble())
+        .toDouble();
 
     return Container(
       height: height,
@@ -52,28 +88,17 @@ class PassengerFloatingTabBar extends StatelessWidget {
         type: MaterialType.transparency,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final destinationWidth =
-                constraints.maxWidth / _destinations.length;
-
             return Stack(
               children: [
-                AnimatedPositionedDirectional(
-                  duration: animationDuration,
-                  curve: Curves.easeOutCubic,
-                  top: 3,
-                  bottom: 3,
-                  start: destinationWidth * activeIndex + 3,
-                  width: destinationWidth - 6,
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      key: const ValueKey<String>(
-                        'passenger-floating-tab-indicator',
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.neutralColor,
-                        borderRadius: BorderRadius.circular(27),
-                      ),
+                Positioned.fill(
+                  child: SwipeActiveTabIndicator(
+                    key: const ValueKey<String>(
+                      'passenger-floating-tab-indicator',
                     ),
+                    pagePosition: visualPagePosition,
+                    itemCount: _destinations.length,
+                    color: AppTheme.neutralColor,
+                    capsuleKeyPrefix: 'passenger-floating-tab-indicator',
                   ),
                 ),
                 Row(
@@ -84,6 +109,7 @@ class PassengerFloatingTabBar extends StatelessWidget {
                           destination: _destinations[index],
                           index: index,
                           isSelected: index == activeIndex,
+                          pagePosition: visualPagePosition,
                           inboxCubit: inboxCubit,
                           onTap: onDestinationSelected,
                         ),
@@ -103,6 +129,7 @@ class _PassengerFloatingTabItem extends StatelessWidget {
   final _PassengerTabDestination destination;
   final int index;
   final bool isSelected;
+  final double pagePosition;
   final InboxCubit inboxCubit;
   final ValueChanged<int> onTap;
 
@@ -110,15 +137,24 @@ class _PassengerFloatingTabItem extends StatelessWidget {
     required this.destination,
     required this.index,
     required this.isSelected,
+    required this.pagePosition,
     required this.inboxCubit,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final targetColor = isSelected
-        ? AppTheme.selectedItemColor
-        : AppTheme.unselectedItemColor;
+    final selectionProgress = SwipeActiveTabIndicator.selectionProgress(
+      pagePosition,
+      index,
+    );
+    final targetColor =
+        Color.lerp(
+          AppTheme.unselectedItemColor,
+          AppTheme.selectedItemColor,
+          selectionProgress,
+        ) ??
+        AppTheme.unselectedItemColor;
     final labelStyle = Theme.of(context).textTheme.labelSmall!;
 
     return Semantics(

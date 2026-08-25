@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -16,8 +17,10 @@ import 'package:shared_core/shared_core.dart';
 class PassengerTabNavigationCoordinator extends ChangeNotifier {
   int? _selectedIndex;
   final List<int> _navigationHistory = [];
+  final ValueNotifier<double> _pagePosition = ValueNotifier(0);
 
   int get selectedIndex => _selectedIndex ?? 0;
+  ValueListenable<double> get pagePosition => _pagePosition;
 
   bool get canPop =>
       _navigationHistory.length <= 1 &&
@@ -28,6 +31,12 @@ class PassengerTabNavigationCoordinator extends ChangeNotifier {
     if (_selectedIndex != null) return;
     _selectedIndex = index;
     _navigationHistory.add(index);
+    _pagePosition.value = index.toDouble();
+  }
+
+  void updatePagePosition(double position) {
+    if (!position.isFinite || _pagePosition.value == position) return;
+    _pagePosition.value = position;
   }
 
   void commit(int index) {
@@ -55,18 +64,26 @@ class PassengerTabNavigationCoordinator extends ChangeNotifier {
     notifyListeners();
     return selectedIndex;
   }
+
+  @override
+  void dispose() {
+    _pagePosition.dispose();
+    super.dispose();
+  }
 }
 
 class PassengerTabBranchContainer extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
   final List<Widget> children;
   final ValueChanged<int> onNavigationSettled;
+  final ValueChanged<double> onPagePositionChanged;
 
   const PassengerTabBranchContainer({
     super.key,
     required this.navigationShell,
     required this.children,
     required this.onNavigationSettled,
+    required this.onPagePositionChanged,
   });
 
   @override
@@ -89,6 +106,8 @@ class _PassengerTabBranchContainerState
     super.initState();
     _activeIndex = widget.navigationShell.currentIndex;
     _pageController = PageController(initialPage: _activeIndex);
+    _pageController.addListener(_handlePagePositionChanged);
+    widget.onPagePositionChanged(_activeIndex.toDouble());
   }
 
   @override
@@ -113,6 +132,7 @@ class _PassengerTabBranchContainerState
 
   @override
   void dispose() {
+    _pageController.removeListener(_handlePagePositionChanged);
     _pageController.dispose();
     super.dispose();
   }
@@ -129,7 +149,10 @@ class _PassengerTabBranchContainerState
           allowImplicitScrolling: true,
           children: widget.children,
           onPageChanged: (index) {
-            if (_isUserDragging) return;
+            if (_isUserDragging ||
+                index != widget.navigationShell.currentIndex) {
+              return;
+            }
             _activeIndex = index;
             widget.onNavigationSettled(index);
           },
@@ -158,6 +181,13 @@ class _PassengerTabBranchContainerState
     }
 
     return false;
+  }
+
+  void _handlePagePositionChanged() {
+    if (!_pageController.hasClients) return;
+    final page = _pageController.page;
+    if (page == null || !page.isFinite) return;
+    widget.onPagePositionChanged(page);
   }
 
   void _preloadAdjacentBranch() {
@@ -189,6 +219,7 @@ class _PassengerTabBranchContainerState
     _gestureStartIndex = null;
     _previewIndex = null;
     _activeIndex = settledIndex;
+    widget.onPagePositionChanged(settledIndex.toDouble());
     widget.navigationShell.goBranch(settledIndex);
     widget.onNavigationSettled(settledIndex);
   }
@@ -357,6 +388,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                       selectedIndex: sel,
                       onDestinationSelected: _onItemTapped,
                       inboxCubit: widget.inboxCubit,
+                      pagePosition: widget.navigationCoordinator.pagePosition,
                     ),
                   ),
                 ),

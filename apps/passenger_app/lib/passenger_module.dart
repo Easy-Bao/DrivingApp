@@ -69,6 +69,9 @@ class PassengerModule extends Module {
             navigationShell: navigationShell,
             onNavigationSettled:
                 Modular.get<PassengerTabNavigationCoordinator>().commit,
+            onPagePositionChanged:
+                Modular.get<PassengerTabNavigationCoordinator>()
+                    .updatePagePosition,
             children: children,
           ),
       branches: [

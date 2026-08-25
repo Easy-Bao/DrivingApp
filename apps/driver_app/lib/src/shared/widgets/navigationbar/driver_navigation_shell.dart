@@ -2,14 +2,17 @@ import 'dart:async';
 
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/shared/widgets/navigationbar/driver_floating_tab_bar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 class DriverTabNavigationCoordinator extends ChangeNotifier {
   int? _selectedIndex;
   final List<int> _navigationHistory = [];
+  final ValueNotifier<double> _pagePosition = ValueNotifier(0);
 
   int get selectedIndex => _selectedIndex ?? 0;
+  ValueListenable<double> get pagePosition => _pagePosition;
 
   bool get canPop =>
       _navigationHistory.length <= 1 &&
@@ -20,6 +23,12 @@ class DriverTabNavigationCoordinator extends ChangeNotifier {
     if (_selectedIndex != null) return;
     _selectedIndex = index;
     _navigationHistory.add(index);
+    _pagePosition.value = index.toDouble();
+  }
+
+  void updatePagePosition(double position) {
+    if (!position.isFinite || _pagePosition.value == position) return;
+    _pagePosition.value = position;
   }
 
   void commit(int index) {
@@ -47,18 +56,26 @@ class DriverTabNavigationCoordinator extends ChangeNotifier {
     notifyListeners();
     return selectedIndex;
   }
+
+  @override
+  void dispose() {
+    _pagePosition.dispose();
+    super.dispose();
+  }
 }
 
 class DriverTabBranchContainer extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
   final List<Widget> children;
   final ValueChanged<int> onNavigationSettled;
+  final ValueChanged<double> onPagePositionChanged;
 
   const DriverTabBranchContainer({
     super.key,
     required this.navigationShell,
     required this.children,
     required this.onNavigationSettled,
+    required this.onPagePositionChanged,
   });
 
   @override
@@ -80,6 +97,8 @@ class _DriverTabBranchContainerState extends State<DriverTabBranchContainer> {
     super.initState();
     _activeIndex = widget.navigationShell.currentIndex;
     _pageController = PageController(initialPage: _activeIndex);
+    _pageController.addListener(_handlePagePositionChanged);
+    widget.onPagePositionChanged(_activeIndex.toDouble());
   }
 
   @override
@@ -104,6 +123,7 @@ class _DriverTabBranchContainerState extends State<DriverTabBranchContainer> {
 
   @override
   void dispose() {
+    _pageController.removeListener(_handlePagePositionChanged);
     _pageController.dispose();
     super.dispose();
   }
@@ -120,7 +140,10 @@ class _DriverTabBranchContainerState extends State<DriverTabBranchContainer> {
           allowImplicitScrolling: true,
           children: widget.children,
           onPageChanged: (index) {
-            if (_isUserDragging) return;
+            if (_isUserDragging ||
+                index != widget.navigationShell.currentIndex) {
+              return;
+            }
             _activeIndex = index;
             widget.onNavigationSettled(index);
           },
@@ -151,6 +174,13 @@ class _DriverTabBranchContainerState extends State<DriverTabBranchContainer> {
     return false;
   }
 
+  void _handlePagePositionChanged() {
+    if (!_pageController.hasClients) return;
+    final page = _pageController.page;
+    if (page == null || !page.isFinite) return;
+    widget.onPagePositionChanged(page);
+  }
+
   void _preloadAdjacentBranch() {
     final startIndex = _gestureStartIndex;
     final page = _pageController.hasClients ? _pageController.page : null;
@@ -179,6 +209,7 @@ class _DriverTabBranchContainerState extends State<DriverTabBranchContainer> {
     _gestureStartIndex = null;
     _previewIndex = null;
     _activeIndex = settledIndex;
+    widget.onPagePositionChanged(settledIndex.toDouble());
     widget.navigationShell.goBranch(settledIndex);
     widget.onNavigationSettled(settledIndex);
   }
@@ -255,6 +286,7 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
               child: DriverFloatingTabBar(
                 selectedIndex: selectedIndex,
                 onDestinationSelected: _onItemTapped,
+                pagePosition: widget.navigationCoordinator.pagePosition,
               ),
             ),
           ),

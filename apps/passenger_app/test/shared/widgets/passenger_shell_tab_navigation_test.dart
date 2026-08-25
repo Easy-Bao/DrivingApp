@@ -94,10 +94,33 @@ void main() {
     final indicator = find.byKey(
       const ValueKey<String>('passenger-floating-tab-indicator'),
     );
-    final initialIndicatorPosition = tester.getTopLeft(indicator).dx;
+    expect(indicator, findsOneWidget);
+    double capsuleScale(int index) {
+      final capsule = find.byKey(
+        ValueKey<String>('passenger-floating-tab-indicator-$index'),
+      );
+      return capsule.evaluate().isEmpty
+          ? 0
+          : tester.widget<Transform>(capsule).transform[0];
+    }
+
+    double capsuleOpacity(int index) {
+      final capsule = find.byKey(
+        ValueKey<String>('passenger-floating-tab-indicator-$index'),
+      );
+      if (capsule.evaluate().isEmpty) return 0;
+      final opacity = find.ancestor(
+        of: capsule,
+        matching: find.byType(Opacity),
+      );
+      return tester.widget<Opacity>(opacity).opacity;
+    }
+
+    final initialHomeCapsuleScale = capsuleScale(0);
 
     // A first-use swipe must load the adjacent branch while the page is still
-    // following the finger, then return to the origin when released early.
+    // following the finger. The active capsules should follow the same live
+    // page allocation before the gesture is released.
     final firstPreviewGesture = await tester.startGesture(
       tester.getCenter(find.byKey(const ValueKey<String>('home-page'))),
     );
@@ -105,6 +128,10 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
     expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
+    expect(capsuleScale(0), lessThan(initialHomeCapsuleScale));
+    expect(capsuleScale(1), greaterThan(0));
+    expect(capsuleOpacity(0), lessThan(1));
+    expect(capsuleOpacity(1), greaterThan(0));
     await firstPreviewGesture.moveBy(const Offset(100, 0));
     await firstPreviewGesture.up();
     await tester.pumpAndSettle();
@@ -114,18 +141,16 @@ void main() {
     await tester.pump();
     expect(router.state.uri.path, ActivityRoutes.fullActivityPath);
     expect(find.byType(PageView), findsOneWidget);
-    expect(
-      tester.getTopLeft(indicator).dx,
-      closeTo(initialIndicatorPosition, 0.1),
-    );
+    final initialActivityCapsuleScale = capsuleScale(1);
     await tester.pump(const Duration(milliseconds: 160));
-    final middleIndicatorPosition = tester.getTopLeft(indicator).dx;
-    expect(middleIndicatorPosition, greaterThan(initialIndicatorPosition));
-    await tester.pumpAndSettle();
+    final middleActivityCapsuleScale = capsuleScale(1);
     expect(
-      tester.getTopLeft(indicator).dx,
-      greaterThan(middleIndicatorPosition),
+      middleActivityCapsuleScale,
+      greaterThan(initialActivityCapsuleScale),
     );
+    await tester.pumpAndSettle();
+    final finalActivityCapsuleScale = capsuleScale(1);
+    expect(finalActivityCapsuleScale, greaterThan(middleActivityCapsuleScale));
     expectStaticDestination(0, 'Home');
     expectStaticDestination(1, 'Activity');
     expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
@@ -182,6 +207,7 @@ GoRouter _createRouter(
             PassengerTabBranchContainer(
               navigationShell: navigationShell,
               onNavigationSettled: navigationCoordinator.commit,
+              onPagePositionChanged: navigationCoordinator.updatePagePosition,
               children: children,
             ),
         branches: [
