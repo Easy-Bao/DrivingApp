@@ -1,3 +1,4 @@
+export 'package:shared_ui/src/navigation/tab_navigation_coordinator.dart';
 export 'package:shared_ui/src/router/safe_route_extra.dart';
 export 'package:shared_ui/src/transitions/app_transitions.dart';
 export 'package:shared_ui/src/transitions/custom_page_transition.dart';

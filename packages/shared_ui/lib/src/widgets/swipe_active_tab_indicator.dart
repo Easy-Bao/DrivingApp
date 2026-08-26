@@ -76,20 +76,17 @@ class SwipeActiveTabIndicator extends StatelessWidget {
       top: verticalInset,
       bottom: verticalInset,
       width: width,
-      child: Opacity(
-        opacity: progress,
-        child: Transform.scale(
-          key: capsuleKeyPrefix == null
-              ? null
-              : ValueKey<String>('$capsuleKeyPrefix-$index'),
-          scale: scale,
-          alignment: Alignment.center,
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: borderRadius,
-              ),
+      child: Transform.scale(
+        key: capsuleKeyPrefix == null
+            ? null
+            : ValueKey<String>('$capsuleKeyPrefix-$index'),
+        scale: scale,
+        alignment: Alignment.center,
+        child: IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: color.a * progress),
+              borderRadius: borderRadius,
             ),
           ),
         ),

@@ -2,67 +2,11 @@ import 'dart:async';
 
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/shared/widgets/navigationbar/driver_floating_tab_bar.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_ui/shared_ui.dart';
 
-class DriverTabNavigationCoordinator extends ChangeNotifier {
-  int? _selectedIndex;
-  final List<int> _navigationHistory = [];
-  final ValueNotifier<double> _pagePosition = ValueNotifier(0);
-
-  int get selectedIndex => _selectedIndex ?? 0;
-  ValueListenable<double> get pagePosition => _pagePosition;
-
-  bool get canPop =>
-      _navigationHistory.length <= 1 &&
-      _navigationHistory.isNotEmpty &&
-      _navigationHistory.last == 0;
-
-  void initialize(int index) {
-    if (_selectedIndex != null) return;
-    _selectedIndex = index;
-    _navigationHistory.add(index);
-    _pagePosition.value = index.toDouble();
-  }
-
-  void updatePagePosition(double position) {
-    if (!position.isFinite || _pagePosition.value == position) return;
-    _pagePosition.value = position;
-  }
-
-  void commit(int index) {
-    if (_selectedIndex == null) {
-      initialize(index);
-      notifyListeners();
-      return;
-    }
-    if (_selectedIndex == index) return;
-    _selectedIndex = index;
-    _navigationHistory.add(index);
-    notifyListeners();
-  }
-
-  int goBackToPreviousTab() {
-    if (_navigationHistory.length > 1) {
-      _navigationHistory.removeLast();
-      _selectedIndex = _navigationHistory.last;
-    } else {
-      _navigationHistory
-        ..clear()
-        ..add(0);
-      _selectedIndex = 0;
-    }
-    notifyListeners();
-    return selectedIndex;
-  }
-
-  @override
-  void dispose() {
-    _pagePosition.dispose();
-    super.dispose();
-  }
-}
+typedef DriverTabNavigationCoordinator = TabNavigationCoordinator;
 
 class DriverTabBranchContainer extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -209,7 +153,6 @@ class _DriverTabBranchContainerState extends State<DriverTabBranchContainer> {
     _gestureStartIndex = null;
     _previewIndex = null;
     _activeIndex = settledIndex;
-    widget.onPagePositionChanged(settledIndex.toDouble());
     widget.navigationShell.goBranch(settledIndex);
     widget.onNavigationSettled(settledIndex);
   }

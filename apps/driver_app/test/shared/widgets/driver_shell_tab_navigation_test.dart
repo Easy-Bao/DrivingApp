@@ -105,11 +105,10 @@ void main() {
         ValueKey<String>('driver-floating-tab-indicator-$index'),
       );
       if (capsule.evaluate().isEmpty) return 0;
-      final opacity = find.ancestor(
-        of: capsule,
-        matching: find.byType(Opacity),
+      final decoratedBox = tester.widget<DecoratedBox>(
+        find.descendant(of: capsule, matching: find.byType(DecoratedBox)),
       );
-      return tester.widget<Opacity>(opacity).opacity;
+      return (decoratedBox.decoration as BoxDecoration).color?.a ?? 0;
     }
 
     final initialEarningsCapsuleScale = capsuleScale(2);
