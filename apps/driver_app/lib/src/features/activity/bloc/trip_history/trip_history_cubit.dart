@@ -40,12 +40,14 @@ class DriverTripHistoryCubit extends Cubit<DriverTripHistoryState> {
     if (loadMore) {
       emit(current.copyWith(isLoadingMore: true, clearLoadMoreError: true));
     } else {
+      final hasExistingTrips = current.trips.isNotEmpty;
       emit(
         current.copyWith(
           isLoading: true,
           isLoadingMore: false,
-          hasMore: false,
-          clearNextOffset: true,
+          hasMore: hasExistingTrips ? current.hasMore : false,
+          nextOffset: hasExistingTrips ? current.nextOffset : null,
+          clearNextOffset: !hasExistingTrips,
           clearError: true,
           clearLoadMoreError: true,
         ),
@@ -107,15 +109,15 @@ class DriverTripHistoryCubit extends Cubit<DriverTripHistoryState> {
 
   void _emitInitialFailure(String message) {
     if (isClosed) return;
+    final hasExistingTrips = state.trips.isNotEmpty;
     emit(
       state.copyWith(
         isLoading: false,
         isLoadingMore: false,
-        hasMore: false,
-        clearNextOffset: true,
+        hasMore: hasExistingTrips ? state.hasMore : false,
+        clearNextOffset: !hasExistingTrips,
         clearLoadMoreError: true,
         errorMessage: message,
-        trips: const [],
       ),
     );
   }
