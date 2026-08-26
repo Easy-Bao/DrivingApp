@@ -10,11 +10,23 @@ import (
 )
 
 const (
-	driverLocationsKey      = "drivers:locations"
-	driverLocationKeyPrefix = "driver:location:"
-	driverLocationTTL       = 45 * time.Second
-	passengerLocationTTL    = 45 * time.Second
+	driverLocationsKey       = "drivers:locations"
+	driverLocationExpiryKey  = "drivers:locations:expiry"
+	driverLocationKeyPrefix  = "driver:location:"
+	driverLocationTTL        = 45 * time.Second
+	passengerLocationTTL     = 45 * time.Second
+	locationCleanupBatchSize = 100
 )
+
+const cleanupExpiredDriversScript = `
+local expired = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', '0', ARGV[2])
+for _, driver_id in ipairs(expired) do
+  redis.call('ZREM', KEYS[1], driver_id)
+  redis.call('ZREM', KEYS[2], driver_id)
+  redis.call('DEL', ARGV[3] .. driver_id)
+end
+return #expired
+`
 
 type RedisRepository struct{ client *redis.Client }
 
@@ -26,6 +38,7 @@ func (repository *RedisRepository) Upsert(ctx context.Context, point domain.Driv
 	if err != nil {
 		return err
 	}
+	expiresAt := time.Now().Add(driverLocationTTL).UnixMilli()
 	_, err = repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.GeoAdd(ctx, driverLocationsKey, &redis.GeoLocation{
 			Longitude: point.Longitude,
@@ -38,6 +51,7 @@ func (repository *RedisRepository) Upsert(ctx context.Context, point domain.Driv
 			payload,
 			driverLocationTTL,
 		)
+		pipe.ZAdd(ctx, driverLocationExpiryKey, redis.Z{Score: float64(expiresAt), Member: point.DriverID})
 		return nil
 	})
 	return err
@@ -49,12 +63,17 @@ func (repository *RedisRepository) Remove(ctx context.Context, driverID string) 
 	}
 	_, err := repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.ZRem(ctx, driverLocationsKey, driverID)
+		pipe.ZRem(ctx, driverLocationExpiryKey, driverID)
 		pipe.Del(ctx, driverLocationKey(driverID))
 		return nil
 	})
 	return err
 }
 func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
+	// GEO members do not support individual TTLs. Sweep the companion expiry
+	// index before searching so expired payloads cannot consume result slots.
+	_ = repository.cleanupExpiredDrivers(ctx)
+
 	// Only the member IDs are needed here. GeoSearchLocation expects a nested
 	// location response when using RESP3, but Redis returns a flat member list
 	// when coordinates are not requested. GeoSearch matches that response shape
@@ -108,9 +127,24 @@ func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitu
 	if len(staleLocations) > 0 {
 		// Expired payloads leave geo members behind; cleanup is best effort so a
 		// transient Redis write failure does not hide valid nearby drivers.
-		_ = repository.client.ZRem(ctx, driverLocationsKey, staleLocations).Err()
+		_, _ = repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+			pipe.ZRem(ctx, driverLocationsKey, staleLocations)
+			pipe.ZRem(ctx, driverLocationExpiryKey, staleLocations)
+			return nil
+		})
 	}
 	return result, nil
+}
+
+func (repository *RedisRepository) cleanupExpiredDrivers(ctx context.Context) error {
+	return repository.client.Eval(
+		ctx,
+		cleanupExpiredDriversScript,
+		[]string{driverLocationExpiryKey, driverLocationsKey},
+		time.Now().UnixMilli(),
+		locationCleanupBatchSize,
+		driverLocationKeyPrefix,
+	).Err()
 }
 
 func (repository *RedisRepository) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {

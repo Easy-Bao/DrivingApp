@@ -40,6 +40,8 @@ the single-process deployment. PostgreSQL remains the authorization authority;
 clients recover transient delivery gaps through REST snapshots. Redis is kept
 for high-churn location state, provider caching, authentication workflow
 artifacts, and request protection rather than as a required event broker.
+Driver GEO members are swept from a companion expiry index, and passenger
+coordinates expire automatically after a short active-ride window.
 
 The API performs a read-only Ent schema preflight before listening. Docker
 Compose runs the migration binary after PostgreSQL is healthy and does not
