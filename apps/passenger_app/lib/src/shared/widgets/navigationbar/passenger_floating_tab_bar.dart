@@ -8,14 +8,14 @@ import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerFloatingTabBar extends StatelessWidget {
-  static const animationDuration = Duration(milliseconds: 280);
-  static const height = AppDesignTokens.navigationBarHeight;
+  static const animationDuration = AppFloatingTabBar.animationDuration;
+  static const height = AppFloatingTabBar.height;
 
-  static const _destinations = <_PassengerTabDestination>[
-    _PassengerTabDestination(icon: LucideIcons.house, label: 'Home'),
-    _PassengerTabDestination(icon: LucideIcons.history, label: 'Activity'),
-    _PassengerTabDestination(icon: LucideIcons.mail, label: 'Inbox'),
-    _PassengerTabDestination(icon: LucideIcons.user, label: 'Profile'),
+  static const _destinations = <AppTabDestination>[
+    AppTabDestination(icon: LucideIcons.house, label: 'Home'),
+    AppTabDestination(icon: LucideIcons.history, label: 'Activity'),
+    AppTabDestination(icon: LucideIcons.mail, label: 'Inbox'),
+    AppTabDestination(icon: LucideIcons.user, label: 'Profile'),
   ];
 
   final int selectedIndex;
@@ -33,174 +33,20 @@ class PassengerFloatingTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeIndex = selectedIndex
-        .clamp(0, _destinations.length - 1)
-        .toInt();
-
-    final positionListenable = pagePosition;
-    if (positionListenable != null) {
-      return ValueListenableBuilder<double>(
-        valueListenable: positionListenable,
-        builder: (context, position, child) => _buildBar(
-          context,
-          activeIndex: activeIndex,
-          pagePosition: position,
-        ),
-      );
-    }
-
-    return TweenAnimationBuilder<double>(
-      duration: animationDuration,
-      curve: Curves.easeOutCubic,
-      tween: Tween<double>(end: activeIndex.toDouble()),
-      builder: (context, position, child) =>
-          _buildBar(context, activeIndex: activeIndex, pagePosition: position),
-    );
-  }
-
-  Widget _buildBar(
-    BuildContext context, {
-    required int activeIndex,
-    required double pagePosition,
-  }) {
-    final visualPagePosition = pagePosition
-        .clamp(0.0, (_destinations.length - 1).toDouble())
-        .toDouble();
-
-    return Container(
-      height: height,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: AppTheme.outlineBorderColor.withValues(alpha: 0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Stack(
-              children: [
-                Positioned.fill(
-                  child: SwipeActiveTabIndicator(
-                    key: const ValueKey<String>(
-                      'passenger-floating-tab-indicator',
-                    ),
-                    pagePosition: visualPagePosition,
-                    itemCount: _destinations.length,
-                    color: AppTheme.neutralColor,
-                    capsuleKeyPrefix: 'passenger-floating-tab-indicator',
-                  ),
-                ),
-                Row(
-                  children: [
-                    for (var index = 0; index < _destinations.length; index++)
-                      Expanded(
-                        child: _PassengerFloatingTabItem(
-                          destination: _destinations[index],
-                          index: index,
-                          isSelected: index == activeIndex,
-                          pagePosition: visualPagePosition,
-                          inboxCubit: inboxCubit,
-                          onTap: onDestinationSelected,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _PassengerFloatingTabItem extends StatelessWidget {
-  final _PassengerTabDestination destination;
-  final int index;
-  final bool isSelected;
-  final double pagePosition;
-  final InboxCubit inboxCubit;
-  final ValueChanged<int> onTap;
-
-  const _PassengerFloatingTabItem({
-    required this.destination,
-    required this.index,
-    required this.isSelected,
-    required this.pagePosition,
-    required this.inboxCubit,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final selectionProgress = SwipeActiveTabIndicator.selectionProgress(
-      pagePosition,
-      index,
-    );
-    final targetColor =
-        Color.lerp(
-          AppTheme.unselectedItemColor,
-          AppTheme.selectedItemColor,
-          selectionProgress,
-        ) ??
-        AppTheme.unselectedItemColor;
-    final labelStyle = Theme.of(context).textTheme.labelSmall!;
-
-    return Semantics(
-      button: true,
-      selected: isSelected,
-      label: destination.label,
-      excludeSemantics: true,
-      child: Tooltip(
-        message: destination.label,
-        child: InkWell(
-          key: ValueKey<String>('passenger-floating-tab-item-$index'),
-          borderRadius: BorderRadius.circular(27),
-          splashFactory: NoSplash.splashFactory,
-          overlayColor: WidgetStatePropertyAll(
-            AppTheme.surface.withValues(alpha: 0),
-          ),
-          onTap: () => onTap(index),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (index == 2)
-                  _InboxTabIcon(color: targetColor, inboxCubit: inboxCubit)
-                else
-                  Icon(
-                    destination.icon,
-                    size: AppDesignTokens.navigationIconSize,
-                    color: targetColor,
-                  ),
-                const SizedBox(height: AppDesignTokens.compactGap / 2),
-                Text(
-                  destination.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                  style: labelStyle.copyWith(
-                    color: targetColor,
-                    fontSize: AppDesignTokens.navigationLabelSize,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+    return AppFloatingTabBar(
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onDestinationSelected,
+      pagePosition: pagePosition,
+      destinations: _destinations,
+      itemKeyPrefix: 'passenger-floating-tab-item',
+      indicatorKey: 'passenger-floating-tab-indicator',
+      iconBuilder: (context, index, destination, color) => index == 2
+          ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
+          : Icon(
+              destination.icon,
+              size: AppDesignTokens.navigationIconSize,
+              color: color,
             ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -263,11 +109,4 @@ class _InboxTabIcon extends StatelessWidget {
       },
     );
   }
-}
-
-class _PassengerTabDestination {
-  final IconData icon;
-  final String label;
-
-  const _PassengerTabDestination({required this.icon, required this.label});
 }

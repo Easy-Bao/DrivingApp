@@ -21,7 +21,7 @@ class AccountPage extends StatelessWidget {
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppTheme.surface,
+          backgroundColor: AppTheme.background,
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {

@@ -34,11 +34,7 @@ class AppNetworkImageWidget extends StatelessWidget {
           color: colors.secondary,
           borderRadius: effectiveRadius,
         ),
-        child: Icon(
-          fallbackIcon,
-          color: colors.primary,
-          size: width * 0.45,
-        ),
+        child: Icon(fallbackIcon, color: colors.primary, size: width * 0.45),
       );
     }
 
@@ -67,18 +63,14 @@ class AppNetworkImageWidget extends StatelessWidget {
             ),
           ),
         ),
-        errorWidget: (context, _, __) => Container(
+        errorWidget: (context, _, error) => Container(
           width: width,
           height: height,
           decoration: BoxDecoration(
             color: colors.secondary,
             borderRadius: effectiveRadius,
           ),
-          child: Icon(
-            fallbackIcon,
-            color: colors.primary,
-            size: width * 0.45,
-          ),
+          child: Icon(fallbackIcon, color: colors.primary, size: width * 0.45),
         ),
       ),
     );

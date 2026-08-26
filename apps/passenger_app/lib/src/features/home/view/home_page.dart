@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
     return BlocListener<LocationAccessCubit, LocationAccessViewState>(
       listener: _handleLocationAccess,
       child: Scaffold(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: AppTheme.background,
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(

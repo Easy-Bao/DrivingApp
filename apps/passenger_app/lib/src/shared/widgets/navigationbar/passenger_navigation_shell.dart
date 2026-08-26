@@ -84,7 +84,7 @@ class _PassengerTabBranchContainerState
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppTheme.surface,
+      color: AppTheme.background,
       child: NotificationListener<ScrollNotification>(
         onNotification: _handleScrollNotification,
         child: PageView(

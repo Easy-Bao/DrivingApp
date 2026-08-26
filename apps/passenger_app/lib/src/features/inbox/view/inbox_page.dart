@@ -111,7 +111,7 @@ class _InboxPageState extends State<InboxPage> {
     return BlocProvider<InboxCubit>.value(
       value: _inboxCubit,
       child: Scaffold(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: AppTheme.background,
         body: SafeArea(
           child: BlocBuilder<InboxCubit, InboxState>(
             builder: (context, state) {
