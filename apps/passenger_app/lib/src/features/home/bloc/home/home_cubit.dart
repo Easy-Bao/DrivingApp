@@ -9,12 +9,17 @@ import 'package:passenger_app/src/features/home/domain/repositories/i_current_lo
 import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
+const _pickupLocationUnavailableMessage =
+    'Unable to find your pickup location. Tap to retry.';
+
 class HomeCubit extends Cubit<HomeState> {
   final IHomeRepository _repository;
   final ICurrentLocationRepository _currentLocationRepository;
 
   StreamSubscription<Either<Failure, CurrentLocation>>? _locationSubscription;
-  Future<void> _trackedLocationLoad = Future<void>.value();
+  CurrentLocation? _pendingTrackedLocation;
+  int? _trackedLocationLoadRevision;
+  bool _isLoadingTrackedLocation = false;
   double? _lastLat;
   double? _lastLng;
   int _trackingRevision = 0;
@@ -62,12 +67,15 @@ class HomeCubit extends Cubit<HomeState> {
         },
         (homeData) {
           final address = homeData.currentAddress.trim();
+          final displayedAddress = address.isNotEmpty
+              ? address
+              : state.currentAddress;
           emit(
             state.copyWith(
               isLoading: false,
-              currentAddress: address,
-              locationErrorMessage: address.isEmpty
-                  ? 'Unable to find your pickup location. Tap to retry.'
+              currentAddress: displayedAddress,
+              locationErrorMessage: displayedAddress.isEmpty
+                  ? _pickupLocationUnavailableMessage
                   : '',
               recentLocations: homeData.recentLocations,
             ),
@@ -80,8 +88,7 @@ class HomeCubit extends Cubit<HomeState> {
       emit(
         state.copyWith(
           isLoading: false,
-          locationErrorMessage:
-              'Unable to find your pickup location. Tap to retry.',
+          locationErrorMessage: _pickupLocationUnavailableMessage,
         ),
       );
     }
@@ -167,6 +174,7 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> stopLocationTracking({bool clearAddress = false}) async {
     _isTrackingLocation = false;
     _trackingRevision++;
+    _pendingTrackedLocation = null;
 
     final subscription = _locationSubscription;
     _locationSubscription = null;
@@ -181,13 +189,38 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> _loadTrackedLocation(
     CurrentLocation location,
     int trackingRevision,
-  ) {
-    final load = _trackedLocationLoad.then((_) async {
-      if (!_isActiveTrackingRevision(trackingRevision)) return;
-      await loadHomeData(lat: location.latitude, lng: location.longitude);
-    });
-    _trackedLocationLoad = load;
-    return load;
+  ) async {
+    if (!_isActiveTrackingRevision(trackingRevision)) return;
+
+    _pendingTrackedLocation = location;
+    if (_isLoadingTrackedLocation) return;
+
+    _isLoadingTrackedLocation = true;
+    _trackedLocationLoadRevision = trackingRevision;
+    try {
+      while (_isActiveTrackingRevision(trackingRevision)) {
+        final pendingLocation = _pendingTrackedLocation;
+        if (pendingLocation == null) break;
+        _pendingTrackedLocation = null;
+        await loadHomeData(
+          lat: pendingLocation.latitude,
+          lng: pendingLocation.longitude,
+        );
+      }
+    } finally {
+      if (_trackedLocationLoadRevision == trackingRevision) {
+        _trackedLocationLoadRevision = null;
+        _isLoadingTrackedLocation = false;
+      }
+
+      final pendingLocation = _pendingTrackedLocation;
+      final currentRevision = _trackingRevision;
+      if (!_isLoadingTrackedLocation &&
+          pendingLocation != null &&
+          _isActiveTrackingRevision(currentRevision)) {
+        unawaited(_loadTrackedLocation(pendingLocation, currentRevision));
+      }
+    }
   }
 
   bool _isActiveTrackingRevision(int trackingRevision) {
@@ -200,6 +233,7 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> close() async {
     _isTrackingLocation = false;
     _trackingRevision++;
+    _pendingTrackedLocation = null;
     await _locationSubscription?.cancel();
     return super.close();
   }

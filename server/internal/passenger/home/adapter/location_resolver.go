@@ -51,6 +51,9 @@ func formatAddress(place *locationdomain.Place) string {
 			return value
 		}
 	}
+	if name := strings.TrimSpace(place.Name); name != "" {
+		return name
+	}
 	return shortenAddress(place.Address)
 }
 

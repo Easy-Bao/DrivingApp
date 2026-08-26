@@ -129,6 +129,36 @@ void main() {
         ),
       ],
     );
+
+    test(
+      'keeps the last pickup address when a later refresh is unresolved',
+      () async {
+        var requestCount = 0;
+        when(
+          () => repo.loadHomeData(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async {
+          requestCount++;
+          return Right(
+            HomeData(
+              currentAddress: requestCount == 1 ? 'Tuburan, Pagadian' : '',
+              recentLocations: const [],
+            ),
+          );
+        });
+
+        final cubit = _makeCubit(repo, currentLocationRepo);
+        await cubit.loadHomeData(lat: 7.828282, lng: 123.434343);
+        await cubit.loadHomeData(lat: 7.829282, lng: 123.435343);
+
+        expect(requestCount, 2);
+        expect(cubit.state.currentAddress, 'Tuburan, Pagadian');
+        expect(cubit.state.locationErrorMessage, isEmpty);
+        await cubit.close();
+      },
+    );
   });
 
   group('HomeCubit — updateAddress()', () {
@@ -223,5 +253,71 @@ void main() {
         await cubit.close();
       },
     );
+
+    test('coalesces GPS updates behind one in-flight home request', () async {
+      final locationStream =
+          StreamController<Either<Failure, CurrentLocation>>();
+      final firstRequest = Completer<Either<Failure, HomeData>>();
+      final secondRequestStarted = Completer<void>();
+      final requestedLatitudes = <double>[];
+      var requestCount = 0;
+
+      when(
+        () => currentLocationRepo.watchCurrentLocation(),
+      ).thenAnswer((_) => locationStream.stream);
+      when(
+        () => currentLocationRepo.getCurrentLocation(),
+      ).thenAnswer((_) async => const Left(CurrentLocationFailure()));
+      when(
+        () => repo.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer((invocation) {
+        requestCount++;
+        requestedLatitudes.add(invocation.namedArguments[#lat]! as double);
+        if (requestCount == 1) return firstRequest.future;
+        if (!secondRequestStarted.isCompleted) {
+          secondRequestStarted.complete();
+        }
+        return Future.value(
+          Right(
+            HomeData(
+              currentAddress: 'Latest pickup',
+              recentLocations: const [],
+            ),
+          ),
+        );
+      });
+
+      final cubit = _makeCubit(repo, currentLocationRepo);
+      await cubit.startLocationTracking();
+
+      locationStream.add(
+        const Right(CurrentLocation(latitude: 7.8000, longitude: 123.4000)),
+      );
+      await Future<void>.delayed(Duration.zero);
+      locationStream.add(
+        const Right(CurrentLocation(latitude: 7.8100, longitude: 123.4100)),
+      );
+      locationStream.add(
+        const Right(CurrentLocation(latitude: 7.8200, longitude: 123.4200)),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      firstRequest.complete(
+        Right(
+          HomeData(currentAddress: 'First pickup', recentLocations: const []),
+        ),
+      );
+      await secondRequestStarted.future.timeout(const Duration(seconds: 1));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(requestedLatitudes, [7.8000, 7.8200]);
+      expect(cubit.state.currentAddress, 'Latest pickup');
+
+      await locationStream.close();
+      await cubit.close();
+    });
   });
 }

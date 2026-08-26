@@ -264,7 +264,8 @@ class _HomePageState extends State<HomePage> {
         return BlocBuilder<HomeCubit, HomeState>(
           buildWhen: (prev, curr) =>
               prev.currentAddress != curr.currentAddress ||
-              prev.isLoading != curr.isLoading,
+              prev.isLoading != curr.isLoading ||
+              prev.locationErrorMessage != curr.locationErrorMessage,
           builder: (context, homeState) {
             return HomeLocationRowWidget(
               isAccessChecking: accessState is LocationAccessChecking,
