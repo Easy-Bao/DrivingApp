@@ -35,6 +35,11 @@ The public client URL is `API_BASE_URL`, normally `http://127.0.0.1:8000`.
 The API process owns REST, WebSocket, authentication, rides, location,
 realtime, chat, and admin routes.
 
+The API performs a read-only Ent schema preflight before listening. Docker
+Compose runs the migration binary after PostgreSQL is healthy and does not
+start the API until that migration process exits successfully. Native startup
+still requires `just db-migrate` to be run explicitly.
+
 ### Runtime protection and connection pools
 
 Request limits use independent one-minute buckets so polling cannot consume an
@@ -163,6 +168,8 @@ with private values; the JWT secret must be at least 32 characters. Add
 only needed when testing verification emails.
 
 The health command should return an object whose service is `api`.
+The readiness command is `http://localhost:8000/readyz` and returns `503`
+until PostgreSQL, Redis, and the generated Ent schema are available.
 API requests should use `http://localhost:8000/api/v1/...`.
 
 ### Optional admin web app

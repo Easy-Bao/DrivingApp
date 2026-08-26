@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -32,6 +33,7 @@ import (
 	passengerhome "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
 	passengerhomeadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/adapter"
 	passengerhomehttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/transport/http"
+	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	assignmentadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment/adapter"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
@@ -92,6 +94,12 @@ func main() {
 		log.Fatal(err)
 	}
 	defer databaseClient.Close()
+	schemaContext, cancelSchemaCheck := context.WithTimeout(runContext, 15*time.Second)
+	if err := platformmigration.ValidateEntSchema(schemaContext, databaseClient); err != nil {
+		cancelSchemaCheck()
+		log.Fatalf("database schema is not ready: %v", err)
+	}
+	cancelSchemaCheck()
 
 	redisURL := strings.TrimSpace(os.Getenv("REDIS_URL"))
 	if redisURL == "" {
@@ -218,6 +226,19 @@ func main() {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok","service":"api"}`))
 	})
+	router.Get("/readyz", func(writer http.ResponseWriter, request *http.Request) {
+		checkContext, cancel := context.WithTimeout(request.Context(), 2*time.Second)
+		defer cancel()
+		if err := platformmigration.ValidateEntSchema(checkContext, databaseClient); err != nil {
+			writeReadinessResponse(writer, http.StatusServiceUnavailable, false)
+			return
+		}
+		if err := redisClient.Ping(checkContext).Err(); err != nil {
+			writeReadinessResponse(writer, http.StatusServiceUnavailable, false)
+			return
+		}
+		writeReadinessResponse(writer, http.StatusOK, true)
+	})
 
 	handler := proxyTrust.Middleware(
 		middleware.Logging(logger.New(apiServiceName))(
@@ -257,6 +278,19 @@ func main() {
 			log.Printf("api shutdown failed: %v", shutdownErr)
 		}
 	}
+}
+
+func writeReadinessResponse(writer http.ResponseWriter, status int, ready bool) {
+	readiness := "not_ready"
+	if ready {
+		readiness = "ready"
+	}
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(status)
+	_ = json.NewEncoder(writer).Encode(map[string]string{
+		"status":  readiness,
+		"service": apiServiceName,
+	})
 }
 
 func apiPort() string {

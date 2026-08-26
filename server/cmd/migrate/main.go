@@ -36,4 +36,7 @@ func main() {
 	if err := platformmigration.NewRunner(database, client).Run(ctx); err != nil {
 		log.Fatal(err)
 	}
+	if err := platformmigration.ValidateEntSchema(ctx, client); err != nil {
+		log.Fatal(err)
+	}
 }
