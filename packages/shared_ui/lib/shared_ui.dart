@@ -1,5 +1,7 @@
 export 'package:shared_ui/src/navigation/tab_navigation_coordinator.dart';
 export 'package:shared_ui/src/router/safe_route_extra.dart';
+export 'package:shared_ui/src/theme/app_design_tokens.dart';
+export 'package:shared_ui/src/theme/easy_ride_theme.dart';
 export 'package:shared_ui/src/transitions/app_transitions.dart';
 export 'package:shared_ui/src/transitions/custom_page_transition.dart';
 export 'package:shared_ui/src/widgets/app_network_image_widget.dart';

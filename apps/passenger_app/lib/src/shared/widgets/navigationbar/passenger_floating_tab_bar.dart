@@ -9,7 +9,7 @@ import 'package:shared_ui/shared_ui.dart';
 
 class PassengerFloatingTabBar extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 280);
-  static const height = 60.0;
+  static const height = AppDesignTokens.navigationBarHeight;
 
   static const _destinations = <_PassengerTabDestination>[
     _PassengerTabDestination(icon: LucideIcons.house, label: 'Home'),
@@ -179,8 +179,12 @@ class _PassengerFloatingTabItem extends StatelessWidget {
                 if (index == 2)
                   _InboxTabIcon(color: targetColor, inboxCubit: inboxCubit)
                 else
-                  Icon(destination.icon, size: 18, color: targetColor),
-                const SizedBox(height: 2),
+                  Icon(
+                    destination.icon,
+                    size: AppDesignTokens.navigationIconSize,
+                    color: targetColor,
+                  ),
+                const SizedBox(height: AppDesignTokens.compactGap / 2),
                 Text(
                   destination.label,
                   maxLines: 1,
@@ -188,7 +192,7 @@ class _PassengerFloatingTabItem extends StatelessWidget {
                   softWrap: false,
                   style: labelStyle.copyWith(
                     color: targetColor,
-                    fontSize: 10,
+                    fontSize: AppDesignTokens.navigationLabelSize,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -225,7 +229,11 @@ class _InboxTabIcon extends StatelessWidget {
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              Icon(LucideIcons.mail, size: 18, color: color),
+              Icon(
+                LucideIcons.mail,
+                size: AppDesignTokens.navigationIconSize,
+                color: color,
+              ),
               if (unreadCount > 0)
                 Positioned(
                   top: -8,

@@ -19,6 +19,7 @@ import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_floating_tab_bar.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 void main() {
   testWidgets('tab changes, named navigation, and swipes stay synchronized', (
@@ -72,9 +73,9 @@ void main() {
         find.descendant(of: item, matching: find.byType(Icon)),
       );
       final inkWell = tester.widget<InkWell>(item);
-      expect(labelWidget.style?.fontSize, 10);
+      expect(labelWidget.style?.fontSize, AppDesignTokens.navigationLabelSize);
       expect(labelWidget.style?.fontWeight, FontWeight.w500);
-      expect(iconWidget.size, 18);
+      expect(iconWidget.size, AppDesignTokens.navigationIconSize);
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),

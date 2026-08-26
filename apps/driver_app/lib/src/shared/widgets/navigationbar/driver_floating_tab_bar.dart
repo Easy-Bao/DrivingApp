@@ -6,7 +6,7 @@ import 'package:shared_ui/shared_ui.dart';
 
 class DriverFloatingTabBar extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 280);
-  static const height = 60.0;
+  static const height = AppDesignTokens.navigationBarHeight;
 
   static const _destinations = <_DriverTabDestination>[
     _DriverTabDestination(
@@ -171,8 +171,12 @@ class _DriverFloatingTabItem extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(destination.icon, size: 18, color: targetColor),
-                const SizedBox(height: 2),
+                Icon(
+                  destination.icon,
+                  size: AppDesignTokens.navigationIconSize,
+                  color: targetColor,
+                ),
+                const SizedBox(height: AppDesignTokens.compactGap / 2),
                 Text(
                   destination.label,
                   maxLines: 1,
@@ -180,7 +184,7 @@ class _DriverFloatingTabItem extends StatelessWidget {
                   softWrap: false,
                   style: labelStyle.copyWith(
                     color: targetColor,
-                    fontSize: 10,
+                    fontSize: AppDesignTokens.navigationLabelSize,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
