@@ -47,10 +47,10 @@ func TestIntegrityMigrationIncludesFinancialAndParticipantConstraints(t *testing
 	}
 }
 
-func TestMigrationPlanEndsWithPrivateDocumentHardening(t *testing.T) {
+func TestMigrationPlanEndsWithPassengerProfileAttributes(t *testing.T) {
 	runner := NewRunner(nil, nil)
 	last := runner.migrations[len(runner.migrations)-1]
-	if last.version != 2026082305 || last.name != "secure_private_driver_documents" {
+	if last.version != 2026082601 || last.name != "add_passenger_profile_attributes" {
 		t.Fatalf("last migration = %d %q", last.version, last.name)
 	}
 }

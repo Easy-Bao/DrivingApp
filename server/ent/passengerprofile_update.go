@@ -82,6 +82,60 @@ func (_u *PassengerProfileUpdate) ClearAddress() *PassengerProfileUpdate {
 	return _u
 }
 
+// SetGender sets the "gender" field.
+func (_u *PassengerProfileUpdate) SetGender(v string) *PassengerProfileUpdate {
+	_u.mutation.SetGender(v)
+	return _u
+}
+
+// SetNillableGender sets the "gender" field if the given value is not nil.
+func (_u *PassengerProfileUpdate) SetNillableGender(v *string) *PassengerProfileUpdate {
+	if v != nil {
+		_u.SetGender(*v)
+	}
+	return _u
+}
+
+// SetAvatarStorageKey sets the "avatar_storage_key" field.
+func (_u *PassengerProfileUpdate) SetAvatarStorageKey(v string) *PassengerProfileUpdate {
+	_u.mutation.SetAvatarStorageKey(v)
+	return _u
+}
+
+// SetNillableAvatarStorageKey sets the "avatar_storage_key" field if the given value is not nil.
+func (_u *PassengerProfileUpdate) SetNillableAvatarStorageKey(v *string) *PassengerProfileUpdate {
+	if v != nil {
+		_u.SetAvatarStorageKey(*v)
+	}
+	return _u
+}
+
+// ClearAvatarStorageKey clears the value of the "avatar_storage_key" field.
+func (_u *PassengerProfileUpdate) ClearAvatarStorageKey() *PassengerProfileUpdate {
+	_u.mutation.ClearAvatarStorageKey()
+	return _u
+}
+
+// SetAvatarContentType sets the "avatar_content_type" field.
+func (_u *PassengerProfileUpdate) SetAvatarContentType(v string) *PassengerProfileUpdate {
+	_u.mutation.SetAvatarContentType(v)
+	return _u
+}
+
+// SetNillableAvatarContentType sets the "avatar_content_type" field if the given value is not nil.
+func (_u *PassengerProfileUpdate) SetNillableAvatarContentType(v *string) *PassengerProfileUpdate {
+	if v != nil {
+		_u.SetAvatarContentType(*v)
+	}
+	return _u
+}
+
+// ClearAvatarContentType clears the value of the "avatar_content_type" field.
+func (_u *PassengerProfileUpdate) ClearAvatarContentType() *PassengerProfileUpdate {
+	_u.mutation.ClearAvatarContentType()
+	return _u
+}
+
 // SetPreferredRideType sets the "preferred_ride_type" field.
 func (_u *PassengerProfileUpdate) SetPreferredRideType(v string) *PassengerProfileUpdate {
 	_u.mutation.SetPreferredRideType(v)
@@ -141,6 +195,21 @@ func (_u *PassengerProfileUpdate) check() error {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.user_id": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Gender(); ok {
+		if err := passengerprofile.GenderValidator(v); err != nil {
+			return &ValidationError{Name: "gender", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.gender": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.AvatarStorageKey(); ok {
+		if err := passengerprofile.AvatarStorageKeyValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_storage_key", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.avatar_storage_key": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.AvatarContentType(); ok {
+		if err := passengerprofile.AvatarContentTypeValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_content_type", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.avatar_content_type": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -170,6 +239,21 @@ func (_u *PassengerProfileUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if _u.mutation.AddressCleared() {
 		_spec.ClearField(passengerprofile.FieldAddress, field.TypeString)
+	}
+	if value, ok := _u.mutation.Gender(); ok {
+		_spec.SetField(passengerprofile.FieldGender, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.AvatarStorageKey(); ok {
+		_spec.SetField(passengerprofile.FieldAvatarStorageKey, field.TypeString, value)
+	}
+	if _u.mutation.AvatarStorageKeyCleared() {
+		_spec.ClearField(passengerprofile.FieldAvatarStorageKey, field.TypeString)
+	}
+	if value, ok := _u.mutation.AvatarContentType(); ok {
+		_spec.SetField(passengerprofile.FieldAvatarContentType, field.TypeString, value)
+	}
+	if _u.mutation.AvatarContentTypeCleared() {
+		_spec.ClearField(passengerprofile.FieldAvatarContentType, field.TypeString)
 	}
 	if value, ok := _u.mutation.PreferredRideType(); ok {
 		_spec.SetField(passengerprofile.FieldPreferredRideType, field.TypeString, value)
@@ -252,6 +336,60 @@ func (_u *PassengerProfileUpdateOne) ClearAddress() *PassengerProfileUpdateOne {
 	return _u
 }
 
+// SetGender sets the "gender" field.
+func (_u *PassengerProfileUpdateOne) SetGender(v string) *PassengerProfileUpdateOne {
+	_u.mutation.SetGender(v)
+	return _u
+}
+
+// SetNillableGender sets the "gender" field if the given value is not nil.
+func (_u *PassengerProfileUpdateOne) SetNillableGender(v *string) *PassengerProfileUpdateOne {
+	if v != nil {
+		_u.SetGender(*v)
+	}
+	return _u
+}
+
+// SetAvatarStorageKey sets the "avatar_storage_key" field.
+func (_u *PassengerProfileUpdateOne) SetAvatarStorageKey(v string) *PassengerProfileUpdateOne {
+	_u.mutation.SetAvatarStorageKey(v)
+	return _u
+}
+
+// SetNillableAvatarStorageKey sets the "avatar_storage_key" field if the given value is not nil.
+func (_u *PassengerProfileUpdateOne) SetNillableAvatarStorageKey(v *string) *PassengerProfileUpdateOne {
+	if v != nil {
+		_u.SetAvatarStorageKey(*v)
+	}
+	return _u
+}
+
+// ClearAvatarStorageKey clears the value of the "avatar_storage_key" field.
+func (_u *PassengerProfileUpdateOne) ClearAvatarStorageKey() *PassengerProfileUpdateOne {
+	_u.mutation.ClearAvatarStorageKey()
+	return _u
+}
+
+// SetAvatarContentType sets the "avatar_content_type" field.
+func (_u *PassengerProfileUpdateOne) SetAvatarContentType(v string) *PassengerProfileUpdateOne {
+	_u.mutation.SetAvatarContentType(v)
+	return _u
+}
+
+// SetNillableAvatarContentType sets the "avatar_content_type" field if the given value is not nil.
+func (_u *PassengerProfileUpdateOne) SetNillableAvatarContentType(v *string) *PassengerProfileUpdateOne {
+	if v != nil {
+		_u.SetAvatarContentType(*v)
+	}
+	return _u
+}
+
+// ClearAvatarContentType clears the value of the "avatar_content_type" field.
+func (_u *PassengerProfileUpdateOne) ClearAvatarContentType() *PassengerProfileUpdateOne {
+	_u.mutation.ClearAvatarContentType()
+	return _u
+}
+
 // SetPreferredRideType sets the "preferred_ride_type" field.
 func (_u *PassengerProfileUpdateOne) SetPreferredRideType(v string) *PassengerProfileUpdateOne {
 	_u.mutation.SetPreferredRideType(v)
@@ -324,6 +462,21 @@ func (_u *PassengerProfileUpdateOne) check() error {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.user_id": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Gender(); ok {
+		if err := passengerprofile.GenderValidator(v); err != nil {
+			return &ValidationError{Name: "gender", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.gender": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.AvatarStorageKey(); ok {
+		if err := passengerprofile.AvatarStorageKeyValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_storage_key", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.avatar_storage_key": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.AvatarContentType(); ok {
+		if err := passengerprofile.AvatarContentTypeValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_content_type", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.avatar_content_type": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -370,6 +523,21 @@ func (_u *PassengerProfileUpdateOne) sqlSave(ctx context.Context) (_node *Passen
 	}
 	if _u.mutation.AddressCleared() {
 		_spec.ClearField(passengerprofile.FieldAddress, field.TypeString)
+	}
+	if value, ok := _u.mutation.Gender(); ok {
+		_spec.SetField(passengerprofile.FieldGender, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.AvatarStorageKey(); ok {
+		_spec.SetField(passengerprofile.FieldAvatarStorageKey, field.TypeString, value)
+	}
+	if _u.mutation.AvatarStorageKeyCleared() {
+		_spec.ClearField(passengerprofile.FieldAvatarStorageKey, field.TypeString)
+	}
+	if value, ok := _u.mutation.AvatarContentType(); ok {
+		_spec.SetField(passengerprofile.FieldAvatarContentType, field.TypeString, value)
+	}
+	if _u.mutation.AvatarContentTypeCleared() {
+		_spec.ClearField(passengerprofile.FieldAvatarContentType, field.TypeString)
 	}
 	if value, ok := _u.mutation.PreferredRideType(); ok {
 		_spec.SetField(passengerprofile.FieldPreferredRideType, field.TypeString, value)

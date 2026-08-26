@@ -6744,6 +6744,9 @@ type PassengerProfileMutation struct {
 	adduser_id          *int
 	name                *string
 	address             *string
+	gender              *string
+	avatar_storage_key  *string
+	avatar_content_type *string
 	preferred_ride_type *string
 	clearedFields       map[string]struct{}
 	done                bool
@@ -6990,6 +6993,140 @@ func (m *PassengerProfileMutation) ResetAddress() {
 	delete(m.clearedFields, passengerprofile.FieldAddress)
 }
 
+// SetGender sets the "gender" field.
+func (m *PassengerProfileMutation) SetGender(s string) {
+	m.gender = &s
+}
+
+// Gender returns the value of the "gender" field in the mutation.
+func (m *PassengerProfileMutation) Gender() (r string, exists bool) {
+	v := m.gender
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGender returns the old "gender" field's value of the PassengerProfile entity.
+// If the PassengerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerProfileMutation) OldGender(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGender is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGender requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGender: %w", err)
+	}
+	return oldValue.Gender, nil
+}
+
+// ResetGender resets all changes to the "gender" field.
+func (m *PassengerProfileMutation) ResetGender() {
+	m.gender = nil
+}
+
+// SetAvatarStorageKey sets the "avatar_storage_key" field.
+func (m *PassengerProfileMutation) SetAvatarStorageKey(s string) {
+	m.avatar_storage_key = &s
+}
+
+// AvatarStorageKey returns the value of the "avatar_storage_key" field in the mutation.
+func (m *PassengerProfileMutation) AvatarStorageKey() (r string, exists bool) {
+	v := m.avatar_storage_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAvatarStorageKey returns the old "avatar_storage_key" field's value of the PassengerProfile entity.
+// If the PassengerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerProfileMutation) OldAvatarStorageKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAvatarStorageKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAvatarStorageKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAvatarStorageKey: %w", err)
+	}
+	return oldValue.AvatarStorageKey, nil
+}
+
+// ClearAvatarStorageKey clears the value of the "avatar_storage_key" field.
+func (m *PassengerProfileMutation) ClearAvatarStorageKey() {
+	m.avatar_storage_key = nil
+	m.clearedFields[passengerprofile.FieldAvatarStorageKey] = struct{}{}
+}
+
+// AvatarStorageKeyCleared returns if the "avatar_storage_key" field was cleared in this mutation.
+func (m *PassengerProfileMutation) AvatarStorageKeyCleared() bool {
+	_, ok := m.clearedFields[passengerprofile.FieldAvatarStorageKey]
+	return ok
+}
+
+// ResetAvatarStorageKey resets all changes to the "avatar_storage_key" field.
+func (m *PassengerProfileMutation) ResetAvatarStorageKey() {
+	m.avatar_storage_key = nil
+	delete(m.clearedFields, passengerprofile.FieldAvatarStorageKey)
+}
+
+// SetAvatarContentType sets the "avatar_content_type" field.
+func (m *PassengerProfileMutation) SetAvatarContentType(s string) {
+	m.avatar_content_type = &s
+}
+
+// AvatarContentType returns the value of the "avatar_content_type" field in the mutation.
+func (m *PassengerProfileMutation) AvatarContentType() (r string, exists bool) {
+	v := m.avatar_content_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAvatarContentType returns the old "avatar_content_type" field's value of the PassengerProfile entity.
+// If the PassengerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PassengerProfileMutation) OldAvatarContentType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAvatarContentType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAvatarContentType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAvatarContentType: %w", err)
+	}
+	return oldValue.AvatarContentType, nil
+}
+
+// ClearAvatarContentType clears the value of the "avatar_content_type" field.
+func (m *PassengerProfileMutation) ClearAvatarContentType() {
+	m.avatar_content_type = nil
+	m.clearedFields[passengerprofile.FieldAvatarContentType] = struct{}{}
+}
+
+// AvatarContentTypeCleared returns if the "avatar_content_type" field was cleared in this mutation.
+func (m *PassengerProfileMutation) AvatarContentTypeCleared() bool {
+	_, ok := m.clearedFields[passengerprofile.FieldAvatarContentType]
+	return ok
+}
+
+// ResetAvatarContentType resets all changes to the "avatar_content_type" field.
+func (m *PassengerProfileMutation) ResetAvatarContentType() {
+	m.avatar_content_type = nil
+	delete(m.clearedFields, passengerprofile.FieldAvatarContentType)
+}
+
 // SetPreferredRideType sets the "preferred_ride_type" field.
 func (m *PassengerProfileMutation) SetPreferredRideType(s string) {
 	m.preferred_ride_type = &s
@@ -7073,7 +7210,7 @@ func (m *PassengerProfileMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PassengerProfileMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 7)
 	if m.user_id != nil {
 		fields = append(fields, passengerprofile.FieldUserID)
 	}
@@ -7082,6 +7219,15 @@ func (m *PassengerProfileMutation) Fields() []string {
 	}
 	if m.address != nil {
 		fields = append(fields, passengerprofile.FieldAddress)
+	}
+	if m.gender != nil {
+		fields = append(fields, passengerprofile.FieldGender)
+	}
+	if m.avatar_storage_key != nil {
+		fields = append(fields, passengerprofile.FieldAvatarStorageKey)
+	}
+	if m.avatar_content_type != nil {
+		fields = append(fields, passengerprofile.FieldAvatarContentType)
 	}
 	if m.preferred_ride_type != nil {
 		fields = append(fields, passengerprofile.FieldPreferredRideType)
@@ -7100,6 +7246,12 @@ func (m *PassengerProfileMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case passengerprofile.FieldAddress:
 		return m.Address()
+	case passengerprofile.FieldGender:
+		return m.Gender()
+	case passengerprofile.FieldAvatarStorageKey:
+		return m.AvatarStorageKey()
+	case passengerprofile.FieldAvatarContentType:
+		return m.AvatarContentType()
 	case passengerprofile.FieldPreferredRideType:
 		return m.PreferredRideType()
 	}
@@ -7117,6 +7269,12 @@ func (m *PassengerProfileMutation) OldField(ctx context.Context, name string) (e
 		return m.OldName(ctx)
 	case passengerprofile.FieldAddress:
 		return m.OldAddress(ctx)
+	case passengerprofile.FieldGender:
+		return m.OldGender(ctx)
+	case passengerprofile.FieldAvatarStorageKey:
+		return m.OldAvatarStorageKey(ctx)
+	case passengerprofile.FieldAvatarContentType:
+		return m.OldAvatarContentType(ctx)
 	case passengerprofile.FieldPreferredRideType:
 		return m.OldPreferredRideType(ctx)
 	}
@@ -7148,6 +7306,27 @@ func (m *PassengerProfileMutation) SetField(name string, value ent.Value) error 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAddress(v)
+		return nil
+	case passengerprofile.FieldGender:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGender(v)
+		return nil
+	case passengerprofile.FieldAvatarStorageKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAvatarStorageKey(v)
+		return nil
+	case passengerprofile.FieldAvatarContentType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAvatarContentType(v)
 		return nil
 	case passengerprofile.FieldPreferredRideType:
 		v, ok := value.(string)
@@ -7204,6 +7383,12 @@ func (m *PassengerProfileMutation) ClearedFields() []string {
 	if m.FieldCleared(passengerprofile.FieldAddress) {
 		fields = append(fields, passengerprofile.FieldAddress)
 	}
+	if m.FieldCleared(passengerprofile.FieldAvatarStorageKey) {
+		fields = append(fields, passengerprofile.FieldAvatarStorageKey)
+	}
+	if m.FieldCleared(passengerprofile.FieldAvatarContentType) {
+		fields = append(fields, passengerprofile.FieldAvatarContentType)
+	}
 	if m.FieldCleared(passengerprofile.FieldPreferredRideType) {
 		fields = append(fields, passengerprofile.FieldPreferredRideType)
 	}
@@ -7224,6 +7409,12 @@ func (m *PassengerProfileMutation) ClearField(name string) error {
 	case passengerprofile.FieldAddress:
 		m.ClearAddress()
 		return nil
+	case passengerprofile.FieldAvatarStorageKey:
+		m.ClearAvatarStorageKey()
+		return nil
+	case passengerprofile.FieldAvatarContentType:
+		m.ClearAvatarContentType()
+		return nil
 	case passengerprofile.FieldPreferredRideType:
 		m.ClearPreferredRideType()
 		return nil
@@ -7243,6 +7434,15 @@ func (m *PassengerProfileMutation) ResetField(name string) error {
 		return nil
 	case passengerprofile.FieldAddress:
 		m.ResetAddress()
+		return nil
+	case passengerprofile.FieldGender:
+		m.ResetGender()
+		return nil
+	case passengerprofile.FieldAvatarStorageKey:
+		m.ResetAvatarStorageKey()
+		return nil
+	case passengerprofile.FieldAvatarContentType:
+		m.ResetAvatarContentType()
 		return nil
 	case passengerprofile.FieldPreferredRideType:
 		m.ResetPreferredRideType()

@@ -67,6 +67,21 @@ func Address(v string) predicate.PassengerProfile {
 	return predicate.PassengerProfile(sql.FieldEQ(FieldAddress, v))
 }
 
+// Gender applies equality check predicate on the "gender" field. It's identical to GenderEQ.
+func Gender(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEQ(FieldGender, v))
+}
+
+// AvatarStorageKey applies equality check predicate on the "avatar_storage_key" field. It's identical to AvatarStorageKeyEQ.
+func AvatarStorageKey(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEQ(FieldAvatarStorageKey, v))
+}
+
+// AvatarContentType applies equality check predicate on the "avatar_content_type" field. It's identical to AvatarContentTypeEQ.
+func AvatarContentType(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEQ(FieldAvatarContentType, v))
+}
+
 // PreferredRideType applies equality check predicate on the "preferred_ride_type" field. It's identical to PreferredRideTypeEQ.
 func PreferredRideType(v string) predicate.PassengerProfile {
 	return predicate.PassengerProfile(sql.FieldEQ(FieldPreferredRideType, v))
@@ -250,6 +265,221 @@ func AddressEqualFold(v string) predicate.PassengerProfile {
 // AddressContainsFold applies the ContainsFold predicate on the "address" field.
 func AddressContainsFold(v string) predicate.PassengerProfile {
 	return predicate.PassengerProfile(sql.FieldContainsFold(FieldAddress, v))
+}
+
+// GenderEQ applies the EQ predicate on the "gender" field.
+func GenderEQ(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEQ(FieldGender, v))
+}
+
+// GenderNEQ applies the NEQ predicate on the "gender" field.
+func GenderNEQ(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNEQ(FieldGender, v))
+}
+
+// GenderIn applies the In predicate on the "gender" field.
+func GenderIn(vs ...string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldIn(FieldGender, vs...))
+}
+
+// GenderNotIn applies the NotIn predicate on the "gender" field.
+func GenderNotIn(vs ...string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNotIn(FieldGender, vs...))
+}
+
+// GenderGT applies the GT predicate on the "gender" field.
+func GenderGT(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldGT(FieldGender, v))
+}
+
+// GenderGTE applies the GTE predicate on the "gender" field.
+func GenderGTE(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldGTE(FieldGender, v))
+}
+
+// GenderLT applies the LT predicate on the "gender" field.
+func GenderLT(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldLT(FieldGender, v))
+}
+
+// GenderLTE applies the LTE predicate on the "gender" field.
+func GenderLTE(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldLTE(FieldGender, v))
+}
+
+// GenderContains applies the Contains predicate on the "gender" field.
+func GenderContains(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldContains(FieldGender, v))
+}
+
+// GenderHasPrefix applies the HasPrefix predicate on the "gender" field.
+func GenderHasPrefix(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldHasPrefix(FieldGender, v))
+}
+
+// GenderHasSuffix applies the HasSuffix predicate on the "gender" field.
+func GenderHasSuffix(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldHasSuffix(FieldGender, v))
+}
+
+// GenderEqualFold applies the EqualFold predicate on the "gender" field.
+func GenderEqualFold(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEqualFold(FieldGender, v))
+}
+
+// GenderContainsFold applies the ContainsFold predicate on the "gender" field.
+func GenderContainsFold(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldContainsFold(FieldGender, v))
+}
+
+// AvatarStorageKeyEQ applies the EQ predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyEQ(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEQ(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyNEQ applies the NEQ predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyNEQ(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNEQ(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyIn applies the In predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyIn(vs ...string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldIn(FieldAvatarStorageKey, vs...))
+}
+
+// AvatarStorageKeyNotIn applies the NotIn predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyNotIn(vs ...string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNotIn(FieldAvatarStorageKey, vs...))
+}
+
+// AvatarStorageKeyGT applies the GT predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyGT(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldGT(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyGTE applies the GTE predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyGTE(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldGTE(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyLT applies the LT predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyLT(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldLT(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyLTE applies the LTE predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyLTE(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldLTE(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyContains applies the Contains predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyContains(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldContains(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyHasPrefix applies the HasPrefix predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyHasPrefix(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldHasPrefix(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyHasSuffix applies the HasSuffix predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyHasSuffix(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldHasSuffix(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyIsNil applies the IsNil predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyIsNil() predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldIsNull(FieldAvatarStorageKey))
+}
+
+// AvatarStorageKeyNotNil applies the NotNil predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyNotNil() predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNotNull(FieldAvatarStorageKey))
+}
+
+// AvatarStorageKeyEqualFold applies the EqualFold predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyEqualFold(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEqualFold(FieldAvatarStorageKey, v))
+}
+
+// AvatarStorageKeyContainsFold applies the ContainsFold predicate on the "avatar_storage_key" field.
+func AvatarStorageKeyContainsFold(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldContainsFold(FieldAvatarStorageKey, v))
+}
+
+// AvatarContentTypeEQ applies the EQ predicate on the "avatar_content_type" field.
+func AvatarContentTypeEQ(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEQ(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeNEQ applies the NEQ predicate on the "avatar_content_type" field.
+func AvatarContentTypeNEQ(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNEQ(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeIn applies the In predicate on the "avatar_content_type" field.
+func AvatarContentTypeIn(vs ...string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldIn(FieldAvatarContentType, vs...))
+}
+
+// AvatarContentTypeNotIn applies the NotIn predicate on the "avatar_content_type" field.
+func AvatarContentTypeNotIn(vs ...string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNotIn(FieldAvatarContentType, vs...))
+}
+
+// AvatarContentTypeGT applies the GT predicate on the "avatar_content_type" field.
+func AvatarContentTypeGT(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldGT(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeGTE applies the GTE predicate on the "avatar_content_type" field.
+func AvatarContentTypeGTE(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldGTE(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeLT applies the LT predicate on the "avatar_content_type" field.
+func AvatarContentTypeLT(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldLT(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeLTE applies the LTE predicate on the "avatar_content_type" field.
+func AvatarContentTypeLTE(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldLTE(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeContains applies the Contains predicate on the "avatar_content_type" field.
+func AvatarContentTypeContains(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldContains(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeHasPrefix applies the HasPrefix predicate on the "avatar_content_type" field.
+func AvatarContentTypeHasPrefix(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldHasPrefix(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeHasSuffix applies the HasSuffix predicate on the "avatar_content_type" field.
+func AvatarContentTypeHasSuffix(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldHasSuffix(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeIsNil applies the IsNil predicate on the "avatar_content_type" field.
+func AvatarContentTypeIsNil() predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldIsNull(FieldAvatarContentType))
+}
+
+// AvatarContentTypeNotNil applies the NotNil predicate on the "avatar_content_type" field.
+func AvatarContentTypeNotNil() predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldNotNull(FieldAvatarContentType))
+}
+
+// AvatarContentTypeEqualFold applies the EqualFold predicate on the "avatar_content_type" field.
+func AvatarContentTypeEqualFold(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldEqualFold(FieldAvatarContentType, v))
+}
+
+// AvatarContentTypeContainsFold applies the ContainsFold predicate on the "avatar_content_type" field.
+func AvatarContentTypeContainsFold(v string) predicate.PassengerProfile {
+	return predicate.PassengerProfile(sql.FieldContainsFold(FieldAvatarContentType, v))
 }
 
 // PreferredRideTypeEQ applies the EQ predicate on the "preferred_ride_type" field.

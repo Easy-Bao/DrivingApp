@@ -69,6 +69,11 @@ func NewRunner(database *sql.DB, client *ent.Client) *Runner {
 				name:    "secure_private_driver_documents",
 				apply:   applyPrivateDocumentMetadata,
 			},
+			{
+				version: 2026082601,
+				name:    "add_passenger_profile_attributes",
+				apply:   applyPassengerProfileAttributes,
+			},
 		},
 	}
 }

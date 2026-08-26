@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -39,7 +41,7 @@ func (handler *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 	profile, err := handler.service.Get(r.Context(), id)
 	if err != nil {
-		writeError(w, 404, "profile not found")
+		writeProfileReadError(w, err)
 		return
 	}
 	writeJSON(w, 200, profile)
@@ -57,12 +59,20 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	current, err := handler.service.Get(r.Context(), id)
 	if err != nil {
-		writeError(w, 404, "profile not found")
+		writeProfileReadError(w, err)
 		return
+	}
+	if input.Gender != nil {
+		normalizedGender, valid := domain.NormalizeGender(*input.Gender)
+		if !valid {
+			writeError(w, http.StatusUnprocessableEntity, "Please choose a valid gender.")
+			return
+		}
+		input.Gender = &normalizedGender
 	}
 	profile, err := handler.service.Update(r.Context(), applyProfileUpdate(current, input))
 	if err != nil {
-		writeError(w, 400, "We could not update your profile. Check the details and try again.")
+		writeError(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
 		return
 	}
 	writeJSON(w, 200, profile)
@@ -80,6 +90,9 @@ func applyProfileUpdate(current domain.Profile, input dto.UpdateProfileRequest) 
 	}
 	if input.Address != nil {
 		current.Address = *input.Address
+	}
+	if input.Gender != nil {
+		current.Gender = *input.Gender
 	}
 	if input.PreferredRideType != nil {
 		current.PreferredRideType = *input.PreferredRideType
@@ -106,7 +119,7 @@ func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 	profile, err := handler.service.Get(r.Context(), id)
 	if err != nil {
-		writeError(w, 404, "profile not found")
+		writeProfileReadError(w, err)
 		return
 	}
 	writeJSON(w, 200, profile)
@@ -124,6 +137,100 @@ func (handler *Handler) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	handler.Update(w, r)
+}
+
+func (handler *Handler) Avatar(w http.ResponseWriter, r *http.Request) {
+	actorID, targetID, ok := handler.profileTarget(r)
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if actorID != targetID {
+		writeError(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	avatar, err := handler.service.Avatar(r.Context(), targetID)
+	if err != nil {
+		writeAvatarError(w, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "private, no-store")
+	w.Header().Set("Content-Type", avatar.ContentType)
+	w.Header().Set("Content-Length", strconv.Itoa(len(avatar.Bytes)))
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(avatar.Bytes)
+}
+
+func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
+	actorID, targetID, ok := handler.profileTarget(r)
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if actorID != targetID {
+		writeError(w, http.StatusForbidden, "forbidden")
+		return
+	}
+
+	maxBytes := handler.service.MaxAvatarBytes()
+	r.Body = http.MaxBytesReader(w, r.Body, maxBytes+(1<<20))
+	if err := r.ParseMultipartForm(maxBytes); err != nil {
+		writeError(w, http.StatusBadRequest, "Please choose a JPEG or PNG photo under 2 MB.")
+		return
+	}
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
+	file, _, err := r.FormFile("photo")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Please choose a profile photo to upload.")
+		return
+	}
+	defer file.Close()
+	content, err := io.ReadAll(io.LimitReader(file, maxBytes+1))
+	if err != nil || int64(len(content)) > maxBytes {
+		writeError(w, http.StatusRequestEntityTooLarge, "The profile photo is too large.")
+		return
+	}
+	profile, err := handler.service.SaveAvatar(r.Context(), targetID, content)
+	if err != nil {
+		writeAvatarError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, profile)
+}
+
+func (handler *Handler) profileTarget(r *http.Request) (int, int, bool) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		return 0, 0, false
+	}
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || targetID <= 0 {
+		return actorID, 0, true
+	}
+	return actorID, targetID, true
+}
+
+func writeAvatarError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, domain.ErrInvalidAvatar):
+		writeError(w, http.StatusUnprocessableEntity, "Please choose a JPEG or PNG photo under 2 MB.")
+	case errors.Is(err, domain.ErrAvatarNotFound):
+		writeError(w, http.StatusNotFound, "Profile photo not found.")
+	case errors.Is(err, domain.ErrAvatarCorrupt):
+		writeError(w, http.StatusServiceUnavailable, "Your profile photo is temporarily unavailable.")
+	default:
+		writeError(w, http.StatusInternalServerError, "Your profile photo is temporarily unavailable. Please try again.")
+	}
+}
+
+func writeProfileReadError(w http.ResponseWriter, err error) {
+	if ent.IsNotFound(err) {
+		writeError(w, http.StatusNotFound, "Profile not found.")
+		return
+	}
+	writeError(w, http.StatusInternalServerError, "Your profile is temporarily unavailable.")
 }
 
 func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {

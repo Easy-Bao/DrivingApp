@@ -115,12 +115,12 @@ func main() {
 		authredis.NewPendingRegistrationStore(redisClient),
 		registerService,
 	))
-	usersRouter := usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(databaseClient)), verifier)
-	documentRepository := documentpostgres.NewRepository(databaseClient)
 	privateDocumentStorage, err := documentstorage.NewFileStorage(documentStorageDirectory())
 	if err != nil {
 		log.Fatal(err)
 	}
+	usersRouter := usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(databaseClient, privateDocumentStorage)), verifier)
+	documentRepository := documentpostgres.NewRepository(databaseClient)
 	documentRouter := documenthttp.NewRouter(
 		documentusecase.NewService(
 			documentRepository,

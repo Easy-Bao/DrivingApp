@@ -66,3 +66,15 @@ func TestDriverDocumentsCarryPrivateObjectIntegrityMetadata(t *testing.T) {
 		}
 	}
 }
+
+func TestPassengerProfilesCarryProfileAttributes(t *testing.T) {
+	for _, column := range []string{
+		"gender",
+		"avatar_storage_key",
+		"avatar_content_type",
+	} {
+		if _, exists := entmigrate.PassengerProfilesTable.Column(column); !exists {
+			t.Fatalf("passenger_profiles.%s is missing from the generated schema", column)
+		}
+	}
+}

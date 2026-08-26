@@ -26,6 +26,8 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		routes.Patch("/users/me", router.handler.Update)
 		routes.With(middleware.RequireRole(security.RolePassenger)).Get("/passengers/{id}", router.handler.Profile)
 		routes.With(middleware.RequireRole(security.RolePassenger)).Put("/passengers/{id}", router.handler.ProfileUpdate)
+		routes.With(middleware.RequireRole(security.RolePassenger)).Get("/passengers/{id}/avatar", router.handler.Avatar)
+		routes.With(middleware.RequireRole(security.RolePassenger)).Post("/passengers/{id}/avatar", router.handler.AvatarUpload)
 		routes.With(middleware.RequireRole(security.RolePassenger)).Get("/passengers/{id}/notifications", router.handler.Notifications)
 		routes.With(middleware.RequireRole(security.RoleDriver)).Get("/drivers/{id}", router.handler.Profile)
 		routes.With(middleware.RequireRole(security.RoleDriver)).Post("/drivers/{id}/online", router.handler.Online)

@@ -243,6 +243,9 @@ var (
 		{Name: "user_id", Type: field.TypeInt},
 		{Name: "name", Type: field.TypeString},
 		{Name: "address", Type: field.TypeString, Nullable: true},
+		{Name: "gender", Type: field.TypeString, Size: 32, Default: "Prefer not to say"},
+		{Name: "avatar_storage_key", Type: field.TypeString, Nullable: true, Size: 160},
+		{Name: "avatar_content_type", Type: field.TypeString, Nullable: true, Size: 64},
 		{Name: "preferred_ride_type", Type: field.TypeString, Nullable: true},
 	}
 	// PassengerProfilesTable holds the schema information for the "passenger_profiles" table.

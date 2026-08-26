@@ -22,6 +22,12 @@ type PassengerProfile struct {
 	Name string `json:"name,omitempty"`
 	// Address holds the value of the "address" field.
 	Address string `json:"address,omitempty"`
+	// Gender holds the value of the "gender" field.
+	Gender string `json:"gender,omitempty"`
+	// AvatarStorageKey holds the value of the "avatar_storage_key" field.
+	AvatarStorageKey string `json:"avatar_storage_key,omitempty"`
+	// AvatarContentType holds the value of the "avatar_content_type" field.
+	AvatarContentType string `json:"avatar_content_type,omitempty"`
 	// PreferredRideType holds the value of the "preferred_ride_type" field.
 	PreferredRideType string `json:"preferred_ride_type,omitempty"`
 	selectValues      sql.SelectValues
@@ -34,7 +40,7 @@ func (*PassengerProfile) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case passengerprofile.FieldID, passengerprofile.FieldUserID:
 			values[i] = new(sql.NullInt64)
-		case passengerprofile.FieldName, passengerprofile.FieldAddress, passengerprofile.FieldPreferredRideType:
+		case passengerprofile.FieldName, passengerprofile.FieldAddress, passengerprofile.FieldGender, passengerprofile.FieldAvatarStorageKey, passengerprofile.FieldAvatarContentType, passengerprofile.FieldPreferredRideType:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -74,6 +80,24 @@ func (_m *PassengerProfile) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field address", values[i])
 			} else if value.Valid {
 				_m.Address = value.String
+			}
+		case passengerprofile.FieldGender:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field gender", values[i])
+			} else if value.Valid {
+				_m.Gender = value.String
+			}
+		case passengerprofile.FieldAvatarStorageKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field avatar_storage_key", values[i])
+			} else if value.Valid {
+				_m.AvatarStorageKey = value.String
+			}
+		case passengerprofile.FieldAvatarContentType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field avatar_content_type", values[i])
+			} else if value.Valid {
+				_m.AvatarContentType = value.String
 			}
 		case passengerprofile.FieldPreferredRideType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -125,6 +149,15 @@ func (_m *PassengerProfile) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("address=")
 	builder.WriteString(_m.Address)
+	builder.WriteString(", ")
+	builder.WriteString("gender=")
+	builder.WriteString(_m.Gender)
+	builder.WriteString(", ")
+	builder.WriteString("avatar_storage_key=")
+	builder.WriteString(_m.AvatarStorageKey)
+	builder.WriteString(", ")
+	builder.WriteString("avatar_content_type=")
+	builder.WriteString(_m.AvatarContentType)
 	builder.WriteString(", ")
 	builder.WriteString("preferred_ride_type=")
 	builder.WriteString(_m.PreferredRideType)

@@ -45,6 +45,48 @@ func (_c *PassengerProfileCreate) SetNillableAddress(v *string) *PassengerProfil
 	return _c
 }
 
+// SetGender sets the "gender" field.
+func (_c *PassengerProfileCreate) SetGender(v string) *PassengerProfileCreate {
+	_c.mutation.SetGender(v)
+	return _c
+}
+
+// SetNillableGender sets the "gender" field if the given value is not nil.
+func (_c *PassengerProfileCreate) SetNillableGender(v *string) *PassengerProfileCreate {
+	if v != nil {
+		_c.SetGender(*v)
+	}
+	return _c
+}
+
+// SetAvatarStorageKey sets the "avatar_storage_key" field.
+func (_c *PassengerProfileCreate) SetAvatarStorageKey(v string) *PassengerProfileCreate {
+	_c.mutation.SetAvatarStorageKey(v)
+	return _c
+}
+
+// SetNillableAvatarStorageKey sets the "avatar_storage_key" field if the given value is not nil.
+func (_c *PassengerProfileCreate) SetNillableAvatarStorageKey(v *string) *PassengerProfileCreate {
+	if v != nil {
+		_c.SetAvatarStorageKey(*v)
+	}
+	return _c
+}
+
+// SetAvatarContentType sets the "avatar_content_type" field.
+func (_c *PassengerProfileCreate) SetAvatarContentType(v string) *PassengerProfileCreate {
+	_c.mutation.SetAvatarContentType(v)
+	return _c
+}
+
+// SetNillableAvatarContentType sets the "avatar_content_type" field if the given value is not nil.
+func (_c *PassengerProfileCreate) SetNillableAvatarContentType(v *string) *PassengerProfileCreate {
+	if v != nil {
+		_c.SetAvatarContentType(*v)
+	}
+	return _c
+}
+
 // SetPreferredRideType sets the "preferred_ride_type" field.
 func (_c *PassengerProfileCreate) SetPreferredRideType(v string) *PassengerProfileCreate {
 	_c.mutation.SetPreferredRideType(v)
@@ -66,6 +108,7 @@ func (_c *PassengerProfileCreate) Mutation() *PassengerProfileMutation {
 
 // Save creates the PassengerProfile in the database.
 func (_c *PassengerProfileCreate) Save(ctx context.Context) (*PassengerProfile, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -91,6 +134,14 @@ func (_c *PassengerProfileCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *PassengerProfileCreate) defaults() {
+	if _, ok := _c.mutation.Gender(); !ok {
+		v := passengerprofile.DefaultGender
+		_c.mutation.SetGender(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *PassengerProfileCreate) check() error {
 	if _, ok := _c.mutation.UserID(); !ok {
@@ -103,6 +154,24 @@ func (_c *PassengerProfileCreate) check() error {
 	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "PassengerProfile.name"`)}
+	}
+	if _, ok := _c.mutation.Gender(); !ok {
+		return &ValidationError{Name: "gender", err: errors.New(`ent: missing required field "PassengerProfile.gender"`)}
+	}
+	if v, ok := _c.mutation.Gender(); ok {
+		if err := passengerprofile.GenderValidator(v); err != nil {
+			return &ValidationError{Name: "gender", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.gender": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.AvatarStorageKey(); ok {
+		if err := passengerprofile.AvatarStorageKeyValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_storage_key", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.avatar_storage_key": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.AvatarContentType(); ok {
+		if err := passengerprofile.AvatarContentTypeValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_content_type", err: fmt.Errorf(`ent: validator failed for field "PassengerProfile.avatar_content_type": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -142,6 +211,18 @@ func (_c *PassengerProfileCreate) createSpec() (*PassengerProfile, *sqlgraph.Cre
 		_spec.SetField(passengerprofile.FieldAddress, field.TypeString, value)
 		_node.Address = value
 	}
+	if value, ok := _c.mutation.Gender(); ok {
+		_spec.SetField(passengerprofile.FieldGender, field.TypeString, value)
+		_node.Gender = value
+	}
+	if value, ok := _c.mutation.AvatarStorageKey(); ok {
+		_spec.SetField(passengerprofile.FieldAvatarStorageKey, field.TypeString, value)
+		_node.AvatarStorageKey = value
+	}
+	if value, ok := _c.mutation.AvatarContentType(); ok {
+		_spec.SetField(passengerprofile.FieldAvatarContentType, field.TypeString, value)
+		_node.AvatarContentType = value
+	}
 	if value, ok := _c.mutation.PreferredRideType(); ok {
 		_spec.SetField(passengerprofile.FieldPreferredRideType, field.TypeString, value)
 		_node.PreferredRideType = value
@@ -167,6 +248,7 @@ func (_c *PassengerProfileCreateBulk) Save(ctx context.Context) ([]*PassengerPro
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*PassengerProfileMutation)
 				if !ok {

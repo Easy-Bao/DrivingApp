@@ -2,6 +2,11 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"strings"
+
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
@@ -10,11 +15,19 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 )
 
-type ProfileRepository struct{ client *ent.Client }
-
-func NewProfileRepository(client *ent.Client) *ProfileRepository {
-	return &ProfileRepository{client: client}
+type ProfileRepository struct {
+	client        *ent.Client
+	avatarStorage domain.AvatarStorage
 }
+
+func NewProfileRepository(client *ent.Client, avatarStorage ...domain.AvatarStorage) *ProfileRepository {
+	var storage domain.AvatarStorage
+	if len(avatarStorage) > 0 {
+		storage = avatarStorage[0]
+	}
+	return &ProfileRepository{client: client, avatarStorage: storage}
+}
+
 func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
 	account, err := repository.client.User.Get(ctx, userID)
 	if err != nil {
@@ -31,8 +44,9 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 	if err != nil {
 		return domain.Profile{}, err
 	}
-	return domain.Profile{ID: passengerProfile.ID, UserID: passengerProfile.UserID, Role: "passenger", Name: passengerProfile.Name, Phone: account.Phone, Email: account.Email, Address: passengerProfile.Address, PreferredRideType: passengerProfile.PreferredRideType}, nil
+	return passengerProfileFromEnt(account, passengerProfile), nil
 }
+
 func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
 	account, err := repository.client.User.UpdateOneID(profile.UserID).SetName(profile.Name).SetPhone(profile.Phone).SetEmail(profile.Email).Save(ctx)
 	if err != nil {
@@ -45,11 +59,98 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		}
 		return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "driver", Name: updated.Name, Phone: account.Phone, Email: account.Email, VehicleType: updated.VehicleType, PlateNumber: updated.PlateNumber, Rating: updated.Rating, IsOnline: updated.IsOnline}, nil
 	}
-	updated, err := repository.client.PassengerProfile.UpdateOneID(profile.ID).SetName(profile.Name).SetAddress(profile.Address).SetPreferredRideType(profile.PreferredRideType).Save(ctx)
+	updated, err := repository.client.PassengerProfile.UpdateOneID(profile.ID).SetName(profile.Name).SetAddress(profile.Address).SetGender(profile.Gender).SetPreferredRideType(profile.PreferredRideType).Save(ctx)
 	if err != nil {
 		return domain.Profile{}, err
 	}
-	return domain.Profile{ID: updated.ID, UserID: updated.UserID, Role: "passenger", Name: updated.Name, Phone: account.Phone, Email: account.Email, Address: updated.Address, PreferredRideType: updated.PreferredRideType}, nil
+	return passengerProfileFromEnt(account, updated), nil
+}
+
+func (repository *ProfileRepository) SaveAvatar(ctx context.Context, userID int, content []byte, contentType string) (domain.Profile, error) {
+	if repository.avatarStorage == nil {
+		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
+	}
+	passengerProfile, err := repository.client.PassengerProfile.Query().
+		Where(passengerprofile.UserIDEQ(userID)).
+		Only(ctx)
+	if ent.IsNotFound(err) {
+		return domain.Profile{}, domain.ErrAvatarNotFound
+	}
+	if err != nil {
+		return domain.Profile{}, err
+	}
+
+	storageKey, err := repository.avatarStorage.Store(ctx, content)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("store passenger avatar: %w", err)
+	}
+	_, err = repository.client.PassengerProfile.UpdateOneID(passengerProfile.ID).
+		SetAvatarStorageKey(storageKey).
+		SetAvatarContentType(contentType).
+		Save(ctx)
+	if err != nil {
+		_ = repository.avatarStorage.Delete(context.WithoutCancel(ctx), storageKey)
+		return domain.Profile{}, err
+	}
+
+	oldStorageKey := strings.TrimSpace(passengerProfile.AvatarStorageKey)
+	if oldStorageKey != "" && oldStorageKey != storageKey {
+		if cleanupErr := repository.avatarStorage.Delete(context.WithoutCancel(ctx), oldStorageKey); cleanupErr != nil {
+			log.Printf("passenger avatar cleanup failed: %v", cleanupErr)
+		}
+	}
+	return repository.Get(ctx, userID)
+}
+
+func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) (domain.Avatar, error) {
+	if repository.avatarStorage == nil {
+		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
+	}
+	passengerProfile, err := repository.client.PassengerProfile.Query().
+		Where(passengerprofile.UserIDEQ(userID)).
+		Only(ctx)
+	if ent.IsNotFound(err) {
+		return domain.Avatar{}, domain.ErrAvatarNotFound
+	}
+	if err != nil {
+		return domain.Avatar{}, err
+	}
+	storageKey := strings.TrimSpace(passengerProfile.AvatarStorageKey)
+	if storageKey == "" {
+		return domain.Avatar{}, domain.ErrAvatarNotFound
+	}
+	content, err := repository.avatarStorage.Read(ctx, storageKey, domain.MaxAvatarBytes)
+	if err != nil {
+		return domain.Avatar{}, fmt.Errorf("read passenger avatar: %w", domain.ErrAvatarCorrupt)
+	}
+	contentType := http.DetectContentType(content)
+	if (contentType != "image/jpeg" && contentType != "image/png") ||
+		(passengerProfile.AvatarContentType != "" && passengerProfile.AvatarContentType != contentType) {
+		return domain.Avatar{}, domain.ErrAvatarCorrupt
+	}
+	return domain.Avatar{Bytes: content, ContentType: contentType}, nil
+}
+
+func passengerProfileFromEnt(account *ent.User, profile *ent.PassengerProfile) domain.Profile {
+	return domain.Profile{
+		ID:                profile.ID,
+		UserID:            profile.UserID,
+		Role:              "passenger",
+		Name:              profile.Name,
+		Phone:             account.Phone,
+		Email:             account.Email,
+		Address:           profile.Address,
+		Gender:            profile.Gender,
+		AvatarURL:         passengerAvatarURL(profile.UserID, profile.AvatarStorageKey),
+		PreferredRideType: profile.PreferredRideType,
+	}
+}
+
+func passengerAvatarURL(userID int, storageKey string) string {
+	if userID <= 0 || strings.TrimSpace(storageKey) == "" {
+		return ""
+	}
+	return fmt.Sprintf("/api/v1/passengers/%d/avatar", userID)
 }
 
 func (repository *ProfileRepository) Notifications(ctx context.Context, userID, limit, offset int) ([]domain.Notification, error) {

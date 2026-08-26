@@ -219,6 +219,20 @@ func init() {
 	passengerprofileDescUserID := passengerprofileFields[0].Descriptor()
 	// passengerprofile.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	passengerprofile.UserIDValidator = passengerprofileDescUserID.Validators[0].(func(int) error)
+	// passengerprofileDescGender is the schema descriptor for gender field.
+	passengerprofileDescGender := passengerprofileFields[3].Descriptor()
+	// passengerprofile.DefaultGender holds the default value on creation for the gender field.
+	passengerprofile.DefaultGender = passengerprofileDescGender.Default.(string)
+	// passengerprofile.GenderValidator is a validator for the "gender" field. It is called by the builders before save.
+	passengerprofile.GenderValidator = passengerprofileDescGender.Validators[0].(func(string) error)
+	// passengerprofileDescAvatarStorageKey is the schema descriptor for avatar_storage_key field.
+	passengerprofileDescAvatarStorageKey := passengerprofileFields[4].Descriptor()
+	// passengerprofile.AvatarStorageKeyValidator is a validator for the "avatar_storage_key" field. It is called by the builders before save.
+	passengerprofile.AvatarStorageKeyValidator = passengerprofileDescAvatarStorageKey.Validators[0].(func(string) error)
+	// passengerprofileDescAvatarContentType is the schema descriptor for avatar_content_type field.
+	passengerprofileDescAvatarContentType := passengerprofileFields[5].Descriptor()
+	// passengerprofile.AvatarContentTypeValidator is a validator for the "avatar_content_type" field. It is called by the builders before save.
+	passengerprofile.AvatarContentTypeValidator = passengerprofileDescAvatarContentType.Validators[0].(func(string) error)
 	passengerreviewFields := schema.PassengerReview{}.Fields()
 	_ = passengerreviewFields
 	// passengerreviewDescRideID is the schema descriptor for ride_id field.

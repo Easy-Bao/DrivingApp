@@ -17,6 +17,12 @@ const (
 	FieldName = "name"
 	// FieldAddress holds the string denoting the address field in the database.
 	FieldAddress = "address"
+	// FieldGender holds the string denoting the gender field in the database.
+	FieldGender = "gender"
+	// FieldAvatarStorageKey holds the string denoting the avatar_storage_key field in the database.
+	FieldAvatarStorageKey = "avatar_storage_key"
+	// FieldAvatarContentType holds the string denoting the avatar_content_type field in the database.
+	FieldAvatarContentType = "avatar_content_type"
 	// FieldPreferredRideType holds the string denoting the preferred_ride_type field in the database.
 	FieldPreferredRideType = "preferred_ride_type"
 	// Table holds the table name of the passengerprofile in the database.
@@ -29,6 +35,9 @@ var Columns = []string{
 	FieldUserID,
 	FieldName,
 	FieldAddress,
+	FieldGender,
+	FieldAvatarStorageKey,
+	FieldAvatarContentType,
 	FieldPreferredRideType,
 }
 
@@ -45,6 +54,14 @@ func ValidColumn(column string) bool {
 var (
 	// UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	UserIDValidator func(int) error
+	// DefaultGender holds the default value on creation for the "gender" field.
+	DefaultGender string
+	// GenderValidator is a validator for the "gender" field. It is called by the builders before save.
+	GenderValidator func(string) error
+	// AvatarStorageKeyValidator is a validator for the "avatar_storage_key" field. It is called by the builders before save.
+	AvatarStorageKeyValidator func(string) error
+	// AvatarContentTypeValidator is a validator for the "avatar_content_type" field. It is called by the builders before save.
+	AvatarContentTypeValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the PassengerProfile queries.
@@ -68,6 +85,21 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByAddress orders the results by the address field.
 func ByAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAddress, opts...).ToFunc()
+}
+
+// ByGender orders the results by the gender field.
+func ByGender(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGender, opts...).ToFunc()
+}
+
+// ByAvatarStorageKey orders the results by the avatar_storage_key field.
+func ByAvatarStorageKey(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAvatarStorageKey, opts...).ToFunc()
+}
+
+// ByAvatarContentType orders the results by the avatar_content_type field.
+func ByAvatarContentType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAvatarContentType, opts...).ToFunc()
 }
 
 // ByPreferredRideType orders the results by the preferred_ride_type field.

@@ -19,6 +19,9 @@ func (PassengerProfile) Fields() []ent.Field {
 		field.Int("user_id").Positive(),
 		field.String("name"),
 		field.String("address").Optional(),
+		field.String("gender").Default("Prefer not to say").MaxLen(32),
+		field.String("avatar_storage_key").Optional().MaxLen(160),
+		field.String("avatar_content_type").Optional().MaxLen(64),
 		field.String("preferred_ride_type").Optional(),
 	}
 }
