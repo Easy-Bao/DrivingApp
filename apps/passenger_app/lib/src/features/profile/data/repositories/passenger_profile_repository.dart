@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
@@ -18,6 +21,7 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
   final PassengerProfileRemoteDataSource _remoteDataSource;
   final SecureSessionService _sessionService;
   final SharedPreferences _preferences;
+  String _avatarData = '';
 
   @override
   ProfileModel getCachedProfile() {
@@ -28,6 +32,7 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
       address: _preferences.getString('passenger_address') ?? '',
       gender: _preferences.getString('passenger_gender') ?? '',
       avatarPath: _preferences.getString('passenger_avatar_path') ?? '',
+      avatarData: _avatarData,
     );
   }
 
@@ -39,6 +44,18 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
       final remote = ProfileModel.fromJson(
         await _remoteDataSource.fetchProfile(passengerId),
       );
+      var avatarData = _avatarData;
+      if (remote.avatarUrl.isEmpty) {
+        avatarData = '';
+      } else {
+        try {
+          final bytes = await _remoteDataSource.fetchProfileAvatar(passengerId);
+          avatarData = bytes.isEmpty ? '' : base64Encode(bytes);
+        } catch (_) {
+          // A profile should remain usable when its optional photo is unavailable.
+        }
+      }
+      _avatarData = avatarData;
       final profile = ProfileModel(
         id: remote.id,
         userId: remote.userId,
@@ -49,6 +66,8 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
         address: remote.address.isEmpty ? cached.address : remote.address,
         gender: remote.gender.isEmpty ? cached.gender : remote.gender,
         avatarPath: cached.avatarPath,
+        avatarUrl: remote.avatarUrl,
+        avatarData: avatarData,
         preferredRideType: remote.preferredRideType,
       );
       await _cache(profile);
@@ -78,6 +97,24 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
     }
     try {
       final passengerId = await _passengerId();
+      final cached = getCachedProfile();
+      final normalizedAvatarPath = avatarPath.trim();
+      var avatarData = _avatarData;
+      if (normalizedAvatarPath.isNotEmpty &&
+          normalizedAvatarPath != cached.avatarPath) {
+        final bytes = await File(normalizedAvatarPath).readAsBytes();
+        if (bytes.isEmpty || bytes.length > (2 << 20)) {
+          return const Left(
+            ValidationFailure('Choose a profile photo under 2 MB.'),
+          );
+        }
+        await _remoteDataSource.uploadProfileAvatar(
+          passengerId: passengerId,
+          bytes: bytes,
+          fileName: _avatarFileName(normalizedAvatarPath),
+        );
+        avatarData = base64Encode(bytes);
+      }
       final response = await _remoteDataSource.updateProfile(
         passengerId: passengerId,
         data: {
@@ -89,6 +126,18 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
         },
       );
       final remote = ProfileModel.fromJson(response);
+      if (normalizedAvatarPath == cached.avatarPath &&
+          remote.avatarUrl.isNotEmpty) {
+        try {
+          final bytes = await _remoteDataSource.fetchProfileAvatar(passengerId);
+          avatarData = bytes.isEmpty ? '' : base64Encode(bytes);
+        } catch (_) {
+          // Keep the last usable in-memory image when a refresh is transient.
+        }
+      } else if (remote.avatarUrl.isEmpty) {
+        avatarData = '';
+      }
+      _avatarData = avatarData;
       final profile = ProfileModel(
         id: remote.id,
         userId: remote.userId,
@@ -98,7 +147,9 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
         email: remote.email.isEmpty ? normalizedEmail : remote.email,
         address: remote.address.isEmpty ? address.trim() : remote.address,
         gender: remote.gender.isEmpty ? gender.trim() : remote.gender,
-        avatarPath: avatarPath.trim(),
+        avatarPath: normalizedAvatarPath,
+        avatarUrl: remote.avatarUrl,
+        avatarData: avatarData,
         preferredRideType: remote.preferredRideType,
       );
       await _cache(profile);
@@ -126,6 +177,11 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
       _preferences.setString('passenger_avatar_path', profile.avatarPath),
     ]);
   }
+
+  String _avatarFileName(String path) {
+    final fileName = path.split(RegExp(r'[/\\]')).last.trim();
+    return fileName.isEmpty ? 'profile.jpg' : fileName;
+  }
 }
 
 Failure _mapFailure(Object error) {
@@ -135,6 +191,9 @@ Failure _mapFailure(Object error) {
       return const AuthFailure(
         'Your passenger session has ended. Sign in again.',
       );
+    }
+    if (statusCode == 413) {
+      return const ValidationFailure('Choose a profile photo under 2 MB.');
     }
     if (statusCode == 400 || statusCode == 422) {
       return const ValidationFailure('Profile values are invalid.');
@@ -157,9 +216,24 @@ Failure _mapFailure(Object error) {
       statusCode,
     );
   }
-  if (error is CacheException) return CacheFailure(error.message);
+  if (error is CacheException) {
+    return const CacheFailure(
+      'Saved profile information is unavailable. Please try again.',
+    );
+  }
   if (error is ServerException) {
-    return ServerFailure.withStatusCode(error.message, error.statusCode);
+    if (error.statusCode == 401 || error.statusCode == 403) {
+      return const AuthFailure(
+        'Your passenger session has ended. Sign in again.',
+      );
+    }
+    if (error.statusCode == 400 || error.statusCode == 422) {
+      return const ValidationFailure('Profile values are invalid.');
+    }
+    return ServerFailure.withStatusCode(
+      'Your profile is temporarily unavailable.',
+      error.statusCode,
+    );
   }
   return const ServerFailure('Your profile is temporarily unavailable.');
 }

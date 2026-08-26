@@ -41,4 +41,51 @@ void main() {
       ),
     );
   });
+
+  test('uploads and fetches the authenticated passenger avatar', () async {
+    final dio = MockDio();
+    final dataSource = PassengerProfileRemoteDataSourceImpl(dio);
+    when(
+      () => dio.post<void>(any(), data: any<dynamic>(named: 'data')),
+    ).thenAnswer(
+      (_) async => Response<void>(
+        requestOptions: RequestOptions(path: '/api/v1/passengers/42/avatar'),
+        statusCode: 200,
+      ),
+    );
+    when(
+      () => dio.get<List<int>>(any(), options: any(named: 'options')),
+    ).thenAnswer(
+      (_) async => Response<List<int>>(
+        requestOptions: RequestOptions(path: '/api/v1/passengers/42/avatar'),
+        statusCode: 200,
+        data: const [1, 2, 3],
+      ),
+    );
+
+    await dataSource.uploadProfileAvatar(
+      passengerId: '42',
+      bytes: const [1, 2, 3],
+      fileName: 'profile.png',
+    );
+    final bytes = await dataSource.fetchProfileAvatar('42');
+
+    expect(bytes, const [1, 2, 3]);
+    final postInvocation =
+        verify(
+              () => dio.post<void>(
+                '/api/v1/passengers/42/avatar',
+                data: captureAny(named: 'data'),
+              ),
+            ).captured.single
+            as FormData;
+    expect(postInvocation.files.single.key, 'photo');
+    expect(postInvocation.files.single.value.filename, 'profile.png');
+    verify(
+      () => dio.get<List<int>>(
+        '/api/v1/passengers/42/avatar',
+        options: any(named: 'options'),
+      ),
+    ).called(1);
+  });
 }

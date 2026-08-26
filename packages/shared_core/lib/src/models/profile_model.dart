@@ -11,6 +11,8 @@ class ProfileModel {
     this.address = '',
     this.gender = '',
     this.avatarPath = '',
+    this.avatarUrl = '',
+    this.avatarData = '',
     this.preferredRideType = '',
     this.vehicleType = '',
     this.plateNumber = '',
@@ -27,6 +29,8 @@ class ProfileModel {
   final String address;
   final String gender;
   final String avatarPath;
+  final String avatarUrl;
+  final String avatarData;
   final String preferredRideType;
   final String vehicleType;
   final String plateNumber;
@@ -64,6 +68,9 @@ class ProfileModel {
       gender: _readString(payload, const ['gender']) ?? '',
       avatarPath:
           _readString(payload, const ['avatar_path', 'avatarPath']) ?? '',
+      avatarUrl: _readString(payload, const ['avatar_url', 'avatarUrl']) ?? '',
+      avatarData:
+          _readString(payload, const ['avatar_data', 'avatarData']) ?? '',
       preferredRideType:
           _readString(payload, const [
             'preferred_ride_type',

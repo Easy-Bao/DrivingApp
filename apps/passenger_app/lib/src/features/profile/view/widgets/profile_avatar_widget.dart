@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:passenger_app/src/core/theme/app_theme.dart';
 class ProfileAvatarWidget extends StatelessWidget {
   final String initials;
   final String? imagePath;
+  final String? imageData;
   final double size;
   final VoidCallback? onCameraTap;
 
@@ -14,6 +16,7 @@ class ProfileAvatarWidget extends StatelessWidget {
     super.key,
     required this.initials,
     this.imagePath,
+    this.imageData,
     this.size = 72,
     this.onCameraTap,
   });
@@ -21,12 +24,13 @@ class ProfileAvatarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = this.imagePath;
+    final fallbackImage = _buildImageData();
     final avatar = imagePath == null || imagePath.isEmpty
-        ? _buildInitials()
+        ? fallbackImage ?? _buildInitials()
         : Image.file(
             File(imagePath),
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => _buildInitials(),
+            errorBuilder: (_, _, _) => fallbackImage ?? _buildInitials(),
           );
 
     return SizedBox(
@@ -62,6 +66,22 @@ class ProfileAvatarWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget? _buildImageData() {
+    final value = imageData?.trim() ?? '';
+    if (value.isEmpty) return null;
+    try {
+      final bytes = base64Decode(value);
+      if (bytes.isEmpty) return null;
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _buildInitials(),
+      );
+    } on FormatException {
+      return null;
+    }
   }
 
   Widget _buildInitials() {

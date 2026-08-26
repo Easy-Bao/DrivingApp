@@ -38,6 +38,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   String _gender = 'Prefer not to say';
   String _avatarPath = '';
+  String _avatarData = '';
   String _savedAddress = '';
 
   String _initialName = '';
@@ -79,6 +80,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     _emailController.text = profile.email;
     _gender = _normalizeGender(profile.gender);
     _avatarPath = profile.avatarPath;
+    _avatarData = profile.avatarData;
     _savedAddress = profile.address;
     _initialName = profile.name.trim();
     _initialPhone = _formatPhone(_phonePrefix, phone.number);
@@ -210,7 +212,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             previous.email != current.email ||
             previous.address != current.address ||
             previous.gender != current.gender ||
-            previous.avatarPath != current.avatarPath,
+            previous.avatarPath != current.avatarPath ||
+            previous.avatarUrl != current.avatarUrl ||
+            previous.avatarData != current.avatarData,
         listener: (_, state) {
           if (!_isDirty && !_isSaving) _applyProfile(state);
         },
@@ -284,6 +288,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                           ),
                           initials: _getInitials(_nameController.text),
                           imagePath: _avatarPath,
+                          imageData: _avatarData,
                           size: 132,
                           onCameraTap: _pickPhoto,
                         ),

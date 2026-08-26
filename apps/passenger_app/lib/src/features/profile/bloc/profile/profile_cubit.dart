@@ -29,6 +29,8 @@ class ProfileCubit extends Cubit<ProfileState> {
           address: cached.address,
           gender: cached.gender,
           avatarPath: cached.avatarPath,
+          avatarUrl: cached.avatarUrl,
+          avatarData: cached.avatarData,
           isLoading: false,
         ),
       );
@@ -49,6 +51,8 @@ class ProfileCubit extends Cubit<ProfileState> {
           address: profile!.address,
           gender: profile!.gender,
           avatarPath: profile!.avatarPath,
+          avatarUrl: profile!.avatarUrl,
+          avatarData: profile!.avatarData,
           isLoading: false,
         ),
       );
@@ -105,8 +109,10 @@ class ProfileCubit extends Cubit<ProfileState> {
             phone: profile.phone,
             email: profile.email,
             address: profile.address,
-            gender: gender,
+            gender: profile.gender.isEmpty ? gender : profile.gender,
             avatarPath: avatarPath,
+            avatarUrl: profile.avatarUrl,
+            avatarData: profile.avatarData,
             isSaving: false,
           ),
         );

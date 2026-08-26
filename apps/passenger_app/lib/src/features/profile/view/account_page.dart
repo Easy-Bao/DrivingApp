@@ -113,6 +113,7 @@ class AccountPage extends StatelessWidget {
               ProfileAvatarWidget(
                 initials: _getInitials(displayName),
                 imagePath: state.avatarPath,
+                imageData: state.avatarData,
                 size: 76,
               ),
               const SizedBox(width: 18),
