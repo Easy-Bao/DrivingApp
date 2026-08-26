@@ -70,4 +70,31 @@ void main() {
     );
     expect(completedTransition.opacity.value, closeTo(1, 0.001));
   });
+
+  testWidgets('delivery status changes animate in place', (tester) async {
+    var delivered = false;
+
+    Widget buildStatus() {
+      return Directionality(
+        textDirection: TextDirection.ltr,
+        child: AppChatDeliveryIndicator(
+          isSending: !delivered,
+          isDelivered: delivered,
+          isFailed: false,
+          color: Colors.black,
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildStatus());
+    expect(find.byIcon(Icons.schedule), findsOneWidget);
+    expect(find.bySemanticsLabel('Sending'), findsOneWidget);
+
+    delivered = true;
+    await tester.pumpWidget(buildStatus());
+    await tester.pump(const Duration(milliseconds: 110));
+    expect(find.byIcon(Icons.done_all), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 110));
+    expect(find.bySemanticsLabel('Delivered'), findsOneWidget);
+  });
 }

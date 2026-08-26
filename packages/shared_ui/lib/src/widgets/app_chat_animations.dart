@@ -34,10 +34,7 @@ class _AppChatMessageTransitionState extends State<AppChatMessageTransition>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    _curve = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    );
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
     final horizontalOffset = widget.isOutgoing ? 0.1 : -0.1;
     _position = Tween<Offset>(
       begin: Offset(horizontalOffset, 0.12),
@@ -183,6 +180,55 @@ class _AppChatTypingIndicatorState extends State<AppChatTypingIndicator>
           ),
         );
       },
+    );
+  }
+}
+
+/// Animates the small delivery acknowledgement without changing the bubble's
+/// layout. The message entrance and this status transition can therefore run
+/// together when the server echoes an accepted message.
+class AppChatDeliveryIndicator extends StatelessWidget {
+  final bool isSending;
+  final bool isDelivered;
+  final bool isFailed;
+  final Color color;
+  final double size;
+
+  const AppChatDeliveryIndicator({
+    super.key,
+    required this.isSending,
+    required this.isDelivered,
+    required this.isFailed,
+    required this.color,
+    this.size = 13,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label) = switch ((isSending, isDelivered, isFailed)) {
+      (true, _, _) => (Icons.schedule, 'Sending'),
+      (_, _, true) => (Icons.refresh, 'Not delivered'),
+      (_, true, _) => (Icons.done_all, 'Delivered'),
+      _ => (Icons.done, 'Sent'),
+    };
+
+    return Semantics(
+      label: label,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutBack,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(scale: animation, child: child),
+        ),
+        child: Icon(
+          icon,
+          key: ValueKey<IconData>(icon),
+          size: size,
+          color: color,
+        ),
+      ),
     );
   }
 }

@@ -631,7 +631,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
     final timeStr = _fmtTime(msg.createdAt);
 
     return AppChatMessageTransition(
-      key: ValueKey<ChatMessage>(msg),
+      key: ValueKey<String>('chat-message-${msg.identityKey}'),
       animate: animate,
       isOutgoing: isMe,
       child: Align(
@@ -689,9 +689,16 @@ class _DriverChatPageState extends State<DriverChatPage> {
                   ),
                   if (isMe) ...[
                     const SizedBox(width: 4),
-                    const Icon(
-                      Icons.done_all,
-                      size: 13,
+                    AppChatDeliveryIndicator(
+                      isSending:
+                          msg.deliveryStatus ==
+                          ChatMessageDeliveryStatus.sending,
+                      isDelivered:
+                          msg.deliveryStatus ==
+                          ChatMessageDeliveryStatus.delivered,
+                      isFailed:
+                          msg.deliveryStatus ==
+                          ChatMessageDeliveryStatus.failed,
                       color: AppTheme.complete,
                     ),
                   ],

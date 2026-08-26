@@ -13,6 +13,7 @@ class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   String? connectionToken;
   bool disposed = false;
   Stream<String> eventStream = const Stream.empty();
+  Stream<ChatConnectionState> connectionStates = const Stream.empty();
 
   @override
   Future<void> establishWebSocketConnection(
@@ -38,6 +39,9 @@ class FakeChatRemoteDataSource implements ChatRemoteDataSource {
 
   @override
   Stream<String> get webSocketEventStream => eventStream;
+
+  @override
+  Stream<ChatConnectionState> get connectionStateStream => connectionStates;
 
   @override
   bool get isWebSocketConnected => true;

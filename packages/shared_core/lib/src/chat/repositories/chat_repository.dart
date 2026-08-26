@@ -23,6 +23,10 @@ class ChatRepository implements IChatRepository {
   bool get isSessionConnected => remoteDataSource.isWebSocketConnected;
 
   @override
+  Stream<ChatConnectionState> get connectionStateStream =>
+      remoteDataSource.connectionStateStream;
+
+  @override
   Future<Either<Failure, void>> establishChatConnection({
     required String roomId,
     required Uri chatUri,
@@ -36,7 +40,7 @@ class ChatRepository implements IChatRepository {
       );
       return const Right(null);
     } catch (error) {
-      return const Left(NetworkFailure('Unable to connect to chat server.'));
+      return Left(_mapChatFailure(error, 'Unable to connect to chat server.'));
     }
   }
 
@@ -106,7 +110,7 @@ class ChatRepository implements IChatRepository {
       remoteDataSource.sendWebSocketChatMessage(payload);
       return const Right(null);
     } catch (error) {
-      return const Left(ServerFailure('Unable to send chat message.'));
+      return Left(_mapChatFailure(error, 'Unable to send chat message.'));
     }
   }
 
@@ -120,7 +124,7 @@ class ChatRepository implements IChatRepository {
       remoteDataSource.sendWebSocketTypingStatus(isTyping);
       return const Right(null);
     } catch (error) {
-      return const Left(NetworkFailure('Unable to update chat status.'));
+      return Left(_mapChatFailure(error, 'Unable to update chat status.'));
     }
   }
 

@@ -40,6 +40,9 @@ void main() {
     () async {
       final repository = MockChatRepository();
       when(
+        () => repository.connectionStateStream,
+      ).thenAnswer((_) => const Stream<ChatConnectionState>.empty());
+      when(
         () => repository.establishChatConnection(
           roomId: 'ride-1',
           chatUri: Uri.parse('wss://example.test/chat/ride-1'),
@@ -83,6 +86,10 @@ void main() {
   test('tracks peer typing and clears it when the peer stops', () async {
     final repository = MockChatRepository();
     final events = StreamController<Either<Failure, ChatEvent>>();
+    final connectionStates = StreamController<ChatConnectionState>.broadcast();
+    when(
+      () => repository.connectionStateStream,
+    ).thenAnswer((_) => connectionStates.stream);
     when(
       () => repository.establishChatConnection(
         roomId: 'ride-1',
@@ -105,6 +112,33 @@ void main() {
       roomId: 'ride-1',
       wsUri: Uri.parse('wss://example.test/chat/ride-1'),
     );
+    connectionStates.add(const ChatConnected());
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.isConnected, isTrue);
+
+    final message = ChatMessage(
+      id: 'message-1',
+      text: 'I am here',
+      senderId: '8',
+      isFromPeer: true,
+      createdAt: DateTime.utc(2026, 8, 27, 10),
+    );
+    events.add(Right<Failure, ChatEvent>(ChatMessageReceived(message)));
+    await Future<void>.delayed(Duration.zero);
+    connectionStates.add(
+      const ChatDisconnected(reconnectIn: Duration(seconds: 1)),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.isConnected, isFalse);
+    expect(cubit.state.messages, contains(message));
+    expect(
+      cubit.state.errorMessage,
+      'Connection lost. Reconnecting automatically...',
+    );
+    connectionStates.add(const ChatConnected());
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.isConnected, isTrue);
+    expect(cubit.state.messages, contains(message));
     events.add(
       const Right<Failure, ChatEvent>(
         ChatTypingChanged(isTyping: true, isFromPeer: true),
@@ -123,5 +157,6 @@ void main() {
 
     await cubit.close();
     await events.close();
+    await connectionStates.close();
   });
 }

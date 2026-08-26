@@ -10,7 +10,11 @@ class ChatCubit extends Cubit<ChatState> {
 
   final IChatRepository _chatRepository;
   StreamSubscription? _chatSubscription;
+  StreamSubscription<ChatConnectionState>? _connectionStateSubscription;
   Timer? _peerTypingTimer;
+  String? _roomId;
+  bool _everConnected = false;
+  bool _historyRequested = false;
 
   ChatCubit({required IChatRepository chatRepository})
     : _chatRepository = chatRepository,
@@ -48,6 +52,16 @@ class ChatCubit extends Cubit<ChatState> {
     required Uri wsUri,
     String? token,
   }) async {
+    if (isClosed) return;
+    _roomId = roomId;
+    _historyRequested = false;
+    await _connectionStateSubscription?.cancel();
+    _connectionStateSubscription = _chatRepository.connectionStateStream.listen(
+      _handleConnectionState,
+    );
+    await _chatSubscription?.cancel();
+    _chatSubscription = null;
+    _ensureChatSubscription();
     emit(state.copyWith(isConnecting: true, errorMessage: null));
 
     try {
@@ -68,66 +82,8 @@ class ChatCubit extends Cubit<ChatState> {
           );
         },
         (_) {
-          unawaited(_chatSubscription?.cancel());
-          _chatSubscription = _chatRepository.chatEventsStream.listen(
-            (eitherEvent) {
-              eitherEvent.fold(
-                (failure) => emit(
-                  state.copyWith(
-                    errorMessage: ErrorHandler.getErrorMessage(failure),
-                  ),
-                ),
-                (chatEvent) {
-                  if (chatEvent is ChatHistoryReceived) {
-                    _peerTypingTimer?.cancel();
-                    emit(
-                      state.copyWith(
-                        messages: chatEvent.messages,
-                        isPeerTyping: false,
-                        lastDeliveredMessage: null,
-                      ),
-                    );
-                  } else if (chatEvent is ChatMessageReceived) {
-                    final updated = List<ChatMessage>.from(state.messages)
-                      ..add(chatEvent.message);
-                    _peerTypingTimer?.cancel();
-                    emit(
-                      state.copyWith(
-                        messages: updated,
-                        isPeerTyping: false,
-                        lastDeliveredMessage: chatEvent.message,
-                      ),
-                    );
-                  } else if (chatEvent is ChatTypingChanged &&
-                      chatEvent.isFromPeer) {
-                    _updatePeerTyping(chatEvent.isTyping);
-                  } else if (chatEvent is ChatRoomLocked) {
-                    _peerTypingTimer?.cancel();
-                    emit(
-                      state.copyWith(
-                        isRoomLocked: true,
-                        isPeerTyping: false,
-                        lockReasonMessage: ErrorHandler.getErrorMessage(
-                          const ChatRoomLockedFailure(),
-                        ),
-                      ),
-                    );
-                  }
-                },
-              );
-            },
-            onError: (Object error, StackTrace stackTrace) {
-              if (isClosed) return;
-              emit(
-                state.copyWith(
-                  errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
-                ),
-              );
-            },
-          );
-
           emit(state.copyWith(isConnecting: false, isConnected: true));
-          unawaited(_loadHistory(roomId));
+          _requestHistory(roomId);
         },
       );
     } catch (error, stackTrace) {
@@ -149,7 +105,72 @@ class ChatCubit extends Cubit<ChatState> {
       (failure) => emit(
         state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
       ),
-      (messages) => emit(state.copyWith(messages: messages)),
+      (messages) => emit(
+        state.copyWith(
+          messages: _mergeMessages(state.messages, messages),
+          errorMessage: null,
+        ),
+      ),
+    );
+  }
+
+  void _requestHistory(String roomId) {
+    if (_historyRequested) return;
+    _historyRequested = true;
+    unawaited(_loadHistory(roomId));
+  }
+
+  void _ensureChatSubscription() {
+    if (_chatSubscription != null) return;
+    _chatSubscription = _chatRepository.chatEventsStream.listen(
+      (eitherEvent) {
+        if (isClosed) return;
+        eitherEvent.fold(
+          (failure) => emit(
+            state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+          ),
+          (chatEvent) {
+            if (chatEvent is ChatHistoryReceived) {
+              emit(
+                state.copyWith(
+                  messages: _mergeMessages(state.messages, chatEvent.messages),
+                  isPeerTyping: false,
+                ),
+              );
+            } else if (chatEvent is ChatMessageReceived) {
+              _peerTypingTimer?.cancel();
+              emit(
+                state.copyWith(
+                  messages: _mergeMessages(state.messages, [chatEvent.message]),
+                  isPeerTyping: false,
+                  lastDeliveredMessage: chatEvent.message,
+                ),
+              );
+            } else if (chatEvent is ChatTypingChanged && chatEvent.isFromPeer) {
+              _updatePeerTyping(chatEvent.isTyping);
+            } else if (chatEvent is ChatRoomLocked) {
+              _peerTypingTimer?.cancel();
+              emit(
+                state.copyWith(
+                  isRoomLocked: true,
+                  isPeerTyping: false,
+                  lockReasonMessage: ErrorHandler.getErrorMessage(
+                    const ChatRoomLockedFailure(),
+                  ),
+                ),
+              );
+            }
+          },
+        );
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
+          ),
+        );
+      },
     );
   }
 
@@ -158,7 +179,14 @@ class ChatCubit extends Cubit<ChatState> {
 
     if (!_chatRepository.isSessionConnected) return false;
     final result = await _chatRepository.sendChatMessage(text);
-    return result.isRight();
+    return result.fold((failure) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+        );
+      }
+      return false;
+    }, (_) => true);
   }
 
   Future<void> updateTypingStatus(bool isTyping) async {
@@ -178,6 +206,54 @@ class ChatCubit extends Cubit<ChatState> {
         }
       });
     }
+  }
+
+  void _handleConnectionState(ChatConnectionState connectionState) {
+    if (isClosed) return;
+
+    switch (connectionState) {
+      case ChatConnecting():
+        emit(state.copyWith(isConnecting: true, isConnected: false));
+      case ChatConnected():
+        _everConnected = true;
+        emit(
+          state.copyWith(
+            isConnecting: false,
+            isConnected: true,
+            errorMessage: null,
+          ),
+        );
+        final roomId = _roomId;
+        if (roomId != null) _requestHistory(roomId);
+      case ChatDisconnected():
+        _historyRequested = false;
+        emit(
+          state.copyWith(
+            isConnecting: false,
+            isConnected: false,
+            errorMessage: _everConnected
+                ? 'Connection lost. Reconnecting automatically...'
+                : state.errorMessage,
+          ),
+        );
+    }
+  }
+
+  List<ChatMessage> _mergeMessages(
+    List<ChatMessage> current,
+    List<ChatMessage> incoming,
+  ) {
+    final messagesByKey = <String, ChatMessage>{};
+    for (final message in [...current, ...incoming]) {
+      messagesByKey[_messageKey(message)] = message;
+    }
+    final messages = messagesByKey.values.toList();
+    messages.sort((left, right) => left.createdAt.compareTo(right.createdAt));
+    return messages;
+  }
+
+  String _messageKey(ChatMessage message) {
+    return message.identityKey;
   }
 
   Future<void> resolveChatRoom(String roomId) async {
@@ -217,6 +293,7 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> close() async {
     _peerTypingTimer?.cancel();
     await _chatSubscription?.cancel();
+    await _connectionStateSubscription?.cancel();
     await _chatRepository.terminateChatConnection();
     await _chatRepository.dispose();
     return super.close();

@@ -24,5 +24,7 @@ abstract class IChatRepository {
 
   Stream<Either<Failure, ChatEvent>> get chatEventsStream;
 
+  Stream<ChatConnectionState> get connectionStateStream;
+
   bool get isSessionConnected;
 }
