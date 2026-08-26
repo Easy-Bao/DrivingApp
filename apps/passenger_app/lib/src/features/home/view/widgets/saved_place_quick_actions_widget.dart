@@ -21,19 +21,28 @@ class SavedPlaceQuickActionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final defaultPlace = defaultSavedPlace(places);
+    final defaultIndex = defaultSavedPlaceIndex(places);
+    final orderedPlaces = [
+      if (defaultIndex >= 0) places[defaultIndex],
+      for (var index = 0; index < places.length; index++)
+        if (index != defaultIndex) places[index],
+    ];
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
-          if (defaultPlace != null) ...[
+          for (var index = 0; index < orderedPlaces.length; index++) ...[
             GestureDetector(
-              onTap: () => onPlaceTap(defaultPlace),
+              onTap: () => onPlaceTap(orderedPlaces[index]),
               onLongPress: onPlaceLongPress == null
                   ? null
-                  : () => onPlaceLongPress!(defaultPlace),
-              child: _SavedPlaceChip(place: defaultPlace),
+                  : () => onPlaceLongPress!(orderedPlaces[index]),
+              child: _SavedPlaceChip(
+                place: orderedPlaces[index],
+                isActive: index == 0 && defaultIndex >= 0,
+              ),
             ),
             const SizedBox(width: 10),
           ],
@@ -46,24 +55,25 @@ class SavedPlaceQuickActionsWidget extends StatelessWidget {
 
 class _SavedPlaceChip extends StatelessWidget {
   final SavedPlace place;
+  final bool isActive;
 
-  const _SavedPlaceChip({required this.place});
+  const _SavedPlaceChip({required this.place, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
-    final hasLocation = place.hasLocation;
+    final showActiveStyle = isActive && place.hasLocation;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
-        color: hasLocation
+        color: showActiveStyle
             ? AppTheme.activeControlBackground
             : AppTheme.interactiveSurface,
         border: Border.all(
-          color: hasLocation
+          color: showActiveStyle
               ? AppTheme.activeControlBackground
               : AppTheme.borderSide,
-          width: hasLocation ? 1.5 : 1.0,
+          width: showActiveStyle ? 1.5 : 1.0,
         ),
         borderRadius: BorderRadius.circular(24),
       ),
@@ -73,7 +83,7 @@ class _SavedPlaceChip extends StatelessWidget {
           Icon(
             savedPlaceIconFromName(place.iconName),
             size: 16,
-            color: hasLocation
+            color: showActiveStyle
                 ? AppTheme.activeControlForeground
                 : AppTheme.primaryColor,
           ),
@@ -83,7 +93,7 @@ class _SavedPlaceChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: hasLocation
+              color: showActiveStyle
                   ? AppTheme.activeControlForeground
                   : AppTheme.primaryColor,
             ),

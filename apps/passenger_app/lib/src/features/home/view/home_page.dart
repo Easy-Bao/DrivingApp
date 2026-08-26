@@ -132,28 +132,22 @@ class _HomePageState extends State<HomePage> {
     return BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
       builder: (context, state) {
         if (state.isLoading && state.places.isNotEmpty) {
-          return const Skeletonizer.zone(
+          final placeholderCount = state.places.length + 1;
+          return Skeletonizer.zone(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              physics: BouncingScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
-                  Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Bone.button(
-                      width: 90,
-                      height: 38,
-                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                  for (var index = 0; index < placeholderCount; index++)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 8),
+                      child: Bone.button(
+                        width: 90,
+                        height: 38,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Bone.button(
-                      width: 90,
-                      height: 38,
-                      borderRadius: BorderRadius.all(Radius.circular(20)),
-                    ),
-                  ),
                 ],
               ),
             ),
