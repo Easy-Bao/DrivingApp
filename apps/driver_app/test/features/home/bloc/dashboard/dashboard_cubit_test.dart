@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
+import 'package:driver_app/src/features/home/domain/entities/driver_dispatch_snapshot.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
@@ -107,6 +108,80 @@ void main() {
         await cubit.close();
       },
     );
+  });
+
+  group('DashboardCubit — dispatch feed', () {
+    blocTest<DashboardCubit, DashboardState>(
+      'loads and sorts active trips while keeping offers in cubit state',
+      build: () {
+        when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+          (_) async => const Right(
+            DriverDispatchSnapshot(
+              activeTrips: [
+                {
+                  'id': 'accepted-trip',
+                  'status': 'accepted',
+                  'created_at': '2026-08-26T10:00:00Z',
+                },
+                {
+                  'id': 'transit-trip',
+                  'status': 'in_transit',
+                  'created_at': '2026-08-26T11:00:00Z',
+                },
+              ],
+              rideOffers: [
+                {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
+              ],
+            ),
+          ),
+        );
+        return _makeCubit(repo);
+      },
+      act: (cubit) => cubit.loadDispatchSnapshot(),
+      expect: () => [
+        const DashboardState(isLoadingDispatch: true),
+        const DashboardState(
+          activeTrips: [
+            {
+              'id': 'transit-trip',
+              'status': 'in_transit',
+              'created_at': '2026-08-26T11:00:00Z',
+            },
+            {
+              'id': 'accepted-trip',
+              'status': 'accepted',
+              'created_at': '2026-08-26T10:00:00Z',
+            },
+          ],
+          activeBids: [
+            {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
+          ],
+        ),
+      ],
+    );
+
+    test('merges realtime trips without mutating existing state', () async {
+      when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+        (_) async => const Right(
+          DriverDispatchSnapshot(
+            activeTrips: [
+              {'id': 'trip-1', 'status': 'accepted'},
+            ],
+            rideOffers: [],
+          ),
+        ),
+      );
+      final cubit = _makeCubit(repo);
+      await cubit.loadDispatchSnapshot();
+      final initialTrips = cubit.state.activeTrips;
+
+      cubit.mergeActiveTrip(const {'id': 'trip-1', 'status': 'in_transit'});
+
+      expect(initialTrips.single['status'], 'accepted');
+      expect(cubit.state.activeTrips.single['status'], 'in_transit');
+      expect(() => cubit.state.activeTrips.add({}), throwsUnsupportedError);
+      await cubit.close();
+    });
   });
 
   group('DashboardCubit — toggleOnline()', () {

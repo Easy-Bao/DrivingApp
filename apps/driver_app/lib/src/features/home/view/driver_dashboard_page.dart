@@ -7,8 +7,6 @@ import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
-import 'package:driver_app/src/features/home/domain/entities/driver_dispatch_snapshot.dart';
-import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/view/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
 import 'package:driver_app/src/features/home/view/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
 import 'package:driver_app/src/features/location/location_routes.dart';
@@ -33,9 +31,7 @@ bool _isActiveDriverTripStatus(Object? value) {
 }
 
 class DriverDashboardPage extends StatefulWidget {
-  const DriverDashboardPage({super.key, required this.repository});
-
-  final IDashboardRepository repository;
+  const DriverDashboardPage({super.key});
 
   @override
   State<DriverDashboardPage> createState() => _DriverDashboardPageState();
@@ -52,8 +48,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   RealtimeWebSocketClient? _realtimeClient;
-  List<Map<String, dynamic>> _activeBids = [];
-  List<Map<String, dynamic>> _activeTrips = [];
   LiveMapBloc? _liveMapBloc;
   bool _isTogglingOnline = false;
   bool _isResumingOnline = false;
@@ -61,7 +55,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool? _pendingOnline;
   String? _submittingBidId;
   String? _completingTripId;
-  bool _isPollingRideData = false;
   int _pollGeneration = 0;
 
   @override
@@ -128,26 +121,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _loadActiveTrips() async {
-    if (!mounted || _isPollingRideData) return;
-    _isPollingRideData = true;
-    try {
-      late DriverDispatchSnapshot snapshot;
-      (await widget.repository.getDispatchSnapshot(
-        includeOffers: false,
-      )).fold((failure) => throw failure, (value) => snapshot = value);
-      final trips = snapshot.activeTrips
-          .where(_isActiveDriverTripStatus)
-          .map(Map<String, dynamic>.from)
-          .toList();
-      if (mounted) {
-        _sortActiveTrips(trips);
-        setState(() => _activeTrips = trips);
-      }
-    } catch (error) {
-      dev.log('Unable to recover active driver trips: $error');
-    } finally {
-      _isPollingRideData = false;
-    }
+    if (!mounted) return;
+    await BlocProvider.of<DashboardCubit>(
+      context,
+    ).loadDispatchSnapshot(includeOffers: false, silent: true);
   }
 
   Future<void> _refreshLocationAfterResume() async {
@@ -236,12 +213,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _refreshRequestCountdowns() {
-    if (!mounted || _activeBids.isEmpty) return;
-    final activeBids = _activeBids.where((bid) {
-      final remaining = remainingBidSeconds(bid);
-      return remaining == null || remaining > 0;
-    }).toList();
-    setState(() => _activeBids = activeBids);
+    if (!mounted) return;
+    BlocProvider.of<DashboardCubit>(context).removeExpiredRideOffers();
   }
 
   void _publishCurrentLocation() {
@@ -323,76 +296,21 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     ride['id'] = rideId;
     ride['status'] = status;
 
-    final updatedTrips = List<Map<String, dynamic>>.from(_activeTrips);
-    final existingIndex = updatedTrips.indexWhere(
-      (trip) => driverValueAsString(trip['id']) == rideId,
-    );
-    if (existingIndex >= 0) {
-      updatedTrips[existingIndex] = {...updatedTrips[existingIndex], ...ride};
-    } else {
-      updatedTrips.insert(0, ride);
-    }
-    _sortActiveTrips(updatedTrips);
-
-    setState(() => _activeTrips = updatedTrips);
-  }
-
-  void _sortActiveTrips(List<Map<String, dynamic>> trips) {
-    trips.sort((a, b) {
-      const statusPriority = {
-        'in_transit': 0,
-        'arrived': 1,
-        'accepted': 2,
-        'assigned': 2,
-      };
-      final aPriority = statusPriority[a['status']] ?? 3;
-      final bPriority = statusPriority[b['status']] ?? 3;
-      if (aPriority != bPriority) return aPriority.compareTo(bPriority);
-      return (a['created_at'] as String? ?? '').compareTo(
-        b['created_at'] as String? ?? '',
-      );
-    });
+    BlocProvider.of<DashboardCubit>(context).mergeActiveTrip(ride);
   }
 
   Future<void> _pollRideData(int pollGeneration) async {
     if (!mounted ||
         pollGeneration != _pollGeneration ||
-        _isPollingRideData ||
         !BlocProvider.of<DashboardCubit>(context).state.isOnline) {
       return;
     }
 
-    _isPollingRideData = true;
-    try {
-      late DriverDispatchSnapshot snapshot;
-      (await widget.repository.getDispatchSnapshot()).fold(
-        (failure) => throw failure,
-        (value) => snapshot = value,
-      );
-      final trips = snapshot.activeTrips
-          .where((ride) => _isActiveDriverTripStatus(ride['status']))
-          .map(Map<String, dynamic>.from)
-          .toList();
-      final bids = snapshot.rideOffers;
-
-      if (!mounted ||
-          pollGeneration != _pollGeneration ||
-          !BlocProvider.of<DashboardCubit>(context).state.isOnline) {
-        return;
-      }
-
-      _sortActiveTrips(trips);
-      setState(() {
-        _activeTrips = trips;
-        _activeBids = bids;
-      });
-    } catch (error) {
-      debugPrint('Error polling: $error');
-    } finally {
-      _isPollingRideData = false;
-      if (mounted && pollGeneration != _pollGeneration) {
-        unawaited(_pollRideData(_pollGeneration));
-      }
+    await BlocProvider.of<DashboardCubit>(
+      context,
+    ).loadDispatchSnapshot(silent: true);
+    if (mounted && pollGeneration != _pollGeneration) {
+      unawaited(_pollRideData(_pollGeneration));
     }
   }
 
@@ -425,11 +343,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (realtimeClient != null) {
       unawaited(realtimeClient.stop());
     }
-    if (mounted) {
-      setState(() {
-        _activeBids = [];
-      });
-    }
+    if (mounted) BlocProvider.of<DashboardCubit>(context).clearActiveBids();
   }
 
   Future<void> _toggleOnline(BuildContext context, bool requestedOnline) async {
@@ -490,7 +404,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _acceptBid(Map<String, dynamic> bid) async {
     if (_submittingBidId != null) return;
-    if (_activeTrips.length >= 5) {
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    final activeTrips = cubit.state.activeTrips;
+    if (activeTrips.length >= 5) {
       CustomToast.show(
         context,
         'You cannot accept more than 5 concurrent rides.',
@@ -498,9 +414,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       );
       return;
     }
-    final hasPriority = _activeTrips.any(
-      (t) => t['ride_type'] == 'Bao Premium',
-    );
+    final hasPriority = activeTrips.any((t) => t['ride_type'] == 'Bao Premium');
     if (hasPriority) {
       CustomToast.show(
         context,
@@ -509,7 +423,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       );
       return;
     }
-    if (bid['ride_type'] == 'Bao Premium' && _activeTrips.isNotEmpty) {
+    if (bid['ride_type'] == 'Bao Premium' && activeTrips.isNotEmpty) {
       CustomToast.show(
         context,
         'Cannot accept a Priority Ride while having other active rides.',
@@ -524,20 +438,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     if (mounted) setState(() => _submittingBidId = sessionId);
     try {
-      final result = await widget.repository.submitRideOffer(
+      final success = await cubit.submitRideOffer(
         sessionId: sessionId,
         farePesos: fare,
       );
-      final success = result.fold((_) => false, (_) => true);
 
       if (mounted) {
-        if (success) {
-          setState(() {
-            _activeBids.removeWhere(
-              (activeBid) => driverValueAsString(activeBid['id']) == sessionId,
-            );
-          });
-        } else {
+        if (!success && cubit.state.errorMessage == null) {
           CustomToast.show(context, 'Failed to submit offer.', isError: true);
         }
       }
@@ -559,15 +466,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     Map<String, dynamic> trip,
     String rideId,
   ) async {
-    try {
-      RideSnapshot? ride;
-      (await widget.repository.fetchRide(
-        rideId,
-      )).fold((_) {}, (value) => ride = value);
-      if (ride != null) return ride!;
-    } catch (error) {
-      dev.log('Unable to refresh trip $rideId before resuming: $error');
-    }
+    final ride = await BlocProvider.of<DashboardCubit>(
+      context,
+    ).fetchAuthoritativeRide(rideId);
+    if (ride != null) return ride;
     return RideSnapshot.fromJson(trip, fallbackId: rideId);
   }
 
@@ -702,9 +604,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       },
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
+          final activeTrips = state.activeTrips;
+          final activeBids = state.activeBids;
           final showFeed =
-              _activeTrips.isNotEmpty ||
-              (state.isOnline && _activeBids.isNotEmpty);
+              activeTrips.isNotEmpty ||
+              (state.isOnline && activeBids.isNotEmpty);
           return Scaffold(
             backgroundColor: AppTheme.background,
             appBar: AppBar(
@@ -767,16 +671,16 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         physics: const BouncingScrollPhysics(),
                         children: [
-                          if (_activeTrips.isNotEmpty) ...[
+                          if (activeTrips.isNotEmpty) ...[
                             DriverDashboardSectionLabel(
                               'Your active rides (__ACTIVE_COUNT__/5)',
                             ),
                             const SizedBox(height: 10),
-                            ..._activeTrips.asMap().entries.map(
+                            ...activeTrips.asMap().entries.map(
                               (entry) => DriverActiveTripCard(
                                 trip: entry.value,
                                 queueIndex: entry.key,
-                                hasCurrentTransitRide: _activeTrips.any(
+                                hasCurrentTransitRide: activeTrips.any(
                                   (activeTrip) =>
                                       activeTrip['status'] == 'in_transit',
                                 ),
@@ -790,20 +694,21 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                             ),
                             const SizedBox(height: 24),
                           ],
-                          if (_activeBids.isNotEmpty) ...[
+                          if (activeBids.isNotEmpty) ...[
                             const DriverDashboardSectionLabel(
                               'Incoming Requests',
                             ),
                             const SizedBox(height: 10),
-                            ..._activeBids.map(
+                            ...activeBids.map(
                               (bid) => DriverPoolBidCard(
                                 bid: bid,
                                 submittingBidId: _submittingBidId,
-                                onDecline: () => setState(
-                                  () => _activeBids.removeWhere(
-                                    (candidate) => candidate['id'] == bid['id'],
-                                  ),
-                                ),
+                                onDecline: () =>
+                                    BlocProvider.of<DashboardCubit>(
+                                      context,
+                                    ).removeActiveBid(
+                                      driverValueAsString(bid['id']),
+                                    ),
                                 onAccept: () => _acceptBid(bid),
                               ),
                             ),

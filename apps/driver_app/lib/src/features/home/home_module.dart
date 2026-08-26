@@ -50,9 +50,7 @@ class HomeModule {
       HomeRoutes.dashboardPath,
       child: (context, GoRouterState state) => BlocProvider.value(
         value: Modular.get<DashboardCubit>()..initialize(),
-        child: DriverDashboardPage(
-          repository: Modular.get<IDashboardRepository>(),
-        ),
+        child: const DriverDashboardPage(),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

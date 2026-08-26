@@ -1,12 +1,13 @@
 import 'dart:developer' as dev;
 
-import 'package:shared_core/shared_core.dart';
-import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
+import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_core/shared_core.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
   final IDashboardRepository _repository;
+  bool _isDispatchRequestInFlight = false;
 
   DashboardCubit({required IDashboardRepository repository})
     : _repository = repository,
@@ -50,6 +51,165 @@ class DashboardCubit extends Cubit<DashboardState> {
           errorMessage: ErrorHandler.getErrorMessage(error),
         ),
       );
+    }
+  }
+
+  Future<bool> loadDispatchSnapshot({
+    bool includeOffers = true,
+    bool silent = false,
+  }) async {
+    if (_isDispatchRequestInFlight) return false;
+    _isDispatchRequestInFlight = true;
+    if (!silent) {
+      emit(state.copyWith(isLoadingDispatch: true, errorMessage: null));
+    }
+
+    try {
+      final result = await _repository.getDispatchSnapshot(
+        includeOffers: includeOffers,
+      );
+      return result.fold(
+        (failure) {
+          if (!silent) {
+            emit(
+              state.copyWith(
+                isLoadingDispatch: false,
+                errorMessage: ErrorHandler.getErrorMessage(failure),
+              ),
+            );
+          }
+          return false;
+        },
+        (snapshot) {
+          emit(
+            state.copyWith(
+              isLoadingDispatch: false,
+              activeTrips: _sortedActiveTrips(snapshot.activeTrips),
+              activeBids: includeOffers
+                  ? _immutableMaps(snapshot.rideOffers)
+                  : null,
+              errorMessage: null,
+            ),
+          );
+          return true;
+        },
+      );
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to load driver dispatch snapshot.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!silent) {
+        emit(
+          state.copyWith(
+            isLoadingDispatch: false,
+            errorMessage: ErrorHandler.getErrorMessage(error),
+          ),
+        );
+      }
+      return false;
+    } finally {
+      _isDispatchRequestInFlight = false;
+    }
+  }
+
+  void mergeActiveTrip(Map<String, dynamic> ride) {
+    final rideId = _stringValue(ride['id']);
+    if (rideId == null) return;
+
+    final updatedTrips = <Map<String, dynamic>>[
+      for (final trip in state.activeTrips) Map<String, dynamic>.from(trip),
+    ];
+    final existingIndex = updatedTrips.indexWhere(
+      (trip) => _stringValue(trip['id']) == rideId,
+    );
+    final normalizedRide = Map<String, dynamic>.from(ride)..['id'] = rideId;
+    if (existingIndex >= 0) {
+      updatedTrips[existingIndex] = {
+        ...updatedTrips[existingIndex],
+        ...normalizedRide,
+      };
+    } else {
+      updatedTrips.insert(0, normalizedRide);
+    }
+    emit(state.copyWith(activeTrips: _sortedActiveTrips(updatedTrips)));
+  }
+
+  void removeActiveBid(String? bidId) {
+    if (bidId == null) return;
+    final remaining = state.activeBids
+        .where((bid) => _stringValue(bid['id']) != bidId)
+        .toList(growable: false);
+    if (remaining.length == state.activeBids.length) return;
+    emit(state.copyWith(activeBids: remaining));
+  }
+
+  void removeExpiredRideOffers() {
+    final now = DateTime.now();
+    final remaining = state.activeBids
+        .where((bid) {
+          final expiresAt = DateTime.tryParse(
+            _stringValue(bid['expires_at']) ?? '',
+          );
+          return expiresAt == null || expiresAt.isAfter(now);
+        })
+        .toList(growable: false);
+    if (remaining.length == state.activeBids.length) return;
+    emit(state.copyWith(activeBids: remaining));
+  }
+
+  void clearActiveBids() {
+    if (state.activeBids.isEmpty) return;
+    emit(state.copyWith(activeBids: const <Map<String, dynamic>>[]));
+  }
+
+  Future<bool> submitRideOffer({
+    required String sessionId,
+    required double farePesos,
+  }) async {
+    try {
+      final result = await _repository.submitRideOffer(
+        sessionId: sessionId,
+        farePesos: farePesos,
+      );
+      return result.fold(
+        (failure) {
+          emit(
+            state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+          );
+          return false;
+        },
+        (_) {
+          removeActiveBid(sessionId);
+          return true;
+        },
+      );
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to submit driver ride offer.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(error)));
+      return false;
+    }
+  }
+
+  Future<RideSnapshot?> fetchAuthoritativeRide(String rideId) async {
+    try {
+      final result = await _repository.fetchRide(rideId);
+      return result.fold((failure) {
+        dev.log('Unable to refresh driver trip $rideId: ${failure.message}');
+        return null;
+      }, (ride) => ride);
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to refresh driver trip $rideId.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return null;
     }
   }
 
@@ -119,5 +279,39 @@ class DashboardCubit extends Cubit<DashboardState> {
       emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)));
       return false;
     }, (_) => true);
+  }
+
+  static List<Map<String, dynamic>> _sortedActiveTrips(
+    Iterable<Map<String, dynamic>> trips,
+  ) {
+    final sorted = trips.map(Map<String, dynamic>.from).toList();
+    sorted.sort((a, b) {
+      const statusPriority = <String, int>{
+        'in_transit': 0,
+        'arrived': 1,
+        'accepted': 2,
+        'assigned': 2,
+      };
+      final aPriority = statusPriority[_stringValue(a['status'])] ?? 3;
+      final bPriority = statusPriority[_stringValue(b['status'])] ?? 3;
+      if (aPriority != bPriority) return aPriority.compareTo(bPriority);
+      return (_stringValue(a['created_at']) ?? '').compareTo(
+        _stringValue(b['created_at']) ?? '',
+      );
+    });
+    return _immutableMaps(sorted);
+  }
+
+  static List<Map<String, dynamic>> _immutableMaps(
+    Iterable<Map<String, dynamic>> values,
+  ) {
+    return List<Map<String, dynamic>>.unmodifiable(
+      values.map(Map<String, dynamic>.from),
+    );
+  }
+
+  static String? _stringValue(Object? value) {
+    final normalized = value?.toString().trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
   }
 }
