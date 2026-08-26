@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/profile/data/datasources/driver_profile_remote_data_source.dart';
@@ -28,6 +27,7 @@ class DriverProfileRepository implements IDriverProfileRepository {
   DriverAccountSnapshot getCachedAccount() {
     return DriverAccountSnapshot(
       name: _preferences.getString('driver_name') ?? '',
+      phone: _preferences.getString('driver_phone') ?? '',
       email: _preferences.getString('driver_email') ?? '',
       vehicleType: _preferences.getString('vehicle_type') ?? '',
       plateNumber: _preferences.getString('plate_number') ?? '',
@@ -58,6 +58,7 @@ class DriverProfileRepository implements IDriverProfileRepository {
       final ratingValue = profile.rating;
       final snapshot = DriverAccountSnapshot(
         name: profile.name.isEmpty ? cached.name : profile.name,
+        phone: profile.phone.isEmpty ? cached.phone : profile.phone,
         email: profile.email.isEmpty ? cached.email : profile.email,
         vehicleType: profile.vehicleType.isEmpty
             ? cached.vehicleType
@@ -75,48 +76,100 @@ class DriverProfileRepository implements IDriverProfileRepository {
             ? stats.averageRating
             : ratingValue ?? 0,
       );
-      await Future.wait<void>([
-        _preferences.setString('driver_name', snapshot.name),
-        _preferences.setString('driver_email', snapshot.email),
-        _preferences.setString('vehicle_type', snapshot.vehicleType),
-        _preferences.setString('plate_number', snapshot.plateNumber),
-        _preferences.setString('rating', snapshot.ratingLabel),
-      ]);
+      await _cacheAccount(snapshot);
       return Right(snapshot);
     } catch (error) {
       return Left(_mapFailure(error));
     }
   }
+
+  @override
+  Future<Either<Failure, DriverAccountSnapshot>> updateAccount({
+    required DriverAccountSnapshot currentAccount,
+    required String name,
+    required String phone,
+    required String email,
+    required String vehicleType,
+    required String plateNumber,
+  }) async {
+    final normalizedName = name.trim();
+    final normalizedPhone = _normalizePhone(phone);
+    final normalizedEmail = email.trim();
+    final normalizedVehicleType = vehicleType.trim();
+    final normalizedPlateNumber = plateNumber.trim();
+
+    if (normalizedName.isEmpty ||
+        normalizedPhone.isEmpty ||
+        normalizedPhone.replaceAll(RegExp(r'[^0-9]'), '').length < 12 ||
+        normalizedEmail.isEmpty ||
+        !normalizedEmail.contains('@') ||
+        normalizedVehicleType.isEmpty ||
+        normalizedPlateNumber.isEmpty) {
+      return const Left(
+        ValidationFailure('Please verify your driver details.'),
+      );
+    }
+
+    try {
+      final response = await _profileDataSource.updateProfile(
+        data: {
+          'name': normalizedName,
+          'phone': normalizedPhone,
+          'email': normalizedEmail,
+          'vehicle_type': normalizedVehicleType,
+          'plate_number': normalizedPlateNumber,
+        },
+      );
+      final profile = ProfileModel.fromJson(response);
+      final updated = DriverAccountSnapshot(
+        name: profile.name.isEmpty ? normalizedName : profile.name,
+        phone: profile.phone.isEmpty ? normalizedPhone : profile.phone,
+        email: profile.email.isEmpty ? normalizedEmail : profile.email,
+        vehicleType: profile.vehicleType.isEmpty
+            ? normalizedVehicleType
+            : profile.vehicleType,
+        plateNumber: profile.plateNumber.isEmpty
+            ? normalizedPlateNumber
+            : profile.plateNumber,
+        ratingLabel: currentAccount.ratingLabel,
+        totalTrips: currentAccount.totalTrips,
+        completedTrips: currentAccount.completedTrips,
+        lifetimeEarnings: currentAccount.lifetimeEarnings,
+        averageRating: currentAccount.averageRating,
+      );
+      await _cacheAccount(updated);
+      return Right(updated);
+    } catch (error) {
+      return Left(_mapFailure(error));
+    }
+  }
+
+  Future<void> _cacheAccount(DriverAccountSnapshot account) async {
+    await Future.wait<void>([
+      _preferences.setString('driver_name', account.name),
+      _preferences.setString('driver_phone', account.phone),
+      _preferences.setString('driver_email', account.email),
+      _preferences.setString('vehicle_type', account.vehicleType),
+      _preferences.setString('plate_number', account.plateNumber),
+      _preferences.setString('rating', account.ratingLabel),
+    ]);
+  }
+
+  String _normalizePhone(String value) {
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.startsWith('63')) return '+$digits';
+    if (digits.startsWith('0')) return '+63${digits.substring(1)}';
+    return digits.isEmpty ? '' : '+63$digits';
+  }
 }
 
 Failure _mapFailure(Object error) {
-  if (error is DioException) {
-    final statusCode = error.response?.statusCode;
-    if (statusCode == 401 || statusCode == 403) {
-      return const AuthFailure('Your driver session has ended. Sign in again.');
-    }
-    if (statusCode == null) {
-      if (error.type == DioExceptionType.connectionTimeout ||
-          error.type == DioExceptionType.sendTimeout ||
-          error.type == DioExceptionType.receiveTimeout) {
-        return const ServerFailure.withStatusCode(
-          'Driver account request timed out.',
-          504,
-        );
-      }
-      return const NetworkFailure(
-        'Unable to refresh your account. Check your connection.',
-      );
-    }
-  }
-  if (error is ServerException) {
-    return FailureMapper.fromException(
-      error,
-      serverMessage: 'Your driver account is temporarily unavailable.',
-    );
-  }
-  if (error is FormatException || error is DataParsingException) {
-    return const ValidationFailure('Driver account data is invalid.');
-  }
-  return const ServerFailure('Your driver account is temporarily unavailable.');
+  return FailureMapper.fromException(
+    error,
+    serverMessage: 'Your driver account is temporarily unavailable.',
+    validationMessage: 'Please verify your driver details.',
+    networkMessage: 'Unable to refresh your account. Check your connection.',
+    timeoutMessage: 'Driver account request timed out.',
+    cacheMessage: 'Saved driver information is unavailable. Please try again.',
+  );
 }

@@ -6,4 +6,13 @@ abstract class IDriverProfileRepository {
   DriverAccountSnapshot getCachedAccount();
 
   Future<Either<Failure, DriverAccountSnapshot>> refreshAccount();
+
+  Future<Either<Failure, DriverAccountSnapshot>> updateAccount({
+    required DriverAccountSnapshot currentAccount,
+    required String name,
+    required String phone,
+    required String email,
+    required String vehicleType,
+    required String plateNumber,
+  });
 }

@@ -1,6 +1,7 @@
 class DriverAccountSnapshot {
   const DriverAccountSnapshot({
     this.name = '',
+    this.phone = '',
     this.email = '',
     this.vehicleType = '',
     this.plateNumber = '',
@@ -12,6 +13,7 @@ class DriverAccountSnapshot {
   });
 
   final String name;
+  final String phone;
   final String email;
   final String vehicleType;
   final String plateNumber;

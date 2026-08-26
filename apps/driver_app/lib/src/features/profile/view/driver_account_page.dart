@@ -9,6 +9,7 @@ import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart
 import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
+import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -88,7 +89,10 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildProfileSummary(compact: compact),
+                        _buildProfileSummary(
+                          context: context,
+                          compact: compact,
+                        ),
                         SizedBox(height: compact ? 10 : 14),
                         _buildVehicleSummary(compact: compact),
                         SizedBox(height: compact ? 12 : 18),
@@ -117,62 +121,83 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     );
   }
 
-  Widget _buildProfileSummary({required bool compact}) {
+  Widget _buildProfileSummary({
+    required BuildContext context,
+    required bool compact,
+  }) {
     final displayName = _name.isEmpty ? 'Driver' : _name;
     final initial = displayName.substring(0, 1).toUpperCase();
 
-    return Row(
-      children: [
-        Container(
-          width: compact ? 46 : 52,
-          height: compact ? 46 : 52,
-          decoration: const BoxDecoration(
-            color: AppTheme.secondaryColor,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            initial,
-            style: TextStyle(
-              fontSize: compact ? 18 : 21,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const ValueKey<String>('driver-profile-summary'),
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => unawaited(_openProfileInfo(context)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
             children: [
-              Text(
-                displayName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: compact ? 17 : 19,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+              Container(
+                width: compact ? 46 : 52,
+                height: compact ? 46 : 52,
+                decoration: const BoxDecoration(
+                  color: AppTheme.secondaryColor,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  initial,
+                  style: TextStyle(
+                    fontSize: compact ? 18 : 21,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                _email.isEmpty ? 'Driver Account' : _email,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.tertiaryColor,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: compact ? 17 : 19,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _email.isEmpty ? 'Driver Account' : _email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.tertiaryColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
+              _ratingBadge(),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        _ratingBadge(),
-      ],
+      ),
     );
+  }
+
+  Future<void> _openProfileInfo(BuildContext context) async {
+    final accountCubit = BlocProvider.of<DriverAccountCubit>(context);
+    await context.pushNamed(ProfileRoutes.profileInfo);
+    if (!context.mounted) return;
+    unawaited(accountCubit.load());
   }
 
   Widget _buildVehicleSummary({required bool compact}) {

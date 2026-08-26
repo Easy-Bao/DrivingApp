@@ -24,6 +24,27 @@ class _FakeDriverProfileRepository implements IDriverProfileRepository {
       ),
     );
   }
+
+  @override
+  Future<Either<Failure, DriverAccountSnapshot>> updateAccount({
+    required DriverAccountSnapshot currentAccount,
+    required String name,
+    required String phone,
+    required String email,
+    required String vehicleType,
+    required String plateNumber,
+  }) async {
+    return Right(
+      DriverAccountSnapshot(
+        name: name,
+        phone: phone,
+        email: email,
+        vehicleType: vehicleType,
+        plateNumber: plateNumber,
+        totalTrips: currentAccount.totalTrips,
+      ),
+    );
+  }
 }
 
 void main() {

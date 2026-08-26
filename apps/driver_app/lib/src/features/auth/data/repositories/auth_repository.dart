@@ -48,6 +48,11 @@ class AuthRepository implements IAuthRepository {
         driver['id'],
       ]);
       final driverName = _stringValue(driver['name']);
+      final driverPhone = _firstNonEmptyString([
+        driver['phone'],
+        driver['phoneNumber'],
+        driver['phone_number'],
+      ]);
       final driverEmail = _stringValue(driver['email']);
       final vehicleType = _stringValue(driver['vehicleType']).isEmpty
           ? 'Vehicle type unavailable'
@@ -70,6 +75,7 @@ class AuthRepository implements IAuthRepository {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('driver_id', driverId);
       await prefs.setString('driver_name', driverName);
+      await prefs.setString('driver_phone', driverPhone);
       await prefs.setString('driver_email', driverEmail);
       await prefs.setString('vehicle_type', vehicleType);
       await prefs.setString('plate_number', plateNumber);

@@ -203,6 +203,51 @@ func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) 
 	}
 }
 
+func TestDriverProfileUpdatePersistsAccountAndVehicleFields(t *testing.T) {
+	repository := &onlineRepository{
+		profile: domain.Profile{
+			ID:          7,
+			UserID:      42,
+			Role:        "driver",
+			Name:        "Before",
+			Phone:       "+639000000000",
+			Email:       "before@example.test",
+			VehicleType: "Motorcycle",
+			PlateNumber: "OLD-123",
+		},
+	}
+	tokenManager := security.NewTokenManager("users-http-test-secret")
+	token, err := tokenManager.IssueWithRole("42", "driver")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	router := chi.NewRouter()
+	usershttp.NewRouter(usecase.NewService(repository), tokenManager).RegisterRoutes(router)
+	request := httptest.NewRequest(
+		http.MethodPatch,
+		"/api/v1/users/me",
+		strings.NewReader(`{"name":"After","phone":"+639170000001","email":"after@example.test","vehicle_type":"Sedan","plate_number":"ABC-1234"}`),
+	)
+	request.Header.Set("Authorization", "Bearer "+token)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+	if repository.saved.ID != 7 || repository.saved.UserID != 42 || repository.saved.Role != "driver" {
+		t.Fatalf("profile identity changed during driver update = %#v", repository.saved)
+	}
+	if repository.saved.Name != "After" ||
+		repository.saved.Phone != "+639170000001" ||
+		repository.saved.Email != "after@example.test" ||
+		repository.saved.VehicleType != "Sedan" ||
+		repository.saved.PlateNumber != "ABC-1234" {
+		t.Fatalf("driver profile values were not persisted = %#v", repository.saved)
+	}
+}
+
 func TestProfileRejectsUnknownGenderWithoutCallingRepository(t *testing.T) {
 	repository := &onlineRepository{
 		profile: domain.Profile{ID: 7, UserID: 42, Role: "passenger", Name: "Before"},
