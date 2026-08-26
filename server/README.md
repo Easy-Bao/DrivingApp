@@ -12,8 +12,8 @@ The other commands are one-shot developer tools:
 
 ## Native local development (default)
 
-The native workflow expects PostgreSQL, Redis, and RabbitMQ to be installed and
-started separately. Just does not enable, start, or stop those services.
+The native workflow expects PostgreSQL and Redis to be installed and started
+separately. Just does not enable, start, or stop those services.
 
 1. Copy `.env.example` to `.env` and set the native database credentials,
    `DATABASE_URL`, and a JWT secret.
@@ -141,9 +141,9 @@ environment. It is not used by `just server` or `just start-all`.
 
 ### Run on Windows with Docker Desktop
 
-The Compose file starts PostgreSQL, Redis, RabbitMQ, the single `api` process,
-and the optional admin app. The API container is the public HTTP and WebSocket
-entrypoint.
+The Compose file starts PostgreSQL, Redis, a one-shot migration checkpoint, the
+single `api` process, and the optional admin app. The API container is the
+public HTTP and WebSocket entrypoint.
 
 ### Prerequisites
 
@@ -157,7 +157,7 @@ entrypoint.
 ```powershell
 Copy-Item .env.example .env
 notepad .env
-docker compose up --build -d postgres-db redis rabbitmq api
+docker compose up --build -d postgres-db redis migrate api
 docker compose ps
 Invoke-RestMethod http://localhost:8000/health
 ```
@@ -206,7 +206,6 @@ docker compose down --volumes
 | Admin app (optional) | `5173` | Admin web interface |
 | PostgreSQL | `55432` | Direct database access for local tooling |
 | Redis | `6379` | Local cache/real-time inspection |
-| RabbitMQ | `5672` | Local message-broker inspection |
 
 Change the corresponding values in `.env` if any of those ports are already
 in use. PostgreSQL data and private driver documents are stored in the

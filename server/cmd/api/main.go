@@ -25,7 +25,6 @@ import (
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
-	locationqueue "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/queue"
 	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
@@ -168,20 +167,9 @@ func main() {
 		geousecase.WithEventPublisher(eventadapter.NewRedisPublisher(redisClient)),
 	)
 
-	var locationPublisher locationdomain.EventPublisher
-	if rabbitURL := strings.TrimSpace(os.Getenv("RABBITMQ_URL")); rabbitURL != "" {
-		queuePublisher, publishErr := locationqueue.NewPublisher(rabbitURL)
-		if publishErr != nil {
-			log.Printf("location event publisher disabled: %v", publishErr)
-		} else {
-			locationPublisher = queuePublisher
-			defer queuePublisher.Close()
-		}
-	}
-	locationService := locationusecase.NewServiceWithInfrastructure(
+	locationService := locationusecase.NewServiceWithCache(
 		mapboxProvider,
 		locationredis.NewCache(redisClient),
-		locationPublisher,
 	)
 
 	authRouter.RegisterRoutes(router)

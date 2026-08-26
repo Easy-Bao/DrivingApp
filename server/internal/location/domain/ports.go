@@ -14,14 +14,3 @@ type Cache interface {
 	Get(ctx context.Context, key string, target any) error
 	Set(ctx context.Context, key string, value any) error
 }
-
-type EventPublisher interface {
-	Publish(ctx context.Context, event LocationEvent) error
-}
-
-type LocationEvent struct {
-	Type      string  `json:"type"`
-	Place     *Place  `json:"place,omitempty"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-}

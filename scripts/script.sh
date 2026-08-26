@@ -9,7 +9,7 @@ readonly DEFAULT_WAIT_TIMEOUT_SECONDS=120
 SERVICES=(
   postgres-db
   redis
-  rabbitmq
+  migrate
   api
 )
 readonly SERVICES

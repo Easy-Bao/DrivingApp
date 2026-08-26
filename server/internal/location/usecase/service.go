@@ -25,17 +25,16 @@ const (
 )
 
 type Service struct {
-	provider  domain.Provider
-	cache     domain.Cache
-	publisher domain.EventPublisher
+	provider domain.Provider
+	cache    domain.Cache
 }
 
 func NewService(provider domain.Provider) *Service {
-	return NewServiceWithInfrastructure(provider, nil, nil)
+	return NewServiceWithCache(provider, nil)
 }
 
-func NewServiceWithInfrastructure(provider domain.Provider, cache domain.Cache, publisher domain.EventPublisher) *Service {
-	return &Service{provider: provider, cache: cache, publisher: publisher}
+func NewServiceWithCache(provider domain.Provider, cache domain.Cache) *Service {
+	return &Service{provider: provider, cache: cache}
 }
 
 func (service *Service) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
@@ -95,9 +94,6 @@ func (service *Service) ReverseGeocode(ctx context.Context, coordinates domain.C
 	}
 	if service.cache != nil && result != nil {
 		_ = service.cache.Set(ctx, key, result)
-	}
-	if service.publisher != nil && result != nil {
-		_ = service.publisher.Publish(ctx, domain.LocationEvent{Type: "LOCATION_RESOLVED", Place: result, Latitude: coordinates.Latitude, Longitude: coordinates.Longitude})
 	}
 	return result, nil
 }

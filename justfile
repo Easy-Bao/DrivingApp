@@ -54,9 +54,9 @@ db-down:
     docker compose stop postgres-db
 
 # Docker-only infrastructure helpers. Native dependencies are intentionally
-# not started by Just; start PostgreSQL, Redis, and RabbitMQ separately.
+# not started by Just; start PostgreSQL and Redis separately.
 infra-up:
-    docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis rabbitmq
+    docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis
 
 # Apply the ordered additive migration plan to configured native PostgreSQL.
 db-migrate:
@@ -69,8 +69,8 @@ docker-db-migrate: infra-up
 test-services:
     cd server && go test ./...
 
-# Start the single Go application natively. PostgreSQL, Redis, and RabbitMQ
-# must already be running on the host; this recipe never enables or starts them.
+# Start the single API application natively. PostgreSQL and Redis must already
+# be running on the host; this recipe never enables or starts them.
 server:
     @port="{{ api-port }}"; \
     port_in_use() { \
@@ -136,7 +136,7 @@ docker-down: services-down
 
 # Build or rebuild compose images
 docker-build:
-    docker compose build postgres-db redis rabbitmq api
+    docker compose build postgres-db redis migrate api
 
 # View logs for all Docker services.
 docker-logs: services-logs

@@ -39,9 +39,9 @@ melos bootstrap
 
 ### Run the Go backend natively
 
-The default local backend workflow uses the host-installed PostgreSQL, Redis,
-and RabbitMQ services. Copy `.env.example` to `.env`, configure the native
-credentials, and run:
+The default local backend workflow uses the host-installed PostgreSQL and Redis
+services. Copy `.env.example` to `.env`, configure the native credentials, and
+run:
 
 ```bash
 just server

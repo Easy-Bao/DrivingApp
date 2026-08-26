@@ -87,7 +87,7 @@ func TestServiceDelegatesSearch(t *testing.T) {
 
 func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 	cache := &cacheStub{values: map[string]any{}}
-	service := usecase.NewServiceWithInfrastructure(providerStub{}, cache, nil)
+	service := usecase.NewServiceWithCache(providerStub{}, cache)
 	places, err := service.Nearby(context.Background(), domain.Coordinates{Latitude: 7.8, Longitude: 123.4}, 1)
 	if err != nil || len(places) != 1 || places[0].Name != "Nearby Place" {
 		t.Fatalf("nearby places = %#v, %v", places, err)

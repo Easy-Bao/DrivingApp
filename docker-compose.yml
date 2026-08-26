@@ -29,18 +29,6 @@ services:
       timeout: 5s
       retries: 12
 
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3-management-alpine
-    restart: always
-    ports:
-      - "${RABBITMQ_HOST_PORT:-5672}:5672"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-
   migrate:
     build:
       context: .
@@ -64,7 +52,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN-}
       REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://rabbitmq:5672
       MAIL_HOST: ${MAIL_HOST:-}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
@@ -97,8 +84,6 @@ services:
       postgres-db:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
