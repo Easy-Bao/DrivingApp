@@ -149,14 +149,17 @@ func main() {
 		}
 		return ridesusecase.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
 	})
+	eventHub := stream.NewHub()
+	assignmentProjection := assignmentadapter.NewMemoryProjection()
+	realtimePublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
 	ridesService := ridesusecase.NewServiceWithRouteCalculator(
 		ridesRepository,
 		routeCalculator,
 		pricingConfig,
-		eventadapter.NewRedisPublisher(redisClient),
+		realtimePublisher,
 	).WithReportingLocation(reportingLocation)
 	rideAssignments := assignment.NewResolver(
-		eventadapter.NewRedisRideAssignmentLookup(redisClient),
+		assignmentProjection,
 		assignmentadapter.NewRideRepositoryLookup(ridesRepository),
 	)
 	ridesRouter := rideshttp.NewRouter(ridesService, verifier)
@@ -164,7 +167,7 @@ func main() {
 	geoService := geousecase.NewService(
 		geo.NewRedisRepository(redisClient),
 		geousecase.WithRideAssignments(rideAssignments),
-		geousecase.WithEventPublisher(eventadapter.NewRedisPublisher(redisClient)),
+		geousecase.WithEventPublisher(realtimePublisher),
 	)
 
 	locationService := locationusecase.NewServiceWithCache(
@@ -186,15 +189,8 @@ func main() {
 
 	chatHistory := chatadapter.NewRedisRepository(redisClient)
 	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory).
-		WithEventPublisher(eventadapter.NewRedisPublisher(redisClient)).
+		WithEventPublisher(realtimePublisher).
 		WithRideAssignmentLookup(rideAssignments)
-	eventHub := stream.NewHub()
-	eventSubscriber := eventadapter.NewRedisSubscriber(redisClient)
-	go func() {
-		if runErr := eventSubscriber.Run(runContext, eventHub); runErr != nil && runContext.Err() == nil {
-			log.Printf("realtime event subscriber stopped: %v", runErr)
-		}
-	}()
 
 	events := ws.NewEventRouter()
 	chatEventHandler := chatws.NewEventHandler(chatService)

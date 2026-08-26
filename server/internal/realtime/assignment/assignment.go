@@ -27,3 +27,10 @@ type Lookup interface {
 	ForRide(ctx context.Context, rideID string) (Assignment, bool, error)
 	ForDriver(ctx context.Context, driverID string) ([]Assignment, error)
 }
+
+// Projection is an optional routing index that can be refreshed from the
+// authoritative driver query after a process restart or routing-cache miss.
+type Projection interface {
+	Lookup
+	Remember(driverID string, values []Assignment)
+}

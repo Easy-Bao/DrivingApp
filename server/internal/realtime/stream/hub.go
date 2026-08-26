@@ -9,8 +9,8 @@ import (
 
 const outboundQueueSize = 32
 
-// Hub owns local WebSocket queues. Dropping an overflowed event is safe
-// because Pub/Sub is transient and the client resynchronizes from REST.
+// Hub owns local WebSocket queues. Dropping an overflowed event is safe because
+// realtime delivery is transient and the client resynchronizes from REST.
 type Hub struct {
 	mu     sync.RWMutex
 	topics map[string]map[*Subscription]struct{}

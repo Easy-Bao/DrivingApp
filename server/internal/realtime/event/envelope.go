@@ -43,8 +43,8 @@ type Scope struct {
 	DriverPool  bool   `json:"driver_pool,omitempty"`
 }
 
-// Envelope is the common contract persisted only transiently in Pub/Sub and
-// forwarded to connected clients. The authoritative state remains in the
+// Envelope is the common contract held only transiently by realtime delivery
+// and forwarded to connected clients. The authoritative state remains in the
 // ride and location stores and is recovered through REST snapshots.
 type Envelope struct {
 	ID         string          `json:"id"`

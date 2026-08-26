@@ -3,7 +3,7 @@
 This directory contains the Go modular monolith. The `internal/*` packages
 own the business modules and their ports/adapters; `cmd/api` is the single
 long-running application process that composes HTTP, WebSocket, persistence,
-messaging, and infrastructure adapters.
+transient event delivery, and infrastructure adapters.
 
 The other commands are one-shot developer tools:
 
@@ -34,6 +34,12 @@ go run ./cmd/api
 The public client URL is `API_BASE_URL`, normally `http://127.0.0.1:8000`.
 The API process owns REST, WebSocket, authentication, rides, location,
 realtime, chat, and admin routes.
+
+Realtime events and the small assignment routing projection stay in memory for
+the single-process deployment. PostgreSQL remains the authorization authority;
+clients recover transient delivery gaps through REST snapshots. Redis is kept
+for high-churn location state, provider caching, authentication workflow
+artifacts, and request protection rather than as a required event broker.
 
 The API performs a read-only Ent schema preflight before listening. Docker
 Compose runs the migration binary after PostgreSQL is healthy and does not
@@ -205,7 +211,7 @@ docker compose down --volumes
 | API | `8000` | Public HTTP and WebSocket endpoint |
 | Admin app (optional) | `5173` | Admin web interface |
 | PostgreSQL | `55432` | Direct database access for local tooling |
-| Redis | `6379` | Local cache/real-time inspection |
+| Redis | `6379` | Cache, location state, and request protection |
 
 Change the corresponding values in `.env` if any of those ports are already
 in use. PostgreSQL data and private driver documents are stored in the
