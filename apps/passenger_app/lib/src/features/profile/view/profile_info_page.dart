@@ -24,7 +24,7 @@ class ProfileInfoPage extends StatefulWidget {
 }
 
 class _ProfileInfoPageState extends State<ProfileInfoPage> {
-  static const _phonePrefixes = <String>['+63', '+1', '+44', '+61', '+81'];
+  static const _phonePrefix = '+63';
   static const _genderOptions = <String>[
     'Female',
     'Male',
@@ -36,7 +36,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   final _phoneNumberController = TextEditingController();
   final _emailController = TextEditingController();
 
-  String _phonePrefix = '+63';
   String _gender = 'Prefer not to say';
   String _avatarPath = '';
   String _savedAddress = '';
@@ -76,7 +75,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     final phone = _splitPhone(profile.phone);
     _isApplyingProfile = true;
     _nameController.text = profile.name;
-    _phonePrefix = phone.prefix;
     _phoneNumberController.text = phone.number;
     _emailController.text = profile.email;
     _gender = _normalizeGender(profile.gender);
@@ -321,17 +319,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                       const SizedBox(height: 24),
                       _buildGenderField(),
                       const SizedBox(height: 44),
-                      const Divider(height: 1),
-                      const SizedBox(height: 28),
-                      const Text(
-                        'Account actions',
-                        style: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 44),
                       _buildLogoutButton(context),
                     ],
                   ),
@@ -390,34 +378,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 border: Border.all(color: AppTheme.borderSide),
               ),
               alignment: Alignment.center,
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _phonePrefix,
-                  isDense: true,
-                  icon: const Icon(
-                    LucideIcons.chevron_down,
-                    size: 18,
-                    color: AppTheme.primaryColor,
-                  ),
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  items: [
-                    for (final prefix in _phonePrefixes)
-                      DropdownMenuItem<String>(
-                        value: prefix,
-                        child: Text(prefix),
-                      ),
-                  ],
-                  onChanged: (prefix) {
-                    if (prefix == null || prefix == _phonePrefix) return;
-                    setState(() {
-                      _phonePrefix = prefix;
-                      _isDirty = _draftHasChanges;
-                    });
-                  },
+              child: const Text(
+                _phonePrefix,
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -584,19 +550,13 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   _PhoneParts _splitPhone(String phone) {
     final digits = phone.replaceAll(RegExp(r'\D'), '');
-    for (final prefix in _phonePrefixes) {
-      final prefixDigits = prefix.substring(1);
-      if (digits.startsWith(prefixDigits)) {
-        return _PhoneParts(
-          prefix: prefix,
-          number: digits.substring(prefixDigits.length),
-        );
-      }
+    if (digits.startsWith('63')) {
+      return _PhoneParts(prefix: _phonePrefix, number: digits.substring(2));
     }
     if (digits.startsWith('0')) {
-      return _PhoneParts(prefix: '+63', number: digits.substring(1));
+      return _PhoneParts(prefix: _phonePrefix, number: digits.substring(1));
     }
-    return _PhoneParts(prefix: '+63', number: digits);
+    return _PhoneParts(prefix: _phonePrefix, number: digits);
   }
 
   String _formatPhone(String prefix, String number) {

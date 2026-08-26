@@ -148,12 +148,6 @@ class AccountPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Icon(
-                LucideIcons.chevron_right,
-                color: AppTheme.primaryColor.withValues(alpha: 0.38),
-                size: 24,
-              ),
             ],
           ),
         ),
